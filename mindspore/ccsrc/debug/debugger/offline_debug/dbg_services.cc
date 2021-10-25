@@ -33,10 +33,17 @@ DbgServices &DbgServices::operator=(const DbgServices &other) {
   return *this;
 }
 
+#if !defined(__APPLE__)
 DbgServices::~DbgServices() noexcept {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
   debug_services_ = nullptr;
 }
+#else
+DbgServices::~DbgServices() {
+  MS_LOG(INFO) << "cpp DbgServices object is deleted";
+  debug_services_ = nullptr;
+}
+#endif
 
 std::string DbgServices::GetVersion() const {
   MS_LOG(INFO) << "get version is called";

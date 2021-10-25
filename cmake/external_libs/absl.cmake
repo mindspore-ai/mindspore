@@ -15,7 +15,11 @@ mindspore_add_pkg(absl
         LIBS absl_strings absl_throw_delegate absl_raw_logging_internal absl_int128 absl_bad_optional_access
         URL ${REQ_URL}
         MD5 ${MD5}
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=TRUE)
+        CMAKE_OPTION
+        -DCMAKE_BUILD_TYPE:STRING=Release
+        -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=TRUE
+        -DCMAKE_CXX_STANDARD=11
+        )
 
 include_directories(${absl_INC})
 

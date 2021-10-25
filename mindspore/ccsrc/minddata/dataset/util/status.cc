@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace dataset {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 float GetMemoryUsage() {
   char buf[128] = {0};
 

@@ -225,7 +225,7 @@ Status ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::string 
 
 Status ShardIndexGenerator::CreateDatabase(int shard_no, sqlite3 **db) {
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
-  CHECK_FAIL_RETURN_UNEXPECTED(!shard_address.empty(), "Shard address is empty, shard No: " + shard_no);
+  CHECK_FAIL_RETURN_UNEXPECTED(!shard_address.empty(), "Shard address is empty, shard No: " + std::to_string(shard_no));
   std::shared_ptr<std::string> fn_ptr;
   RETURN_IF_NOT_OK(GetFileName(shard_address, &fn_ptr));
   shard_address += ".db";

@@ -22,19 +22,23 @@ high performance and parse data precisely. It also provides the following
 operations for users to preprocess data: shuffle, batch, repeat, map, and zip.
 """
 
+import platform
 from ..callback import DSCallback, WaitedDSCallback
 from ..core import config
 from .cache_client import DatasetCache
 from .datasets import *
-from .graphdata import GraphData, SamplingStrategy, OutputFormat
 from .iterators import *
 from .samplers import *
 from .serializer_deserializer import compare, deserialize, serialize, show
+if platform.system().lower() != "darwin":
+    from .graphdata import GraphData, SamplingStrategy, OutputFormat
 
 __all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", "CocoDataset", "CSVDataset",
-           "GeneratorDataset", "GraphData", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
+           "GeneratorDataset", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
            "NumpySlicesDataset", "PaddedDataset", "TextFileDataset", "TFRecordDataset", "VOCDataset",
            "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
            "WeightedRandomSampler", "SubsetSampler",
            "DatasetCache", "DSCallback", "Schema", "WaitedDSCallback", "compare", "deserialize",
            "serialize", "show", "zip"]
+if platform.system().lower() != "darwin":
+    __all__.append("GraphData")

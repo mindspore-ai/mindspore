@@ -52,21 +52,22 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-  MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name() << ") launches graph: " << graph_->graph_id();
+  MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name()
+               << ") launches graph: " << std::to_string(graph_->graph_id());
   if (!CheckInputData(context)) {
-    std::string error_info = "Check the input data invalid, graph id: " + graph_->graph_id();
+    std::string error_info = "Check the input data invalid, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
   try {
     auto ret = device_contexts_[0]->LaunchGraph(graph_);
     if (!ret) {
-      std::string error_info = "Launch graph failed, graph id: " + graph_->graph_id();
+      std::string error_info = "Launch graph failed, graph id: " + std::to_string(graph_->graph_id());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
-    std::string error_info = "Launch graph exception, graph id: " + graph_->graph_id();
+    std::string error_info = "Launch graph exception, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 

@@ -632,7 +632,7 @@ void SetMindRTEnable() {
   return;
 #endif
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_ps_mode()) {
     return;
   }

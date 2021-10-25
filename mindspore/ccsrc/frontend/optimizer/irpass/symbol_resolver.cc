@@ -28,12 +28,12 @@ namespace irpass {
 // {prim::kPrimGetAttr, bool, attr}
 // {prim::kPrimResolve, namespace, symbol}
 AnfNodePtr ResolverGetAttrResolve::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  constexpr char PARSE_SUPER_NAME[] = "namespace";
+  constexpr std::string_view PARSE_SUPER_NAME = "namespace";
   constexpr size_t namespace_index = 1;
   constexpr size_t symbol_index = 2;
 
   PatternNode<AnfNodePtr> resolve_node, ns_node, sym_node, attr_node, bool_node;
-  auto GetAttrResolveLambda = [&node, &resolve_node, &attr_node, &optimizer]() -> AnfNodePtr {
+  auto GetAttrResolveLambda = [&node, &resolve_node, &attr_node, &optimizer, &PARSE_SUPER_NAME]() -> AnfNodePtr {
     auto inner = resolve_node.GetNode(node);
     auto attr = attr_node.GetNode(node);
     if (IsPrimitiveCNode(inner, prim::kPrimResolve)) {

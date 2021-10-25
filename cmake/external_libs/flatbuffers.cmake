@@ -20,6 +20,9 @@ else()
 endif()
 
 if(APPLE)
+    set(flatbuffers_CXXFLAGS "${flatbuffers_CXXFLAGS} -Wno-deprecated")
+endif()
+if(APPLE)
     mindspore_add_pkg(flatbuffers
             VER 2.0.0
             LIBS flatbuffers

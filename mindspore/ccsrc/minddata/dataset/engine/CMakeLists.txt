@@ -1,6 +1,8 @@
 add_subdirectory(datasetops)
 add_subdirectory(opt)
-add_subdirectory(gnn)
+if(NOT APPLE)
+    add_subdirectory(gnn)
+endif()
 add_subdirectory(ir)
 
 message("ENABLE_SECURITY = ${ENABLE_SECURITY}")
@@ -43,13 +45,16 @@ if(ENABLE_PYTHON)
     target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
 endif()
 
-add_dependencies(engine engine-datasetops
-                    engine-datasetops-source
-                    engine-opt
-                    engine-gnn
-                    engine-cache-client
-                    engine-datasetops-mapop
-                    )
+add_dependencies(engine
+    engine-datasetops
+    engine-datasetops-source
+    engine-opt
+    engine-cache-client
+    engine-datasetops-mapop
+    )
+if(NOT APPLE)
+    add_dependencies(engine engine-gnn)
+endif()
 
 if(NOT ENABLE_SECURITY)
     add_dependencies(engine engine-perf)

@@ -3182,7 +3182,7 @@ static void PipelinePostProcess(const FuncGraphPtr &root, const std::vector<AnfN
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }

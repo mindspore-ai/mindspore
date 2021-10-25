@@ -77,10 +77,10 @@ bool QRCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   auto householder_qr = input_a.householderQr();
   if (economic_) {
     // r_row_ = std::min(a_row_, a_col_)
-    output_r = Eigen::MatrixXd::Identity(r_row_, a_row_).cast<T>() *
+    output_r = Eigen::MatrixXd::Identity(r_row_, a_row_).template cast<T>() *
                householder_qr.matrixQR().template triangularView<Eigen::Upper>();
     // q_col_ = std::min(a_row_, a_col_)
-    output_q = householder_qr.householderQ() * Eigen::MatrixXd::Identity(q_row_, q_col_).cast<T>();
+    output_q = householder_qr.householderQ() * Eigen::MatrixXd::Identity(q_row_, q_col_).template cast<T>();
   } else {
     output_r = householder_qr.matrixQR().template triangularView<Eigen::Upper>();
     output_q = householder_qr.householderQ();

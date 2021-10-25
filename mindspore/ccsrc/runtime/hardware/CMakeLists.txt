@@ -35,6 +35,10 @@ if(ENABLE_CPU)
     endif()
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
+endif()
+
 
 set_property(SOURCE ${HARDWARE_SRC_LIST} ${HARDWARE_D_SRC_LIST} ${HARDWARE_GPU_SRC_LIST} ${HARDWARE_CPU_SRC_LIST}
                     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)

@@ -422,9 +422,9 @@ def get_enable_shared_mem():
         >>> # Get the flag of shared memory feature.
         >>> shared_mem_flag = ds.config.get_enable_shared_mem()
     """
-    # For windows we forbid shared mem function temporarily
-    if platform.system().lower() == 'windows':
-        logger.warning("For windows we forbid shared mem function temporarily.")
+    # For windows and macos we forbid shared mem function temporarily
+    if platform.system().lower() in {"windows", "darwin"}:
+        logger.warning("For windows and macos we forbid shared mem function temporarily.")
         return False
     return _config.get_enable_shared_mem()
 

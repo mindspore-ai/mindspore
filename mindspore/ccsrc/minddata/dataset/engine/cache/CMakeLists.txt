@@ -96,10 +96,15 @@ if(ENABLE_CACHE)
         ${PYTHON_LIBRARIES}
         ${SECUREC_LIBRARY}
         pthread
-        -ldl
-        -Wl,--no-as-needed
-        mindspore::grpc++
-        -Wl,--as-needed)
+        -ldl)
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+      target_link_libraries(cache_server mindspore::grpc++)
+    else()
+      target_link_libraries(cache_server
+          -Wl,--no-as-needed
+          mindspore::grpc++
+          -Wl,--as-needed)
+    endif()
   endif()
 
   if(USE_GLOG)
@@ -116,8 +121,12 @@ if(ENABLE_CACHE)
     target_link_libraries(cache_admin
         -Wl,--start-group mindspore::protobuf mindspore_core mindspore_shared_lib ${ACL_TDT_CHANNEL} -Wl,--end-group)
   else()
-    target_link_libraries(cache_admin
-        -Wl,--start-group mindspore::protobuf mindspore_core mindspore_shared_lib -Wl,--end-group)
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+      target_link_libraries(cache_admin mindspore::protobuf mindspore_core mindspore_shared_lib)
+    else()
+      target_link_libraries(cache_admin
+          -Wl,--start-group mindspore::protobuf mindspore_core mindspore_shared_lib -Wl,--end-group)
+    endif()
   endif()
 
   if(USE_GLOG)

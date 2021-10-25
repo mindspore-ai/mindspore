@@ -25,7 +25,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/context.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "utils/ms_context.h"
 #endif
@@ -160,7 +160,7 @@ Status GatherInfo::GetAttrs() {
   if (std::find(inputs_shape_[1].begin(), inputs_shape_[1].end(), -1) != inputs_shape_[1].end()) {
     dynamic_shape_indices_ = true;
   }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   bool enable_sparse = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_SPARSE);
   if (ps::PsDataPrefetch::GetInstance().cache_enable() && enable_sparse) {
@@ -645,7 +645,7 @@ Status GatherInfo::InferBias() {
         rank = rank % (params_strategy[0] * params_strategy[1]);
       }
     }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       bias_ = static_cast<int64_t>(ps::PsCacheManager::GetInstance().cache_indices_lower_bound());
       return SUCCESS;

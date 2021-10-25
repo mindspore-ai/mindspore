@@ -74,8 +74,8 @@ using FuncGraphVector = std::vector<FuncGraphPtr>;
 
 class Primitive;
 using PrimitivePtr = std::shared_ptr<Primitive>;
-class PrimitiveHasher;
-class PrimitiveEqual;
+struct PrimitiveHasher;
+struct PrimitiveEqual;
 using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
 class BaseRef;

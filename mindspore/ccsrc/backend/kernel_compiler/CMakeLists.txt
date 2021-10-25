@@ -6,7 +6,7 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor -Wno-overloaded-virtual")
 endif()
 
 if(ENABLE_D)
@@ -44,7 +44,7 @@ if(ENABLE_CPU)
     endif()
 endif()
 
-if(NOT ENABLE_CPU OR WIN32)
+if(NOT ENABLE_CPU OR WIN32 OR APPLE)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/apply_momentum_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_proxy_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_ps_kernel.cc")

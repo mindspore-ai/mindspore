@@ -88,21 +88,16 @@ if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,-force_load mindspore -Wl,-noall_load mindspore_core proto_input mindspore_gvar mindspore::protobuf)
+if(ENABLE_D OR ENABLE_GPU)
+    target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
+        mindspore::protobuf)
 else()
-    if(ENABLE_D OR ENABLE_GPU)
-        target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
-            mindspore::protobuf)
+    if(BUILD_LITE)
+        target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
     else()
-        if(BUILD_LITE)
-            target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
-        else()
-            target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
-                    mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
-        endif()
+        target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
+                mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
     endif()
 endif()
 

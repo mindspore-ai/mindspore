@@ -37,7 +37,7 @@ CPUKernelFactory &CPUKernelFactory::GetInstance() {
 void CPUKernelFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
                                 CPUKernelCreator &&kernel_creator) {
   (void)name_to_attr_creator_[kernel_name].emplace_back(kernel_attr, kernel_creator);
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   MS_LOG(DEBUG) << "CPUKernelFactory register operator: " << kernel_name;
 #endif
 }

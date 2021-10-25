@@ -30,7 +30,7 @@ if(ENABLE_GPU_INFER)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -Wno-user-defined-warnings -Wno-inconsistent-missing-override
+    set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -Wno-user-defined-warnings -Wno-inconsistent-missing-override \
         -Wno-overloaded-virtual -Wno-unused-const-variable -Wno-pessimizing-move")
 endif()
 

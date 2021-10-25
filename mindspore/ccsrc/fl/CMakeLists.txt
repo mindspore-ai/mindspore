@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _FL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if(NOT ENABLE_CPU OR WIN32)
+if(NOT ENABLE_CPU OR WIN32 OR APPLE)
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/apply_momentum_kernel.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/aggregation_kernel_factory.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/dense_grad_accum_kernel.cc")

@@ -16,7 +16,7 @@
 
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 #include "backend/session/pynative_task_manager.h"
@@ -26,7 +26,7 @@ namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
   // Just remove PyNative tasks before runtime resource release.
   session::PynativeTaskManager::GetInstance().Reset();
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
   }
@@ -132,7 +132,7 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
   if (runtime == nullptr) {
     return;
   }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
   }

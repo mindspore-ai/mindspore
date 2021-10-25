@@ -27,7 +27,7 @@ const size_t kKBToByte = 1024;
 const size_t kLineMaxSize = 1024;
 
 size_t GetSystemMemorySize(const std::string &key) {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
   return SIZE_MAX;
 #else
   FILE *file = fopen("/proc/meminfo", "r");
