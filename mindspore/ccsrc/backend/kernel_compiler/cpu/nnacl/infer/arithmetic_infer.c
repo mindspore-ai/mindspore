@@ -88,6 +88,9 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
 
   param->broadcasting_ = has_broad_cast;
   param->ndim_ = ndim;
+  if (ndim > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   memcpy(param->in_shape0_, in_shape0, ndim * sizeof(int));
   memcpy(param->in_shape1_, in_shape1, ndim * sizeof(int));
   memcpy(param->out_shape_, output_shape, ndim * sizeof(int));

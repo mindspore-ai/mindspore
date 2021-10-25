@@ -58,9 +58,8 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     ShapeSet(output->shape_, &(output->shape_size_), tensor_index->shape_, tensor_index->shape_size_);
   } else {
     const TensorC *input2 = inputs[2];
-    if (input2 == NULL || input2->data_ == NULL) {
-      return NNACL_NULL_PTR;
-    }
+    NNACL_CHECK_NULL_RETURN_ERR(input2);
+    NNACL_CHECK_NULL_RETURN_ERR(input2->data_);
     int *ele_shape_data = (int *)(input2->data_);
     NNACL_CHECK_NULL_RETURN_ERR(ele_shape_data);
     int element_shape[MAX_SHAPE_SIZE] = {0};
