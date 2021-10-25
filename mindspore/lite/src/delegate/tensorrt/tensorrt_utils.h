@@ -28,6 +28,11 @@
 #define kNCHW_C 1
 #define kNCHW_H 2
 #define kNCHW_W 3
+#define kNHWC_N 0
+#define kNHWC_H 1
+#define kNHWC_W 2
+#define kNHWC_C 3
+
 namespace mindspore::lite {
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
@@ -51,6 +56,8 @@ bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape);
 
 std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);
 
+std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape);
+
 nvinfer1::DataType ConvertDataType(DataType type_id);
 
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
@@ -59,13 +66,15 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
 
 ActivationParams ConvertActivationType(schema::ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor);
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor,
+                                         const std::string &op_name);
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size);
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size,
+                                               const std::string &op_name);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
-                                          const DataType data_type);
+                                          const DataType data_type, const std::string &op_name);
 
 nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight);
 

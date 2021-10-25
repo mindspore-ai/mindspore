@@ -44,12 +44,8 @@ const std::vector<TensorRTOp *> &TensorRTOp::in_ops() const { return this->in_op
 const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_ops_; }
 
 bool TensorRTOp::IsShapeKnown() {
-  if (this->in_tensors_[0].Shape().size() == 0) {
+  if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {
     return false;
-  } else {
-    if (this->in_tensors_[0].Shape()[0] == -1) {
-      return false;
-    }
   }
   return true;
 }

@@ -70,6 +70,18 @@ std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims) {
   return shape;
 }
 
+std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape) {
+  std::vector<int64_t> nchw_shape;
+  if (nhwc_shape.size() != DIMENSION_4D) {
+    return nhwc_shape;
+  }
+  nchw_shape.push_back(nhwc_shape[kNHWC_N]);
+  nchw_shape.push_back(nhwc_shape[kNHWC_C]);
+  nchw_shape.push_back(nhwc_shape[kNHWC_H]);
+  nchw_shape.push_back(nhwc_shape[kNHWC_W]);
+  return nchw_shape;
+}
+
 nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input,
                                       nvinfer1::Permutation permutation) {
   nvinfer1::IShuffleLayer *layer = network->addShuffle(const_cast<nvinfer1::ITensor &>(input));
@@ -111,7 +123,8 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
   return SetTranspose(network, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor) {
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor,
+                                         const std::string &op_name) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
@@ -128,13 +141,13 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor.Name() + "_constant_layer";
+  auto name = ms_tensor.Name() + "_" + op_name;
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
-                                          const DataType data_type) {
+                                          const DataType data_type, const std::string &op_name) {
   nvinfer1::Dims dims = ConvertCudaDims(1, shape_size);
   nvinfer1::Weights weights{ConvertDataType(data_type), value, 1};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
@@ -142,6 +155,8 @@ nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network,
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
+  auto name = op_name + "_constant";
+  constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
 
@@ -170,7 +185,8 @@ ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
 }
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size) {
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size,
+                                               const std::string &op_name) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
@@ -197,7 +213,7 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor.Name() + "_constant_layer";
+  auto name = ms_tensor.Name() + "_" + op_name;
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }

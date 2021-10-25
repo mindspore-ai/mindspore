@@ -77,6 +77,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
     pad_input = transpose_layer_in->getOutput(0);
+    MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(pad_input, Format::NCHW);
   }
 
   // trt 6 only support 2D padding
@@ -91,8 +92,8 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     nvinfer1::DimsHW prePadding{*(padding_data + 2), *(padding_data + 4)};
     nvinfer1::DimsHW postPadding{*(padding_data + 3), *(padding_data + 5)};
-    MS_LOG(DEBUG) << "prePadding: " << *(padding_data + 2) << ", " << *(padding_data + 4);
-    MS_LOG(DEBUG) << "postPadding: " << *(padding_data + 3) << ", " << *(padding_data + 5);
+    MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
+                  << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
 
     padding_layer = network->addPadding(*pad_input, prePadding, postPadding);
   } else {
