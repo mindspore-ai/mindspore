@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SWITCH_H_
-#define MINDSPORE_CORE_OPS_SWITCH_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include "ops/switch_layer.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSwitch = "Switch";
-/// \brief Switch defined Switch operator prototype of lite.
-class MS_CORE_API Switch : public PrimitiveC {
- public:
-  /// \brief Constructor.
-  Switch() : PrimitiveC(kNameSwitch) {}
-
-  /// \brief Destructor.
-  ~Switch() = default;
-
-  MS_DECLARE_PARENT(Switch, PrimitiveC);
-};
+REGISTER_PRIMITIVE_C(kNameSwitchLayer, SwitchLayer);
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_SWITCH_H_

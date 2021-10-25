@@ -46,6 +46,7 @@ ADD_CONVERTER_ONLY_OP(Constant);
 ADD_CONVERTER_ONLY_OP(MakeTuple);
 ADD_CONVERTER_ONLY_OP(TupleGetItem);
 ADD_CONVERTER_ONLY_OP(Return);
+ADD_CONVERTER_ONLY_OP(Merge);
 }  // namespace lite
 }  // namespace mindspore
 

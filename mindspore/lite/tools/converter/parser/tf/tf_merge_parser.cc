@@ -19,14 +19,14 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/merge.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TFMergeParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<ops::Merge>();
+  auto prim = std::make_unique<Merge>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
