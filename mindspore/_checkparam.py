@@ -897,7 +897,7 @@ def _check_data_type_valid(data, valid_type):
     if isinstance(data, valid_type):
         if hasattr(data, 'size') and data.size == 0:
             msg = "Please provide non-empty data."
-            logger.error(msg)
+            logger.critical(msg)
             raise ValueError(msg)
         return True
     return False

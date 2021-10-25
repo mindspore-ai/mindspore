@@ -261,7 +261,7 @@ class Integrator:
         """Load data according to the parsed AICORE operator types file."""
         file_path = query_latest_trace_time_file(self._profiling_dir, int(self._device_id))
         if not file_path:
-            logger.error("Failed to find parsed trace time file.")
+            logger.critical("Failed to find parsed trace time file.")
             raise ProfilerFileNotFoundException('parsed step trace time file')
         file_path = validate_and_normalize_path(file_path)
         with open(file_path, 'r') as handle:
@@ -611,7 +611,7 @@ class BaseTimelineGenerator:
                 json_file.write(label_name_json)
                 os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when write timeline display file: %s', err)
+            logger.critical('Error occurred when write timeline display file: %s', err)
             raise ProfilerIOException()
 
     def write_timeline_summary(self):
@@ -628,7 +628,7 @@ class BaseTimelineGenerator:
                 json.dump(self._timeline_summary, json_file)
             os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when write timeline summary file: %s', err)
+            logger.critical('Error occurred when write timeline summary file: %s', err)
             raise ProfilerIOException()
 
     @staticmethod
@@ -806,7 +806,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         )
         file_path = validate_and_normalize_path(file_path)
         if not os.path.exists(file_path):
-            logger.error(f"Failed to find parsed timeline file {file_path}.")
+            logger.critical(f"Failed to find parsed timeline file {file_path}.")
             raise ProfilerFileNotFoundException('parsed timeline file')
 
         return file_path
@@ -910,7 +910,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 # lines[1] stores the gpu time of start training.
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {start_time_file_path}: {err}')
+            logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
             raise ProfilerIOException()
 
         time_diff = gpu_start_time - host_monotonic_start_time
@@ -932,7 +932,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                         line_list = op_list[:2] + time
                         op_timeline_list.append(line_list)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when load operator timeline data intermediate file: %s', err)
+            logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
             raise ProfilerIOException()
 
         return op_timeline_list
@@ -956,7 +956,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     line_list += args_dict[line_list[0]]
                     activity_timeline_list.append(line_list)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when load activity timeline data intermediate file: %s', err)
+            logger.critical('Error occurred when load activity timeline data intermediate file: %s', err)
             raise ProfilerIOException()
 
         return activity_timeline_list
@@ -1024,7 +1024,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     step_time_list.append(step_time_item)
                     step_num += 1
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
             raise ProfilerIOException()
 
         return step_time_list
@@ -1042,7 +1042,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 # otherwise, the data format is "Default/op1 160123,12 "
                 return bool(len(first_string.split(',')) == 2)
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
             raise ProfilerIOException()
 
 
@@ -1074,7 +1074,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         )
         file_path = validate_and_normalize_path(file_path)
         if not os.path.exists(file_path):
-            logger.error("Failed to find parsed timeline file.")
+            logger.critical("Failed to find parsed timeline file.")
             raise ProfilerFileNotFoundException('parsed timeline file')
 
         timeline_list = []
@@ -1086,7 +1086,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                         line_list[self._tid_idx] = f"Stream #{line_list[self._tid_idx]}"
                         timeline_list.append(line_list)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when read timeline intermediate file: %s', err)
+            logger.critical('Error occurred when read timeline intermediate file: %s', err)
             raise ProfilerIOException()
 
         return timeline_list
@@ -1215,7 +1215,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 # lines[2] stores host monotonic_raw time of start training.
                 host_monotonic = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
-            logger.error('Error occurred when read host_start.log: %s', err)
+            logger.critical('Error occurred when read host_start.log: %s', err)
             raise ProfilerIOException()
         try:
             with open(dev_start_file_path) as f_obj:
@@ -1223,7 +1223,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 # lines[2] stores device cycle counter of start training.
                 dev_cntvct = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
-            logger.error('Error occurred when read dev_start.log: %s', err)
+            logger.critical('Error occurred when read dev_start.log: %s', err)
             raise ProfilerIOException()
 
         factor_ns_to_ms = 1e-6

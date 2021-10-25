@@ -1244,7 +1244,7 @@ class Tensor(Tensor_):
             arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
         except ValueError:
             msg = "Error shape={}".format(shape)
-            logger.error(msg)
+            logger.critical(msg)
             raise ValueError(msg)
 
         class seed_context:

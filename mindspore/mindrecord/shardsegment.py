@@ -60,7 +60,7 @@ class ShardSegment:
             file_name = [file_name]
         ret = self._segment.open(file_name, load_dataset, num_consumer, self._columns, operator)
         if ret != SUCCESS:
-            logger.error("Failed to open {}.".format(file_name))
+            logger.critical("Failed to open {}.".format(file_name))
             raise MRMOpenError
         self._header = ShardHeader(self._segment.get_header())
         return ret

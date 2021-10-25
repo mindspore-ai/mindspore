@@ -386,7 +386,7 @@ if __name__ == "__main__":
         os.chdir(os.path.join(script_path, "../../../../.."))
         main()
     except (OSError, IndexError, KeyError):
-        logger.error('FAILED: cropper_configure.py!')
+        logger.critical('FAILED: cropper_configure.py!')
         raise
     else:
         logger.info('SUCCESS: cropper_configure.py ')

@@ -49,7 +49,7 @@ class ShardHeader:
         """
         schema_id = self._header.add_schema(schema)
         if schema_id == -1:
-            logger.error("Failed to add schema.")
+            logger.critical("Failed to add schema.")
             raise MRMAddSchemaError
         return schema_id
 
@@ -68,7 +68,7 @@ class ShardHeader:
         """
         ret = self._header.add_index_fields(index_fields)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to add index field.")
+            logger.critical("Failed to add index field.")
             raise MRMAddIndexError
         return ret
 
@@ -89,7 +89,7 @@ class ShardHeader:
         desc = desc if desc else ""
         schema = ms.Schema.build(desc, content)
         if not schema:
-            logger.error("Failed to add build schema.")
+            logger.critical("Failed to add build schema.")
             raise MRMBuildSchemaError
         return schema
 
@@ -127,7 +127,7 @@ class ShardHeader:
         if ret and len(ret) == 1:
             return ret[0].get_schema_content()
 
-        logger.error("Failed to get meta info.")
+        logger.critical("Failed to get meta info.")
         raise MRMGetMetaError
 
     @property

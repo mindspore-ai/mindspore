@@ -95,7 +95,7 @@ def _update_param(param, new_param, strict_load):
     if isinstance(param.data, Tensor) and isinstance(new_param.data, Tensor):
         if param.data.shape != new_param.data.shape:
             if not _special_process_par(param, new_param):
-                logger.error("Failed to combine the net and the parameters for param %s.", param.name)
+                logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
                 msg = ("Net parameters {} shape({}) are different from parameter_dict's({})"
                        .format(param.name, param.data.shape, new_param.data.shape))
                 raise RuntimeError(msg)
@@ -106,7 +106,7 @@ def _update_param(param, new_param, strict_load):
                 param.set_data(new_tensor)
                 return
 
-            logger.error("Failed to combine the net and the parameters for param %s.", param.name)
+            logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
                    .format(param.name, param.data.dtype, new_param.data.dtype))
             raise RuntimeError(msg)
@@ -116,14 +116,14 @@ def _update_param(param, new_param, strict_load):
 
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
         if param.data.shape != (1,) and param.data.shape != ():
-            logger.error("Failed to combine the net and the parameters for param %s.", param.name)
+            logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} shape({}) is not (1,), inconsistent with parameter_dict's(scalar)."
                    .format(param.name, param.data.shape))
             raise RuntimeError(msg)
         param.set_data(initializer(new_param.data, param.data.shape, param.data.dtype))
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
-        logger.error("Failed to combine the net and the parameters for param %s.", param.name)
+        logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
         msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
                .format(param.name, type(param.data), type(new_param.data)))
         raise RuntimeError(msg)
@@ -191,7 +191,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
-        logger.error("Failed to save the checkpoint file %s.", ckpt_file_name)
+        logger.critical("Failed to save the checkpoint file %s.", ckpt_file_name)
         raise e
 
 
@@ -422,11 +422,11 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
-            logger.error("Failed to read the checkpoint file `%s`. The file may be encrypted, please pass in the "
-                         "correct dec_key.", ckpt_file_name)
+            logger.critical("Failed to read the checkpoint file `%s`. The file may be encrypted, please pass in the "
+                            "correct dec_key.", ckpt_file_name)
         else:
-            logger.error("Failed to read the checkpoint file `%s`, please check the correct of the file.", \
-                         ckpt_file_name)
+            logger.critical("Failed to read the checkpoint file `%s`, please check the correct of the file.", \
+                            ckpt_file_name)
         raise ValueError(e.__str__())
 
     parameter_dict = {}
@@ -464,7 +464,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         logger.info("Loading checkpoint files process is finished.")
 
     except BaseException as e:
-        logger.error("Failed to load the checkpoint file `%s`.", ckpt_file_name)
+        logger.critical("Failed to load the checkpoint file `%s`.", ckpt_file_name)
         raise RuntimeError(e.__str__())
 
     if not parameter_dict:
@@ -532,12 +532,12 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         ['conv1.weight']
     """
     if not isinstance(net, nn.Cell):
-        logger.error("Failed to combine the net and the parameters.")
+        logger.critical("Failed to combine the net and the parameters.")
         msg = ("Argument net should be a Cell, but got {}.".format(type(net)))
         raise TypeError(msg)
 
     if not isinstance(parameter_dict, dict):
-        logger.error("Failed to combine the net and the parameters.")
+        logger.critical("Failed to combine the net and the parameters.")
         msg = ("Argument parameter_dict should be a dict, but got {}.".format(type(parameter_dict)))
         raise TypeError(msg)
 
@@ -549,7 +549,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         if param.name in parameter_dict:
             new_param = copy.deepcopy(parameter_dict[param.name])
             if not isinstance(new_param, Parameter):
-                logger.error("Failed to combine the net and the parameters.")
+                logger.critical("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
                 raise TypeError(msg)
             _update_param(param, new_param, strict_load)
@@ -909,7 +909,7 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.error("The parameter %s in the graph is not in the network.", param_name)
+            logger.critical("The parameter %s in the graph is not in the network.", param_name)
             raise ValueError("The parameter in the graph must be in the network.")
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
@@ -1050,7 +1050,7 @@ def parse_print(print_file_name):
             pb_content = f.read()
         print_list.ParseFromString(pb_content)
     except BaseException as e:
-        logger.error("Failed to read the print file %s, please check the correctness of the file.", print_file_name)
+        logger.critical("Failed to read the print file %s, please check the correctness of the file.", print_file_name)
         raise ValueError(e.__str__())
 
     tensor_list = []
@@ -1082,7 +1082,7 @@ def parse_print(print_file_name):
                     tensor_list.append(Tensor(param_data, ms_type))
 
     except BaseException as e:
-        logger.error("Failed to load the print file %s.", print_list)
+        logger.critical("Failed to load the print file %s.", print_list)
         raise RuntimeError(e.__str__())
 
     return tensor_list
@@ -1415,8 +1415,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             try:
                 data_slice = np.split(data, size)[rank]
             except BaseException as e:
-                logger.error("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
-                             " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
+                logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
+                                " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__())
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)

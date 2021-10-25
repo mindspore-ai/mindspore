@@ -634,7 +634,7 @@ class Dataset:
         """
         dataset = None
         if not hasattr(func, '__call__'):
-            logger.error("func must be a function.")
+            logger.critical("func must be a function.")
             raise TypeError("func must be a function.")
 
         for row_data in self.create_tuple_iterator(output_numpy=True):
@@ -644,7 +644,7 @@ class Dataset:
                 dataset += func(row_data)
 
         if not isinstance(dataset, Dataset):
-            logger.error("flat_map must return a Dataset object.")
+            logger.critical("flat_map must return a Dataset object.")
             raise TypeError("flat_map must return a Dataset object.")
         return dataset
 
@@ -2568,8 +2568,8 @@ def _watch_dog(eot, pids):
                 wait_pid()
             ## multiprocessing.queue may hang in .get() forever when put() process was killed.
             ## We have to exit main process otherwise main process will hang.
-            logger.exception("The subprocess of dataset may exit unexpected or be killed, "
-                             "main process will exit.")
+            logger.critical("The subprocess of dataset may exit unexpected or be killed, "
+                            "main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
 
 
@@ -2742,7 +2742,7 @@ class _ExceptHookHandler:
         sys.excepthook = self.__handler_exception
 
     def __handler_exception(self, ex_type, value, tb):
-        logger.exception("Uncaught exception: ", exc_info=(ex_type, value, tb))
+        logger.critical("Uncaught exception: ", exc_info=(ex_type, value, tb))
         _mp_pool_exit_preprocess()
 
 
