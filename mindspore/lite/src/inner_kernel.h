@@ -171,7 +171,7 @@ class InnerKernel : public Kernel {
   virtual size_t workspace_size() { return workspace_size_; }
   void AllocWorkspace();
   void FreeWorkspace();
-  void *workspace() { return workspace_; }
+  void *workspace() const { return workspace_; }
   void set_workspace(void *ws) {
     if (ws_allocated_ == false) {
       workspace_ = ws;

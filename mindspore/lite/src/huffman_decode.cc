@@ -33,6 +33,10 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
     MS_LOG(ERROR) << "not found '#' in input_str";
     return RET_ERROR;
   }
+  if (key_pos + 1 > input_str.size() || code_pos + 1 > input_str.size()) {
+    MS_LOG(ERROR) << "pos extend input_str size.";
+    return RET_ERROR;
+  }
   auto key = input_str.substr(0, key_pos);
   auto code = input_str.substr(key_pos + 1, code_pos - key_pos - 1);
   auto encoded_data = input_str.substr(code_pos + 1);
