@@ -4441,7 +4441,7 @@ class Asin(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as `x`.
