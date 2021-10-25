@@ -24,8 +24,8 @@ from mindspore.ops import PrimitiveWithInfer, prim_attr_register
 from mindspore._checkparam import Validator as validator
 from mindspore.common import dtype as mstype
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-np.random.seed(0)
+context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+np.random.seed(100)
 
 
 class SolveTriangular(PrimitiveWithInfer):
