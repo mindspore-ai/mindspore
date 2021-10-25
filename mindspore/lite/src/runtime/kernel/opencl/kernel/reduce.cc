@@ -66,15 +66,27 @@ cl_float4 ReduceOpenCLKernel::GenC4Mask() {
   return mask;
 }
 
-bool IsHWReduce(const bool *reduce_axes_) {
+bool ReduceOpenCLKernel::IsHWCReduce() {
+  return !reduce_axes_[0] && reduce_axes_[1] && reduce_axes_[2] && reduce_axes_[3];
+}
+
+bool ReduceOpenCLKernel::IsHWReduce() {
   return !reduce_axes_[0] && reduce_axes_[1] && reduce_axes_[2] && !reduce_axes_[3];
 }
 
-bool IsWCReduce(const bool *reduce_axes_) {
+bool ReduceOpenCLKernel::IsWCReduce() {
   return !reduce_axes_[0] && !reduce_axes_[1] && reduce_axes_[2] && reduce_axes_[3];
 }
 
-bool IsCReduce(const bool *reduce_axes_) {
+bool ReduceOpenCLKernel::IsHReduce() {
+  return !reduce_axes_[0] && reduce_axes_[1] && !reduce_axes_[2] && !reduce_axes_[3];
+}
+
+bool ReduceOpenCLKernel::IsWReduce() {
+  return !reduce_axes_[0] && !reduce_axes_[1] && reduce_axes_[2] && !reduce_axes_[3];
+}
+
+bool ReduceOpenCLKernel::IsCReduce() {
   return !reduce_axes_[0] && !reduce_axes_[1] && !reduce_axes_[2] && reduce_axes_[3];
 }
 
@@ -83,8 +95,26 @@ int ReduceOpenCLKernel::SetAxes() {
   // get num_axes
   int num_axes = 0;
   auto *axes_tensor = in_tensors_.at(1);
+
+  if (axes_tensor->shape().size() == 0) {
+    CHECK_NULL_RETURN(axes_tensor->data());
+    auto reduction_indices = reinterpret_cast<int *>(axes_tensor->data())[0];
+
+    if (reduction_indices == -1) {
+      reduce_axes_[1] = true;
+      reduce_axes_[2] = true;
+      reduce_axes_[3] = true;
+    } else if (reduction_indices == 1 || reduction_indices == 2 || reduction_indices == 3) {
+      reduce_axes_[reduction_indices] = true;
+    } else {
+      MS_LOG(ERROR) << "in Reduce: axes tensor's reduction_indices should be -1, 1, 2, 3";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+
   if (axes_tensor->shape().size() != 1) {
-    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 1.";
+    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 0 or 1.";
     return RET_ERROR;
   } else {
     num_axes = axes_tensor->shape().front();
@@ -146,14 +176,12 @@ int ReduceOpenCLKernel::CheckSpecs() {
   if (ret != RET_OK) {
     return ret;
   }
-  hw_reduce_ = IsHWReduce(reduce_axes_);
-  wc_reduce_ = IsWCReduce(reduce_axes_);
-  c_reduce_ = IsCReduce(reduce_axes_);
-  if (!hw_reduce_ && !wc_reduce_ && !c_reduce_) {
+
+  if (!IsHWReduce() && !IsWCReduce() && !IsHReduce() && !IsWReduce() && !IsCReduce() && !IsHWCReduce()) {
     MS_LOG(WARNING) << "Unsupported reduce axes";
     return RET_PARAM_INVALID;
   }
-  if ((c_reduce_ || wc_reduce_) && !reduce_param->keep_dims_) {
+  if ((IsCReduce() || IsWCReduce() || IsWReduce()) && !reduce_param->keep_dims_) {
     MS_LOG(WARNING) << "reduce axis (2,3) should keep dims";
     return RET_PARAM_INVALID;
   }
@@ -169,19 +197,26 @@ int ReduceOpenCLKernel::Prepare() {
   std::string kernel_name;
   use_local_ = false;
   kernel_name = "Global";
-  if (wc_reduce_ && (inShape.W >= LOCAL_CACHE_THREAD || inShape.C >= LOCAL_CACHE_THREAD)) {
+  if (IsWCReduce() && (inShape.W >= LOCAL_CACHE_THREAD || inShape.C >= LOCAL_CACHE_THREAD)) {
     use_local_ = true;
     kernel_name = "Local";
   }
-  if (hw_reduce_ && (inShape.W >= LOCAL_CACHE_THREAD || inShape.H >= LOCAL_CACHE_THREAD)) {
+  if (IsHWReduce() && (inShape.W >= LOCAL_CACHE_THREAD || inShape.H >= LOCAL_CACHE_THREAD)) {
     use_local_ = true;
     kernel_name = "Local";
   }
-  if (wc_reduce_) {
+
+  if (IsHWCReduce()) {
+    kernel_name += "HWC";
+  } else if (IsWCReduce()) {
     kernel_name += "WC";
-  } else if (hw_reduce_) {
+  } else if (IsHWReduce()) {
     kernel_name += "HW";
-  } else if (c_reduce_) {
+  } else if (IsHReduce()) {
+    kernel_name += "H";
+  } else if (IsWReduce()) {
+    kernel_name += "W";
+  } else if (IsCReduce()) {
     kernel_name += "C";
   }
   kernel_name += GetReduceTypeStr(reduce_param->mode_);
@@ -217,7 +252,7 @@ int ReduceOpenCLKernel::SetConstArgs() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (wc_reduce_ || c_reduce_) {
+  if (IsWCReduce() || IsCReduce()) {
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, GenC4Mask()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
@@ -234,13 +269,22 @@ void ReduceOpenCLKernel::SetGlobalLocal() {
   if (use_local_) {
     local_size_ = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
   }
-  if (hw_reduce_) {
+  if (IsHWCReduce()) {
+    global_size_ = {1, 1, 1};
+  } else if (IsHWReduce()) {
     global_size_ = {static_cast<size_t>(c4), 1, 1};
-  } else if (wc_reduce_) {
+  } else if (IsWCReduce()) {
     global_size_ = {static_cast<size_t>(h), 1, 1};
-  } else if (c_reduce_ && !use_local_) {
+  } else if (IsHReduce()) {
+    global_size_ = {static_cast<size_t>(w), static_cast<size_t>(c4)};
+  } else if (IsWReduce()) {
+    global_size_ = {static_cast<size_t>(h), static_cast<size_t>(c4)};
+  } else if (IsCReduce() && !use_local_) {
     global_size_ = {static_cast<size_t>(h), static_cast<size_t>(w)};
+  } else {
+    global_size_ = {1, 1, 1};
   }
+
   AlignGlobalLocal(global_size_, local_size_);
 }
 

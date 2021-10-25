@@ -191,7 +191,6 @@ __kernel void Softmax1x1_NHWC4(__read_only image2d_t input, __write_only image2d
 
 __kernel void Softmax1x1_32_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
                                   const int4 input_shape) {
-  const int MAX_C4_NUM = 8;
   int n = get_global_id(1);
   if (n >= input_shape.x) return;
 
@@ -210,7 +209,7 @@ __kernel void Softmax1x1_32_NHWC4(__read_only image2d_t input, __write_only imag
   float4 input_max_f4 = (float4)(input_max, input_max, input_max, input_max);
 
   // Calc input sum value
-  float4 element_vec4[MAX_C4_NUM];
+  float4 element_vec4[8];  // 8 : MAX_C4_NUM
   float4 sum_vec4 = convert_float4(mask);
   sum_vec4 *= exp(convert_float4(READ_IMAGE(input, smp_zero, (int2)(C4 - 1, n))) - input_max_f4);
   element_vec4[C4 - 1] = sum_vec4;
