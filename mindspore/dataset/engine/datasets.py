@@ -7638,15 +7638,15 @@ class CityscapesDataset(MappableDataset):
         >>>
         >>> # 1) Get all samples from Cityscapes dataset in sequence
         >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, task="instance", quality_mode="fine",
-        >>>                                usage="train", shuffle=False, num_parallel_workers=1)
+        ...                                usage="train", shuffle=False, num_parallel_workers=1)
         >>>
         >>> # 2) Randomly select 350 samples from Cityscapes dataset
         >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, num_samples=350, shuffle=True,
-        >>>                                num_parallel_workers=1)
+        ...                                num_parallel_workers=1)
         >>>
         >>> # 3) Get samples from Cityscapes dataset for shard 0 in a 2-way distributed training
         >>> dataset = ds.CityscapesDataset(dataset_dir=cityscapes_dataset_dir, num_shards=2, shard_id=0,
-        >>>                                num_parallel_workers=1)
+        ...                                num_parallel_workers=1)
         >>>
         >>> # In Cityscapes dataset, each dictionary has keys "image" and "task"
 
@@ -7812,15 +7812,15 @@ class DIV2KDataset(MappableDataset):
         >>>
         >>> # 1) Get all samples from DIV2K dataset in sequence
         >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
-        >>>                           shuffle=False)
+        ...                           shuffle=False)
         >>>
         >>> # 2) Randomly select 350 samples from DIV2K dataset
         >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
-        >>>                           num_samples=350, shuffle=True)
+        ...                           num_samples=350, shuffle=True)
         >>>
         >>> # 3) Get samples from DIV2K dataset for shard 0 in a 2-way distributed training
         >>> dataset = ds.DIV2KDataset(dataset_dir=div2k_dataset_dir, usage="train", scale=2, downgrade="bicubic",
-        >>>                           num_shards=2, shard_id=0)
+        ...                           num_shards=2, shard_id=0)
         >>>
         >>> # In DIV2K dataset, each dictionary has keys "hr_image" and "lr_image"
 
