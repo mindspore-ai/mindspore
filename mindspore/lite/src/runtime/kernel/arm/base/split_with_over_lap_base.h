@@ -47,7 +47,7 @@ class SplitWithOverlapBaseCPUKernel : public InnerKernel {
   std::vector<int> end_indices_;
 
   SplitWithOverlapParameter *param_ = nullptr;
-  int thread_count_;
+  int thread_count_ = 0;
 
   char *input_ptr_{nullptr};
   std::vector<char *> output_ptr_;

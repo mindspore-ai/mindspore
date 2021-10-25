@@ -33,15 +33,19 @@ class MixPrecisionCfg {
     this->num_of_not_nan_iter_th_ = 1000;
   }
 
-  bool dynamic_loss_scale_ = false; /**< Enable\disable dynamic loss scale during mix precision training */
-  float loss_scale_;                /**< Initial loss scale factor  */
-  uint32_t num_of_not_nan_iter_th_; /**< a threshold for modifying loss scale when dynamic loss scale is enabled */
+  ~MixPrecisionCfg() = default;
+
+  bool dynamic_loss_scale_ = false;   /**< Enable\disable dynamic loss scale during mix precision training */
+  float loss_scale_;                  /**< Initial loss scale factor  */
+  uint32_t num_of_not_nan_iter_th_;   /**< a threshold for modifying loss scale when dynamic loss scale is enabled */
   bool is_raw_mix_precision_ = false; /**< Is mix precision model export from mindspore  */
 };
 
 class TrainCfg {
  public:
   TrainCfg() { this->loss_name_ = "_loss_fn"; }
+
+  ~TrainCfg() = default;
 
   OptimizationLevel optimization_level_ = kO0;
   std::string loss_name_;             /**< Set part of the name that identify a loss kernel */

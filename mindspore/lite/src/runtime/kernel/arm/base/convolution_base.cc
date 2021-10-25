@@ -32,7 +32,7 @@ void *ConvolutionBaseCPUKernel::MallocAlignedData(size_t alignment, size_t size)
     MS_LOG(ERROR) << "MallocAlignedData failed!";
     return nullptr;
   }
-  auto aligned_ptr = (reinterpret_cast<uintptr_t>(ptr) + alignment - 1) & (~(alignment - 1));
+  uintptr_t aligned_ptr = (reinterpret_cast<uintptr_t>(ptr) + alignment - 1) & (~(alignment - 1));
   addr_map[aligned_ptr] = ptr;
   return reinterpret_cast<void *>(aligned_ptr);
 }
@@ -220,8 +220,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
 }
 
 int ConvolutionBaseCPUKernel::MallocQuantParam() {
-  conv_quant_arg_ = &conv_param_->conv_quant_arg_;
-  CHECK_NULL_RETURN(conv_quant_arg_);
+  conv_quant_arg_ = &(conv_param_->conv_quant_arg_);
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);

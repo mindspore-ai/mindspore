@@ -88,6 +88,9 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
   }
 
   std::string filename(file.data(), file.size());
+  if (filename.find_last_of(".") == std::string::npos) {
+    return kLiteInputParamInvalid;
+  }
   if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
     filename = filename + ".ms";
   }

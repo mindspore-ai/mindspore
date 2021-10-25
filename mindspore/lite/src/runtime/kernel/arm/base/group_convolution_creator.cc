@@ -17,13 +17,13 @@
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 
 namespace mindspore::kernel {
-void CopyTensorQuantParam(lite::Tensor *dst, lite::Tensor *src) {
+void CopyTensorQuantParam(lite::Tensor *dst, const lite::Tensor *src) {
   for (size_t i = 0; i < src->quant_params().size(); i++) {
     dst->AddQuantParam(src->quant_params().at(i));
   }
 }
 
-ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
+ConvParameter *CreateNewConvParameter(const ConvParameter *parameter) {
   auto conv_parameter = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_parameter == nullptr) {
     MS_LOG(ERROR) << "Malloc new conv parameter failed.";
@@ -37,6 +37,7 @@ void FreeCurrentConv(ConvParameter *conv_param, std::vector<lite::Tensor *> *new
                      std::vector<lite::Tensor *> *new_outputs) {
   if (conv_param != nullptr) {
     free(conv_param);
+    conv_param = nullptr;
   }
   if (new_inputs != nullptr) {
     for (auto &in_tensor : *new_inputs) {
@@ -61,7 +62,7 @@ static inline lite::Tensor *TensorMalloc(lite::Tensor *tensor) {
   return tensor;
 }
 
-lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &shape, const int index) {
+lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<int> &shape, const int index) {
   auto new_tensor =
     new (std::nothrow) lite::Tensor(tensor->data_type(), shape, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   if (new_tensor == nullptr) {
@@ -76,7 +77,7 @@ lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &sh
   }
 
   uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size();
-  memcpy(new_tensor->data(), new_tensor_data, new_tensor->Size());
+  memcpy(new_tensor->data(), reinterpret_cast<void *>(new_tensor_data), new_tensor->Size());
   return new_tensor;
 }
 
@@ -104,7 +105,7 @@ lite::Tensor *CreateVarTensor(const TensorInfo &tensor_info, bool inferred) {
 }
 
 /* Class GroupConv Creator Implement Part */
-void GroupConvCreator::CopyQuantParam(std::vector<lite::Tensor *> *tensors) {
+void GroupConvCreator::CopyQuantParam(const std::vector<lite::Tensor *> *tensors) {
   for (size_t j = 0; j < origin_inputs_.size(); ++j) {
     CopyTensorQuantParam(tensors->at(j), origin_inputs_.at(j));
   }
@@ -112,11 +113,13 @@ void GroupConvCreator::CopyQuantParam(std::vector<lite::Tensor *> *tensors) {
 
 void GroupConvCreator::FreeGroupConvs() {
   for (auto &sub_conv : group_convs_) {
-    for (auto &in_tensor : sub_conv->in_tensors()) {
+    for (auto in_tensor : sub_conv->in_tensors()) {
       delete in_tensor;
+      in_tensor = nullptr;
     }
-    for (auto &out_tensor : sub_conv->out_tensors()) {
+    for (auto out_tensor : sub_conv->out_tensors()) {
       delete out_tensor;
+      out_tensor = nullptr;
     }
     delete sub_conv;
     sub_conv = nullptr;

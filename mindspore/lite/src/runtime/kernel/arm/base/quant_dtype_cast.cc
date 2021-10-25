@@ -208,12 +208,14 @@ int QuantDTypeCastCPUKernel::Run() {
     if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
         out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
       delete (float32_ptr_);
+      float32_ptr_ = nullptr;
     }
     return RET_ERROR;
   }
   if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
       out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
     delete (float32_ptr_);
+    float32_ptr_ = nullptr;
   }
   return RET_OK;
 }

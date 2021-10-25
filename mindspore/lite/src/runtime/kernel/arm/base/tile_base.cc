@@ -39,7 +39,6 @@ int TileCPUKernel::Prepare() {
 }
 
 int TileCPUKernel::ReSize() {
-  tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
   CHECK_NULL_RETURN(tile_parameter_);
   if (in_tensors_.size() == kDoubleInputsSize) {
     if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {

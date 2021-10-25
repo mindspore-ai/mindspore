@@ -54,15 +54,15 @@
 
 #define MSVALID(left, x, right) (MSMIN((MSMAX(left, x)), right))
 #define SIZE_MUL_OVERFLOW(x, y) (((x) == 0) ? false : (SIZE_MAX / (x)) < (y))
-#define INT_MUL_OVERFLOW(x, y)                                                             \
-  ((x == 0) ? false                                                                        \
-            : ((x) > 0 ? ((y >= 0) ? (INT_MAX / (x)) < (y) : (INT_MAX / (x)) < (-1 * (y))) \
-                       : ((y >= 0) ? (INT_MAX / (x)) > (-1 * (y)) : (INT_MAX / (x)) > (y))))
+#define INT_MUL_OVERFLOW(x, y)                                                                 \
+  (((x) == 0) ? false                                                                          \
+              : ((x) > 0 ? (((y) >= 0) ? (INT_MAX / (x)) < (y) : (INT_MAX / (x)) < (-1 * (y))) \
+                         : (((y) >= 0) ? (INT_MAX / (x)) > (-1 * (y)) : (INT_MAX / (x)) > (y))))
 
-#define INT_MUL_OVERFLOW_THRESHOLD(x, y, threshold)                                                \
-  ((x == 0) ? false                                                                                \
-            : ((x) > 0 ? ((y >= 0) ? ((threshold) / (x)) < (y) : ((threshold) / (x)) < (-1 * (y))) \
-                       : ((y >= 0) ? ((threshold) / (x)) > (-1 * (y)) : ((threshold) / (x)) > (y))))
+#define INT_MUL_OVERFLOW_THRESHOLD(x, y, threshold)                                                    \
+  (((x) == 0) ? false                                                                                  \
+              : ((x) > 0 ? (((y) >= 0) ? ((threshold) / (x)) < (y) : ((threshold) / (x)) < (-1 * (y))) \
+                         : (((y) >= 0) ? ((threshold) / (x)) > (-1 * (y)) : ((threshold) / (x)) > (y))))
 
 #define INT_ADD_OVERFLOW(x, y) (INT_MAX - (x)) < (y)
 
