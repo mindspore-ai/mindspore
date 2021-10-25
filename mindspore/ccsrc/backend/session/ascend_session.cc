@@ -723,7 +723,7 @@ void AscendSession::BatchBuildKernel(const std::vector<std::shared_ptr<SessionTa
 
   std::vector<CNodePtr> atomic_node_to_build;
   for (auto &graph : graphs) {
-    device::ascend::KernelBuildPreprocess(graph.get());
+    device::ascend::InsertAtomicCleanOp(graph);
     const auto &nodes = graph->execution_order();
     std::copy(nodes.begin(), nodes.end(), std::back_inserter(atomic_node_to_build));
   }
@@ -1000,10 +1000,10 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   InitRuntimeResource();
   // Compile all kernels parallel
   BuildKernel(kernels);
-  // Some new kernel may be added after KernelBuildPreprocess, so collect and build kernels again
+  // Some new kernel may be added after InsertAtomicCleanOp, so collect and build kernels again
   kernels.clear();
   for (const auto &graph_item : single_op_graphs) {
-    device::ascend::KernelBuildPreprocess(graph_item.first.get());
+    device::ascend::InsertAtomicCleanOp(graph_item.first);
     const auto &execution_order = graph_item.first->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
   }
@@ -1080,7 +1080,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
-  device::ascend::KernelBuildPreprocess(kernel_graph.get());
+  device::ascend::InsertAtomicCleanOp(kernel_graph);
   device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
   device::KernelAdjust::GetInstance().ProcessLoopSink(kernel_graph);
 #ifdef ENABLE_DUMP_IR
@@ -1100,7 +1100,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
-  device::ascend::KernelBuildPreprocess(kernel_graph.get());
+  device::ascend::InsertAtomicCleanOp(kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 

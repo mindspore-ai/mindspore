@@ -358,6 +358,7 @@ constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrTransposeFirst = "transpose_first";
 constexpr auto kAttrAtomicAddMemSize = "automic_add_mem_size";
 constexpr auto kAttrAtomicOutputIndexs = "atomic_output_clean_indexs";
+constexpr auto kAttrNeedAtomic = "need_atomic";
 constexpr auto kAttrAtomicWorkspaceIndexs = "atomic_workspace_clean_indexs";
 constexpr auto kAttrSwitchCondition = "switch_condition";
 constexpr auto kAttrDataType = "data_type";
