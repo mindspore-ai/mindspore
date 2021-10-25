@@ -131,7 +131,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "List in HyperMap should have same length";
+    MS_LOG(EXCEPTION) << "List in HyperMap should have same length.";
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -189,7 +189,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "Tuple in HyperMap should have same length";
+    MS_LOG(EXCEPTION) << "Tuple in HyperMap should have same length.";
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -469,7 +469,7 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
     return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>());
   }
 
-  MS_LOG(EXCEPTION) << "arg0 must be AbstractTuple or AbstractList, but: " << a->ToString();
+  MS_LOG(EXCEPTION) << "'Tail' arg0 must be AbstractTuple or AbstractList, but: " << a->ToString();
 }
 
 REGISTER_PYBIND_DEFINE(

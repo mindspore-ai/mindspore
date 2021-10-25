@@ -43,12 +43,12 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
     MS_LOG(EXCEPTION) << "For 'zip', there is at least one input.";
   }
 
-  auto is_all_sequeue =
+  auto all_is_sequence =
     std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
       MS_EXCEPTION_IF_NULL(abs);
       return abs->isa<AbstractSequeue>();
     });
-  if (!is_all_sequeue) {
+  if (!all_is_sequence) {
     MS_LOG(EXCEPTION) << "For 'zip', all inputs must be sequence.";
   }
 
@@ -62,7 +62,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
     (void)ret_graph->add_parameter();
   }
 
-  // generate tuple output of ziped arguments input
+  // generate tuple output of zipped arguments input
   std::vector<AnfNodePtr> make_tuple_nodes;
   make_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
   for (size_t idx = 0; idx < (*min_abs)->cast<AbstractSequeuePtr>()->size(); idx++) {

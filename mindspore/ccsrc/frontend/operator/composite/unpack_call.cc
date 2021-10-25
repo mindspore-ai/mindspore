@@ -85,7 +85,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
                                {NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(item.first), dict_get_item});
                            });
     } else {
-      MS_LOG(EXCEPTION) << op_name << " require args should be tuple or dict, but got "
+      MS_LOG(EXCEPTION) << op_name << " require args should be tuple, list or dict, but got "
                         << args_spec_list[index]->ToString();
     }
   }
