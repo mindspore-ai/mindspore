@@ -1182,7 +1182,6 @@ kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKerne
     }
   }
   if (sub_graph == nullptr) {
-    delete inner_kernel;
     MS_LOG(ERROR) << "create sub graph failed.";
     return nullptr;
   }

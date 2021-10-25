@@ -103,6 +103,10 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
   for (auto info : *config_infos) {
     std::string op_name = info.first;
     std::string value = info.second;
+    if (value.empty()) {
+      MS_LOG(WARNING) << "Empty info in execution_plan";
+      continue;
+    }
     if (value[0] == '"' && value[value.length() - 1] == '"') {
       value = value.substr(1, value.length() - kLengthOfParentheses);
     }
