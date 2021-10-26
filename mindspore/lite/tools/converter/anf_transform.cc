@@ -515,6 +515,10 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
+  if (!config->pluginsPath.empty() && config->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE) {
+    MS_LOG(ERROR) << "Unsupported external extension with quantization.";
+    return nullptr;
+  }
   status = DoQuantize(old_graph, config);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";
