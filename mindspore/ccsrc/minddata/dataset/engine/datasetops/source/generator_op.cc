@@ -176,8 +176,11 @@ Status GeneratorOp::operator()() {
         return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
       try {
+#ifndef ENABLE_SECURITY
         auto start = ProfilingTime::GetCurMilliSecond();
+#endif
         RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &new_row));
+#ifndef ENABLE_SECURITY
         auto end = ProfilingTime::GetCurMilliSecond();
         if ((end - start) / num_parallel_workers_ > kGetItemTimeOutMilliSeconds) {
           MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to generator.__next__ new row, "
@@ -185,6 +188,7 @@ Status GeneratorOp::operator()() {
                              "parameter num_parallel_workers in GeneratorDataset / optimize the efficiency of "
                              "obtaining samples in the user-defined generator function.";
         }
+#endif
         generator_counter_++;
       } catch (py::error_already_set &e) {
         eoe = e.matches(PyExc_StopIteration);

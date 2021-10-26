@@ -30,8 +30,9 @@ namespace mindspore::dataset {
 // Forward declare
 class TreeAdapter;
 class DatasetNode;
+#ifndef ENABLE_SECURITY
 class ProfilingManager;
-
+#endif
 /// A base class for tree consumers which would fetch rows from the tree pipeline
 class TreeConsumer {
  public:
@@ -50,6 +51,8 @@ class TreeConsumer {
   virtual Status Terminate();
 
 #ifndef ENABLE_SECURITY
+  Status RegisterProfilingManager();
+
   /// \brief Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 

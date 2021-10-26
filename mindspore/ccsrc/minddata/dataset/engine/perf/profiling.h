@@ -24,6 +24,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/engine/perf/monitor.h"
 
 namespace mindspore {
 namespace dataset {
@@ -32,6 +33,7 @@ class Monitor;
 class ExecutionTree;
 class TreeConsumer;
 class CpuSampler;
+class TreeAdapter;
 
 const char kDeviceQueueTracingName[] = "Device_Queue_Tracing";
 const char kDatasetIteratorTracingName[] = "Dataset_Iterator_Tracing";
@@ -117,12 +119,22 @@ class Tracing : public Profiling {
 // 3) Provide access of profiling nodes for profiling actions
 // 4) Manage profiling data serialization process
 class ProfilingManager {
+  friend Monitor;
+
  public:
-  explicit ProfilingManager(TreeConsumer *tree_consumer);
+  ProfilingManager();
 
   ~ProfilingManager() = default;
 
-  Status Initialize(ExecutionTree *tree);
+  /// Register the given tree to be profiled.
+  /// This method should be called once, calling it for another tree without resetting the ProfilingManager would fail.
+  /// \param tree_adapter pointer the adapter that owns the ExecutionTree
+  /// \return Status the status code returned
+  Status RegisterTree(TreeAdapter *tree_adapter);
+
+  /// Reset the ProfilingManager. This method is sued when we want to profile another tree in the same process.
+  /// \return Status the status code returned
+  Status Reset();
 
   // Save profile data to file
   // @return Status The status code returned
@@ -227,13 +239,12 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status GetEmptyQueueFrequency(int32_t epoch_num, float_t *result);
 
- private:
+ protected:
   std::unique_ptr<Monitor> perf_monitor_;
   bool enabled_;
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;
   ExecutionTree *tree_;                   // ExecutionTree pointer
-  TreeConsumer *tree_consumer_;           // TreeConsumer pointer
   std::string dir_path_;                  // where to create profiling file
   std::string device_id_;                 // used when create profiling file,filename_device_id.suffix
   std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp

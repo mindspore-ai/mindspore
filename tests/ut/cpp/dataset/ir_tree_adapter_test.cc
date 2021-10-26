@@ -19,8 +19,6 @@
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/engine/perf/monitor.h"
-#include "minddata/dataset/engine/perf/profiling.h"
 
 // IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
@@ -52,10 +50,6 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   EXPECT_NE(ds, nullptr);
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
-
-  // Create ProfilingManager
-  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
-  tree_adapter->SetProfilingManagerPtr(profiling_manager);
 
   // Disable IR optimization pass
   tree_adapter->SetOptimize(false);
@@ -95,10 +89,6 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
 
-  // Create ProfilingManager
-  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
-  tree_adapter->SetProfilingManagerPtr(profiling_manager);
-
   Status rc = tree_adapter->Compile(ds->IRNode(), 2);
   EXPECT_TRUE(rc.IsOk());
 
@@ -135,10 +125,6 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   EXPECT_NE(ds, nullptr);
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
-
-  // Create ProfilingManager
-  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
-  tree_adapter->SetProfilingManagerPtr(profiling_manager);
 
   Status rc = tree_adapter->Compile(ds->IRNode(), 2);
 

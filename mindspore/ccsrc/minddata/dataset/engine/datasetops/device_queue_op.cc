@@ -189,10 +189,10 @@ Status DeviceQueueOp::SendDataToAscend() {
 
 #ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
   if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
-    RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
+    RETURN_IF_NOT_OK(GlobalContext::profiling_manager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
     batch_start_time = ProfilingTime::GetCurMilliSecond();
     connector_capacity = ChildOpConnectorCapacity();
@@ -280,7 +280,7 @@ Status DeviceQueueOp::SendDataToAscend() {
       connector_size = ChildOpConnectorSize();
       connector_capacity = ChildOpConnectorCapacity();
       tree_->SetEpochEnd();
-      tree_->GetProfilingManager()->RecordEndOfEpoch(send_batch);
+      GlobalContext::profiling_manager()->RecordEndOfEpoch(send_batch);
     }
 #endif
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
@@ -411,10 +411,10 @@ Status DeviceQueueOp::PushDataToGPU() {
   int32_t connector_size = 0;
   int32_t connector_capacity = 0;
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
   if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
-    RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
+    RETURN_IF_NOT_OK(GlobalContext::profiling_manager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
     batch_start_time = ProfilingTime::GetCurMilliSecond();
     connector_capacity = gpu_connector_->capacity();
@@ -481,7 +481,7 @@ Status DeviceQueueOp::PushDataToGPU() {
 #ifndef ENABLE_SECURITY
       if (is_profiling_enable) {
         tree_->SetEpochEnd();
-        tree_->GetProfilingManager()->RecordEndOfEpoch(send_batch);
+        GlobalContext::profiling_manager()->RecordEndOfEpoch(send_batch);
       }
 #endif
     }

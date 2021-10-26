@@ -89,7 +89,7 @@ DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree)
       eof_handled_(false) {
   std::shared_ptr<Tracing> node;
 #ifndef ENABLE_SECURITY
-  Status s = exe_tree->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+  Status s = GlobalContext::profiling_manager()->GetTracingNode(kDatasetIteratorTracingName, &node);
   if (s.IsOk()) {
     tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
   }
@@ -107,7 +107,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // clear the old tensor row
   out_row->clear();
 #ifndef ENABLE_SECURITY
-  bool is_profiling_enable = root_->Tree()->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
 #endif
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
@@ -133,7 +133,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 #ifndef ENABLE_SECURITY
     if (is_profiling_enable) {
       root_->Tree()->SetEpochEnd();
-      root_->Tree()->GetProfilingManager()->RecordEndOfEpoch(cur_batch_num_);
+      GlobalContext::profiling_manager()->RecordEndOfEpoch(cur_batch_num_);
     }
 #endif
     return Status::OK();
