@@ -78,6 +78,7 @@ OpParameter *PopulateApplyMomentumParameter(const void *prim) {
   memset(p, 0, sizeof(ApplyMomentumParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_ApplyMomentum();
+  MS_ASSERT(value != nullptr);
   p->op_parameter_.type_ = primitive->value_type();
   p->grad_scale_ = value->gradient_scale();
   p->use_nesterov_ = value->use_nesterov();

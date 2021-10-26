@@ -180,7 +180,7 @@ void FlagParser::AddFlag(T1 *t1, const std::string &flagName, const std::string 
   FlagInfo flagItem;
 
   // flagItem is as an output parameter
-  ConstructFlag(t1, flagName, helpInfo, flagItem);
+  ConstructFlag(t1, flagName, helpInfo, &flagItem);
   flagItem.parse = [t1](FlagParser *base, const std::string &value) -> Option<Nothing> {
     if (base != nullptr) {
       Option<T1> ret = Option<T1>(GenericParseValue<T1>(value));
@@ -200,7 +200,7 @@ void FlagParser::AddFlag(T1 *t1, const std::string &flagName, const std::string 
   }
 
   flagItem.helpInfo +=
-    !helpInfo.empty() && helpInfo.find_last_of("\n\r") != helpInfo.size() - 1 ? " (default: " : "(default: ";
+    (!helpInfo.empty() && helpInfo.find_last_of("\n\r") != helpInfo.size() - 1) ? " (default: " : "(default: ";
   if (t2 != nullptr) {
     flagItem.helpInfo += ToString(*t2).Get();
   }
@@ -251,7 +251,7 @@ void FlagParser::AddFlag(T1 Flags::*t1, const std::string &flagName, const std::
   }
 
   flagItem.helpInfo +=
-    !helpInfo.empty() && helpInfo.find_last_of("\n\r") != helpInfo.size() - 1 ? " (default: " : "(default: ";
+    (!helpInfo.empty() && helpInfo.find_last_of("\n\r") != helpInfo.size() - 1) ? " (default: " : "(default: ";
   if (t2 != nullptr) {
     flagItem.helpInfo += ToString(*t2).Get();
   }

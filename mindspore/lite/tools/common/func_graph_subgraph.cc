@@ -479,7 +479,7 @@ int SubGraph::CreateParameterForPartialSubGraph(
   MS_ASSERT(sub_graph != nullptr);
   MS_ASSERT(partial_inputs != nullptr && partial_inputs->empty());
   MS_ASSERT(partial_inputs_and_subgraph_input_map != nullptr && partial_inputs_and_subgraph_input_map->empty());
-
+  MS_CHECK_TRUE_MSG(sub_graph->get_attr("graph_name") != nullptr, RET_ERROR, "graph_name is nullptr");
   std::string graph_name = sub_graph->get_attr("graph_name")->ToString();
   for (const auto &in_cnode : this->GetInCNodes()) {
     if (in_cnode == nullptr) {
@@ -551,10 +551,10 @@ int SubGraph::CreateCNodeForPartialSubGraph(
       node->set_func_graph(sub_graph);
     }
     for (size_t i = 0; i < node->inputs().size(); i++) {
-      if (node == nullptr || node->inputs().at(i)) {
+      auto input = node->inputs().at(i);
+      if (input == nullptr) {
         continue;
       }
-      auto input = node->inputs().at(i);
       auto iter = partial_inputs_and_subgraph_input_map.find(input);
       if (iter == partial_inputs_and_subgraph_input_map.end()) {
         continue;
