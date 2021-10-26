@@ -116,39 +116,40 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       return status;
     }
   }
-
-  // quantization
-  if (ctx.fmk != converter::kFmkTypeTf) {
-    // init old node indices
-    auto old_nodes = GetGraphNodes();
-    Optimizer tensor_quant_optimizer;
-    tensor_quant_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    tensor_quant_optimizer.AddPass(new (std::nothrow) InferQuantParamPass());
-    tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    tensor_quant_optimizer.AddPass(new (std::nothrow) TensorQuantPass());
-    tensor_quant_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-    status = tensor_quant_optimizer.Run(graph_defT_);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "DoQuantize failed!";
-      return status;
+  if (ctx.commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
+    // quantization
+    if (ctx.fmk != converter::kFmkTypeTf) {
+      // init old node indices
+      auto old_nodes = GetGraphNodes();
+      Optimizer tensor_quant_optimizer;
+      tensor_quant_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+      tensor_quant_optimizer.AddPass(new (std::nothrow) InferQuantParamPass());
+      tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
+      tensor_quant_optimizer.AddPass(new (std::nothrow) TensorQuantPass());
+      tensor_quant_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
+      status = tensor_quant_optimizer.Run(graph_defT_);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "DoQuantize failed!";
+        return status;
+      }
     }
-  }
 
-  // quantization
-  if (ctx.fmk != converter::kFmkTypeTf) {
-    // init old node indices
-    Optimizer quant_node_optimizer;
-    quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    auto old_nodes = GetGraphNodes();
-    quant_node_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    quant_node_optimizer.AddPass(new (std::nothrow) DTypeTransPass(ctx.inputDataType, ctx.outputDataType));
-    quant_node_optimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
-    quant_node_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    quant_node_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-    status = quant_node_optimizer.Run(graph_defT_);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run quant_node_optimizer graphPasses Failed";
-      return status;
+    // quantization
+    if (ctx.fmk != converter::kFmkTypeTf) {
+      // init old node indices
+      Optimizer quant_node_optimizer;
+      quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+      auto old_nodes = GetGraphNodes();
+      quant_node_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
+      quant_node_optimizer.AddPass(new (std::nothrow) DTypeTransPass(ctx.inputDataType, ctx.outputDataType));
+      quant_node_optimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
+      quant_node_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+      quant_node_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
+      status = quant_node_optimizer.Run(graph_defT_);
+      if (status != RET_OK && status != RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "Run quant_node_optimizer graphPasses Failed";
+        return status;
+      }
     }
   }
 
