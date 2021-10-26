@@ -74,8 +74,6 @@ int TransposeInt8CPUKernel::ReSize() {
 int TransposeInt8CPUKernel::DoTranspose(int task_id) {
   CHECK_NULL_RETURN(in_ptr_);
   CHECK_NULL_RETURN(out_ptr_);
-  CHECK_NULL_RETURN(in_shape_);
-  CHECK_NULL_RETURN(out_shape_);
   CHECK_NULL_RETURN(transpose_param_);
   TransposeDimsInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_, task_id, op_parameter_->thread_num_);
   return RET_OK;

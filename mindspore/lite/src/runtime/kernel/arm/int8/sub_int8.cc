@@ -46,11 +46,11 @@ int SubInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Malloc SubQuantArg for Sub int8 op failed!";
     return RET_ERROR;
   }
-  quant_param_->in0_args_.scale_ = input0->quant_params().front().scale;
+  quant_param_->in0_args_.scale_ = static_cast<float>(input0->quant_params().front().scale);
   quant_param_->in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
-  quant_param_->in1_args_.scale_ = input1->quant_params().front().scale;
+  quant_param_->in1_args_.scale_ = static_cast<float>(input1->quant_params().front().scale);
   quant_param_->in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
-  quant_param_->out_args_.scale_ = output->quant_params().front().scale;
+  quant_param_->out_args_.scale_ = static_cast<float>(output->quant_params().front().scale);
   quant_param_->out_args_.zp_ = output->quant_params().front().zeroPoint;
 
   const int left_shift = 20;
