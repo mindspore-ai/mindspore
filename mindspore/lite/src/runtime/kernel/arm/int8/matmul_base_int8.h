@@ -77,6 +77,7 @@ class MatmulBaseInt8CPUKernel : public InnerKernel {
   int *batch_sums_ = nullptr;
   int row_tile_ = C4NUM;
   int col_tile_ = C4NUM;
+  int channel_num_ = 0;
 };
 }  // namespace mindspore::kernel
 
