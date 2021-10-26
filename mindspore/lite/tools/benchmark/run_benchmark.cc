@@ -39,6 +39,9 @@ int RunBenchmark(int argc, const char **argv) {
   if (flags.config_file_ != "") {
     run_old_api = false;
   }
+  if (IsCharEndWith(flags.model_file_.c_str(), MINDIR_POSTFIX)) {
+    run_old_api = false;
+  }
   if (run_old_api) {
     benchmark = new Benchmark(&flags);
   } else {

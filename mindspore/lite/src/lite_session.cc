@@ -1325,7 +1325,7 @@ char *lite::LiteSession::LoadModelByPath(const char *file, size_t *size) {
 #ifdef RUNTIME_CONVERT
     return RuntimeConvert(file, size);
 #endif
-    MS_LOG(ERROR) << "Enable runtime convert.";
+    MS_LOG(ERROR) << "Please enable runtime convert.";
     return nullptr;
   }
 

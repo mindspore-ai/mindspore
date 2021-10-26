@@ -110,8 +110,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc
         )
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)
@@ -119,12 +117,20 @@ if(MSLITE_ENABLE_RUNTIME_GLOG)
     add_definitions(-DUSE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
+        set(LITE_SRC ${LITE_SRC}
+            ${CORE_DIR}/utils/log_adapter.cc
+            ${CORE_DIR}/gvar/logging_level.cc
+            ${CORE_DIR}/gvar/log_adapter_common.cc)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
 
     file(GLOB RUNTIME_CONVERT_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_convert.cc)
 
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
@@ -373,22 +379,22 @@ if(PLATFORM_ARM)
     endif()
 endif()
 
-if(MSLITE_ENABLE_RUNTIME_GLOG)
-    target_link_libraries(mindspore-lite mindspore::glog mindspore_core)
-    target_link_libraries(mindspore-lite_static mindspore::glog mindspore_core)
-endif()
-
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin
+            config_parser_mid mslite_converter_plugin mindspore_core
             mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin
+            config_parser_mid mslite_converter_plugin mindspore_core
             mindspore::protobuf ${SECUREC_LIBRARY})
+endif()
+
+if(MSLITE_ENABLE_RUNTIME_GLOG)
+    target_link_libraries(mindspore-lite mindspore::glog)
+    target_link_libraries(mindspore-lite_static mindspore::glog)
 endif()
 
 if(DEFINED ARCHS)

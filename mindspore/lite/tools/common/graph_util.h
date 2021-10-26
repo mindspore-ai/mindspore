@@ -38,6 +38,7 @@
 
 namespace mindspore {
 namespace lite {
+#define MAX_GRAPH_SIZE 1024
 using STATUS = int;
 enum InsertPlace { kBefore, kAfter };
 
@@ -88,6 +89,8 @@ TypeId GetParameterDtype(const ParameterPtr &param_node);
 STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph);
 
 STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph);
+
+int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t *size);
 
 template <typename T>
 bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
