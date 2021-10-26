@@ -137,7 +137,7 @@ class OcclusionSensitivity(Metric):
               but doesn't have to be
 
         Raises:
-            ValueError: If the number of input is not 3.
+            ValueError: If the number of inputs is not 3.
             RuntimeError: If the batch size is not 1.
             RuntimeError: If the number of labels is different from the number of batches.
         """

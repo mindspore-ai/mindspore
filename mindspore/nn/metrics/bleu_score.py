@@ -96,7 +96,7 @@ class BleuScore(Metric):
                 an iterable of iterables of reference corpus.
 
         Raises:
-            ValueError: If the number of input is not 2.
+            ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
             raise ValueError('The bleu_score needs 2 inputs (candidate_corpus, reference_corpus), '

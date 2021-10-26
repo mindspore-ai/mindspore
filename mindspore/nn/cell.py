@@ -773,7 +773,7 @@ class Cell(Cell_):
         """
         Cast parameter according to auto mix precision level in pynative mode.
 
-        This interface is currently used in the case of auto mix precision and usually need not to be used explicitly.
+        This interface is currently used in the case of auto mix precision and usually needs not to be used explicitly.
 
         Args:
             param (Parameter): Parameters, the type of which should be cast.
@@ -824,7 +824,7 @@ class Cell(Cell_):
         """
         Remove the redundant parameters.
 
-        This interface usually need not to be used explicitly.
+        This interface usually needs not to be used explicitly.
         """
         cells = self.cells_and_names()
         for _, cell in cells:
@@ -852,7 +852,7 @@ class Cell(Cell_):
 
         Note:
             trainable_params() and other similar interfaces may return different parameter instance after
-            `init_parameters_data`, do not save these result.
+            `init_parameters_data`, do not save these results.
 
         Args:
             auto_parallel_mode (bool): If running in auto_parallel_mode.
@@ -1219,7 +1219,7 @@ class Cell(Cell_):
         In order to improve the network performance, configure the network auto enable to
         accelerate the algorithm in the algorithm library.
 
-        If `boost_type is not in the algorithm library`, Please view the algorithm in the algorithm library
+        If `boost_type is not in the algorithm library`. Please view the algorithm in the algorithm library
         through `algorithm library`.
 
         Note:
@@ -1242,7 +1242,7 @@ class Cell(Cell_):
 
     def set_grad(self, requires_grad=True):
         """
-        Sets the cell flag for gradient. In pynative mode, this parameter specifies whether the network require
+        Sets the cell flag for gradient. In pynative mode, this parameter specifies whether the network requires
         gradients. If true, the backward network needed to compute the gradients will be generated when the forward
         network is executed.
 
@@ -1433,11 +1433,11 @@ class Cell(Cell_):
               primitive is subject to the recompute api of the primitive.
             - The interface can be configured only once.
               Therefore, when the parent cell is configured, the child cell should not be configured.
-            - When the memory remains after applying the recompute, configuring 'mp_comm_recompute=False'
+            - When the memory remains after applying the recomputation, configuring 'mp_comm_recompute=False'
               to improve performance if necessary.
             - When the memory still not enough after applying the recompute, configuring
               'parallel_optimizer_comm_recompute=True' to save more memory if necessary.
-              Cells in the same fusion group should has the same parallel_optimizer_comm_recompute configures.
+              Cells in the same fusion group should have the same parallel_optimizer_comm_recompute configures.
 
         Args:
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
@@ -1466,7 +1466,7 @@ class Cell(Cell_):
         Note:
             - If a parameter does not belong to any cell which has been set pipeline_stage,
               the parameter should use add_pipeline_stage to add it's pipeline_stage information.
-            - If a parameter P has been used by two operator in different stages "stageA" and "stageB",
+            - If a parameter P has been used by two operators in different stages "stageA" and "stageB",
               the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
               to add it's stage information before use infer_param_pipeline_stage.
 
