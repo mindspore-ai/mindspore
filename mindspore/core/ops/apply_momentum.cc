@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <memory>
-#include <set>
-#include <map>
-#include <string>
 #include "ops/apply_momentum.h"
+
+#include <utility>
+
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -57,19 +55,32 @@ float ApplyMomentum::get_gradient_scale() const {
   auto value_ptr = GetAttr(kGradientScale);
   return GetValue<float>(value_ptr);
 }
-AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 5;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-
+  const int64_t kInputNum = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   // Infer shape
-  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-
+  auto v_shape = input_args[0]->BuildShape();
+  auto shape_element = v_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
+}
+TypePtr ApplyMomentumInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kInputNum = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
+                                           prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   // Infer type
   auto v_tensor_type = input_args[kInputIndex0]->BuildType();
   auto a_tensor_type = input_args[kInputIndex1]->BuildType();
@@ -79,15 +90,24 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_tensor_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_tensor_type, valid_types, prim_name);
-  std::map<std::string, TypePtr> args;
-  (void)args.insert(std::make_pair("l_type", l_type));
-  (void)args.insert(std::make_pair("g_type", g_type));
-  (void)args.insert(std::make_pair("m_type", m_type));
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, valid_types, prim_name);
-  auto g_type_tensor = g_type->cast<TensorTypePtr>();
-  auto element = g_type_tensor->element();
-  return std::make_shared<abstract::AbstractTensor>(element, v_shape);
+  std::map<std::string, TypePtr> args_l;
+  (void)args_l.insert(std::make_pair("l_type", l_type));
+  std::map<std::string, TypePtr> args_g;
+  (void)args_g.insert(std::make_pair("g_type", g_type));
+  std::map<std::string, TypePtr> args_m;
+  (void)args_m.insert(std::make_pair("m_type", m_type));
+  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l, valid_types, prim_name);
+  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_g, valid_types, prim_name);
+  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_m, valid_types, prim_name);
+  return v_tensor_type;
 }
-REGISTER_PRIMITIVE_C(kNameApplyMomentum, ApplyMomentum);
+}  // namespace
+AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) {
+  auto infer_type = ApplyMomentumInferType(primitive, input_args);
+  auto infer_shape = ApplyMomentumInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ApplyMomentum, prim::kPrimApplyMomentum, ApplyMomentumInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

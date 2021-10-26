@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 #define MINDSPORE_CORE_OPS_APPLY_MOMENTUM_H_
 #include <vector>
 #include <memory>
+#include <string>
+#include <set>
+#include <map>
 
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -32,7 +35,7 @@ class MS_CORE_API ApplyMomentum : public PrimitiveC {
  public:
   /// \brief Constructor.
   ApplyMomentum() : PrimitiveC(kNameApplyMomentum) {
-    InitIOName({"variable", "accumulation", "learning_rate", "gradient", "momentum"}, {"output"});
+    InitIOName({"var", "accum", "lr", "grad", "momentum"}, {"var", "accum"});
   }
   /// \brief Destructor.
   ~ApplyMomentum() = default;
@@ -60,7 +63,7 @@ class MS_CORE_API ApplyMomentum : public PrimitiveC {
 };
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
+using kPrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_APPLY_MOMENTUM_H_
