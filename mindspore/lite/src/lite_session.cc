@@ -165,6 +165,10 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
 
   auto ret = DecompressTensor(*src_tensor, dst_tensor);
   if (ret == RET_NO_CHANGE) {
+    if (src_tensor->data()->size() < dst_tensor->Size()) {
+      MS_LOG(ERROR) << "Tensor data shape invalid";
+      return RET_ERROR;
+    }
     dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
     dst_tensor->set_own_data(false);
   } else if (ret != RET_OK) {

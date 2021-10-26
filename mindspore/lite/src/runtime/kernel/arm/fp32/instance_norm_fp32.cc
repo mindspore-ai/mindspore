@@ -45,7 +45,7 @@ int InstanceNormCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
+int InstanceNormCPUKernel::DoInstanceNorm(int task_id) const {
   int ret = 0;
   if (in_tensors_[0]->format() == NC4HW4) {  // arm64 x86-avx x86-sse x86
 #ifdef ENABLE_AVX
@@ -63,8 +63,8 @@ int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
   return RET_OK;
 }
 
-int InstanceNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto kernel = reinterpret_cast<InstanceNormCPUKernel *>(cdata);
+int InstanceNormRun(const void *cdata, int task_id, float, float) {
+  auto kernel = reinterpret_cast<const InstanceNormCPUKernel *>(cdata);
   auto ret = kernel->DoInstanceNorm(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormRun error task_id[" << task_id << "] error_code[" << ret << "]";

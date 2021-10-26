@@ -36,7 +36,7 @@ class LstmCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
-  void InputWeightMatMul(int task_id);
+  void InputWeightMatMul(int task_id) const;
 
  private:
   void FreeTmpBuffer();
@@ -50,9 +50,9 @@ class LstmCPUKernel : public InnerKernel {
                          const float *state_bias, float *hidden_state, float *cell_state, bool is_backward);
   int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
   void RecordStates(const float *cell_state, int step);
-  const float *weight_loop_;
-  const float *bias_loop_;
-  float *gate_loop_;
+  const float *weight_loop_ = nullptr;
+  const float *bias_loop_ = nullptr;
+  float *gate_loop_ = nullptr;
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
 
@@ -64,7 +64,7 @@ class LstmCPUKernel : public InnerKernel {
   const int weight_h_index = 2;
   const int bias_index = 3;
 
-  float *buffer_[7];
+  float *buffer_[7] = {nullptr};
   const int gate_num = 4;
   const int packed_input_index = 0;
   const int input_gate_index = 1;

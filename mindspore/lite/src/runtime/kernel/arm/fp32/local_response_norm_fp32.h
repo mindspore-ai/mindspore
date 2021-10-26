@@ -32,7 +32,7 @@ class LocalResponseNormCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoLocalResponseNorm(int task_id);
+  int DoLocalResponseNorm(int task_id) const;
 
  private:
   int thread_count_;

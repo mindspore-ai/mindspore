@@ -206,8 +206,8 @@ int PadCPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddi
   return RET_OK;
 }
 
-int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
+int PadImpl(const void *cdata, int task_id, float, float) {
+  auto padKernel = reinterpret_cast<const PadCPUKernel *>(cdata);
   int error_code = padKernel->RunImpl(task_id);
   if (error_code != NNACL_OK) {
     MS_LOG(ERROR) << "Pad Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -216,7 +216,7 @@ int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return RET_OK;
 }
 
-int PadCPUKernel::RunImpl(int task_id) {
+int PadCPUKernel::RunImpl(int task_id) const {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->data());
@@ -228,8 +228,8 @@ int PadCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int MirrorPadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
+int MirrorPadImpl(const void *cdata, int task_id, float, float) {
+  auto padKernel = reinterpret_cast<const PadCPUKernel *>(cdata);
   int error_code = padKernel->RunMirrorPadImpl(task_id);
   if (error_code != NNACL_OK) {
     MS_LOG(ERROR) << "Pad Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -238,7 +238,27 @@ int MirrorPadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return RET_OK;
 }
 
-int PadCPUKernel::RunMirrorPadImpl(int task_id) {
+void PadCPUKernel::RunMirrorPadImplFast(const MirrorPadBlock &block, const float *input_data,
+                                        float *output_data) const {
+  for (int a = 0; a < block.size_[FIRST_INPUT]; a++) {
+    int out_a_index = block.out_offset_ + a * block.out_stride_[FIRST_INPUT];
+    for (int b = 0; b < block.size_[SECOND_INPUT]; b++) {
+      int out_b_index = out_a_index + b * block.out_stride_[SECOND_INPUT];
+      for (int c = 0; c < block.size_[THIRD_INPUT]; ++c) {
+        int out_c_index = out_b_index + c * block.out_stride_[THIRD_INPUT];
+        for (int d = 0; d < block.size_[FOURTH_INPUT]; ++d) {
+          int out_d_index = out_c_index + d * block.out_stride_[FOURTH_INPUT];
+          for (int e = 0; e < block.size_[FIFTH_INPUT]; ++e) {
+            int output_index = out_d_index + e * block.out_stride_[FIFTH_INPUT];
+            MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[SIXTH_INPUT]);
+          }
+        }
+      }
+    }
+  }
+}
+
+int PadCPUKernel::RunMirrorPadImpl(int task_id) const {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->data());
@@ -253,23 +273,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
     /* calculate region part */
     for (size_t i = task_id; i < mirror_pad_block_.size(); i += static_cast<size_t>(op_parameter_->thread_num_)) {
       auto block = mirror_pad_block_[i];
-
-      for (int a = 0; a < block.size_[0]; a++) {
-        int out_a_index = block.out_offset_ + a * block.out_stride_[0];
-        for (int b = 0; b < block.size_[1]; b++) {
-          int out_b_index = out_a_index + b * block.out_stride_[1];
-          for (int c = 0; c < block.size_[2]; ++c) {
-            int out_c_index = out_b_index + c * block.out_stride_[2];
-            for (int d = 0; d < block.size_[3]; ++d) {
-              int out_d_index = out_c_index + d * block.out_stride_[3];
-              for (int e = 0; e < block.size_[4]; ++e) {
-                int output_index = out_d_index + e * block.out_stride_[4];
-                MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[5]);
-              }
-            }
-          }
-        }
-      }
+      RunMirrorPadImplFast(block, input_data, output_data);
     }
     return RET_OK;
   }

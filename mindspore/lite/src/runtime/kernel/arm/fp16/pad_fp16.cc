@@ -28,12 +28,32 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kPadCommonInputSize = 2;
 }  // namespace
-int PadFp16CPUKernel::RunImpl(int task_id) {
+int PadFp16CPUKernel::RunImpl(int task_id) const {
   PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
 
-int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
+void PadFp16CPUKernel::RunMirrorPadImplFast(const MirrorPadBlock &block, const float16_t *input_data,
+                                            float16_t *output_data) const {
+  for (int a = 0; a < block.size_[0]; a++) {
+    int out_a_index = block.out_offset_ + a * block.out_stride_[0];
+    for (int b = 0; b < block.size_[1]; b++) {
+      int out_b_index = out_a_index + b * block.out_stride_[1];
+      for (int c = 0; c < block.size_[2]; ++c) {
+        int out_c_index = out_b_index + c * block.out_stride_[2];
+        for (int d = 0; d < block.size_[3]; ++d) {
+          int out_d_index = out_c_index + d * block.out_stride_[3];
+          for (int e = 0; e < block.size_[4]; ++e) {
+            int output_index = out_d_index + e * block.out_stride_[4];
+            MirrorPadFp16(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[5]);
+          }
+        }
+      }
+    }
+  }
+}
+
+int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) const {
   auto input = in_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   auto output = out_tensors_.at(0);
@@ -51,23 +71,7 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
     /* calculate region part */
     for (size_t i = task_id; i < mirror_pad_block_.size(); i += op_parameter_->thread_num_) {
       auto block = mirror_pad_block_[i];
-
-      for (int a = 0; a < block.size_[0]; a++) {
-        int out_a_index = block.out_offset_ + a * block.out_stride_[0];
-        for (int b = 0; b < block.size_[1]; b++) {
-          int out_b_index = out_a_index + b * block.out_stride_[1];
-          for (int c = 0; c < block.size_[2]; ++c) {
-            int out_c_index = out_b_index + c * block.out_stride_[2];
-            for (int d = 0; d < block.size_[3]; ++d) {
-              int out_d_index = out_c_index + d * block.out_stride_[3];
-              for (int e = 0; e < block.size_[4]; ++e) {
-                int output_index = out_d_index + e * block.out_stride_[4];
-                MirrorPadFp16(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[5]);
-              }
-            }
-          }
-        }
-      }
+      RunMirrorPadImplFast(block, input_data, output_data);
     }
     return RET_OK;
   }

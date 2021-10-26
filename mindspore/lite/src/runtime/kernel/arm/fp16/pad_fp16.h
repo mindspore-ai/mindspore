@@ -30,8 +30,11 @@ class PadFp16CPUKernel : public PadCPUKernel {
   ~PadFp16CPUKernel() {}
 
   int Run() override;
-  int RunImpl(int task_id) override;
-  int RunMirrorPadImpl(int task_id) override;
+  int RunImpl(int task_id) const override;
+  int RunMirrorPadImpl(int task_id) const override;
+
+ private:
+  void RunMirrorPadImplFast(const MirrorPadBlock &block, const float16_t *input_data, float16_t *output_data) const;
 
  private:
   float16_t *input_ = nullptr;

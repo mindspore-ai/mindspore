@@ -322,7 +322,7 @@ int LstmCPUKernel::MallocRunBuffer() {
   return RET_OK;
 }
 
-void LstmCPUKernel::InputWeightMatMul(int task_id) {
+void LstmCPUKernel::InputWeightMatMul(int task_id) const {
   int current_start_oc = task_id * input_thread_stride_ * col_tile_;
   int current_rest_oc = 0;
   current_rest_oc = lstm_param_->hidden_size_ - current_start_oc;
@@ -339,8 +339,8 @@ void LstmCPUKernel::InputWeightMatMul(int task_id) {
             cur_oc, lstm_param_->hidden_size_, OutType_Nhwc);
 }
 
-int LstmInputMulWeightRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto kernel = reinterpret_cast<LstmCPUKernel *>(cdata);
+int LstmInputMulWeightRun(const void *cdata, int task_id, float, float) {
+  auto kernel = reinterpret_cast<const LstmCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   kernel->InputWeightMatMul(task_id);
   return RET_OK;

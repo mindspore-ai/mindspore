@@ -84,7 +84,7 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
   return;
 }
 
-bool Nc4hw4PassMatch(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
+bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t index) {
   kernel::LiteKernel *start_kernel = kernels->at(index);
   if (IsContain(Nc4hw4FormatOutOpList, start_kernel->type()) == false) {
     return false;
@@ -179,7 +179,7 @@ void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tenso
   return;
 }
 
-void ConvNormC4PassActReplace(kernel::LiteKernel *conv_op, kernel::LiteKernel *in_op) {
+void ConvNormC4PassActReplace(const kernel::LiteKernel *conv_op, const kernel::LiteKernel *in_op) {
   conv_op->out_tensors().front()->set_format(NC4HW4);
   in_op->in_tensors().front()->set_format(NC4HW4);
 }

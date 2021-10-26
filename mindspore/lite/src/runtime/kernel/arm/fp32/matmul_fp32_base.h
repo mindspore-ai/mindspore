@@ -47,8 +47,8 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
  protected:
   int InitBufferA();
   int InitBufferB();
-  int InitMatrixA(const float *src_ptr);
-  int InitMatrixB(const float *src_ptr);
+  int InitMatrixA(const float *src_ptr) const;
+  int InitMatrixB(const float *src_ptr) const;
   void FreeBiasBuf();
   int InitBiasData();
   void InitParameter();

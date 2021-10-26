@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
-int PReluFp16CPUKernel::DoExcute(int task_id) {
+int PReluFp16CPUKernel::DoExcute(int task_id) const {
   int thread_num = param_->op_parameter_.thread_num_;
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread_num is 0!";
