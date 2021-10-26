@@ -187,7 +187,7 @@ class CNodeDecoder {
         inputs.push_back(nodes_map_[name]);
       }
       input_formats_.push_back(input_desc[kJsonKeyFormat]);
-      input_types_.push_back(DtypeToTypeId(input_desc[kJsonKeyDataType]));
+      input_types_.push_back(StringToTypeId(input_desc[kJsonKeyDataType]));
       input_shapes_.push_back(input_desc[kJsonKeyShape]);
     }
     // new cnode.
@@ -205,7 +205,7 @@ class CNodeDecoder {
       // single output.
       nlohmann::json output_desc = output_descs[0];
       output_formats_.push_back(output_desc[kJsonKeyFormat]);
-      output_types_.push_back(DtypeToTypeId(output_desc[kJsonKeyDataType]));
+      output_types_.push_back(StringToTypeId(output_desc[kJsonKeyDataType]));
       output_shapes_.push_back(output_desc[kJsonKeyShape]);
       nodes_map_[output_desc[kJsonKeyTensorName]] = cnode_;
     } else {
@@ -213,7 +213,7 @@ class CNodeDecoder {
       for (size_t j = 0; j < output_descs.size(); ++j) {
         nlohmann::json output_desc = output_descs[j];
         output_formats_.push_back(output_desc[kJsonKeyFormat]);
-        output_types_.push_back(DtypeToTypeId(output_desc[kJsonKeyDataType]));
+        output_types_.push_back(StringToTypeId(output_desc[kJsonKeyDataType]));
         output_shapes_.push_back(output_desc[kJsonKeyShape]);
         auto get_item =
           func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_, NewValueNode(SizeToLong(j))});
@@ -282,7 +282,7 @@ class CNodeDecoder {
   }
 
   tensor::TensorPtr DecodeScalar(const nlohmann::json &scalar_json) const {
-    auto type_id = DtypeToTypeId(scalar_json[kJsonKeyDataType]);
+    auto type_id = StringToTypeId(scalar_json[kJsonKeyDataType]);
     switch (type_id) {
       case kNumberTypeFloat16:
         return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat16);
@@ -310,7 +310,7 @@ class CNodeDecoder {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // layout info.
     builder->SetOutputsFormat(std::vector<std::string>{value_json[kJsonKeyFormat]});
-    builder->SetOutputsDeviceType(std::vector<TypeId>{DtypeToTypeId(value_json[kJsonKeyDataType])});
+    builder->SetOutputsDeviceType(std::vector<TypeId>{StringToTypeId(value_json[kJsonKeyDataType])});
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), value_node.get());
     func_graph->AddValueNode(value_node);
     MS_LOG(DEBUG) << "decode value node success, " << value_node->DebugString(2);
@@ -340,7 +340,7 @@ ParameterPtr AkgKernelJsonDecoder::DecodeParameter(const nlohmann::json &paramet
   std::string name = parameter_json[kJsonKeyTensorName];
   new_parameter->set_name(name);
   std::string format = parameter_json[kJsonKeyFormat];
-  TypeId dtype = DtypeToTypeId(parameter_json[kJsonKeyDataType]);
+  TypeId dtype = StringToTypeId(parameter_json[kJsonKeyDataType]);
   ShapeVector shape = AbstractShapeCreator::GetFakeAbstractShape(parameter_json[kJsonKeyShape], format);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dtype), shape);
   new_parameter->set_abstract(abstract);

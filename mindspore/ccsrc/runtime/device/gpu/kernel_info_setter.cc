@@ -89,12 +89,12 @@ std::string SupportedTypeList(const CNodePtr &kernel_node) {
     auto supported_akg_type_out = kernel_info_list[i]->GetAllOutputDeviceTypes();
     std::string supported_akg_type_list = "in[";
     for (auto type : supported_akg_type) {
-      supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
+      supported_akg_type_list = supported_akg_type_list + TypeIdToString(type);
     }
     supported_type_lists = supported_type_lists + supported_akg_type_list + "], out[";
     supported_akg_type_list.clear();
     for (auto type : supported_akg_type_out) {
-      supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
+      supported_akg_type_list = supported_akg_type_list + TypeIdToString(type);
     }
     supported_type_lists = supported_type_lists + supported_akg_type_list + "]; ";
   }
@@ -381,10 +381,10 @@ void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vecto
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   std::string build_type = "in [";
   std::for_each(std::begin(inputs_type), std::end(inputs_type),
-                [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "] out [";
   std::for_each(std::begin(outputs_type), std::end(outputs_type),
-                [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "]";
   auto supported_type_lists = SupportedTypeList(kernel_node);
   MS_EXCEPTION(TypeError) << "Select GPU kernel op[" << kernel_name

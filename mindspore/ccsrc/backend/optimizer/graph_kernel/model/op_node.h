@@ -24,7 +24,6 @@
 #include <functional>
 
 #include "backend/optimizer/graph_kernel/model/node.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "ir/dtype/type.h"
 
 namespace mindspore::graphkernel::inner {

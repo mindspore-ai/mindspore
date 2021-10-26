@@ -193,7 +193,7 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
     std::vector<nlohmann::json> input_list;
     for (size_t input_i = 0; input_i < input_tensor_num; input_i++) {
       auto type_id = this->GetInputDataType(anf_node, real_input_index);
-      std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
+      std::string dtype = TypeIdToString(type_id, true);
       if (dtype.empty()) {
         MS_LOG(ERROR) << "Op [" << anf_node->fullname_with_scope() << "] input [" << real_input_index
                       << "] data type is null. ";
@@ -234,7 +234,7 @@ bool AkgKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, co
   for (size_t i = 0; i < output_tensor_num; i++) {
     nlohmann::json output_json;
     auto type_id = this->GetOutputDataType(anf_node, i);
-    std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
+    std::string dtype = TypeIdToString(type_id, true);
     if (dtype.empty()) {
       MS_LOG(ERROR) << "Op [" << anf_node->fullname_with_scope() << "] output [" << i << "] data type is null. ";
       return false;
@@ -271,7 +271,7 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
     (*attr_json)[kJsonKeyValue] = get_int_value(attr_value);
   } else if (type == "str") {
     if (attr_value->isa<Type>()) {
-      (*attr_json)[kJsonKeyValue] = TypeId2String(attr_value->cast<TypePtr>()->type_id());
+      (*attr_json)[kJsonKeyValue] = TypeIdToString(attr_value->cast<TypePtr>()->type_id(), true);
     } else {
       (*attr_json)[kJsonKeyValue] = GetValue<std::string>(attr_value);
     }
@@ -723,7 +723,7 @@ nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNod
   for (size_t i = 0; i < input_index.size(); ++i) {
     auto tmp_input = input_index[i];
     auto type_id = this->GetInputDataType(tmp_input.first, tmp_input.second.first);
-    std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
+    std::string dtype = TypeIdToString(type_id, true);
     nlohmann::json input_desc_json;
     input_desc_json[kJsonKeyTensorName] =
       GetTensorName(node_json_map.at(tmp_input.first), kJsonKeyInputDesc, tmp_input.second);
@@ -823,7 +823,7 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
     }
     if (!found) {
       auto type_id = this->GetOutputDataType(tmp_output.first, tmp_output.second);
-      std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
+      std::string dtype = TypeIdToString(type_id, true);
       output_desc_json[kJsonKeyTensorName] =
         GetTensorName(node_json_map.at(tmp_output.first), kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
       output_desc_json[kJsonKeyDataType] = dtype;

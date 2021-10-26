@@ -82,6 +82,24 @@ TypePtr TypeIdToType(TypeId id) {
   return it->second;
 }
 
+std::string TypeIdToString(TypeId id, bool to_lower) {
+  switch (id) {
+    case TypeId::kNumberTypeFloat:
+      return "float";
+    case TypeId::kNumberTypeInt:
+      return "int";
+    case TypeId::kNumberTypeUInt:
+      return "uint";
+    default:
+      break;
+  }
+  auto type = TypeIdToType(id)->ToString();
+  if (to_lower) {
+    std::transform(type.begin(), type.end(), type.begin(), [](auto c) { return static_cast<char>(std::tolower(c)); });
+  }
+  return type;
+}
+
 namespace {
 template <typename T>
 TypePtr StringToNumberType(const std::string &type_name, const std::string &num_type_name) {
@@ -279,6 +297,7 @@ TypePtr GetTypeByFullString(const std::string &type_name) {
                                                     {"EnvType", std::make_shared<EnvType>()},
                                                     {"Number", std::make_shared<Number>()},
                                                     {"Bool", std::make_shared<Bool>()},
+                                                    {"bool", std::make_shared<Bool>()},
                                                     {"Slice", std::make_shared<Slice>()},
                                                     {"Dictionary", std::make_shared<Dictionary>()},
                                                     {"String", std::make_shared<String>()},
@@ -298,10 +317,15 @@ TypePtr GetTypeByStringStarts(const std::string &type_name) {
       return r.compare(0, cmp_len, l, 0, cmp_len) < 0;
     }
   };
-  static std::map<std::string, std::function<TypePtr(const std::string &type_name)>, name_cmp> type_map = {
+  static std::map<std::string, std::function<TypePtr(const std::string &)>, name_cmp> type_map = {
     {"Int", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Int>(type_name, "Int"); }},
+    {"int", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Int>(type_name, "int"); }},
     {"UInt", [](const std::string &type_name) -> TypePtr { return StringToNumberType<UInt>(type_name, "UInt"); }},
+    {"uint", [](const std::string &type_name) -> TypePtr { return StringToNumberType<UInt>(type_name, "uint"); }},
     {"Float", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Float>(type_name, "Float"); }},
+    {"float", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Float>(type_name, "float"); }},
+    {"Complex", [](const std::string &tname) -> TypePtr { return StringToNumberType<Complex>(tname, "Complex"); }},
+    {"complex", [](const std::string &tname) -> TypePtr { return StringToNumberType<Complex>(tname, "complex"); }},
     {"Tensor", [](const std::string &type_name) -> TypePtr { return TensorStrToType(type_name); }},
     {"Undetermined", [](const std::string &type_name) -> TypePtr { return UndeterminedStrToType(type_name); }},
     {"RowTensor", [](const std::string &type_name) -> TypePtr { return RowTensorStrToType(type_name); }},
@@ -329,6 +353,8 @@ TypePtr StringToType(const std::string &type_name) {
   }
   return type;
 }
+
+TypeId StringToTypeId(const std::string &type_name) { return StringToType(type_name)->type_id(); }
 
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {
   if (x == nullptr || base_type == nullptr) {

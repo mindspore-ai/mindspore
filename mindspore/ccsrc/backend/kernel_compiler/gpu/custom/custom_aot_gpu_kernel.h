@@ -121,7 +121,7 @@ class CustomAOTGpuKernel : public GpuKernel {
                     [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
       shape_list_.push_back(in_shape_tmp);
       ndims_.push_back(SizeToInt(in_shape_tmp.size()));
-      type_list_.push_back(TypeId2String(input_type_list[i]));
+      type_list_.push_back(TypeIdToString(input_type_list[i], true));
     }
 
     num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -140,7 +140,7 @@ class CustomAOTGpuKernel : public GpuKernel {
                     [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
       shape_list_.push_back(out_shape_tmp);
       ndims_.push_back(SizeToInt(out_shape_tmp.size()));
-      type_list_.push_back(TypeId2String(output_type_list[i]));
+      type_list_.push_back(TypeIdToString(output_type_list[i], true));
     }
 
     std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),

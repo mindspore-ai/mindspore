@@ -33,7 +33,6 @@
 #include "mindspore/core/ir/tensor.h"
 #include "mindspore/core/utils/shape_utils.h"
 #include "utils/utils.h"
-#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore::graphkernel::inner {
 enum class NType {

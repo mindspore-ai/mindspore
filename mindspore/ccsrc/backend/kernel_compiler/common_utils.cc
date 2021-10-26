@@ -36,41 +36,6 @@ namespace mindspore {
 namespace kernel {
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
-const std::unordered_map<std::string, TypeId> type_id_maps = {{"float", TypeId::kNumberTypeFloat32},
-                                                              {"float16", TypeId::kNumberTypeFloat16},
-                                                              {"float32", TypeId::kNumberTypeFloat32},
-                                                              {"float64", TypeId::kNumberTypeFloat64},
-                                                              {"int", TypeId::kNumberTypeInt},
-                                                              {"int8", TypeId::kNumberTypeInt8},
-                                                              {"int16", TypeId::kNumberTypeInt16},
-                                                              {"int32", TypeId::kNumberTypeInt32},
-                                                              {"int64", TypeId::kNumberTypeInt64},
-                                                              {"uint", TypeId::kNumberTypeUInt},
-                                                              {"uint8", TypeId::kNumberTypeUInt8},
-                                                              {"uint16", TypeId::kNumberTypeUInt16},
-                                                              {"uint32", TypeId::kNumberTypeUInt32},
-                                                              {"uint64", TypeId::kNumberTypeUInt64},
-                                                              {"bool", TypeId::kNumberTypeBool},
-                                                              {"complex64", TypeId::kNumberTypeComplex64},
-                                                              {"complex128", TypeId::kNumberTypeComplex128}};
-
-const std::map<TypeId, std::string> type_id_str_map = {{TypeId::kNumberTypeFloat32, "float32"},
-                                                       {TypeId::kNumberTypeFloat16, "float16"},
-                                                       {TypeId::kNumberTypeFloat, "float"},
-                                                       {TypeId::kNumberTypeFloat64, "float64"},
-                                                       {TypeId::kNumberTypeInt, "int"},
-                                                       {TypeId::kNumberTypeInt8, "int8"},
-                                                       {TypeId::kNumberTypeInt16, "int16"},
-                                                       {TypeId::kNumberTypeInt32, "int32"},
-                                                       {TypeId::kNumberTypeInt64, "int64"},
-                                                       {TypeId::kNumberTypeUInt, "uint"},
-                                                       {TypeId::kNumberTypeUInt8, "uint8"},
-                                                       {TypeId::kNumberTypeUInt16, "uint16"},
-                                                       {TypeId::kNumberTypeUInt32, "uint32"},
-                                                       {TypeId::kNumberTypeUInt64, "uint64"},
-                                                       {TypeId::kNumberTypeBool, "bool"},
-                                                       {TypeId::kNumberTypeComplex64, "complex64"},
-                                                       {TypeId::kNumberTypeComplex128, "complex128"}};
 
 const std::unordered_map<std::string, std::string> dtype_shortdtype_map_ = {
   {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},
@@ -276,24 +241,10 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
 }
 
 TypeId DtypeToTypeId(const std::string &dtypes) {
-  auto iter = type_id_maps.find(dtypes);
-  if (iter != type_id_maps.end()) {
-    return iter->second;
-  } else {
-    MS_EXCEPTION(ArgumentError) << "Illegal input device dtype:" << dtypes;
+  if (dtypes == "float") {
+    return TypeId::kNumberTypeFloat32;
   }
-}
-
-std::string TypeId2String(TypeId type_id, bool unknown_as_default) {
-  auto iter = type_id_str_map.find(type_id);
-  if (iter == type_id_str_map.end()) {
-    if (!unknown_as_default) {
-      MS_EXCEPTION(ArgumentError) << "Illegal input dtype." << TypeIdLabel(type_id);
-    }
-    MS_LOG(INFO) << "Using default dtype: float32";
-    return "float32";
-  }
-  return iter->second;
+  return StringToTypeId(dtypes);
 }
 
 std::string Dtype2ShortType(const std::string &dtype) {

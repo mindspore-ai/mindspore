@@ -48,6 +48,14 @@ namespace mindspore {
 /// \return The shared_ptr of Type.
 MS_CORE_API TypePtr TypeIdToType(TypeId id);
 
+/// \brief Get the type string according to a TypeId.
+///
+/// \param[in] id Define a TypeId.
+/// \param[in] to_lower Whether convert the string to lowercase.
+///
+/// \return The string of Type.
+MS_CORE_API std::string TypeIdToString(TypeId id, bool to_lower = false);
+
 /// \brief String defines a type of string.
 class MS_CORE_API String : public Object {
  public:
@@ -371,6 +379,13 @@ TypePtr Clone(const T &t) {
 ///
 /// \return The shared_ptr of type.
 MS_CORE_API TypePtr StringToType(const std::string &type_name);
+
+/// \brief Get the TypeId of Type according to a string of type name.
+///
+/// \param[in] type_name Define a string of type name.
+///
+/// \return The TypeId of type.
+MS_CORE_API TypeId StringToTypeId(const std::string &type_name);
 
 /// \brief Given a type x and a base type, judge whether x is the base type or is a subclass of the base type.
 ///
