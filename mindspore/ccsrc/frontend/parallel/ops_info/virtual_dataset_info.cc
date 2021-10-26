@@ -94,12 +94,13 @@ Status VirtualDatasetInfo::InferMirrorOps() { return SUCCESS; }
 Status VirtualDatasetInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status VirtualDatasetInfo::InferTensorMap() {
-  auto slice_dim_iter = std::find(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), shard_num_);
-  if (slice_dim_iter == dev_matrix_shape_.end()) {
+  auto dev_mat_origin = strategy_->GetInputDim()[max_size_strategy_dim_];
+  auto slice_dim_iter = std::find(dev_mat_origin.begin(), dev_mat_origin.end(), shard_num_);
+  if (slice_dim_iter == dev_mat_origin.end()) {
     MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
     return FAILED;
   }
-  size_t slice_dim = size_t(slice_dim_iter - dev_matrix_shape_.begin());
+  size_t slice_dim = size_t(slice_dim_iter - dev_mat_origin.begin());
   auto stra = strategy_->GetInputDim();
   for (size_t i = 0; i < stra.size(); i++) {
     Shape tensor_map_index;
@@ -107,7 +108,7 @@ Status VirtualDatasetInfo::InferTensorMap() {
       if (dim == 1) {
         tensor_map_index.push_back(MAP_NONE);
       } else if (dim == shard_num_) {
-        tensor_map_index.push_back(dev_matrix_shape_.size() - 1 - slice_dim);
+        tensor_map_index.push_back(dev_mat_origin.size() - 1 - slice_dim);
       } else {
         MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
         return FAILED;
@@ -123,6 +124,9 @@ Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
 Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
   repeated_num_in_dev_matrix_right_ = false;
+  if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
+    repeated_num_in_dev_matrix_right_ = true;
+  }
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;

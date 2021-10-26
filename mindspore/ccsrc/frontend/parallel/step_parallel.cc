@@ -1762,6 +1762,10 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
       attrs_temp[STRATEGY] = strategy;
       (void)prim->SetAttrs(attrs_temp);
+      if (prim->HasAttr(REPEAT_DIM_DIRECT) && GetValue<std::string>(prim->GetAttr(REPEAT_DIM_DIRECT)) == RIGHT) {
+        ParallelContext::GetInstance()->set_dataset_repeat_dim_right(true);
+        MS_LOG(INFO) << "dataset repeat dim is right";
+      }
       return;
     }
     int64_t dev_num;
