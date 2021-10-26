@@ -42,37 +42,44 @@ def remove_file(file_name):
 
 def test_cv_file_writer_shard_num_none():
     """test cv file writer when shard num is None."""
-    with pytest.raises(Exception, match="Shard num is illegal."):
+    with pytest.raises(Exception, match="Parameter shard_num is None."):
         FileWriter("/tmp/123454321", None)
 
+def test_cv_file_writer_overwrite_int():
+    """
+    Feature: Overwriting in FileWriter
+    Description: invalid parameter
+    Expectation: exception occur
+    """
+    with pytest.raises(Exception, match="Parameter overwrite's type is not bool."):
+        FileWriter("/tmp/123454321", 4, 1)
 
 def test_cv_file_writer_shard_num_str():
     """test cv file writer when shard num is string."""
-    with pytest.raises(Exception, match="Shard num is illegal."):
+    with pytest.raises(Exception, match="Parameter shard_num's type is not int."):
         FileWriter("/tmp/123454321", "20")
-
 
 def test_cv_page_reader_consumer_num_none():
     """test cv page reader when consumer number is None."""
-    with pytest.raises(Exception, match="Consumer number is illegal."):
+    with pytest.raises(Exception, match="Parameter num_consumer is None."):
         MindPage("dummy.mindrecord", None)
 
 
 def test_cv_page_reader_consumer_num_str():
     """test cv page reader when consumer number is string."""
-    with pytest.raises(Exception, match="Consumer number is illegal."):
+    with pytest.raises(Exception, match="Parameter num_consumer is not int."):
         MindPage("dummy.mindrecord", "2")
 
 
 def test_nlp_file_reader_consumer_num_none():
     """test nlp file reader when consumer number is None."""
-    with pytest.raises(Exception, match="Consumer number is illegal."):
+    with pytest.raises(Exception, match="Parameter num_consumer is None."):
         FileReader("dummy.mindrecord", None)
 
 
 def test_nlp_file_reader_consumer_num_str():
     """test nlp file reader when consumer number is string."""
-    with pytest.raises(Exception, match="Consumer number is illegal."):
+    with pytest.raises(Exception, match="Parameter num_consumer is not int."):
         FileReader("dummy.mindrecord", "4")
 
 
@@ -271,7 +278,7 @@ def test_overwrite_invalid_db():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1, file_name)
-    assert 'Unexpected error. Failed to write data to db.' in str(err.value)
+    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
     remove_file(file_name)
 
 def test_read_after_close():
@@ -323,7 +330,7 @@ def test_cv_file_writer_shard_num_greater_than_1000():
     """
     with pytest.raises(ParamValueError) as err:
         FileWriter('dummy.mindrecord', 1001)
-    assert 'Shard number should between' in str(err.value)
+    assert "Parameter shard_num's value: 1001 should between 1 and 1000." in str(err.value)
 
 
 def test_add_index_without_add_schema():

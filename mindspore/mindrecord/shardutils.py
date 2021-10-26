@@ -126,13 +126,13 @@ def check_parameter(func):
                     check_filename(value)
             if name == 'num_consumer':
                 if value is None:
-                    raise ParamValueError("Consumer number is illegal.")
+                    raise ParamValueError("Parameter num_consumer is None.")
                 if isinstance(value, int):
                     if value < MIN_CONSUMER_COUNT or value > MAX_CONSUMER_COUNT():
-                        raise ParamValueError("Consumer number should between {} and {}."
-                                              .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
+                        raise ParamValueError("Parameter num_consumer: {} should between {} and {}."
+                                              .format(value, MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
                 else:
-                    raise ParamValueError("Consumer number is illegal.")
+                    raise ParamValueError("Parameter num_consumer is not int.")
         return func(*args, **kw)
 
     return wrapper

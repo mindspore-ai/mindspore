@@ -64,7 +64,7 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
   return Status::OK();
 }
 
-Status ShardWriter::OpenDataFiles(bool append) {
+Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
   // Open files
   for (const auto &file : file_paths_) {
     std::optional<std::string> dir = "";
@@ -82,13 +82,33 @@ Status ShardWriter::OpenDataFiles(bool append) {
 
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     if (!append) {
-      // if not append and mindrecord file exist, return FAILED
+      // if not append && mindrecord or db file exist
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
-      if (fs->good()) {
+      std::ifstream fs_db(whole_path.value() + ".db");
+      if (fs->good() || fs_db.good()) {
         fs->close();
-        RETURN_STATUS_UNEXPECTED("Invalid file, Mindrecord files already existed in path: " + file);
+        fs_db.close();
+        if (overwrite) {
+          auto res1 = std::remove(whole_path.value().c_str());
+          CHECK_FAIL_RETURN_UNEXPECTED(!std::ifstream(whole_path.value()) == true,
+                                       "Failed to delete file, path: " + file);
+          if (res1 == 0) {
+            MS_LOG(WARNING) << "Succeed to delete file, path: " << file;
+          }
+          auto db_file = whole_path.value() + ".db";
+          auto res2 = std::remove(db_file.c_str());
+          CHECK_FAIL_RETURN_UNEXPECTED(!std::ifstream(whole_path.value() + ".db") == true,
+                                       "Failed to delete db file, path: " + file + ".db");
+          if (res2 == 0) {
+            MS_LOG(WARNING) << "Succeed to delete metadata file, path: " << file + ".db";
+          }
+        } else {
+          RETURN_STATUS_UNEXPECTED("Invalid file, Mindrecord files already existed in path: " + file);
+        }
+      } else {
+        fs->close();
+        fs_db.close();
       }
-      fs->close();
       // open the mindrecord file to write
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
@@ -131,7 +151,7 @@ Status ShardWriter::InitLockFile() {
   return Status::OK();
 }
 
-Status ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
+Status ShardWriter::Open(const std::vector<std::string> &paths, bool append, bool overwrite) {
   shard_count_ = paths.size();
   CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ <= kMaxSchemaCount,
                                "Invalid data, schema_count_ must be less than or equal to " +
@@ -140,7 +160,7 @@ Status ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
   // Get full path from file name
   RETURN_IF_NOT_OK(GetFullPathFromFileName(paths));
   // Open files
-  RETURN_IF_NOT_OK(OpenDataFiles(append));
+  RETURN_IF_NOT_OK(OpenDataFiles(append, overwrite));
   // Init lock file
   RETURN_IF_NOT_OK(InitLockFile());
   return Status::OK();

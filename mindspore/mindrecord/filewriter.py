@@ -41,11 +41,12 @@ class FileWriter:
 
     Args:
         file_name (str): File name of MindRecord file.
-        shard_num (int, optional): The Number of MindRecord file. Default: 1.
+        shard_num (int, optional): The Number of MindRecord files. Default: 1.
             It should be between [1, 1000].
+        overwrite (bool, optional): Overwrite MindRecord files if true. Default: False.
 
     Raises:
-        ParamValueError: If `file_name` or `shard_num` is invalid.
+        ParamValueError: If `file_name` or `shard_num` or `overwrite` is invalid.
 
     Examples:
         >>> from mindspore.mindrecord import FileWriter
@@ -68,19 +69,22 @@ class FileWriter:
         MSRStatus.SUCCESS
     """
 
-    def __init__(self, file_name, shard_num=1):
+    def __init__(self, file_name, shard_num=1, overwrite=False):
         check_filename(file_name)
         self._file_name = file_name
 
         if shard_num is not None:
             if isinstance(shard_num, int):
                 if shard_num < MIN_SHARD_COUNT or shard_num > MAX_SHARD_COUNT:
-                    raise ParamValueError("Shard number should between {} and {}."
-                                          .format(MIN_SHARD_COUNT, MAX_SHARD_COUNT))
+                    raise ParamValueError("Parameter shard_num's value: {} should between {} and {}."
+                                          .format(shard_num, MIN_SHARD_COUNT, MAX_SHARD_COUNT))
             else:
-                raise ParamValueError("Shard num is illegal.")
+                raise ParamValueError("Parameter shard_num's type is not int.")
         else:
-            raise ParamValueError("Shard num is illegal.")
+            raise ParamValueError("Parameter shard_num is None.")
+
+        if not isinstance(overwrite, bool):
+            raise ParamValueError("Parameter overwrite's type is not bool.")
 
         self._shard_num = shard_num
         self._index_generator = True
@@ -93,6 +97,7 @@ class FileWriter:
                                          str(x).rjust(suffix_shard_size, '0'))
                            for x in range(self._shard_num)]
 
+        self._overwrite = overwrite
         self._append = False
         self._header = ShardHeader()
         self._writer = ShardWriter()
@@ -137,7 +142,7 @@ class FileWriter:
         check_filename(file_name)
         # construct ShardHeader
         reader = ShardReader()
-        reader.open(file_name)
+        reader.open(file_name, False)
         header = ShardHeader(reader.get_header())
         reader.close()
 
@@ -268,7 +273,7 @@ class FileWriter:
             MRMSetHeaderError: If failed to set header.
         """
         if not self._writer.is_open:
-            ret = self._writer.open(self._paths)
+            ret = self._writer.open(self._paths, self._overwrite)
         if not self._writer.get_shard_header():
             return self._writer.set_shard_header(self._header)
         return ret
@@ -296,7 +301,7 @@ class FileWriter:
             MRMWriteDatasetError: If failed to write dataset.
         """
         if not self._writer.is_open:
-            self._writer.open(self._paths)
+            self._writer.open(self._paths, self._overwrite)
         if not self._writer.get_shard_header():
             self._writer.set_shard_header(self._header)
         if not isinstance(raw_data, list):
@@ -378,7 +383,7 @@ class FileWriter:
             MRMCommitError: If failed to flush data to disk.
         """
         if not self._writer.is_open:
-            self._writer.open(self._paths)
+            self._writer.open(self._paths, self._overwrite)
         # permit commit without data
         if not self._writer.get_shard_header():
             self._writer.set_shard_header(self._header)
