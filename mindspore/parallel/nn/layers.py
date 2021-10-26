@@ -436,14 +436,17 @@ class FixedSparseAttention(nn.Cell):
         num_heads (int): Number of attention heads.
         block_size (int): An integer determining the block size. Current implementation of sparse self-attention
                           is based on blocked sparse matrices. In which this parameter defines size of such blocks,
-                          Block X Block. only supports 64 for now
-        seq_length (int): length of input sequence, only supports 1024 for now
+                          Block X Block. only supports 64 for now.
+        seq_length (int): length of input sequence, only supports 1024 for now.
         num_different_global_patterns (int):An integer determining number of different global attentions layouts.
                                             While global attention can be fixed by which block/s are representative of
                                             any local window, since there are multi-heads, each head can use a
                                             different global representative, only supports 4 for now
         size_per_head (int): An integer determining embedding size of each attention head,
-                             only supports 64, 128 for now
+                             only supports 64, 128 for now.
+        parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
+                                           Default `default_dpmp_config`, an instance of `OpParallelConfig` with
+                                           default args.
 
     Inputs:
         - **q** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
