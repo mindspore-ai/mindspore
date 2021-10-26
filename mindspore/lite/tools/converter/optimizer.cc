@@ -53,7 +53,10 @@ STATUS Optimizer::Run(schema::MetaGraphT *graph_defT) {
       if (graph_node == nullptr) {
         return RET_ERROR;
       }
-      CHECK_NULL_RETURN(pass);
+      if (pass == nullptr) {
+        delete graph_node;
+        return RET_ERROR;
+      }
       status = pass->Run(graph_node);
       delete graph_node;
       if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
