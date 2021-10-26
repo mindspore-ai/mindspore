@@ -54,21 +54,6 @@ const int kSingleDirBiasTensorSize = 4;
 const int kLstmBiasShapeSize = 2;
 const int kLstmBiasIndex = 3;
 
-constexpr float kInputDataFloatMin = 0.1f;
-constexpr float kInputDataFloatMax = 1.0f;
-constexpr double kInputDataDoubleMin = 0.1;
-constexpr double kInputDataDoubleMax = 1.0;
-constexpr int64_t kInputDataInt64Min = 0;
-constexpr int64_t kInputDataInt64Max = 1;
-constexpr int32_t kInputDataInt32Min = 0;
-constexpr int32_t kInputDataInt32Max = 1;
-constexpr int16_t kInputDataInt16Min = 0;
-constexpr int16_t kInputDataInt16Max = 1;
-constexpr int16_t kInputDataInt8Min = -127;
-constexpr int16_t kInputDataInt8Max = 127;
-constexpr int16_t kInputDataUint8Min = 0;
-constexpr int16_t kInputDataUint8Max = 254;
-
 bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   MS_CHECK_TRUE_RET(node != nullptr, false);
   if (!node->isa<mindspore::CNode>()) {
@@ -154,7 +139,7 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &input_node, int preferr
 
   // min_quant_weight_channel_ only supports convolution
   if (weight_shape.size() > kDim2 && weight_shape[preferred_dim] <= static_cast<int>(min_quant_weight_channel_)) {
-    MS_LOG(INFO) << "preferred_dim shape" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
+    MS_LOG(INFO) << "preferred_dim shape:" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
                  << min_quant_weight_channel_;
     return false;
   }
@@ -502,57 +487,10 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   sm.model = model;
   return sm;
 }
+
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
   int size = 0;
   return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
-}
-
-FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
-  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
-  Cloner cloner({func_graph}, true, true, true, std::make_shared<TraceCopy>(), nullptr);
-  auto new_func_graph = cloner[func_graph];
-
-  std::map<std::string, CNodePtr> old_cnode_map;
-  for (const auto &cnode : func_graph->GetOrderedCnodes()) {
-    old_cnode_map[cnode->fullname_with_scope()] = cnode;
-  }
-
-  for (auto &cnode : new_func_graph->GetOrderedCnodes()) {
-    auto cnode_name = cnode->fullname_with_scope();
-    auto old_cnode_iter = old_cnode_map.find(cnode_name);
-    if (old_cnode_iter == old_cnode_map.end()) {
-      MS_LOG(ERROR) << "can not find node: " << cnode_name;
-      return nullptr;
-    }
-    auto old_cnode = old_cnode_iter->second;
-    auto inputs = cnode->inputs();
-    for (const auto &input_node : inputs) {
-      if (input_node->isa<Parameter>()) {
-        auto param_node = input_node->cast<ParameterPtr>();
-        if (!param_node->has_default()) {
-          MS_LOG(ERROR) << "Param node has no default parameter: " << cnode_name;
-          return nullptr;
-        }
-        auto old_tensor_info = std::static_pointer_cast<tensor::Tensor>(param_node->default_param());
-        if (old_tensor_info == nullptr) {
-          MS_LOG(ERROR) << "Default param of param node is not a tensor info:" << cnode_name;
-          return nullptr;
-        }
-        auto new_tensor_info = lite::CreateTensorInfo(old_tensor_info->data().data(), old_tensor_info->data().nbytes(),
-                                                      old_tensor_info->shape(), old_tensor_info->data_type());
-        if (new_tensor_info == nullptr) {
-          MS_LOG(ERROR) << "Create tensor info failed";
-          return nullptr;
-        }
-        auto status = lite::InitParameterFromTensorInfo(param_node, new_tensor_info);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "init parameter from tensor info failed";
-          return nullptr;
-        }
-      }
-    }  // end inputs loop
-  }    // end cnodes loop
-  return new_func_graph;
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
@@ -594,6 +532,30 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
   return RET_OK;
 }
 
+int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims) {
+  size_t last_first_index = dims.size() - 1;
+  size_t last_second_index = dims.size() - 2;
+  auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
+  MS_ASSERT(matmul_prim != nullptr);
+  // For MatMul A
+  if (input_index == 0) {
+    if (matmul_prim->GetAttr(ops::kTransposeA) != nullptr && matmul_prim->get_transpose_a()) {
+      return last_second_index;
+    } else {
+      return last_first_index;
+    }
+  }
+  // For MatMul B
+  if (input_index == 1) {
+    if (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b()) {
+      return last_first_index;
+    } else {
+      return last_second_index;
+    }
+  }
+  return 0;
+}
+
 int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first) {
   auto channels = dims[0];
   if (!(*channel_at_first)) {
@@ -609,38 +571,20 @@ int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first
   return channels;
 }
 
-void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
-                       int *channel_cnt) {
-  MS_ASSERT(primitive != nullptr);
-  if (shapes.empty()) {
-    MS_LOG(ERROR) << " shape vector is empty.";
-    return;
+int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims) {
+  if (primitive->name() == ops::kNameMatMul) {
+    return GetMatMulPreferredDim(primitive, input_index, dims);
   }
-  if (primitive->name() == ops::kNameMatMul && static_cast<int>(shapes.size()) == DIMENSION_2D) {
-    auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
-    MS_ASSERT(matmul_prim != nullptr);
-    *channel_at_first =
-      index != 1 || (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b());
-  } else if (primitive->name() == ops::kNameLSTM) {
-    if (index == kLstmInputWeightIndex || index == kLstmStateWeightIndex) {
-      if (shapes.size() != kLstmWeightShapeSize) {
-        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
-      } else {
-        *channel_cnt = shapes[0] * shapes[1];
-      }
-    } else if (index == kLstmBiasIndex) {
-      if (shapes.size() != kLstmBiasShapeSize) {
-        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
-      } else {
-        auto tensor_elem_cnt = shapes[0] * shapes[1];
-        if (tensor_elem_cnt % kSingleDirBiasTensorSize == 0) {
-          *channel_cnt = kSingleDirBiasTensorSize;
-        }
-      }
-    } else {
-      MS_LOG(WARNING) << "unexpected index of lstm: " << index;
-    }
+  // The first index.
+  return 0;
+}
+
+std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims) {
+  std::vector<int> shape;
+  for (auto dim : dims) {
+    shape.push_back(dim);
   }
+  return shape;
 }
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
@@ -722,6 +666,7 @@ STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   quant_param_holder->set_input_quant_param(index, quant_params);
   return ret;
 }
+
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types) {
   for (const auto &type : support_primitive_types) {
     if (opt::CheckPrimitiveType(cnode, type)) {

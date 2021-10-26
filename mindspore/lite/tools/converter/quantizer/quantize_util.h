@@ -91,7 +91,6 @@ class QuantStrategy {
 constexpr float delta = 0.1;
 constexpr float ratio = 10.0;
 constexpr int percent = 10;
-constexpr int quant_param_size = 32 * 8;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
@@ -103,11 +102,6 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 
 STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_datas, int new_size, TypeId new_data_type);
-
-int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first);
-
-void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
-                       int *channel_cnt);
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt);
@@ -147,10 +141,16 @@ STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const s
 STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
                            WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index);
 
+int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first);
+
+int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims);
+
+std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
+
 template <typename T>
 STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
                            int quant_max, int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
-                           TypeId quant_data_type, int index = 1, bool k_means = false) {
+                           TypeId quant_data_type, int index, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -172,17 +172,11 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   std::vector<T> quant_data(elem_count);
   int ret = RET_OK;
   if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-    bool channel_at_first = true;
-    int channel_cnt = -1;
-    CalQuantAssitInfo(primitive, dims, index, &channel_at_first, &channel_cnt);
-    auto channels = CalChannels(dims, channel_cnt, &channel_at_first);
-    if (channels == 0) {
-      MS_LOG(ERROR) << "channels is zero";
-      return RET_ERROR;
-    }
-    ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
-                               static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
-                               quant_min, bit_num, k_means, &quant_data, channels, channel_at_first);
+    int preferred_dim = GetPreferredDim(primitive, index, dims);
+    ret =
+      DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
+                           static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max, quant_min,
+                           bit_num, k_means, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim);
     if (ret == RET_QUANT_CONTINUE) {
       return ret;
     } else if (ret != RET_OK) {

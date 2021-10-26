@@ -126,92 +126,111 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
 
 STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
 
+// A * stride_a + bucket_index * stride_b + C
+int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index);
+
 class WeightDecoder {
  public:
   static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
 
   static int UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
+  static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims);
+
  private:
-  static int DequantTensor(Tensor *tensor, bool channel_first = true, TypeId dst_data_type = kNumberTypeFloat32);
+  static int DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
   static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
   template <typename ST, typename DT = float>
-  static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
-    const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
-    if (quant_datas == nullptr) {
-      MS_LOG(ERROR) << "Get quant tensor failed.";
-      return nullptr;
-    }
+  static DT *DequantPerLayerData(const lite::Tensor *input_tensor, const ST *quant_datas) {
+    auto quant_param = input_tensor->quant_params();
     DT *dequant_datas = static_cast<DT *>(malloc(input_tensor->ElementsNum() * sizeof(DT)));
     if (dequant_datas == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
     }
-    auto quant_param = input_tensor->quant_params();
-    if (quant_param.size() != kPerTensor) {
-      auto shapes = input_tensor->shape();
-      auto channels = quant_param.size();
-      if (!channel_first) {
-        if (static_cast<int>(shapes.size()) != 2 || shapes[1] != static_cast<int>(channels)) {
-          MS_LOG(ERROR) << "shape size: " << shapes.size() << " quant params size: " << channels;
+    auto quant_clusters = input_tensor->quant_clusters();
+    auto param = quant_param.front();
+    auto scale = param.scale;
+    auto zero_point = param.zeroPoint;
+    for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
+      if (!quant_clusters.empty()) {
+        int8_t index = quant_datas[j];
+        if (index > INT8_MAX || index < INT8_MIN) {
+          MS_LOG(ERROR) << "KMeans param quant is error.";
           free(dequant_datas);
           return nullptr;
         }
-      }
-      MS_CHECK_GT(channels, 0, nullptr);
-      size_t per_channel_size = input_tensor->ElementsNum() / channels;
-      for (size_t i = 0; i < channels; i++) {
-        auto param = quant_param.at(i);
-        auto scale = param.scale;
-        auto zero_point = param.zeroPoint;
-        auto var_corr = param.var_corr;
-        auto mean_corr = param.mean_corr;
-        if (var_corr < 0 || var_corr > 10) {
-          MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
-          var_corr = 1;
-        }
-        for (size_t j = 0; j < per_channel_size; j++) {
-          auto index = per_channel_size * i + j;
-          if (!channel_first) {
-            index = channels * j + i;
-          }
+        dequant_datas[j] = static_cast<DT>(param.clusters[index - INT8_MIN]);
+      } else {
 #ifdef ENABLE_ARM32
-          volatile float dequant_data = (quant_datas[index] - zero_point) * scale * var_corr + mean_corr;
-          dequant_datas[index] = static_cast<DT>(dequant_data);
+        volatile float dequant_data = (quant_datas[j] - zero_point) * scale;
+        dequant_datas[j] = static_cast<DT>(dequant_data);
 #else
-          dequant_datas[index] = static_cast<DT>((quant_datas[index] - zero_point) * scale * var_corr + mean_corr);
+        dequant_datas[j] = static_cast<DT>((quant_datas[j] - zero_point) * scale);
 #endif
-        }
-      }
-    } else {
-      auto quant_clusters = input_tensor->quant_clusters();
-      auto param = quant_param.front();
-      auto scale = param.scale;
-      auto zero_point = param.zeroPoint;
-      for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
-        if (!quant_clusters.empty()) {
-          int8_t index = quant_datas[j];
-          if (index > INT8_MAX || index < INT8_MIN) {
-            MS_LOG(ERROR) << "KMeans param quant is error.";
-            free(dequant_datas);
-            return nullptr;
-          }
-          dequant_datas[j] = static_cast<DT>(param.clusters[index - INT8_MIN]);
-        } else {
-#ifdef ENABLE_ARM32
-          volatile float dequant_data = (quant_datas[j] - zero_point) * scale;
-          dequant_datas[j] = static_cast<DT>(dequant_data);
-#else
-          dequant_datas[j] = static_cast<DT>((quant_datas[j] - zero_point) * scale);
-#endif
-        }
       }
     }
     return dequant_datas;
+  }
+
+  template <typename ST, typename DT = float>
+  static DT *DequantPerChannelData(const lite::Tensor *input_tensor, const ST *quant_datas, int preferred_dim) {
+    auto quant_param = input_tensor->quant_params();
+    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor->ElementsNum() * sizeof(DT)));
+    if (dequant_datas == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return nullptr;
+    }
+    auto shapes = input_tensor->shape();
+    auto channels = quant_param.size();
+    if (channels != static_cast<size_t>(shapes.at(preferred_dim))) {
+      MS_LOG(ERROR) << input_tensor->tensor_name() << " shapes at preferred_dim " << preferred_dim << " is "
+                    << shapes.at(preferred_dim) << " != channels " << channels;
+      free(dequant_datas);
+      return nullptr;
+    }
+    MS_CHECK_GT(channels, 0, nullptr);
+    size_t per_channel_size = input_tensor->ElementsNum() / channels;
+    for (size_t i = 0; i < channels; i++) {
+      auto param = quant_param.at(i);
+      auto scale = param.scale;
+      auto zero_point = param.zeroPoint;
+      auto var_corr = param.var_corr;
+      auto mean_corr = param.mean_corr;
+      if (var_corr < 0 || var_corr > 10) {
+        MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
+        var_corr = 1;
+      }
+      for (size_t j = 0; j < per_channel_size; j++) {
+        auto index = GetDataIndex(shapes, preferred_dim, i, j);
+#ifdef ENABLE_ARM32
+        volatile float dequant_data = (quant_datas[index] - zero_point) * scale * var_corr + mean_corr;
+        dequant_datas[index] = static_cast<DT>(dequant_data);
+#else
+        dequant_datas[index] = static_cast<DT>((quant_datas[index] - zero_point) * scale * var_corr + mean_corr);
+#endif
+      }
+    }
+    return dequant_datas;
+  }
+
+  template <typename ST, typename DT = float>
+  static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim = true) {
+    const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
+    if (quant_datas == nullptr) {
+      MS_LOG(ERROR) << "Get quant tensor failed.";
+      return nullptr;
+    }
+    auto quant_param = input_tensor->quant_params();
+    if (quant_param.size() != kPerTensor) {
+      return DequantPerChannelData<ST, DT>(input_tensor, quant_datas, preferred_dim);
+    } else {
+      return DequantPerLayerData<ST, DT>(input_tensor, quant_datas);
+    }
   }
 
   inline static bool IsChannelFirst(int index, const OpParameter *op_parameter) {
@@ -227,7 +246,9 @@ class WeightDecoder {
     return true;
   }
 
-  static int DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type = kNumberTypeFloat32);
+  static int GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
+
+  static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename T1, typename T2>
   static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,

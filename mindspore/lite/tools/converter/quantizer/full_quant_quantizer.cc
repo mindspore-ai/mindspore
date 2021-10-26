@@ -677,7 +677,7 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
     return RET_QUANT_CONTINUE;
   }
   if (CheckNodeInSet(cnode, has_bias_operator)) {
-    if (input_index == FOURTH_INPUT) {
+    if (input_index == THIRD_INPUT + 1) {
       ret = DoBiasQuant(input_node, primitive);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do bias quant failed.";
@@ -685,7 +685,12 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
       }
     } else {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
-        ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+        if (input_index == FIRST_INPUT + 1) {
+          ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+        } else {
+          // optimize input2 is const to per_layer in the future.
+          ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+        }
       } else {
         ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
       }
@@ -1304,26 +1309,31 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to update divergence's max value";
   status = DoInference();
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do inference failed.";
     return status;
   }
   MS_LOG(INFO) << "start to update divergence's interval";
   status = UpdateDivergeInterval();
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "Update diverge interval failed.";
     return status;
   }
   MS_LOG(INFO) << "start to collect data's distribution";
   status = CollectDataFrequency();
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "Collect data frequency failed.";
     return status;
   }
   MS_LOG(INFO) << "compute the best threshold";
   status = ComputeThreshold();
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "compute threshold failed.";
     return status;
   }
   MS_LOG(INFO) << "start to generate quant param and quantize tensor's data";
   status = QuantNode();
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "Quant node failed.";
     return status;
   }
 
