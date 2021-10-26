@@ -251,11 +251,9 @@ class KernelGraph : public FuncGraph {
   FuncGraphPtr GetFuncGraph();
   // Cache the backend graph output nodes and corresponding to front nodes with output index into
   // graph_output_to_front_node_map_.
-  void CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend_graph_output, const AnfNodePtr &front_node);
+  void CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNodePtr> &backend_outputs,
+                                            const std::vector<AnfNodePtr> &front_outputs);
   AnfWithOutIndex GetFrontNodeWithIndexByGraphOutput(const AnfWithOutIndex &backend_graph_output_with_index) const;
-  // Update the related map of backend graph output nodes by modified backend output nodes.
-  void UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_outputs,
-                            const std::vector<AnfWithOutIndex> &new_outputs);
 
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
