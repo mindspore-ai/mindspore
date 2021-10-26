@@ -27,13 +27,10 @@
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore::graphkernel {
-using kernel::GetDtypeNbyte;
 using kernel::GetInputIndex;
-using kernel::GetInputTensorValue;
 using kernel::GetKernelInput;
 using kernel::GetOutputIndex;
 using kernel::GetStrProcessorFromContext;
-using kernel::kProcessorCuda;
 using kernel::OpAttr;
 using kernel::OpImplyType;
 using kernel::OpInfo;
@@ -41,7 +38,7 @@ using kernel::OpIOInfo;
 namespace {
 std::vector<int> GetDynInputSize(const AnfNodePtr &anf_node) {
   std::vector<int> dyn_input_sizes;
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->HasAttr(kAttrDynInputSizes)) {
     std::vector<int64_t> dyn_input_sizes_me =
@@ -145,16 +142,6 @@ class OpInfoExtractor {
 };
 }  // namespace
 
-int AkgKernelJsonGenerator::op_cnt_ = 0;
-std::mutex AkgKernelJsonGenerator::op_cnt_mtx_;
-
-int AkgKernelJsonGenerator::GetOpCntInc() {
-  op_cnt_mtx_.lock();
-  int cnt = op_cnt_++;
-  op_cnt_mtx_.unlock();
-  return cnt;
-}
-
 TypeId AkgKernelJsonGenerator::GetInputDataType(const AnfNodePtr &anf_node, size_t real_index) const {
   return dump_option_.is_before_select_kernel ? AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_index)
                                               : AnfAlgo::GetInputDeviceDataType(anf_node, real_index);
@@ -181,6 +168,68 @@ std::vector<size_t> AkgKernelJsonGenerator::GetOutputShape(const AnfNodePtr &anf
 
 std::string AkgKernelJsonGenerator::GetOutputFormat(const AnfNodePtr &anf_node, size_t index) const {
   return dump_option_.is_before_select_kernel ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(anf_node, index);
+}
+
+bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
+                                                 nlohmann::json *node_json) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(node_json);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
+                                << cnode->inputs().size() << "][" << cnode->DebugString() << "]";
+  }
+
+  auto input_node = cnode->input(input_idx + 1);
+  if (!IsValueNode<tensor::Tensor>(input_node)) {
+    return false;
+  }
+
+  auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
+  if (tensor == nullptr) {
+    MS_LOG(DEBUG) << "Value of input node is nullptr, op: [" << input_node->DebugString() << "]";
+    return false;
+  }
+
+  auto type_id = tensor->data_type();
+  auto *data = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data);
+  if (tensor->DataSize() > 1) {
+    // not const tensor.
+    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, [" << input_node->DebugString(2) << "]";
+    return false;
+  }
+
+  if (type_id == kFloat64->type_id()) {
+    (*node_json)["value"] = static_cast<double *>(data)[0];
+  } else if (type_id == kFloat32->type_id()) {
+    (*node_json)["value"] = static_cast<float *>(data)[0];
+  } else if (type_id == kFloat16->type_id()) {
+    float16 *val = static_cast<float16 *>(data);
+    (*node_json)["value"] = static_cast<float>(val[0]);
+  } else if (type_id == kUInt64->type_id()) {
+    (*node_json)["value"] = static_cast<uint64_t *>(data)[0];
+  } else if (type_id == kUInt32->type_id()) {
+    (*node_json)["value"] = static_cast<uint32_t *>(data)[0];
+  } else if (type_id == kUInt16->type_id()) {
+    (*node_json)["value"] = static_cast<uint16_t *>(data)[0];
+  } else if (type_id == kUInt8->type_id()) {
+    (*node_json)["value"] = static_cast<uint8_t *>(data)[0];
+  } else if (type_id == kInt64->type_id()) {
+    (*node_json)["value"] = static_cast<int64_t *>(data)[0];
+  } else if (type_id == kInt32->type_id()) {
+    (*node_json)["value"] = static_cast<int32_t *>(data)[0];
+  } else if (type_id == kInt16->type_id()) {
+    (*node_json)["value"] = static_cast<int16_t *>(data)[0];
+  } else if (type_id == kInt8->type_id()) {
+    (*node_json)["value"] = static_cast<int8_t *>(data)[0];
+  } else if (type_id == kBool->type_id()) {
+    (*node_json)["value"] = static_cast<bool *>(data)[0];
+  } else {
+    MS_LOG(EXCEPTION) << "Unknown value type of tensor[" << cnode->DebugString() << "]";
+  }
+  return true;
 }
 
 bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
@@ -321,7 +370,7 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
     return true;
   }
   auto dyn_input_sizes = GetDynInputSize(anf_node);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = GetCNodePrimitive(anf_node);
 
   // create input name list for "x_shape" in attr with "x" in primitive.
   auto inputs = op_info->inputs_ptr();
@@ -481,7 +530,7 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
 
   // get basic params from currentNodeOpDesc
   if (IsPrimitiveCNode(anf_node, prim::kPrimCustom)) {
-    auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+    auto primitive = GetCNodePrimitive(anf_node);
     MS_EXCEPTION_IF_NULL(primitive);
     (*node_json)[kJsonKeyName] = primitive->name();
   } else {
@@ -518,6 +567,17 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
   return true;
 }
 
+size_t AkgKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) const {
+  const std::vector<size_t> &shape = node_json[kJsonKeyShape];
+  const std::string &dtype = node_json[kJsonKeyDataType];
+  auto type_ptr = StringToType(dtype);
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto num_ptr = type_ptr->cast<NumberPtr>();
+  MS_EXCEPTION_IF_NULL(num_ptr);
+  size_t nbyte = IntToSize(num_ptr->nbits() / static_cast<int>(BitsNum::eBits8));
+  return std::accumulate(shape.begin(), shape.end(), nbyte, std::multiplies<size_t>());
+}
+
 bool AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
                                        std::vector<size_t> *output_size) const {
   if (input_size == nullptr || output_size == nullptr) {
@@ -529,22 +589,12 @@ bool AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vec
 
   for (size_t i = 0; i < node_json[kJsonKeyInputDesc].size(); i++) {
     for (size_t m = 0; m < node_json[kJsonKeyInputDesc][i].size(); m++) {
-      std::string dtype = node_json[kJsonKeyInputDesc][i][m][kJsonKeyDataType];
-      size_t nbyte = GetDtypeNbyte(dtype);
-      size_t size_i =
-        std::accumulate(node_json[kJsonKeyInputDesc][i][m][kJsonKeyShape].begin(),
-                        node_json[kJsonKeyInputDesc][i][m][kJsonKeyShape].end(), nbyte, std::multiplies<size_t>());
-      input_size->push_back(size_i);
+      input_size->push_back(GetTensorSize(node_json[kJsonKeyInputDesc][i][m]));
     }
   }
 
   for (size_t i = 0; i < node_json[kJsonKeyOutputDesc].size(); i++) {
-    std::string dtype = node_json[kJsonKeyOutputDesc][i][kJsonKeyDataType];
-    size_t nbyte = GetDtypeNbyte(dtype);
-    size_t size_i =
-      std::accumulate(node_json[kJsonKeyOutputDesc][i][kJsonKeyShape].begin(),
-                      node_json[kJsonKeyOutputDesc][i][kJsonKeyShape].end(), nbyte, std::multiplies<size_t>());
-    output_size->push_back(size_i);
+    output_size->push_back(GetTensorSize(node_json[kJsonKeyOutputDesc][i]));
   }
 
   return true;
@@ -564,7 +614,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = op_name + "_";
   (void)kernel_name_.append(std::to_string(hash_id));
-  (*kernel_json)[kJsonKeyId] = GetOpCntInc();
+  (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();  // GetProcessorStr(anf_node);
@@ -588,8 +638,10 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
                                            nlohmann::json *kernel_json) {
   std::vector<std::string> stitchs;
   for (auto const &anf_node : anf_nodes) {
-    if (AnfAlgo::HasNodeAttr(kAttrStitch, anf_node->cast<CNodePtr>()) &&
-        AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrStitch) == "common") {
+    auto prim = GetCNodePrimitive(anf_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto stitch_attr = prim->GetAttr(kAttrStitch);
+    if (stitch_attr != nullptr && GetValue<std::string>(stitch_attr) == "common") {
       auto name = GetTensorName((*node_json_map)[anf_node], kJsonKeyOutputDesc, {0, 0});
       if (std::find(stitchs.begin(), stitchs.end(), name) == stitchs.end()) {
         stitchs.emplace_back(name);
@@ -656,7 +708,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
     static_cast<void>(kernel_name_.append(fg_name).append("_"));
   }
   static_cast<void>(kernel_name_.append(std::to_string(hash_id)));
-  (*kernel_json)[kJsonKeyId] = GetOpCntInc();
+  (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();
@@ -679,18 +731,13 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
 bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes,
                                             std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
   for (auto const &anf_node : anf_nodes) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    if (!AnfAlgo::IsRealKernel(anf_node)) {
-      MS_LOG(ERROR) << "Invalid anf node to build [" << anf_node->fullname_with_scope() << "].";
-      return false;
-    }
     nlohmann::json node_json;
     if (!GenerateSingleKernelJson(anf_node, &node_json)) {
       MS_LOG(ERROR) << "Op [" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
       return false;
     }
 
-    auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+    auto primitive = GetCNodePrimitive(anf_node);
     MS_EXCEPTION_IF_NULL(primitive);
 
     (*node_json_map)[anf_node] = node_json;
@@ -770,9 +817,11 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
       if (tcnode == nullptr) {
         return;
       }
+      auto prim = GetCNodePrimitive(tcnode);
+      MS_EXCEPTION_IF_NULL(prim);
       // Get dim info.
-      if (AnfAlgo::HasNodeAttr(kAttrParallelDimInfo, tcnode)) {
-        auto info = AnfAlgo::GetNodeAttr<std::vector<size_t>>(tcnode, kAttrParallelDimInfo);
+      if (prim->HasAttr(kAttrParallelDimInfo)) {
+        auto info = GetValue<std::vector<size_t>>(prim->GetAttr(kAttrParallelDimInfo));
         if (info.size() != 2) {
           MS_LOG(EXCEPTION) << "Parallel dim info is invalid!";
         }
@@ -782,22 +831,17 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
         sub_graphs_info[info[0]].first = info[1];
       }
       // Get fusion type.
-      if (AnfAlgo::HasNodeAttr(kAttrParallelFusionType, tcnode)) {
-        fusion_type = AnfAlgo::GetNodeAttr<std::string>(tcnode, kAttrParallelFusionType);
+      if (prim->HasAttr(kAttrParallelFusionType)) {
+        fusion_type = GetValue<std::string>(prim->GetAttr(kAttrParallelFusionType));
       }
       // Get fusion type info.
-      if (AnfAlgo::HasNodeAttr(kAttrParallelTypeInfo, tcnode)) {
-        type_info = AnfAlgo::GetNodeAttr<std::vector<std::vector<int>>>(tcnode, kAttrParallelTypeInfo);
+      if (prim->HasAttr(kAttrParallelTypeInfo)) {
+        type_info = GetValue<std::vector<std::vector<int>>>(prim->GetAttr(kAttrParallelTypeInfo));
       }
     }
   }
 
   if (!sub_graphs_info.empty()) {
-    auto processor = GetStrProcessorFromContext();  // GetProcessorStr(anf_nodes[0]);
-    if (processor != kProcessorCuda) {
-      MS_LOG(EXCEPTION) << "Parallel fusion not support " << processor << " now.";
-    }
-
     nlohmann::json parallel_fusion_json;
     parallel_fusion_json[kJsonKeyFusionType] = fusion_type;
     parallel_fusion_json[kJsonKeyTypeInfo] = type_info;
