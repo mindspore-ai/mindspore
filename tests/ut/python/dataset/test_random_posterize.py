@@ -84,6 +84,8 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
     Test RandomPosterize in C transformations with fixed point
     """
     logger.info("test_random_posterize_op_c")
+    original_seed = config_get_set_seed(55)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # define map operations
     transforms1 = [
@@ -114,6 +116,10 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
 
     if plot:
         visualize_list(image_original, image_posterize)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_random_posterize_default_c_md5(plot=False, run_golden=True):

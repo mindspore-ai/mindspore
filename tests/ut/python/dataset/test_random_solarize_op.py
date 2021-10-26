@@ -76,6 +76,8 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
     """
     Test RandomSolarize op with MNIST dataset (Grayscale images)
     """
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     mnist_1 = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     mnist_2 = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
@@ -98,6 +100,9 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
     if run_golden:
         filename = "random_solarize_02_result.npz"
         save_and_check_md5(mnist_2, filename, generate_golden=GENERATE_GOLDEN)
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_random_solarize_errors():
