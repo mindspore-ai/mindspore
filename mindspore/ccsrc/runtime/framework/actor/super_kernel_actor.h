@@ -50,6 +50,9 @@ class SuperKernelActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
 
+  // Check whether the input data is valid.
+  bool CheckInputData(const OpContext<DeviceTensor> *context);
+
   KernelGraphPtr graph_;
 };
 

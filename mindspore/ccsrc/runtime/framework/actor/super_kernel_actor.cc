@@ -30,6 +30,22 @@ void SuperKernelActor::Init() {
 
   // Set the number of actor running dependent messages.
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
+
+  if (output_data_arrows_.size() != output_data_nodes_.size()) {
+    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output data nodes.";
+  }
+  // Init the output data.
+  for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
+    auto &data_arrow = output_data_arrows_[i];
+    auto &output_node = output_data_nodes_[i];
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    MS_EXCEPTION_IF_NULL(output_node);
+
+    auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, data_arrow->from_output_index_, false);
+    auto data =
+      std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address.get(), data_arrow->to_input_index_);
+    (void)output_data_.emplace_back(std::move(data));
+  }
 }
 
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
@@ -37,6 +53,10 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(graph_);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name() << ") launches graph: " << graph_->graph_id();
+  if (!CheckInputData(context)) {
+    std::string error_info = "Check the input data invalid, graph id: " + graph_->graph_id();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
 
   try {
     auto ret = device_contexts_[0]->LaunchGraph(graph_);
@@ -51,6 +71,36 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
 
   PostRun(context);
+}
+
+bool SuperKernelActor::CheckInputData(const OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph_);
+  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
+  if (data_iter == input_op_datas_.end()) {
+    return true;
+  }
+
+  auto &input_nodes = graph_->input_nodes();
+  for (auto &input_data : data_iter->second) {
+    MS_EXCEPTION_IF_NULL(input_data);
+    if (IntToSize(input_data->index_) >= input_nodes.size()) {
+      MS_LOG(ERROR) << "The input index:" << input_data->index_ << "is out of range:" << input_nodes.size();
+      return false;
+    }
+    auto input_node = input_nodes[input_data->index_];
+    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    MS_EXCEPTION_IF_NULL(device_address);
+
+    MS_EXCEPTION_IF_NULL(input_data->data_);
+    if (input_data->data_->GetPtr() != device_address->GetPtr()) {
+      MS_LOG(ERROR) << "The input data address:" << input_data->data_->GetPtr()
+                    << " is not equal to the graph node address:" << device_address->GetPtr();
+      return false;
+    }
+  }
+
+  return true;
 }
 }  // namespace runtime
 }  // namespace mindspore

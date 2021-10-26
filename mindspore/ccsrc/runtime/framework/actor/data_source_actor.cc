@@ -58,21 +58,25 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
   SendMemoryAllocReq(context);
 }
 
-void DataSourceActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
-                                       OpContext<DeviceTensor> *const context) {
+void DataSourceActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                                       const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output_data);
   MS_EXCEPTION_IF_NULL(data_arrow);
+  MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(context);
 
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
-
   const auto &output_device_tensors = buffers_.front();
-  if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors.size()) {
+
+  auto position = FetchNodePosition(output_node);
+  // Host data souruce actor uses the node position, device data source actor uses the output index.
+  auto output_position = (position != 0) ? position : data_arrow->from_output_index_;
+  if (output_position >= output_device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
   }
-  output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
+  output_data->data_ = output_device_tensors[output_position];
 }
 
 void DeviceQueueDataSourceActor::Init() {

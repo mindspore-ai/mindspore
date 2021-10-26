@@ -58,9 +58,6 @@ size_t GetSystemMemorySize(const std::string &key) {
   }
   (void)fclose(file);
 
-  if (mem_size == 0) {
-    MS_LOG(EXCEPTION) << "Get system meminfo failed: " << key;
-  }
   MS_LOG(INFO) << "Get system memory(" << key << "): " << mem_size << " kB";
   return mem_size * kKBToByte;
 #endif
