@@ -56,11 +56,6 @@ using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::vector<AnfNode
 using NodeWithDeviceContext = std::vector<std::pair<AnfNodePtr, DeviceContext *>>;
 using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 
-// Check whether node is a call node, there are two types of call nodes:
-// 1. First input of node is a cnode.
-// 2. First input of node is a funcgraph value node.
-bool IsCallNode(const AnfNodePtr &node);
-
 // Check if the call node is the input of another call node.
 bool IsSubCallNode(const AnfNodePtr &node);
 

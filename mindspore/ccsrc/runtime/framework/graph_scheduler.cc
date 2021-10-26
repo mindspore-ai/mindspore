@@ -1689,8 +1689,9 @@ void GraphScheduler::FetchKernelTransformTypeAndName(const AnfNodePtr &node, con
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(kernel_type);
   MS_EXCEPTION_IF_NULL(kernel_name);
-
-  if (graph->is_executing_sink() && ((node == nullptr) || node->isa<CNode>())) {
+  // In sink mode, the data exchange between child graphs is expressed as parameters. These parameters are stored
+  // in the graph and should be obtained from the super kernel actor.
+  if (graph->is_executing_sink() && ((node == nullptr) || node->isa<CNode>() || graph->IsChildGraphResult(node))) {
     *kernel_type = KernelTransformType::kSuperKernelActor;
     *kernel_name = graph->ToString() + "_SuperKernelActor";
     return;

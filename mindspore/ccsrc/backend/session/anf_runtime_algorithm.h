@@ -83,7 +83,8 @@ class AnfRuntimeAlgorithm {
                                                      prim::kPrimMakeTuple});
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
                                               const std::vector<PrimitivePtr> &return_types = {});
-  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
+  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node,
+                                                            std::set<AnfNodePtr> *visited_call_nodes = nullptr);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);
   static void SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, size_t index);
@@ -329,6 +330,20 @@ class AnfRuntimeAlgorithm {
   static void CacheAddrForGraph(const KernelGraphPtr &kernel_graph);
   static void CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
   static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
+  // Check whether node is a call node, there are two types of call nodes:
+  // 1. First input of node is a cnode.
+  // 2. First input of node is a funcgraph value node.
+  static bool IsCallNode(const AnfNodePtr &node);
+  // Find all funcgraphs that the call node will call.
+  static std::set<FuncGraphPtr> GetFuncGraphbyCallNode(const AnfNodePtr &node, size_t call_depth = 1);
+  // Check whether node has a partial structure, a node is a partial structure whicih:
+  // 1. a partial cnode.
+  // 2. a funcgraph value node.
+  static bool IsPartial(const AnfNodePtr &node);
+  // Get funcgraph in partial structure.
+  // Depth represents the number of layers of the call. When the first input of the call node is a call node,
+  // the funcgraph in the return value of the inner call needs to be returned.
+  static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node, size_t depth = 1);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

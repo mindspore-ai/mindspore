@@ -980,13 +980,6 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
   size_t position = 0;
   auto outputs = AnfAlgo::GetAllOutputWithIndex(root_output);
-  if (runtime::IsCallNode(root_output)) {
-    std::vector<AnfNodePtr> call_nodes;
-    size_t call_output_num = runtime::FetchOutputSizebyCallNode(root_output, &call_nodes);
-    for (size_t i = 0; i < call_output_num; ++i) {
-      (void)outputs.emplace_back(root_output, i);
-    }
-  }
   outputs_num = outputs.size();
   for (const auto &output : outputs) {
     if (outputs_order.count(output) == 0) {
