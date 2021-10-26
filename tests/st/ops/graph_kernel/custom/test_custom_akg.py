@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
@@ -53,6 +54,7 @@ def outer_product(a, b):
 
 class TestHybrid(Cell):
     """Net definition"""
+
     def __init__(self):
         super(TestHybrid, self).__init__()
 
@@ -65,12 +67,7 @@ class TestHybrid(Cell):
         return self.program(x, y)
 
 
-def test_hybrid():
-    """
-    Feature: ALL To ALL
-    Description: hybrid test cases.
-    Expectation: the result match with numpy result
-    """
+def hybrid_case():
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
 
@@ -82,24 +79,58 @@ def test_hybrid():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def test_hybrid_ascend():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_hybrid_ascend_graph_mode():
     """
-    Feature: ALL To ALL
-    Description: hybrid ascend test cases.
+    Feature: test case for Custom op with func_type="akg"
+    Description: ascend test case, akg dsl using hybrid grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_hybrid()
+    hybrid_case()
 
 
-def test_hybrid_gpu():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_hybrid_ascend_pynative_mode():
     """
-    Feature: ALL To ALL
-    Description: hybrid gpu test cases.
+    Feature: test case for Custom op with func_type="akg"
+    Description: ascend test case, akg dsl using hybrid grammar in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    hybrid_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_hybrid_gpu_graph_mode():
+    """
+    Feature: test case for Custom op with func_type="akg"
+    Description: gpu test case, akg dsl using hybrid grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_hybrid()
+    hybrid_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_hybrid_gpu_pynative_mode():
+    """
+    Feature: test case for Custom op with func_type="akg"
+    Description: gpu test case, akg dsl using hybrid grammar in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    hybrid_case()
 
 
 v_add_ascend_info = CustomRegOp() \
@@ -135,6 +166,7 @@ def v_add(inputs, attrs):
 
 class TestIRbuilder(Cell):
     """Net definition"""
+
     def __init__(self, shape):
         super(TestIRbuilder, self).__init__()
         self.program = Custom(v_add, out_shape=shape, out_dtype=mstype.float16, func_type="akg")
@@ -143,12 +175,7 @@ class TestIRbuilder(Cell):
         return self.program([x, y])
 
 
-def test_irbuider():
-    """
-    Feature: ALL To ALL
-    Description: irbuider test cases.
-    Expectation: the result match with numpy result
-    """
+def irbuider_case():
     shape = (4, 5)
     input_x = np.random.normal(0, 1, shape).astype(np.float16)
     input_y = np.random.normal(0, 1, shape).astype(np.float16)
@@ -160,21 +187,55 @@ def test_irbuider():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def test_irbuider_ascend():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_irbuider_ascend_graph_mode():
     """
-    Feature: ALL To ALL
-    Description: irbuider ascend test cases.
+    Feature: test case for Custom op with func_type="akg"
+    Description: ascend test case, akg dsl using irbuider grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_irbuider()
+    irbuider_case()
 
 
-def test_irbuider_gpu():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_irbuider_ascend_pynative_mode():
     """
-    Feature: ALL To ALL
-    Description: irbuider gpu test cases.
+    Feature: test case for Custom op with func_type="akg"
+    Description: ascend test case, akg dsl using irbuider grammar in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    irbuider_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_irbuider_gpu_graph_mode():
+    """
+    Feature: test case for Custom op with func_type="akg"
+    Description: gpu test case, akg dsl using irbuider grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_irbuider()
+    irbuider_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_irbuider_gpu_pynative_mode():
+    """
+    Feature: test case for Custom op with func_type="akg"
+    Description: gpu test case, akg dsl using irbuider grammar in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    irbuider_case()

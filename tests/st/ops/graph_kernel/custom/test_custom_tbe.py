@@ -21,6 +21,7 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.op_info_register import TBERegOp, DataType
 from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 square_with_bias_op_info = CustomRegOp() \
     .fusion_type("OPAQUE") \
@@ -158,17 +159,7 @@ class Net1(Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_multi_input_multi_output_with_attr():
-    """
-    Feature: ALL To ALL
-    Description: test cases for Custom op with multiple inputs, outputs and attr.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+def multi_input_multi_output_with_attr():
     dtype = np.float32
     x = np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]).astype(dtype)
     expect0 = np.array([[9.0, 9.0, 9.0], [441.0, 441.0, 441.0]]).astype(dtype)
@@ -196,10 +187,38 @@ def test_multi_input_multi_output_with_attr():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net1_graph_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: test cases with multiple inputs, outputs and attr in GRAPH_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    multi_input_multi_output_with_attr()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net1_pynative_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: test cases with multiple inputs, outputs and attr in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    multi_input_multi_output_with_attr()
+
+
 def bprop(data, axis, out, dout):
     gradient = data * 2
     dx = gradient * dout
-    return (dx,)
+    return dx, zeros_like(axis)
 
 
 class Net2(Cell):
@@ -215,17 +234,7 @@ class Net2(Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_bprop():
-    """
-    Feature: ALL To ALL
-    Description: test cases for bprop function of Custom op.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+def grad_case():
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     expect = np.array([2.0, 8.0, 18.0]).astype(np.float32)
@@ -237,3 +246,31 @@ def test_bprop():
     compare_res = np.allclose(expect, dx_np, 0.0001, 0.0001)
     if not compare_res:
         raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net2_graph_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: grad test case in GRAPH_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    grad_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net2_pynative_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: grad test case in PYNATIVE_MODE.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    grad_case()

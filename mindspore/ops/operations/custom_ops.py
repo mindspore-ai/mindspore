@@ -91,7 +91,7 @@ class CustomRegOp(RegOp):
                 Please note that target and the `func_type` of `Custom` op have some constraints.
                 If func_type is "akg", target can be one of ["Ascend", "GPU"].
                 If func_type is "tbe", target can only be "Ascend".
-                If func_type is "aot", target can only be "GPU".
+                If func_type is "aot", target can only be ["GPU", "CPU"].
                 If func_type is "py_func", target can only be "CPU".
                 Default: None.
         """
@@ -264,7 +264,7 @@ class Custom(ops.PrimitiveWithInfer):
         >>>
         >>> class Net(Cell):
         ...     def __init__(self):
-        ...         super(Net1, self).__init__()
+        ...         super(Net, self).__init__()
         ...         self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
         ...                                        func_type="tbe")
         ...
@@ -296,6 +296,7 @@ class Custom(ops.PrimitiveWithInfer):
     """
 
     registered_func = {}
+    attr_dict = {}  # Save input_names and attr_names for func.
 
     def __init__(self, func, out_shape, out_dtype, func_type, bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -303,16 +304,23 @@ class Custom(ops.PrimitiveWithInfer):
         self.supported_targets = ["Ascend", "GPU", "CPU"]
         self.func = func
         self.func_name = ""
+        self.uniq_name = ""
+        self.imply_path = ""
         if callable(self.func):
             # Get the original function if func is decorated
             if "__wrapped__" in self.func.__dict__:
                 self.func = self.func.__dict__["__wrapped__"]
+            self.imply_path = os.path.realpath(inspect.getfile(self.func))
             self.func_name = self.func.__name__
+            self.uniq_name = self.name + "_" + self.func_name + "_" + str(id(self.func))
         elif isinstance(self.func, str):
             self.func_name = self.func
+            self.uniq_name = self.name + "_" + self.func_name
         else:
             raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
         self.add_prim_attr("func_name", self.func_name)
+        self.add_prim_attr("uniq_name", self.uniq_name)
+        self.add_prim_attr("imply_path", self.imply_path)
         self.out_shape = out_shape
         self.out_dtype = out_dtype
         self.bprop = bprop
@@ -333,6 +341,7 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 self.func_type = "hybrid"
         self.add_prim_attr("func_type", self.func_type)
+        self.update_attr()
 
     def infer_shape(self, *args):
         if callable(self.out_shape):
@@ -353,7 +362,6 @@ class Custom(ops.PrimitiveWithInfer):
         if reg_info is None and hasattr(self.func, "reg_info"):
             reg_info = getattr(self.func, "reg_info")
         reg_info_list = self.get_expanded_list(reg_info)
-        already_add_attr = False
         for reg_info in reg_info_list:
             if not isinstance(reg_info, (str, dict)):
                 continue
@@ -366,17 +374,10 @@ class Custom(ops.PrimitiveWithInfer):
             # Register
             reg_info = self.reformat_reg_info(reg_info, target)
             reg_info_str = json.dumps(reg_info)
-            if isinstance(self.func, str):
-                imply_path = self.func
-            else:
-                imply_path = os.path.realpath(inspect.getfile(self.func))
             op_lib = Oplib()
-            if not op_lib.reg_op(reg_info_str, imply_path):
-                raise ValueError('Invalid reg info {}: {}\n'.format(imply_path, reg_info_str))
-            # Add inputs name to attr
-            if not already_add_attr:
-                self.add_inputs_name_to_attr(reg_info)
-                already_add_attr = True
+            if not op_lib.reg_op(reg_info_str, self.imply_path):
+                raise ValueError('Invalid reg info {}: {}\n'.format(self.imply_path, reg_info_str))
+            self.save_attr(reg_info)
             self.save_register_status(target)
 
     def get_expanded_list(self, data):
@@ -405,7 +406,7 @@ class Custom(ops.PrimitiveWithInfer):
             registered_targets = getattr(self.func, "registered_targets", [])
             registered_targets.append(target)
             setattr(self.func, "registered_targets", registered_targets)
-        elif isinstance(self, str):
+        elif isinstance(self.func, str):
             if isinstance(Custom.registered_func.get(self.func), list):
                 Custom.registered_func[self.func].append(target)
             else:
@@ -415,7 +416,7 @@ class Custom(ops.PrimitiveWithInfer):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
             raise TypeError("reg_info should be of type dict, but got {}".format(type(reg_info)))
-        reg_info["op_name"] = self.func_name
+        reg_info["op_name"] = self.uniq_name
         reg_info["imply_type"] = self.get_imply_type(reg_info, target)
         # Supplement necessary info for TBE if these information is missing in reg_info
         if reg_info["imply_type"] == "TBE":
@@ -468,13 +469,19 @@ class Custom(ops.PrimitiveWithInfer):
         func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "py_func": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
-    def add_inputs_name_to_attr(self, reg_info):
-        """Save inputs name to primitive's attr."""
+    def save_attr(self, reg_info):
+        """Save input_names and attr_names of current func."""
         if not isinstance(reg_info, dict):
             return
         tensor_inputs = reg_info.get("inputs", [])
         attr = reg_info.get("attr", [])
+        if not isinstance(tensor_inputs, (list, tuple)):
+            tensor_inputs = [tensor_inputs]
+        if not isinstance(attr, (list, tuple)):
+            attr = [attr]
+        # input_names include tensor input names and attr input names
         input_names = []
+        # attr_names only includes attr input names
         attr_names = []
         for item in tensor_inputs:
             if isinstance(item, dict) and item.get("name") is not None:
@@ -483,6 +490,46 @@ class Custom(ops.PrimitiveWithInfer):
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
                 attr_names.append(item["name"])
-        # input_names include tensor input names and attr names
-        self.add_prim_attr("input_names", input_names)
-        self.add_prim_attr("attr_names", attr_names)
+        cur_attr = {"input_names": input_names, "attr_names": attr_names}
+        # If func does not have attr, save current attr.
+        # Else, check if current attr is same as previous saved one.
+        prev_input_names = input_names
+        prev_attr_names = attr_names
+        if callable(self.func):
+            func_attr = getattr(self.func, "func_attr", None)
+            if not isinstance(func_attr, dict):
+                setattr(self.func, "func_attr", cur_attr)
+            else:
+                prev_input_names = func_attr.get("input_names")
+                prev_attr_names = func_attr.get("attr_names")
+        elif isinstance(self.func, str):
+            func_attr = Custom.attr_dict.get(self.func)
+            if not isinstance(func_attr, dict):
+                Custom.attr_dict[self.func] = cur_attr
+            else:
+                prev_input_names = func_attr.get("input_names")
+                prev_attr_names = func_attr.get("attr_names")
+        if not isinstance(prev_input_names, list):
+            raise TypeError("func {}: previous saved input_names should be a list, but got {}"
+                            .format(self.func, type(prev_input_names)))
+        if len(input_names) != len(prev_input_names):
+            raise ValueError("func {}: input_names's length {} is different from previous saved one {}"
+                             .format(self.func, len(input_names), len(prev_input_names)))
+        if attr_names != prev_attr_names:
+            raise ValueError("func {}: attr_names {} is different from previous saved one {}"
+                             .format(self.func, attr_names, prev_attr_names))
+
+    def update_attr(self):
+        """Add input_names and attr_names to primitive's attr."""
+        func_attr = {}
+        if callable(self.func):
+            func_attr = getattr(self.func, "func_attr", None)
+        elif isinstance(self.func, str):
+            func_attr = Custom.attr_dict.get(self.func)
+        if isinstance(func_attr, dict):
+            input_names = func_attr.get("input_names")
+            attr_names = func_attr.get("attr_names")
+            if input_names:
+                self.add_prim_attr("input_names", input_names)
+            if attr_names:
+                self.add_prim_attr("attr_names", attr_names)

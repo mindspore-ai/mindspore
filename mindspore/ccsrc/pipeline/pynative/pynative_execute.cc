@@ -503,7 +503,18 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(op_prim);
   // Checking whether attr conversion is needed.
   opt::ConstInputToAttrInfoRegister reg;
-  bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
+  bool reg_exist = false;
+  if (op_run_info->op_name == prim::kPrimCustom->name()) {
+    // Custom op needs to set reg dynamically
+    std::unordered_set<size_t> attr_indexes;
+    opt::GetCustomOpAttrIndex(op_prim, &attr_indexes);
+    if (!attr_indexes.empty()) {
+      reg_exist = true;
+      reg.SetConstInputToAttr(attr_indexes);
+    }
+  } else {
+    reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
+  }
   if (op_run_info->is_dynamic_shape &&
       dynamic_shape_const_input_to_attr.find(op_run_info->op_name) == dynamic_shape_const_input_to_attr.end()) {
     MS_LOG(DEBUG) << "current node is dynamic shape: " << op_run_info->op_name;

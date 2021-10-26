@@ -1018,5 +1018,29 @@ int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, cons
   auto output_used_num = GetNodeOutputUsedNum(kernel_graph, node);
   return std::accumulate(output_used_num.begin(), output_used_num.end(), int64_t(0));
 }
+
+void GetCustomOpAttrIndex(const PrimitivePtr &primitive, std::unordered_set<size_t> *indexes) {
+  if (primitive == nullptr || primitive->name() != prim::kPrimCustom->name()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(indexes);
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  auto attr_names = primitive->GetAttr(kAttrAttrNames);
+  if (input_names == nullptr || attr_names == nullptr) {
+    return;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
+  if (input_names_vec.size() >= attr_names_vec.size()) {
+    size_t offset = input_names_vec.size() - attr_names_vec.size();
+    for (size_t i = offset; i < input_names_vec.size(); ++i) {
+      if (input_names_vec[i] != attr_names_vec[i - offset]) {
+        MS_LOG(EXCEPTION) << primitive->name() << " found mismatching attr name " << input_names_vec[i]
+                          << "in input_names and " << attr_names_vec[i - offset] << " in attr_names";
+      }
+      indexes->insert(i);
+    }
+  }
+}
 }  // namespace opt
 }  // namespace mindspore

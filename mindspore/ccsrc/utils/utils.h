@@ -336,6 +336,7 @@ constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
+constexpr auto kAttrAttrNames = "attr_names";
 constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";

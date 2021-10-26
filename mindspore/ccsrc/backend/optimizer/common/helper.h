@@ -229,6 +229,9 @@ std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_gra
 
 // Get total used number of node's output
 int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+
+// Get custom operator attr input indexes
+void GetCustomOpAttrIndex(const PrimitivePtr &primitive, std::unordered_set<size_t> *indexes);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_
