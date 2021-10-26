@@ -384,17 +384,17 @@ int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_in
   // For MatMul A
   if (input_index == 0) {
     if (matmul_parameter->a_transpose_) {
-      return last_second_index;
-    } else {
       return last_first_index;
+    } else {
+      return last_second_index;
     }
   }
   // For MatMul B
   if (input_index == 1) {
     if (matmul_parameter->b_transpose_) {
-      return last_first_index;
-    } else {
       return last_second_index;
+    } else {
+      return last_first_index;
     }
   }
   return 0;

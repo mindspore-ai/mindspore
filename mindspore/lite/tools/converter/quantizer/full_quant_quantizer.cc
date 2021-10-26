@@ -688,8 +688,7 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
         if (input_index == FIRST_INPUT + 1) {
           ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
         } else {
-          // optimize input2 is const to per_layer in the future.
-          ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+          ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
         }
       } else {
         ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
