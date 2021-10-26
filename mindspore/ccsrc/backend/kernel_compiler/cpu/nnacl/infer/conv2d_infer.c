@@ -96,8 +96,16 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   int input_h = in_shape[1];
   int input_w = in_shape[2];
+  int input_c = in_shape[3];
   int output_w = 0, output_h = 0;
 
+  // common conv: input_c == weight_tensor->shape_[3]
+  // conv depthwise: input_c == 1
+  // group conv: input_c / group == weight_tensor->shape_[3]
+  MS_CHECK_FALSE(param->group_ == 0, NNACL_PARAM_INVALID);
+  if (input_c != weight_tensor->shape_[3] && input_c != 1 && (input_c / param->group_) != weight_tensor->shape_[3]) {
+    return NNACL_PARAM_INVALID;
+  }
   if (param->stride_h_ == 0 || param->stride_w_ == 0) {
     return NNACL_PARAM_INVALID;
   }
