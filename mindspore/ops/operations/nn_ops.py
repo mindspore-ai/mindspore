@@ -3270,10 +3270,11 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
 
     Note:
-        The difference between `ApplyCenteredRMSProp` and `ApplyRMSProp` is that the fromer
+        The difference between `ApplyCenteredRMSProp` and `ApplyRMSProp` is that the former
         uses the centered RMSProp algorithm, and the centered RRMSProp algorithm uses an estimate of the centered second
         moment(i.e., the variance) for normalization, as opposed to regular RMSProp, which uses the (uncertained)
-        second moment. This often helps with training, but is slightly more expensive interms of computation and memory.
+        second moment. This often helps with training, but is slightly more expensive in terms of computation and
+        memory.
 
     .. warning::
         In dense implementation of this algorithm, `mean_gradient`, `mean_square`, and `moment` will update
