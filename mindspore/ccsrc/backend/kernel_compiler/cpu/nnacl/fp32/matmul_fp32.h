@@ -39,6 +39,8 @@ extern "C" {
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type);
 void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
+void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
+void MatVecMulFp32Block4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
 
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2RowMajor(const float *src_ptr, float *dst_ptr, int row, int col);
