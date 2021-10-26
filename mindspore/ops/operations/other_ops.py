@@ -339,7 +339,7 @@ class CheckValid(PrimitiveWithInfer):
         return mstype.bool_
 
 
-class IOU(PrimitiveWithInfer):
+class IOU(Primitive):
     r"""
     Calculates intersection over union for boxes.
 
@@ -390,20 +390,6 @@ class IOU(PrimitiveWithInfer):
         if mode not in {'iou', 'iof'}:
             raise KeyError(f"For '{self.name}', only 'iou' or 'iof' are supported, but got 'mode': {mode}.")
         self.init_prim_io_names(inputs=['anchor_boxes', 'gt_boxes'], outputs=['overlap'])
-
-    def infer_shape(self, anchor_boxes, gt_boxes):
-        validator.check_equal_int(gt_boxes[1], 4, 'gt_boxes shape[1]', self.name)
-        validator.check_equal_int(anchor_boxes[1], 4, 'anchor_boxes shape[1]', self.name)
-        validator.check_equal_int(len(anchor_boxes), 2, 'anchor_boxes rank', self.name)
-        validator.check_equal_int(len(gt_boxes), 2, 'gt_boxes rank', self.name)
-        iou = [gt_boxes[0], anchor_boxes[0]]
-        return iou
-
-    def infer_dtype(self, anchor_boxes, gt_boxes):
-        valid_type = [mstype.float32, mstype.float16]
-        validator.check_tensor_dtype_valid("anchor_boxes", anchor_boxes, valid_type, self.name)
-        validator.check_tensor_dtype_valid("gt_boxes", gt_boxes, valid_type, self.name)
-        return anchor_boxes
 
 
 class Partial(Primitive):
