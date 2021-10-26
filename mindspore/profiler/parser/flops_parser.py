@@ -165,15 +165,15 @@ class FlopsParser:
         logger.info("the aicore file path is %s", aicore_file_path)
 
         if not os.path.exists(aicore_file_path):
-            logger.error(f'The file {aicore_file_path} does not exist.')
+            logger.critical(f'The file {aicore_file_path} does not exist.')
             raise ProfilerFileNotFoundException('aicore.data')
 
         file_size = os.path.getsize(aicore_file_path)
         read_count = file_size // self.AICORE_LOG_SIZE
 
         if not read_count:
-            logger.error(f'the file {aicore_file_path} '
-                         f'does not have enough content to be parsed.')
+            logger.critical(f'the file {aicore_file_path} '
+                            f'does not have enough content to be parsed.')
             raise ProfilerRawFileException(
                 'aicore.data file does not have enough content to be parsed'
             )
@@ -182,7 +182,7 @@ class FlopsParser:
             with open(aicore_file_path, "rb") as aicore_file:
                 all_log_struct = aicore_file.read(self.AICORE_LOG_SIZE * read_count)
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {aicore_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {aicore_file_path} file: {err}')
             raise ProfilerIOException()
 
         return read_count, all_log_struct
@@ -195,7 +195,7 @@ class FlopsParser:
         )
 
         if not os.path.exists(info_json_file_path):
-            logger.error(f'The file {info_json_file_path} does not exist.')
+            logger.critical(f'The file {info_json_file_path} does not exist.')
             raise ProfilerFileNotFoundException(info_json_file_path)
 
         try:
@@ -206,7 +206,7 @@ class FlopsParser:
                 # peak_flops formula (provided by Hisi): device_frequency * num_of_aicore * 4096 * 2.
                 peak_flops = device_frequency * 1e6 * ai_core_num * 4096 * 2
         except (IOError, OSError, json.JSONDecodeError) as err:
-            logger.error(f'Error occurred when read {info_json_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {info_json_file_path} file: {err}')
             raise ProfilerIOException()
 
         return peak_flops
@@ -253,7 +253,7 @@ class FlopsParser:
         optime_file_path = os.path.join(self._output_dir, self._optime_filename)
 
         if not os.path.exists(optime_file_path):
-            logger.error(f'The {optime_file_path} file does not exist.')
+            logger.critical(f'The {optime_file_path} file does not exist.')
             raise ProfilerFileNotFoundException(optime_file_path)
 
         try:
@@ -264,7 +264,7 @@ class FlopsParser:
                     op_name, avg_time = line.split()[:2]
                     op_avg_time_dict[op_name] = avg_time
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {optime_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
             raise ProfilerIOException()
 
         return op_avg_time_dict
@@ -356,7 +356,7 @@ class FlopsParser:
                     f.writelines(line + '\n')
             os.chmod(output_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when writing {output_file_path} file: {err}')
+            logger.critical(f'Error occurred when writing {output_file_path} file: {err}')
             raise ProfilerIOException()
 
         for key in self._flops_summary:
@@ -366,7 +366,7 @@ class FlopsParser:
                 json.dump(self._flops_summary, json_file)
             os.chmod(output_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when write {output_summary_file_path} file: {err}')
+            logger.critical(f'Error occurred when write {output_summary_file_path} file: {err}')
             raise ProfilerIOException()
 
         try:
@@ -374,7 +374,7 @@ class FlopsParser:
                 json.dump(self._flops_sankey_diagram, json_file)
             os.chmod(output_flops_scope_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when write {output_flops_scope_file_path} file: {err}')
+            logger.critical(f'Error occurred when write {output_flops_scope_file_path} file: {err}')
             raise ProfilerIOException()
 
     def _get_aicore_files(self, profiler_dir):
@@ -431,7 +431,7 @@ class FlopsParser:
         _step_trace_file_path = os.path.join(self._output_dir, self._step_trace_filename)
 
         if not os.path.exists(_step_trace_file_path):
-            logger.error(f'The {_step_trace_file_path} file does not exist.')
+            logger.critical(f'The {_step_trace_file_path} file does not exist.')
             raise ProfilerFileNotFoundException(_step_trace_file_path)
         try:
             with open(_step_trace_file_path, 'r') as f:
@@ -456,7 +456,7 @@ class FlopsParser:
                         op_all_step_comp.append([0.0, end_point - fp])
 
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {optime_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
             raise ProfilerIOException()
         logger.info("the train step is %d .", len(op_all_step_time))
         if not op_all_step_time:
@@ -470,7 +470,7 @@ class FlopsParser:
         _timeline_file_path = os.path.join(self._output_dir, self._timeline_data_filename)
 
         if not os.path.exists(_timeline_file_path):
-            logger.error(f'The {_timeline_file_path} file does not exist.')
+            logger.critical(f'The {_timeline_file_path} file does not exist.')
             raise ProfilerFileNotFoundException(_timeline_file_path)
         try:
             with open(_timeline_file_path, 'r') as f:
@@ -482,7 +482,7 @@ class FlopsParser:
                     op_start = float(line[2])
                     op_start_time.append([op_name, op_start])
         except (IOError, OSError) as err:
-            logger.error(f'Error occurred when read {optime_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
             raise ProfilerIOException()
         if not op_start_time:
             logger.warning(f'Empty when read {optime_file_path} file, please check the valid'

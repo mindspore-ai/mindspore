@@ -38,8 +38,8 @@ AnfNodePtr GetTraceNode(const AbstractBasePtr &abs) {
 
 inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Type Join Failed: abstract type " << abstract1->type_name() << " cannot not join with "
-      << abstract2->type_name() << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
+  oss << "Type Join Failed: abstract type " << abstract1->type_name() << " cannot join with " << abstract2->type_name()
+      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
       << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   auto node = GetTraceNode(abstract1);
   if (node != nullptr) {

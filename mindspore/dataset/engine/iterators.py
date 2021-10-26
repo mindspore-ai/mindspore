@@ -180,7 +180,7 @@ class DictIterator(Iterator):
             ## maybe "Out of memory" / "MemoryError" error
             err_info = str(err)
             if err_info.find("Out of memory") >= 0 or err_info.find("MemoryError") >= 0:
-                logger.exception("Memory error occurred, process will exit.")
+                logger.critical("Memory error occurred, process will exit.")
                 os.kill(os.getpid(), signal.SIGKILL)
             raise err
 

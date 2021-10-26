@@ -51,7 +51,7 @@ static std::string GetProcName() {
 static std::string GetLogLevel(MsLogLevel level) {
 #define _TO_STRING(x) #x
   static const char *const level_names[] = {
-    _TO_STRING(DEBUG), _TO_STRING(INFO), _TO_STRING(WARNING), _TO_STRING(ERROR), _TO_STRING(EXCEPTION),
+    "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
   };
 #undef _TO_STRING
   if (level > this_thread_max_log_level) {
@@ -79,11 +79,11 @@ static int GetGlogLevel(MsLogLevel level) {
 static int GetThresholdLevel(const std::string &threshold) {
   if (threshold.empty()) {
     return google::GLOG_WARNING;
-  } else if (threshold == std::to_string(DEBUG) || threshold == std::to_string(INFO)) {
+  } else if (threshold == "DEBUG" || threshold == "INFO") {
     return google::GLOG_INFO;
-  } else if (threshold == std::to_string(WARNING)) {
+  } else if (threshold == "WARNING") {
     return google::GLOG_WARNING;
-  } else if (threshold == std::to_string(ERROR) || threshold == std::to_string(EXCEPTION)) {
+  } else if (threshold == "ERROR" || threshold == "CRITICAL") {
     return google::GLOG_ERROR;
   } else {
     return google::GLOG_WARNING;
@@ -299,7 +299,7 @@ class LogConfigParser {
   }
 
   // The text of config MS_SUBMODULE_LOG_v is in the form {submodule1:log_level1,submodule2:log_level2,...}.
-  // Valid values of log levels are: 0 - debug, 1 - info, 2 - warning, 3 - error, 4 - exception
+  // Valid values of log levels are: 0 - debug, 1 - info, 2 - warning, 3 - error, 4 - critical
   // e.g. MS_SUBMODULE_LOG_v={PARSER:0, ANALYZER:2, PIPELINE:1}
   std::map<std::string, std::string> Parse() {
     std::map<std::string, std::string> log_levels;

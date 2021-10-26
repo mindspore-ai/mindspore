@@ -163,7 +163,7 @@ class Profiler:
             # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
             if len(profiling_options) > 2048:
                 msg = "The parameter length exceeds the limit (2048), please input valid parameters."
-                logger.error(msg)
+                logger.critical(msg)
                 raise ValueError(msg)
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
             self._ascend_profiler = c_expression.AscendProfiler.get_instance()
@@ -215,7 +215,7 @@ class Profiler:
             job_dir = validate_and_normalize_path(job_dir)
             if not os.path.exists(job_dir):
                 msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
-                logger.error(msg)
+                logger.critical(msg)
                 raise ValueError(msg)
             self._output_path, _ = os.path.split(job_dir)
 
@@ -710,9 +710,9 @@ class Profiler:
             from hccl_parser.entry import hccl_parse_op
             hccl_parse_op(self._dev_id, self._output_path, hccl_path, op_type='all')
         except ImportError as err:
-            logger.error("%s,please check if the hccl_parser-{version}-py3-none-any.whl is installed."
-                         "The hccl_parser-{version}-py3-none-any.whl package is usually located "
-                         "in the /usr/local/Ascend/tools Directory", err)
+            logger.critical("%s,please check if the hccl_parser-{version}-py3-none-any.whl is installed."
+                            "The hccl_parser-{version}-py3-none-any.whl package is usually located "
+                            "in the /usr/local/Ascend/tools Directory", err)
             raise ImportError(err)
         logger.info("Parse hccl info successfully.")
         logger.info("Start analyse hccl info.")

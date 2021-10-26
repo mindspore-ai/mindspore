@@ -51,7 +51,7 @@ class ShardWriter:
         """
         ret = self._writer.open(paths, False)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to open paths")
+            logger.critical("Failed to open paths")
             raise MRMOpenError
         self._is_open = True
         return ret
@@ -71,7 +71,7 @@ class ShardWriter:
         """
         ret = self._writer.open_for_append(path)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to open path to append.")
+            logger.critical("Failed to open path to append.")
             raise MRMOpenForAppendError
         self._is_open = True
         return ret
@@ -91,7 +91,7 @@ class ShardWriter:
         """
         ret = self._writer.set_header_size(header_size)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to set header size.")
+            logger.critical("Failed to set header size.")
             raise MRMInvalidHeaderSizeError
         return ret
 
@@ -110,7 +110,7 @@ class ShardWriter:
         """
         ret = self._writer.set_page_size(page_size)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to set page size.")
+            logger.critical("Failed to set page size.")
             raise MRMInvalidPageSizeError
         return ret
 
@@ -130,7 +130,7 @@ class ShardWriter:
         self._header = shard_header
         ret = self._writer.set_shard_header(shard_header.header)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to set header.")
+            logger.critical("Failed to set header.")
             raise MRMSetHeaderError
         return ret
 
@@ -177,7 +177,7 @@ class ShardWriter:
         raw_data = {0: raw_data} if raw_data else {}
         ret = self._writer.write_raw_data(raw_data, blob_data, validate, parallel_writer)
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to write dataset.")
+            logger.critical("Failed to write dataset.")
             raise MRMWriteDatasetError
         return ret
 
@@ -220,7 +220,7 @@ class ShardWriter:
         """
         ret = self._writer.commit()
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to commit.")
+            logger.critical("Failed to commit.")
             raise MRMCommitError
         return ret
 

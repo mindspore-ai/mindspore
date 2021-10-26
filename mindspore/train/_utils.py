@@ -80,23 +80,23 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
 def _make_directory(path, arg_name='path'):
     """Make directory."""
     if not isinstance(path, str):
-        logger.error("The %s is invalid, the type should be string.", arg_name)
+        logger.critical("The %s is invalid, the type should be string.", arg_name)
         raise TypeError("The {} is invalid, the type should be string.".format(arg_name))
     if path.strip() == "":
-        logger.error("The %s is invalid, it should be non-blank.", arg_name)
+        logger.critical("The %s is invalid, it should be non-blank.", arg_name)
         raise ValueError("The {} is invalid, it should be non-blank.".format(arg_name))
 
     path = os.path.realpath(path)
 
     if len(path) > MAX_PATH_LENGTH:
-        logger.error("The %s length is too long, it should be limited in %s.", arg_name, MAX_PATH_LENGTH)
+        logger.critical("The %s length is too long, it should be limited in %s.", arg_name, MAX_PATH_LENGTH)
         raise ValueError("The {} length is too long, it should be limited in {}.".format(arg_name, MAX_PATH_LENGTH))
 
     logger.debug("The abs path is %r", path)
 
     if os.path.exists(path):
         if not os.path.isdir(path):
-            logger.error("The path(%r) is a file path, it should be a directory path.", path)
+            logger.critical("The path(%r) is a file path, it should be a directory path.", path)
             raise NotADirectoryError("The path({}) is a file path, it should be a directory path.".format(path))
         real_path = path
     else:
@@ -108,7 +108,7 @@ def _make_directory(path, arg_name='path'):
             os.makedirs(path, mode=mode, exist_ok=True)
             real_path = path
         except PermissionError as e:
-            logger.error("No write permission on the directory(%r), error = %r", path, e)
+            logger.critical("No write permission on the directory(%r), error = %r", path, e)
             raise TypeError("No write permission on the directory.")
         finally:
             pass
@@ -251,7 +251,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
             pb_content = f.read()
             model.ParseFromString(pb_content)
     except BaseException as e:
-        logger.error("Failed to read the file `%s`, please check the correct of the file.", file_name)
+        logger.critical("Failed to read the file `%s`, please check the correct of the file.", file_name)
         raise ValueError(e.__str__())
     finally:
         pass

@@ -61,7 +61,7 @@ class OPComputeTimeParser:
         hwts_list = []
 
         if not os.path.exists(self._hwts_output_file):
-            logger.error('The hwts output file does not exist.')
+            logger.critical('The hwts output file does not exist.')
             raise ProfilerFileNotFoundException('hwts output file')
 
         with open(self._hwts_output_file, 'r') as data_file:
@@ -169,7 +169,7 @@ class OPComputeTimeParser:
                     f_obj.write(','.join(timeline) + '\n')
             os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error('Error occurred when writing intermediate timeline file: %s', err)
+            logger.critical('Error occurred when writing intermediate timeline file: %s', err)
             raise ProfilerIOException
 
     def _calculate_op_execution_time(self):

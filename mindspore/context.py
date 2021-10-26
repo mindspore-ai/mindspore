@@ -62,7 +62,7 @@ def _make_directory(path):
             os.makedirs(path)
             real_path = path
         except PermissionError as e:
-            logger.error(f"No write permission on the directory `{path}`, error = {e}")
+            logger.critical(f"No write permission on the directory `{path}`, error = {e}")
             raise ValueError(f"No write permission on the directory `{path}`.")
     return real_path
 

@@ -38,7 +38,7 @@ class ShardIndexGenerator:
     def __init__(self, path, append=False):
         self._generator = ms.ShardIndexGenerator(path, append)
         if not self._generator:
-            logger.error("Failed to create index generator.")
+            logger.critical("Failed to create index generator.")
             raise MRMIndexGeneratorError
 
     def build(self):
@@ -53,7 +53,7 @@ class ShardIndexGenerator:
         """
         ret = self._generator.build()
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to build index generator.")
+            logger.critical("Failed to build index generator.")
             raise MRMGenerateIndexError
         return ret
 
@@ -69,6 +69,6 @@ class ShardIndexGenerator:
         """
         ret = self._generator.write_to_db()
         if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to write to database.")
+            logger.critical("Failed to write to database.")
             raise MRMGenerateIndexError
         return ret

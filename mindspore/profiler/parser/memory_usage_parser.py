@@ -85,7 +85,7 @@ class MemoryUsageParser:
             with open(file_path, 'rb') as f:
                 content = f.read()
         except (IOError, OSError) as err:
-            logger.error('Failed to read memory file: %s', err)
+            logger.critical('Failed to read memory file: %s', err)
             raise ProfilerIOException
 
         # Parse memory raw data from file.
@@ -98,7 +98,7 @@ class MemoryUsageParser:
                 memory_proto.ParseFromString(content)
             except ParseError as err:
                 msg = "Fail to parse memory proto file."
-                logger.error("Cannot parse the memory file. Please check the file schema.\n%s", err)
+                logger.critical("Cannot parse the memory file. Please check the file schema.\n%s", err)
                 raise ProfilerRawFileException(msg)
 
             # Parse memory details based on graphs in the network.
@@ -139,7 +139,7 @@ class MemoryUsageParser:
                 json.dump(content, json_file)
                 os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            logger.error('Fail to write memory file.\n%s', err)
+            logger.critical('Fail to write memory file.\n%s', err)
             raise ProfilerIOException
 
     def write_memory_files(self):
