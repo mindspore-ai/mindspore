@@ -102,6 +102,7 @@ echo 'runtime pass'
 
 echo 'runtime convert'
 ./lite-test --gtest_filter="RuntimeConvert.*"
+./lite-test --gtest_filter="BenchmarkTest.runtimeConvert1"
 
 echo 'Optimize Allocator'
 ./lite-test --gtest_filter="OptAllocator.*"

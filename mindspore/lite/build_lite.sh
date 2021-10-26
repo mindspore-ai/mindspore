@@ -39,6 +39,7 @@ write_commit_file() {
 
 build_lite_x86_64_jni_and_jar() {
     X86_JNI_CMAKE_ARGS=$1
+    export MSLITE_ENABLE_RUNTIME_CONVERT=off
     # copy x86 so
     local is_train=on
     cd ${BASEPATH}/output/tmp

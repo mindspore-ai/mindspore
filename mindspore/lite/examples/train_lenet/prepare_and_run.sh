@@ -125,6 +125,7 @@ cp scripts/*.sh ${PACKAGE}/
 # Copy the shared MindSpore ToD library
 tar -xzf ${TARBALL}
 mv mindspore-*/runtime/lib ${PACKAGE}/
+mv mindspore-*/runtime/third_party/glog/* ${PACKAGE}/lib/
 mv mindspore-*/runtime/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 cd mindspore-*
 if [[ "${TARGET}" == "arm64" ]] && [[ -d "runtime/third_party/hiai_ddk/lib" ]]; then
