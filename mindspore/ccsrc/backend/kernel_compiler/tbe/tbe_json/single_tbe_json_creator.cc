@@ -15,6 +15,8 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_json/single_tbe_json_creator.h"
+#include <algorithm>
+#include <string>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
@@ -374,51 +376,5 @@ bool SelectTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, c
   MS_EXCEPTION_IF_NULL(attrs_json);
   tbe::TbeAdapter::LayerNormAttrJsonPost(anf_node, attrs_json);
   return true;
-}
-
-void CheckTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
-                                      nlohmann::json *output_desc) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesJsonCommon(output_desc);
-  std::vector<int64_t> shape;
-  std::vector<int64_t> ori_shape;
-  ori_shape = TbeJsonUtils::GetOutputOriShapeForTbeBuild(anf_node, node_out_idx);
-  if (ori_shape.empty()) {
-    ori_shape.emplace_back(1);
-  }
-  shape = ori_shape;
-  auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  auto format = def_format;
-
-  (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx));
-  (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);
-  (*output_desc)[kJFormat] = format;
-  (*output_desc)[kJOriFormat] = def_format;
-  (*output_desc)[kJOriShape] = ori_shape;
-  (*output_desc)[kJShape] = shape;
-  (*output_desc)[kJOutputIndex] = desc_output_idx;
-}
-
-void CheckTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index,
-                                           nlohmann::json *input_desc) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesJsonCommon(input_desc);
-  auto ori_shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
-  if (ori_shape.empty()) {
-    ori_shape.emplace_back(1);
-  }
-  auto shape = ori_shape;
-
-  auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  auto format = def_format;
-  (*input_desc)[kJDtype] = tbe::TypeIdToString(AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index));
-  (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
-  (*input_desc)[kJOriShape] = ori_shape;
-  (*input_desc)[kJOriFormat] = def_format;
-  (*input_desc)[kJShape] = shape;
-  (*input_desc)[kJFormat] = format;
-  (*input_desc)[kJValid] = true;
-  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
-  GenInputConstValue(anf_node, real_input_index, input_desc);
 }
 }  // namespace mindspore::kernel

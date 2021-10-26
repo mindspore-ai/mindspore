@@ -46,11 +46,6 @@ class CheckTbeJsonCreator : public SingleTbeJsonCreator {
  public:
   CheckTbeJsonCreator() = default;
   ~CheckTbeJsonCreator() override = default;
-
- protected:
-  void GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
-                   nlohmann::json *output_desc) override;
-  void GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc) override;
 };
 class SelectTbeJsonCreator : public SingleTbeJsonCreator {
  public:
