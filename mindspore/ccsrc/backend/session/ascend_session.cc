@@ -293,10 +293,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_EXCEPTION_IF_NULL(kernel_graph);
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto &input_nodes = kernel_graph->input_nodes();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
+  if (device::KernelRuntime::use_mem_scheduler()) {
     kernel_graph->SetInputTensors(inputs);
     return;
   }
@@ -342,6 +339,8 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
                                             tensor->data_c(), tensor->device_info().host_format_)) {
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
       if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
           AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
         tensor->set_device_address(device_address);
@@ -539,8 +538,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
-    auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-    if (!enable_mem_scheduler) {
+    if (!device::KernelRuntime::use_mem_scheduler()) {
       AnfAlgo::CacheAddrForGraph(graph);
     }
     // generate and load task info to device if it is sink mode
@@ -577,8 +575,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   // optimize graph
   HardwareOptimize(child_graph);
   // assign static memory of parameters
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (!enable_mem_scheduler) {
+  if (!device::KernelRuntime::use_mem_scheduler()) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     runtime_instance->AssignStaticMemoryInput(*child_graph);
@@ -1801,10 +1798,7 @@ void AscendSession::ExecuteAllTaskInQueue() {
 void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
                                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                         std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
+  if (device::KernelRuntime::use_mem_scheduler()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(outputs);

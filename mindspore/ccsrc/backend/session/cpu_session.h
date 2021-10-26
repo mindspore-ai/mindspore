@@ -34,7 +34,8 @@ class CPUSession : public SessionBasic {
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override { SessionBasic::UnifyMindIR(graph); }
   void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *,
-                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
+                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                           KernelMapTensor *node_to_tensor) override;
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   void PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                        VectorRef *const outputs) override;

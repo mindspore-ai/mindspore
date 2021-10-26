@@ -211,7 +211,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual bool IsSupportSummary() { return true; }
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
-                                   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
+                                   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                   KernelMapTensor *node_to_tensor);
   // When the device address of the node is used as the output of the graph, the device address will be passed
   // to the output tensor, and the output node will recreate a new device address. This third parameter records
   // the relationship between the new and old device address.
