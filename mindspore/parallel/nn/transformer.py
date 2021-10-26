@@ -285,8 +285,8 @@ class FeedForward(Cell):
           Float tensor.
 
     Outputs:
-        Tensor, the output of this layer after mapping.
-          The shape is `[batch, seq_length, hidden_size] or [batch * seq_length, hidden_size]`.
+        Tensor. the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size] or
+        [batch * seq_length, hidden_size]`.
 
     Raises:
         ValueError: `hidden_act` is not a string.
@@ -1975,7 +1975,8 @@ class TransformerDecoder(Cell):
             represents the transformer block, `layer_id(int)` means the layer index for the current module, counts from
             zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net. The
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
-            Default: None
+            Default: None.
+        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
         parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
                                            an instance of `TransformerOpParallelConfig` with default args.
@@ -2172,6 +2173,7 @@ class Transformer(Cell):
         hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
                          'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
         lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the user
             wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a function
