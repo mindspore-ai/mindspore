@@ -318,15 +318,14 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
   session_->SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();
 
-  // Cache the backend graph output nodes to front nodes with output index.
-  for (auto &output : outputs) {
-    auto backend_node = graph->GetBackendAnfByFrontAnf(output);
-    if (backend_node != nullptr) {
-      graph->CacheGraphOutputToFrontNodeWithIndex(backend_node, output);
-    }
-  }
+  auto graph_id = CompileGraphImpl(graph, device_context);
 
-  return CompileGraphImpl(graph, device_context);
+  // Cache the backend graph output nodes to front nodes with output index.
+  auto backend_node = graph->output();
+  MS_EXCEPTION_IF_NULL(backend_node);
+  graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
+
+  return graph_id;
 }
 
 GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context) {
@@ -347,14 +346,16 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   // The graph common optimization.
   opt::BackendCommonOptimization(root_graph);
 
+  auto graph_id = CompileGraphImpl(root_graph, device_context);
+
   // Cache the backend graph output nodes to front nodes with output index.
   auto output = func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
-  auto backend_node = root_graph->GetBackendAnfByFrontAnf(output);
+  auto backend_node = root_graph->output();
   MS_EXCEPTION_IF_NULL(backend_node);
-  root_graph->CacheGraphOutputToFrontNodeWithIndex(backend_node, output);
+  root_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {output});
 
-  return CompileGraphImpl(root_graph, device_context);
+  return graph_id;
 }
 
 GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
@@ -376,9 +377,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   graph->set_is_executing_sink(is_executing_sink);
   graph->set_is_loop_count_sink(is_loop_count_sink);
 
-  MS_LOG(INFO) << "Get graph outputs before optimizer, graph id: " << graph->graph_id();
-  auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
-
   // Execute optimization pass.
   device_context->OptimizeGraph(graph);
 
@@ -388,11 +386,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
-
-  MS_LOG(INFO) << "Get graph outputs after optimizer, graph id: " << graph->graph_id();
-  auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
-  // Update the output map of kernel graph by modified output nodes.
-  graph->UpdateGraphOutputMap(outputs_before_optimizer, outputs_after_optimizer);
 
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     // Create device address for all anf nodes of graph.
