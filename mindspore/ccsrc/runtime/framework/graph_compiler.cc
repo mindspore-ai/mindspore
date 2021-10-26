@@ -47,7 +47,7 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
   if (AnfAlgo::OutputAddrExist(kernel, index)) {
-    const auto &address = AnfAlgo::GetOutputAddr(kernel, index);
+    const auto &address = AnfAlgo::GetOutputAddr(kernel, index, false);
     MS_EXCEPTION_IF_NULL(address);
     return address->DeviceType() == device_context->GetDeviceAddressType();
   }

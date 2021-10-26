@@ -134,7 +134,9 @@ void OutputActor::UpdateOutputDeviceAddress() {
       MS_EXCEPTION_IF_NULL(new_device_tensor);
       new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
       new_device_tensor->ResetRefCount();
-      AnfAlgo::SetOutputAddr(new_device_tensor, output_index, output_node.get());
+      // Support skip nop node.
+      const auto &real_output_node = AnfAlgo::VisitKernelWithReturnType(output_node, output_index);
+      AnfAlgo::SetOutputAddr(new_device_tensor, real_output_node.second, real_output_node.first.get());
     }
   }
 
