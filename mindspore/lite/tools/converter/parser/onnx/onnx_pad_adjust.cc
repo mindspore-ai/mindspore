@@ -35,12 +35,11 @@ ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vecto
   MS_CHECK_TRUE_RET(parameter != nullptr, nullptr);
   ShapeVector shape_vector;
   shape_vector.push_back(static_cast<int64_t>(data.size()));
-  size_t size = data.size() * sizeof(int);
   if (INT_MUL_OVERFLOW_THRESHOLD(data.size(), sizeof(int), SIZE_MAX)) {
     MS_LOG(ERROR) << "data_size overflow";
     return nullptr;
   }
-
+  size_t size = data.size() * sizeof(int);
   auto tensor_info = lite::CreateTensorInfo(data.data(), size, shape_vector, kNumberTypeInt32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";

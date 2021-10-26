@@ -65,9 +65,11 @@ STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode
     MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
     activationParam->activation_type = addNode->primitive->value.AsAddFusion()->activation_type;
     addNode->primitive->value.type = schema::PrimitiveType_Activation;
+    delete (reinterpret_cast<mindspore::schema::AddFusionT *>(addNode->primitive->value.value));
     addNode->primitive->value.value = activationParam.release();
     addNode->inputIndex.pop_back();
   }
+  delete (reinterpret_cast<mindspore::schema::MulFusionT *>(mulNode->primitive->value.value));
   mulNode->primitive->value.value = scaleParam.release();
   return RET_OK;
 }

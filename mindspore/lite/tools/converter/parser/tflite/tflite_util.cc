@@ -117,7 +117,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
       return RET_ERROR;
     }
     int H_output = ceil(H_input * 1.0 / strideH);
-    if (INT_MUL_OVERFLOW_THRESHOLD((H_output - 1), static_cast<size_t>(strideH), SIZE_MAX)) {
+    if (INT_MUL_OVERFLOW(H_output - 1, strideH)) {
       MS_LOG(ERROR) << "data_size overflow";
       return RET_ERROR;
     }
@@ -129,7 +129,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
       return RET_ERROR;
     }
     int W_output = ceil(W_input * 1.0 / strideW);
-    if (INT_MUL_OVERFLOW_THRESHOLD((W_output - 1), static_cast<size_t>(strideW), SIZE_MAX)) {
+    if (INT_MUL_OVERFLOW(W_output - 1, strideW)) {
       MS_LOG(ERROR) << "data_size overflow";
       return RET_ERROR;
     }

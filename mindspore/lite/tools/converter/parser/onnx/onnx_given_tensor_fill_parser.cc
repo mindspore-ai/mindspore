@@ -29,7 +29,11 @@ namespace {
 STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                    const std::vector<int> &shape) {
   MS_ASSERT(prim != nullptr);
-  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+  int data_count = 1;
+  for (size_t i = 0; i < shape.size(); i++) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(data_count, shape.at(i)), RET_ERROR, "Int mul overflow.");
+    data_count = data_count * shape.at(i);
+  }
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
@@ -53,7 +57,11 @@ STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::Primit
 STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                 const std::vector<int> &shape) {
   MS_ASSERT(prim != nullptr);
-  int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+  int data_count = 1;
+  for (size_t i = 0; i < shape.size(); i++) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(data_count, shape.at(i)), RET_ERROR, "Int mul overflow.");
+    data_count = data_count * shape.at(i);
+  }
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
