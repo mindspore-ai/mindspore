@@ -494,7 +494,7 @@ void KernelMeta::UpdateCache(const std::string &kernel_name) {
   auto kernel_pack_iter = kernel_pack_map_.find(kernel_name);
   if (kernel_pack_iter != kernel_pack_map_.end()) {
     // cache exists, skip
-    MS_LOG(INFO) << "Kernel pack already exist, skip. Kernel name:" << kernel_name;
+    MS_LOG(DEBUG) << "Kernel pack already exist, skip. Kernel name:" << kernel_name;
     return;
   }
   auto config_path = TbeUtils::GetOpDebugPath();

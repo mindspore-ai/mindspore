@@ -438,7 +438,7 @@ void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const st
 
 void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
                                              const std::string &job_type, const std::vector<AnfNodePtr> &output_nodes) {
-  MS_LOG(INFO) << "Save io size info for " << json_name;
+  MS_LOG(DEBUG) << "Save io size info for " << json_name;
   if (kernel_io_size_info_.find(json_name) != kernel_io_size_info_.end()) {
     MS_LOG(DEBUG) << "Io size info of " << json_name << " already exist, skip.";
     return;
