@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_FAKE_LEARNED_SCALE_QUANT_GRAD_UNIFY_MINDIR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_FAKE_LEARNED_SCALE_QUANT_GRAD_UNIFY_MINDIR_H_
 
+#include <vector>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -41,6 +42,13 @@ class FakeLearnedScaleQuantPerLayerGradUnifyMindIR : public PatternProcessPass {
   ~FakeLearnedScaleQuantPerLayerGradUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
+                                       std::vector<AnfNodePtr> *const lsq_perlayer_grad_d_outputs) const;
+  void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
+                                            const std::vector<AnfNodePtr> &lsq_perlayer_grad_d_outputs,
+                                            std::vector<AnfNodePtr> *const lsq_perlayer_reduce_grad_outputs) const;
 };
 
 class FakeLearnedScaleQuantPerChannelGradUnifyMindIR : public PatternProcessPass {
@@ -50,6 +58,13 @@ class FakeLearnedScaleQuantPerChannelGradUnifyMindIR : public PatternProcessPass
   ~FakeLearnedScaleQuantPerChannelGradUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
+                                         std::vector<AnfNodePtr> *const lsq_perchannel_grad_d_outputs) const;
+  void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
+                                              const std::vector<AnfNodePtr> &lsq_perchannel_grad_d_outputs,
+                                              std::vector<AnfNodePtr> *const lsq_perchannel_reduce_grad_outputs) const;
 };
 
 }  // namespace opt

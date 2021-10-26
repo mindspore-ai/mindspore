@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,9 @@ uint32_t GetRankSize(const std::string &group) {
   }
   return rank_size;
 }
+}  // namespace
 
-CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) {
+CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(all_to_all);
   int64_t split_count = AnfAlgo::GetNodeAttr<int64_t>(all_to_all, kAttrSplitCount);
@@ -66,7 +67,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
   auto all_to_all_input = all_to_all->input(kAllToAllInputIdx);
   std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
                                          all_to_all_input};
-  auto split_v = graph->NewCNode(split_input);
+  auto split_v = NewCNode(split_input, graph);
   MS_EXCEPTION_IF_NULL(split_v);
   auto dtype = AnfAlgo::GetOutputInferDataType(all_to_all_input, 0);
   auto shape = AnfAlgo::GetOutputInferShape(all_to_all_input, 0);
@@ -90,7 +91,8 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
   return split_v;
 }
 
-CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &split) {
+CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
+                                                  const CNodePtr &split) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(all_to_all);
   MS_EXCEPTION_IF_NULL(split);
@@ -103,7 +105,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   }
   std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
   (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
-  auto all_to_all_v = graph->NewCNode(all_to_all_v_input);
+  auto all_to_all_v = NewCNode(all_to_all_v_input, graph);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
   auto single_shape = AnfAlgo::GetOutputInferShape(split_outputs[0], 0);
   auto single_type = AnfAlgo::GetOutputInferDataType(split_outputs[0], 0);
@@ -123,7 +125,8 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   return all_to_all_v;
 }
 
-CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &all_to_all_v) {
+CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
+                                               const CNodePtr &all_to_all_v) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(all_to_all);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
@@ -136,7 +139,7 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   }
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.end());
-  auto concat = graph->NewCNode(concat_input);
+  auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
   auto single_shape = AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
   concat_dim = NormalizeDim(single_shape, concat_dim);
@@ -152,7 +155,6 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
   return concat;
 }
-}  // namespace
 
 const BaseRef NeighborExchangeUnifyMindIR::DefinePattern() const {
   return VectorRef({prim::kPrimNeighborExchange, std::make_shared<SeqVar>()});

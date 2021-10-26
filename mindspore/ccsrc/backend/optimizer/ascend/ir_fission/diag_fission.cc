@@ -96,7 +96,7 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
   (void)new_inputs.insert(new_inputs.end(), diag_cnode->inputs().begin() + 1, diag_cnode->inputs().end());
   new_inputs.push_back(assist_const);
-  CNodePtr new_cnode = graph->NewCNode(new_inputs);
+  CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(diag_cnode->abstract());
   new_cnode->set_scope(diag_cnode->scope());

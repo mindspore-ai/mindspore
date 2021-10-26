@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
   inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
   inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
   inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));
-  auto new_node = graph->NewCNode(inputs);
+  auto new_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());

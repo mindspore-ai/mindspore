@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ AnfNodePtr LambNextMVWithDecayRule::CreateLambNextMVWithDecayNode(const FuncGrap
   auto constant_add2_y_node = utils::cast<AnfNodePtr>((*equiv)[constant_add2_y_]);
   MS_EXCEPTION_IF_NULL(constant_add2_y_node);
   new_node_inputs.push_back(constant_add2_y_node);
-  auto new_node = func_graph->NewCNode(new_node_inputs);
+  auto new_node = NewCNode(new_node_inputs, func_graph);
   return GetLambNextMVWithDecayOutput(func_graph, new_node, add3, add5, equiv);
 }
 

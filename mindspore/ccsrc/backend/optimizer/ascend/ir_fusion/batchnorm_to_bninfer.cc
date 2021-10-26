@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +26,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-CNodePtr CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(batchnorm);
-  MS_EXCEPTION_IF_NULL(node);
-  auto prim = std::make_shared<Primitive>(kBNInferOpName);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
-  for (size_t i = 1; i < batchnorm->size(); ++i) {
-    inputs.push_back(batchnorm->input(i));
-  }
-  auto new_node = graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(new_node);
-  new_node->set_scope(batchnorm->scope());
-  new_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
-  return new_node;
-}
-
 bool CheckIndex(const AnfNodePtr &index_node) {
   MS_EXCEPTION_IF_NULL(index_node);
   if (!IsValueNode<Int64Imm>(index_node)) {
@@ -102,6 +84,25 @@ bool NeedFusion(const FuncGraphPtr &graph, const AnfNodePtr &node, CNodePtr *bat
   return CheckBatchNorm(graph, *batchnorm);
 }
 }  // namespace
+
+CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm,
+                                          const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(batchnorm);
+  MS_EXCEPTION_IF_NULL(node);
+  auto prim = std::make_shared<Primitive>(kBNInferOpName);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
+  for (size_t i = 1; i < batchnorm->size(); ++i) {
+    inputs.push_back(batchnorm->input(i));
+  }
+  auto new_node = NewCNode(inputs, graph);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_scope(batchnorm->scope());
+  new_node->set_abstract(node->abstract());
+  AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
+  AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
+  return new_node;
+}
 
 const BaseRef BatchNorm2BNInfer::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

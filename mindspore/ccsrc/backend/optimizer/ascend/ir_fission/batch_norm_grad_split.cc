@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,8 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
-                               std::vector<AnfNodePtr> *bn_update_grad_outputs) {
+void BatchNormGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                                   std::vector<AnfNodePtr> *bn_update_grad_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   const auto &bn_grad_inputs = bn_grad_node->inputs();
@@ -37,7 +36,7 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   std::vector<AnfNodePtr> bn_update_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[kIndex1],
     bn_grad_inputs[kIndex2], bn_grad_inputs[kIndex4], bn_grad_inputs[kIndex5]};
-  auto bn_update_grad = graph->NewCNode(bn_update_grad_inputs);
+  auto bn_update_grad = NewCNode(bn_update_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_update_grad);
   bn_update_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_update_grad->set_scope(bn_grad_node->scope());
@@ -50,9 +49,9 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   CreateMultipleOutputsOfAnfNode(graph, bn_update_grad, kBNTrainingUpdateGradOutputNum, bn_update_grad_outputs);
 }
 
-void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
-                               const std::vector<AnfNodePtr> &bn_update_grad_outputs,
-                               std::vector<AnfNodePtr> *bn_reduce_grad_outputs) {
+void BatchNormGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                                   const std::vector<AnfNodePtr> &bn_update_grad_outputs,
+                                                   std::vector<AnfNodePtr> *bn_reduce_grad_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   MS_EXCEPTION_IF_NULL(bn_reduce_grad_outputs);
@@ -71,7 +70,7 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
     bn_grad_inputs[kIndex3],
     bn_grad_inputs[kIndex4],
     bn_grad_inputs[kIndex5]};
-  auto bn_reduce_grad = graph->NewCNode(bn_reduce_grad_inputs);
+  auto bn_reduce_grad = NewCNode(bn_reduce_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_reduce_grad);
   bn_reduce_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_reduce_grad->set_scope(bn_grad_node->scope());
@@ -83,7 +82,7 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
   (*bn_reduce_grad_outputs).push_back(bn_reduce_grad);
 }
-}  // namespace
+
 const BaseRef BatchNormGradSplit::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto prim = std::make_shared<Primitive>(kBatchNormGradOpName);

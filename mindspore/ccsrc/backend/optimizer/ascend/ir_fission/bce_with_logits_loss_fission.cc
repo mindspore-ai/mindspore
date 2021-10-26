@@ -26,8 +26,7 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -36,7 +35,7 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   std::vector<AnfNodePtr> new_simoid_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimBCEWithLogitsLoss->name()))};
   new_simoid_inputs.insert(new_simoid_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  CNodePtr new_cnode = func_graph->NewCNode(new_simoid_inputs);
+  CNodePtr new_cnode = NewCNode(new_simoid_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto predict_input = cnode->inputs()[kIndex1];
   auto new_node_dtype = {AnfAlgo::GetOutputInferDataType(predict_input, 0)};
@@ -55,7 +54,7 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
     MS_LOG(INFO) << "Reduction attr is not mean or sum, can not do fission.";
     return nullptr;
   }
-  auto reduce_node = func_graph->NewCNode(reduce_inputs);
+  auto reduce_node = NewCNode(reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
   auto type = AnfAlgo::GetOutputInferDataType(node, 0);
   if (type == kNumberTypeFloat16) {
@@ -69,7 +68,6 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   reduce_node->set_scope(cnode->scope());
   return reduce_node;
 }
-}  // namespace
 
 const BaseRef BCEWithLogitsLossFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

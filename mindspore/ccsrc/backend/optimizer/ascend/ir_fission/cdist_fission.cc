@@ -55,13 +55,13 @@ std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vec
 }
 
 AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int64_t dim,
-                              const std::vector<size_t> &need_shape) {
+                              const std::vector<size_t> &need_shape, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   // Add ExpandDims Node
   std::vector<AnfNodePtr> expand_dims_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimExpandDims->name())), input_node};
-  auto expand_dims = func_graph->NewCNode(expand_dims_inputs);
+  auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
   auto dtype = AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = AnfAlgo::GetOutputInferShape(input_node, 0);
   (void)expand_shape.insert(expand_shape.end() + dim, 1);
@@ -71,7 +71,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   // Add BroadCastTo Node
   std::vector<AnfNodePtr> broadcast_to_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())), expand_dims};
-  auto broadcast_to = func_graph->NewCNode(broadcast_to_inputs);
+  auto broadcast_to = pass.NewCNode(broadcast_to_inputs, func_graph);
   AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
   std::vector<int64_t> shape;
   (void)std::transform(need_shape.begin(), need_shape.end(), std::back_inserter(shape), LongToSize);
@@ -110,11 +110,11 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   auto x_shape = AnfAlgo::GetOutputInferShape(cdist_inputs[kDim1], 0);
   auto y_shape = AnfAlgo::GetOutputInferShape(cdist_inputs[kDim2], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
-  auto broadcast_input_x = AddBroadCastToNode(graph, cdist_inputs[kDim1], kInputXDimP, broadcast_to_shape);
-  auto broadcast_input_y = AddBroadCastToNode(graph, cdist_inputs[kDim2], kInputYDimR, broadcast_to_shape);
+  auto broadcast_input_x = AddBroadCastToNode(graph, cdist_inputs[kDim1], kInputXDimP, broadcast_to_shape, *this);
+  auto broadcast_input_y = AddBroadCastToNode(graph, cdist_inputs[kDim2], kInputYDimR, broadcast_to_shape, *this);
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimCdist->name())),
                                      broadcast_input_x, broadcast_input_y};
-  CNodePtr new_cnode = graph->NewCNode(new_inputs);
+  CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_cnode->abstract());
   new_cnode->set_scope(cdist_cnode->scope());
@@ -140,13 +140,13 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   auto x_shape = AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim2], 0);
   auto y_shape = AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim3], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
-  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], 0, broadcast_to_shape);
-  auto broadcast_input_x = AddBroadCastToNode(graph, cdist_grad_inputs[kDim2], kInputXDimP, broadcast_to_shape);
-  auto broadcast_input_y = AddBroadCastToNode(graph, cdist_grad_inputs[kDim3], kInputYDimR, broadcast_to_shape);
-  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], 0, broadcast_to_shape);
+  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], 0, broadcast_to_shape, *this);
+  auto broadcast_input_x = AddBroadCastToNode(graph, cdist_grad_inputs[kDim2], kInputXDimP, broadcast_to_shape, *this);
+  auto broadcast_input_y = AddBroadCastToNode(graph, cdist_grad_inputs[kDim3], kInputYDimR, broadcast_to_shape, *this);
+  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], 0, broadcast_to_shape, *this);
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimCdistGrad->name())),
                                      broadcast_grad, broadcast_input_x, broadcast_input_y, broadcast_out};
-  CNodePtr new_cnode = graph->NewCNode(new_inputs);
+  CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_grad_cnode->abstract());
   new_cnode->set_scope(cdist_grad_cnode->scope());

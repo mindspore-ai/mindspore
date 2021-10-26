@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
   std::vector<AnfNodePtr> bn_infer_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNInferGradOpName)), utils::cast<AnfNodePtr>(iter_input0->second),
     utils::cast<AnfNodePtr>(iter_input2->second), utils::cast<AnfNodePtr>(iter_input4->second)};
-  auto bn_infer_grad = func_graph->NewCNode(bn_infer_grad_inputs);
+  auto bn_infer_grad = NewCNode(bn_infer_grad_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_infer_grad);
   // Set abstract, the output of new node is taking the place of the 0th output of bn_grad.
   auto bn_grad_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn_grad->abstract());
@@ -125,7 +125,7 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)),
     utils::cast<AnfNodePtr>(iter_input0->second), utils::cast<AnfNodePtr>(iter_input1->second),
     utils::cast<AnfNodePtr>(iter_input3->second), utils::cast<AnfNodePtr>(iter_input4->second)};
-  auto bn_training_update_grad = func_graph->NewCNode(bn_training_update_grad_inputs);
+  auto bn_training_update_grad = NewCNode(bn_training_update_grad_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_update_grad);
   // Set abstract, the outputs of new node are taking the place of the 1st and 2nd outputs of bn_grad.
   auto bn_grad_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn_grad->abstract());

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::opt {
+namespace {
 constexpr size_t kFloat16Len = 2;  // size of float16;
 constexpr size_t kTopkIndexK = 1;
-namespace {
+
 tensor::TensorPtr CreateTensor() {
   // 1 create tensor
   const size_t last_dim = 4096;
@@ -142,7 +143,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   // Copy a new node to check supported.
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKOpName))};
   new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+  CNodePtr new_cnode = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());

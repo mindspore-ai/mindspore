@@ -30,7 +30,8 @@ constexpr size_t kMomentumOutputNum = 2;
 constexpr size_t kRMSPropOutputNum = 3;
 constexpr size_t kCenteredRMSPropOutputNum = 4;
 
-CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const size_t output_size) {
+CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const size_t output_size,
+                       const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -53,7 +54,7 @@ CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const 
   cnode_ptr->set_abstract(abstract_tuple);
 
   auto index = NewValueNode(static_cast<int64_t>(0));
-  auto get_item = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_ptr, index});
+  auto get_item = pass.NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_ptr, index}, graph);
   MS_EXCEPTION_IF_NULL(get_item);
 
   get_item->set_abstract(abstract->Clone());
@@ -76,7 +77,7 @@ const BaseRef FtrlUnifyOutput::DefinePattern() const {
 }
 
 const AnfNodePtr FtrlUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
-  return ProcessOutput(graph, node, kFtrlOutputNum);
+  return ProcessOutput(graph, node, kFtrlOutputNum, *this);
 }
 
 const BaseRef MomentumUnifyOutput::DefinePattern() const {
@@ -92,7 +93,7 @@ const BaseRef MomentumUnifyOutput::DefinePattern() const {
 
 const AnfNodePtr MomentumUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
-  return ProcessOutput(graph, node, kMomentumOutputNum);
+  return ProcessOutput(graph, node, kMomentumOutputNum, *this);
 }
 
 const BaseRef RMSPropUnifyOutput::DefinePattern() const {
@@ -103,7 +104,7 @@ const BaseRef RMSPropUnifyOutput::DefinePattern() const {
 
 const AnfNodePtr RMSPropUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
-  return ProcessOutput(graph, node, kRMSPropOutputNum);
+  return ProcessOutput(graph, node, kRMSPropOutputNum, *this);
 }
 
 const BaseRef CenteredRMSPropUnifyOutput::DefinePattern() const {
@@ -123,7 +124,7 @@ const BaseRef CenteredRMSPropUnifyOutput::DefinePattern() const {
 
 const AnfNodePtr CenteredRMSPropUnifyOutput::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                      const EquivPtr &) const {
-  return ProcessOutput(graph, node, kCenteredRMSPropOutputNum);
+  return ProcessOutput(graph, node, kCenteredRMSPropOutputNum, *this);
 }
 }  // namespace opt
 }  // namespace mindspore

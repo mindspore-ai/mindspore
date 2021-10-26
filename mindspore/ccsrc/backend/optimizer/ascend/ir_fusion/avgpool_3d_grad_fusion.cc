@@ -235,7 +235,7 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
       ConstructMultiplier(func_graph, dims_in, origin_input_shape, kernel_size, strides, pad_list, count_include_pad);
     new_inputs.push_back(multiplier);
   }
-  auto new_3d_grad = func_graph->NewCNode(new_inputs);
+  auto new_3d_grad = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_3d_grad);
   new_3d_grad->set_scope(avg_pool_3d_grad_node->scope());
   new_3d_grad->set_abstract(avg_pool_3d_grad_node->abstract());

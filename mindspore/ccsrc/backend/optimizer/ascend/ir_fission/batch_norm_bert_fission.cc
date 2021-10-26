@@ -58,8 +58,9 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
   }
   return output_num == kBatchNormRealOutputNum;
 }
+}  // namespace
 
-AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) {
+AnfNodePtr BatchNormBertFission::CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
@@ -70,7 +71,7 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(kIndex1)};
-  auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
+  auto bn_training_reduce = NewCNode(bn_training_reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
   auto bn_input1 = bn_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(bn_input1);
@@ -84,8 +85,9 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   return bn_training_reduce;
 }
 
-AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNodePtr &bn,
-                                    const std::vector<AnfNodePtr> &bn_training_reduce_outputs) {
+AnfNodePtr BatchNormBertFission::CreateBNTrainingUpdateV2(
+  const FuncGraphPtr &func_graph, const AnfNodePtr &bn,
+  const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
@@ -106,7 +108,7 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
     bn_training_reduce_outputs[kIndex1],
     bn_cnode->input(kIndex2),
     bn_cnode->input(kIndex3)};
-  auto bn_training_update_v2 = func_graph->NewCNode(bn_training_update_v2_inputs);
+  auto bn_training_update_v2 = NewCNode(bn_training_update_v2_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_update_v2);
 
   auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn->abstract());
@@ -124,7 +126,6 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
   AnfAlgo::CopyNodeAttrs(bn, bn_training_update_v2);
   return bn_training_update_v2;
 }
-}  // namespace
 
 const BaseRef BatchNormBertFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

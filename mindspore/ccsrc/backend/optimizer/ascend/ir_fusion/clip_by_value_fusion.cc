@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), minimum->input(kIndex1),
                                     is_first_input ? maximum_input1 : maximum_input0, minimum->input(kIndex2)};
-  auto clip_by_value = graph->NewCNode(inputs);
+  auto clip_by_value = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(clip_by_value);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
   auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};

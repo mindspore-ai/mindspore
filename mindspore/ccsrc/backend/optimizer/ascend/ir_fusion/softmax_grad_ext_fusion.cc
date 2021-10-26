@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   }
 
   auto prim = std::make_shared<Primitive>(kSoftmaxGradExtOpName);
-  auto fusion_node = graph->NewCNode({NewValueNode(prim), input0, input1, input2});
+  auto fusion_node = NewCNode({NewValueNode(prim), input0, input1, input2}, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(node->scope());
   fusion_node->set_abstract(node->abstract());

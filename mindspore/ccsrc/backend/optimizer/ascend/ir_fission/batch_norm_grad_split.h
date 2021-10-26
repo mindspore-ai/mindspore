@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BATCH_NORM_GRAD_SPLIT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BATCH_NORM_GRAD_SPLIT_H_
 
+#include <vector>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -27,6 +28,13 @@ class BatchNormGradSplit : public PatternProcessPass {
   ~BatchNormGradSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                 std::vector<AnfNodePtr> *bn_update_grad_outputs) const;
+  void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                 const std::vector<AnfNodePtr> &bn_update_grad_outputs,
+                                 std::vector<AnfNodePtr> *bn_reduce_grad_outputs) const;
 };
 }  // namespace opt
 }  // namespace mindspore

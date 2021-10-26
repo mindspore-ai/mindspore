@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,28 +29,6 @@ namespace mindspore {
 namespace opt {
 namespace {
 const size_t kConfusionMulGradOutputNum = 2;
-
-CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &reduce_sum, const AnfNodePtr &mul0_anf,
-                          const AnfNodePtr &input3) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(reduce_sum);
-  MS_EXCEPTION_IF_NULL(mul0_anf);
-  MS_EXCEPTION_IF_NULL(input3);
-  auto mul0 = mul0_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(mul0);
-
-  auto prim = std::make_shared<Primitive>(kConfusionMulGradOpName);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), mul0->input(kIndex1), mul0->input(kIndex2), input3};
-  auto fusion_node = graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(fusion_node);
-  fusion_node->set_scope(reduce_sum->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, reduce_sum, fusion_node);
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, reduce_sum, fusion_node);
-  auto types = {AnfAlgo::GetOutputInferDataType(mul0, 0), AnfAlgo::GetOutputInferDataType(reduce_sum, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(mul0, 0), AnfAlgo::GetOutputInferShape(reduce_sum, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
-  return fusion_node;
-}
 
 AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const AnfNodePtr &mul1) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -116,6 +94,28 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   return false;
 }
 }  // namespace
+
+CNodePtr ConfusionMulGradFusion::CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &reduce_sum,
+                                                  const AnfNodePtr &mul0_anf, const AnfNodePtr &input3) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(reduce_sum);
+  MS_EXCEPTION_IF_NULL(mul0_anf);
+  MS_EXCEPTION_IF_NULL(input3);
+  auto mul0 = mul0_anf->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(mul0);
+
+  auto prim = std::make_shared<Primitive>(kConfusionMulGradOpName);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), mul0->input(kIndex1), mul0->input(kIndex2), input3};
+  auto fusion_node = NewCNode(inputs, graph);
+  MS_EXCEPTION_IF_NULL(fusion_node);
+  fusion_node->set_scope(reduce_sum->scope());
+  AnfAlgo::CopyNodeAttr(kAttrAxis, reduce_sum, fusion_node);
+  AnfAlgo::CopyNodeAttr(kAttrKeepDims, reduce_sum, fusion_node);
+  auto types = {AnfAlgo::GetOutputInferDataType(mul0, 0), AnfAlgo::GetOutputInferDataType(reduce_sum, 0)};
+  auto shapes = {AnfAlgo::GetOutputInferShape(mul0, 0), AnfAlgo::GetOutputInferShape(reduce_sum, 0)};
+  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  return fusion_node;
+}
 
 const BaseRef ConfusionMulGradFusion::DefinePattern() const {
   VectorRef mul1({prim::kPrimMul, input3_, input2_});

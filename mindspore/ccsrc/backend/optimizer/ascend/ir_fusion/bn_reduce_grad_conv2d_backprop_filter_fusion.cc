@@ -85,7 +85,7 @@ const AnfNodePtr BNReduceGradConv2dBackpropFilterFusion::Process(const FuncGraph
   for (size_t i = 1; i <= kBNTrainingReduceGradInputNum; ++i) {
     fused_dbn_dw_inputs.push_back(bnreduce_grad->input(i));
   }
-  auto fused_dbn_dw = graph->NewCNode(fused_dbn_dw_inputs);
+  auto fused_dbn_dw = NewCNode(fused_dbn_dw_inputs, graph);
   MS_EXCEPTION_IF_NULL(fused_dbn_dw);
   auto types = {AnfAlgo::GetOutputInferDataType(bnreduce_grad, 0),
                 AnfAlgo::GetOutputInferDataType(conv_back_filter, 0)};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-CNodePtr CreateSplitVNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(input_node);
-  std::vector<AnfNodePtr> splitv_inputs{NewValueNode(std::make_shared<Primitive>(kSplitVOpName)), input_node};
-  CNodePtr splitv = func_graph->NewCNode(splitv_inputs);
-  MS_EXCEPTION_IF_NULL(splitv);
-  splitv->set_scope(input_node->scope());
-  return splitv;
-}
-
-CNodePtr CreateBaseSplitVNode(const FuncGraphPtr &func_graph, const CNodePtr &origin_cnode) {
-  MS_EXCEPTION_IF_NULL(origin_cnode);
-  CheckCNodeInputSize(origin_cnode, kSplitInputTensorNum);
-  return CreateSplitVNode(func_graph, origin_cnode->input(1));
-}
-
 void SetAttrForSplitVNode(const AnfNodePtr &splitv, const std::vector<int64_t> &size_splits, int64_t split_dim,
                           int64_t num_split) {
   AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(size_splits), splitv);
@@ -120,6 +104,22 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
   AnfAlgo::SetOutputInferTypeAndShape(base_type_ids, base_output_shapes_base, base_splitv.get());
 }
 }  // namespace
+
+CNodePtr SplitFission::CreateSplitVNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input_node);
+  std::vector<AnfNodePtr> splitv_inputs{NewValueNode(std::make_shared<Primitive>(kSplitVOpName)), input_node};
+  CNodePtr splitv = NewCNode(splitv_inputs, func_graph);
+  MS_EXCEPTION_IF_NULL(splitv);
+  splitv->set_scope(input_node->scope());
+  return splitv;
+}
+
+CNodePtr SplitFission::CreateBaseSplitVNode(const FuncGraphPtr &func_graph, const CNodePtr &origin_cnode) const {
+  MS_EXCEPTION_IF_NULL(origin_cnode);
+  CheckCNodeInputSize(origin_cnode, kSplitInputTensorNum);
+  return CreateSplitVNode(func_graph, origin_cnode->input(1));
+}
 
 AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int64_t num_split,
                                    int64_t divisor, int64_t split_dim) const {

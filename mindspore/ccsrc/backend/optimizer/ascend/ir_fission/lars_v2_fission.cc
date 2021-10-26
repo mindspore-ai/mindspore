@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 #include "backend/optimizer/ascend/ir_fission/lars_v2_fission.h"
 #include <memory>
-#include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"
@@ -29,14 +28,16 @@ constexpr size_t kLarsV2WIndex = 1;
 constexpr size_t kLarsV2GIndex = 2;
 constexpr size_t kLarsV2WeightDecayIndex = 3;
 constexpr size_t kLarsV2LearningRatIndex = 4;
-void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
-                                 std::vector<AnfNodePtr> *square_sum_all_outputs) {
+}  // namespace
+
+void LarsV2Fission::CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
+                                                std::vector<AnfNodePtr> *square_sum_all_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
   CheckCNodeInputSize(lars_v2, kLarsV2InputTensorNum);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSquareSumAllOpName)), lars_v2->input(1),
                                     lars_v2->input(2)};
-  auto square_sum_all = graph->NewCNode(inputs);
+  auto square_sum_all = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(square_sum_all);
   square_sum_all->set_scope(lars_v2->scope());
 
@@ -47,8 +48,8 @@ void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars
   CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kSquareSumOutputNum, square_sum_all_outputs);
 }
 
-CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
-                            const std::vector<AnfNodePtr> &square_sum_all_outputs) {
+CNodePtr LarsV2Fission::CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
+                                           const std::vector<AnfNodePtr> &square_sum_all_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
   if (square_sum_all_outputs.size() != kSquareSumOutputNum) {
@@ -63,13 +64,12 @@ CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
                                     square_sum_all_outputs[1],
                                     lars_v2->input(kLarsV2WeightDecayIndex),
                                     lars_v2->input(kLarsV2LearningRatIndex)};
-  auto lars_v2_update = graph->NewCNode(inputs);
+  auto lars_v2_update = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(lars_v2_update);
   lars_v2_update->set_scope(lars_v2->scope());
   lars_v2_update->set_abstract(lars_v2->abstract());
   return lars_v2_update;
 }
-}  // namespace
 
 const BaseRef LarsV2Fission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

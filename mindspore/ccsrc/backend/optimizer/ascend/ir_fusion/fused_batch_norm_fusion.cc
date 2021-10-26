@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingReduce(const FuncGraphPtr &func
   // Set input to create node
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), GetAnfNodeByVar(equiv, data_input0_var_)};
-  auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
+  auto bn_training_reduce = NewCNode(bn_training_reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
   bn_training_reduce->set_scope(node->scope());
   // Set abstract
@@ -151,7 +151,7 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingUpdate(
   // Set input
   std::vector<AnfNodePtr> bn_training_update_inputs;
   GetBNTrainingUpdateInputs(equiv, bn_training_reduce_outputs, &bn_training_update_inputs);
-  auto bn_training_update = func_graph->NewCNode(bn_training_update_inputs);
+  auto bn_training_update = NewCNode(bn_training_update_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_update);
   // Set abstract
   AnfNodePtr bn = GetAnfNodeByVar(equiv, batch_norm_var_);

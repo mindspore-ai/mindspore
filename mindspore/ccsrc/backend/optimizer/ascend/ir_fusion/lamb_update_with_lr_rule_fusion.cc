@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ const AnfNodePtr LambUpdateWithLRRuleFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {
     NewValueNode(prim), input0, input1, input2, input3, input4, input5, input6, input7, input8};
-  auto lamb_update_with_lr = graph->NewCNode(inputs);
+  auto lamb_update_with_lr = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(lamb_update_with_lr);
 
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};

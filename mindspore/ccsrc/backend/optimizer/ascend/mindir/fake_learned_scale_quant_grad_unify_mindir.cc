@@ -27,9 +27,9 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
-                                     std::vector<AnfNodePtr> *const lsq_perlayer_grad_d_outputs) {
+void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerGradD(
+  const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
+  std::vector<AnfNodePtr> *const lsq_perlayer_grad_d_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_node);
   const auto &lsq_perlayer_grad_inputs = lsq_perlayer_grad_node->inputs();
@@ -41,7 +41,7 @@ void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDOpName)),
     lsq_perlayer_grad_inputs[kIndex1], lsq_perlayer_grad_inputs[kIndex2], lsq_perlayer_grad_inputs[kIndex3],
     lsq_perlayer_grad_inputs[kIndex4]};
-  auto lsq_perlayer_grad_d = graph->NewCNode(lsq_perlayer_grad_d_inputs);
+  auto lsq_perlayer_grad_d = NewCNode(lsq_perlayer_grad_d_inputs, graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_d);
   lsq_perlayer_grad_d->set_scope(lsq_perlayer_grad_node->scope());
 
@@ -56,9 +56,10 @@ void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &
                                  lsq_perlayer_grad_d_outputs);
 }
 
-void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
-                                          const std::vector<AnfNodePtr> &lsq_perlayer_grad_d_outputs,
-                                          std::vector<AnfNodePtr> *const lsq_perlayer_reduce_grad_outputs) {
+void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerReduceGrad(
+  const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
+  const std::vector<AnfNodePtr> &lsq_perlayer_grad_d_outputs,
+  std::vector<AnfNodePtr> *const lsq_perlayer_reduce_grad_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_node);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad_outputs);
@@ -74,7 +75,7 @@ void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNode
   std::vector<AnfNodePtr> lsq_perlayer_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDReduceOpName)),
     lsq_perlayer_grad_d_outputs[kIndex1]};
-  auto lsq_perlayer_reduce_grad = graph->NewCNode(lsq_perlayer_reduce_grad_inputs);
+  auto lsq_perlayer_reduce_grad = NewCNode(lsq_perlayer_reduce_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad);
   lsq_perlayer_reduce_grad->set_scope(lsq_perlayer_grad_node->scope());
 
@@ -85,8 +86,9 @@ void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNode
   (*lsq_perlayer_reduce_grad_outputs).push_back(lsq_perlayer_reduce_grad);
 }
 
-void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
-                                       std::vector<AnfNodePtr> *const lsq_perchannel_grad_d_outputs) {
+void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChannelGradD(
+  const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
+  std::vector<AnfNodePtr> *const lsq_perchannel_grad_d_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_node);
   const auto &lsq_perchannel_grad_inputs = lsq_perchannel_grad_node->inputs();
@@ -98,7 +100,7 @@ void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDOpName)),
     lsq_perchannel_grad_inputs[1], lsq_perchannel_grad_inputs[2], lsq_perchannel_grad_inputs[3],
     lsq_perchannel_grad_inputs[4]};
-  auto lsq_perchannel_grad_d = graph->NewCNode(lsq_perchannel_grad_d_inputs);
+  auto lsq_perchannel_grad_d = NewCNode(lsq_perchannel_grad_d_inputs, graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_d);
   lsq_perchannel_grad_d->set_scope(lsq_perchannel_grad_node->scope());
 
@@ -114,9 +116,10 @@ void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr
                                  lsq_perchannel_grad_d_outputs);
 }
 
-void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
-                                            const std::vector<AnfNodePtr> &lsq_perchannel_grad_d_outputs,
-                                            std::vector<AnfNodePtr> *const lsq_perchannel_reduce_grad_outputs) {
+void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChannelReduceGrad(
+  const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
+  const std::vector<AnfNodePtr> &lsq_perchannel_grad_d_outputs,
+  std::vector<AnfNodePtr> *const lsq_perchannel_reduce_grad_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_node);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_reduce_grad_outputs);
@@ -132,7 +135,7 @@ void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNo
   std::vector<AnfNodePtr> lsq_perchannel_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDReduceOpName)),
     lsq_perchannel_grad_d_outputs[kIndex1]};
-  auto lsq_perchannel_reduce_grad = graph->NewCNode(lsq_perchannel_reduce_grad_inputs);
+  auto lsq_perchannel_reduce_grad = NewCNode(lsq_perchannel_reduce_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_reduce_grad);
   lsq_perchannel_reduce_grad->set_scope(lsq_perchannel_grad_node->scope());
 
@@ -142,7 +145,7 @@ void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNo
   AnfAlgo::CopyNodeAttr(kAttrChannelAxis, lsq_perchannel_grad_node, lsq_perchannel_reduce_grad);
   (*lsq_perchannel_reduce_grad_outputs).push_back(lsq_perchannel_reduce_grad);
 }
-}  // namespace
+
 const BaseRef FakeLearnedScaleQuantPerLayerGradUnifyMindIR::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto prim = std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradOpName);

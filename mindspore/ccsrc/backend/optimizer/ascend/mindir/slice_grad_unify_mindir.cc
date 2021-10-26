@@ -71,7 +71,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   }
   std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)),
                                         slice_grad->input(kIndex1)};
-  auto pad = graph->NewCNode(pad_inputs);
+  auto pad = NewCNode(pad_inputs, graph);
   MS_EXCEPTION_IF_NULL(pad);
   pad->set_scope(slice_grad->scope());
   pad->set_abstract(slice_grad->abstract());

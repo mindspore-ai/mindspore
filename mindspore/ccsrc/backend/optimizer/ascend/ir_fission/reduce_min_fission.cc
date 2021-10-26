@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-CNodePtr CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &old_node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(input);
-  MS_EXCEPTION_IF_NULL(old_node);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMin->name())), input};
-  CNodePtr reduce_min = graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(reduce_min);
-  reduce_min->set_scope(old_node->scope());
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
-  return reduce_min;
-}
-
 bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
     MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need to optimize!";
@@ -96,6 +84,19 @@ std::vector<size_t> GetInferShape(const std::vector<size_t> &shape, const std::v
   return shape_first;
 }
 }  // namespace
+
+CNodePtr ReduceMinFission::CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input,
+                                           const CNodePtr &old_node) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(old_node);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMin->name())), input};
+  CNodePtr reduce_min = NewCNode(inputs, graph);
+  MS_EXCEPTION_IF_NULL(reduce_min);
+  reduce_min->set_scope(old_node->scope());
+  AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
+  return reduce_min;
+}
 
 const BaseRef ReduceMinFission::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();

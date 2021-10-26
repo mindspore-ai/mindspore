@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
                                           mul_cnode->input(kMulInputTensorNum + 1 - value_node_index),
                                           depend,
                                           mul_cnode->input(value_node_index)};
-  auto new_node = func_graph->NewCNode(new_node_inputs);
+  auto new_node = NewCNode(new_node_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   AnfAlgo::CopyNodeAttrs(node, new_node);
   auto input_names_value = AnfAlgo::GetNodeAttr<std::vector<std::string>>(new_node, kAttrInputNames);

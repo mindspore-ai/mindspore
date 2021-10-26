@@ -27,6 +27,9 @@ class BatchNormGradUnifyMindIR : public PatternProcessPass {
   ~BatchNormGradUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  AnfNodePtr CreateNewBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node) const;
 };
 }  // namespace opt
 }  // namespace mindspore
