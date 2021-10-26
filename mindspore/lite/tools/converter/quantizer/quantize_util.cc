@@ -540,17 +540,17 @@ int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const 
   // For MatMul A
   if (input_index == 0) {
     if (matmul_prim->GetAttr(ops::kTransposeA) != nullptr && matmul_prim->get_transpose_a()) {
-      return last_second_index;
-    } else {
       return last_first_index;
+    } else {
+      return last_second_index;
     }
   }
   // For MatMul B
   if (input_index == 1) {
     if (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b()) {
-      return last_first_index;
-    } else {
       return last_second_index;
+    } else {
+      return last_first_index;
     }
   }
   return 0;
