@@ -19,6 +19,8 @@
 #include <utility>
 #include <memory>
 
+#include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace ps {
 #define RETURN_IF_FALSE(condition) \
@@ -26,6 +28,14 @@ namespace ps {
     if (!(condition)) {            \
       return false;                \
     }                              \
+  } while (false)
+
+#define RETURN_IF_FALSE_WITH_LOG(condition, message) \
+  do {                                               \
+    if (!(condition)) {                              \
+      MS_LOG(ERROR) << message;                      \
+      return false;                                  \
+    }                                                \
   } while (false)
 
 class PsCacheBasic {
