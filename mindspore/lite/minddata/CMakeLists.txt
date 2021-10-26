@@ -180,7 +180,6 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/perf/monitor.cc
         ${MINDDATA_DIR}/engine/perf/device_queue_tracing.cc
         ${MINDDATA_DIR}/engine/perf/connector_size.cc
-        ${MINDDATA_DIR}/engine/perf/connector_throughput.cc
         ${MINDDATA_DIR}/engine/perf/dataset_iterator_tracing.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/subset_sampler.cc

@@ -152,7 +152,7 @@ class DeviceQueueOp : public PipelineOp {
 
   QueueList<TensorRow> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;
-  std::unique_ptr<GpuItemConnector> gpu_item_connector_;
+  std::unique_ptr<GpuConnector> gpu_connector_;
   const uint32_t kDeviceQueGpuNumThreads = 2;
   const uint32_t kDeviceQueGpuQueueCapacity = 8;
   const uint32_t kDeviceQueGpuThreadMemory = 1024;

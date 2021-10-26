@@ -389,7 +389,7 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
     RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool, -1, kDeviceQueGpuThreadMemory, false, true));
     pool_.push_back(pool);
   }
-  gpu_item_connector_ = std::make_unique<GpuItemConnector>(num_workers_, 1, queue_capacity_);
+  gpu_connector_ = std::make_unique<GpuConnector>(num_workers_, 1, queue_capacity_);
   receive_queues_.Init(num_workers_, queue_capacity_);
   RETURN_IF_NOT_OK(receive_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
@@ -417,73 +417,78 @@ Status DeviceQueueOp::PushDataToGPU() {
     RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
     batch_start_time = ProfilingTime::GetCurMilliSecond();
-    connector_capacity = gpu_item_connector_->capacity();
+    connector_capacity = gpu_connector_->capacity();
   }
 #endif
 #ifdef ENABLE_DUMP_IR
-  md_channel_info_->RecordBatchQueue(gpu_item_connector_->size());
+  md_channel_info_->RecordBatchQueue(gpu_connector_->size());
   md_channel_info_->RecordPreprocessBatch(0);
 #endif
-  std::vector<device::DataItemGpu> items;
-  RETURN_IF_NOT_OK(gpu_item_connector_->Pop(0, &items));
+  GpuConnectorItem item;
+  RETURN_IF_NOT_OK(gpu_connector_->Pop(0, &item));
+  auto items = std::move(item.data_item);
+  bool eoe_flag = item.eoe_flag;
   int64_t send_batch = 0;
-  bool is_open = false;
   uint32_t handle = INVALID_HANDLE;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  while (!items.empty() && !GpuBufferMgr::GetInstance().IsClosed()) {
-#ifdef ENABLE_DUMP_IR
-    md_channel_info_->RecordBatchQueue(gpu_item_connector_->size());
-    md_channel_info_->RecordPreprocessBatch(send_batch);
-    md_channel_info_->RecordPushStartTime();
-#endif
-    if (!is_open) {
-      std::vector<size_t> data_size;
-      for (int32_t index = 0; index < items.size(); index++) {
-        data_size.push_back(items[index].data_len_);
-      }
-      handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, data_size, release_function);
-      if (handle == INVALID_HANDLE) {
-        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                      "[Internal ERROR] Failed to open channel for sending data.");
-      }
-      is_open = true;
-    }
+  handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, {}, release_function);
+  if (handle == INVALID_HANDLE) {
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Failed to open channel for sending data.");
+  }
 
-    // Data prefetch only when PS mode enables cache.
-    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
-                                                        items[0].data_type_)) {
-      return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
-                    "Failed to prefetch data in current PS mode(cache data when sending).");
-    }
-    RETURN_IF_NOT_OK(RetryPushData(handle, items));
-    send_batch++;
+  while (!(items.empty() && !eoe_flag) && !GpuBufferMgr::GetInstance().IsClosed()) {
+    if (!eoe_flag) {
+#ifdef ENABLE_DUMP_IR
+      md_channel_info_->RecordBatchQueue(gpu_connector_->size());
+      md_channel_info_->RecordPreprocessBatch(send_batch);
+      md_channel_info_->RecordPushStartTime();
+#endif
+      // Data prefetch only when PS mode enables cache.
+      if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
+                                                          items[0].data_type_)) {
+        return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
+                      "Failed to prefetch data in current PS mode(cache data when sending).");
+      }
+      RETURN_IF_NOT_OK(RetryPushData(handle, items));
+      send_batch++;
 #ifndef ENABLE_SECURITY
-    if (is_profiling_enable) {
-      uint64_t end_time = ProfilingTime::GetCurMilliSecond();
-      // record push data time
-      profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost, end_time);
-      int32_t batch_cost = (int32_t)(end_time - batch_start_time);
-      // record batch time
-      profiling_node->Record(TIME, BATCH_TIME, send_batch, batch_cost, end_time);
-      // record pipeline time
-      profiling_node->Record(TIME, PIPELINE_TIME, send_batch, batch_cost - push_cost, end_time);
-      batch_start_time = end_time;
-      // record connector depth
-      profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch, connector_size, end_time);
-      connector_size = gpu_item_connector_->size();
-      connector_capacity = gpu_item_connector_->capacity();
-    }
+      if (is_profiling_enable) {
+        uint64_t end_time = ProfilingTime::GetCurMilliSecond();
+        // record push data time
+        profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost, end_time);
+        int32_t batch_cost = (int32_t)(end_time - batch_start_time);
+        // record batch time
+        profiling_node->Record(TIME, BATCH_TIME, send_batch, batch_cost, end_time);
+        // record pipeline time
+        profiling_node->Record(TIME, PIPELINE_TIME, send_batch, batch_cost - push_cost, end_time);
+        batch_start_time = end_time;
+        // record connector depth
+        profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch, connector_size, end_time);
+        connector_size = gpu_connector_->size();
+        connector_capacity = gpu_connector_->capacity();
+      }
 #endif
 #ifdef ENABLE_DUMP_IR
-    md_channel_info_->RecordBatchQueue(gpu_item_connector_->size());
-    md_channel_info_->RecordPreprocessBatch(send_batch);
-    md_channel_info_->RecordPushEndTime();
+      md_channel_info_->RecordBatchQueue(gpu_connector_->size());
+      md_channel_info_->RecordPreprocessBatch(send_batch);
+      md_channel_info_->RecordPushEndTime();
 #endif
-    if (total_batch_ > 0 && send_batch >= total_batch_) {
-      break;
+      if (total_batch_ > 0 && send_batch >= total_batch_) {
+        break;
+      }
+    } else {
+#ifndef ENABLE_SECURITY
+      if (is_profiling_enable) {
+        tree_->SetEpochEnd();
+        tree_->GetProfilingManager()->RecordEndOfEpoch(send_batch);
+      }
+#endif
     }
     if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
-      auto rc = gpu_item_connector_->Pop(0, &items);
+      auto rc = gpu_connector_->Pop(0, &item);
+      items = std::move(item.data_item);
+      eoe_flag = item.eoe_flag;
       // If the batches send by dataset are more than gpu calculate, gpu will core for no signal notify.
       if (rc.IsError()) {
         GpuBufferMgr::GetInstance().Close(handle);
@@ -543,25 +548,30 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
   uint32_t batch_num = 0;
   RETURN_IF_NOT_OK(receive_queues_[worker_id]->PopFront(&current_row));
   while (!current_row.quit() && !GpuBufferMgr::GetInstance().IsClosed()) {
-    std::vector<device::DataItemGpu> items;
-    for (int i = 0; i < current_row.size(); i++) {
-      device::DataItemGpu data_item;
-      data_item.data_len_ = static_cast<size_t>(current_row[i]->SizeInBytes());
-      data_item.data_ptr_ = nullptr;
-      data_item.worker_id_ = worker_id;
-      items.push_back(data_item);
+    GpuConnectorItem connector_item = {{}, current_row.eoe()};
+    if (!connector_item.eoe_flag) {
+      std::vector<device::DataItemGpu> items;
+      for (auto &i : current_row) {
+        device::DataItemGpu data_item;
+        data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
+        data_item.data_ptr_ = nullptr;
+        data_item.worker_id_ = worker_id;
+        items.push_back(data_item);
+      }
+      RETURN_IF_NOT_OK(MallocForGPUData(&items, current_row, worker_id));
+      connector_item.data_item = std::move(items);
+      batch_num++;
+    } else {
+      MS_LOG(INFO) << "EOE Detected";
     }
-    RETURN_IF_NOT_OK(MallocForGPUData(&items, current_row, worker_id));
-    RETURN_IF_NOT_OK(gpu_item_connector_->Add(worker_id, std::move(items)));
-    batch_num++;
-
+    RETURN_IF_NOT_OK(gpu_connector_->Add(worker_id, std::move(connector_item)));
     RETURN_IF_NOT_OK(receive_queues_[worker_id]->PopFront(&current_row));
   }
 
   MS_LOG(INFO) << "Device queue worker id " << worker_id << "proc " << batch_num << "batch.";
-  // Add empty vector as quit flag.
-  std::vector<device::DataItemGpu> items;
-  RETURN_IF_NOT_OK(gpu_item_connector_->Add(worker_id, std::move(items)));
+  // Add empty data_item vector with eoe_flag=false as quit flag.
+  GpuConnectorItem connector_item = {{}, false};
+  RETURN_IF_NOT_OK(gpu_connector_->Add(worker_id, std::move(connector_item)));
   return Status::OK();
 }
 
@@ -599,12 +609,12 @@ Status DeviceQueueOp::SendDataToGPU() {
       }
     }
 
-#ifndef ENABLE_SECURITY
-    if (current_row.eoe() && tree_->GetProfilingManager()->IsProfilingEnable()) {
-      tree_->SetEpochEnd();
-      tree_->GetProfilingManager()->RecordEndOfEpoch(batch_num);
+    if (current_row.eoe()) {
+      MS_LOG(INFO) << "EOE Detected";
+      TensorRow eoe_flag(TensorRow::kFlagEOE);
+      RETURN_IF_NOT_OK(receive_queues_[num_buf % num_workers_]->Add(std::move(eoe_flag)));
     }
-#endif
+
     if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
     } else {
@@ -613,6 +623,7 @@ Status DeviceQueueOp::SendDataToGPU() {
   }
 
   for (uint32_t index = 0; index < num_workers_; index++) {
+    MS_LOG(INFO) << "Adding quit flag to Workers";
     TensorRow quit_flag(TensorRow::kFlagQuit);
     RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(quit_flag)));
   }

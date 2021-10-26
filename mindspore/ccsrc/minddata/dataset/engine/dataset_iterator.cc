@@ -151,8 +151,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 #ifndef ENABLE_SECURITY
   if (tracing_ != nullptr) {
     cur_batch_num_++;
-    RETURN_IF_NOT_OK(tracing_->Record(static_cast<int32_t>(CONNECTOR_DEPTH), cur_connector_capacity_, cur_batch_num_,
-                                      cur_connector_size_, ProfilingTime::GetCurMilliSecond()));
+    tracing_->Record(static_cast<int32_t>(CONNECTOR_DEPTH), cur_connector_capacity_, cur_batch_num_,
+                     cur_connector_size_, ProfilingTime::GetCurMilliSecond());
   }
 #endif
   return Status::OK();

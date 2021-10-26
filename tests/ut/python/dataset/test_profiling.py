@@ -82,8 +82,7 @@ def confirm_cpuutil(num_pipeline_ops, cpu_uti_file):
     with open(cpu_uti_file) as file1:
         data = json.load(file1)
         op_info = data["op_info"]
-        # Confirm <num_pipeline_ops>+1 ops in CPU util file (including op_id=-1 for monitor thread)
-        assert len(op_info) == num_pipeline_ops + 1
+        assert len(op_info) == num_pipeline_ops
 
 
 def confirm_ops_in_pipeline(num_ops, op_list, pipeline_file):
@@ -176,7 +175,6 @@ def test_profiling_complex_pipeline():
                 if op_info[i]["op_type"] != "ZipOp":
                     assert "size" in op_info[i]["metrics"]["output_queue"]
                     assert "length" in op_info[i]["metrics"]["output_queue"]
-                    assert "throughput" in op_info[i]["metrics"]["output_queue"]
                 else:
                     # Note: Zip is an inline op and hence does not have metrics information
                     assert op_info[i]["metrics"] is None
@@ -243,7 +241,6 @@ def test_profiling_inline_ops_pipeline1():
                 else:
                     assert "size" in op_info[i]["metrics"]["output_queue"]
                     assert "length" in op_info[i]["metrics"]["output_queue"]
-                    assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 4 ops are in the pipeline JSON file
         confirm_cpuutil(4, cpu_util_file)
@@ -294,7 +291,6 @@ def test_profiling_inline_ops_pipeline2():
                 else:
                     assert "size" in op_info[i]["metrics"]["output_queue"]
                     assert "length" in op_info[i]["metrics"]["output_queue"]
-                    assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         confirm_cpuutil(5, cpu_util_file)
@@ -384,7 +380,6 @@ def test_profiling_basic_pipeline():
                 else:
                     assert "size" in op_info[i]["metrics"]["output_queue"]
                     assert "length" in op_info[i]["metrics"]["output_queue"]
-                    assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         confirm_cpuutil(5, cpu_util_file)
@@ -441,7 +436,6 @@ def test_profiling_cifar10_pipeline():
                 else:
                     assert "size" in op_info[i]["metrics"]["output_queue"]
                     assert "length" in op_info[i]["metrics"]["output_queue"]
-                    assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
         confirm_cpuutil(5, cpu_util_file)

@@ -23,24 +23,24 @@
 
 namespace mindspore {
 namespace dataset {
+constexpr int32_t RECORDS_PER_STEP_DEVICE_QUEUE = 4;
 class DeviceQueueTracing : public Tracing {
  public:
   // Constructor
-  DeviceQueueTracing() = default;
+  DeviceQueueTracing() : Tracing(RECORDS_PER_STEP_DEVICE_QUEUE) {}
 
   // Destructor
   ~DeviceQueueTracing() override = default;
-
-  // Record tracing data
-  // @return Status The status code returned
-  void Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value,
-              const uint64_t time_stamp);
 
   std::string Name() const override { return kDeviceQueueTracingName; };
 
   Status Init(const std::string &dir_path, const std::string &device_id) override;
 
-  Status ChangeFileMode() override;
+  Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
+  Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
+  Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
+  Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
+  Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) override;
 };
 }  // namespace dataset
 }  // namespace mindspore
