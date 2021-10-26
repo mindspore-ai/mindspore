@@ -179,8 +179,8 @@ config for checkpoint.
 
 # [Training and Eval process](#contents)
 
-Before training, the dataset should be processed. We use the scripts provided by [SeanNaren](https://github.com/SeanNaren/deepspeech.pytorch) to process the dataset.
-This script in [SeanNaren](https://github.com/SeanNaren/deepspeech.pytorch) will automatically download the dataset and process it. After the process, the
+Before training, the dataset should be processed. We use the scripts provided by [SeanNaren](https://github.com/SeanNaren/deepspeech.pytorch/tree/V2.1) to process the dataset.
+This script in [SeanNaren](https://github.com/SeanNaren/deepspeech.pytorch/tree/V2.1) will automatically download the dataset and process it. After the process, the
 dataset directory structure is as follows:
 
 ```path
