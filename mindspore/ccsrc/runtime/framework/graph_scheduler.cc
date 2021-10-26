@@ -355,6 +355,16 @@ void GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
+
+    // When temporary variable 'op_context' has beed set failed status, the main thread need wait other threads until
+    // they finish respective task, otherwise segmentation fault will happen when these task access 'op_context',
+    // because it has been destroyed.
+    std::mutex mutex;
+    std::unique_lock<std::mutex> locker(mutex);
+    std::condition_variable thread_blocker;
+    const int64_t kTimeToWait = 2;
+    thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
+
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 }
