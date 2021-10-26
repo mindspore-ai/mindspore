@@ -107,9 +107,6 @@ class _AutoParallelContext:
             raise TypeError("The type of pipeline_stage_num must be int.")
         if stages < 1:
             raise ValueError("pipeline_stage_num can't be less than 1.")
-        backend = context.get_context("device_target")
-        if backend == "GPU" and stages > 1:
-            raise RuntimeError("Now GPU don't support pipeline parallel.")
         self.check_context_handle()
         self._context_handle.set_pipeline_stage_split_num(stages)
 
