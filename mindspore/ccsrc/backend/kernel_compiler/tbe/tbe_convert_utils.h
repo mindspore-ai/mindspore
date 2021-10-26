@@ -31,8 +31,6 @@ TypeId DtypeToTypeId(const std::string &dtypes);
 std::string TypeIdToString(TypeId type_id);
 
 size_t GetDtypeNbyte(const std::string &dtypes);
-
-std::string GetProcessor(const AnfNodePtr &anf_node);
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore

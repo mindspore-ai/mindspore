@@ -101,20 +101,6 @@ size_t GetDtypeNbyte(const std::string &dtypes) {
   }
   return iter->second;
 }
-
-std::string GetProcessor(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  std::string device;
-  switch (AnfAlgo::GetProcessor(anf_node)) {
-    case Processor::AICORE:
-      device = kProcessorAiCore;
-      break;
-    default:
-      MS_LOG(INFO) << "Unknown processor type." << anf_node->fullname_with_scope();
-      break;
-  }
-  return device;
-}
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore
