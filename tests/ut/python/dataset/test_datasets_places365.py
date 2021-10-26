@@ -71,8 +71,7 @@ def test_places365_content_check():
     logger.info("Test Places365Dataset Op with content check")
     sampler = ds.SequentialSampler(num_samples=4)
     data1 = ds.Places365Dataset(dataset_dir=DATA_DIR, usage='val', small=True, decode=True, sampler=sampler)
-    images, labels = load_places365(DATA_DIR)
-    visualize_dataset(images, labels)
+    _, labels = load_places365(DATA_DIR)
     num_iter = 0
     # in this example, each dictionary has keys "image" and "label"
     image_list, label_list = [], []
