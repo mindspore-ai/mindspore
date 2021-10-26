@@ -235,7 +235,7 @@ class TraceSpecialize : public TraceInfo {
  public:
   explicit TraceSpecialize(int64_t counter) : TraceInfo(nullptr), counter_(counter) {}
   std::string name() const override { return "specialize" + std::to_string(counter_); }
-  std::string symbol() const override { return counter_ + "_"; }
+  std::string symbol() const override { return std::to_string(counter_) + "_"; }
   std::string full_name() const override { return "specialize" + std::to_string(counter_) + "_"; }
   ~TraceSpecialize() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceSpecialize>(*this); }
