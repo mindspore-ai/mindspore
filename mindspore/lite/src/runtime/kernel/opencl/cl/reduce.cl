@@ -362,7 +362,7 @@ __kernel void GlobalHMean(__read_only image2d_t src_data, __write_only image2d_t
   __kernel void GlobalH##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
     int w = get_global_id(0);                                                                                 \
     int c4 = get_global_id(1);                                                                                \
-    float4 result = (float4)0.f;                                                                              \
+    float4 result = (float4)Init##Method;                                                                     \
     for (int h = 0; h < size.x; h++) {                                                                        \
       Do##Method(result, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));         \
     }                                                                                                         \
@@ -373,7 +373,7 @@ __kernel void GlobalHMean(__read_only image2d_t src_data, __write_only image2d_t
 __kernel void GlobalWMean(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
   int h = get_global_id(0);
   int c4 = get_global_id(1);
-  float4 result = (float4)0.f;
+  float4 result = (float4)(0.f);
   for (int w = 0; w < size.y; w++) {
     result += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h)));
   }
@@ -385,25 +385,47 @@ __kernel void GlobalWMean(__read_only image2d_t src_data, __write_only image2d_t
   __kernel void GlobalW##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
     int h = get_global_id(0);                                                                                 \
     int c4 = get_global_id(1);                                                                                \
-    float4 result = (float4)0.f;                                                                              \
+    float4 result = (float4)Init##Method;                                                                     \
     for (int w = 0; w < size.y; w++) {                                                                        \
       Do##Method(result, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));         \
     }                                                                                                         \
     WRITE_IMAGE(dst_data, (int2)(c4, h), TO_FLT4(result));                                                    \
   }
 
+// C
+#define DoCSum(a, B) ((a) = dot((float4)(1.0f), (B)))
+#define DoCMax(a, B) ((a) = max((B).x, max((B).y, max((B).z, (B).w))))
+#define DoCMin(a, B) ((a) = min((B).x, min((B).y, min((B).z, (B).w))))
+#define DoCProd(a, B) ((a) = (B).x * (B).y * (B).z * (B).w)
+
+#define GlobalC(Method)                                                                                           \
+  __kernel void GlobalC##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size,       \
+                                float4 mask) {                                                                    \
+    int h = get_global_id(0);                                                                                     \
+    int w = get_global_id(1);                                                                                     \
+    float4 value = (float4)Init##Method;                                                                          \
+    for (int c4 = 0; c4 < size.z - 1; c4++) {                                                                     \
+      Do##Method(value, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));              \
+    }                                                                                                             \
+    Do##Method(value, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + size.z - 1, h))) + mask); \
+    float4 result = (float4)0.f;                                                                                  \
+    DoC##Method(result.x, value);                                                                                 \
+    WRITE_IMAGE(dst_data, (int2)(w * size.z, h), TO_FLT4(result));                                                \
+  }
+
 #define DoSum(A, B) A += B
 #define InitSum 0.f
-GlobalHWC(Sum) GlobalHW(Sum) GlobalWC(Sum) GlobalH(Sum) GlobalW(Sum) LocalHW(Sum) LocalWC(Sum)
+GlobalHWC(Sum) GlobalHW(Sum) GlobalWC(Sum) GlobalH(Sum) GlobalW(Sum) GlobalC(Sum) LocalHW(Sum) LocalWC(Sum)
 
 #define DoMin(A, B) A = min(A, B)
 #define InitMin 10000.f
-  GlobalHWC(Min) GlobalHW(Min) GlobalWC(Min) GlobalH(Min) GlobalW(Min) LocalHW(Min) LocalWC(Min)
+  GlobalHWC(Min) GlobalHW(Min) GlobalWC(Min) GlobalH(Min) GlobalW(Min) GlobalC(Min) LocalHW(Min) LocalWC(Min)
 
 #define DoMax(A, B) A = max(A, B)
 #define InitMax -10000.f
-    GlobalHWC(Max) GlobalHW(Max) GlobalWC(Max) GlobalH(Max) GlobalW(Max) LocalHW(Max) LocalWC(Max)
+    GlobalHWC(Max) GlobalHW(Max) GlobalWC(Max) GlobalH(Max) GlobalW(Max) GlobalC(Max) LocalHW(Max) LocalWC(Max)
 
 #define DoProd(A, B) A *= B
 #define InitProd 1.f
-      GlobalHWC(Prod) GlobalHW(Prod) GlobalWC(Prod) GlobalH(Prod) GlobalW(Prod) LocalHW(Prod) LocalWC(Prod)
+      GlobalHWC(Prod) GlobalHW(Prod) GlobalWC(Prod) GlobalH(Prod) GlobalW(Prod) GlobalC(Prod) LocalHW(Prod)
+        LocalWC(Prod)

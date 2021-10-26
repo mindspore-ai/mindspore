@@ -64,7 +64,7 @@ __kernel void Tanh(__read_only image2d_t input, __write_only image2d_t output, c
   int Y = get_global_id(1);
   if (X >= img_shape.x || Y >= img_shape.y) return;
   FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(X, Y));
-  in_c4 = clamp(in_c4, -10.0f, 10.0f);
+  in_c4 = clamp(in_c4, (FLT)(-10.0f), (FLT)(10.0f));
   WRITE_IMAGE(output, (int2)(X, Y), tanh(in_c4));
 }
 
