@@ -48,10 +48,6 @@ MS_REG_CPU_KERNEL(
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   MatmulDoubleCPUKernel);
 
-MS_REG_CPU_KERNEL(
-  BatchMatMul,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatmulDoubleCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
