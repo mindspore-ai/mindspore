@@ -439,7 +439,9 @@ class Cell(Cell_):
             self._do_parameter_broadcast()
 
         for item in inputs:
-            if isinstance(item, numpy.ndarray):
+            if isinstance(item, Tensor) and item.has_init:
+                item.init_data()
+            elif isinstance(item, numpy.ndarray):
                 raise TypeError("The cell inputs should not be numpy arrays.")
         if self.requires_grad is True:
             _pynative_executor.set_grad_flag(True)
@@ -712,6 +714,8 @@ class Cell(Cell_):
         new_inputs = []
         for i in inputs:
             if isinstance(i, Tensor):
+                if i.has_init:
+                    i.init_data()
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
