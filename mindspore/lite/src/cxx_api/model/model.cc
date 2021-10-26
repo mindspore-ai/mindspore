@@ -255,7 +255,7 @@ Status Model::SetOptimizerParams(const std::vector<MSTensor> &params) {
   return impl_->SetOptimizerParams(params);
 }
 
-Status Model::InitMetrics(std::vector<Metrics *> metrics) {
+Status Model::InitMetrics(const std::vector<Metrics *> metrics) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteUninitializedObj;

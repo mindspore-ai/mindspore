@@ -179,9 +179,6 @@ int StridedSliceCPUKernel::FastRun() {
   CHECK_NULL_RETURN(input_ptr_);
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_ptr_);
-  if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
-    return RET_NULL_PTR;
-  }
   auto ret = ParallelLaunch(this->ms_context_, StrideRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Stride run error error_code[" << ret << "]";

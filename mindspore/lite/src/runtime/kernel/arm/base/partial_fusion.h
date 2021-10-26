@@ -32,7 +32,7 @@ class PartialFusionKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   void set_subgraph_kernel(LiteKernel *subgraph_kernel) { subgraph_kernel_ = subgraph_kernel; }
-  LiteKernel *subgraph_kernel() { return subgraph_kernel_; }
+  LiteKernel *subgraph_kernel() const { return subgraph_kernel_; }
 
  private:
   LiteKernel *subgraph_kernel_ = nullptr;

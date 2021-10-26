@@ -41,10 +41,7 @@ class Buffer::Impl {
   void *MutableData() { return data_.data(); }
   size_t DataSize() const { return data_.size(); }
 
-  bool ResizeData(size_t data_len) {
-    data_.resize(data_len);
-    return true;
-  }
+  void ResizeData(size_t data_len) { data_.resize(data_len); }
 
   bool SetData(const void *data, size_t data_len) {
     ResizeData(data_len);
@@ -89,7 +86,7 @@ bool MSTensor::operator==(const MSTensor &tensor) const {
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {
-  if (data_len < 0 || data_len > MAX_MALLOC_SIZE) {
+  if (data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "data_len is error.";
     return nullptr;
   }
@@ -182,7 +179,7 @@ MSTensor *MSTensor::Clone() const {
     return nullptr;
   }
   auto data_len = this->DataSize();
-  if (data_len <= 0 || data_len > MAX_MALLOC_SIZE) {
+  if (data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "Illegal data size of tensor.";
     return nullptr;
   }
@@ -235,7 +232,7 @@ enum DataType MSTensor::DataType() const {
 }
 
 const std::vector<int64_t> &MSTensor::Shape() const {
-  static std::vector<int64_t> empty;
+  static const std::vector<int64_t> empty{};
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return empty;
@@ -409,7 +406,8 @@ bool Buffer::ResizeData(size_t data_len) {
     MS_LOG(ERROR) << "impl is nullptr.";
     return false;
   }
-  return impl_->ResizeData(data_len);
+  impl_->ResizeData(data_len);
+  return true;
 }
 
 bool Buffer::SetData(const void *data, size_t data_len) {

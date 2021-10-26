@@ -171,7 +171,7 @@ std::shared_ptr<Delegate> Context::GetDelegate() const {
 }
 
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
-  static std::vector<std::shared_ptr<DeviceInfoContext>> empty;
+  static std::vector<std::shared_ptr<DeviceInfoContext>> empty{};
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return empty;

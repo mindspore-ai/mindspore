@@ -82,6 +82,8 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
     return RET_ERROR;
   }
 
+  CHECK_NULL_RETURN(src_tensor->data());
+  CHECK_NULL_RETURN(dst_tensor->data());
   // need replace with increase data ref count
   memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;

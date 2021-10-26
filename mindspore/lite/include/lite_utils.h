@@ -69,6 +69,9 @@ class String {
   }
 
   String(size_t count, char ch) {
+    if (count > SIZE_MAX / sizeof(char) - 1) {
+      MS_C_EXCEPTION("Invalid string size");
+    }
     buffer_ = reinterpret_cast<char *>(malloc(sizeof(char) * (count + 1)));
     if (buffer_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
@@ -98,7 +101,7 @@ class String {
     if (buffer_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    strncpy(buffer_, s, size_);
+    memcpy(buffer_, s, size_);
     buffer_[size_] = '\0';
   }
 
@@ -150,12 +153,17 @@ class String {
       if (buffer_ == nullptr) {
         MS_C_EXCEPTION("malloc data failed");
       }
-      strncpy(buffer_, other.buffer_ + pos, size_);
+      memcpy(buffer_, other.buffer_ + pos, size_);
       buffer_[size_] = '\0';
     }
   }
 
-  ~String() { free(buffer_); }
+  ~String() {
+    if (buffer_ != nullptr) {
+      free(buffer_);
+      buffer_ = nullptr;
+    }
+  }
 
   String &operator=(const String &str) {
     if (this == &str) {
@@ -241,7 +249,9 @@ class String {
   }
 
   String &append(size_t count, const char ch) {
-    (*this) += ch;
+    for (size_t i = 0; i < count; i++) {
+      (*this) += ch;
+    }
     return *this;
   }
 
@@ -264,6 +274,9 @@ class String {
   }
 
   String &operator+=(const String &str) {
+    if (size_ > SIZE_MAX / sizeof(char) - str.size_ - 1) {
+      MS_C_EXCEPTION("Invalid string size");
+    }
     size_t new_size = size_ + str.size_;
     char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (new_size + 1)));
     if (tmp == nullptr) {
@@ -283,6 +296,9 @@ class String {
       return *this;
     }
     size_t str_size = strlen(str);
+    if (size_ > SIZE_MAX / sizeof(char) - str_size - 1) {
+      MS_C_EXCEPTION("Invalid string size");
+    }
     size_t new_size = size_ + str_size;
     char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (new_size + 1)));
     if (tmp == nullptr) {
@@ -298,6 +314,9 @@ class String {
   }
 
   String &operator+=(const char ch) {
+    if (size_ > SIZE_MAX / sizeof(char) - 2) {
+      MS_C_EXCEPTION("Invalid string size");
+    }
     char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (size_ + 2)));
     if (tmp == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
@@ -585,6 +604,10 @@ class Vector {
     size_ = vec.size_;
     elem_size_ = sizeof(T);
     capacity_ = vec.capacity_;
+    if (data_ != nullptr) {
+      delete[] data_;
+      data_ = nullptr;
+    }
     data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");

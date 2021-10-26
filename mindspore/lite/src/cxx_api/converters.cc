@@ -27,7 +27,7 @@
 namespace mindspore {
 constexpr static int kMaxNumOfDevices = 3;
 
-Status AddCpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
+Status AddCpuDevice(const Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
   auto cpu_context = device->Cast<CPUDeviceInfo>();
   l_context->allocator = cpu_context->GetAllocator();
   if (l_context->allocator == nullptr) {
@@ -54,7 +54,7 @@ Status AddCpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
   return kSuccess;
 }
 
-Status AddGpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
+Status AddGpuDevice(lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto gpu_context = device->Cast<GPUDeviceInfo>();
   device_info.gpu_device_info_ = {gpu_context->GetEnableFP16(), gpu_context->GetDeviceID()};
@@ -63,7 +63,7 @@ Status AddGpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
   return kSuccess;
 }
 
-Status AddNpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
+Status AddNpuDevice(lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto npu_context = device->Cast<KirinNPUDeviceInfo>();
   device_info.npu_device_info_ = {npu_context->GetFrequency()};
@@ -71,7 +71,7 @@ Status AddNpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
   return kSuccess;
 }
 
-Status AddAscend310Device(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
+Status AddAscend310Device(lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto ascend310_context = device->Cast<Ascend310DeviceInfo>();
   device_info.ascend310_device_info_ = {ascend310_context->GetDeviceID()};
@@ -105,11 +105,11 @@ Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
     if (device->GetDeviceType() == kCPU) {
       error_code = AddCpuDevice(a_context, l_context, device.get());
     } else if (device->GetDeviceType() == kGPU) {
-      error_code = AddGpuDevice(a_context, l_context, device.get());
+      error_code = AddGpuDevice(l_context, device.get());
     } else if (device->GetDeviceType() == kKirinNPU) {
-      error_code = AddNpuDevice(a_context, l_context, device.get());
+      error_code = AddNpuDevice(l_context, device.get());
     } else if (device->GetDeviceType() == kAscend310) {
-      error_code = AddAscend310Device(a_context, l_context, device.get());
+      error_code = AddAscend310Device(l_context, device.get());
     } else {
       MS_LOG(ERROR) << "Invalid device.";
       return kLiteInputParamInvalid;

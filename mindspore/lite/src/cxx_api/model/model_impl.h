@@ -84,7 +84,7 @@ class ModelImpl {
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
   bool IsTrainModel();
 
-  Status InitMetrics(std::vector<Metrics *> metrics) {
+  Status InitMetrics(const std::vector<Metrics *> metrics) {
     metrics_ = metrics;
     return kSuccess;
   }

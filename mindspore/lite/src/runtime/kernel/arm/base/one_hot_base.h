@@ -18,13 +18,16 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
+#include "nnacl/one_hot_parameter.h"
 
 namespace mindspore::kernel {
 class OneHotCPUKernel : public InnerKernel {
  public:
   OneHotCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {
+    one_hot_param_ = reinterpret_cast<OneHotParameter *>(parameter);
+  }
 
   ~OneHotCPUKernel() override = default;
 
@@ -50,6 +53,7 @@ class OneHotCPUKernel : public InnerKernel {
   float on_value_ = 0.;
   float off_value_ = 0.;
 #endif
+  OneHotParameter *one_hot_param_;
 };
 }  // namespace mindspore::kernel
 

@@ -51,11 +51,13 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
   MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
+    delete lite_context;
     return status;
   }
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
+    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -77,11 +79,13 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
   MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
+    delete lite_context;
     return status;
   }
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
+    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -113,6 +117,7 @@ Status ModelImpl::Build() {
   MS_CHECK_TRUE_MSG(lite_context != nullptr, kLiteNullptr, "inner context failed");
   auto status = A2L_ConvertContext(context_.get(), lite_context);
   if (status != kSuccess) {
+    delete lite_context;
     MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
     return status;
   }
@@ -129,12 +134,14 @@ Status ModelImpl::Build() {
 
   auto model = graph_->graph_data_->lite_model();
   if (model == nullptr || model->buf == nullptr) {
+    delete lite_context;
     MS_LOG(ERROR) << "Lite model has been freed.";
     return kLiteError;
   }
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
+    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -149,7 +156,7 @@ Status ModelImpl::Build() {
   return kSuccess;
 }
 
-static void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors) {
+static void ResetTensorData(std::vector<void *> old_data, const std::vector<tensor::MSTensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }

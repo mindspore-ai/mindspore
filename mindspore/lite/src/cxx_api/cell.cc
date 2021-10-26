@@ -18,8 +18,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-class GraphImpl {};
-
 std::vector<Output> CellBase::operator()(const std::vector<Input> &inputs) const {
   std::vector<Output> empty;
   MS_LOG(ERROR) << "Unsupported feature.";
