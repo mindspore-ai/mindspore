@@ -47,7 +47,7 @@ from PIL import Image
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
-from mindspore import Tensor
+from mindspore.common import Tensor
 from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore.parallel._utils import _get_device_num

@@ -45,7 +45,7 @@ import platform
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from mindspore import dtype as mstype
+from mindspore.common import dtype as mstype
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
