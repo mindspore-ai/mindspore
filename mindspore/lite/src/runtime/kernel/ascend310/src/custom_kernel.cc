@@ -27,7 +27,7 @@ namespace acl {
 CustomAscend310Kernel::CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs,
                                              const std::vector<mindspore::MSTensor> &outputs,
                                              const schema::Primitive *primitive, const mindspore::Context *ctx)
-    : Kernel(inputs, outputs, primitive, ctx), load_model_(false), model_infer_(nullptr) {}
+    : Kernel(inputs, outputs, primitive, ctx), load_model_(false), acl_options_({}), model_infer_(nullptr) {}
 
 CustomAscend310Kernel::~CustomAscend310Kernel() {
   if (load_model_) {
@@ -38,7 +38,23 @@ CustomAscend310Kernel::~CustomAscend310Kernel() {
   }
 }
 
-AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Context *ctx) const {
+STATUS CustomAscend310Kernel::ParseBatchSize(const std::string &batch_size, AclModelOptions *options) {
+  CHECK_NULL_RETURN(options);
+  if (!batch_size.empty()) {
+    char *ptr = nullptr;
+    options->batch_size = strtol(batch_size.c_str(), &ptr, 0);
+    bool ret = (ptr == (batch_size.c_str() + batch_size.size()));
+    if (!ret) {
+      options->batch_size = kBatchSizeInvalid;
+      MS_LOG(ERROR) << "Convert batch size failed, val: " << batch_size;
+      return lite::RET_ERROR;
+    }
+    MS_LOG(INFO) << "Batch size of context is " << options->batch_size;
+  }
+  return lite::RET_OK;
+}
+
+AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Context *ctx) {
   AclModelOptions options;
   options.device_id = 0;
   if (ctx == nullptr) {
@@ -62,6 +78,11 @@ AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Conte
   }
 
   options.device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
+  auto batch_size = ascend31o_info->GetDynamicBatchSize();
+  if (ParseBatchSize(batch_size, &options) != lite::RET_OK) {
+    MS_LOG(WARNING) << "Parse batch size failed.";
+    return options;
+  }
   return options;
 }
 
@@ -74,8 +95,8 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
   int idx = inputs_.size() - 1;
   Buffer om_data(inputs_[idx].Data().get(), inputs_[idx].DataSize());
   if (model_infer_ == nullptr) {
-    auto options = GetAclModelOptions(context_);
-    model_infer_ = std::make_shared<ModelInfer>(om_data, options);
+    acl_options_ = GetAclModelOptions(context_);
+    model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_);
     CHECK_NULL_RETURN(model_infer_);
   }
   int ret = model_infer_->Init();
@@ -116,12 +137,26 @@ STATUS CustomAscend310Kernel::ReSize() {
   return Prepare();
 }
 
+STATUS CustomAscend310Kernel::ProcDynamicBatchSizeInput(std::vector<mindspore::MSTensor> *input) {
+  CHECK_NULL_RETURN(input);
+  if (acl_options_.batch_size != kBatchSizeInvalid) {
+    mindspore::MSTensor dynamic_input("batch", DataType::kNumberTypeInt32, {1}, &acl_options_.batch_size,
+                                      sizeof(int32_t));
+    input->push_back(dynamic_input);
+  }
+  return lite::RET_OK;
+}
+
 STATUS CustomAscend310Kernel::Execute() {
   if (!load_model_) {
     MS_LOG(WARNING) << "Custom kernel has not been prepared.";
     return lite::RET_OK;
   }
   std::vector<mindspore::MSTensor> inputs(inputs_.begin(), inputs_.end() - 1);
+  if (ProcDynamicBatchSizeInput(&inputs) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
+    return lite::RET_ERROR;
+  }
   if (model_infer_->Inference(inputs, &outputs_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Custom kernel execute failed.";
     return lite::RET_ERROR;

@@ -25,6 +25,7 @@
 #include "acl/acl_rt.h"
 #include "include/api/types.h"
 #include "include/errorcode.h"
+#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -40,8 +41,9 @@ struct AclTensorInfo {
 
 class ModelProcess {
  public:
-  ModelProcess()
-      : model_id_(0xffffffff),
+  explicit ModelProcess(const AclModelOptions &options)
+      : options_(options),
+        model_id_(0xffffffff),
         is_run_on_device_(false),
         model_desc_(nullptr),
         inputs_(nullptr),
@@ -65,22 +67,23 @@ class ModelProcess {
   STATUS CheckAndInitInput(const std::vector<mindspore::MSTensor> &inputs);
   STATUS SortTensorInfoByName(const std::vector<mindspore::MSTensor> &tensor, std::vector<AclTensorInfo> *tensor_info);
   STATUS CheckTensorByTensorInfo(const std::vector<mindspore::MSTensor> &tensor,
-                                 const std::vector<AclTensorInfo> &tensor_info, size_t dynamic_nums);
+                                 const std::vector<AclTensorInfo> &tensor_info);
   STATUS GetOutputs(std::vector<mindspore::MSTensor> *outputs);
   STATUS ConstructTensor(std::vector<mindspore::MSTensor> *outputs);
   STATUS SetBatchSize(const std::vector<mindspore::MSTensor> &inputs);
   STATUS InitInputsBuffer();
   STATUS InitOutputsBuffer();
   STATUS ResetOutputSize();
-  size_t GetDynamicDims(const std::vector<AclTensorInfo> &);
-  STATUS ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs, size_t dynamic_nums);
+  STATUS ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs);
   std::string VectorToString(const std::vector<int64_t> &);
-
+  bool IsDynamicShape();
+  bool IsDynamicBatchSize();
   void DestroyInputsDataset();
   void DestroyInputsDataMem();
   void DestroyInputsBuffer();
   void DestroyOutputsBuffer();
 
+  AclModelOptions options_;
   uint32_t model_id_;
   // if run one device(AICPU), there is no need to alloc device memory and copy inputs to(/outputs from) device
   bool is_run_on_device_;

@@ -70,6 +70,17 @@ std::shared_ptr<mindspore::KirinNPUDeviceInfo> NPUDeviceInfoFromNPUDeviceContext
   return npu_info;
 }
 
+std::vector<size_t> GetBatchSize(const std::string &batch_size) {
+  char *ptr = nullptr;
+  size_t val = strtol(batch_size.c_str(), &ptr, 0);
+  bool ret = (ptr == (batch_size.c_str() + batch_size.size()));
+  if (!ret) {
+    return {};
+  }
+  MS_LOG(INFO) << "Batch size: " << val;
+  return {val};
+}
+
 std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310DeviceContext(
   const lite::DeviceContext &ascend310_context) {
   if (ascend310_context.device_type_ != DT_ASCEND310) {
@@ -79,6 +90,11 @@ std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310
   auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
   MS_CHECK_TRUE_RET(ascend310_info != nullptr, nullptr);
   ascend310_info->SetDeviceID(ascend310_context.device_info_.ascend310_device_info_.device_id_);
+  std::string batch_size = ascend310_context.device_info_.ascend310_device_info_.batch_size_;
+  if (!batch_size.empty()) {
+    auto val = GetBatchSize(batch_size);
+    ascend310_info->SetDynamicBatchSize(val);
+  }
   return ascend310_info;
 }
 }  // namespace

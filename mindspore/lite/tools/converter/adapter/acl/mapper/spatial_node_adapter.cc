@@ -75,7 +75,7 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &
 static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                          const FuncGraphManagerPtr &manager) {
   std::string cnode_func_name = GetCNodeFuncName(cnode);
-  if (cnode_func_name == prim::kTupleGetItem || cnode_func_name == kNameReturn) {
+  if (cnode_func_name == prim::kTupleGetItem) {
     return lite::RET_OK;
   }
 

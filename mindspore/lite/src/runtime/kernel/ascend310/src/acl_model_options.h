@@ -21,11 +21,15 @@
 
 namespace mindspore::kernel {
 namespace acl {
+const uint64_t kBatchSizeInvalid = 0;
+
 typedef struct AclModelOptions {
   int32_t device_id;
   std::string dump_cfg_path;
-} AclModelOptions;
+  uint64_t batch_size;
 
+  AclModelOptions() : device_id(0), dump_cfg_path(""), batch_size(kBatchSizeInvalid) {}
+} AclModelOptions;
 }  // namespace acl
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_

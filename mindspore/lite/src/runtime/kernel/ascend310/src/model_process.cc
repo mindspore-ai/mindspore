@@ -201,7 +201,7 @@ STATUS ModelProcess::InitOutputsBuffer() {
   aclError ret;
   outputs_ = aclmdlCreateDataset();
   if (outputs_ == nullptr) {
-    MS_LOG(ERROR) << "Create input dataset failed";
+    MS_LOG(ERROR) << "Create output dataset failed";
     return lite::RET_ERROR;
   }
   size_t output_size = aclmdlGetNumOutputs(model_desc_);
@@ -217,7 +217,7 @@ STATUS ModelProcess::InitOutputsBuffer() {
     aclmdlIODims dims;
     ret = aclmdlGetOutputDims(model_desc_, i, &dims);
     if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Get input shape failed";
+      MS_LOG(ERROR) << "Get output shape failed";
       if (!is_run_on_device_) {
         aclrtFree(data_mem_buffer);
       } else {
@@ -235,7 +235,7 @@ STATUS ModelProcess::InitOutputsBuffer() {
     if (output_name.empty()) {
       MS_LOG(WARNING) << "Get name of output " << i << " failed.";
     }
-    MS_LOG(INFO) << "Name of input " << i << " is " << output_name;
+    MS_LOG(INFO) << "Name of om output " << i << " is " << output_name << "Buffer size " << buffer_size;
     output_infos_.emplace_back(
       AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, data_type, shape, output_name});
   }
@@ -310,35 +310,25 @@ STATUS ModelProcess::UnLoad() {
   return lite::RET_OK;
 }
 
-size_t ModelProcess::GetDynamicDims(const std::vector<AclTensorInfo> &inputs) {
-  size_t max_num = 0;
-  for (auto input : inputs) {
-    size_t cur_num = std::count(input.dims.begin(), input.dims.end(), -1);
-    if (cur_num > max_num) {
-      max_num = cur_num;
-    }
-  }
-  return max_num;
-}
-
 STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs) {
   size_t index;
   aclError ret;
   for (size_t i = 0; i < inputs.size(); i++) {
     input_infos_[i].buffer_size = inputs[i].DataSize();
   }
-  auto *p = reinterpret_cast<const float *>(inputs[inputs.size() - 1].Data().get());
+  auto *p = reinterpret_cast<const int32_t *>(inputs[inputs.size() - 1].Data().get());
   if (p == nullptr) {
     MS_LOG(ERROR) << "Pointer is nullptr.";
     return lite::RET_OK;
   }
-  auto dynamicBatchSize = p[0];
+  auto batch_size = p[0];
   ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Get index failed";
     return lite::RET_ERROR;
   }
-  ret = aclmdlSetDynamicBatchSize(model_id_, inputs_, index, dynamicBatchSize);
+  MS_LOG(INFO) << "Set Batch size(" << batch_size << ") of input " << index << ".";
+  ret = aclmdlSetDynamicBatchSize(model_id_, inputs_, index, batch_size);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
     return lite::RET_ERROR;
@@ -347,8 +337,8 @@ STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs
 }
 
 STATUS ModelProcess::CheckTensorByTensorInfo(const std::vector<mindspore::MSTensor> &tensor,
-                                             const std::vector<AclTensorInfo> &tensor_info, size_t dynamic_nums) {
-  if (dynamic_nums == 0) {
+                                             const std::vector<AclTensorInfo> &tensor_info) {
+  if (!IsDynamicShape()) {
     for (size_t i = 0; i < tensor_info.size(); ++i) {
       if (tensor[i].Shape() != tensor_info[i].dims) {
         MS_LOG(ERROR) << "Note: input " << i << " shape not match, required " << ShapeToString(tensor_info[i].dims)
@@ -371,8 +361,8 @@ STATUS ModelProcess::CheckTensorByTensorInfo(const std::vector<mindspore::MSTens
   return lite::RET_OK;
 }
 
-STATUS ModelProcess::ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs, size_t dynamic_nums) {
-  if (dynamic_nums == kDynamicBatchSize) {
+STATUS ModelProcess::ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs) {
+  if (IsDynamicBatchSize()) {
     if (SetBatchSize(inputs) != lite::RET_OK) {
       MS_LOG(ERROR) << "Failed to convert dynamic batch size";
       return lite::RET_ERROR;
@@ -381,19 +371,19 @@ STATUS ModelProcess::ProcDynamicShape(const std::vector<mindspore::MSTensor> &in
       MS_LOG(ERROR) << "Reset output size failed";
       return lite::RET_ERROR;
     }
-  } else if (dynamic_nums == kDynamicImageSize) {
-    MS_LOG(ERROR) << "Only dynamic batch size is supported";
-    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
 
+bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize(); }
+
+bool ModelProcess::IsDynamicBatchSize() { return options_.batch_size != kBatchSizeInvalid; }
+
 STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
-  size_t dynamic_nums = GetDynamicDims(input_infos_);
   // check inputs
-  if (CheckTensorByTensorInfo(inputs, input_infos_, dynamic_nums) != lite::RET_OK) {
+  if (CheckTensorByTensorInfo(inputs, input_infos_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Check input tensor failed.";
     return lite::RET_ERROR;
   }
@@ -407,7 +397,8 @@ STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &i
       info.cur_device_data = info.device_data;
       ret = aclrtMemcpy(info.cur_device_data, info.buffer_size, data, input.DataSize(), ACL_MEMCPY_HOST_TO_DEVICE);
       if (ret != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, buffer size " << input.DataSize();
+        MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, src input size: " << input.DataSize()
+                      << "dst device buffer size: " << info.buffer_size;
         return lite::RET_ERROR;
       }
       input_buffer = info.cur_device_data;
@@ -426,7 +417,7 @@ STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &i
       return lite::RET_ERROR;
     }
   }
-  if (ProcDynamicShape(inputs, dynamic_nums) != lite::RET_OK) {
+  if (ProcDynamicShape(inputs) != lite::RET_OK) {
     MS_LOG(ERROR) << "Proc input dynamic shape failed.";
     return lite::RET_ERROR;
   }
@@ -445,10 +436,12 @@ STATUS ModelProcess::ResetOutputSize() {
       MS_LOG(ERROR) << "get output dim error.";
       return lite::RET_ERROR;
     }
+    std::vector<int64_t> shape(output_dims.dims, output_dims.dims + output_dims.dimCount);
     for (size_t i = 0; i < output_dims.dimCount; i++) {
       dims *= output_dims.dims[i];
     }
     output_type = aclmdlGetOutputDataType(model_desc_, index);
+    output_infos_[index].dims = shape;
     output_infos_[index].buffer_size = dims * aclDataTypeSize(output_type);
   }
   return lite::RET_OK;
@@ -470,8 +463,11 @@ STATUS ModelProcess::SortTensorInfoByName(const std::vector<mindspore::MSTensor>
     std::string name = tensor[i].Name();
     size_t j;
     for (j = 0; j < size; j++) {
-      if (name.find((*tensor_info)[j].name) != std::string::npos) {
-        std::swap((*tensor_info)[i], (*tensor_info)[j]);
+      if (name.find((*tensor_info)[j].name) != std::string::npos ||
+          (*tensor_info)[j].name.find(name) != std::string::npos) {
+        if (i != j) {
+          std::swap((*tensor_info)[i], (*tensor_info)[j]);
+        }
         break;
       }
     }
