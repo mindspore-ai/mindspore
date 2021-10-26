@@ -2959,7 +2959,7 @@ class Mod(_MathBinaryOp):
         return None
 
 
-class Floor(PrimitiveWithInfer):
+class Floor(Primitive):
     r"""
     Rounds a tensor down to the closest integer element-wise.
 
@@ -2968,14 +2968,14 @@ class Floor(PrimitiveWithInfer):
         out_i = \lfloor x_i \rfloor
 
     Inputs:
-        - **x** (Tensor) - The input tensor. Its element data type must be float.
+        - **x** (Tensor) - The input tensor. Its element data type must be float16 or float32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is not float.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2992,13 +2992,6 @@ class Floor(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Floor."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, mstype.float_type, self.name)
-        return x_dtype
 
 
 class FloorMod(_MathBinaryOp):
