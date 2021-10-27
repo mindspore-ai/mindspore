@@ -235,6 +235,7 @@ from .transpose_d import _transpose_d_tbe
 from .transpose_ds import _transpose_ds_tbe
 from .truncate_div import _truncate_div_tbe
 from .truncate_mod import _truncate_mod_tbe
+from .truncate_mod_ds import _truncate_mod_ds_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
 from .unsorted_segment_sum_ds import _unsorted_segment_sum_ds_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe

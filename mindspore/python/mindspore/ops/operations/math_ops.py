@@ -2957,7 +2957,7 @@ class TruncateDiv(_MathBinaryOp):
     """
 
 
-class TruncateMod(_MathBinaryOp):
+class TruncateMod(Primitive):
     r"""
     Returns the remainder of division element-wise.
 
@@ -2999,7 +2999,12 @@ class TruncateMod(_MathBinaryOp):
         >>> print(output)
         [ 2  1 -1]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TruncateMod."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 class Mod(_MathBinaryOp):
     r"""
