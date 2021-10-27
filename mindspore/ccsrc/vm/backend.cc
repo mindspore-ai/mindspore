@@ -1018,7 +1018,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   auto parser = std::make_shared<ControlNodeParser>();
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
                                              std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
-                                             outputs_order, outputs_order.size(), actor_info, need_erase,
+                                             outputs_order, 0, actor_info, need_erase,
                                              runtime::GraphExecutionStrategy::kStep);
 }
 

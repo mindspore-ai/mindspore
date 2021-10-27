@@ -43,10 +43,13 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
 }  // namespace
 
 void OutputActor::Init() {
-  // Set the number of actor running dependent messages.
-  if ((!need_loop_count_)) {
-    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
+  // Check device contexts number.
+  if (device_contexts_.size() != output_nodes_.size()) {
+    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
+
+  // Set the number of actor running dependent messages.
+  running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
 }
 
 void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context) {
@@ -126,11 +129,6 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
 
   // Save the output nodes to clear the device tensor in the running end.
   output_nodes_[output_position] = KernelWithIndex(output_node, output_index);
-
-  // There is no loop count actor in step mode, need trigger call CollectLoopCount to replace old output device tensors.
-  if (!need_loop_count_ && (current_outputs_num_ + device_tensor_store_keys_.size() == outputs_num_)) {
-    CollectLoopCount(++current_count_, context);
-  }
 }
 }  // namespace runtime
 }  // namespace mindspore
