@@ -59,13 +59,7 @@ def matmul_dds_grad(q,
     :param local_prob_grad: local output grad (bs, heads, block_num, block_size // 16, block_size // 16, 16, 16) zN
     :param global_prob_grad: global output grad (bs, heads, block_num, global_size // 16, block_size // 16, 16, 16) zN
     """
-    # seq_len = 1024
-    # size_per_head = 128
-    # block_size = 64
-    # block_num = 16
-    # global_size = 256
-    # bs = 2
-    # heads = 2
+
     shape_q = q.get(
         'shape')
     shape_lc = local_prob.get(
@@ -120,17 +114,17 @@ def matmul_dds_grad(q,
                              (global_size + block_size) * 16 // 128, 8)
             tik_inst.data_move(mat_l1_ones[0, 0, 0, 0], mat_ub_ones[0, 0, 0, 0],
                                0, (global_size + block_size) // 16, 16, 0, 0)
-        # all_head = 32 * rx + block_index
+
         b = tik_inst.Scalar(dtype="int32")
         b.set_as(block_index // heads)
 
-        # head = block_index - b * heads
+
         head = tik_inst.Scalar(dtype="int32")
         head.set_as(block_index - b * heads)
-        # s = head // 4
+
         s = tik_inst.Scalar(dtype="int32")
         s.set_as(head // 4)
-        # global_idx = 3 - (head - 4 * s)  # global idx for global key extraction
+        # formula: global_idx = 3 - (head - 4 * s)  # global idx for global key extraction
         global_idx = tik_inst.Scalar(dtype="int32")
         global_idx.set_as(3 - (head - 4 * s))
         # apply tensor in l1 for global k (256, 128) nZ
@@ -154,7 +148,7 @@ def matmul_dds_grad(q,
                                0, size_per_head // 16, 16, bs * seq_len - 16, 0)
         with tik_inst.for_range(0, block_num) as block:
             # do backward softmax
-            # grad_x = grad_softmax * softmax - sum(grad_softmax * softmax) * softmax
+            # formula: grad_x = grad_softmax * softmax - sum(grad_softmax * softmax) * softmax
             # apply for tensor in ub for grad_x out (64, 320) zN
             mat_ub_lg_d = tik_inst.Tensor("float16",
                                           ((global_size + block_size) //
@@ -217,16 +211,16 @@ def matmul_dds_grad(q,
                               1, 1, 1, 8, 8, 8)
 
                 # apply for tensor in L1 for dsoftmax*softmax result (320, 64) nZ
-                mat_l1_ssg_nZ = tik_inst.Tensor("float16", ((global_size + block_size) // 16,
+                mat_l1_ssg_nz = tik_inst.Tensor("float16", ((global_size + block_size) // 16,
                                                             block_size // 16, 16, 16),
-                                                name='mat_l1_ssg_nZ',
+                                                name='mat_l1_ssg_nz',
                                                 scope=tik.scope_cbuf)
                 # move ones from ub to L1 for CUBE mmad
                 # the shape of ones in ub is nZ
                 # the shape of ones in L0A is nZ
                 # the stride between each (16, 16) is 0
                 # repeat 32 times
-                tik_inst.data_move(mat_l1_ssg_nZ[0, 0, 0, 0], mat_ub_ssg[0, 0, 0, 0], 0,
+                tik_inst.data_move(mat_l1_ssg_nz[0, 0, 0, 0], mat_ub_ssg[0, 0, 0, 0], 0,
                                    (global_size + block_size) // 16, block_size, 0, 0)
                 # apply tensor in l0c for exp sum (16, 64) zN
                 mat_l0c_ssg_sum = tik_inst.Tensor("float32", (block_size // 16, 1, 16, 16),
@@ -254,7 +248,7 @@ def matmul_dds_grad(q,
                 # the shape of ssg in L0B is nZ
                 # the stride between each (16, 16) is 0
                 # repeat 128 times
-                tik_inst.load2dv1(mat_l0b_ssg[0, 0, 0, 0], mat_l1_ssg_nZ[0, 0, 0, 0], 0,
+                tik_inst.load2dv1(mat_l0b_ssg[0, 0, 0, 0], mat_l1_ssg_nz[0, 0, 0, 0], 0,
                                   (global_size + block_size) * block_size // (16 * 16), 1, 0, False)
                 tik_inst.mmad(mat_l0c_ssg_sum, mat_l0a_ones, mat_l0b_ssg,
                               16, (global_size + block_size), block_size, 0)
@@ -423,30 +417,30 @@ def matmul_dds_grad(q,
             # local dk calculation
             # dk calculation q.T X dw
             # apply for tensor in ub for dw (320, 64) nZ
-            mat_ub_lg_d_nZ = tik_inst.Tensor("float16",
+            mat_ub_lg_d_nz = tik_inst.Tensor("float16",
                                              (block_size // 16, (global_size +
                                                                  block_size) // 16, 16, 16),
-                                             name='mat_ub_lg_d_nZ',
+                                             name='mat_ub_lg_d_nz',
                                              scope=tik.scope_ubuf)
             # transpose dw from zN to nZ
             with tik_inst.for_range(0, (global_size + block_size) // 16) as lb:
                 with tik_inst.for_range(0, block_size // 16) as gb:
                     tik_inst.vtranspose(
-                        mat_ub_lg_d_nZ[gb, lb, 0, 0], mat_ub_lg_d[lb, gb, 0, 0])
+                        mat_ub_lg_d_nz[gb, lb, 0, 0], mat_ub_lg_d[lb, gb, 0, 0])
 
             # apply tensor in l1 for local dw (64, 64) nZ
-            mat_l1_ldw_nZ = tik_inst.Tensor("float16",
+            mat_l1_ldw_nz = tik_inst.Tensor("float16",
                                             (block_size // 16,
                                              block_size // 16, 16, 16),
-                                            name="mat_l1_ldw_nZ",
+                                            name="mat_l1_ldw_nz",
                                             scope=tik.scope_cbuf)
             # move local dw from ub to l1
             # the shape of local dw in ub is nZ
             # the shape of local dw in l1 is nZ
             # the stride between each (16, 64) is 256
             # repeat 4 times
-            tik_inst.data_move(mat_l1_ldw_nZ[0, 0, 0, 0],
-                               mat_ub_lg_d_nZ[0, 0, 0, 0],
+            tik_inst.data_move(mat_l1_ldw_nz[0, 0, 0, 0],
+                               mat_ub_lg_d_nz[0, 0, 0, 0],
                                0, block_size // 16, block_size, global_size, 0)
             # apply for tensor in L1 for q (128, 64) nZ
             mat_l1_q_b = tik_inst.Tensor("float16",
@@ -498,7 +492,7 @@ def matmul_dds_grad(q,
                 # the shape of local dw in L0B is nZ
                 # the stride between each (16, 16) is 0
                 # repeat 32 times
-                tik_inst.load2dv1(mat_l0b_ldw[0, 0, 0, 0], mat_l1_ldw_nZ[0, 0, 0, 0], 0,
+                tik_inst.load2dv1(mat_l0b_ldw[0, 0, 0, 0], mat_l1_ldw_nz[0, 0, 0, 0], 0,
                                   block_size * block_size // (16 * 16), 1, 0, False)
                 # matmul q and local dw
                 # the shape of local k in L0C is zN
@@ -525,7 +519,7 @@ def matmul_dds_grad(q,
             # the stride between each (16, 64) is 0
             # repeat 8 times
             tik_inst.data_move(mat_l1_dwg_b[0, 0, 0, 0],
-                               mat_ub_lg_d_nZ[0, block_size // 16, 0, 0],
+                               mat_ub_lg_d_nz[0, block_size // 16, 0, 0],
                                0, block_size // 16, global_size, block_size, 0)
 
             with tik_inst.new_stmt_scope():
