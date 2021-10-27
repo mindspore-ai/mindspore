@@ -250,8 +250,7 @@ class Cauchy(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
-        log_unnormalized_prob = - self.log1p(self.sq(z))
+        log_unnormalized_prob = (-1) * self.log1p(self.sq(z))
         log_normalization = self.log(np.pi * scale)
         return log_unnormalized_prob - log_normalization
 

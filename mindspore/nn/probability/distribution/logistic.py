@@ -292,8 +292,7 @@ class Logistic(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
-        return -self.softplus(-z)
+        return (-1) * self.softplus(-z)
 
     def _survival_function(self, value, loc=None, scale=None):
         r"""
@@ -329,8 +328,7 @@ class Logistic(Distribution):
         value = self.cast(value, self.dtype)
         loc, scale = self._check_param_type(loc, scale)
         z = (value - loc) / scale
-        # pylint: disable=E1130
-        return -self.softplus(z)
+        return (-1) * self.softplus(z)
 
     def _sample(self, shape=(), loc=None, scale=None):
         """
