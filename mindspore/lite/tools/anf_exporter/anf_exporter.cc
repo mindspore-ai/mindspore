@@ -209,7 +209,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[index]].get();
     auto &output_quant_param = output_quant_params[index];
     for (const auto &channel_quant_param : output_quant_param) {
-      if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
+      if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_QUANT_WEIGHT) {
         std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
           std::make_unique<schema::QuantParamT>(channel_quant_param);
         CHECK_NULL_RETURN(output_quant_param_ptr);

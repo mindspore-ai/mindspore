@@ -27,7 +27,8 @@
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
 #include "tools/converter/quantizer/quant_helper/matmul_quant_type_determiner.h"
-#include "nnacl/op_base.h"
+#include "src/lite_kernel.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore::lite {
 void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const schema::CNodeT &node) {
@@ -66,6 +67,10 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
 
 bool QuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_ASSERT(node != nullptr);
+  kernel::KernelKey desc{kernel::kCPU, kNumberTypeInt8, node->primitive->value.type, ""};
+  if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
+    return false;
+  }
   if (node->quantType != schema::QuantType_QUANT_NONE) {
     return node->quantType == schema::QuantType_QUANT_ALL;
   }
@@ -82,13 +87,22 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const schema::MetaGraphT &graph, 
   return node->quantType == schema::QuantType_QUANT_WEIGHT;
 }
 
-void QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
+int QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
   MS_ASSERT(node != nullptr);
   if (quant_type_determiner_->DetermineQuantWeight(*graph, node)) {
-    return;
+    return RET_OK;
   }
-  quant_param_propogator_->PropogateQuantParams(graph, *node);
-  quant_type_determiner_->DetermineQuantAll(*graph, node);
+  auto ret = quant_param_propogator_->PropogateQuantParams(graph, *node);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << node->name << " propagate Quant Params failed.";
+    return ret;
+  }
+  auto bool_ret = quant_type_determiner_->DetermineQuantAll(*graph, node);
+  if (!bool_ret) {
+    MS_LOG(DEBUG) << node->name << " dont need quant.";
+    return RET_OK;
+  }
+  return RET_OK;
 }
 
 QuantHelperRegister *QuantHelperRegister::GetInstance() {

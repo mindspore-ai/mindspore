@@ -74,7 +74,7 @@ STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t d
     freq_map[data[i]]++;
   }
   for (auto &kv : freq_map) {
-    if (kv.second <= 0) {
+    if (kv.second == 0) {
       continue;
     }
     auto node = new (std::nothrow) HuffmanNode();
@@ -216,7 +216,7 @@ HuffmanEncode::~HuffmanEncode() {
   for (auto &node : this->huffman_nodes_) {
     delete node;
   }
-  this->huffman_nodes_.resize(0);
+  this->huffman_nodes_.clear();
 }
 }  // namespace lite
 }  // namespace mindspore

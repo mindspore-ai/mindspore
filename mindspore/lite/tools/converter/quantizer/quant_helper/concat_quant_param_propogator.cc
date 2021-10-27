@@ -30,7 +30,7 @@ STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaG
 
   if (input_inited_quant_params_ != node.inputIndex.size()) {
     MS_LOG(DEBUG) << "Can not determine concat inputTensor quantParam, node " << node.name;
-    return RET_ERROR;
+    return RET_NO_CHANGE;
   }
 
   if (output_inited_quant_params_ != 1) {

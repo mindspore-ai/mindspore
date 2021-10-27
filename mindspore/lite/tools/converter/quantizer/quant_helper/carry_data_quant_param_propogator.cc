@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include "tools/common/tensor_util.h"
+#include "src//common/log_util.h"
 #include "nnacl/op_base.h"
 namespace mindspore::lite {
 STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
@@ -31,10 +32,9 @@ STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *g
     MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(0));
     auto &out_tensor = graph->allTensors.at(node.outputIndex.at(0));
     auto out_quant_param = GetTensorQuantParam(out_tensor);
-    MS_ASSERT(out_quant_param != nullptr);
     if (out_quant_param == nullptr || !out_quant_param->inited) {
-      MS_LOG(DEBUG) << "Can not determine inputTensor quantParam from outputTensor for node " << node.name;
-      return RET_ERROR;
+      MS_LOG(DEBUG) << node.name << " dont need to pass quant param.";
+      return RET_NO_CHANGE;
     }
     MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
     auto &in_tensor = graph->allTensors.at(node.inputIndex.at(0));
@@ -53,8 +53,8 @@ STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *g
     MS_ASSERT(in_tensor != nullptr);
     auto in_quant_param = GetTensorQuantParam(in_tensor);
     if (in_quant_param == nullptr || !in_quant_param->inited) {
-      MS_LOG(DEBUG) << "Can not determine outputTensor quantParam from inputTensor for node %s" << node.name;
-      return RET_ERROR;
+      MS_LOG(DEBUG) << node.name << " dont need to pass quant param.";
+      return RET_NO_CHANGE;
     }
     for (unsigned int i : node.outputIndex) {
       MS_ASSERT(graph->allTensors.size() > i);
