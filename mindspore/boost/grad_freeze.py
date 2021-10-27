@@ -114,7 +114,7 @@ class FreezeOpt(Cell):
 
 
 class _TrainFreezeCell(Cell):
-    """
+    r"""
     Gradient freezing training network.
 
     Args:
@@ -157,7 +157,7 @@ class _TrainFreezeCell(Cell):
 
 
 class GradientFreeze:
-    """
+    r"""
     Freezing the gradients of some layers randomly. The number and
     probability of frozen layers can be configured by users
 
@@ -180,7 +180,13 @@ class GradientFreeze:
         self._param_processer = ParameterProcess()
 
     def split_parameters_groups(self, net, freeze_para_groups_number):
-        """Split parameter groups for gradients freezing training."""
+        r"""
+        Split parameter groups for gradients freezing training.
+
+        Inputs:
+            - **net** (Cell) - The training network.
+            - **freeze_para_groups_number** (int) - The number of gradient freeze groups.
+        """
         grouped_params = []
         tmp = []
         for para in net.trainable_params():
@@ -201,7 +207,15 @@ class GradientFreeze:
         return freeze_grouped_params
 
     def generate_freeze_index_sequence(self, parameter_groups_number, freeze_strategy, freeze_p, total_steps):
-        """Generate index sequence for gradient freezing training."""
+        r"""
+        Generate index sequence for gradient freezing training.
+
+        Inputs:
+            - **parameter_groups_number** (int) - The number of parameter groups.
+            - **freeze_strategy** (int) - Gradient freeze grouping strategy, select from [0, 1].
+            - **freeze_p** (float) - Gradient freezing probability.
+            - **total_steps** (int) - Total training steps.
+        """
         total_step = int(total_steps * 1.01)
         if parameter_groups_number <= 1:
             return [0 for _ in range(total_step)]
@@ -235,7 +249,13 @@ class GradientFreeze:
             f"Unsupported freezing training strategy '{freeze_strategy}'")
 
     def freeze_generate(self, network, optimizer):
-        """Generate freeze network and optimizer."""
+        r"""
+        Generate freeze network and optimizer.
+
+        Inputs:
+            - **network** (Cell) - The training network.
+            - **optimizer** (Cell) - Optimizer for updating the weights.
+        """
         train_para_groups = self.split_parameters_groups(
             network, self._param_groups)
         for i in range(self._param_groups):
@@ -250,7 +270,43 @@ class GradientFreeze:
 
 def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None,
                 max_accumulation_step=1):
-    """Provide freeze network cell."""
+    r"""
+    Generate freeze network and optimizer.
+
+    Inputs:
+        - **reducer_flag** (bool) - Reducer flag.
+        - **network** (Cell) - The training network.
+        - **optimizer** (Cell) - Optimizer for updating the weights.
+        - **sens** (Tensor) -  Tensor with shape :math:`()`
+        - **grad** (Tuple(Tensor)) - Tuple of gradient tensors.
+        - **use_grad_accumulation** (bool) - Use gradient accumulation flag.
+        - **mean** (bool) - Gradients mean flag. default: None.
+        - **degree** (int) - Device number. default: None.
+        - **max_accumulation_step** (int) - Max accumulation steps. default: 1.
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, Parameter, nn
+        >>> import mindspore.ops as ops
+        >>> from mindspore.boost.grad_freeze import freeze_cell
+        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = ops.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
+        >>> in_features, out_features = 16, 10
+        >>> network = Net(in_features, out_features)
+        >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> grad = ops.GradOperation(get_by_list=True, sens_param=True)
+        >>> freeze_nets = freeze_cell(False, network, optimizer, 1.0, grad, False, None, None, 1)
+    """
     if reducer_flag:
         param_processer = ParameterProcess()
         grad_reducers = (DistributedGradReducer(param_processer.assign_parameter_group(opt.parameters),

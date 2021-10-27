@@ -37,7 +37,7 @@ _boost_config_level = {
 
 
 class AutoBoost:
-    """
+    r"""
     Provide auto accelerating for network.
 
     Args:
@@ -68,7 +68,13 @@ class AutoBoost:
             self._boost_config_func_map[key](self, val)
 
     def network_auto_process_train(self, network, optimizer):
-        """Network train."""
+        r"""
+        Boost network train.
+
+        Inputs:
+            - **network** (Cell) - The training network.
+            - **optimizer** (Cell) - Optimizer for updating the weights.
+        """
         if self._boost_config["less_bn"]:
             network = LessBN(network, fn_flag=self._fn_flag)
             optimizer_process = OptimizerProcess(optimizer)
@@ -90,7 +96,12 @@ class AutoBoost:
         return network, optimizer
 
     def network_auto_process_eval(self, network):
-        """Network eval."""
+        r"""
+        Boost network eval.
+
+        Args:
+            - **network** (Cell) - The inference network.
+        """
         if self._boost_config["less_bn"]:
             network = LessBN(network)
 

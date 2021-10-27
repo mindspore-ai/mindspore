@@ -209,7 +209,12 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         return loss
 
     def gradient_freeze_process(self, *inputs):
-        """gradient freeze algorithm process."""
+        r"""
+        Gradient freeze algorithm process.
+
+        Inputs:
+            - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        """
         if self.train_strategy is None:
             step = self.step
             max_index = len(self.freeze_nets)
@@ -224,7 +229,13 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         return loss
 
     def gradient_accumulation_process(self, loss, grads):
-        """gradient accumulation algorithm process."""
+        r"""
+        Gradient accumulation algorithm process.
+
+        Inputs:
+            - **loss** (Tensor) -  Tensor with shape :math:`()`.
+            - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+        """
         loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
                                              self.grad_accumulation, grads))
         self.accumulation_step += 1
@@ -242,7 +253,13 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         return loss
 
     def adasum_process(self, loss, grads):
-        """adasum algorithm process."""
+        r"""
+        Adasum algorithm process.
+
+        Inputs:
+            - **loss** (Tensor) -  Tensor with shape :math:`()`.
+            - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+        """
         loss = F.depend(loss, self.optimizer(grads))
         rank_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
         grad_clone = F.depend(self.grad_clone, loss)
@@ -261,7 +278,13 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         return loss
 
     def check_adasum_enable(self, optimizer, reducer_flag):
-        """check adasum enable."""
+        r"""
+        Check adasum enable.
+
+        Inputs:
+            - **optimizer** (Union[Cell]) - Optimizer for updating the weights.
+            - **reducer_flag** (bool) - Reducer flag.
+        """
         if not getattr(optimizer, "adasum", None) or not reducer_flag:
             return False
         _rank_size = get_group_size()
@@ -280,7 +303,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     BoostTrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
     The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
     the value must be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
-    must be provied by Cell type of `scale_sense`.
+    must be provide by Cell type of `scale_sense`.
 
     Args:
         network (Cell): The training network. The network only supports single output.
