@@ -41,6 +41,7 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/quant_utils.h"
 #include "src/common/utils.h"
+#include "tools/common/node_util.h"
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "nnacl/op_base.h"
 
@@ -54,6 +55,7 @@ static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion
                                                          prim::kPrimLayerNormFusion};
 constexpr int kMinSize = 0;
 constexpr int kMaxSize = 65535;
+constexpr int kHasBiasTensorSize = 3;
 }  // namespace
 namespace {
 STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
@@ -723,12 +725,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
-    bool is_graph_input = false;
-    if (input_node->isa<Parameter>()) {
-      if (!input_node->cast<ParameterPtr>()->has_default()) {
-        is_graph_input = true;
-      }
-    }
+    bool is_graph_input = IsGraphInput(input_node);
     if (is_graph_input) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
@@ -901,13 +898,12 @@ STATUS FullQuantQuantizer::PreProcess() {
 
 STATUS FullQuantQuantizer::CheckFp32TensorVec(const std::string &node_name,
                                               const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) {
-  MS_ASSERT(tensor_vec != nullptr);
   if (tensor_vec.empty()) {
     MS_LOG(ERROR) << "node: " << node_name << " input tensors is 0";
     return RET_ERROR;
   }
   auto *tensor = tensor_vec[0];
-  MS_ASSERT(tensor != nullptr);
+  CHECK_NULL_RETURN(tensor);
   if (tensor->data_type() != kNumberTypeFloat32) {
     MS_LOG(INFO) << "node: " << node_name << " will not quantize"
                  << " tensor data_type: " << tensor->data_type();
@@ -1019,27 +1015,20 @@ STATUS FullQuantQuantizer::DoInference() {
 STATUS FullQuantQuantizer::Int8Inference() {
   // int8 inference
   vector<mindspore::tensor::MSTensor *> inputs = int8_session_->GetInputs();
-  for (auto input_tensor : inputs) {
-    // get input tensor
-    auto elem_count = input_tensor->ElementsNum();
-    vector<float> dummy_data(elem_count);
-    // set the input data to 0.1
-    std::fill(dummy_data.begin(), dummy_data.end(), 0.1);
-    auto ret =
-      memcpy_s(input_tensor->MutableData(), input_tensor->Size(), dummy_data.data(), sizeof(float) * dummy_data.size());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy_s error: " << ret;
-      return RET_ERROR;
-    }
-  }
-
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
+    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
+      STATUS status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data failed!";
+        return RET_ERROR;
+      }
+    }
     // before func
     KernelCallBack before_call_back = GetBeforeCallBack(true);
     // after func
     KernelCallBack after_call_back = GetAfterCallBack(true);
-    auto ret = int8_session_->RunGraph(before_call_back, after_call_back);
-    if (ret != RET_OK) {
+    auto status = int8_session_->RunGraph(before_call_back, after_call_back);
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
     }
@@ -1051,10 +1040,6 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
   std::future<STATUS> int8_inference = std::async(std::launch::async, &FullQuantQuantizer::Int8Inference, this);
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
-  if (inputs.size() != 1) {
-    MS_LOG(ERROR) << "model's input tensor size: " << inputs.size();
-    return RET_ERROR;
-  }
   // fp32 inference
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
@@ -1114,10 +1099,10 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   auto input_quant_params = quant_param_holder->get_input_quant_params();
-  if (input_quant_params.size() == DIMENSION_3D) {
+  if (input_quant_params.size() == kHasBiasTensorSize) {
     // compensate the existed
     auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
-    auto bias = cnode->input(FOURTH_INPUT);
+    auto bias = cnode->input(THIRD_INPUT + 1);
     auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
     auto bias_default_param = bias_parameter_ptr->default_param();
     auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
@@ -1154,7 +1139,7 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
         bias_datas[i] += diff;
       }
     }
-  } else if (input_quant_params.size() == DIMENSION_2D) {
+  } else if (input_quant_params.size() == kHasBiasTensorSize - 1) {
     MS_LOG(INFO) << op_name << " add bias input";
     // need to add bias input
     auto parameter = func_graph->add_parameter();
@@ -1524,12 +1509,12 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
       const int8_t *tensor_data = static_cast<int8_t *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
       auto shapes = tensor->shape();
-      if (shapes.size() != 4) {
+      if (shapes.size() != DIMENSION_4D) {
         MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
         return false;
       }
       // suppose the the format is NHWC
-      auto channels = shapes[3];
+      auto channels = shapes[FOURTH_INPUT];
       if (channels == 0) {
         MS_LOG(ERROR) << "unexpected channels: 0";
         return false;
@@ -1591,12 +1576,12 @@ KernelCallBack FullQuantQuantizer::GetFloatAfterCallBack() {
       const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
       auto shapes = tensor->shape();
-      if (shapes.size() != 4) {
+      if (shapes.size() != DIMENSION_4D) {
         MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
         return false;
       }
       // suppose the activation format: NHWC
-      auto channels = shapes[3];
+      auto channels = shapes[FOURTH_INPUT];
       if (channels == 0) {
         MS_LOG(ERROR) << "unexpected channels: 0";
         return false;
