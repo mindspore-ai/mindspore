@@ -38,7 +38,7 @@ void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::K
   return;
 }
 
-bool KernelAdjust::NeedInsertSwitch() { return true; }
+bool KernelAdjust::NeedLoopSink() { return true; }
 
 void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 

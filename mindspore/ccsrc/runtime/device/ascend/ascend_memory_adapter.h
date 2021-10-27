@@ -43,8 +43,7 @@ class AscendMemAdapter {
   void ResetDynamicMemory();
 
   uint64_t FreeDevMemSize() { return static_mem_offset_ - max_dynamic_mem_offset_; }
-  uint64_t TotalDevMemSize() { return device_mem_size_; }
-  uint64_t MaxHbmSizeForMs() { return max_hbm_size_for_ms_; }
+  uint64_t MaxHbmSizeForMs() { return max_available_ms_hbm_size_; }
 
   std::string DevMemStatistics();
   std::string DevMemDetailInfo();
@@ -72,10 +71,10 @@ class AscendMemAdapter {
   std::mutex mutex_;
 
   // rts Memory INFO
-  size_t total_hbm_size_{0};
-  size_t max_hbm_size_for_ms_{0};
-  uint8_t *device_mem_base_{nullptr};
-  uint64_t device_mem_size_{0};
+  size_t device_hbm_size_{0};
+  size_t max_available_ms_hbm_size_{0};
+  uint8_t *device_mem_base_addr_{nullptr};
+  uint64_t ms_used_hbm_size_{0};
 
   // dynamic memory info
   uint64_t cur_dynamic_mem_offset_{0};
