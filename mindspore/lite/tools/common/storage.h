@@ -27,8 +27,6 @@ namespace mindspore {
 namespace lite {
 class Storage {
  public:
-  static int Save(const schema::MetaGraphT &graph, const std::string &outputPath);
-
   static schema::MetaGraphT *Load(const std::string &inputPath);
 };
 }  // namespace lite

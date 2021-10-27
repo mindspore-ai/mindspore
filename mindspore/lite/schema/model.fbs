@@ -45,6 +45,13 @@ enum WeightQunatCompressType: int {
     FSE
 }
 
+table ExternalData {
+    location: string;
+    offset: int64 = 0;
+    length: int64 = -1;
+    checkSum: string;
+}
+
 table Tensor {
     nodeType: int;
     // data type
@@ -60,6 +67,7 @@ table Tensor {
     name: string;
     enableHuffmanCode: bool = false;
     weightQunatCompressType: WeightQunatCompressType = NONE;
+    externalData: [ExternalData];
 }
 
 enum QuantType: int {

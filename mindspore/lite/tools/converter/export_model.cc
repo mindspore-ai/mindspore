@@ -278,7 +278,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     tensor->name = output_names.at(idx);
   }
   meta_graph->version = Version();
-  status = Storage::Save(*meta_graph, "model");
+  status = MetaGraphSerializer::Save(*meta_graph, "model");
   delete meta_graph;
   std::ostringstream oss;
   if (status != RET_OK) {

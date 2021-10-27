@@ -22,7 +22,7 @@
 #include "tools/converter/optimizer.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "schema/inner/model_generated.h"
-#include "tools/common/storage.h"
+#include "tools/common/meta_graph_serializer.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore {
