@@ -356,8 +356,7 @@ class Cell(Cell_):
     def _check_construct_args(self, *inputs, **kwargs):
         """Check the args needed by the function construct"""
         if kwargs:
-            raise ValueError("For 'graph' mode, the outermost network does not support passing "
-                             "variable key-value pair parameters.")
+            raise ValueError(f"Expect no kwargs here. Did you pass wrong arguments? args: {inputs}, kwargs: {kwargs}")
         positional_args = 0
         default_args = 0
         for value in inspect.signature(self.construct).parameters.values():
@@ -415,21 +414,22 @@ class Cell(Cell_):
             if _pynative_executor.is_top_cell():
                 _pynative_executor.set_lazy_build(False)
 
-    def __call__(self, *inputs, **kwargs):
+    def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
                            f"will call the super class(Cell) 'construct'.")
         if kwargs:
-            bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
-            inputs = bound_args.args
-            kwargs = bound_args.kwargs
+            bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
+            bound_arguments.apply_defaults()
+            args = bound_arguments.args
+            kwargs = bound_arguments.kwargs
 
         # Run in Graph mode.
         if context.get_context("mode") == context.GRAPH_MODE:
-            self._check_construct_args(*inputs, **kwargs)
+            self._check_construct_args(*args, **kwargs)
             if self.enable_hook:
                 raise ValueError("The graph mode does not support hook function.")
-            out = self.compile_and_run(*inputs)
+            out = self.compile_and_run(*args)
             return out
 
         # Run in PyNative mode.
@@ -438,22 +438,22 @@ class Cell(Cell_):
             # There many Casts in parameter_broadcast. Enable lazy_build and build faster.
             self._do_parameter_broadcast()
 
-        for item in inputs:
+        for item in args:
             if isinstance(item, Tensor) and item.has_init:
                 item.init_data()
             elif isinstance(item, numpy.ndarray):
                 raise TypeError("The cell inputs should not be numpy arrays.")
         if self.requires_grad is True:
             _pynative_executor.set_grad_flag(True)
-        _pynative_executor.new_graph(self, *inputs, **kwargs)
+        _pynative_executor.new_graph(self, *args, **kwargs)
         cast_inputs = list()
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp16'):
-                cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float16)
+                cast_inputs = self._cast_mixed_precision_inputs(args, mstype.float16)
             if self._mindspore_flags.get('fp32'):
-                cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float32)
+                cast_inputs = self._cast_mixed_precision_inputs(args, mstype.float32)
         if not cast_inputs:
-            cast_inputs = inputs
+            cast_inputs = args
 
         with self.CellGuard():
             try:
@@ -467,7 +467,7 @@ class Cell(Cell_):
 
         if isinstance(output, Parameter):
             output = output.data
-        _pynative_executor.end_graph(self, output, *inputs, **kwargs)
+        _pynative_executor.end_graph(self, output, *args, **kwargs)
         return output
 
     def _add_attr(self, name, value):

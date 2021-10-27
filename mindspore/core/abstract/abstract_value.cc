@@ -1171,8 +1171,8 @@ std::string AbstractKeywordArg::ToString() const {
   std::ostringstream buffer;
   MS_EXCEPTION_IF_NULL(arg_value_);
   buffer << type_name() << "(";
-  buffer << "key : " << arg_name_;
-  buffer << "value : " << arg_value_->ToString();
+  buffer << "key: " << arg_name_;
+  buffer << ", value: " << arg_value_->ToString();
   buffer << ")";
   return buffer.str();
 }
