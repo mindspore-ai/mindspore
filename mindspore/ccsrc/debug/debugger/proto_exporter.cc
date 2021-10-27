@@ -402,7 +402,7 @@ void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugge
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode != func_graph->get_return()) {
-      ExportCNode(func_graph, cnode, &apply_map, const_map_ptr, graph_proto);
+      ExportCNode(func_graph, cnode, &apply_map, const_map_ptr, graph_proto, dump_location);
     } else {
       ExportFuncGraphOutput(func_graph, cnode, apply_map, const_map_ptr, graph_proto);
     }
@@ -412,7 +412,7 @@ void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugge
 void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                         std::map<AnfNodePtr, size_t> *apply_map_ptr,
                                         std::map<AnfNodePtr, size_t> *const_map_ptr,
-                                        debugger::GraphProto *const graph_proto) {
+                                        debugger::GraphProto *const graph_proto, LocDebugDumpMode dump_location) {
   if (func_graph == nullptr || node == nullptr || apply_map_ptr == nullptr || const_map_ptr == nullptr ||
       graph_proto == nullptr) {
     return;
@@ -440,14 +440,14 @@ void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CN
     std::string full_name = GetKernelNodeName(node);
     node_proto->set_full_name(full_name);
     MS_LOG(INFO) << "full_name: " << full_name;
-
-    std::ostringstream buffer;
-    auto traces = mindspore::trace::GetSourceLineList(node);
-    for (auto &trace : traces) {
-      buffer << "      # " << trace;
+    if (dump_location == kDebugWholeStack) {
+      std::ostringstream buffer;
+      auto traces = mindspore::trace::GetSourceLineList(node);
+      for (auto &trace : traces) {
+        buffer << "      # " << trace;
+      }
+      node_proto->set_source_address(buffer.str());
     }
-    node_proto->set_source_address(buffer.str());
-
     // process OP inputs
     for (size_t i = 1; i < inputs.size(); ++i) {
       debugger::InputProto *input_proto = node_proto->add_input();

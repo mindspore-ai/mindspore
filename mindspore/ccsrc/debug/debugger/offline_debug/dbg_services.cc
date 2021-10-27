@@ -59,8 +59,8 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
   debug_services_->SetSyncMode(is_sync_mode);
   // Set the memory ratio used by tensor cache. Leave 50% for other debugger backend usage.
   const uint64_t kMegabytesToBytes = 1048576;  // max_mem_usage will be bytes in unit in debugger backend.
-  auto cache_mem_ratio = 0.5;
-  const uint64_t memlimit = max_mem_usage * kMegabytesToBytes * cache_mem_ratio;
+  const uint64_t ratio_inversion = 2;
+  const uint64_t memlimit = max_mem_usage * kMegabytesToBytes / ratio_inversion;
   debug_services_->SetMemLimit(memlimit);
   return 0;
 }
