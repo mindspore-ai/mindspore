@@ -12,6 +12,7 @@
 "mindspore/mindspore/_check_version.py"                                                                 "unused-import"
 "mindspore/mindspore/_check_version.py"                                                                 "broad-except"
 "mindspore/mindspore/common/parameter.py"                                                               "protected-access"
+"mindspore/mindspore/common/dtype.py"                                                                   "undefined-all-variable"
 "mindspore/mindspore/context.py"                                                                        "protected-access"
 "mindspore/mindspore/ops/operations"                                                                    "super-init-not-called"
 "mindspore/mindspore/ops/operations/_quant_ops.py"                                                      "unused-import"
