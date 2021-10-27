@@ -31,35 +31,45 @@ bool AscendMemAdapter::Initialize() {
     return true;
   }
   size_t free_hbm_size = 0;
-  rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free_hbm_size, &total_hbm_size_);
-  if (ret != RT_ERROR_NONE || total_hbm_size_ == 0) {
-    MS_LOG(EXCEPTION) << "Get Device HBM memory size failed, ret = " << ret << ", total HBM size :" << total_hbm_size_;
+  rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free_hbm_size, &device_hbm_size_);
+  if (ret != RT_ERROR_NONE || device_hbm_size_ == 0) {
+    MS_LOG(EXCEPTION) << "Get Device HBM memory size failed, ret = " << ret << ", total HBM size :" << device_hbm_size_;
   }
 
-  max_hbm_size_for_ms_ = total_hbm_size_ * 15 / 16;  // reserved memory is 1/16 of total
-  auto context_mem = GetDeviceMemSizeFromContext();
-  device_mem_size_ = context_mem == 0 ? max_hbm_size_for_ms_ : context_mem;
-  device_mem_base_ = MallocFromRts(device_mem_size_);
-  static_mem_offset_ = device_mem_size_;
+  // reserved memory for HCCL or other component
+  auto reserved_mem_size_for_others = device_hbm_size_ * 15 / 16;
+  reserved_mem_size_for_others =
+    reserved_mem_size_for_others >= (1 << kMemSizeGB) ? (1 << kMemSizeGB) : reserved_mem_size_for_others;
+  max_available_ms_hbm_size_ = device_hbm_size_ - reserved_mem_size_for_others;
+
+  auto user_define_ms_size_ = GetDeviceMemSizeFromContext();
+  ms_used_hbm_size_ = user_define_ms_size_ == 0 ? max_available_ms_hbm_size_ : user_define_ms_size_;
+  MS_LOG(INFO) << "Device HBM Size:" << device_hbm_size_
+               << ", Reserved HBM size for Other Components(HCCL/rts/etc.):" << reserved_mem_size_for_others
+               << ", Max available HBM Size for MindSpore:" << max_available_ms_hbm_size_
+               << ", User define MindSpore HBM Size:" << user_define_ms_size_
+               << ", MindSpore Used HBM Size:" << ms_used_hbm_size_;
+  device_mem_base_addr_ = MallocFromRts(ms_used_hbm_size_);
+  static_mem_offset_ = ms_used_hbm_size_;
   cur_dynamic_mem_offset_ = 0;
   max_dynamic_mem_offset_ = 0;
-  MS_LOG(INFO) << " Ascend Memory Adapter initialize success, Memory Statistics:" << DevMemStatistics();
+  MS_LOG(INFO) << "Ascend Memory Adapter initialize success, Memory Statistics:" << DevMemStatistics();
   initialized_ = true;
   return true;
 }
 
 bool AscendMemAdapter::DeInitialize() {
   if (!initialized_) {
-    MS_LOG(ERROR) << " DeInitialize Ascend Memory Adapter when it is not initialize";
+    MS_LOG(ERROR) << "DeInitialize Ascend Memory Adapter when it is not initialize";
     return false;
   }
 
-  auto ret = FreeToRts(device_mem_base_);
+  auto ret = FreeToRts(device_mem_base_addr_);
   if (ret) {
-    total_hbm_size_ = 0;
-    max_hbm_size_for_ms_ = 0;
-    device_mem_base_ = nullptr;
-    device_mem_size_ = 0;
+    device_hbm_size_ = 0;
+    max_available_ms_hbm_size_ = 0;
+    device_mem_base_addr_ = nullptr;
+    ms_used_hbm_size_ = 0;
 
     cur_dynamic_mem_offset_ = 0;
     max_dynamic_mem_offset_ = 0;
@@ -79,14 +89,14 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, std::string tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto new_static_offset = static_mem_offset_ - size;
   if (new_static_offset < max_dynamic_mem_offset_) {
-    MS_LOG(ERROR) << "Out of Memory!!! Request memory size: " << size << " Memory Statistic:" << DevMemStatistics()
-                  << " failed! Please try to reduce 'batch_size' or check whether exists extra large shape. More "
+    MS_LOG(ERROR) << "Out of Memory!!! Request memory size: " << size << ", Memory Statistic:" << DevMemStatistics()
+                  << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
                      "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
     MS_LOG(ERROR) << DevMemDetailInfo();
     return nullptr;
   }
 
-  auto memory_block_ptr = device_mem_base_ + new_static_offset;
+  auto memory_block_ptr = device_mem_base_addr_ + new_static_offset;
   static_mem_offset_ = new_static_offset;
   static_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
 
@@ -97,14 +107,14 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, std::string tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto new_dynamic_offset = cur_dynamic_mem_offset_ + size;
   if (new_dynamic_offset > static_mem_offset_) {
-    MS_LOG(ERROR) << "Out of Memory!!! Request memory size: " << size << " Memory Statistic:" << DevMemStatistics()
-                  << " failed! Please try to reduce 'batch_size' or check whether exists extra large shape. More "
+    MS_LOG(ERROR) << "Out of Memory!!! Request memory size: " << size << ", Memory Statistic:" << DevMemStatistics()
+                  << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
                      "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
     MS_LOG(ERROR) << DevMemDetailInfo();
     return nullptr;
   }
 
-  auto memory_block_ptr = device_mem_base_ + cur_dynamic_mem_offset_;
+  auto memory_block_ptr = device_mem_base_addr_ + cur_dynamic_mem_offset_;
   cur_dynamic_mem_offset_ = new_dynamic_offset;
   max_dynamic_mem_offset_ = std::max(cur_dynamic_mem_offset_, max_dynamic_mem_offset_);
   dynamic_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
@@ -116,14 +126,12 @@ void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }
 
 std::string AscendMemAdapter::DevMemStatistics() {
   std::ostringstream oss;
-  oss << "\nHBM memory size: " << total_hbm_size_;
-  oss << "\nAvailable HBM memory size for MS: " << max_hbm_size_for_ms_;
-  oss << "\nMS memory base size: " << device_mem_size_;
-  oss << "\nMS memory base address: " << reinterpret_cast<void *>(device_mem_base_);
-  oss << "\nStatic Memory size: " << device_mem_size_ - static_mem_offset_;
+  oss << "\nDevice HBM memory size: " << device_hbm_size_;
+  oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_;
+  oss << "\nMindSpore memory base address: " << reinterpret_cast<void *>(device_mem_base_addr_);
+  oss << "\nTotal Static Memory size: " << ms_used_hbm_size_ - static_mem_offset_;
+  oss << "\nTotal Dynamic memory size: " << max_dynamic_mem_offset_;
   oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_;
-  oss << "\nMAX Dynamic memory size of all graph: " << max_dynamic_mem_offset_;
-  oss << "\nMS Static memory offset: " << static_mem_offset_;
   oss << std::endl;
   return oss.str();
 }
@@ -161,9 +169,9 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() {
   auto gb_var = std::stoull(gb_str);
   MS_LOG(INFO) << "variable_memory_max_size(GB):" << gb_var;
 
-  auto max_hbm_size_for_ms_GB = max_hbm_size_for_ms_ >> kMemSizeGB;
+  auto max_hbm_size_for_ms_GB = max_available_ms_hbm_size_ >> kMemSizeGB;
   if (gb_var > max_hbm_size_for_ms_GB || gb_var == 0) {
-    MS_LOG(EXCEPTION) << "The Total Device Memory Size is " << (total_hbm_size_ >> kMemSizeGB)
+    MS_LOG(EXCEPTION) << "The Total Device Memory Size is " << (device_hbm_size_ >> kMemSizeGB)
                       << " GB, variable_memory_max_size should be in range (0-" << max_hbm_size_for_ms_GB
                       << "]GB, but got " << gb_var
                       << "GB, please set the context key 'variable_memory_max_size' in valid range.";

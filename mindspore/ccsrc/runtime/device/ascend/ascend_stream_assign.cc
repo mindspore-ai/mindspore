@@ -300,7 +300,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
 }
 
 void AscendStreamAssign::SetLoopSink() {
-  if (KernelAdjust::NeedInsertSwitch()) {
+  if (KernelAdjust::NeedLoopSink()) {
     loop_sink_ = true;
   } else {
     loop_sink_ = false;

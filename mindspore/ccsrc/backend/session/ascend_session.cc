@@ -32,6 +32,7 @@
 #include "runtime/device/ascend/kernel_build_ascend.h"
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "runtime/device/ascend/ascend_memory_adapter.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "runtime/device/kernel_adjust.h"
@@ -583,7 +584,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   }
 }
 
-bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
+bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedLoopSink(); }
 
 void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
@@ -1282,7 +1283,8 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignMemory(*kernel_graph);
   device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
-  MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id();
+  MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id()
+               << ", Memory Statistics:" << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
 void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,

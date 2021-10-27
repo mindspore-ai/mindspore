@@ -68,7 +68,7 @@ class KernelAdjust {
 #ifndef ENABLE_SECURITY
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
-  static bool NeedInsertSwitch();
+  static bool NeedLoopSink();
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 
  private:

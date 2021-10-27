@@ -63,7 +63,7 @@ void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &k
   kernel_graph_ptr->set_execution_order(new_order_list);
 }
 
-bool KernelAdjust::NeedInsertSwitch() {
+bool KernelAdjust::NeedLoopSink() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   return (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) &&
@@ -396,7 +396,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
-  if (!NeedInsertSwitch()) {
+  if (!NeedLoopSink()) {
     return;
   }
   if (kernel_graph_ptr->is_dynamic_shape()) {
@@ -954,7 +954,7 @@ void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGra
 
   // constant loop num in epoch tensor
   int32_t initial_value = 0;
-  if (NeedInsertSwitch()) {
+  if (NeedLoopSink()) {
     initial_value = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
   } else {
     MS_LOG(INFO) << "Tensor const_loop_num_in_epoch only used in loop sink mode.";
@@ -1009,6 +1009,10 @@ void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_gr
 }
 
 void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) {
+  auto device_loop_control_tensors = kernel_graph_ptr.device_loop_control_tensors();
+  if (device_loop_control_tensors.empty()) {
+    return;
+  }
   MS_LOG(INFO) << "Assign device loop control memory";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1046,6 +1050,10 @@ void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::Kernel
 
 void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
+  if (device_loop_control_tensors.empty()) {
+    return;
+  }
   MS_LOG(INFO) << "Load device loop control data";
   SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurLoopCountName, 0);
   SetDeviceLoopCtrlTensor(kernel_graph_ptr, kNextLoopCountName, 0);
