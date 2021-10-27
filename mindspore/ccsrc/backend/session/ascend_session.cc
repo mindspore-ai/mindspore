@@ -237,7 +237,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *cur_val = 0;
   cur_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  if (inputs) {
+  if (inputs != nullptr) {
     inputs->push_back(cur_loop_tensor);
   } else {
     auto device_address = cur_loop_tensor->device_address();

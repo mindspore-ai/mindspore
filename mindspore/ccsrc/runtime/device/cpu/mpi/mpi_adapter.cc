@@ -20,6 +20,7 @@
 #include <string>
 #include "pybind11/pybind11.h"
 #include "utils/log_adapter.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -150,7 +151,7 @@ MPI_Group MPIAdapter::AddGroup(const std::vector<int> &ranks) {
   }
 
   MPI_Group group = MPI_GROUP_NULL;
-  MPI_Group_incl(comm_group_world_, static_cast<int>(ranks.size()), ranks_input.data(), &group);
+  (void)MPI_Group_incl(comm_group_world_, static_cast<int>(ranks.size()), ranks_input.data(), &group);
   if (group == MPI_GROUP_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi group fail!rankid:", rank_id_);
   }
@@ -236,8 +237,7 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       exception_msg << "output buffer size " << output_size << " < input size " << data_size;
       RAISE_EXCEPTION(exception_msg.str());
     }
-    auto copy_ret =
-      memcpy_s(output, output_size, input + static_cast<size_t>(scatter_index) * input_data_num, data_size);
+    auto copy_ret = memcpy_s(output, output_size, input + IntToSize(scatter_index) * input_data_num, data_size);
     if (copy_ret != 0) {
       RAISE_EXCEPTION_WITH_PARAM("copy output memory fail!ret = ", copy_ret);
     }

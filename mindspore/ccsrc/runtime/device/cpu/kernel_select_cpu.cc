@@ -142,7 +142,7 @@ int GetOutputDtypeMatchedNum(const KernelAttr &kernel_attr, const std::vector<Ty
 }
 
 int GetInputDtypeFormatMatchedNum(const KernelAttr &kernel_attr, const std::vector<TypeId> &input_types,
-                                  const std::vector<size_t> &input_not_cnode_indexes, bool strict) {
+                                  const std::vector<size_t> & /* input_not_cnode_indexes */, bool strict) {
   if (kernel_attr.GetInputSize() != input_types.size()) {
     MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetInputSize() << ", actual input num:" << input_types.size();
     return 0;

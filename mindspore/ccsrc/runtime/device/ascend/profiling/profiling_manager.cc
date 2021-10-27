@@ -224,7 +224,6 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
     prof_cb_.msprofReporterCallback(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
                                     static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
                                     static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
-
   if (ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(ERROR) << "Call MsprofReporterCallback failed. ret: " << ret;
     return PROF_FAILED;

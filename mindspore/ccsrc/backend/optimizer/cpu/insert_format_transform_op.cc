@@ -30,7 +30,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-
 constexpr int kMinDimNeedToTransform = 3;
 enum FormatTransformDir { ChannelFirst2ChannelLast = 0, ChannelLast2ChannelFirst };
 

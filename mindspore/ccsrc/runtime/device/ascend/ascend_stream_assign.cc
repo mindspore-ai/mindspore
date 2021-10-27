@@ -1448,7 +1448,7 @@ void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPt
 }
 
 std::vector<std::pair<uint32_t, vector<size_t>>> AscendStreamAssign::GetStreamIDHcomMap(
-  std::vector<CNodePtr> cnode_ptr_list, std::string group, size_t graph_id) {
+  const std::vector<CNodePtr> &cnode_ptr_list, const std::string &group, size_t graph_id) {
   std::vector<std::pair<uint32_t, vector<size_t>>> stream_indices;
   for (size_t i = 0; i < cnode_ptr_list.size(); i++) {
     auto cur_cnode = cnode_ptr_list[i];

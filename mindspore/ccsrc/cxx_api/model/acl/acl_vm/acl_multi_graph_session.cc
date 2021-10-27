@@ -26,7 +26,6 @@
 #include "cxx_api/graph/graph_data.h"
 
 namespace mindspore::session {
-
 void MultiGraphAclSession::Init(uint32_t device_id) { InitExecutor(kDavinciMultiGraphInferenceDevice, device_id); }
 
 GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
