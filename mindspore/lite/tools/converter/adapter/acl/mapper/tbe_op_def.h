@@ -41,7 +41,7 @@ ADD_CONVERTER_TBE_OP(BNInference)
 ADD_CONVERTER_TBE_OP(Deconvolution)
 ADD_CONVERTER_TBE_OP(Upsample)
 ADD_CONVERTER_TBE_OP(Conv2DTransposeD)
-
+ADD_CONVERTER_TBE_OP(DepthwiseConv2dNative)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

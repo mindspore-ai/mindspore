@@ -36,6 +36,7 @@
 namespace mindspore {
 namespace opt {
 static const std::set<std::string> kDevice = {"Ascend310", "Ascend710"};
+static const std::map<int64_t, std::string> kEnumFormatToStrMap = {{Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"}};
 namespace {
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kOutputNames = "outputs_names";
@@ -51,6 +52,50 @@ constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
+
+STATUS PreProcForMindIr(const FuncGraphPtr &func_graph) { return lite::RET_OK; }
+
+STATUS PreProcForTF(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+    MS_LOG(ERROR) << "Infer shape pass failed.";
+    return lite::RET_ERROR;
+  }
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    CHECK_NULL_RETURN(node);
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    CHECK_NULL_RETURN(cnode);
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(prim);
+    if (prim->GetAttr(ops::kFormat) != nullptr) {
+      auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+      if (kEnumFormatToStrMap.find(node_format) != kEnumFormatToStrMap.end()) {
+        std::string format = kEnumFormatToStrMap.at(node_format);
+        prim->AddAttr("io_format", MakeValue(format));
+      }
+    }
+  }
+  return lite::RET_OK;
+}
+
+STATUS PreProcForCaffe(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+    MS_LOG(ERROR) << "To nchw format failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+    MS_LOG(ERROR) << "To nchw format failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
 }  // namespace
 
 AclPassImpl::AclPassImpl(const converter::Flags &config)
@@ -174,14 +219,20 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Common pass failed.";
     return lite::RET_ERROR;
   }
-  if (fmk_type_ == converter::kFmkTypeMs) {
-    MS_LOG(DEBUG) << "MindIr no need to change format.";
-    return lite::RET_OK;
-  }
-  // The format of nodes (cnode, parameter, val) must be nchw due to interface of convert om
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
-    MS_LOG(ERROR) << "To nchw format failed.";
-    return lite::RET_ERROR;
+  std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &)>> fmk_proc_func = {
+    {converter::kFmkTypeMs, PreProcForMindIr},
+    {converter::kFmkTypeTf, PreProcForTF},
+    {converter::kFmkTypeCaffe, PreProcForCaffe},
+    {converter::kFmkTypeOnnx, PreProcForOnnx},
+  };
+  if (fmk_proc_func.find(fmk_type_) != fmk_proc_func.end()) {
+    auto func = fmk_proc_func.at(fmk_type_);
+    if (func(func_graph) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Pre proc failed, fmk " << fmk_type_;
+      return lite::RET_ERROR;
+    }
+  } else {
+    MS_LOG(WARNING) << "Not support fmk type " << fmk_type_;
   }
   MS_LOG(DEBUG) << "Pre proc graph success.";
   return lite::RET_OK;
