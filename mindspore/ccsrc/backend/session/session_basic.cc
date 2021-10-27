@@ -1679,24 +1679,20 @@ std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const Graph
 
 void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                        VectorRef *outputs,
-                                       std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+                                       std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                       KernelMapTensor *node_to_tensor) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   auto anf_outputs = kernel_graph->outputs();
-  KernelMapTensor node_to_tensor;
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
-    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, &node_to_tensor));
+    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, node_to_tensor));
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
-    kernel_graph->SetOutputNodeToTensor(node_to_tensor);
-  }
 }
 
 void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
@@ -1704,8 +1700,7 @@ void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
                                        std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
+  if (device::KernelRuntime::use_mem_scheduler()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(outputs);

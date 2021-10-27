@@ -97,6 +97,7 @@ class RunGraphTask : public Task {
   VectorRef outputs_;
   GraphId graph_id_{0};
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node_;
+  KernelMapTensor node_to_tensor_;
 };
 
 class RunOpsInGraphTask : public Task {

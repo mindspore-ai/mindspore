@@ -202,6 +202,9 @@ void MemScheduler::CountMemUsage() {
   if (!min_mem_used_.empty()) {
     return;
   }
+  if (mem_events_.empty() || compute_index_ == 0) {
+    return;
+  }
   min_mem_used_.resize(compute_index_, 0);
   std::vector<size_t> total_mem_used(compute_index_, 0);
   for (auto &item : mem_events_) {

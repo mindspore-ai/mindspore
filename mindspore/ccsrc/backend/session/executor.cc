@@ -130,6 +130,9 @@ void RunGraphTask::Run() {
     return;
   }
   graph->ResetGraphRunningStatus();
+  if (device::KernelRuntime::use_mem_scheduler()) {
+    graph->SetOutputNodeToTensor(node_to_tensor_);
+  }
   try {
     session_->LoadInputs(graph_id_, input_tensors_);
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
@@ -361,7 +364,7 @@ void Executor::RunGraph(const SessionPtr &session, const GraphId &graph_id,
   task->session_ = session;
   task->graph_id_ = graph_id;
   task->input_tensors_ = inputs;
-  session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_);
+  session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_, &task->node_to_tensor_);
   task->outputs_ = *outputs;
   task->sync_run_ = true;
   RunTask(task, true, true);
@@ -383,7 +386,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     reenter_cond_var_.wait(lock, [&graph] { return graph->IsPostGraphFinished(); });
     MsException::Instance().CheckException();
   }
-  session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_);
+  session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_, &task->node_to_tensor_);
   // maintain a copy of output vector
   task->outputs_ = *outputs;
 

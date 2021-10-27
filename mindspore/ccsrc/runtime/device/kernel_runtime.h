@@ -94,6 +94,7 @@ class KernelRuntime {
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
+  static bool use_mem_scheduler();
 
 #ifdef ENABLE_DEBUGGER
   // set debugger

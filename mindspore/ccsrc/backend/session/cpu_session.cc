@@ -160,7 +160,8 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
 
 void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                      VectorRef *outputs,
-                                     std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+                                     std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                     KernelMapTensor *) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs, tensor_to_node);

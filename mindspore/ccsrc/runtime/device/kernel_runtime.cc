@@ -98,8 +98,7 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
 void KernelRuntime::AssignMemory(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
+  if (use_mem_scheduler()) {
     AssignStaticMemoryValueNode(graph);
     ResetNodeAddress(graph);
   } else {
@@ -1175,6 +1174,17 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   }
 }
 
+bool KernelRuntime::use_mem_scheduler() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER)) {
+    return false;
+  }
+  // Not use MemScheduler when running single op
+  return (!context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
+          (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode));
+}
+
 void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs,
                                            const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1347,28 +1357,29 @@ void KernelRuntime::SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &m
       }
       continue;
     }
-    if (tensor != nullptr) {
-      if (device_address == nullptr) {
-        tensor->data_sync(false);
-        tensor->set_device_address(nullptr);
-        tensor->set_sync_status(kNeedSyncHostToDevice);
-        continue;
-      }
-      if (!SyncStream()) {
-        MS_LOG(ERROR) << "SyncStream failed";
-      }
-      auto origin_ptr = device_address->ptr_;
-      if (origin_ptr == nullptr) {
-        device_address->ptr_ = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size_);
-      }
-      tensor->set_device_address(device_address);
+    if (tensor == nullptr) {
+      continue;
+    }
+    if (device_address == nullptr) {
       tensor->data_sync(false);
       tensor->set_device_address(nullptr);
-      if (origin_ptr == nullptr) {
-        device_address->ptr_ = nullptr;
-      }
       tensor->set_sync_status(kNeedSyncHostToDevice);
+      continue;
     }
+    if (!SyncStream()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed";
+    }
+    auto origin_ptr = device_address->ptr_;
+    if (origin_ptr == nullptr) {
+      device_address->ptr_ = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size_);
+    }
+    tensor->set_device_address(device_address);
+    tensor->data_sync(false);
+    tensor->set_device_address(nullptr);
+    if (origin_ptr == nullptr) {
+      device_address->ptr_ = nullptr;
+    }
+    tensor->set_sync_status(kNeedSyncHostToDevice);
   }
 }
 
@@ -1384,21 +1395,24 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
     auto tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);
     auto input_node = input_nodes[i];
-    if (!input_node->isa<Parameter>()) {
+    if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
       continue;
     }
-    if (AnfAlgo::OutputAddrExist(input_node, 0)) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
-      MS_EXCEPTION_IF_NULL(tensor);
-      MemPriority priority = kMemPriorityHigh;
-      auto tensor_address = tensor->device_address();
-      if (tensor_address != nullptr && tensor_address != device_address) {
-        tensor->data_sync(false);
-        priority = kMemPriorityLow;
-      }
-      auto tensor_size = LongToSize(tensor->data().nbytes());
-      mem_scheduler->Init(device_address.get(), tensor->data_c(), tensor_size, priority);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+    MS_EXCEPTION_IF_NULL(tensor);
+    MemPriority priority = kMemPriorityLow;
+    auto tensor_address = tensor->device_address();
+    if (!tensor->NeedSyncHostToDevice() && tensor_address != nullptr && tensor_address != device_address) {
+      tensor->data_sync(false);
     }
+    if (AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>()) ||
+        graph.IsUpdatedParameter(input_node->cast<ParameterPtr>())) {
+      tensor->set_device_address(device_address);
+      priority = kMemPriorityHigh;
+    }
+    auto tensor_size = LongToSize(tensor->data().nbytes());
+    mem_scheduler->Init(device_address.get(), tensor->data_c(), tensor_size, priority);
+    tensor->set_sync_status(kNoNeedSync);
   }
 }
 
@@ -1451,8 +1465,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::shared_ptr<MemScheduler> mem_scheduler = nullptr;
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
+  if (use_mem_scheduler()) {
     mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     MS_EXCEPTION_IF_NULL(mem_scheduler);
     mem_scheduler->SetMemHandler(mem_manager_);
@@ -1520,27 +1533,27 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
 void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
-  if (enable_mem_scheduler) {
-    auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
-    if (mem_scheduler->need_record_event()) {
-      (void)LaunchKernelMod(graph, true);
-      mem_scheduler->set_need_record_event(false);
+  if (!use_mem_scheduler()) {
+    return;
+  }
+  auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
+  if (mem_scheduler->need_record_event()) {
+    (void)LaunchKernelMod(graph, true);
+    mem_scheduler->set_need_record_event(false);
+  }
+  float mem_used_factor = kMaxMemReuseFactor;
+  while (!mem_scheduler->optimized() && mem_used_factor >= kMinMemReuseFactor) {
+    mem_scheduler->SetMemUsedFactor(mem_used_factor);
+    mem_scheduler->OptMemUsage();
+    bool ret = LaunchKernelMod(graph, true);
+    if (ret) {
+      mem_scheduler->set_optimized(true);
+    } else {
+      mem_used_factor -= kRetryFactor;
     }
-    float mem_used_factor = kMaxMemReuseFactor;
-    while (!mem_scheduler->optimized() && mem_used_factor >= kMinMemReuseFactor) {
-      mem_scheduler->SetMemUsedFactor(mem_used_factor);
-      mem_scheduler->OptMemUsage();
-      bool ret = LaunchKernelMod(graph, true);
-      if (ret) {
-        mem_scheduler->set_optimized(true);
-      } else {
-        mem_used_factor -= kRetryFactor;
-      }
-    }
-    if (!mem_scheduler->optimized()) {
-      MS_LOG_EXCEPTION << "Can't run graph " << graph.graph_id() << " for memory limit.";
-    }
+  }
+  if (!mem_scheduler->optimized()) {
+    MS_LOG_EXCEPTION << "Can't run graph " << graph.graph_id() << " for memory limit.";
   }
 }
 
