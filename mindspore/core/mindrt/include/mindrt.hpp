@@ -33,7 +33,7 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv = "", con
                const std::string &udpUrlAdv = "", int threadCount = 0);
 
 // brief spawn a process to run an actor
-AID Spawn(ActorReference actor, bool sharedThread = true);
+AID Spawn(const ActorReference actor, bool sharedThread = true);
 
 // brief wait for the actor process to exit . It will be discarded
 void Await(const ActorReference &actor);

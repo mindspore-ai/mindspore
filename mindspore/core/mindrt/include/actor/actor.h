@@ -200,9 +200,9 @@ class ActorBase {
 
   void Run();
   void Quit();
-  int EnqueMessage(std::unique_ptr<MessageBase> msg);
+  int EnqueMessage(std::unique_ptr<MessageBase> msg) const;
 
-  void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<MailBox> mailbox);
+  void Spawn(const std::shared_ptr<ActorBase>, std::unique_ptr<MailBox> mailbox);
 
   std::unique_ptr<MailBox> mailbox;
   std::atomic_bool terminating_ = false;

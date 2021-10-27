@@ -16,11 +16,10 @@
 #include "actor/mailbox.h"
 
 namespace mindspore {
-
 int BlockingMailBox::EnqueueMessage(std::unique_ptr<mindspore::MessageBase> msg) {
   {
     std::unique_lock<std::mutex> ulk(lock);
-    enqueMailBox->emplace_back(std::move(msg));
+    (void)enqueMailBox->emplace_back(std::move(msg));
   }
 
   cond.notify_all();
@@ -46,7 +45,7 @@ int NonblockingMailBox::EnqueueMessage(std::unique_ptr<mindspore::MessageBase> m
   {
     std::unique_lock<std::mutex> ulk(lock);
     empty = enqueMailBox->empty();
-    enqueMailBox->emplace_back(std::move(msg));
+    (void)enqueMailBox->emplace_back(std::move(msg));
     released = this->released_;
   }
   if (empty && released && notifyHook) {
@@ -86,5 +85,4 @@ std::unique_ptr<MessageBase> HQueMailBox::GetMsg() {
   std::unique_ptr<MessageBase> msg(mailbox.Dequeue());
   return msg;
 }
-
 }  // namespace mindspore

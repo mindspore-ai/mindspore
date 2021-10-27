@@ -187,7 +187,7 @@ ActorReference ActorMgr::GetActor(const AID &id) {
   }
 }
 
-int ActorMgr::EnqueueMessage(mindspore::ActorReference actor, std::unique_ptr<mindspore::MessageBase> msg) {
+int ActorMgr::EnqueueMessage(const mindspore::ActorReference actor, std::unique_ptr<mindspore::MessageBase> msg) {
   return actor->EnqueMessage(std::move(msg));
 }
 
