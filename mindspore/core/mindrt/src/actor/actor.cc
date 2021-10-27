@@ -29,7 +29,7 @@ ActorBase::ActorBase(const std::string &name, ActorThreadPool *pool)
 
 ActorBase::~ActorBase() {}
 
-void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<MailBox> mailboxPtr) {
+void ActorBase::Spawn(const std::shared_ptr<ActorBase>, std::unique_ptr<MailBox> mailboxPtr) {
   // lock here or await(). and unlock at Quit() or at await.
   waiterLock.lock();
   this->mailbox = std::move(mailboxPtr);
@@ -67,7 +67,7 @@ void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
                     << ",m=" << msg->Name().c_str();
   }
 }
-int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> msg) {
+int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> msg) const {
   int ret = mailbox->EnqueueMessage(std::move(msg));
   return ret;
 }
@@ -128,7 +128,6 @@ void ActorBase::Run() {
       }
       msgs->clear();
     }
-
   } else {
     while (auto msg = mailbox->GetMsg()) {
       if (msgHandler(msg) == ACTOR_TERMINATED) {
