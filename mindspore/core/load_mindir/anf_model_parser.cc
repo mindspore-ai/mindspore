@@ -417,31 +417,31 @@ void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto
   for (int i = 0; i < attr_proto.ints_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    multi_value_map->emplace(name, res);
   }
   for (int i = 0; i < attr_proto.doubles_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    multi_value_map->emplace(name, res);
   }
   for (int i = 0; i < attr_proto.floats_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    multi_value_map->emplace(name, res);
   }
   for (int i = 0; i < attr_proto.strings_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    multi_value_map->emplace(name, res);
   }
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    multi_value_map->emplace(name, res);
   }
 }
 
-ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto) {
+ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto) const {
   const int attr_type = attr_proto.type();
   switch (attr_type) {
     case mind_ir::AttributeProto_AttributeType_STRING: {
@@ -543,7 +543,8 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && res->isa<StringImm>()) {
           auto str_dtype = GetValue<std::string>(res);
           if (str_dtype == "int32") {
-            prim->AddAttr(attr_name, MakeValue<int64_t>(3));
+            const int64_t attr_value = 3;
+            (void)prim->AddAttr(attr_name, MakeValue<int64_t>(attr_value));
             break;
           }
           MS_EXCEPTION(NotSupportError)
@@ -644,8 +645,7 @@ bool MSANFModelParser::ObtainValueNodeInTypeForm(const std::string &value_node_n
   return true;
 }
 
-bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_name,
-                                                 const mind_ir::AttributeProto &attr_proto) {
+bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_name) {
   auto new_value_node = NewValueNode(kNone);
   MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(kNone->ToAbstract());
@@ -674,6 +674,25 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
   return true;
 }
 
+namespace {
+std::string GetTypeFromAttrName(const std::string &ref_attr_name) {
+  string type = "";
+  std::size_t pos(0);
+  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
+    return ref_attr_name.substr(pos, string("scalar:").length() - 1);
+  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
+    return ref_attr_name.substr(pos, string("type:").length() - 1);
+  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
+    return ref_attr_name.substr(pos, string("tensor:").length() - 1);
+  } else if ((pos = ref_attr_name.find("Monad:")) != std::string::npos) {
+    return ref_attr_name.substr(pos, string("Monad:").length() - 1);
+  } else if (ref_attr_name == "none") {
+    return ref_attr_name;
+  }
+  return type;
+}
+}  // namespace
+
 bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_name,
                                                 const mind_ir::AttributeProto &attr_proto) {
   if (!attr_proto.has_ref_attr_name()) {
@@ -681,20 +700,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  string type = "";
-  std::size_t pos(0);
-  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
-  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("type:").length() - 1);
-  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
-  } else if ((pos = ref_attr_name.find("Monad:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("Monad:").length() - 1);
-  } else if (ref_attr_name == "none") {
-    type = ref_attr_name;
-  }
-
+  auto type = GetTypeFromAttrName(ref_attr_name);
   ValueNodePtr new_value_node;
   std::unordered_map<std::string, ValuePtr> multi_value_map;
   switch (kParseTypeSwitchMap[type]) {
@@ -735,7 +741,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_NONE: {
-      ObtainValueNodeInNoneForm(value_node_name, attr_proto);
+      ObtainValueNodeInNoneForm(value_node_name);
       break;
     }
     case FORM_PARSE_MONAD: {
@@ -748,7 +754,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   }
 
   if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
-    if ((pos = ref_attr_name.find("Tuple")) != std::string::npos) {
+    if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
       new_value_node = NewValueNode(value_tuple_ptr);
       new_value_node->set_abstract(value_tuple_ptr->ToAbstract());
@@ -786,7 +792,7 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
     MS_EXCEPTION_IF_NULL(tensor_info);
     auto abstract = tensor_info->ToAbstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abstract));
+    kv.emplace(attr_tensor.name(), abstract);
   }
   return kv;
 }

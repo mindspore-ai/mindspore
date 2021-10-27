@@ -59,7 +59,7 @@ class MSANFModelParser {
   void ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                    std::unordered_map<std::string, ValuePtr> *multi_value_map);
   ValuePtr ParseAttrInScalarForm(const mind_ir::AttributeProto &attr_proto, int index);
-  ValuePtr ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto);
+  ValuePtr ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto) const;
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto);
   AnfNodePtr BuildOperatorNode(const mind_ir::NodeProto &node_proto);
@@ -68,7 +68,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInTupleTensorForm(const string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_tensor);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
-  bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
+  bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
     const mind_ir::AttributeProto &attr_proto);

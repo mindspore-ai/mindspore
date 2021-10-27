@@ -156,6 +156,8 @@ class KPrim {
 #endif
 
  private:
+  FuncGraphPtr GetBprop(const CNodePtr &cnode, const ValueNodePtr &value_node,
+                        const pipeline::ResourceBasePtr &resources, const PrimitivePtr &prim);
   FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr);
   FuncGraphPtr GetFprop(const PrimitivePtr &prim);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);

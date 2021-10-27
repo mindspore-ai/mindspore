@@ -308,6 +308,27 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
   return true;
 }
 
+void PipelineRDRProcess(const FuncGraphPtr &graph, const std::vector<ActionItem> &actions, const ActionItem &action,
+                        size_t i) {
+  MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
+  std::string name = GetBaseNameForIR(SizeToLong(i), action.first);
+  if (graph != nullptr) {
+    auto graph_clone = BasicClone(graph);
+    if (graph_clone != nullptr) {
+      DumpGraphParams dump_params = {false, static_cast<int>(kTopStack)};
+      if (i == actions.size()) {
+        dump_params.dump_mode = static_cast<int>(kWholeStack);
+      }
+      (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, dump_params, ".ir");
+    } else {
+      MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
+    }
+  } else {
+    MS_LOG(WARNING) << "Pipeline Resource has no FuncGraph, no FuncGraph recording in RDR";
+  }
+  MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
+}
+
 GraphExecutorPy::GraphExecutorPy() {}
 
 ResourcePtr GraphExecutorPy::GetResource(const std::string &phase) {
@@ -893,25 +914,8 @@ void Pipeline::Run(const std::string &phase) {
       FuncGraphPtr graph = resource_->func_graph();
 #ifdef ENABLE_DUMP_IR
       if (mindspore::RecorderManager::Instance().RdrEnable()) {
-        MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
-        std::string name = GetBaseNameForIR(SizeToLong(i), action.first);
-        if (graph != nullptr) {
-          auto graph_clone = BasicClone(graph);
-          if (graph_clone != nullptr) {
-            DumpGraphParams dump_params = {false, static_cast<int>(kTopStack)};
-            if (i == actions_.size()) {
-              dump_params.dump_mode = static_cast<int>(kWholeStack);
-            }
-            (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, dump_params, ".ir");
-          } else {
-            MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
-          }
-        } else {
-          MS_LOG(WARNING) << "Pipeline Resource has no FuncGraph, no FuncGraph recording in RDR";
-        }
-        MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
+        PipelineRDRProcess(graph, actions_, action, i);
       }
-
       if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
         user_graph = graph;
         std::string base_name = GetBaseNameForIR(SizeToLong(i), action.first);

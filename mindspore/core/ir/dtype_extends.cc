@@ -293,7 +293,7 @@ TypePtr GetTypeByFullString(const std::string &type_name) {
 
 TypePtr GetTypeByStringStarts(const std::string &type_name) {
   struct name_cmp {
-    bool operator()(const std::string &l, const std::string &r) {
+    bool operator()(const std::string &l, const std::string &r) const {
       auto cmp_len = std::min(l.length(), r.length());
       return r.compare(0, cmp_len, l, 0, cmp_len) < 0;
     }

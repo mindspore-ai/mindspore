@@ -97,6 +97,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
   }
   dirent *p = nullptr;
+  bool list_ret = true;
   while ((p = readdir(open_dir)) != nullptr) {
     struct stat st;
     if (p->d_name[0] != '.') {
@@ -104,13 +105,15 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
       ret = stat(name.c_str(), &st);
       if (ret != 0) {
         MS_LOG(ERROR) << "stat error, ret is : " << ret;
-        return false;
+        list_ret = false;
+        break;
       }
       if (S_ISDIR(st.st_mode)) {
         bool result = get_all_files(name, files);
         if (!result) {
           MS_LOG(ERROR) << "Get files failed.";
-          return false;
+          list_ret = false;
+          break;
         }
       } else if (S_ISREG(st.st_mode)) {
         files->push_back(name);
@@ -118,7 +121,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     }
   }
   closedir(open_dir);
-  return true;
+  return list_ret;
 }
 
 int endsWith(const string s, const string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }

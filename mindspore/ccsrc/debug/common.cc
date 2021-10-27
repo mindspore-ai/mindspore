@@ -273,23 +273,23 @@ bool Common::FileExists(const std::string &filepath) {
 
 struct GlogLogDirRegister {
   GlogLogDirRegister() {
-    const char *logtostderr = std::getenv("GLOG_logtostderr");
-    const char *log_dir = std::getenv("GLOG_log_dir");
-    if (logtostderr != nullptr && log_dir != nullptr) {
+    const std::string logtostderr = common::GetEnv("GLOG_logtostderr");
+    const std::string log_dir = common::GetEnv("GLOG_log_dir");
+    if (!logtostderr.empty() && !log_dir.empty()) {
       std::string logtostderr_str = std::string(logtostderr);
       std::string log_dir_str = std::string(log_dir);
       if (logtostderr_str != "0") {
         return;
       }
-      const char *rank_id = std::getenv("RANK_ID");
-      const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
+      const std::string rank_id = common::GetEnv("RANK_ID");
+      const std::string gpu_rank_id = common::GetEnv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
       bool both_exist = false;
-      if (rank_id != nullptr && gpu_rank_id == nullptr) {
+      if (!rank_id.empty() && gpu_rank_id.empty()) {
         rank = std::string(rank_id);
-      } else if (rank_id == nullptr && gpu_rank_id != nullptr) {
+      } else if (rank_id.empty() && !gpu_rank_id.empty()) {
         rank = std::string(gpu_rank_id);
-      } else if (rank_id != nullptr && gpu_rank_id != nullptr) {
+      } else if (!rank_id.empty() && !gpu_rank_id.empty()) {
         rank = std::string(rank_id);
         both_exist = true;
       }
