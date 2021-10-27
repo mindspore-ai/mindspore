@@ -116,14 +116,13 @@ class Softplus(Bijector):
             f^{-1}(y) = \frac{\log(e^{y} - 1)}
         """
         too_small = self.less(x, self.tiny)
-        too_large = self.greater(x, -self.threshold)
+        too_large = self.greater(x, (-1) * self.threshold)
         too_small_value = self.log(x)
         too_large_value = x
         ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
         too_small_or_too_large = self.logicalor(too_small, too_large)
         x = self.select(too_small_or_too_large, ones, x)
-        # pylint: disable=E1130
-        y = x + self.log(self.abs(self.expm1(-x)))
+        y = x + self.log(self.abs(self.expm1((-1)*x)))
         return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
 
     @property

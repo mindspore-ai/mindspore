@@ -39,7 +39,6 @@ class ELBO(Cell):
             - Normal: If the distribution of output data is Normal, the reconstruct loss is MSELoss.
 
     Inputs:
-
         - **input_data** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
         - **target_data** (Tensor) - the target tensor of shape :math:`(N,)`.
 
