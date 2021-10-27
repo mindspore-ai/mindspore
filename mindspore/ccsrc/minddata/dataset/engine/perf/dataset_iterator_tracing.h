@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ class DatasetIteratorTracing : public Tracing {
   Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
+  Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) override;
 };
 }  // namespace dataset
