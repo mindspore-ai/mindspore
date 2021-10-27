@@ -180,6 +180,11 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // who does the increment wakes up the master.
   // @return - Status
   Status WaitForWorkers() override;
+
+  /// Send quit flag row to worker at worker_id to make it exit
+  /// \param worker_id id of the worker
+  /// \return Status code
+  Status SendQuitFlagToWorker(int32_t worker_id) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

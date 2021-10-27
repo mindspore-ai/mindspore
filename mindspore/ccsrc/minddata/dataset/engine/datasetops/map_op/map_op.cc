@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <vector>
@@ -161,9 +162,7 @@ Status MapOp::operator()() {
 
   // Quit all workers, this code might never be reached if EpochCtrl is -1.
   for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
-    TensorRow quit_flag(TensorRow::kFlagQuit);
-    auto quit = std::make_unique<MapWorkerJob>(quit_flag);
-    RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::move(quit)));
+    RETURN_IF_NOT_OK(SendQuitFlagToWorker(NextWorkerID()));
   }
 
   return Status::OK();
@@ -385,6 +384,12 @@ Status MapOp::WaitForWorkers() {
   next_worker_id_ = 0;
   // clear the WaitPost for the next Wait()
   wait_for_workers_post_.Clear();
+  return Status::OK();
+}
+Status MapOp::SendQuitFlagToWorker(int32_t worker_id) {
+  TensorRow quit_flag(TensorRow::kFlagQuit);
+  auto quit = std::make_unique<MapWorkerJob>(quit_flag);
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::move(quit)));
   return Status::OK();
 }
 }  // namespace dataset

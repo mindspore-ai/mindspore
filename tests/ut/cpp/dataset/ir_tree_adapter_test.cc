@@ -31,6 +31,8 @@
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
+#include "minddata/dataset/engine/tree_modifier.h"
+
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
 
@@ -144,4 +146,55 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   rc = tree_adapter->GetNext(&row);
   const std::string err_msg = rc.ToString();
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
+}
+
+// Feature: Basic test for TreeModifier
+// Description: Create simple tree and modify the tree by adding workers, change queue size and then removing workers
+// Expectation: No failures.
+TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
+  MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeModifier.";
+
+  // Create a CSVDataset, with single CSV file
+  std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
+  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
+  ASSERT_NE(ds, nullptr);
+  ds = ds->Project({"col1"});
+  ASSERT_NE(ds, nullptr);
+  ds = ds->Repeat(2);
+  ASSERT_NE(ds, nullptr);
+  auto to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt32);
+  ASSERT_NE(to_number, nullptr);
+  ds = ds->Map({to_number}, {"col1"}, {"col1"});
+  ds->SetNumWorkers(1);
+
+  auto tree_adapter = std::make_shared<TreeAdapter>();
+  // Disable IR optimization pass
+  tree_adapter->SetOptimize(false);
+  ASSERT_OK(tree_adapter->Compile(ds->IRNode(), 1));
+
+  auto tree_modifier = std::make_unique<TreeModifier>(tree_adapter.get());
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(2));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(20));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>());
+  tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
+
+  std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
+  TensorRow row;
+
+  uint64_t i = 0;
+  ASSERT_OK(tree_adapter->GetNext(&row));
+
+  while (row.size() != 0) {
+    auto tensor = row[0];
+    int32_t num;
+    ASSERT_OK(tensor->GetItemAt(&num, {}));
+    EXPECT_EQ(num, expected_result[i]);
+    ASSERT_OK(tree_adapter->GetNext(&row));
+    i++;
+  }
+
+  // Expect 6 samples
+  EXPECT_EQ(i, 6);
 }

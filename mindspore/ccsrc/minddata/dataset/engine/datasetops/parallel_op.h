@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_PARALLEL_OP_H_
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -98,8 +99,9 @@ class ParallelOp : public DatasetOp {
     RETURN_IF_NOT_OK(worker_out_queues_.Register(tree_->AllTasks()));
     RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
 
-    RETURN_IF_NOT_OK(tree_->LaunchWorkers(
-      num_workers_, std::bind(&ParallelOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry", id()));
+    RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                          std::bind(&ParallelOp::WorkerEntry, this, std::placeholders::_1),
+                                          &worker_tasks_, Name() + "::WorkerEntry", id()));
     RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&ParallelOp::Collector, this), Name() + "::Collector", id()));
 
     return Status::OK();
@@ -154,8 +156,11 @@ class ParallelOp : public DatasetOp {
     for (int32_t i = 0; i < num_new_workers; i++) {
       worker_in_queues_.AddQueue(tree_->AllTasks());
       worker_out_queues_.AddQueue(tree_->AllTasks());
+      Task *new_task;
       RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
-        Name() + "::WorkerEntry", std::bind(&ParallelOp::WorkerEntry, this, num_workers_), nullptr, id()));
+        Name() + "::WorkerEntry", std::bind(&ParallelOp::WorkerEntry, this, num_workers_), &new_task, id()));
+      CHECK_FAIL_RETURN_UNEXPECTED(new_task != nullptr, "Cannot create a new worker.");
+      worker_tasks_.push_back(new_task);
       num_workers_++;
       MS_LOG(INFO) << "A new worker has been added to op: " << Name() << "::" << id()
                    << " num_workers=" << num_workers_;
@@ -163,6 +168,25 @@ class ParallelOp : public DatasetOp {
     return Status::OK();
   }
 
+  /// Add a new worker to the parallelOp. The function will have to wait for all workers to process current rows.
+  /// Then it adds a new thread to the list.
+  /// \note The caller of this function has to be the main thread of the Op, since it's the only entity responsible to
+  /// push rows to workers_in_queue
+  /// \return Status The status code returned
+  Status RemoveWorkers(int32_t num_workers = 1) override {
+    // wait for workers to process the current rows
+    RETURN_IF_NOT_OK(WaitForWorkers());
+    for (int32_t i = 0; i < num_workers; i++) {
+      RETURN_IF_NOT_OK(SendQuitFlagToWorker(num_workers_ - 1));
+      RETURN_IF_NOT_OK(worker_tasks_[num_workers_ - 1]->Join());
+      RETURN_IF_NOT_OK(worker_in_queues_.RemoveLastQueue());
+      worker_tasks_.pop_back();
+      num_workers_--;
+      MS_LOG(INFO) << "Worker ID " << num_workers_ << " is requested to be removed in operator: " << NameWithID()
+                   << " num_workers=" << num_workers_;
+    }
+    return Status::OK();
+  }
   // Wait post used to perform the pausing logic
   WaitPost wait_for_workers_post_;
 
@@ -175,13 +199,21 @@ class ParallelOp : public DatasetOp {
   /// The number of worker threads
   int32_t num_workers_;
 
+  std::vector<Task *> worker_tasks_;
+
   int32_t NextWorkerID() {
     int32_t next_worker = next_worker_id_;
     next_worker_id_ = (next_worker_id_ + 1) % num_workers_;
     return next_worker;
   }
 
+ public:
+  int32_t NumWorkers() override { return num_workers_; }
+
+ protected:
   std::atomic_int next_worker_id_;
+
+  std::map<int32_t, std::atomic_bool> quit_ack_;
 
   /// The size of input/output worker queeus
   int32_t worker_connector_size_;

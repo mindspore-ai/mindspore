@@ -218,10 +218,10 @@ ExecutionTree::Iterator::Iterator(const std::shared_ptr<DatasetOp> &root) : ind_
   (void)nodes_.emplace_back(nullptr);
 }
 
-// Given the number of workers, launches the worker entry function for each. Essentially a
+// Given the number of workers, launch the worker entry function for each worker. This is essentially a
 // wrapper for the TaskGroup handling that is stored inside the execution tree.
-Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name,
-                                    int32_t operator_id) {
+Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func,
+                                    std::vector<Task *> *worker_tasks, std::string name, int32_t operator_id) {
   int32_t num_cpu_threads = GlobalContext::Instance()->config_manager()->num_cpu_threads();
   // this performs check that num_workers is positive and not unreasonably large which could happen
   // for example, un-initialized variable. uint16 max is 65536 which is large enough to cover everything
@@ -232,10 +232,22 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
     MS_LOG(WARNING) << name + " is launched with " << std::to_string(num_workers) << " worker threads which exceeds "
                     << std::to_string(num_cpu_threads) << ", the maximum number of threads on this CPU.";
   }
+  worker_tasks->resize(num_workers);
   for (int32_t i = 0; i < num_workers; ++i) {
-    RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i), nullptr, operator_id));
+    Task *task = nullptr;
+    RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i), &task, operator_id));
+    CHECK_FAIL_RETURN_UNEXPECTED(task != nullptr, "Failed to create a new worker");
+    (*worker_tasks)[i] = task;
   }
   return Status::OK();
+}
+
+// Given the number of workers, launches the worker entry function for each. Essentially a
+// wrapper for the TaskGroup handling that is stored inside the execution tree.
+Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name,
+                                    int32_t operator_id) {
+  std::vector<Task *> tasks;
+  return LaunchWorkers(num_workers, func, &tasks, name, operator_id);
 }
 
 // Walks the tree to perform modifications to the tree in post-order to get it ready for execution.
