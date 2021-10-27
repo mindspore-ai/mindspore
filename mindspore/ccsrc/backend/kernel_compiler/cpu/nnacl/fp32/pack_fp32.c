@@ -109,6 +109,9 @@ void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param
     int block_start = block_index + i;
     int input_h = block_start / out_w * conv_param->stride_h_ - conv_param->pad_u_;
     int input_w = block_start % out_w * conv_param->stride_w_ - conv_param->pad_l_;
+    if (conv_param->input_h_ - input_h < 0 || in_w - input_w < 0) {
+      continue;
+    }
     int input_stride = (input_h * in_w + input_w) * in_channel;
     int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
     int kh_e = MSMIN(kernel_h, UP_DIV(conv_param->input_h_ - input_h, dilation_h));

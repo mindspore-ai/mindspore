@@ -84,10 +84,11 @@ int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
-
+  MS_CHECK_TRUE_RET(input_channel > 0 && output_channel > 0, RET_ERROR);
   size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
+      CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
       packed_weight_ = malloc(size);
       if (packed_weight_ == nullptr) {
         MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
@@ -100,6 +101,7 @@ int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
   if (in_tensors_.size() == kInputSize2) {
     size = UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
     if (bias_data_ == nullptr) {
+      CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
       bias_data_ = malloc(size);
       if (bias_data_ == nullptr) {
         MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";

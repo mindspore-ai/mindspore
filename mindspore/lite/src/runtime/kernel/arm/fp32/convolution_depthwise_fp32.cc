@@ -108,19 +108,21 @@ void ConvolutionDepthwiseCPUKernel::PackWeight() {
 int ConvolutionDepthwiseCPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
+  MS_CHECK_TRUE_RET(channel > 0, RET_ERROR);
   int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
   if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
     MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
     return RET_ERROR;
   }
   if (!op_parameter_->is_train_session_) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
     packed_weight_ = malloc(pack_weight_size * sizeof(float));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
   }
-
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, channel * sizeof(float));
   bias_data_ = malloc(channel * sizeof(float));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

@@ -173,6 +173,7 @@ int ConvolutionDepthwiseSWCPUKernel::MallocWeightBiasData() {
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
     packed_weight_ = malloc(pack_weight_size * sizeof(float));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -180,10 +181,8 @@ int ConvolutionDepthwiseSWCPUKernel::MallocWeightBiasData() {
     }
   }
   int malloc_size = MSMAX(conv_param_->output_channel_, C4NUM * OC4);
-  if (malloc_size <= 0) {
-    MS_LOG(ERROR) << "malloc size is wrong";
-    return RET_ERROR;
-  }
+  CHECK_LESS_RETURN(malloc_size, 0);
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, malloc_size * sizeof(float));
   bias_data_ = malloc(malloc_size * sizeof(float));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

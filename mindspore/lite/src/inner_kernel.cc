@@ -55,6 +55,11 @@ int InnerKernel::PreProcess() {
     }
   }
 
+  // check if inputs are valid
+  if (!CheckInputsValid()) {
+    MS_LOG(ERROR) << "The input is not valid.";
+    return RET_ERROR;
+  }
   for (auto *output : this->out_tensors()) {
     MS_ASSERT(output != nullptr);
     if (registry_data_type_ == kNumberTypeFloat16 && output->data_type() == kNumberTypeFloat32) {

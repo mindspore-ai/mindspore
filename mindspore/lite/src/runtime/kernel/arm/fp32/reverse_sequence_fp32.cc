@@ -92,6 +92,7 @@ int ReverseSequenceCPUKernel::ReSize() {
 }
 
 int ReverseSequenceCPUKernel::Run() {
+  MS_CHECK_TRUE_RET(in_tensors_.at(0)->shape() == out_tensors_.at(0)->shape(), RET_ERROR);
   float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   void *input1 = in_tensors_.at(1)->MutableData();
   float *output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
