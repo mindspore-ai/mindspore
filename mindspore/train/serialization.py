@@ -1174,8 +1174,8 @@ def build_searched_strategy(strategy_filename):
     """
     Build strategy of every parameter in network. Used in the case of distributed inference.
     For details of merge_sliced_parameter, please check:
-    `Enabling Graph-Accounting Convergence
-     <https://www.mindspore.cn/docs/programming_guide/en/r1.5/save_load_model_hybrid_parallel.html>`_.
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
+    /en/r1.5/save_load_model_hybrid_parallel.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.
@@ -1222,8 +1222,8 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     """
     Merge parameter slices into one parameter. Used in the case of distributed inference.
     For details of merge_sliced_parameter, please check:
-    `Enabling Graph-Accounting Convergence
-     <https://www.mindspore.cn/docs/programming_guide/en/r1.5/save_load_model_hybrid_parallel.html>`_.
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
+    /en/r1.5/save_load_model_hybrid_parallel.html>`_.
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank_id.
@@ -1310,8 +1310,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     """
     Load checkpoint into net for distributed predication. Used in the case of distributed inference.
     For details of distributed inference, please check:
-    `Enabling Graph-Accounting Convergence
-     <https://www.mindspore.cn/docs/programming_guide/en/r1.5/distributed_inference.html>`_.
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
+    /en/r1.5/distributed_inference.html>`_.
 
     Args:
         network (Cell): Network for distributed predication.

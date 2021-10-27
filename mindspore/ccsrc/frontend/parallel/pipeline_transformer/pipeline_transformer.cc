@@ -812,7 +812,6 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
 }
 
 std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer::CutBorder(const FuncGraphPtr &graph) {
-  OperatorAttrs depend_attrs;
   std::vector<AnfNodePtr> receive_ops;
   std::vector<AnfNodePtr> send_ops;
   auto ret = graph->get_return();

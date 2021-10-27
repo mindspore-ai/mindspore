@@ -465,15 +465,15 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node) {
   while (!node_queue.empty()) {
     auto cur_node = (*node_queue.begin())->cast<CNodePtr>();
     if (!cur_node) {
-      node_queue.erase(node_queue.begin());
+      (void)node_queue.erase(node_queue.begin());
       continue;
     }
-    node_queue.erase(node_queue.begin());
+    (void)node_queue.erase(node_queue.begin());
     if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD)) {
       MS_LOG(INFO) << "Pipeline End node: " << cur_node->DebugString();
       return cur_node;
     }
-    node_queue.insert(node_queue.end(), cur_node->inputs().begin() + 1, cur_node->inputs().end());
+    (void)node_queue.insert(node_queue.end(), cur_node->inputs().begin() + 1, cur_node->inputs().end());
   }
   MS_LOG(EXCEPTION) << "Get Pipeline End node failed.";
 }

@@ -55,6 +55,7 @@ class MoEConfig:
 
 default_moe_config = MoEConfig()
 
+
 @constexpr
 def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
     return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)
