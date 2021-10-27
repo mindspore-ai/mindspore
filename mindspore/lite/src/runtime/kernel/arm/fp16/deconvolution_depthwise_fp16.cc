@@ -74,13 +74,14 @@ int DeconvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   if (!op_parameter_->is_train_session_) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float16_t));
     packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
   }
-
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, C8NUM * OC8 * sizeof(float16_t));
   bias_data_ = malloc(C8NUM * OC8 * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

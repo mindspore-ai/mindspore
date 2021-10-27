@@ -65,6 +65,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocIndirectBuffer() {
   step_h =
     (conv_param_->kernel_h_ * conv_param_->kernel_w_) + (conv_param_->output_w_ - 1) * step_w * conv_param_->kernel_h_;
   int buffer_size = conv_param_->output_batch_ * conv_param_->output_h_ * step_h;
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, buffer_size * sizeof(float *));
   indirect_buffer_ = reinterpret_cast<float **>(malloc(buffer_size * sizeof(float *)));
   if (indirect_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -196,12 +197,14 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
   int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
     packed_weight_ = malloc(pack_weight_size * sizeof(float));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
   }
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, batch_flag * div_flag * sizeof(float));
   bias_data_ = malloc(batch_flag * div_flag * sizeof(float));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

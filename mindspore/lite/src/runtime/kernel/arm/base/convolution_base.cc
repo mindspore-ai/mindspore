@@ -27,6 +27,7 @@ using mindspore::schema::ActivationType;
 
 namespace mindspore::kernel {
 void *ConvolutionBaseCPUKernel::MallocAlignedData(size_t alignment, size_t size) {
+  MS_CHECK_TRUE_RET(size + alignment < MAX_MALLOC_SIZE, nullptr);
   auto ptr = malloc(size + alignment);
   if (ptr == nullptr) {
     MS_LOG(ERROR) << "MallocAlignedData failed!";
@@ -423,5 +424,15 @@ void ConvolutionBaseCPUKernel::UpdateOriginWeightAndBias() {
   if (in_tensors_.size() == kInputSize2 && in_tensors_.at(kBiasIndex)->data() != nullptr) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data();
   }
+}
+
+bool ConvolutionBaseCPUKernel::CheckInputsValid() const {
+  // the data type of input and weight must be the same, while the bias data type of int8 convolution is int32.
+  MS_CHECK_TRUE_RET(in_tensors_.size() >= kInputSize1, false);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  MS_CHECK_TRUE_RET(input_tensor != nullptr && weight_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(input_tensor->data() != nullptr, false);
+  return input_tensor->data_type() == weight_tensor->data_type();
 }
 }  // namespace mindspore::kernel

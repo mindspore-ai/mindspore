@@ -46,6 +46,8 @@ int ScaleCPUKernel::InitScaleOffset() {
   auto scale_tensor = in_tensors_.at(1);
   if (reinterpret_cast<float *>(scale_tensor->data()) != nullptr) {
     scale_param_->const_scale_ = true;
+    MS_CHECK_TRUE_RET(scale_tensor->ElementsNum() > 0, RET_ERROR);
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, scale_tensor->ElementsNum() * sizeof(float));
     scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
     if (scale_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";

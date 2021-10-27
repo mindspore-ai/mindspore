@@ -205,6 +205,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
     input_unit_ * input_unit_ * in_channel * UP_ROUND(out_channel, oc_block_) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
+      CHECK_LESS_RETURN(MAX_MALLOC_SIZE, trans_matrix_data_size);
       packed_weight_ = malloc(trans_matrix_data_size);
       if (packed_weight_ == nullptr) {
         MS_LOG(ERROR) << "malloc matrix_buffer failed.";
@@ -232,6 +233,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
   // init bias
   size_t new_bias_size = UP_ROUND(out_channel, C4NUM) * sizeof(float);
   if (bias_data_ == nullptr) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, new_bias_size);
     bias_data_ = malloc(new_bias_size);
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_data_ failed.";
