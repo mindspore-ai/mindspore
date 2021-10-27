@@ -338,7 +338,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         If the user has set the sens in the training process and wants to reassign the value, he can call
         this function again to make modification, and sens needs to be of type Tensor.
 
-        Inputs:
+        Args:
             - **sens** (Tensor) - The new sense whose shape and type are the same with original `scale_sense`.
         """
         if self.scale_sense and isinstance(sens, Tensor):
@@ -355,7 +355,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         overflow in the process of gradient calculation. In this case, pre_cond should be the output of the loss
         function, and compute_input should be the input of gradients-computing function.
 
-        Inputs:
+        Args:
             - **pre_cond** (Tensor) - A precondition for starting overflow detection. It determines the executing order
               of overflow state clearing and prior processions. It makes sure that the function 'start_overflow'
               clears status after finishing the process of precondition.
@@ -385,7 +385,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
         Get overflow results after executing the target process for overflow detection.
 
-        Inputs:
+        Args:
             - **status** (object) - A status instance used to detect the overflow.
             - **compute_output** - Overflow detection should be performed on a certain computation. Set `compute_output`
               as the output of the computation, to ensure overflow status is acquired before executing the
@@ -418,7 +418,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         Calculate loss scale according to the overflow.
 
-        Inputs:
+        Args:
             - **overflow** (bool) - Whether the overflow occurs or not.
 
         Outputs:
