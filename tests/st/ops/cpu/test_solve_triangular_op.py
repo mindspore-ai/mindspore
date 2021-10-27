@@ -34,10 +34,12 @@ class SolveTriangular(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, lower: bool, trans: str):
+    def __init__(self, lower: bool, unit_diagonal: bool, trans: str):
         """Initialize SolveTriangular"""
-        self.upper_triangle = validator.check_value_type(
+        self.lower = validator.check_value_type(
             "lower", lower, [bool], self.name)
+        self.unit_diagonal = validator.check_value_type(
+            "unit_diagonal", unit_diagonal, [bool], self.name)
         self.trans = validator.check_value_type(
             "trans", trans, [str], self.name)
 
@@ -59,21 +61,23 @@ class SolveTriangular(PrimitiveWithInfer):
 
 def mind_solve(a, b, trans="N", lower=False, unit_diagonal=False,
                overwrite_b=False, debug=None, check_finite=True):
-    solve = SolveTriangular(lower, trans)
+    solve = SolveTriangular(
+        lower=lower, unit_diagonal=unit_diagonal, trans=trans)
     return solve(a, b)
 
 
-def match(a, b, lower, trans):
-    sci_x = solve_triangular(a, b, lower=lower, trans=trans)
-    if context.get_context("device_target") == "GPU":
-        a = a.T
+def match(a, b, lower, unit_diagonal, trans):
+    sci_x = solve_triangular(
+        a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
     mind_x = mind_solve(Tensor(a), Tensor(
-        b), lower=lower, trans=trans).asnumpy()
+        b), lower=lower, unit_diagonal=unit_diagonal, trans=trans).asnumpy()
 
-    print(sci_x)
-    print(mind_x)
-    print(f'lower: {lower}')
-    assert np.allclose(sci_x, mind_x)
+    print(a.flatten())
+    print(b.flatten())
+    print(sci_x.flatten())
+    print(mind_x.flatten())
+    print(f'lower: {lower}, unit_diagonal: {unit_diagonal}, trans: {trans}')
+    np.testing.assert_almost_equal(sci_x, mind_x, decimal=5)
 
 
 @pytest.mark.level0
@@ -83,7 +87,8 @@ def match(a, b, lower, trans):
 @pytest.mark.parametrize('trans', ["N", "T"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
-def test_2D(n: int, dtype, lower: bool, trans: str):
+@pytest.mark.parametrize('unit_diagonal', [False])
+def test_2D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
     """
     Feature: ALL TO ALL
     Description:  test cases for [N x N] X [N X 1]
@@ -92,7 +97,7 @@ def test_2D(n: int, dtype, lower: bool, trans: str):
     # add Identity matrix to make matrix A non-singular
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random((n, 1)).astype(dtype)
-    match(a, b, lower, trans)
+    match(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
 
 
 @pytest.mark.level0
@@ -102,7 +107,8 @@ def test_2D(n: int, dtype, lower: bool, trans: str):
 @pytest.mark.parametrize('trans', ["N", "T"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
-def test_1D(n: int, dtype, lower: bool, trans: str):
+@pytest.mark.parametrize('unit_diagonal', [False, True])
+def test_1D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
     """
     Feature: ALL TO ALL
     Description: test cases for [N x N] X [N]
@@ -111,4 +117,4 @@ def test_1D(n: int, dtype, lower: bool, trans: str):
     # add Identity matrix to make matrix A non-singular
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random(n).astype(dtype)
-    match(a, b, lower, trans)
+    match(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)

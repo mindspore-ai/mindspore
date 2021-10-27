@@ -34,10 +34,11 @@ class SolveTriangularCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  int m{0};
-  int n{0};
+  int m_{0};
+  int n_{0};
   bool lower_{false};
   bool trans_{false};
+  bool unit_diagonal_{false};
 };
 
 MS_REG_CPU_KERNEL_T(

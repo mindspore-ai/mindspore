@@ -29,6 +29,8 @@ using Eigen::Lower;
 using Eigen::Map;
 using Eigen::MatrixBase;
 using Eigen::RowMajor;
+using Eigen::UnitLower;
+using Eigen::UnitUpper;
 using Eigen::Upper;
 template <typename T, int Major>
 using Matrix = Eigen::Matrix<T, Dynamic, Dynamic, Major>;
@@ -46,21 +48,22 @@ void SolveTriangularCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "wrong array shape, A should be a squre matrix, but got [" << A_shape[kDim0] << " X "
                       << A_shape[kDim1] << "]";
   }
-  m = A_shape[kDim0];
+  m_ = A_shape[kDim0];
 
   if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "wrong array shape, b should be 1D or 2D, but got [" << b_shape.size() << "] dimensions";
   }
-  if (SizeToInt(b_shape[kDim0]) != m) {
-    MS_LOG(EXCEPTION) << "wrong array shape, b should match the shape of A, excepted [" << m << "] but got ["
+  if (SizeToInt(b_shape[kDim0]) != m_) {
+    MS_LOG(EXCEPTION) << "wrong array shape, b should match the shape of A, excepted [" << m_ << "] but got ["
                       << b_shape[kDim0] << "]";
   }
   if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
-    n = 1;
+    n_ = 1;
   } else {
-    n = b_shape[kDim1];
+    n_ = b_shape[kDim1];
   }
   lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+  unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
   const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
   if (trans == "N") {
     trans_ = false;
@@ -72,13 +75,21 @@ void SolveTriangularCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename Derived_A, typename Derived_b, typename T>
-inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b, T *output_addr, size_t m, size_t n,
-                  bool lower) {
+inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b, T *output_addr, int m, int n,
+                  bool lower, bool unit_diagonal) {
   Map<Matrix<T, RowMajor>> output(output_addr, m, n);
-  if (lower) {
-    output.noalias() = A.template triangularView<Lower>().solve(b);
+  if (unit_diagonal) {
+    if (lower) {
+      output.noalias() = A.template triangularView<UnitLower>().solve(b);
+    } else {
+      output.noalias() = A.template triangularView<UnitUpper>().solve(b);
+    }
   } else {
-    output.noalias() = A.template triangularView<Upper>().solve(b);
+    if (lower) {
+      output.noalias() = A.template triangularView<Lower>().solve(b);
+    } else {
+      output.noalias() = A.template triangularView<Upper>().solve(b);
+    }
   }
 }
 
@@ -93,14 +104,14 @@ bool SolveTriangularCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
   auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  Map<Matrix<T, RowMajor>> b(b_addr, m, n);
+  Map<Matrix<T, RowMajor>> b(b_addr, m_, n_);
 
   if (trans_) {
-    Map<Matrix<T, ColMajor>> A(A_addr, m, m);
-    solve(A, b, output_addr, m, n, !lower_);
+    Map<Matrix<T, ColMajor>> A(A_addr, m_, m_);
+    solve(A, b, output_addr, m_, n_, !lower_, unit_diagonal_);
   } else {
-    Map<Matrix<T, RowMajor>> A(A_addr, m, m);
-    solve(A, b, output_addr, m, n, lower_);
+    Map<Matrix<T, RowMajor>> A(A_addr, m_, m_);
+    solve(A, b, output_addr, m_, n_, lower_, unit_diagonal_);
   }
 
   return true;
