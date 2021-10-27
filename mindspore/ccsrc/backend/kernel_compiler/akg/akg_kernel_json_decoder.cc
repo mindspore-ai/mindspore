@@ -36,6 +36,18 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+using graphkernel::kJsonKeyAttr;
+using graphkernel::kJsonKeyDataType;
+using graphkernel::kJsonKeyFormat;
+using graphkernel::kJsonKeyInputDesc;
+using graphkernel::kJsonKeyName;
+using graphkernel::kJsonKeyOpDesc;
+using graphkernel::kJsonKeyOutputDesc;
+using graphkernel::kJsonKeyProcess;
+using graphkernel::kJsonKeyShape;
+using graphkernel::kJsonKeyTensorName;
+using graphkernel::kJsonKeyValue;
+
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 

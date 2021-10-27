@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
+using graphkernel::AkgKernelJsonGenerator;
 using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
 
 class AkgKernelBuilder {

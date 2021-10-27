@@ -31,14 +31,6 @@
 #include "utils/context/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
-using kernel::kJsonKeyBufferStitch;
-using kernel::kJsonKeyOpDesc;
-using kernel::kJsonKeyOutputDesc;
-using kernel::kJsonKeyPtrAddress;
-using kernel::kJsonKeyRecomputeOps;
-using kernel::kJsonKeyStitchAtomicOp;
-using kernel::kJsonKeyStitchOp;
-using kernel::kJsonKeyTensorName;
 namespace {
 StitchInfo GetStitchInfo(const nlohmann::json &kernel_json) {
   StitchInfo info;

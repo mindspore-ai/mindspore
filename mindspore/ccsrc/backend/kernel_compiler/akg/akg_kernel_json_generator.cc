@@ -19,12 +19,25 @@
 #ifdef ENABLE_GPU
 #include <cuda.h>
 #endif
+#include <set>
+#include <functional>
+#include <algorithm>
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::graphkernel {
+using kernel::GetDtypeNbyte;
+using kernel::GetInputIndex;
+using kernel::GetInputTensorValue;
+using kernel::GetKernelInput;
+using kernel::GetOutputIndex;
+using kernel::GetStrProcessorFromContext;
+using kernel::kProcessorCuda;
+using kernel::OpAttr;
+using kernel::OpImplyType;
+using kernel::OpInfo;
+using kernel::OpIOInfo;
 namespace {
 std::vector<int> GetDynInputSize(const AnfNodePtr &anf_node) {
   std::vector<int> dyn_input_sizes;
@@ -206,9 +219,8 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = this->GetInputShape(anf_node, real_input_index);
       if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
-        MS_LOG(DEBUG) << "Take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
-                      << "] as const tensor, shape: [" << Vector2Str(input_shape)
-                      << "], value: " << input_desc_json[kJsonKeyValue];
+        MS_LOG(WARNING) << "Pick single value [" << input_desc_json[kJsonKeyValue] << "] from input["
+                        << real_input_index << "] of node [" << anf_node->DebugString(2);
         input_shape.clear();
       }
       if (input_shape.empty()) {
@@ -286,7 +298,7 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
     (*attr_json)[kJsonKeyValue] = list_int;
   } else if (type == "listStr") {
     std::vector<std::string> data_format;
-    if (op_attr->name() == kArgDataformat) {
+    if (op_attr->name() == kJsonKeyDataformat) {
       size_t tensor_args_num = !dyn_input_sizes.empty() ? dyn_input_sizes.size() : AnfAlgo::GetInputTensorNum(anf_node);
       for (size_t format_i = 0; format_i < tensor_args_num; format_i++) {
         auto input_format = this->GetInputFormat(anf_node, format_i);
@@ -321,7 +333,7 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
   for (const auto &op_attr : attrs) {
     nlohmann::json attr_json;
     ValuePtr attr_value = primitive->GetAttr(op_attr->name());
-    if (attr_value == nullptr && op_attr->name() != kArgDataformat) {
+    if (attr_value == nullptr && op_attr->name() != kJsonKeyDataformat) {
       if (op_attr->param_type() != "required") continue;
       // match "x_shape" in attr with "x" in primitive.
       auto find_item = op_info_shape_name.find(op_attr->name());
@@ -870,5 +882,4 @@ void ComputeCapability::GetComputeCapability() {
 #endif
   return;
 }
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
