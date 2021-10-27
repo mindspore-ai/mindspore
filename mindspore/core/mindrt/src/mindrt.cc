@@ -79,7 +79,7 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const st
   return result;
 }
 
-AID Spawn(ActorReference actor, bool sharedThread) {
+AID Spawn(const ActorReference actor, bool sharedThread) {
   if (actor == nullptr) {
     MS_LOG(ERROR) << "Actor is nullptr.";
     MINDRT_EXIT("Actor is nullptr.");

@@ -80,7 +80,7 @@ class ActorMgr {
       return false;
     }
   }
-  int EnqueueMessage(ActorReference actor, std::unique_ptr<MessageBase> msg);
+  int EnqueueMessage(const ActorReference actor, std::unique_ptr<MessageBase> msg);
   // in order to avoid being initialized many times
   std::atomic_bool initialized_{false};
 

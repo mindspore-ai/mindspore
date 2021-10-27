@@ -45,7 +45,8 @@ class AppActor : public ActorBase {
   // send T message to the actor
   template <typename M>
   int Send(const std::string &to, const std::string &msgName, std::unique_ptr<M> msg) {
-    std::unique_ptr<MessageLocal> localMsg(new (std::nothrow) MessageLocal(GetAID(), to, msgName, msg.release()));
+    auto localMsg =
+      std::unique_ptr<MessageLocal>(new (std::nothrow) MessageLocal(GetAID(), to, msgName, msg.release()));
     MINDRT_OOM_EXIT(localMsg);
     return Send(to, std::move(localMsg));
   }
