@@ -30,17 +30,19 @@ class MetaGraphSerializer {
  private:
   MetaGraphSerializer() = default;
 
-  virtual ~MetaGraphSerializer() = default;
+  virtual ~MetaGraphSerializer();
 
-  void InitPath(const std::string &output_path);
+  bool InitPath(const std::string &real_output_path);
 
-  bool Init(const schema::MetaGraphT &graph, const std::string &output_path);
+  bool Init(const schema::MetaGraphT &graph, const std::string &output_path, bool save_together = true);
 
-  schema::ExternalDataT *AddExternalData(std::fstream *file, const char *data, size_t size);
+  schema::ExternalDataT *AddExternalData(const char *data, size_t size);
 
   bool ExtraAndSerializeModelWeight(const schema::MetaGraphT &graph);
 
   bool SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT);
+
+  bool SerializeModel(const void *content, size_t size);
 
  private:
   int64_t cur_offset_ = 0;
@@ -48,6 +50,8 @@ class MetaGraphSerializer {
   std::string model_name_;
   std::string save_model_path_;
   std::string save_data_path_;
+  std::fstream *model_fs_ = nullptr;
+  std::fstream *data_fs_ = nullptr;
 };
 }  // namespace mindspore::lite
 

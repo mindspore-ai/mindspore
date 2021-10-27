@@ -15,13 +15,13 @@
  */
 
 #include "src/common/file_utils.h"
+#include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
 #else
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #endif
 
@@ -72,6 +72,32 @@ bool IsCharEndWith(const char *src, const char *end) {
   return false;
 }
 
+// do not call RealPath function in OpenFile, because OpenFile may open a non-exist file
+std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode) {
+#ifndef _MSC_VER
+  if (access(file_path.c_str(), F_OK) == 0) {
+    chmod(file_path.c_str(), S_IWUSR | S_IRUSR);
+  }
+#endif
+  auto fs = new (std::nothrow) std::fstream();
+  if (fs == nullptr) {
+    MS_LOG(DEBUG) << "Create file stream failed";
+    return nullptr;
+  }
+  fs->open(file_path, open_mode);
+  if (!fs->good()) {
+    MS_LOG(DEBUG) << "File is not exist: " << file_path;
+    delete fs;
+    return nullptr;
+  }
+  if (!fs->is_open()) {
+    MS_LOG(DEBUG) << "Can not open file: " << file_path;
+    delete fs;
+    return nullptr;
+  }
+  return fs;
+}
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";
@@ -79,34 +105,29 @@ char *ReadFile(const char *file, size_t *size) {
   }
   MS_ASSERT(size != nullptr);
   std::string real_path = RealPath(file);
-  if (AccessFile(real_path, R_OK) != 0) {
-    MS_LOG(ERROR) << "cannot access file:" << real_path << ".please check file if exists and file mod";
+  if (real_path.empty()) {
+    MS_LOG(DEBUG) << "File path not regular: " << file;
     return nullptr;
   }
-  std::ifstream ifs(real_path, std::ifstream::in | std::ifstream::binary);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
-    return nullptr;
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "file: " << real_path << " open failed";
+  auto ifs = OpenFile(real_path, std::ifstream::in | std::ifstream::binary);
+  if (ifs == nullptr) {
     return nullptr;
   }
 
-  ifs.seekg(0, std::ios::end);
-  *size = ifs.tellg();
+  ifs->seekg(0, std::ios::end);
+  *size = ifs->tellg();
   auto buf = std::make_unique<char[]>(*size);
   if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
-    ifs.close();
+    MS_LOG(ERROR) << "malloc buf failed, file: " << file;
+    ifs->close();
+    delete ifs;
     return nullptr;
   }
 
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), *size);
-  ifs.close();
-
+  ifs->seekg(0, std::ios::beg);
+  ifs->read(buf.get(), *size);
+  ifs->close();
+  delete ifs;
   return buf.release();
 }
 

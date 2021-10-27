@@ -46,10 +46,10 @@ enum WeightQunatCompressType: int {
 }
 
 table ExternalData {
+    checkSum: string;
     location: string;
     offset: int64 = 0;
     length: int64 = -1;
-    checkSum: string;
 }
 
 table Tensor {

@@ -33,6 +33,8 @@ constexpr const char MINDIR_POSTFIX[] = ".mindir";
 
 bool IsCharEndWith(const char *src, const char *end);
 
+std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode = std::ios::in | std::ios::out);
+
 char *ReadFile(const char *file, size_t *size);
 
 std::string RealPath(const char *path);
