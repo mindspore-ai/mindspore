@@ -70,14 +70,14 @@ OpParameter *PopulateAffineParameter(const void *prim) {
   affine_param->context_size_ = static_cast<int>(context.size());
 
   // malloc && memset for context
-  affine_param->context_ = reinterpret_cast<int *>(malloc(affine_param->context_size_ * sizeof(int)));
+  affine_param->context_ = reinterpret_cast<int *>(malloc(context.size() * sizeof(int)));
   if (affine_param->context_ == nullptr) {
     MS_LOG(ERROR) << "malloc param context_ for affine layer failed!";
     ReleaseParam(affine_param, matmul_param);
     return nullptr;
   }
-  memset(affine_param->context_, 0, affine_param->context_size_ * sizeof(int));
-  for (int i = 0; i < affine_param->context_size_; ++i) {
+  (void)memset(affine_param->context_, 0, context.size() * sizeof(int));
+  for (size_t i = 0; i < context.size(); ++i) {
     affine_param->context_[i] = context.at(i);
   }
   affine_param->output_dim_ = value->output_dim();

@@ -52,7 +52,7 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   param->context_dim_ = static_cast<int>(primitive_context.size());
 
   // malloc && memset for context
-  param->context_ = reinterpret_cast<int *>(malloc(param->context_dim_ * sizeof(int)));
+  param->context_ = reinterpret_cast<int *>(malloc(primitive_context.size() * sizeof(int)));
   if (param->context_ == nullptr) {
     MS_LOG(ERROR) << "malloc param context_ error";
     free(param);
@@ -60,8 +60,8 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   }
   // src_to_dst_row_offset
   int src_to_dst_row_offset = INT32_MIN;
-  memset(param->context_, 0, param->context_dim_ * sizeof(int));
-  for (int i = 0; i < param->context_dim_; ++i) {
+  (void)memset(param->context_, 0, primitive_context.size() * sizeof(int));
+  for (size_t i = 0; i < primitive_context.size(); ++i) {
     param->context_[i] = primitive_context[i];
     src_to_dst_row_offset = std::max(src_to_dst_row_offset, std::abs(primitive_context.at(i)));
   }
@@ -83,15 +83,16 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   param->forward_indexes_dim_ = static_cast<int>(primitive_forward_indexes.size());
 
   // malloc && memset for forward_indexes
-  param->forward_indexes_ = reinterpret_cast<int *>(malloc(param->forward_indexes_dim_ * sizeof(int)));
+  param->forward_indexes_ = reinterpret_cast<int *>(malloc(primitive_forward_indexes.size() * sizeof(int)));
   if (param->forward_indexes_ == nullptr) {
     MS_LOG(ERROR) << "malloc param forward_indexes_ error";
     free(param->context_);
     free(param);
     return nullptr;
   }
-  memset(param->forward_indexes_, 0, param->forward_indexes_dim_ * sizeof(int));
-  memcpy(param->forward_indexes_, primitive_forward_indexes.data(), param->forward_indexes_dim_ * sizeof(int));
+  (void)memset(param->forward_indexes_, 0, primitive_forward_indexes.size() * sizeof(int));
+  (void)memcpy(param->forward_indexes_, primitive_forward_indexes.data(),
+               primitive_forward_indexes.size() * sizeof(int));
   param->output_dim_ = value->output_dim();
   return reinterpret_cast<OpParameter *>(param);
 }
