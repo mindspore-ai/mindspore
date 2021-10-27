@@ -426,6 +426,10 @@ ValueNodePtr GetPartialFusionPrim();
 ValueNodePtr GetSwitchAnfPrim();
 
 ValueNodePtr GetCallAnfPrim();
+
+inline bool IsGraphInput(const AnfNodePtr &cnode) {
+  return cnode->isa<Parameter>() && !cnode->cast<ParameterPtr>()->has_default();
+}
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H
