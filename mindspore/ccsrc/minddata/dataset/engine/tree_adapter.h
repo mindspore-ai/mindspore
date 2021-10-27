@@ -32,6 +32,10 @@ namespace dataset {
 class DatasetNode;
 
 class TreeAdapter {
+#ifndef ENABLE_SECURITY
+  friend ProfilingManager;
+#endif
+
  public:
   // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
   // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
@@ -74,8 +78,12 @@ class TreeAdapter {
 
 #ifndef ENABLE_SECURITY
   /// \brief Setter for Profiling Manager
-  void SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager) {
+  Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager) {
     profiling_manager_ = profiling_manager;
+    std::shared_ptr<Tracing> node;
+    RETURN_IF_NOT_OK(profiling_manager_->GetTracingNode(kDatasetIteratorTracingName, &node));
+    tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+    return Status::OK();
   }
 
   /// \brief Getter for profiling manager, no ownership

@@ -38,23 +38,43 @@
 namespace mindspore {
 namespace dataset {
 // TreeConsumer
-TreeConsumer::TreeConsumer() {
-  tree_adapter_ = std::make_unique<TreeAdapter>();
+TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
+
+Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) {
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d)));
 #ifndef ENABLE_SECURITY
-  profiling_manager_ = std::make_shared<ProfilingManager>(this);
-  tree_adapter_->SetProfilingManagerPtr(profiling_manager_);
+  RETURN_IF_NOT_OK(RegisterProfilingManager());
 #endif
+  return Status::OK();
 }
 
-Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d)); }
 Status TreeConsumer::Terminate() {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_adapter_->AllTasks() != nullptr, " Execution tree has not been built");
   return tree_adapter_->AllTasks()->ServiceStop();
 }
 
+#ifndef ENABLE_SECURITY
+Status TreeConsumer::RegisterProfilingManager() {
+  profiling_manager_ = GlobalContext::profiling_manager();
+  // Profiling infrastructures need to be initialized before Op launching
+  if (profiling_manager_->IsProfilingEnable()) {
+    // Setup profiling manager
+    RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
+    RETURN_IF_NOT_OK(tree_adapter_->SetProfilingManagerPtr(profiling_manager_));
+    // Launch Monitor Thread
+    RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
+  }
+  return Status::OK();
+}
+#endif
+
 // IteratorConsumer
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
-  return tree_adapter_->Compile(std::move(d), num_epochs_);
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
+#ifndef ENABLE_SECURITY
+  RETURN_IF_NOT_OK(RegisterProfilingManager());
+#endif
+  return Status::OK();
 }
 
 Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
@@ -158,7 +178,13 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 }
 
 // ToDevice
-Status ToDevice::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), num_epochs_); }
+Status ToDevice::Init(std::shared_ptr<DatasetNode> d) {
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
+#ifndef ENABLE_SECURITY
+  RETURN_IF_NOT_OK(RegisterProfilingManager());
+#endif
+  return Status::OK();
+}
 
 Status ToDevice::Send() {
   RETURN_IF_NOT_OK(tree_adapter_->Launch());
@@ -593,9 +619,6 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
 
 TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), first_row_obtained_(false) {
   tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
-#ifndef ENABLE_SECURITY
-  tree_adapter_->SetProfilingManagerPtr(profiling_manager_);
-#endif
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
@@ -728,9 +751,6 @@ Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
 Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
   RETURN_UNEXPECTED_IF_NULL(dataset_size);
   std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
-#ifndef ENABLE_SECURITY
-  tree_adapter->SetProfilingManagerPtr(profiling_manager_);
-#endif
   tree_adapters_.push_back(tree_adapter);
   RETURN_IF_NOT_OK(tree_adapter->Compile(ir_node, 1));
   TensorRow row;

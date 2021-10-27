@@ -24,6 +24,9 @@
 #endif
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
+#ifndef ENABLE_SECURITY
+#include "minddata/dataset/engine/perf/profiling.h"
+#endif
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/system_pool.h"
 
@@ -63,6 +66,9 @@ Status GlobalContext::Init() {
 #endif
   device_tensor_allocator_ = std::make_unique<Allocator<DeviceTensor>>(mem_pool_);
   int_allocator_ = std::make_unique<IntAlloc>(mem_pool_);
+#ifndef ENABLE_SECURITY
+  profiler_manager_ = std::make_shared<ProfilingManager>();
+#endif
   return Status::OK();
 }
 

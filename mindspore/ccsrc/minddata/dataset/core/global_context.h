@@ -21,6 +21,11 @@
 
 #include "include/api/status.h"
 #include "minddata/dataset/core/config_manager.h"
+
+#ifndef ENABLE_SECURITY
+#include "minddata/dataset/engine/perf/profiling.h"
+#endif
+
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/util/allocator.h"
 
@@ -72,6 +77,11 @@ class GlobalContext {
   // @return the client config as raw const pointer
   static std::shared_ptr<ConfigManager> config_manager() { return Instance()->config_manager_; }
 
+#ifndef ENABLE_SECURITY
+  /// Getter method
+  /// \return Shared pointer to the ProfilingManager Singleton
+  static std::shared_ptr<ProfilingManager> profiling_manager() { return Instance()->profiler_manager_; }
+#endif
   // Getter method
   // @return the mem pool
   std::shared_ptr<MemoryPool> mem_pool() const { return mem_pool_; }
@@ -108,6 +118,9 @@ class GlobalContext {
   std::unique_ptr<CVTensorAlloc> cv_tensor_allocator_;          // An allocator for CV Tensors
   std::unique_ptr<DeviceTensorAlloc> device_tensor_allocator_;  // An allocator for Device Tensors
   std::unique_ptr<IntAlloc> int_allocator_;                     // An allocator for ints
+#ifndef ENABLE_SECURITY
+  std::shared_ptr<ProfilingManager> profiler_manager_;  // ProfilerManager instance for all trees
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

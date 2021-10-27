@@ -22,8 +22,6 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
-#include "minddata/dataset/engine/perf/monitor.h"
-#include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -352,10 +350,6 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   ASSERT_NE(ds, nullptr);
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
-
-  // Create ProfilingManager
-  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
-  tree_adapter->SetProfilingManagerPtr(profiling_manager);
 
   // Disable IR optimization pass
   tree_adapter->SetOptimize(false);

@@ -20,17 +20,18 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/perf/profiling.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 class ExecutionTree;
-class TreeConsumer;
+class ProfilingManager;
+
 class Monitor {
  public:
   // Monitor object constructor
-  explicit Monitor(TreeConsumer *tree_consumer);
+  explicit Monitor(ProfilingManager *profiler_manager);
 
   ~Monitor() = default;
 
@@ -42,9 +43,9 @@ class Monitor {
   void SetTree(ExecutionTree *tree) { tree_ = tree; }
 
  private:
+  ProfilingManager *profiling_manager_;
   int64_t sampling_interval_;
   ExecutionTree *tree_;
-  TreeConsumer *tree_consumer_;
 };
 }  // namespace dataset
 }  // namespace mindspore

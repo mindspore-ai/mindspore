@@ -29,6 +29,7 @@
 #include "minddata/dataset/engine/perf/cpu_sampler.h"
 #include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -127,79 +128,71 @@ Status Sampling::ReadJson(nlohmann::json *output) {
 }
 
 // Constructor
-ProfilingManager::ProfilingManager(TreeConsumer *tree_consumer) : tree_consumer_(tree_consumer), enabled_(true) {
-  perf_monitor_ = std::make_unique<Monitor>(tree_consumer_);
-}
+ProfilingManager::ProfilingManager() : enabled_(true) {}
 
 bool ProfilingManager::IsProfilingEnable() const { return common::GetEnv("PROFILING_MODE") == "true" && enabled_; }
 
-Status ProfilingManager::Initialize(ExecutionTree *tree) {
-  // Initialize execution tree pointer
-  tree_ = tree;
-  // Initialize execution tree pointer in Monitor
-  perf_monitor_->SetTree(tree);
+Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
+  Reset();
+  if (IsProfilingEnable()) {
+    tree_ = tree_adapter->tree_.get();
 
-  // Register nodes based on config
-  std::string dir = common::GetEnv("MINDDATA_PROFILING_DIR");
-  if (dir.empty()) {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, Profiling directory is not set.");
-  }
-  char real_path[PATH_MAX] = {0};
-  if (dir.size() >= PATH_MAX) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, Profiling directory is invalid.");
-  }
+    perf_monitor_ = std::make_unique<Monitor>(this);
+
+    // Register nodes based on config
+    std::string dir = common::GetEnv("MINDDATA_PROFILING_DIR");
+    CHECK_FAIL_RETURN_UNEXPECTED(!dir.empty(), "Invalid parameter, Profiling directory is not set.");
+    CHECK_FAIL_RETURN_UNEXPECTED(dir.size() < PATH_MAX, "Invalid file, Profiling directory is invalid.");
+
+    char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, common::SafeCStr(dir), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
-  }
+    if (_fullpath(real_path, common::SafeCStr(dir), PATH_MAX) == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
+    }
 #else
-  if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
-  }
+    if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
+    }
 #endif
-  dir_path_ = real_path;
+    dir_path_ = real_path;
 
 #ifdef ENABLE_GPUQUE
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  int32_t rank_id = cfg->rank_id();
-  // If DEVICE_ID is not set, default value is 0
-  if (rank_id < 0) {
-    device_id_ = common::GetEnv("DEVICE_ID");
+    std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+    int32_t rank_id = cfg->rank_id();
     // If DEVICE_ID is not set, default value is 0
+    if (rank_id < 0) {
+      device_id_ = common::GetEnv("DEVICE_ID");
+    } else {
+      device_id_ = std::to_string(rank_id);
+    }
+#else
+    device_id_ = common::GetEnv("RANK_ID");
+#endif
+    // If RANK_ID is not set, default value is 0
     if (device_id_.empty()) {
       device_id_ = "0";
     }
-  } else {
-    device_id_ = std::to_string(rank_id);
-  }
-#else
-  device_id_ = common::GetEnv("RANK_ID");
-  // If RANK_ID is not set, default value is 0
-  if (device_id_.empty()) {
-    device_id_ = "0";
-  }
-#endif
+    // Register all profiling node.
+    // device_queue node is used for graph mode
+    std::shared_ptr<Tracing> device_queue_tracing = std::make_shared<DeviceQueueTracing>();
+    RETURN_IF_NOT_OK(RegisterTracingNode(device_queue_tracing));
 
-  // Register all profiling node.
-  // device_queue node is used for graph mode
-  std::shared_ptr<Tracing> device_queue_tracing = std::make_shared<DeviceQueueTracing>();
-  RETURN_IF_NOT_OK(RegisterTracingNode(device_queue_tracing));
+    // dataset_iterator node is used for graph mode
+    std::shared_ptr<Tracing> dataset_iterator_tracing = std::make_shared<DatasetIteratorTracing>();
+    RETURN_IF_NOT_OK(RegisterTracingNode(dataset_iterator_tracing));
 
-  // dataset_iterator node is used for graph mode
-  std::shared_ptr<Tracing> dataset_iterator_tracing = std::make_shared<DatasetIteratorTracing>();
-  RETURN_IF_NOT_OK(RegisterTracingNode(dataset_iterator_tracing));
-
-  std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
-  RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
+    std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
+    RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
 
 #ifndef ENABLE_ANDROID
-  std::shared_ptr<Sampling> cpu_sampler = std::make_shared<CpuSampler>(tree_);
-  RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampler));
+    std::shared_ptr<Sampling> cpu_sampler = std::make_shared<CpuSampler>(tree_);
+    RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampler));
 #endif
-  // can insert a correct timestamp so that we can ignore the samples that were taken
-  // during start up of the pipeline.
-  (void)epoch_end_ts_.emplace_back(0);
-  (void)epoch_end_step_.emplace_back(0);
+    // can insert a correct timestamp so that we can ignore the samples that were taken
+    // during start up of the pipeline.
+    (void)epoch_end_ts_.emplace_back(0);
+    (void)epoch_end_step_.emplace_back(0);
+  }
   return Status::OK();
 }
 
@@ -434,6 +427,15 @@ void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
   MS_LOG(INFO) << "Recording end of epoch. step_num: " << step_num;
   (void)epoch_end_ts_.emplace_back(ProfilingTime::GetCurMilliSecond());
   (void)epoch_end_step_.emplace_back(step_num);
+}
+Status ProfilingManager::Reset() {
+  tracing_nodes_.clear();
+  sampling_nodes_.clear();
+  epoch_end_ts_.clear();
+  epoch_end_step_.clear();
+  perf_monitor_.reset();
+  tree_ = nullptr;
+  return Status::OK();
 }
 
 uint64_t ProfilingTime::GetCurMilliSecond() {

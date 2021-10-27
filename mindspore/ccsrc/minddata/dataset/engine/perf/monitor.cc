@@ -21,9 +21,10 @@
 namespace mindspore {
 namespace dataset {
 
-Monitor::Monitor(TreeConsumer *tree_consumer) : tree_consumer_(tree_consumer) {
+Monitor::Monitor(ProfilingManager *profiling_manager) : profiling_manager_(profiling_manager) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   sampling_interval_ = cfg->monitor_sampling_interval();
+  tree_ = profiling_manager_->tree_;
 }
 Status Monitor::operator()() {
   // Register this thread with TaskManager to receive proper interrupt signal.
@@ -43,12 +44,12 @@ Status Monitor::operator()() {
   constexpr int64_t geometric_series_ratio = 2;
   while (!this_thread::is_interrupted() && !(tree_->isFinished()) && !(cfg->stop_profiler_status())) {
     if (tree_->IsEpochEnd()) {
-      RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
+      RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
       tree_->SetExecuting();
     } else if (loop_cnt % save_interval == 0) {
-      RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
+      RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
     }
-    for (auto &node : tree_consumer_->GetProfilingManager()->GetSamplingNodes()) {
+    for (auto &node : profiling_manager_->GetSamplingNodes()) {
       RETURN_IF_NOT_OK(node.second->Sample());
     }
     if (loop_cnt % save_interval == 0) save_interval *= geometric_series_ratio;
@@ -57,9 +58,9 @@ Status Monitor::operator()() {
   }
 
   // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->Analyze());
-  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
-  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->ChangeFileMode());
+  RETURN_IF_NOT_OK(profiling_manager_->Analyze());
+  RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
+  RETURN_IF_NOT_OK(profiling_manager_->ChangeFileMode());
   cfg->set_profiler_file_status(true);
   return Status::OK();
 }
