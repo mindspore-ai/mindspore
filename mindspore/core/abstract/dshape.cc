@@ -97,7 +97,15 @@ bool Shape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  return shape_ == static_cast<const Shape &>(other).shape_;
+  Shape other_shape = static_cast<const Shape &>(other);
+  bool shape_equal = shape_ == other_shape.shape_;
+
+  if (!IsDynamic() || !other_shape.IsDynamic()) {
+    return shape_equal;
+  }
+  bool min_shape_equel = min_shape_ == other_shape.min_shape_;
+  bool max_shape_equel = max_shape_ == other_shape.max_shape_;
+  return shape_equal && min_shape_equel && max_shape_equel;
 }
 
 const int64_t Shape::SHP_ANY;
