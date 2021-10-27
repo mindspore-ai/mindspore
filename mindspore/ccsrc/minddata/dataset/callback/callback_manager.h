@@ -77,6 +77,12 @@ class CallbackManager {
   bool enabled_;   // flag to enable callback, if false, all functions would return immediately
   DatasetOp *op_;  // back pointer to DatasetOp, raw pointer to avoid circular ownership
   std::vector<std::shared_ptr<DSCallback>> callbacks_;  // list of callbacks the  DatasetOp needs to call
+  std::vector<size_t> begin_indices_;
+  std::vector<size_t> end_indices_;
+  std::vector<size_t> epoch_begin_indices_;
+  std::vector<size_t> epoch_end_indices_;
+  std::vector<size_t> step_begin_indices_;
+  std::vector<size_t> step_end_indices_;
 };
 }  // namespace dataset
 }  // namespace mindspore

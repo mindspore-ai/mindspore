@@ -98,15 +98,21 @@ class TestCallback : public DSCallback {
   bool IsNStepEndNeeded() override { return step_end_; }
 
   std::vector<std::string> all_names(size_t len) {
-    return std::vector<std::string>(all_names_.begin(), all_names_.begin() + len);
+    std::vector<std::string> res(all_names_.begin(), all_names_.begin() + len);
+    std::sort(res.begin(), res.end());
+    return res;
   }
 
   std::vector<int64_t> all_step_nums(size_t len) {
-    return std::vector<int64_t>(all_step_nums_.begin(), all_step_nums_.begin() + len);
+    std::vector<int64_t> res(all_step_nums_.begin(), all_step_nums_.begin() + len);
+    std::sort(res.begin(), res.end());
+    return res;
   }
 
   std::vector<int64_t> all_ep_nums(size_t len) {
-    return std::vector<int64_t>(all_ep_nums_.begin(), all_ep_nums_.begin() + len);
+    std::vector<int64_t> res(all_ep_nums_.begin(), all_ep_nums_.begin() + len);
+    std::sort(res.begin(), res.end());
+    return res;
   }
 
   // flag for turning callback on and off
@@ -179,6 +185,7 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   }
 
   std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
+  std::sort(callback_names.begin(), callback_names.end());
   std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
   std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
   // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
@@ -219,7 +226,7 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   // config RepeatOp
   std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
   // config EpochCtrlOp
-  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(-1);
+  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(2);
   // start build then launch tree
   leaf->SetTotalRepeats(-2);
   leaf->SetNumRepeatsPerEpoch(2);
@@ -246,6 +253,7 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
 
   std::vector<std::string> callback_names = {"BGN",   "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND",
                                              "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
+  std::sort(callback_names.begin(), callback_names.end());
 
   std::vector<int64_t> all_steps = {0, 0, 1, 1, 5, 5, 8, 8, 9, 9, 13, 13, 16};
   std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
@@ -288,7 +296,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   // config RepeatOp
   std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
   // config EpochCtrlOp
-  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(-1);
+  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(2);
 
   // start build then launch tree
   leaf->SetTotalRepeats(-2);
@@ -316,6 +324,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
 
   std::vector<std::string> callback_names = {"BGN",   "SPBGN", "SPEND", "SPBGN", "SPEND",
                                              "SPBGN", "SPEND", "SPBGN", "SPEND"};
+  std::sort(callback_names.begin(), callback_names.end());
 
   std::vector<int64_t> all_steps = {0, 1, 1, 5, 5, 9, 9, 13, 13};
   std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 2, 2, 2, 2};
@@ -360,6 +369,7 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
     ASSERT_OK(tree_adapter->GetNext(&row));
   }
   std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
+  std::sort(callback_names.begin(), callback_names.end());
   std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
   std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
   // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
