@@ -49,7 +49,6 @@ static const std::vector<std::string> sub_module_names = {
   "LITE",               // SM_LITE
   "ARMOUR",             // SM_ARMOUR
   "HCCL_ADPT",          // SM_HCCL_ADPT
-  "MINDQUANTUM",        // SM_MINDQUANTUM
   "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
   "GE",                 // SM_GE
 };
