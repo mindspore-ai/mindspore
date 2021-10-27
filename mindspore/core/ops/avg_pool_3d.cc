@@ -95,6 +95,9 @@ void GetPadsByPadding(int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d
   if (pad_mode == PadMode::VALID) {
     (void)pad_list->insert(pad_list->begin(), kPadDims, 0);
   } else if (pad_mode == PadMode::SAME) {
+    MS_EXCEPTION_IF_ZERO("stride_d", stride_d);
+    MS_EXCEPTION_IF_ZERO("stride_h", stride_h);
+    MS_EXCEPTION_IF_ZERO("stride_w", stride_w);
     int64_t tail_d = in_d % stride_d;
     int64_t tail_h = in_h % stride_h;
     int64_t tail_w = in_w % stride_w;

@@ -46,7 +46,7 @@ class PadGpuFwdKernel : public GpuKernel {
     T *input_device = GetDeviceAddress<T>(inputs, 0);
     T *output_device = GetDeviceAddress<T>(outputs, 0);
 
-    float pad_value = 0.0;
+    const float pad_value = 0.0;
     FillDeviceArray(output_size_, output_device, pad_value, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, 0);

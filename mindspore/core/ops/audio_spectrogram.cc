@@ -40,7 +40,8 @@ int64_t Log2Ceil(int64_t length) {
       floor += shift;
     }
   }
-  return length == (length & ~(unsigned int)(length - 1)) ? floor : floor + 1;
+  auto unsigned_length = LongToUlong(length);
+  return unsigned_length == (unsigned_length & ~(unsigned_length - 1)) ? floor : floor + 1;
 }
 
 int64_t GetFftLength(int64_t length) {

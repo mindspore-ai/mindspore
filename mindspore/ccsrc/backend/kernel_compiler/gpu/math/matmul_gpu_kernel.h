@@ -45,9 +45,7 @@ class MatMulGpuKernel : public GpuKernel {
     }
     VARIABLE_NOT_USED(workspace);
     VARIABLE_NOT_USED(stream_ptr);
-    if (is_null_input_) {
-      return true;
-    }
+
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
     auto input2_addr = GetDeviceAddress<T>(inputs, 1);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
