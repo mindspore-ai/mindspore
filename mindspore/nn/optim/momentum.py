@@ -66,7 +66,7 @@ class Momentum(Optimizer):
 
         When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
         but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non convolution layer are set to True, an error will be reported.
+        If the parameters of the non-convolution layer are set to True, an error will be reported.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 

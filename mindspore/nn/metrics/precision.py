@@ -88,7 +88,7 @@ class Precision(EvaluationBase):
                 are both :math:`(N, C)`.
 
         Raises:
-            ValueError: If the number of input is not 2.
+            ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
             raise ValueError('The precision needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))

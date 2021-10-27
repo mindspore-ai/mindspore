@@ -224,7 +224,7 @@ class ConfusionMatrixMetric(Metric):
 
             - **y_pred** (ndarray) - Input data to compute. It must be one-hot format and first dim is batch.
               The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
-              As for classification tasks, `y_pred` should has the shape [BN] where N is larger than 1.
+              As for classification tasks, `y_pred` should have the shape [BN] where N is larger than 1.
               As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
             - **y** (ndarray) - Compute the true value of the measure. It must be one-hot format and first dim is batch.
               The shape of `y` is :math:`(N, C, ...)`.

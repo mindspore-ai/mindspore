@@ -131,7 +131,7 @@ class MSE(Metric):
                 `y_pred` and `y` are both N-D and the shape are the same.
 
         Raises:
-            ValueError: If the number of input is not 2.
+            ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
             raise ValueError('The MSE needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
