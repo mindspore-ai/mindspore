@@ -4020,7 +4020,7 @@ class IsNan(PrimitiveWithInfer):
         return mstype.tensor_type(mstype.bool_)
 
 
-class IsInf(PrimitiveWithInfer):
+class IsInf(Primitive):
     r"""
     Determines which elements are inf or -inf for each position
 
@@ -4044,7 +4044,7 @@ class IsInf(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> is_inf = ops.IsInf()
@@ -4058,12 +4058,6 @@ class IsInf(PrimitiveWithInfer):
     def __init__(self):
         """Initialize IsInf"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        return mstype.tensor_type(mstype.bool_)
 
 
 class IsFinite(PrimitiveWithInfer):
