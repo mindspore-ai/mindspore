@@ -816,9 +816,8 @@ enum class REQUIRE_TYPE { ATTR, METHOD };
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
                                    REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
   MS_EXCEPTION_IF_NULL(old_conf);
-
-  AbstractBasePtr abs_ptr = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
-  AbstractFunctionPtr abs_func = dyn_cast<abstract::AbstractFunction>(abs_ptr);
+  AbstractBasePtr abstract = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
+  AbstractFunctionPtr abs_func = dyn_cast<abstract::AbstractFunction>(abstract);
   MS_EXCEPTION_IF_NULL(abs_func);
 
   // Create new cnode
@@ -861,10 +860,10 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   MS_EXCEPTION_IF_NULL(args_spec_list[1]);
   MS_LOG(DEBUG) << "Args[0]: " << args_spec_list[0]->ToString();
   MS_LOG(DEBUG) << "Args[1]: " << args_spec_list[1]->ToString();
-  auto data_v = args_spec_list[0]->BuildValue();
-  MS_EXCEPTION_IF_NULL(data_v);
-  if (!data_v->isa<parse::NameSpace>()) {
-    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_v->ToString()
+  auto data_value = args_spec_list[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(data_value);
+  if (!data_value->isa<parse::NameSpace>()) {
+    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
                             << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
   }
 
@@ -880,7 +879,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
 
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_value->cast<parse::SymbolPtr>();
-  parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
+  parse::NameSpacePtr name_space = data_value->cast<parse::NameSpacePtr>();
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
   FuncGraphPtr func_graph = out_node->func_graph();
@@ -942,7 +941,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   MS_EXCEPTION_IF_NULL(data_type);
   // The method maybe a Primitive or Composite
   if (!item_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "Error item is not string";
+    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
   }
 
   std::string item_name = item_value->cast<StringImmPtr>()->value();
@@ -1318,6 +1317,10 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(global_dict);
     MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString() << ", [" << global_dict->type_name() << "]";
     ValuePtr global_dict_value = global_dict->BuildValue();
+    if (global_dict_value == kAnyValue) {
+      MS_LOG(EXCEPTION) << "Not support Tensor or variable type as input during running JIT Fallback, but got "
+                        << global_dict->ToString();
+    }
     py::object global_params_dict = ValueToPyData(global_dict_value);
     MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
                   << py::str(global_params_dict);
@@ -1328,6 +1331,10 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(local_dict);
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString() << ", [" << local_dict->type_name() << "]";
     ValuePtr local_dict_value = local_dict->BuildValue();
+    if (local_dict_value == kAnyValue) {
+      MS_LOG(EXCEPTION) << "Not support Tensor or variable type as input during running JIT Fallback, but got "
+                        << local_dict->ToString();
+    }
     py::object local_params_dict = ValueToPyData(local_dict_value);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
