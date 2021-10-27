@@ -393,8 +393,8 @@ bool IsIterInRange(uint32_t iteration, const std::string &range) {
   if (low_range_str.empty() || high_range_str.empty()) {
     return false;
   }
-  uint32_t low_range = std::stoul(low_range_str);
-  uint32_t high_range = std::stoul(high_range_str);
+  uint32_t low_range = static_cast<uint32_t>(std::stoul(low_range_str));
+  uint32_t high_range = static_cast<uint32_t>(std::stoul(high_range_str));
   return (low_range <= iteration) && (iteration <= high_range);
 }
 

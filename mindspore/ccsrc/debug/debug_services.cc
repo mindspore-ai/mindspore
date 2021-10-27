@@ -565,7 +565,10 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path << " Errno:" << errno;
     const int kMaxFilenameLength = 128;
     char err_info[kMaxFilenameLength];
-    MS_LOG(ERROR) << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
+    auto ret = strerror_r(errno, err_info, sizeof(err_info));
+    if (ret != nullptr) {
+      MS_LOG(ERROR) << " ErrInfo:" << ret;
+    }
     return;
   }
   const int substr_len = 2;
@@ -609,6 +612,9 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   std::size_t word_size = std::stoul(std::string(1, (*tensor_type)[1]));
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
+  if (!data_size) {
+    return;
+  }
   // Check memory available before loading tensor into host.
   bool has_enough_memory = true;
   if (tensor_loader_->EnableMemoryControl()) {
@@ -861,7 +867,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   tensor_data->SetDeviceId(device_id);
   tensor_data->SetRootGraphId(root_graph_id);
   tensor_data->SetIsOutput(is_output);
-  if (data_size) {
+  if (buffer != nullptr) {
     tensor_data->SetDataPtr(buffer->data());
   } else {
     tensor_data->SetDataPtr(nullptr);
@@ -911,8 +917,11 @@ std::string GetTimeStampStr(std::string file_path) {
   size_t third_dot = file_name.rfind(".", second_dot - 1);
   size_t fourth_dot = file_name.rfind(".", third_dot - 1);
   size_t fifth_dot = file_name.rfind(".", fourth_dot - 1);
-  std::string time_stamp = file_name.substr(fifth_dot + 1, fourth_dot - fifth_dot - 1);
-  return time_stamp;
+  if (fourth_dot != std::string::npos && fifth_dot != std::string::npos && fourth_dot > fifth_dot) {
+    std::string time_stamp = file_name.substr(fifth_dot + 1, fourth_dot - fifth_dot - 1);
+    return time_stamp;
+  }
+  return "";
 }
 
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
@@ -954,7 +963,7 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
                                            const unsigned int root_graph_id, const bool &is_output, size_t slot,
                                            bool *no_mem_to_read, unsigned int iteration,
                                            std::vector<std::shared_ptr<TensorData>> *result_list) {
-  std::string time_stamp;
+  std::string time_stamp = "";
   std::string type_name = "";
   uint64_t data_size = 0;
   std::vector<int64_t> shape;
