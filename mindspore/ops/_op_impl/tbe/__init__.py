@@ -267,6 +267,7 @@ from .depth_to_space import _depth_to_space_tbe
 from .space_to_depth import _space_to_depth_tbe
 from .extract_image_patches import _extract_image_patches_tbe
 from .sort import _sort_tbe
+from .sort_ds import _sort_ds_tbe
 from .floor import _floor_tbe
 from .floor_ds import _floor_ds_tbe
 from .ceil import _ceil_tbe
