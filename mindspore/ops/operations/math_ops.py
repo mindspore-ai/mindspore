@@ -3974,7 +3974,7 @@ class LogicalOr(_LogicBinaryOp):
         return None
 
 
-class IsNan(PrimitiveWithInfer):
+class IsNan(Primitive):
     r"""
     Determines which elements are NaN for each position.
 
@@ -4005,19 +4005,13 @@ class IsNan(PrimitiveWithInfer):
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> output = is_nan(x)
         >>> print(output)
-        [True False False]
+        [ True False False]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize IsNan"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        return mstype.tensor_type(mstype.bool_)
 
 
 class IsInf(Primitive):

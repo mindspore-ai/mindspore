@@ -1183,6 +1183,11 @@ test_case_math_ops = [
         'desc_inputs': [[2, 512, 56, 56]],
         'desc_bprop': [[2, 512, 56, 56]],
         'skip': ['backward']}),
+    ('IsNan', {
+        'block': P.IsNan(),
+        'desc_inputs': [Tensor(np.array([np.log(-1), 1, np.log(0)]).astype(np.float32))],
+        'desc_bprop': [],
+        'skip': ['backward']}),
     ('InplaceAdd', {
         'block': InplaceAddNet(),
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),
