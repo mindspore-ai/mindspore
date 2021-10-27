@@ -130,7 +130,7 @@ void RunGraphTask::Run() {
     return;
   }
   graph->ResetGraphRunningStatus();
-  if (device::KernelRuntime::use_mem_scheduler()) {
+  if (device::KernelRuntime::UseMemScheduler()) {
     graph->SetOutputNodeToTensor(node_to_tensor_);
   }
   try {

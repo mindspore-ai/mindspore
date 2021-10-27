@@ -294,7 +294,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_EXCEPTION_IF_NULL(kernel_graph);
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto &input_nodes = kernel_graph->input_nodes();
-  if (device::KernelRuntime::use_mem_scheduler()) {
+  if (device::KernelRuntime::UseMemScheduler()) {
     kernel_graph->SetInputTensors(inputs);
     return;
   }
@@ -539,7 +539,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
-    if (!device::KernelRuntime::use_mem_scheduler()) {
+    if (!device::KernelRuntime::UseMemScheduler()) {
       AnfAlgo::CacheAddrForGraph(graph);
     }
     // generate and load task info to device if it is sink mode
@@ -576,7 +576,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   // optimize graph
   HardwareOptimize(child_graph);
   // assign static memory of parameters
-  if (!device::KernelRuntime::use_mem_scheduler()) {
+  if (!device::KernelRuntime::UseMemScheduler()) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     runtime_instance->AssignStaticMemoryInput(*child_graph);
@@ -1800,7 +1800,7 @@ void AscendSession::ExecuteAllTaskInQueue() {
 void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
                                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                         std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
-  if (device::KernelRuntime::use_mem_scheduler()) {
+  if (device::KernelRuntime::UseMemScheduler()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(outputs);

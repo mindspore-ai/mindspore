@@ -1691,8 +1691,6 @@ void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vecto
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
     outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, node_to_tensor));
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
 }
 
 void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
@@ -1700,7 +1698,7 @@ void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
                                        std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (device::KernelRuntime::use_mem_scheduler()) {
+  if (device::KernelRuntime::UseMemScheduler()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(outputs);
