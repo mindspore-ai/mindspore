@@ -685,12 +685,12 @@ std::string DataToString(void *data, size_t data_number, size_t print_len = 40) 
   if (data == nullptr) {
     return "Data of tensor is nullptr";
   }
-  std::ostringstream oss;
-  auto casted_data = static_cast<T *>(data);
+  auto t_data = static_cast<T *>(data);
+  std::ostringstream sstream;
   for (size_t i = 0; i < print_len && i < data_number; i++) {
-    oss << " " << casted_data[i];
+    sstream << " " << t_data[i];
   }
-  return oss.str();
+  return sstream.str();
 }
 
 std::string DumpMSTensor(tensor::MSTensor *tensor) {
