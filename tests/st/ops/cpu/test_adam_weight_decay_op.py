@@ -22,9 +22,52 @@ from mindspore import Tensor
 from mindspore.nn import Dense
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
-from tests.models.official.nlp.pangu_alpha.src.adam import AdamWeightDecayOp
+from mindspore.ops import functional as F
+from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
+from mindspore.nn.optim.optimizer import Optimizer
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+
+def _adam_opt(opt, beta1, beta2, eps, lr, weight_decay, param, m, v, gradient):
+    """
+    Update parameters by AdamWeightDecay op.
+    """
+    success = True
+    next_param = opt(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient)
+    return F.depend(success, next_param)
+
+
+def _check_param_value(beta1, beta2, eps, prim_name):
+    """Check the type of inputs."""
+    validator.check_value_type("beta1", beta1, [float], prim_name)
+    validator.check_value_type("beta2", beta2, [float], prim_name)
+    validator.check_value_type("eps", eps, [float], prim_name)
+    validator.check_float_range(beta1, 0.0, 1.0, Rel.INC_NEITHER, "beta1", prim_name)
+    validator.check_float_range(beta2, 0.0, 1.0, Rel.INC_NEITHER, "beta2", prim_name)
+    validator.check_positive_float(eps, "eps", prim_name)
+
+
+class AdamWeightDecayOp(Optimizer):
+    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
+        super(AdamWeightDecayOp, self).__init__(learning_rate, params, weight_decay)
+        _check_param_value(beta1, beta2, eps, self.cls_name)
+        self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
+        self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
+        self.eps = Tensor(np.array([eps]).astype(np.float32))
+        self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
+        self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
+        self.opt = P.AdamWeightDecay()
+        self.opt.add_prim_attr("primitive_target", "CPU")
+
+    def construct(self, gradients):
+        """AdamWeightDecayOp"""
+        lr = self.get_lr()
+        optim_result = self.map_reverse(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps, lr,
+                                                  self.weight_decay), self.parameters, self.moments1, self.moments2,
+                                        gradients)
+        return optim_result
 
 
 class NetAdamWeightDecay(nn.Cell):
