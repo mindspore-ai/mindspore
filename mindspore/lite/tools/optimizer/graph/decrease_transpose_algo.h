@@ -53,7 +53,7 @@ class DecreaseTransposeAlgo : public Pass {
   STATUS DoPreInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type);
   int SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   int ResetSubGraphInput();
-  int SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  int SetSubGraphOutput(const FuncGraphPtr &sub_graph);
   int ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type);
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};

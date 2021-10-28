@@ -360,7 +360,7 @@ int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr
     return lite::RET_ERROR;
   }
   if (std::any_of(inputs_ptr.begin(), inputs_ptr.end(),
-                  [](TensorPtr input) { return input->data_type() == kObjectTypeTensorType; })) {
+                  [](const TensorPtr &input) { return input->data_type() == kObjectTypeTensorType; })) {
     MS_LOG(DEBUG) << "this op is control flow op, which is not supported now.";
     return lite::RET_OK;
   }
@@ -370,16 +370,16 @@ int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr
     return lite::RET_ERROR;
   }
   if (std::any_of(outputs_ptr.begin(), outputs_ptr.end(),
-                  [](TensorPtr output) { return output->data_type() == kObjectTypeTensorType; })) {
+                  [](const TensorPtr &output) { return output->data_type() == kObjectTypeTensorType; })) {
     MS_LOG(DEBUG) << "this op is control flow op, which is not supported now.";
     return lite::RET_OK;
   }
   std::vector<Tensor *> input_tensors;
   std::transform(inputs_ptr.begin(), inputs_ptr.end(), std::back_inserter(input_tensors),
-                 [](TensorPtr input) { return input.get(); });
+                 [](const TensorPtr &input) { return input.get(); });
   std::vector<Tensor *> output_tensors;
   std::transform(outputs_ptr.begin(), outputs_ptr.end(), std::back_inserter(output_tensors),
-                 [](TensorPtr output) { return output.get(); });
+                 [](const TensorPtr &output) { return output.get(); });
   if (CopyQuantParams(cnode, input_tensors, output_tensors) != lite::RET_OK) {
     MS_LOG(ERROR) << "copy quant params failed.";
     return lite::RET_ERROR;

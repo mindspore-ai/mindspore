@@ -117,7 +117,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
       if (abstract == nullptr) {
         MS_LOG(ERROR) << "Create tensor abstarct failed";
-        return RET_ERROR;
+        return false;
       }
       weight_node->set_abstract(abstract);
     }

@@ -29,7 +29,7 @@ constexpr size_t kConvWeightIndex = 2;
 constexpr size_t kConvBiasIndex = 3;
 constexpr size_t kConvNoBiasLen = 3;
 constexpr size_t kConvWithBiasLen = 4;
-int GetOutChannels(const CNodePtr &conv_node) {
+int64_t GetOutChannels(const CNodePtr &conv_node) {
   MS_ASSERT(conv_node != nullptr);
   auto value_node = conv_node->input(0);
   MS_ASSERT(value_node != nullptr);
@@ -66,7 +66,7 @@ void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const 
 }
 
 void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weight,
-                                      const tensor::TensorPtr &weight_tensor, int group, int kernel_num) {
+                                      const tensor::TensorPtr &weight_tensor, int64_t group, int kernel_num) {
   MS_ASSERT(dst_weight != nullptr && scale_weight != nullptr && weight_tensor != nullptr);
   if (group <= 0 || kernel_num <= 0) {
     return;
@@ -74,10 +74,10 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
   MS_ASSERT(weight_tensor->data_c() != nullptr);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->data_c());
   auto cin_group = weight_tensor->shape()[0] / group;
-  int area_size = weight_tensor->shape()[kInputIndexTwo] * weight_tensor->shape()[kInputIndexTwo];
-  for (int k = 0; k < cin_group; ++k) {
-    for (int j = 0; j < area_size; j++) {
-      for (int i = 0; i < kernel_num; ++i) {
+  int64_t area_size = weight_tensor->shape()[kInputIndexTwo] * weight_tensor->shape()[kInputIndexTwo];
+  for (int64_t k = 0; k < cin_group; ++k) {
+    for (int64_t j = 0; j < area_size; j++) {
+      for (int64_t i = 0; i < kernel_num; ++i) {
         dst_weight[i + j * kernel_num + k * area_size * kernel_num] =
           weight_data[i + j * kernel_num + k * area_size * kernel_num] * scale_weight[i];
       }
@@ -109,7 +109,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     return nullptr;
   }
   auto abstr = transform_node->abstract();
-  int kernel_nums = GetOutChannels(conv_node);
+  int kernel_nums = static_cast<int>(GetOutChannels(conv_node));
   if (kernel_nums <= 0) {
     MS_LOG(INFO) << "Unsupported conv node, " << conv_node->DebugString();
     return node;
