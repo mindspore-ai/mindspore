@@ -57,13 +57,13 @@ class TrsmGpuKernel : public GpuKernel {
     T alpha = 1;
     if constexpr (std::is_same_v<T, float>) {
       CHECK_CUBLAS_RET_WITH_EXCEPT(kernel_node_,
-                                   cublasStrsm(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, trans_, CUBLAS_DIAG_NON_UNIT, m_,
-                                               n_, &alpha, inputA_addr, lda_, output_addr, ldb_),
+                                   cublasStrsm(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, trans_, unit_diagonal_, m_, n_,
+                                               &alpha, inputA_addr, lda_, output_addr, ldb_),
                                    "cublas trsm Fail");
     } else {
       CHECK_CUBLAS_RET_WITH_EXCEPT(kernel_node_,
-                                   cublasDtrsm(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, trans_, CUBLAS_DIAG_NON_UNIT, m_,
-                                               n_, &alpha, inputA_addr, lda_, output_addr, ldb_),
+                                   cublasDtrsm(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, trans_, unit_diagonal_, m_, n_,
+                                               &alpha, inputA_addr, lda_, output_addr, ldb_),
                                    "cublas trsm Fail");
     }
 
@@ -104,20 +104,30 @@ class TrsmGpuKernel : public GpuKernel {
     lda_ = SizeToInt(m_);
     ldb_ = SizeToInt(m_);
 
+    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
+    // converting row major to col major is the same as reverting the trans flag
+    if (trans == "N") {
+      trans_ = CUBLAS_OP_T;
+    } else if (trans == "T") {
+      trans_ = CUBLAS_OP_N;
+    } else {
+      MS_LOG(EXCEPTION) << "trans should be in [N, T], but got [" << trans << "]";
+    }
+
     bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
+    // reverting the trans flag by default, so also flip the lower flag
+    lower = !lower;
     if (lower) {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
     } else {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
     }
 
-    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
-    if (trans == "N") {
-      trans_ = CUBLAS_OP_N;
-    } else if (trans == "T") {
-      trans_ = CUBLAS_OP_T;
+    bool unit_diagonal = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
+    if (unit_diagonal) {
+      unit_diagonal_ = CUBLAS_DIAG_UNIT;
     } else {
-      MS_LOG(EXCEPTION) << "trans should be in [N, T], but got [" << trans << "]";
+      unit_diagonal_ = CUBLAS_DIAG_NON_UNIT;
     }
 
     InitSizeLists();
@@ -140,6 +150,7 @@ class TrsmGpuKernel : public GpuKernel {
   cublasHandle_t blas_handle_{nullptr};
   cublasFillMode_t uplo_{CUBLAS_FILL_MODE_UPPER};
   cublasOperation_t trans_{CUBLAS_OP_N};
+  cublasDiagType_t unit_diagonal_{CUBLAS_DIAG_NON_UNIT};
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
