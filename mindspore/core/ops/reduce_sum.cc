@@ -48,7 +48,7 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
       ValuePtrList::iterator it;
       if (keep_dims_value) {
         for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-          auto axis_value = GetValue<int64_t>(*it);
+          auto axis_value = InferImplReduceFuncCheckAxis(GetValue<int64_t>(*it), x_shape.size());
           shape->at(LongToSize(axis_value)) = 1;
         }
       } else {
@@ -108,10 +108,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     auto axis_shape = axis_tensor->shape()->shape();
     if (axis_shape.size() == 1 && axis_shape[0] == -1 && !keep_dims) {
       out_shape.push_back(-2);
-      for (size_t i = 0; i < input_shape.size(); ++i) {
-        out_min_shape.push_back(1);
-        out_max_shape.push_back(max_v);
-      }
+      out_min_shape = input_min_shape;
+      out_max_shape = input_max_shape;
     } else if (!keep_dims) {
       for (size_t i = 0; i < input_shape.size() - axis_shape.size(); ++i) {
         out_shape.push_back(-1);
@@ -136,7 +134,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     }
     MS_EXCEPTION_IF_NULL(axis_ptr);
     if (axis_ptr->isa<tensor::Tensor>()) {
-      MS_LOG(ERROR) << "Tensor with value";
       auto axis_type = input_args[1]->BuildType();
       MS_EXCEPTION_IF_NULL(axis_type);
       auto axis_type_id = axis_type->cast<TensorTypePtr>();
@@ -178,8 +175,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  return CheckAndConvertUtils::CheckTensorTypeValid("x dtype", input_args[0]->BuildType(), common_valid_types,
-                                                    "ReduceSum");
+  auto x_type = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, common_valid_types, prim->name());
+  return x_type;
 }
 }  // namespace
 

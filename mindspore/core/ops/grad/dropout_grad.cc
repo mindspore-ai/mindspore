@@ -44,8 +44,8 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
 
-  const int64_t dy_index = 0;
-  const int64_t mask_index = 1;
+  const size_t dy_index = 0;
+  const size_t mask_index = 1;
   auto dy_type = input_args[dy_index]->BuildType();
   auto mask_type = input_args[mask_index]->BuildType();
 

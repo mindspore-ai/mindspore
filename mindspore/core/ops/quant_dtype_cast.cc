@@ -33,9 +33,9 @@ AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  const int64_t x_index = 0;
+  const size_t x_index = 0;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto input_type = CheckAndConvertUtils::GetInputTensorType(input_args, x_index, primitive->name());
+  auto input_type = CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, x_index);
   auto dst_type = TypeIdToType(TypeId(GetValue<int64_t>(primitive->GetAttr(kDstT))));
   MS_EXCEPTION_IF_NULL(dst_type);
   if (input_type != dst_type) {

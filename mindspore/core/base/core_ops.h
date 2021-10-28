@@ -95,6 +95,7 @@ constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 constexpr auto kTranspose = "Transpose";
 constexpr auto kSplitV = "SplitV";
+constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -170,6 +171,7 @@ inline const PrimitivePtr kPrimStackPush = std::make_shared<Primitive>("StackPus
 inline const PrimitivePtr kPrimStackPop = std::make_shared<Primitive>("StackPop");
 
 // Arrays
+inline const PrimitivePtr kPrimDynamicBroadcastTo = std::make_shared<Primitive>(kDynamicBroadcastTo);
 inline const PrimitivePtr kPrimBroadcastTo = std::make_shared<Primitive>("BroadcastTo");
 inline const PrimitivePtr kPrimScalarToArray = std::make_shared<Primitive>("scalar_to_array");
 inline const PrimitivePtr kPrimTopK = std::make_shared<Primitive>("TopK");

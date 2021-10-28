@@ -60,7 +60,7 @@ AbstractBasePtr InferImplSqrtGrad(const AnalysisEnginePtr &, const PrimitivePtr 
   auto out = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto dout = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   (void)CheckDtypeSame(op_name, out, dout);
-  (void)CheckShapeSame(op_name, out, dout);
+  CheckShapeSame(op_name, out, dout);
 
   return out->Broaden();
 }

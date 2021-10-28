@@ -451,9 +451,8 @@ class _Reduce(PrimitiveWithInfer):
                 axis_shape = axis_shape_list[0]
                 if axis_shape == -1 and not self.keep_dims:
                     out_shape = np.array([-2]).tolist()
-                    output_min_shape = np.ones_like(input_shp).tolist()
-                    output_max_shape = max_v * np.ones_like(input_shp)
-                    output_max_shape = output_max_shape.tolist()
+                    output_min_shape = input_x['min_shape']
+                    output_max_shape = input_x['max_shape']
                 elif not self.keep_dims:
                     out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
                     out_shape = out_shape.tolist()
@@ -467,12 +466,12 @@ class _Reduce(PrimitiveWithInfer):
                     output_max_shape = max_v * np.ones_like(input_shp)
                     output_max_shape = output_max_shape.tolist()
             else:
-                out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
                 output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
                 output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
+                out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         else:
             if axis_v is None:
-                raise ValueError(f"For {self.name}, the 'axis' cannot be None.")
+                raise ValueError(f"For {self.name}, axis must be const, its value cannot be None.")
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
             output_max_shape = out_shape
             output_min_shape = out_shape

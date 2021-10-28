@@ -86,7 +86,6 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
     }
     count = count * value;
   }
-
   // convert to bytes(8 bits) mask, using round up
   int64_t n128s = count / mask_convert_len;
   if ((count % mask_convert_len) != 0) {
@@ -106,7 +105,18 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   AbstractBasePtr shape_args = input_args[0];
   MS_EXCEPTION_IF_NULL(shape_args);
 
+  ShapeVector out_shape;
   if (shape_args->isa<abstract::AbstractTensor>()) {
+    auto shape_value = shape_args->BuildValue();
+    MS_EXCEPTION_IF_NULL(shape_value);
+    if (shape_value->isa<tensor::Tensor>()) {
+      auto mask_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+      std::vector<ValuePtr> value_elements;
+      std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(value_elements),
+                     [](int64_t elem) { return MakeValue(elem); });
+      out_shape = CalDynamicOutputShape(value_elements);
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
     auto shape_abstract = dyn_cast<abstract::AbstractTensor>(shape_args);
     MS_EXCEPTION_IF_NULL(shape_abstract);
     auto shape_base = shape_abstract->BuildShape();
@@ -139,7 +149,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
   auto x_shape = dyn_cast<abstract::AbstractTuple>(shape_args);
   auto x_shape_data = x_shape->elements();
-  ShapeVector out_shape = CalOutputShape(x_shape_data);
+  out_shape = CalOutputShape(x_shape_data);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

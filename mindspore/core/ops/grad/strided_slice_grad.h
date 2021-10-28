@@ -34,13 +34,13 @@ class MS_CORE_API StridedSliceGrad : public PrimitiveC {
 
   ~StridedSliceGrad() = default;
   MS_DECLARE_PARENT(StridedSliceGrad, PrimitiveC);
-  void Init(const int64_t begin_mask = 0, const int64_t end_mask = 0, const int64_t ellipsis_mask = 0,
-            const int64_t new_axis_mask = 0, const int64_t shrink_axis_mask = 0);
-  void set_begin_mask(const int64_t begin_mask);
-  void set_end_mask(const int64_t end_mask);
-  void set_ellipsis_mask(const int64_t ellipsis_mask);
-  void set_new_axis_mask(const int64_t new_axis_mask);
-  void set_shrink_axis_mask(const int64_t shrink_axis_mask);
+  void Init(int64_t begin_mask = 0, int64_t end_mask = 0, int64_t ellipsis_mask = 0, int64_t new_axis_mask = 0,
+            int64_t shrink_axis_mask = 0);
+  void set_begin_mask(int64_t begin_mask);
+  void set_end_mask(int64_t end_mask);
+  void set_ellipsis_mask(int64_t ellipsis_mask);
+  void set_new_axis_mask(int64_t new_axis_mask);
+  void set_shrink_axis_mask(int64_t shrink_axis_mask);
   int64_t get_begin_mask() const;
   int64_t get_end_mask() const;
   int64_t get_ellipsis_mask() const;

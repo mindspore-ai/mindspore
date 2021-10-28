@@ -55,7 +55,9 @@ from .batch_matmul_ds import _batch_matmul_ds_tbe
 from .batchnorm import _batch_norm_tbe
 from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe
+from .bias_add_ds import _bias_add_ds_tbe
 from .bias_add_grad import _bias_add_grad_tbe
+from .bias_add_grad_ds import _bias_add_grad_ds_tbe
 from .cast import _cast_tbe
 from .cast_ds import _cast_ds_tbe
 from .conv2d import _conv2d_tbe
@@ -113,6 +115,7 @@ from .scatter_nd_sub import _scatter_nd_sub_tbe
 from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
+from .tile_ds import _tile_ds_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
 from .gather_v2_ds import _gather_v2_ds_tbe
@@ -186,6 +189,7 @@ from .sparse_apply_proximal_adagrad_ds import _sparse_apply_proximal_adagrad_ds
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose import _transpose_tbe
 from .transpose_d import _transpose_d_tbe
+from .transpose_ds import _transpose_ds_tbe
 from .truncate_div import _truncate_div_tbe
 from .truncate_mod import _truncate_mod_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
@@ -352,6 +356,7 @@ from .gru_v2_hidden_grad_cell import _gru_v2_hidden_grad_cell_tbe
 from .lstm_input_grad import _lstm_input_grad_tbe
 from .confusion_matrix import _confusion_matrix_tbe
 from .broadcast_to import _broadcast_to_tbe
+from .broadcast_to_ds import _broadcast_to_ds_tbe
 from .strided_read import _strided_read_tbe
 from .strided_write import _strided_write_tbe
 from .range import _range_tbe

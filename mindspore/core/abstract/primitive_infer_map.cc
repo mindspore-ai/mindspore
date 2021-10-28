@@ -47,6 +47,7 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kStridedSlice = prim::kPrimStridedSlice->name();
   const auto kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   const auto kReduceSum = prim::kPrimReduceSum->name();
+  const auto kDynamicBroadcastTo = prim::kPrimDynamicBroadcastTo->name();
   const auto kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   const auto kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
   const auto kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
@@ -78,7 +79,8 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                                               {kTile, {1}},
                                                                               {kReshape, {1}},
                                                                               {kSlice, {1, 2}},
-                                                                              {kSliceGrad, {2, 3}}};
+                                                                              {kSliceGrad, {2, 3}},
+                                                                              {kDynamicBroadcastTo, {1}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

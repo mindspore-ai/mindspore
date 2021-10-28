@@ -521,7 +521,7 @@ class Reshape(PrimitiveWithInfer):
                 neg_index = i
             else:
                 dim_prod *= shp_i
-        arr_prod = np.prod(x_shp)
+
         if -1 in x_shp:
             if 'max_shape' in x:
                 x_max_shape = x['max_shape']
@@ -545,6 +545,7 @@ class Reshape(PrimitiveWithInfer):
                    'max_shape': tuple(max_shape),
                    'min_shape': tuple(min_shape)}
         else:
+            arr_prod = np.prod(x_shp)
             if dim_prod <= 0:
                 raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
                                  f"the value of 'input_shape' is {shape_v}. "

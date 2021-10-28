@@ -114,7 +114,7 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
   for (size_t i = 1; i < tuple_len; ++i) {
     AbstractTensorPtr tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
     (void)CheckDtypeSame(op_name, tensor_base, tensor);
-    (void)CheckShapeSame(op_name, tensor_base, tensor);
+    CheckShapeSame(op_name, tensor_base, tensor);
   }
   auto element = tensor_base->element();
   MS_EXCEPTION_IF_NULL(element);
@@ -1241,6 +1241,7 @@ AbstractBasePtr InferImplMaskedSelect(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
+  bool output_shape_unknow = false;
   auto prim_name = primitive->name();
   constexpr int64_t args_size = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(args_spec_list.size()), kEqual, args_size,
@@ -1253,6 +1254,22 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   auto input_tuple = args_spec_list[0]->cast<abstract::AbstractSequeuePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto indices = input_tuple->elements();
+  auto input_indice_size = input_tuple->size();
+  int64_t first_dim_size = 0;
+  for (size_t i = 0; i < input_indice_size; i++) {
+    auto indicei = indices[i]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(indicei);
+    auto valuei = indicei->BuildValue();
+    MS_EXCEPTION_IF_NULL(valuei);
+    if (!valuei->isa<tensor::Tensor>()) {
+      output_shape_unknow = true;
+      continue;
+    }
+    auto indicei_value = CheckAndConvertUtils::CheckTensorIntValue("indices", valuei, prim_name);
+    auto indicei_max = std::max_element(indicei_value.begin(), indicei_value.end());
+    first_dim_size = *indicei_max > first_dim_size ? *indicei_max : first_dim_size;
+  }
+
   auto indices0 = indices[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(indices0);
   auto indices0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices0->BuildShape())[kShape];
@@ -1282,7 +1299,12 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   std::set<TypePtr> valid_types = ops::common_valid_types;
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
 
-  ShapeVector out_shape = {abstract::Shape::SHP_ANY};
+  ShapeVector out_shape;
+  if (output_shape_unknow) {
+    out_shape.push_back(abstract::Shape::SHP_ANY);
+  } else {
+    out_shape.push_back(first_dim_size + 1);
+  }
   for (size_t i = indices0_shape.size(); i < data0_shape.size(); ++i) {
     out_shape.push_back(data0_shape[i]);
   }
