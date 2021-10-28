@@ -18,6 +18,7 @@ Watchpoints test script for offline debugger APIs.
 
 import os
 import json
+import time
 import tempfile
 import numpy as np
 import pytest
@@ -52,13 +53,13 @@ def run_watchpoints(is_sync):
     tensor2 = np.array([-5.0167350e-06, 1.2509107e-05, -4.3148934e-06, 8.1415592e-06,
                         2.1177532e-07, 2.9952851e-06], np.float32)
     info2 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/fc3-Dense/"
-                         "Parameter[6]_11/fc2.bias",
+                                   "Parameter[6]_11/fc2.bias",
                          slot=0, iteration=2, rank_id=0, root_graph_id=0, is_output=True)
 
     tensor3 = np.array([2.9060817e-07, -5.1009415e-06, -2.8662325e-06, 2.6036503e-06,
                         -5.1546101e-07, 6.0798648e-06], np.float32)
     info3 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/fc3-Dense/"
-                         "Parameter[6]_11/fc2.bias",
+                                   "Parameter[6]_11/fc2.bias",
                          slot=0, iteration=3, rank_id=0, root_graph_id=0, is_output=True)
 
     tensor_info = [info1, info2, info3]
@@ -81,8 +82,8 @@ def run_watchpoints(is_sync):
         debugger_backend.add_watchpoint(watchpoint_id=1, watch_condition=6,
                                         check_node_list={"Default/network-WithLossCell/_backbone-AlexNet/"
                                                          "conv1-Conv2d/Conv2D-op369":
-                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": False
-                                                         }}, parameter_list=[param1])
+                                                             {"rank_id": [0], "root_graph_id": [0], "is_output": False
+                                                              }}, parameter_list=[param1])
 
         watchpoint_hits_test_1 = debugger_backend.check_watchpoints(iteration=2)
         assert len(watchpoint_hits_test_1) == 1
@@ -101,8 +102,8 @@ def run_watchpoints(is_sync):
         debugger_backend.add_watchpoint(watchpoint_id=2, watch_condition=6,
                                         check_node_list={"Default/network-WithLossCell/_backbone-AlexNet/"
                                                          "conv1-Conv2d/Conv2D-op369":
-                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": False
-                                                         }}, parameter_list=[param2])
+                                                             {"rank_id": [0], "root_graph_id": [0], "is_output": False
+                                                              }}, parameter_list=[param2])
 
         watchpoint_hits_test_3 = debugger_backend.check_watchpoints(iteration=2)
         assert not watchpoint_hits_test_3
@@ -115,9 +116,9 @@ def run_watchpoints(is_sync):
         debugger_backend.add_watchpoint(watchpoint_id=3, watch_condition=18,
                                         check_node_list={"Default/network-WithLossCell/_backbone-AlexNet/fc3-Dense/"
                                                          "Parameter[6]_11/fc2.bias":
-                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": True
-                                                         }}, parameter_list=[param_abs_mean_update_ratio_gt,
-                                                                             param_epsilon])
+                                                             {"rank_id": [0], "root_graph_id": [0], "is_output": True
+                                                              }}, parameter_list=[param_abs_mean_update_ratio_gt,
+                                                                                  param_epsilon])
 
         watchpoint_hits_test_4 = debugger_backend.check_watchpoints(iteration=3)
         assert len(watchpoint_hits_test_4) == 1
@@ -155,18 +156,18 @@ def run_overflow_watchpoint(is_overflow):
     with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
         path = os.path.join(tmp_dir, "rank_0", "Add", "0", "0")
         os.makedirs(path, exist_ok=True)
-        add_file = tempfile.mkstemp(prefix="Add.Default_Add-op0."+str(task_id)+"."+str(stream_id)+
-                                    ".1", dir=path)
-        with open(add_file[1], 'wb') as add_f:
+        add_file = os.path.join(path, "Add.Default_Add-op0." + str(task_id) + "." + str(stream_id) + "."
+                                + str(int(round(time.time() * 1000000))))
+        with open(add_file, 'wb') as add_f:
             add_f.write(b'1')
             add_f.seek(8)
             add_f.write(b'\n\x032.0\x10\x83\xf7\xef\x9f\x99\xc8\xf3\x02\x1a\x10\x08\x02\x10\x02\x1a\x03')
             add_f.write(b'\n\x01\x020\x04:\x03\n\x01\x022\x0f')
             add_f.write(b'Default/Add-op0')
             add_f.write(tensor)
-        overflow_file = tempfile.mkstemp(prefix="Opdebug.Node_OpDebug."+str(task_id)+"." +str(stream_id)+
-                                         ".0", dir=path)
-        with open(overflow_file[1], 'wb') as f:
+        overflow_file = os.path.join(path, "Opdebug.Node_OpDebug." + str(task_id) + "." + str(stream_id) +
+                                     "." + str(int(round(time.time() * 1000000))))
+        with open(overflow_file, 'wb') as f:
             f.seek(321, 0)
             byte_list = []
             for i in range(256):
@@ -177,7 +178,7 @@ def run_overflow_watchpoint(is_overflow):
                         byte_list.append(task_id)
                     else:
                         # wrong task_id, should not generate overflow watchpoint hit
-                        byte_list.append(task_id+1)
+                        byte_list.append(task_id + 1)
                 else:
                     byte_list.append(0)
             newFileByteArray = bytearray(byte_list)
@@ -186,8 +187,8 @@ def run_overflow_watchpoint(is_overflow):
         debugger_backend.initialize(net_name="Add", is_sync_mode=False)
         debugger_backend.add_watchpoint(watchpoint_id=1, watch_condition=2,
                                         check_node_list={"Default/Add-op0":
-                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": True
-                                                         }}, parameter_list=[])
+                                                             {"rank_id": [0], "root_graph_id": [0], "is_output": True
+                                                              }}, parameter_list=[])
 
         watchpoint_hits_test = debugger_backend.check_watchpoints(iteration=0)
 
@@ -236,8 +237,8 @@ def compare_expect_actual_result(watchpoint_hits_list, test_index, test_name):
     with open(golden_file) as f:
         expected_list = json.load(f)
         for x, watchpoint_hits in enumerate(watchpoint_hits_list):
-            test_id = "watchpoint_hit" + str(test_index+x+1)
-            info = expected_list[x+test_index][test_id]
+            test_id = "watchpoint_hit" + str(test_index + x + 1)
+            info = expected_list[x + test_index][test_id]
             assert watchpoint_hits.name == info['name']
             assert watchpoint_hits.slot == info['slot']
             assert watchpoint_hits.condition == info['condition']
@@ -269,7 +270,7 @@ def print_watchpoint_hits(watchpoint_hits_list, test_index, is_print, test_name)
                     'actual_value': watchpoint_hits.parameters[p].actual_value
                 }
             })
-        watchpoint_hit = "watchpoint_hit" + str(test_index+x+1)
+        watchpoint_hit = "watchpoint_hit" + str(test_index + x + 1)
         watchpoint_hits_json.append({
             watchpoint_hit: {
                 'name': watchpoint_hits.name,
