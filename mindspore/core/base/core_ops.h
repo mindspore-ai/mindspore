@@ -243,6 +243,7 @@ inline const PrimitivePtr kPrimScatterMul = std::make_shared<Primitive>("Scatter
 inline const PrimitivePtr kPrimScatterDiv = std::make_shared<Primitive>("ScatterDiv");
 inline const PrimitivePtr kPrimScatterMax = std::make_shared<Primitive>("ScatterMax");
 inline const PrimitivePtr kPrimScatterMin = std::make_shared<Primitive>("ScatterMin");
+inline const PrimitivePtr kPrimScatterNdAdd = std::make_shared<Primitive>("ScatterNdAdd");
 inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("ScatterUpdate");
 inline const PrimitivePtr kPrimScatterElements = std::make_shared<Primitive>("ScatterElements");
 inline const PrimitivePtr kPrimTensorCopySlices = std::make_shared<Primitive>("TensorCopySlices");

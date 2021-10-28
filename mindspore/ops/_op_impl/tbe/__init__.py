@@ -120,6 +120,7 @@ from .sub_ds import _sub_ds_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
 from .scatter_nd_add import _scatter_nd_add_tbe
+from .scatter_nd_add_ds import _scatter_nd_add_ds_tbe
 from .scatter_nd_sub import _scatter_nd_sub_tbe
 from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .reduce_mean import _reduce_mean_tbe
