@@ -269,11 +269,8 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   // replace kernel_info with current kernel info
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_build_info_iter, cnode_ptr_.get());
-  bool ret = true;
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
-  if (!build_manager.TbeOpCheckSupported(cnode_ptr_)) {
-    ret = false;
-  }
+  auto ret = HostCheck::CheckValidDeviceShape(cnode_ptr_) && build_manager.TbeOpCheckSupported(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }
