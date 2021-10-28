@@ -47,11 +47,10 @@ class CPUDeviceContext : public DeviceContext {
                                        const ShapeVector &shape = ShapeVector()) const override;
 
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
-  void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
-  void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
+  void PreprocessBeforeRun(const KernelGraphPtr &graph) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;

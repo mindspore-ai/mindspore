@@ -52,17 +52,12 @@ class AscendDeviceContext : public DeviceContext {
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
 
-  // Optimize the single operator graph for PyNative mode.
-  void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   // Adjust kernel graph before run graph, used in Graph Mode.
-  void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
-  // Adjust single op kernel graph before run graph, used in PyNative Mode.
-  void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const override;
+  void PreprocessBeforeRun(const KernelGraphPtr &graph) const override;
 
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
@@ -155,6 +150,8 @@ class AscendDeviceContext : public DeviceContext {
   void *GetKernelStream(const CNodePtr &node) const;
   bool GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                            std::vector<AddressPtr> *real_inputs) const;
+  void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const;
+  void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const;
 };
 }  // namespace ascend
 }  // namespace device

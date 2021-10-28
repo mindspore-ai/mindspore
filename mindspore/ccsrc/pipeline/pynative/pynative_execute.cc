@@ -481,7 +481,7 @@ bool RunOpConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, size_t input
     }
     const auto &input_names_vec = GetValue<std::vector<std::string>>(input_names_value);
     if (input_index >= input_names_vec.size()) {
-      MS_LOG(EXCEPTION) << "The input index: " << input_index << " is large than the input names vector size!";
+      MS_LOG(EXCEPTION) << "The input index: " << input_index << " is larger than the input names vector size!";
     }
     const auto &value = PyObjToValue(input_object);
     auto input_name = input_names_vec[input_index];

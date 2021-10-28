@@ -91,17 +91,12 @@ class DeviceContext {
   // Optimize the kernel graph for graph mode.
   virtual void OptimizeGraph(const KernelGraphPtr &graph) const {}
 
-  // Optimize the single operator graph for PyNative mode.
-  virtual void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {}
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
-  // Adjust kernel graph before run graph, used in Graph Mode.
-  virtual void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {}
-  // Adjust single op kernel graph before run graph, used in PyNative Mode.
-  virtual void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {}
+  // Adjust kernel graph before run graph.
+  virtual void PreprocessBeforeRun(const KernelGraphPtr &graph) const {}
 
   // Launch graph, device such as Ascend support the whole graph sink to the device executing.
   virtual bool LaunchGraph(const KernelGraphPtr &graph) const { return true; }
