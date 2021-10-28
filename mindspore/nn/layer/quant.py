@@ -422,6 +422,11 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         r"""
         Reset the quant max parameter (eg. 256) and the initial value of the minq parameter and maxq parameter,
         this function is currently only valid for `LEARNED_SCALE` mode.
+
+        Args:
+            quant_dtype (QuantDtype): The datatype of quantization, supporting 4 and 8bits. Default: QuantDtype.INT8.
+            min_init (int, float, list): The initialized min value. Default: -6.
+            max_init (int, float, list): The initialized max value. Default: 6.
         """
         if self.mode == "LEARNED_SCALE":
             self.quant_dtype = quant_dtype
@@ -1457,7 +1462,11 @@ class DenseQuant(Cell):
                                                      quant_dtype=quant_dtype)
 
     def construct(self, x):
-        """Use operators to construct the Dense layer."""
+        """Use operators to construct the Dense layer.
+
+        Args:
+            x (Tensor): Input tensor.
+        """
         output = self.fake_quant_weight(self.weight)
         output = self.matmul(x, output)
         if self.has_bias:
