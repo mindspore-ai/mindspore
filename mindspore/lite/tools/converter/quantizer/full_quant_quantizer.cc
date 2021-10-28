@@ -1441,18 +1441,13 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
         }
         auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
-        auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        if (lite_tensor == nullptr) {
-          MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-          return false;
-        }
         if (tensor->data_type() != kNumberTypeInt8) {
           MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
           return false;
         }
         // do quantization: activation is always per layer quantized
         std::vector<int8_t> quant_datas;
-        auto quant_params = lite_tensor->quant_params();
+        auto quant_params = tensor->quant_params();
         if (quant_params.size() != 1) {
           MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size();
           return false;
@@ -1503,11 +1498,6 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
-      auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-      if (lite_tensor == nullptr) {
-        MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-        return false;
-      }
       if (tensor->data_type() != kNumberTypeInt8) {
         MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
         return false;
@@ -1525,7 +1515,7 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
         MS_LOG(ERROR) << "unexpected channels: 0";
         return false;
       }
-      auto quant_params = lite_tensor->quant_params();
+      auto quant_params = tensor->quant_params();
       if (quant_params.size() != 1) {
         MS_LOG(ERROR) << "unexpected activatation quant_params size: " << quant_params.size();
         return false;
