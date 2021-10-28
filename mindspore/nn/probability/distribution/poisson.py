@@ -220,8 +220,7 @@ class Poisson(Distribution):
         safe_x = self.select(self.less(value, zeros), zeros, value)
         y = log_rate * safe_x - self.lgamma(safe_x + 1.)
         comp = self.equal(value, safe_x)
-        # pylint: disable=E1130
-        log_unnormalized_prob = self.select(comp, y, -inf)
+        log_unnormalized_prob = self.select(comp, y, (-1) * inf)
         log_normalization = self.exp(log_rate)
         return log_unnormalized_prob - log_normalization
 

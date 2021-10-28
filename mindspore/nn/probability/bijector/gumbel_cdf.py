@@ -113,16 +113,13 @@ class GumbelCDF(Bijector):
         loc_local = self.cast_param_by_value(x, self.loc)
         scale_local = self.cast_param_by_value(x, self.scale)
         z = (x - loc_local) / scale_local
-        # pylint: disable=E1130
-        return self.exp(-self.exp(-z))
+        return self.exp((-1) * self.exp(-z))
 
     def _inverse(self, y):
-        # pylint false positive
-        # pylint: disable=E1130
         y = self._check_value_dtype(y)
         loc_local = self.cast_param_by_value(y, self.loc)
         scale_local = self.cast_param_by_value(y, self.scale)
-        return loc_local - scale_local * self.log(-self.log(y))
+        return loc_local - scale_local * self.log((-1) * self.log(y))
 
     def _forward_log_jacobian(self, x):
         x = self._check_value_dtype(x)
