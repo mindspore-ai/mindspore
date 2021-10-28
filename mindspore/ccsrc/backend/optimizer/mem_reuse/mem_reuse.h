@@ -87,7 +87,7 @@ class MemReuseUtil {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
   bool is_all_nop_node() const { return is_all_nop_node_; }
-  session::KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool visit_nop_node);
+  session::KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool skip_nop_node);
 
  private:
   KernelRefs kernel_output_refs_;

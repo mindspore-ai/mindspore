@@ -1127,7 +1127,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto visit_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
+  auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
     auto op_name = AnfAlgo::GetCNodeName(cnode);
@@ -1143,7 +1143,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
       }
     }
     auto real_input = AnfAlgo::GetRealInputIndex(kernel, i);
-    auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, visit_nop_node);
+    auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(input);
@@ -1154,7 +1154,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   }
 
   for (size_t i = 0; i < kernel_mod.GetOutputSizeList().size(); ++i) {
-    auto device_address = AnfAlgo::GetOutputAddr(kernel, i, visit_nop_node);
+    auto device_address = AnfAlgo::GetOutputAddr(kernel, i, skip_nop_node);
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(output);
     output->addr = device_address->ptr_;

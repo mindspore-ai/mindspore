@@ -1339,12 +1339,12 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
   }
 }
 
-DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
+DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool skip_nop_node) {
   if (!enable_relation_cache_) {
-    return AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
+    return AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, skip_nop_node);
   }
 
-  auto &addr_cache = visit_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
+  auto &addr_cache = skip_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
   std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>>::iterator addr_iter;
   if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
     addr_iter = addr_cache.insert({node, {AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
@@ -1353,7 +1353,7 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   }
 
   if (addr_iter->second[i].first == nullptr) {
-    addr_iter->second[i] = AnfAlgo::GetPrevNodeOutput(node, i, visit_nop_node);
+    addr_iter->second[i] = AnfAlgo::GetPrevNodeOutput(node, i, skip_nop_node);
   }
 
   session::KernelWithIndex prev_node_with_index = addr_iter->second[i];
@@ -1364,12 +1364,12 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   return addr;
 }
 
-DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
+DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool skip_nop_node) {
   if (!enable_relation_cache_) {
-    return AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+    return AnfAlgo::GetMutableOutputAddr(node, i, skip_nop_node);
   }
 
-  auto &addr_cache = visit_nop_node ? mut_output_addr_cache_ : mut_output_addr_skip_nop_node_cache_;
+  auto &addr_cache = skip_nop_node ? mut_output_addr_cache_ : mut_output_addr_skip_nop_node_cache_;
   std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>>::iterator addr_iter;
   if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
     auto kernel_mod = AnfAlgo::GetKernelMod(node);
@@ -1382,12 +1382,12 @@ DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, 
 
   auto &now_addr = addr_iter->second[i];
   if (now_addr == nullptr) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, skip_nop_node);
     now_addr = device_address;
   } else {
     if (addr_state_.count(now_addr) > 0) {
       addr_state_.erase(now_addr);
-      auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, skip_nop_node);
       now_addr = device_address;
     }
   }

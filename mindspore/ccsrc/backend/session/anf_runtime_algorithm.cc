@@ -309,7 +309,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   if (AnfAlgo::IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
     return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, skip_nop_node, return_types);
   }
-  if (opt::IsNopNode(cnode) && (skip_nop_node || IsNeedSkipNopOp(cnode))) {
+  if (opt::IsNopNode(cnode) && skip_nop_node) {
     if (cnode->size() != kNopNodeInputSize) {
       MS_LOG(EXCEPTION) << "Invalid nop node " << cnode->DebugString() << " trace: " << trace::DumpSourceLines(cnode);
     }
@@ -787,18 +787,18 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx,
-                                                       bool visit_nop_node) {
+                                                       bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode."
                       << " trace: " << trace::DumpSourceLines(anf_node);
   }
   if (CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
-    return VisitKernelWithReturnType(anf_node, 0, visit_nop_node);
+    return VisitKernelWithReturnType(anf_node, 0, skip_nop_node);
   }
   auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
   MS_EXCEPTION_IF_NULL(input_node);
-  return VisitKernelWithReturnType(input_node, 0, visit_nop_node);
+  return VisitKernelWithReturnType(input_node, 0, skip_nop_node);
 }
 
 std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -1034,10 +1034,9 @@ TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputDeviceDataType(const AnfNodePtr &an
 }
 
 // get output device addr of anf_node
-const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, size_t output_idx,
-                                                        bool visit_nop_node) {
+const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (opt::IsNopNode(node) && (visit_nop_node || IsNeedSkipNopOp(node))) {
+  if (opt::IsNopNode(node) && (skip_nop_node || IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() == kNopNodeInputSize) {
@@ -1059,9 +1058,9 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
 }
 
 DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx,
-                                                           bool visit_nop_node) {
+                                                           bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (opt::IsNopNode(node) && (visit_nop_node || IsNeedSkipNopOp(node))) {
+  if (opt::IsNopNode(node) && (skip_nop_node || IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->inputs().size() == kNopNodeInputSize) {
@@ -1083,14 +1082,14 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
 }
 
 // get output device addr of anf_node
-bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node) {
+bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (opt::IsNopNode(node) && (visit_nop_node || IsNeedSkipNopOp(node))) {
+  if (opt::IsNopNode(node) && (skip_nop_node || IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->inputs().size() > 1) {
       auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(cnode, 0);
-      return OutputAddrExist(kernel_with_index.first, kernel_with_index.second, visit_nop_node);
+      return OutputAddrExist(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
     }
     return false;
   }
@@ -1109,15 +1108,15 @@ bool AnfRuntimeAlgorithm::WorkspaceAddrExist(const AnfNodePtr &node, size_t outp
 }
 
 const DeviceAddress *AnfRuntimeAlgorithm::GetPrevNodeOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
-                                                                bool visit_nop_node) {
+                                                                bool skip_nop_node) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
-  return AnfRuntimeAlgorithm::GetOutputAddr(kernel_with_index.first, kernel_with_index.second, visit_nop_node);
+  return AnfRuntimeAlgorithm::GetOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
 }
 
 DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
-                                                                   bool visit_nop_node) {
+                                                                   bool skip_nop_node) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
-  return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, visit_nop_node);
+  return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
 }
 
 // set output device addr of anf_node
@@ -1687,7 +1686,7 @@ bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
   return kernel_name == kGetNextOpName;
 }
 
-bool AnfRuntimeAlgorithm::IsNeedSkipNopOp(const AnfNodePtr &node) {
+bool AnfRuntimeAlgorithm::IsNeedSkipNopOpAddr(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
@@ -1698,12 +1697,12 @@ bool AnfRuntimeAlgorithm::IsNeedSkipNopOp(const AnfNodePtr &node) {
     return false;
   }
 
-  auto skip_nop_op_attr = primitive->GetAttr(kAttrSkipNopOp);
-  if (skip_nop_op_attr == nullptr) {
+  auto skip_nop_op_addr_attr = primitive->GetAttr(kAttrSkipNopOpAddr);
+  if (skip_nop_op_addr_attr == nullptr) {
     return false;
   }
 
-  return GetValue<bool>(skip_nop_op_attr);
+  return GetValue<bool>(skip_nop_op_addr_attr);
 }
 
 FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) {
@@ -2410,7 +2409,7 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
   MS_EXCEPTION_IF_NULL(cnode);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto visit_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
+  auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
     auto op_name = GetCNodeName(cnode);
@@ -2426,7 +2425,7 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
       }
     }
     auto real_input = GetRealInputIndex(node, i);
-    auto device_address = GetPrevNodeOutputAddr(node, real_input, visit_nop_node);
+    auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(input);
@@ -2436,7 +2435,7 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
     kernel_inputs.emplace_back(input);
   }
   for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
-    auto device_address = GetOutputAddr(node, i, visit_nop_node);
+    auto device_address = GetOutputAddr(node, i, skip_nop_node);
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(output);
     output->addr = const_cast<void *>(device_address->GetPtr());
