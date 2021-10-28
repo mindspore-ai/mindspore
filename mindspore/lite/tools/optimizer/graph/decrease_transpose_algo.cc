@@ -118,10 +118,9 @@ void SetTransType(const std::set<CNodePtr> &cnodes, FormatTransNodeType *trans_t
   }
 }
 
-bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<CNodePtr> &in_nodes,
-                                 const std::set<CNodePtr> &out_nodes, const std::set<CNodePtr> &middle_nodes,
-                                 TransTypePair *trans_info) {
-  MS_ASSERT(func_graph != nullptr && trans_info != nullptr);
+bool JudgeCanOptimizerForMultiOp(const std::set<CNodePtr> &in_nodes, const std::set<CNodePtr> &out_nodes,
+                                 const std::set<CNodePtr> &middle_nodes, TransTypePair *trans_info) {
+  MS_ASSERT(trans_info != nullptr);
   SetTransType(in_nodes, &trans_info->pre_);
   if (trans_info->pre_ == kNONE) {
     return false;
@@ -140,7 +139,7 @@ bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<
     }
     auto middle_node_prim = GetValueNode<PrimitivePtr>(middle_cnode->input(0));
     MS_CHECK_TRUE_MSG(middle_node_prim != nullptr, false, "GetValueNode failed");
-    if (!transpose_strategy.CanChangeOpAxis(func_graph, middle_cnode)) {
+    if (!transpose_strategy.CanChangeOpAxis(middle_cnode)) {
       return false;
     }
   }
@@ -424,7 +423,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
     }
   }
   TransTypePair trans_info;
-  if (!JudgeCanOptimizerForMultiOp(func_graph, in_nodes, out_nodes, middle_nodes, &trans_info)) {
+  if (!JudgeCanOptimizerForMultiOp(in_nodes, out_nodes, middle_nodes, &trans_info)) {
     return lite::RET_NO_CHANGE;
   }
   auto node_list = TopoSort(func_graph->get_return());
@@ -547,8 +546,8 @@ int DecreaseTransposeAlgo::ResetSubGraphInput() {
   return lite::RET_OK;
 }
 
-int DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
-  MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
+int DecreaseTransposeAlgo::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
+  MS_ASSERT(sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();
@@ -673,7 +672,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
         return false;
       }
       (void)DecreaseTransposeForSingleOp(sub_func_graph);
-      ret = SetSubGraphOutput(cnode, sub_func_graph);
+      ret = SetSubGraphOutput(sub_func_graph);
       if (ret != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed";
         return false;
@@ -689,7 +688,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
         return false;
       }
       (void)DecreaseTransposeForSingleOp(sub_func_graph);
-      ret = SetSubGraphOutput(cnode, sub_func_graph);
+      ret = SetSubGraphOutput(sub_func_graph);
       if (ret != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed";
         return false;
@@ -808,7 +807,7 @@ bool DecreaseTransposeAlgo::DoFixFormat(const FuncGraphPtr &func_graph) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
         return false;
       }
-      SetSubGraphOutput(cnode, sub_func_graph);
+      SetSubGraphOutput(sub_func_graph);
 
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
@@ -821,7 +820,7 @@ bool DecreaseTransposeAlgo::DoFixFormat(const FuncGraphPtr &func_graph) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
         return false;
       }
-      SetSubGraphOutput(cnode, sub_func_graph);
+      SetSubGraphOutput(sub_func_graph);
       SetSubGraphAbstract(cnode, sub_func_graph);
       continue;
     }
