@@ -36,6 +36,7 @@ def _get_group(group):
         return GlobalComm.WORLD_COMM_GROUP
     return group
 
+
 def _check_task_sink_envs():
     """
     Check whether task_sink environment variables have been exported or not.
@@ -50,6 +51,8 @@ def _check_task_sink_envs():
                 return False
         except ValueError:
             return True
+        finally:
+            pass
     return True
 
 
@@ -70,11 +73,14 @@ def _check_parallel_envs():
         int(rank_id_str)
     except ValueError:
         print("RANK_ID should be number")
+    finally:
+        pass
     rank_table_file_str = os.getenv("MINDSPORE_HCCL_CONFIG_PATH")
     rank_table_file_str_old = os.getenv("RANK_TABLE_FILE")
     if not rank_table_file_str and not rank_table_file_str_old:
         raise RuntimeError("Get hccl rank_table_file failed, "
                            "please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE.")
+
 
 def init(backend_name=None):
     """
