@@ -121,7 +121,7 @@ void ActorBase::Run() {
         if (msg == nullptr) {
           continue;
         }
-        MS_LOG_DEBUG << "dequeue message]actor=" << id.Name() << ",msg=" << msg->Name();
+        MS_LOG(DEBUG) << "dequeue message]actor=" << id.Name() << ",msg=" << msg->Name();
         if (msgHandler(msg) == ACTOR_TERMINATED) {
           return;
         }

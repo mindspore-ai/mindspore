@@ -23,7 +23,6 @@
 #include "nnacl/splice_parameter.h"
 
 namespace mindspore::kernel {
-
 class AffineFp32CPUKernel : public InnerKernel {
  public:
   AffineFp32CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
