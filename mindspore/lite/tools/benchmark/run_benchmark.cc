@@ -32,17 +32,17 @@ int RunBenchmark(int argc, const char **argv) {
     return RET_OK;
   }
 
-  BenchmarkBase *benchmark = nullptr;
   // get dump data output path
   auto new_api = std::getenv("ENABLE_NEW_API");
   bool run_old_api = (new_api == nullptr || std::string(new_api) != "true");
   if (flags.config_file_ != "") {
     run_old_api = false;
   }
+  std::unique_ptr<BenchmarkBase> benchmark;
   if (run_old_api) {
-    benchmark = new Benchmark(&flags);
+    benchmark = std::make_unique<Benchmark>(&flags);
   } else {
-    benchmark = new BenchmarkUnifiedApi(&flags);
+    benchmark = std::make_unique<BenchmarkUnifiedApi>(&flags);
   }
   if (benchmark == nullptr) {
     MS_LOG(ERROR) << "new benchmark failed ";
@@ -53,8 +53,6 @@ int RunBenchmark(int argc, const char **argv) {
   if (status != 0) {
     MS_LOG(ERROR) << "Benchmark init Error : " << status;
     std::cerr << "Benchmark init Error : " << status << std::endl;
-    delete benchmark;
-    benchmark = nullptr;
     return RET_ERROR;
   }
 
@@ -65,8 +63,6 @@ int RunBenchmark(int argc, const char **argv) {
                   << " Failed : " << status;
     std::cerr << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
               << " Failed : " << status << std::endl;
-    delete benchmark;
-    benchmark = nullptr;
     return RET_ERROR;
   }
 
@@ -74,8 +70,6 @@ int RunBenchmark(int argc, const char **argv) {
                << " Success.";
   std::cout << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
             << " Success." << std::endl;
-  delete benchmark;
-  benchmark = nullptr;
   return RET_OK;
 }
 }  // namespace lite
