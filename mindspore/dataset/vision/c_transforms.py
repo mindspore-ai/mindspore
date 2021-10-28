@@ -998,13 +998,18 @@ class RandomCropDecodeResize(ImageTensorOperation):
         ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
 
             - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
 
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+            - Inter.AREA, means interpolation method is pixel area interpolation.
+
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
+              should be in 3 channels format.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead.
@@ -1263,7 +1268,7 @@ class RandomResizedCrop(ImageTensorOperation):
         ratio (list, tuple, optional): Range [min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode for resize operator (default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC].
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
 
@@ -1650,7 +1655,7 @@ class Resize(ImageTensorOperation):
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
-            It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC].
+            It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
             - Inter.LINEAR, means interpolation method is bilinear interpolation.
 

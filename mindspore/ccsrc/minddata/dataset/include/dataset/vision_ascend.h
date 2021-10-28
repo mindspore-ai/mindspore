@@ -40,6 +40,15 @@ class DvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] resize Parameter vector of two integers for each dimension, with respect to H,W order.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto dvpp_op = vision::DvppDecodeResizeJpeg({255, 255});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({dvpp_op},   // operations
+  ///                            {"image"});  // input columns
+  /// \endcode
   explicit DvppDecodeResizeJpeg(std::vector<uint32_t> resize);
 
   /// \brief Destructor.
@@ -64,6 +73,15 @@ class DvppDecodeResizeCropJpeg final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] crop Parameter vector of two integers for each dimension after final crop, with respect to H,W order.
   /// \param[in] resize Parameter vector of two integers for each dimension after resize, with respect to H,W order.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto dvpp_op = vision::DvppDecodeResizeCropJpeg({50, 50}, {100, 100});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({dvpp_op},   // operations
+  ///                            {"image"});  // input columns
+  /// \endcode
   DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
 
   /// \brief Destructor.
@@ -86,6 +104,15 @@ class DvppDecodeResizeCropJpeg final : public TensorTransform {
 class DvppDecodePng final : public TensorTransform {
  public:
   /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto dvpp_op = vision::DvppDecodePng();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({dvpp_op},   // operations
+  ///                            {"image"});  // input columns
+  /// \endcode
   DvppDecodePng();
 
   /// \brief Destructor.
