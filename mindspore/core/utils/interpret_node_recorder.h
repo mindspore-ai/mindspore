@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 #define MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 
-#include <vector>
+#include <unordered_set>
 #include <string>
 
 namespace mindspore {
@@ -32,7 +32,9 @@ class InterpretNodeRecorder {
     return instance;
   }
 
-  void Push(const std::string &line) { interpret_nodes_lines_.emplace_back(line); }
+  void PushLineInfo(const std::string &line) { interpret_nodes_lines_.emplace(line); }
+
+  const std::unordered_set<std::string> &LineInfos() const { return interpret_nodes_lines_; }
 
   void Clear() { interpret_nodes_lines_.clear(); }
 
@@ -41,7 +43,7 @@ class InterpretNodeRecorder {
   virtual ~InterpretNodeRecorder() = default;
 
  private:
-  std::vector<std::string> interpret_nodes_lines_;
+  std::unordered_set<std::string> interpret_nodes_lines_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_

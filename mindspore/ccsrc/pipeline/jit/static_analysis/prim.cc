@@ -1317,10 +1317,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(global_dict);
     MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString() << ", [" << global_dict->type_name() << "]";
     ValuePtr global_dict_value = global_dict->BuildValue();
-    if (global_dict_value == kAnyValue) {
-      MS_LOG(EXCEPTION) << "Not support Tensor or variable type as input during running JIT Fallback, but got "
-                        << global_dict->ToString();
-    }
     py::object global_params_dict = ValueToPyData(global_dict_value);
     MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
                   << py::str(global_params_dict);
@@ -1331,10 +1327,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(local_dict);
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString() << ", [" << local_dict->type_name() << "]";
     ValuePtr local_dict_value = local_dict->BuildValue();
-    if (local_dict_value == kAnyValue) {
-      MS_LOG(EXCEPTION) << "Not support Tensor or variable type as input during running JIT Fallback, but got "
-                        << local_dict->ToString();
-    }
     py::object local_params_dict = ValueToPyData(local_dict_value);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
