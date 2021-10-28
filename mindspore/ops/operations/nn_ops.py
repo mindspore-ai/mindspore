@@ -3436,9 +3436,11 @@ class L2Normalize(PrimitiveWithInfer):
     This operator will normalize the input using the given axis. The function is shown as follows:
 
     .. math::
-        \text{output} = \frac{x}{\sqrt{\text{max}(\text{sum} (\text{x}^2), \epsilon)}},
+        \displaylines{{\text{output} = \frac{x}{\sqrt{\text{max}(\parallel x_i \parallel^p , \epsilon)} } } \\
+        {\parallel x_i \parallel^p = (\sum_{i}^{}\left | x_i  \right | ^p  )^{1/p}} }
 
-    where :math:`\epsilon` is epsilon.
+    where :math:`\epsilon` is epsilon amd :math:`\sum_{i}^{}\left | x_i  \right | ^p` calculate
+    along the dimension `axis`.
 
     Args:
         axis (Union[list(int), tuple(int), int]): The starting axis for the input to apply the L2 Normalization.
