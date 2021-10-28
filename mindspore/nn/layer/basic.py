@@ -679,9 +679,9 @@ class Pad(Cell):
                 x = [[1,2,3], [4,5,6], [7,8,9]].
                 # The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
                 # Substitute into the formula to get:
-                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
+                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 5.
                 # 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
-                # So the shape of output is (4, 7).
+                # So the shape of output is (5, 7).
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
