@@ -348,11 +348,11 @@ def get_bprop_concat(self):
             if is_uniform:
                 dx_tuple = P.Split(axis, input_nums)(dout)
                 for _, i in enumerate(dx_tuple):
-                    dx = dx + [i,]
+                    dx = dx + [i]
             else:
                 for i in range(input_nums):
                     slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
-                    dx = dx + [slice_out,]
+                    dx = dx + [slice_out]
         else:
             dx = ()
             if is_uniform:
@@ -447,12 +447,14 @@ def get_bprop_gather_d(self):
 
     return bprop
 
+
 @bprop_getters.register(G.GatherDGrad)
 def get_bprop_gather_d_grad(self):
     """Generate bprop for GatherDGrad"""
     op = P.Gather()
     dim = self.dim
     x_shp = self.out_shape
+
     def bprop(index, x, out, dout):
         index_shp = shape_op(index)
         dim_before_axis = 1

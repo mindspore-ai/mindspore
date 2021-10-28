@@ -23,7 +23,6 @@ namespace mindspore {
 namespace kernel {
 void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
   // The dimensions of input tensor must be 1 or 2, with data type of float32.
   if (input_shape_.size() == 1) {
     workspace_size_list_.push_back(input_shape_[0] * sizeof(float));

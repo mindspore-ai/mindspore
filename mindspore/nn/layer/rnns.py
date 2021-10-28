@@ -49,6 +49,7 @@ def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
         raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x "
                          f"and {batch_size_hx} of hx.")
 
+
 @constexpr
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
@@ -613,6 +614,7 @@ class RNNCell(_RNNCellBase):
         (3, 16)
     """
     _non_linearity = ['tanh', 'relu']
+
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = "tanh"):
         super().__init__(input_size, hidden_size, has_bias, num_chunks=1)
         validator.check_value_type("nonlinearity", nonlinearity, [str], self.cls_name)

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <set>
+#include <utility>
 
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
