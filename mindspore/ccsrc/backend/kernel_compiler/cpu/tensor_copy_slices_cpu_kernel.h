@@ -35,7 +35,7 @@ class TensorCopySlicesCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  TypeId data_type_;
+  TypeId data_type_{kTypeUnknown};
   size_t offset_{0};
   size_t copy_size_{0};
   std::vector<int64_t> input_shape_;
