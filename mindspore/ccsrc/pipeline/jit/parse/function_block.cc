@@ -219,7 +219,7 @@ AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &namespace_info) {
   if (unsupported) {
     resolved_node->set_interpret(true);
     AddGlobalPyParam(symbol->name(), py_obj);
-    MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symblol: {" << symbol->name() << " : "
+    MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol->name() << " : "
                  << py::str(py_obj) << "}";
   }
   return resolved_node;
@@ -268,7 +268,7 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
 
 AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
   MS_LOG(DEBUG) << "MakeResolve for " << (name_space ? (std::string)py::str(name_space->obj()) : "null namespace")
-                << " , " << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resoleve symbol.");
+                << " , " << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resolve symbol.");
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
   auto node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
@@ -343,7 +343,7 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
 //    If all arguments of a φ-function are the same value s or the φfunction itself,
 //    then we remove the φ-function and let all users directly uses. We call such a
 //    φ-function obviously unnecessary.
-//    When we removed a φ-function p, then we recursively try to apply this simpliﬁcation
+//    When we removed a φ-function p, then we recursively try to apply this simplification
 //    rule with all (former) users of p, because they may have become obviously unnecessary
 //    due to the removal of p
 // <Quote>
