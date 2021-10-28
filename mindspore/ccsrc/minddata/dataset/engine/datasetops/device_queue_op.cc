@@ -719,7 +719,7 @@ Status DeviceQueueOp::DetectFirstBatch() {
   return Status::OK();
 }
 
-void DeviceQueueOp::DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time) {
+void DeviceQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) {
   *end_time = ProfilingTime::GetCurMilliSecond();
   if (*end_time - *start_time > kTimeOutMilliSeconds) {
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "

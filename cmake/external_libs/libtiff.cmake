@@ -29,6 +29,6 @@ mindspore_add_pkg(tiff
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -Djbig=OFF -Dlzma=OFF -Djpeg12=OFF -Dzstd=OFF -Dpixarlog=OFF
-        -Dold-jpeg=OFF -Dwebp=OFF -DBUILD_SHARED_LIBS=OFF)
+        -Dold-jpeg=OFF -Dwebp=OFF -DBUILD_SHARED_LIBS=OFF -Dlibdeflate=OFF)
 message("tiff include = ${tiff_INC}")
 message("tiff lib = ${tiff_LIB}")
