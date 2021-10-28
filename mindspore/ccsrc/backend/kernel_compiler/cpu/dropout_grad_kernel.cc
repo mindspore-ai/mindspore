@@ -51,9 +51,9 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
 void DropoutGradCpuBwdKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat16) {
-    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
-    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
-    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+    (void)workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+    (void)workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+    (void)workspace_size_list_.emplace_back(num_count_ * sizeof(float));
   }
 }
 

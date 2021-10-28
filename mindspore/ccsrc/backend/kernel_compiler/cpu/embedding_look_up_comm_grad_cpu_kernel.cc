@@ -67,7 +67,8 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   size_t input_split_lens = input_size / LongToSize(split_num_) / sizeof(float_t);
   size_t output_split_lens = output_size / LongToSize(split_num_) / sizeof(float_t);
   for (int64_t i = 0; i < split_num_; i++) {
-    MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group, input_split_lens);
+    (void)MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group,
+                       input_split_lens);
   }
   const uint64_t kUSecondInSecond = 1000000;
 #if defined(_WIN32) || defined(_WIN64)
