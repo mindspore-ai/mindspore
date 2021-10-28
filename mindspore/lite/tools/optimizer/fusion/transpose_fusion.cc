@@ -138,9 +138,8 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   return cnode;
 }
 
-AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func_graph,
-                                             const mindspore::AnfNodePtr &node) const {
-  MS_ASSERT(func_graph != nullptr && node != nullptr);
+AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   auto trans_cnode_2 = node->cast<CNodePtr>();
   if (IsMarkedTrainOp(trans_cnode_2)) {
     return nullptr;
@@ -181,7 +180,7 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return nullptr;
   }
   if (pattern_name == "TransTransPatternName") {
-    return TransTransFusion(func_graph, node);
+    return TransTransFusion(node);
   }
   if (node->cast<CNodePtr>() == nullptr) {
     return nullptr;

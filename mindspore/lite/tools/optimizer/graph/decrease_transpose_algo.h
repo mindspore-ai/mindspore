@@ -41,7 +41,7 @@ class DecreaseTransposeAlgo : public Pass {
 
  private:
   STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
-  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
+  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> perm, bool before,
                      size_t index = 0);
   bool DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph);
   bool DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph);

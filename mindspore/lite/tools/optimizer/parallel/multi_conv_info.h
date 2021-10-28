@@ -41,7 +41,6 @@ class MultiConvSplit : public MultiNodeSplit {
   virtual AnfNodePtr MultiConvNHSplit(const AnfNodePtr &node);
 
   virtual void AdJustInputs(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &new_inputs_node,
-                            const std::vector<AnfNodePtr> &weight_node, const std::vector<AnfNodePtr> &bias_nodes,
                             int output_conv_index, std::vector<AnfNodePtr> *conv_inputs);
 
   virtual bool CreateNewConvNode(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &conv_inputs,

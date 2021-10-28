@@ -267,7 +267,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   scale_primitive->set_activation_type(scale_act_type_);
-  scale_primitive->set_axis(-(bias_tensor_->shape_c().size()));
+  scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size())));
   // create scale op
   auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode_, mul_const_anode_, add_const_anode_});
   return scale_node;

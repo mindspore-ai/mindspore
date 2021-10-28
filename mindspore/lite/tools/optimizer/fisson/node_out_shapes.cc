@@ -32,6 +32,7 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto cnode = node->cast<CNodePtr>();
   // assume multi inputs
   for (const auto &input_node : cnode->inputs()) {
+    MS_ASSERT(input_node != nullptr);
     if (utils::isa<CNodePtr>(input_node) || utils::isa<ParameterPtr>(input_node)) {
       auto in_shape = input_node->Shape();
       if (in_shape == nullptr) {

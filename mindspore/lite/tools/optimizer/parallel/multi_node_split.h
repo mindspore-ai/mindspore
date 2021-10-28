@@ -46,7 +46,7 @@ class MultiNodeSplitProxy : public MultiNodeSplit {
 
  private:
   int InitResource();
-  int FreeResource();
+  void FreeResource();
 
  private:
   SplitMode split_mode_{NoSplit};

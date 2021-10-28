@@ -58,11 +58,19 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
     MS_LOG(ERROR) << "string tensor's dim size not found.";
     return RET_ERROR;
   }
-  size_t shape_size = std::stoi(shape_size_str);
+  size_t shape_size = std::atoi(shape_size_str.c_str());
+  MS_CHECK_TRUE_RET(shape_size != 0, RET_ERROR);
   for (; *offset < tensor_info->Size(); (*offset)++) {
     if (tensor_data[*offset] == ',') {
       cnt++;
-      shape_vector->push_back(std::stoi(shape_str));
+      int64_t shape = 0;
+      try {
+        shape = std::stoi(shape_str);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Get shape failed: " << e.what();
+        return RET_ERROR;
+      }
+      shape_vector->push_back(shape);
       shape_str.clear();
     } else {
       shape_str.push_back(tensor_data[*offset]);

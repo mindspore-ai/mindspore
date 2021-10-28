@@ -766,8 +766,8 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
   MS_CHECK_TRUE_RET(fw_cond_graph_pattern != nullptr, nullptr);
   auto fw_cond = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[0]]);
   MS_ASSERT(fw_cond != nullptr);
-  auto fw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_cond_graph_pattern, fw_cond_primitive_vars,
-                                                           fw_cond, kCondCNodesNum, kCondNodesNum);
+  auto fw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(fw_cond_graph_pattern, fw_cond_primitive_vars, fw_cond,
+                                                           kCondCNodesNum, kCondNodesNum);
   if (fw_cond_equiv == nullptr || fw_cond_equiv->empty()) {
     return nullptr;
   }
@@ -778,8 +778,8 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
   MS_CHECK_TRUE_RET(bw_cond_graph_pattern != nullptr, nullptr);
   auto bw_cond = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[0]]);
   MS_ASSERT(bw_cond != nullptr);
-  auto bw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_cond_graph_pattern, bw_cond_primitive_vars,
-                                                           bw_cond, kCondCNodesNum, kCondNodesNum);
+  auto bw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(bw_cond_graph_pattern, bw_cond_primitive_vars, bw_cond,
+                                                           kCondCNodesNum, kCondNodesNum);
   if (bw_cond_equiv == nullptr || bw_cond_equiv->empty()) {
     return nullptr;
   }
@@ -790,8 +790,8 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
   MS_CHECK_TRUE_RET(fw_body_graph_pattern != nullptr, nullptr);
   auto fw_body = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[1]]);
   MS_ASSERT(fw_body != nullptr);
-  auto fw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_body_graph_pattern, fw_primitive_vars_body,
-                                                           fw_body, kBodyCNodesNum, kBodyNodesNum);
+  auto fw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(fw_body_graph_pattern, fw_primitive_vars_body, fw_body,
+                                                           kBodyCNodesNum, kBodyNodesNum);
   if (fw_body_equiv == nullptr || fw_body_equiv->empty()) {
     return nullptr;
   }
@@ -802,8 +802,8 @@ const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph,
   MS_CHECK_TRUE_RET(bw_body_graph_pattern != nullptr, nullptr);
   auto bw_body = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[1]]);
   MS_ASSERT(bw_body != nullptr);
-  auto bw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_body_graph_pattern, bw_primitive_vars_body,
-                                                           bw_body, kBodyCNodesNum, kBodyNodesNum);
+  auto bw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(bw_body_graph_pattern, bw_primitive_vars_body, bw_body,
+                                                           kBodyCNodesNum, kBodyNodesNum);
   if (bw_body_equiv == nullptr || bw_body_equiv->empty()) {
     return nullptr;
   }
