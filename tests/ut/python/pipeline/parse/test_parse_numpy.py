@@ -45,12 +45,11 @@ def test_use_numpy_method():
             return ret
 
     net = Net()
-    with pytest.raises(NotImplementedError) as err:
+    # Not raise NotImplementedError('Mindspore not supports to use the numpy ...') any more,
+    # but raise RuntimeError('Should not use Python object in runtime...'), after support JIT Fallback.
+    with pytest.raises(RuntimeError) as err:
         net()
-    assert "Mindspore does not support to use the numpy methods " \
-           "within the construct() or @ms_function decorated function in graph mode." \
-           in str(err.value)
-
+    assert "Should not use Python object in runtime" in str(err.value)
 
 def test_use_numpy_module():
     class Net(nn.Cell):
@@ -62,8 +61,8 @@ def test_use_numpy_module():
             return ret
 
     net = Net()
-    with pytest.raises(NotImplementedError) as err:
+    # Not raise NotImplementedError('Mindspore not supports to use the numpy ...') any more,
+    # but raise RuntimeError('Should not use Python object in runtime...'), after support JIT Fallback.
+    with pytest.raises(RuntimeError) as err:
         net()
-    assert "Mindspore does not support to use the numpy methods " \
-           "within the construct() or @ms_function decorated function in graph mode." \
-           in str(err.value)
+    assert "Should not use Python object in runtime" in str(err.value)

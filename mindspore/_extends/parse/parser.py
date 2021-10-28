@@ -164,7 +164,7 @@ def resolve_symbol(namespace, symbol):
             return resolve_
 
         # Raise a proper error if not using Fallback feature.
-        if support_fallback_ != '1':
+        if support_fallback_ == '0':
             # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
             if namespace.name == "numpy" and \
                 isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
@@ -262,7 +262,7 @@ def get_obj_type(obj):
         obj_type = RESOLVE_TYPE_CLASS_INSTANCE
     else:
         # Raise a proper error if not using Fallback feature.
-        if support_fallback_ == '1':
+        if support_fallback_ != '0':
             obj_type = RESOLVE_TYPE_INVALID
         else:
             # here for ndarray, just print its shape (in case of the array to large and print many data in screen)

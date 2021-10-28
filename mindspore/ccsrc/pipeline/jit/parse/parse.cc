@@ -1825,7 +1825,7 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
                                    const py::object &value_object) {
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (support_fallback() == "1");
+  static const auto use_fallback = (support_fallback() != "0");
   if (!use_fallback || !value_node->interpret()) {
     return value_node;
   }
@@ -1842,19 +1842,19 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   auto [keys, values] = block->local_py_params();
   auto local_dict_node = ParseDictByKeysAndValues(block, keys, values);
   // Update the valued node if it need interpreting.
-  constexpr int recursive_level = 3;
+  constexpr int recursive_level = 2;
   MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
                << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
                << ",\nglobal_dict_node: " << global_dict_node->ToString()
-               << ",\nlocal_dict_node: " << local_dict_node->ToString();
+               << ",\nlocal_dict_node: " << local_dict_node->DebugString(recursive_level);
   AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
 
   // Print a hint for user.
   auto line_info = trace::GetDebugInfo(value_node->debug_info());
-  MS_LOG(DEBUG) << "Found unsupported syntax in Graph mode, those codes would be fell back to Python interpreter:"
-                << "\n\n"
-                << line_info;
-  InterpretNodeRecorder::GetInstance().Push(line_info);
+  MS_LOG(INFO) << "Found unsupported syntax in Graph mode, those codes would be fallen back to Python interpreter:"
+               << "\n\n"
+               << line_info;
+  InterpretNodeRecorder::GetInstance().PushLineInfo(line_info);
   return interpreted_node;
 }
 

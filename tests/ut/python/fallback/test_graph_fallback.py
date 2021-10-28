@@ -80,7 +80,6 @@ def np_fallback_func():
     return me_x
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_fallback_func():
     print(np_fallback_func())
 
@@ -94,7 +93,6 @@ def div_mod_func1():
     return Tensor(a)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_div_mod_func1():
     print(div_mod_func1())  # (2, 2)
 
@@ -106,7 +104,6 @@ def div_mod_func2(x, y):
     return Tensor(a)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_div_mod_func2_scalar():
     """
     Feature: JIT Fallback
@@ -116,14 +113,16 @@ def test_div_mod_func2_scalar():
     print(div_mod_func2(8, 3))  # (2, 2)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
 def test_div_mod_func2_tensor():
     """
     Feature: JIT Fallback
-    Description: Test divmod in graph.
-    Expectation: No exception.
+    Description: Test divmod with Tensor input in graph. We'll support it in Tensor Input Fallback solution.
+    Expectation: Not supported exception.
     """
-    print(div_mod_func2(Tensor(8), Tensor(3)))  # name 'x' is not defined
+    with pytest.raises(RuntimeError) as err:
+        print(div_mod_func2(Tensor(8), Tensor(3)))
+    assert "Not support Tensor or variable type as input during running JIT Fallback, but got" in str(err.value)
 
 
 # NameError: name 'Tensor' is not defined.

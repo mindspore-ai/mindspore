@@ -864,6 +864,24 @@ void CacheValidateFuncGraph(const std::string &phase, const ResourcePtr &resourc
   }
 }
 
+void CheckInterpretNodeLineInfos() {
+  auto &line_infos = InterpretNodeRecorder::GetInstance().LineInfos();
+  if (line_infos.empty()) {
+    return;
+  }
+  std::stringstream ss;
+  ss << "Found unsupported syntax in Graph mode, those codes would be fallen back to Python interpreter:\n";
+  size_t num = 1;
+  for (auto &line : line_infos) {
+    ss << "\t#" << num << ": " << line << "\n";
+    ++num;
+  }
+  ss << "\n";
+  // Print the codes run in JIT Fallback with ERROR level.
+  MS_LOG(ERROR) << ss.str();
+  InterpretNodeRecorder::GetInstance().Clear();
+}
+
 void Pipeline::Run(const std::string &phase) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
@@ -885,6 +903,7 @@ void Pipeline::Run(const std::string &phase) {
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
       } else if (action.first == "validate") {
+        CheckInterpretNodeLineInfos();
         CacheValidateFuncGraph(phase, resource_);
       }
       if (!result) {

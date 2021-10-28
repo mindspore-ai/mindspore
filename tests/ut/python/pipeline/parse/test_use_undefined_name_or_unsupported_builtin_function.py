@@ -330,6 +330,7 @@ def test_insert_defined_var_compute():
     net(Tensor([1, 2, 3], mstype.float32))
 
 
+@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
 def test_call_unsupported_builtin_function_in_while():
     class Net(nn.Cell):
         def __init__(self):
@@ -352,6 +353,7 @@ def test_call_unsupported_builtin_function_in_while():
     assert "ret = divmod(x, y)" in str(err.value)
 
 
+@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
 def test_call_unsupported_builtin_function_in_if_in_for():
     class Net(nn.Cell):
         def __init__(self):
@@ -374,6 +376,7 @@ def test_call_unsupported_builtin_function_in_if_in_for():
     assert "x = divmod(x, i)" in str(err.value)
 
 
+@pytest.mark.skip(reason='Not support in graph jit fallback feature yet')
 def test_use_defined_class_obj_in_for():
     class Test:
         def __init__(self):

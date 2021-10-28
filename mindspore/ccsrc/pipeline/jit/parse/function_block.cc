@@ -75,7 +75,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() == "1");
+  static const auto use_fallback = (parser_.support_fallback() != "0");
 
   auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
@@ -133,7 +133,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
 
       // The fallback feature is enabled in default.
       // Not support change the flag during the process is alive.
-      static const auto use_fallback = (parser_.support_fallback() == "1");
+      static const auto use_fallback = (parser_.support_fallback() != "0");
       if (use_fallback) {
         MS_LOG(DEBUG) << "Update global params of block: " << ToString()
                       << ", with previous block: " << block->ToString() << ",\nCurrent: " << py::str(global_py_params())
@@ -242,7 +242,7 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() == "1");
+  static const auto use_fallback = (parser_.support_fallback() != "0");
   if (!use_fallback) {
     py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
     return HandleNamespaceInfo(namespace_info);
