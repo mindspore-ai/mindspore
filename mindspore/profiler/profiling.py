@@ -25,7 +25,7 @@ import mindspore._c_expression as c_expression
 from mindspore.dataset.core.config import _stop_dataset_profiler
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
-from mindspore.profiler.common.util import get_file_names, fwrite_format
+from mindspore.profiler.common.util import get_file_path, fwrite_format
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
@@ -523,35 +523,44 @@ class Profiler:
         """
 
         job_id = ""
+        job_dirs = filter(lambda item: item.startswith('JOB') and os.path.isdir(os.path.join(self._output_path, item)),
+                          os.listdir(self._output_path))
+        sorted_job_dirs = sorted(job_dirs, key=lambda x: os.path.getmtime(os.path.join(self._output_path, x)),
+                                 reverse=True)
 
-        for item in os.listdir(self._output_path):
-            if item.startswith('JOB'):
-                path = os.path.join(self._output_path, item)
+        for dir_name in sorted_job_dirs:
+            job_dir = os.path.join(self._output_path, dir_name)
+            host_start_file_path = get_file_path(job_dir, "host_start.log")
+            if host_start_file_path is None:
+                logger.warning("Find profiling job path %s, but host_start.log not exist, "
+                               "profiler will ignore this job dir.", job_dir)
+                continue
 
-                log_file = get_file_names(path, "host_start.log")
-                if not log_file:
-                    logger.error("Profiling: job path %s, host_start.log not exist.", path)
-                    continue
+            training_device_id = host_start_file_path.split('.')[-1]
+            if self._dev_id != training_device_id:
+                logger.warning("Find profiling find job path %s, but not current training device id. "
+                               "Current training device id %s, but job path device id: %s, "
+                               "profiler will ignore this job dir.", job_dir, self._dev_id, training_device_id)
+                continue
 
-                training_device_id = log_file[0].split('.')[-1]
-                if self._dev_id == training_device_id:
-                    log_file = os.path.join(path, log_file[0])
-                    job_start_time = self._parse_host_start_log(log_file)
-                    if not job_start_time:
-                        logger.error("Profiling: job path %s, fail to get job start info.", path)
-                        break
-                    job_id = item
-                    if self._start_time > int(job_start_time):
-                        logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
-                                    path, job_start_time, self._start_time)
-                    break
-                else:
-                    logger.info("Profiling: job path %s, dev id %s, training device id %s.",
-                                path, training_device_id, self._dev_id)
+            job_start_time = self._parse_host_start_log(host_start_file_path)
+            if not job_start_time:
+                logger.warning("Find profiling job path %s, but fail to get job start info, "
+                               "profiler will ignore this job dir.", job_start_time)
+                continue
+
+            if int(job_start_time) < self._start_time:
+                logger.warning("Find profiling job path %s, but start_time(%d) is earlier than this training "
+                               "start_time(%d), profiler will ignore this job dir.",
+                               job_dir, job_start_time, self._start_time)
+                continue
+
+            job_id = dir_name
+            break
 
         if not job_id:
             msg = "Fail to get profiling job, output path is {}, " \
-                  "please check whether job dir in output path was generated, " \
+                  "please check whether job dir(name startswith JOB) in output path was generated, " \
                   "or may be the device id from job dir dismatch the " \
                   "device_id in current process.".format(self._output_path)
             raise RuntimeError(msg)
