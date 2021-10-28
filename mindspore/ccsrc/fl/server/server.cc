@@ -283,8 +283,7 @@ void Server::InitCipher() {
   }
 
   (void)cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
-                           cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
-                           cipher_reconstruct_secrets_up_cnt_);
+                           cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_up_cnt_);
 #endif
 }
 

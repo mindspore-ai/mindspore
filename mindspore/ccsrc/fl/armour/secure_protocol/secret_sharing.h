@@ -49,10 +49,10 @@ class SecretSharing {
   // reconstruct the secret from multiple shares
   int Combine(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length);
   int CheckShares(Share *share_i, BIGNUM *x_i, BIGNUM *y_i, BIGNUM *denses_i, BIGNUM *nums_i);
-  int CheckSum(BIGNUM *sum);
+  int CheckSum(BIGNUM *sum) const;
   int LagrangeCal(BIGNUM *nums_j, BIGNUM *x_m, BIGNUM *x_j, BIGNUM *denses_j, BIGNUM *tmp, BN_CTX *ctx);
-  int InputCheck(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length);
-  void ReleaseNum(BIGNUM *bigNum);
+  int InputCheck(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length) const;
+  void ReleaseNum(BIGNUM *bigNum) const;
 
  private:
   BIGNUM *bn_prim_;

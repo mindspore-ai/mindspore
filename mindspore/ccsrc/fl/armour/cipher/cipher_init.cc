@@ -24,8 +24,7 @@ namespace mindspore {
 namespace armour {
 bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_exchange_keys_cnt,
                       size_t cipher_get_keys_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_secrets_cnt,
-                      size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_down_cnt,
-                      size_t cipher_reconstruct_secrets_up_cnt) {
+                      size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_up_cnt) {
   MS_LOG(INFO) << "CipherInit::Init START";
   if (publicparam_.p == nullptr || param.p == nullptr || param.prime == nullptr || publicparam_.prime == nullptr) {
     MS_LOG(ERROR) << "CipherInit::input data invalid.";
@@ -38,7 +37,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
 
   publicparam_.g = param.g;
   publicparam_.t = param.t;
-  secrets_minnums_ = param.t;
+  secrets_minnums_ = IntToSize(param.t);
   featuremap_ = fl::server::ModelStore::GetInstance().model_size() / sizeof(float);
 
   exchange_key_threshold = cipher_exchange_keys_cnt;

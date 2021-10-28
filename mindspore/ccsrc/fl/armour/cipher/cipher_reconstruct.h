@@ -60,7 +60,7 @@ class CipherReconStruct {
  private:
   CipherInit *cipher_init_;  // the parameter of the secure aggregation
   // get mask symbol by comparing str1 and str2.
-  bool GetSymbol(const std::string &str1, const std::string &str2);
+  bool GetSymbol(const std::string &str1, const std::string &str2) const;
   // get suv noise by computing shares result.
   bool GetSuvNoise(const std::vector<std::string> &clients_share_list,
                    const std::map<std::string, std::vector<std::vector<uint8_t>>> &record_public_keys,
