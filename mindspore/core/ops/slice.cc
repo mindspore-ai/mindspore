@@ -35,6 +35,7 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION_IF_NULL(item);
   }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
   std::vector<std::vector<int64_t>> input_values;
@@ -47,13 +48,25 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     } else {
       tmp_input = CheckAndConvertUtils::CheckAttrTupleInt("slice args value", input_value, prim_name);
     }
-
     (void)input_values.emplace_back(tmp_input);
   }
-  if (max_shape.empty() && min_shape.empty()) {
-    return std::make_shared<abstract::Shape>(input_values[1]);
+
+  auto begin_v = input_values[0];
+  auto size_v = input_values[1];
+  auto rank = input_shape.size();
+  if (begin_v.size() != rank || size_v.size() != rank) {
+    MS_LOG(EXCEPTION) << "For Slice, the shape of input|begin|size must be equal.";
   }
-  return std::make_shared<abstract::Shape>(input_values[1], min_shape, max_shape);
+
+  for (size_t i = 0; i < size_v.size(); ++i) {
+    if (size_v[i] == -1) {
+      size_v[i] = input_shape[i] - begin_v[i];
+    }
+  }
+  if (max_shape.empty() && min_shape.empty()) {
+    return std::make_shared<abstract::Shape>(size_v);
+  }
+  return std::make_shared<abstract::Shape>(size_v, min_shape, max_shape);
 }
 
 TypePtr SliceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

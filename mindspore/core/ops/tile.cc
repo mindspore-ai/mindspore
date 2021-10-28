@@ -69,6 +69,12 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
     multiples_v = CheckAndConvertUtils::CheckAttrTupleInt("tile multiples value", multiple_value, prim_name);
   }
 
+  for (auto multiple : multiples_v) {
+    if (multiple <= 0) {
+      MS_LOG(EXCEPTION) << "multiples in Tile should be an int and must > 0, but got " << multiples_v;
+    }
+  }
+
   auto infer_shape = GetInferShape(input_shape, multiples_v);
   if (max_shape.empty() && min_shape.empty()) {
     return std::make_shared<abstract::Shape>(infer_shape);

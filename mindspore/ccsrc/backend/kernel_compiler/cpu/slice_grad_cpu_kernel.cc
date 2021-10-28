@@ -32,14 +32,7 @@ constexpr size_t kSliceGradMaxInputShapeSize = 4;
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   cnode_ptr_ = kernel_node;
-  begin_.clear();
-  size_.clear();
-  strides_.clear();
-  end_.clear();
-  input_element_num_.clear();
-  output_element_num_.clear();
-  input_shape_.clear();
-  output_shape_.clear();
+  ClearVectors();
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
     MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradCpuKernel only support 4d or lower.";
@@ -83,6 +76,17 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
 
+void SliceGradCPUKernel::ClearVectors() {
+  begin_.clear();
+  size_.clear();
+  strides_.clear();
+  end_.clear();
+  input_element_num_.clear();
+  output_element_num_.clear();
+  input_shape_.clear();
+  output_shape_.clear();
+}
+
 void SliceGradCPUKernel::ExpandAllMemberDims() {
   auto output_len = output_shape_.size();
   constexpr size_t expand_dims = 4;
@@ -107,6 +111,8 @@ void SliceGradCPUKernel::ExpandAllMemberDims() {
 
 void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
+  ClearVectors();
+  output_shape_ = AnfAlgo::GetOutputInferShape(cnode, 0);
   std::string kernel_name = AnfAlgo::GetCNodeName(cnode);
   auto begin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
   auto begin_ptr = reinterpret_cast<int32_t *>(inputs[2]->addr);
@@ -129,7 +135,8 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
                          [](const int32_t &value) { return value; });
     (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const int32_t &value) { return value; });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
+      MS_LOG(EXCEPTION) << "stride|end|input size must be equal, but got begin: " << begin_ << ", size: " << size_
+                        << ", input shape: " << output_shape_;
     }
     FormatArgs(true);
   } else {

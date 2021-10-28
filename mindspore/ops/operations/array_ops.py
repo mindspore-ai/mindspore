@@ -2001,19 +2001,16 @@ class Tile(PrimitiveWithInfer):
     def __infer__(self, x, multiples):
         multiples_v = multiples['value']
         if multiples_v is None:
+            if len(multiples['shape']) != 1:
+                raise ValueError(f'For \'{self.name}\' the dim of multiples must be 1.')
             rank = max(len(x['shape']), multiples['shape'][0])
             out_shape = [-1] * rank
-            if 'max_shape' not in x:
-                max_shape = x['shape']
-                min_shape = x['shape']
-            else:
-                max_shape = x['max_shape']
-                min_shape = x['min_shape']
+            # tile can't infer min/max shape if multiples_v is None
             return {'shape': out_shape,
                     'dtype': x['dtype'],
                     'value': None,
-                    'min_shape': min_shape,
-                    'max_shape': max_shape
+                    'min_shape': [1] * rank,
+                    'max_shape': [1] * rank
                     }
 
         x_shp = x['shape']
@@ -2856,7 +2853,13 @@ class Slice(PrimitiveWithInfer):
         x_shp_len = len(x_shape)
         begin_v, size_v = begin['value'], size['value']
         if begin_v is None or size_v is None:
-            out_shape = [-1] * size['shape'][0]
+            # if size_v is not None and begin_v is None, it should be also a dynamic output shape.
+            if size_v is None:
+                if size['shape'][0] < 0:
+                    raise ValueError(f"For '{self.name}', the size shape haven't support dynamic yet.")
+                out_shape = [-1] * size['shape'][0]
+            else:
+                out_shape = [-1] * len(size_v)
             if 'max_shape' in x:
                 max_shape = x['max_shape']
                 min_shape = x['min_shape']

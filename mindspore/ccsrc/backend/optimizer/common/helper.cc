@@ -573,7 +573,15 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
       if (i >= input_names_vec.size()) {
         MS_LOG(EXCEPTION) << "index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
       }
-      primitive->set_attr(input_names_vec[i], value_node->value());
+      auto value = value_node->value();
+      if (value->isa<tensor::Tensor>()) {
+        auto tensor = value->cast<tensor::TensorPtr>();
+        if (tensor->data().const_data() == nullptr) {
+          need_update = false;
+          break;
+        }
+      }
+      primitive->set_attr(input_names_vec[i], value);
       need_update = true;
     } else {
       new_inputs.push_back(inputs[i + 1]);

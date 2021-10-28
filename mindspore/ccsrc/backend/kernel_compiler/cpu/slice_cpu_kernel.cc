@@ -81,7 +81,7 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
         slice_size = dim_len - begin_pos;
       }
       if (slice_size <= 0) {
-        MS_LOG(EXCEPTION) << "Slice requires the each dimension slice size must be greater than 0.";
+        MS_LOG(EXCEPTION) << "Slice requires the each dimension slice size must be greater than 0 or be equal to -1.";
       }
       slice_param_.shape_[i] = dim_len;
       slice_param_.size_[i] = slice_size;

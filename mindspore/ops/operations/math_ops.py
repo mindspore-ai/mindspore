@@ -487,7 +487,9 @@ class _Reduce(PrimitiveWithInfer):
 
             if np_reduce_func is not None:
                 value = input_x['value'].asnumpy()
-                if not axis_v:
+                if isinstance(axis_v, int):
+                    axis_v = (axis_v,)
+                elif not axis_v:
                     axis_v = [i for i in range(len(input_x['shape']))]
                     axis_v = tuple(axis_v)
                 value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)

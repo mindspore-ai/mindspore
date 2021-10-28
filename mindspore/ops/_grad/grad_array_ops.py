@@ -247,6 +247,7 @@ def _tile_shape(multiples, shapex):
         else:
             ret.append(1)
             ret.append(shapex[j])
+            j += 1
             len_cmp += 1
     return tuple(ret)
 
@@ -262,24 +263,33 @@ def get_bprop_tile(self):
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
-        if isinstance(multiples, tuple):
+        if -1 in shapex:
+            shapex = dyn_shape_op(x)
+        # if shapex or multiples not tuple, it should be dynamic shape.
+        if isinstance(multiples, tuple) and isinstance(shapex, tuple):
             r_shape = _tile_shape(multiples, shapex)
         else:
+            if isinstance(multiples, tuple):
+                multiples = tuple_to_array(multiples)
+            multiples = cast(multiples, mstype.int64)
             len_multi = size_op(multiples)
             rank = len(shapex)
-            shape_tensor = cast(tuple_to_array(shapex), mstype.int64)
+            if isinstance(shapex, tuple):
+                shape_tensor = cast(tuple_to_array(shapex), mstype.int64)
+            else:
+                shape_tensor = shapex
             if len_multi > rank:
                 one_tensor = ones((len_multi - rank,), mstype.int64)
-                shape_tensor = concat((shape_tensor, one_tensor))
+                shape_tensor = concat((one_tensor, shape_tensor))
             elif len_multi < rank:
                 one_tensor = ones((rank - len_multi,), mstype.int64)
-                multiples = concat((multiples, one_tensor))
+                multiples = concat((one_tensor, multiples))
             tile_shape = stack_op((multiples, shape_tensor))
-            r_shape = reshape(tile_shape, (-1,))
+            r_shape = P.Reshape()(tile_shape, (-1,))
 
         # 0 represents the start index, and 2 represents the step
         axis = F.make_range(0, len(r_shape), 2)
-        dx = reduce_sum(reshape(dout, r_shape), axis)
+        dx = reduce_sum(P.Reshape()(dout, r_shape), axis)
         dx = reshape(dx, shapex)
         return dx, zeros_like(multiples)
 

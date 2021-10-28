@@ -683,7 +683,9 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
 
   const auto eval_result = evaluator_cache_mgr_->GetValue(args);
   if (eval_result != nullptr) {
-    return eval_result;
+    auto abs = eval_result->abstract()->Clone();
+    auto attr = eval_result->attribute();
+    return std::make_shared<EvalResult>(abs, attr);
   }
 
   auto py_args = PreparePyInputs(prim_py_, args);
