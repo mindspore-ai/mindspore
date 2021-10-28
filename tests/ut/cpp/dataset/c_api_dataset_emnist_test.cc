@@ -26,12 +26,14 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: EMnistTrainDataset.
+/// Description: test basic usage of EMnistTrainDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestEMnistTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTrainDataset.";
 
   // Create a EMnist Train Dataset
   std::string folder_path = datasets_root_path_ + "/testEMnistDataset";
-
   std::shared_ptr<Dataset> ds = EMnist(folder_path, "mnist", "train", std::make_shared<RandomSampler>(false, 5));
 
   EXPECT_NE(ds, nullptr);
@@ -61,6 +63,9 @@ TEST_F(MindDataTestPipeline, TestEMnistTrainDataset) {
   iter->Stop();
 }
 
+/// Feature: EMnistTestDataset.
+/// Description: test basic usage of EMnistTestDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestEMnistTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTestDataset.";
 
@@ -96,6 +101,9 @@ TEST_F(MindDataTestPipeline, TestEMnistTestDataset) {
   iter->Stop();
 }
 
+/// Feature: EMnistTrainDatasetWithPipeline.
+/// Description: test usage of EMnistTrainDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestEMnistTrainDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTrainDatasetWithPipeline.";
 
@@ -152,6 +160,9 @@ TEST_F(MindDataTestPipeline, TestEMnistTrainDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: TestEMnistTestDatasetWithPipeline.
+/// Description: test usage of EMnistTrainDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestEMnistTestDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTestDatasetWithPipeline.";
 
@@ -208,6 +219,64 @@ TEST_F(MindDataTestPipeline, TestEMnistTestDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: EMnistIteratorOneColumn.
+/// Description: test iterator of EMnistDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestEMnistIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistIteratorOneColumn.";
+// Create a EMnist Dataset
+std::string folder_path = datasets_root_path_ + "/testEMnistDataset";
+std::shared_ptr<Dataset> ds = EMnist(folder_path, "mnist", "train", std::make_shared<RandomSampler>(false, 5));
+EXPECT_NE(ds, nullptr);
+
+// Create a Batch operation on ds
+int32_t batch_size = 1;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+std::vector<int64_t> expect_image = {1, 28, 28, 1};
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+EXPECT_EQ(expect_image, v.Shape());
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 5);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: EMnistIteratorWrongColumn.
+/// Description: test iterator of EMnistDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestEMnistIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistIteratorWrongColumn.";
+// Create a EMnist Dataset
+std::string folder_path = datasets_root_path_ + "/testEMnistDataset";
+std::shared_ptr<Dataset> ds = EMnist(folder_path, "mnist", "train", std::make_shared<RandomSampler>(false, 5));
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestGetEMnistTrainDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetEMnistTrainDatasetSize.";
 
@@ -236,6 +305,9 @@ TEST_F(MindDataTestPipeline, TestGetEMnistTestDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: EMnistTrainDatasetGetters.
+/// Description: test usage of getters EMnistTrainDataset.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestEMnistTrainDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTrainDatasetGetters.";
 
@@ -274,6 +346,9 @@ TEST_F(MindDataTestPipeline, TestEMnistTrainDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: EMnistTestDatasetGetters.
+/// Description: test usage of getters EMnistTrainDataset.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestEMnistTestDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistTestDatasetGetters.";
 
@@ -312,6 +387,9 @@ TEST_F(MindDataTestPipeline, TestEMnistTestDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: EMnistDatasetWithInvalidDir.
+/// Description: test failure of EMnistDataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidDir) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistDatasetWithInvalidDir.";
 
@@ -325,6 +403,9 @@ TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidDir) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: EMnistDatasetWithInvalidUsage.
+/// Description: test failure of EMnistDataset with invalid usage.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidUsage) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistDatasetWithInvalidUsage.";
 
@@ -339,6 +420,9 @@ TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidUsage) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: EMnistDatasetWithInvalidName.
+/// Description: test failure of EMnistDataset with invalid name.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidName) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistDatasetWithInvalidName.";
 
@@ -353,6 +437,9 @@ TEST_F(MindDataTestPipeline, TestEMnistDatasetWithInvalidName) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TestEMnistDatasetWithNullSampler.
+/// Description: test failure of EMnistDataset with null sampler.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestEMnistDatasetWithNullSampler) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEMnistDatasetWithNullSampler.";
 

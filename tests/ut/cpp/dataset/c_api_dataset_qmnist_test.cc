@@ -25,6 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: QMnistTrainDataset.
+/// Description: test basic usage of QMnistTrainDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDataset.";
 
@@ -59,6 +62,9 @@ TEST_F(MindDataTestPipeline, TestQMnistTrainDataset) {
   iter->Stop();
 }
 
+/// Feature: QMnistTestDataset.
+/// Description: test basic usage of QMnistTestDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTestDataset.";
 
@@ -93,6 +99,9 @@ TEST_F(MindDataTestPipeline, TestQMnistTestDataset) {
   iter->Stop();
 }
 
+/// Feature: QMnistNistDataset.
+/// Description: test basic usage of QMnistNistDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistNistDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistNistDataset.";
 
@@ -127,6 +136,9 @@ TEST_F(MindDataTestPipeline, TestQMnistNistDataset) {
   iter->Stop();
 }
 
+/// Feature: QMnistAllDataset.
+/// Description: test basic usage of QMnistAllDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistAllDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistAllDataset.";
 
@@ -161,6 +173,9 @@ TEST_F(MindDataTestPipeline, TestQMnistAllDataset) {
   iter->Stop();
 }
 
+/// Feature: QMnistCompatDataset.
+/// Description: test basic usage of QMnistCompatDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistCompatDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistCompatDataset.";
 
@@ -197,6 +212,9 @@ TEST_F(MindDataTestPipeline, TestQMnistCompatDataset) {
   iter->Stop();
 }
 
+/// Feature: QMnistTrainDatasetWithPipeline.
+/// Description: test usage of QMnistTrainDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDatasetWithPipeline.";
 
@@ -252,6 +270,67 @@ TEST_F(MindDataTestPipeline, TestQMnistDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: QMnistIteratorOneColumn.
+/// Description: test iterator of QMnistDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestQMnistIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistIteratorOneColumn.";
+// Create a QMnist Dataset
+std::string folder_path = datasets_root_path_ + "/testQMnistData/";
+std::shared_ptr<Dataset> ds = QMnist(folder_path, "train", true, std::make_shared<RandomSampler>(false, 5));
+EXPECT_NE(ds, nullptr);
+
+// Create a Batch operation on ds
+int32_t batch_size = 1;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+std::vector<int64_t> expect_image = {1, 28, 28, 1};
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+EXPECT_EQ(expect_image, v.Shape());
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 5);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: QMnistIteratorWrongColumn.
+/// Description: test iterator of QMnistDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestQMnistIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistIteratorWrongColumn.";
+// Create a QMnist Dataset
+std::string folder_path = datasets_root_path_ + "/testQMnistData/";
+std::shared_ptr<Dataset> ds = QMnist(folder_path, "train", true, std::make_shared<RandomSampler>(false, 5));
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: GetQMnistDatasetSize.
+/// Description: test usage of get the size of QMnistDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestGetQMnistDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetQMnistTrainDatasetSize.";
 
@@ -263,6 +342,9 @@ TEST_F(MindDataTestPipeline, TestGetQMnistDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: QMnistDatasetGetters.
+/// Description: test usage of getters QMnistTrainDataset.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestQMnistDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDatasetGetters.";
 
@@ -301,6 +383,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: QMnistDataFail.
+/// Description: test failure of QMnistDataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestQMnistDataFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataFail.";
 
@@ -314,6 +399,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDataFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: QMnistDataWithInvalidUsageFail.
+/// Description: test failure of QMnistDataset with invalid usage.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestQMnistDataWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataWithInvalidUsageFail.";
 
@@ -328,6 +416,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDataWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: QMnistDataWithNullSamplerFail.
+/// Description: test failure of QMnistDataset with null sampler.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestQMnistDataWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataWithNullSamplerFail.";
 

@@ -26,7 +26,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDataset
 /// Description: test FakeImage 
 /// Expectation: get correct FakeImage dataset
 TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
@@ -34,7 +34,6 @@ TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
 
   // Create a FakeImage Dataset
   std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
-
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -63,7 +62,7 @@ TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
   iter->Stop();
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetWithPipeline
 /// Description: test FakeImage in pipeline mode
 /// Expectation: get correct FakeImage dataset
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
@@ -119,8 +118,63 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+/// Feature: FakeImageIteratorOneColumn.
+/// Description: test iterator of FakeImageDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestFakeImageIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorOneColumn.";
+// Create a FakeImage Dataset
+std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+EXPECT_NE(ds, nullptr);
 
-/// Feature: FakeIamge
+// Create a Batch operation on ds
+int32_t batch_size = 2;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+std::vector<int64_t> expect_image = {2, 28, 28, 3};
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+EXPECT_EQ(expect_image, v.Shape());
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 5);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: FakeImageIteratorWrongColumn.
+/// Description: test iterator of FakeImageDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestFakeImageIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorWrongColumn.";
+// Create a FakeImage Dataset
+std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: GetFakeImageDatasetSize
 /// Description: test GetDataSize of FakeImage 
 /// Expectation: get the correct size of FakeImage
 TEST_F(MindDataTestPipeline, TestGetFakeImageDatasetSize) {
@@ -133,7 +187,7 @@ TEST_F(MindDataTestPipeline, TestGetFakeImageDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 50);
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetGetters
 /// Description: test DatasetGetters of FakeImage 
 /// Expectation: getters of FakeImage get the correct value
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetGetters) {
@@ -173,7 +227,7 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 50);
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetWithInvalidNumImages
 /// Description: test invalid num_images of FakeImage 
 /// Expectation: throw exception correctly
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumImages) {
@@ -189,7 +243,7 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumImages) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetWithInvalidImageSize
 /// Description: test invalid image_size of FakeImage 
 /// Expectation: throw exception correctly
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidImageSize) {
@@ -205,7 +259,7 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidImageSize) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetWithInvalidNumClasses
 /// Description: test invalid num_classes of FakeImage 
 /// Expectation: throw exception correctly
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumClasses) {
@@ -221,7 +275,7 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumClasses) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeIamge
+/// Feature: FakeImageDatasetWithNullSampler
 /// Description: test FakeImage dataset with null sampler
 /// Expectation: dataset is null
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithNullSampler) {
