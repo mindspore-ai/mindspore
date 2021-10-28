@@ -60,6 +60,5 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
   MS_LOG(INFO) << "Unmask success time is : " << duration;
   return true;
 }
-
 }  // namespace armour
 }  // namespace mindspore

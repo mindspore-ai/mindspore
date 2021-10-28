@@ -435,7 +435,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
   return true;
 }
 
-bool CipherReconStruct::GetSymbol(const std::string &str1, const std::string &str2) {
+bool CipherReconStruct::GetSymbol(const std::string &str1, const std::string &str2) const {
   if (str1 > str2) {
     return true;
   } else {

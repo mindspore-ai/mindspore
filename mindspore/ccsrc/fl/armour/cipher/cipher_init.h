@@ -40,8 +40,7 @@ class CipherInit {
   // Initialize the parameters of the secure aggregation.
   bool Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_exchange_keys_cnt,
             size_t cipher_get_keys_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_secrets_cnt,
-            size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_down_cnt,
-            size_t cipher_reconstruct_secrets_up_cnt);
+            size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_up_cnt);
 
   // Get public params. which is given to start fl job thread.
   CipherPublicPara *GetPublicParams() { return &publicparam_; }
