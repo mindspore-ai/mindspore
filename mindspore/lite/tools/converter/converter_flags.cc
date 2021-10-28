@@ -415,9 +415,11 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   const char *colon = ":";
   for (const auto &device : device_rates) {
     std::vector<std::string> rate = lite::SplitStringToVector(device, *colon);
-    auto compute_rate = std::atoi(rate.back().c_str());
-    if (compute_rate == 0) {
-      MS_LOG(ERROR) << "The compute rate is invalid.";
+    int64_t compute_rate = 0;
+    try {
+      compute_rate = std::stoi(rate.back());
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Get compute rate failed: " << e.what();
       return false;
     }
     parallel_split_config->parallel_compute_rates_.push_back(compute_rate);

@@ -393,14 +393,14 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
       in_nodes.push_back(cnode->input(i));
     }
   }
-  if (!IsInOutCanFuison(func_graph, in_nodes, &trans_count, &trans_info->pre_)) {
+  if (!IsInOutCanFuison(in_nodes, &trans_count, &trans_info->pre_)) {
     return false;
   }
   std::vector<AnfNodePtr> out_nodes;
   if (GetPostNodes(func_graph, cnode, &out_nodes) != lite::RET_OK) {
     return false;
   }
-  if (!IsInOutCanFuison(func_graph, out_nodes, &trans_count, &trans_info->post_)) {
+  if (!IsInOutCanFuison(out_nodes, &trans_count, &trans_info->post_)) {
     return false;
   }
   if (trans_info->pre_ == trans_info->post_) {
@@ -425,8 +425,8 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
   return can_insert;
 }
 
-bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+bool TransposeStrategy::CanChangeOpAxis(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode Failed");
   if (!IsDynamicFormatOp(prim->name())) {
@@ -506,9 +506,8 @@ STATUS TransposeStrategy::TransposeInsertDependOnShape(const FuncGraphPtr &func_
   return lite::RET_OK;
 }
 
-bool TransposeStrategy::IsInOutCanFuison(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
-                                         size_t *trans_count, FormatTransNodeType *trans_type) {
-  MS_ASSERT(func_graph != nullptr);
+bool TransposeStrategy::IsInOutCanFuison(const std::vector<AnfNodePtr> &nodes, size_t *trans_count,
+                                         FormatTransNodeType *trans_type) {
   MS_ASSERT(trans_count != nullptr && trans_type != nullptr);
   for (auto &node : nodes) {
     if (CheckPrimitiveType(node, prim::kPrimTranspose)) {

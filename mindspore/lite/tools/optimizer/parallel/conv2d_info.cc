@@ -368,7 +368,7 @@ int Conv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
   if (split_mode_ == SplitCIN) {
     MS_LOG(DEBUG) << name_ << " : Split Cin, infer Forward op.";
-    replace_op_ = CreateReduceNode(cnode_, parallel_output_nodes_, kAxisCIn, dev_num);
+    replace_op_ = CreateReduceNode(cnode_, parallel_output_nodes_, dev_num);
   } else {
     int32_t concat_dim;
     if (split_mode_ == SplitN) {

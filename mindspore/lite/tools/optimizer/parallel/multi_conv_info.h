@@ -49,7 +49,6 @@ class MultiConvSplit : public MultiNodeSplit {
                                  int output_conv_index, std::vector<AnfNodePtr> *outputs_node);
 
   virtual bool SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
-                               const std::vector<AnfNodePtr> &weight_node, const std::vector<AnfNodePtr> &bias_nodes,
                                std::vector<AnfNodePtr> *outputs_node);
 
  protected:
