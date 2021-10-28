@@ -57,8 +57,8 @@ class KernelRuntime {
   virtual void AssignMemory(const session::KernelGraph &graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
-  void RunOpAssignCommunicationOutput(const AnfNodePtr &node) const;
-  void RunOpAssignCommunicationInput(const AnfNodePtr &node) const;
+  void AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &node) const;
+  void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph &graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
 #ifdef ENABLE_DEBUGGER
@@ -94,7 +94,7 @@ class KernelRuntime {
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
-  static bool use_mem_scheduler();
+  static bool UseMemScheduler();
 
 #ifdef ENABLE_DEBUGGER
   // set debugger
@@ -152,6 +152,8 @@ class KernelRuntime {
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
   void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
                              const AnfNodePtr &kernel, bool mock);
+
+  void AssignCommunicationMem(const session::KernelGraph &graph);
   void AssignStaticMemoryOutput(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
   void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index) const;
@@ -171,11 +173,10 @@ class KernelRuntime {
   void CheckIfSupportPSEmbeddingCache(const session::KernelGraph &graph);
   void CheckSparsePSEmbeddingCache(const CNodePtr &node);
 #endif
-  void RunOpGetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size,
-                                      std::vector<DeviceAddressPtr> *address_list,
-                                      std::vector<size_t> *align_size_list) const;
-  void RunOpGetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, std::vector<size_t> *align_size_list,
-                                       std::vector<DeviceAddressPtr> *device_address_list) const;
+  void GetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size, DeviceAddressPtrList *address_list,
+                                 std::vector<size_t> *align_size_list) const;
+  void GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, DeviceAddressPtrList *address_list,
+                                  std::vector<size_t> *align_size_list) const;
 
  protected:
   uint32_t device_id_{0};
