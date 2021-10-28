@@ -4164,7 +4164,7 @@ class ScatterUpdate(_ScatterOpDynamic):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class ScatterNdUpdate(_ScatterNdOp):
+class ScatterNdUpdate(Primitive):
     r"""
     Updates tensor values by using input indices and value.
 
@@ -4217,19 +4217,18 @@ class ScatterNdUpdate(_ScatterNdOp):
          [0.4  2.2  -3.2]]
     """
 
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Initialize ScatterNdUpdate"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'value'], outputs=['y'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
-
 
 class ScatterMax(_ScatterOp):
     r"""

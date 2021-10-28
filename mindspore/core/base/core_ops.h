@@ -257,6 +257,7 @@ inline const PrimitivePtr kPrimDepthToSpace = std::make_shared<Primitive>("Depth
 inline const PrimitivePtr kPrimBatchToSpace = std::make_shared<Primitive>("BatchToSpace");
 inline const PrimitivePtr kPrimSpaceToBatch = std::make_shared<Primitive>("SpaceToBatch");
 inline const PrimitivePtr kPrimScatterNd = std::make_shared<Primitive>("ScatterNd");
+inline const PrimitivePtr kPrimScatterNdUpdate = std::make_shared<Primitive>("ScatterNdUpdate");
 inline const PrimitivePtr kPrimConstantOfShape = std::make_shared<Primitive>("ConstantOfShape");
 inline const PrimitivePtr kPrimSquaredDifference = std::make_shared<Primitive>("SquaredDifference");
 inline const PrimitivePtr kPrimReverseV2 = std::make_shared<Primitive>("ReverseV2");
