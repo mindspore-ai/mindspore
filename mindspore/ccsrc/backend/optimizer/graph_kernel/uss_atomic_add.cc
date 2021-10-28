@@ -29,13 +29,10 @@
 #include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "utils/utils.h"
-#include "utils/log_adapter.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
-#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace opt {

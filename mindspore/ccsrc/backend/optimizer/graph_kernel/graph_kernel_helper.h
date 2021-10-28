@@ -149,7 +149,7 @@ std::vector<PrimitivePtr> GetValidOps(
 // return a func_graph's manager
 FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);
 
-void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph);
+void UpdateMng(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph);
 }  // namespace opt
 }  // namespace mindspore
 
