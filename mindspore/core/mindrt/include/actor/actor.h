@@ -28,13 +28,9 @@
 #include "actor/mailbox.h"
 
 namespace mindspore {
-
-class ActorBase;
 class ActorMgr;
 class ActorWorker;
 class ActorThreadPool;
-
-using ActorReference = std::shared_ptr<ActorBase>;
 
 // should be at least greater than 1
 constexpr uint32_t MAX_ACTOR_RECORD_SIZE = 3;
@@ -217,6 +213,6 @@ class ActorBase {
   ActorThreadPool *pool_{nullptr};
 };
 
+using ActorReference = std::shared_ptr<ActorBase>;
 };  // namespace mindspore
-
 #endif
