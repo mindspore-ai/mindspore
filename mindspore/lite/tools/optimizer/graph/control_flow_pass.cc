@@ -582,7 +582,7 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
     // set after fg inputs to cond_partial_cnode inputs
     then_partial_cnode_inputs.push_back(item);
     auto new_parameter = then_fg->add_parameter();
-    MS_CHECK_TRUE_MSG(new_parameter != nullptr, lite::RET_NULL_PTR, "new_parameter is nullptr");
+    MS_CHECK_TRUE_MSG(new_parameter != nullptr, RET_FAILED, "new_parameter is nullptr");
     if (index == kIfThenIndex) {
       new_parameter->set_name(item->fullname_with_scope() + "_then_fg_parameter");
     } else {
@@ -719,7 +719,7 @@ int ControlFlowPass::ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodeP
   ValueNodePtr switch_anf_primitive = lite::GetSwitchAnfPrim();
   if (switch_anf_primitive == nullptr) {
     MS_LOG(ERROR) << "GetSwitchAnfPrim failed.";
-    return false;
+    return RET_FAILED;
   }
 
   //  insert switch node

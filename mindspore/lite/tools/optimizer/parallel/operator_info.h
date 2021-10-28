@@ -66,7 +66,7 @@ class OperatorInfo {
 
   AnfNodePtr CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                int32_t concat_dim, size_t input_nodes_num);
-  AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes, int32_t reduce_dim,
+  AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                               size_t input_nodes_num);
 
   std::shared_ptr<abstract::AbstractTensor> CreateFakeAbstractTensor() const;

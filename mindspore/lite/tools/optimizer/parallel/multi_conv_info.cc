@@ -159,7 +159,7 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   int res_conv_numbers = static_cast<int>(conv_nodes_.size() - 1);
   for (int32_t i = res_conv_numbers; i >= 0; i--) {
     std::vector<AnfNodePtr> outputs_node;
-    if (!SplitSingleConv(conv_nodes_[i], split_outputs, {}, {}, &outputs_node)) {
+    if (!SplitSingleConv(conv_nodes_[i], split_outputs, &outputs_node)) {
       MS_LOG(ERROR) << "SplitSingleConv failed";
       return nullptr;
     }
@@ -174,14 +174,13 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
 }
 
 bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
-                                     const std::vector<AnfNodePtr> &weight_nodes,
-                                     const std::vector<AnfNodePtr> &bias_nodes, std::vector<AnfNodePtr> *outputs_node) {
+                                     std::vector<AnfNodePtr> *outputs_node) {
   MS_ASSERT(ori_node != nullptr && outputs_node != nullptr);
   auto ori_conv_cnode = ori_node->cast<CNodePtr>();
   MS_ASSERT(ori_conv_cnode != nullptr);
   auto ori_attr = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(ori_conv_cnode->input(kAnfPrimitiveIndex));
   MS_ASSERT(ori_attr != nullptr);
-  for (int64_t output_conv_index = 0; output_conv_index < (split_info_.out_num); output_conv_index++) {
+  for (int output_conv_index = 0; output_conv_index < static_cast<int>(split_info_.out_num); output_conv_index++) {
     // Create Conv node attr
     auto conv_prim = CopyConvPrim(ori_attr);
     auto ori_node_name = ori_node->fullname_with_scope();

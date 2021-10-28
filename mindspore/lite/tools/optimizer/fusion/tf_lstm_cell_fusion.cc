@@ -292,19 +292,22 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     return RET_FAILED;
   }
   auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(old_bias_param->default_param());
+  MS_CHECK_TRUE_RET(origin_tensor != nullptr, RET_ERROR);
   if (origin_tensor->data_type() != kNumberTypeFloat32 && origin_tensor->data_type() != kNumberTypeFloat) {
     MS_LOG(DEBUG) << "origin_tensor is not float32 type";
     return RET_ERROR;
   }
   auto data_ptr = reinterpret_cast<float *>(origin_tensor->data_c());
+  MS_CHECK_TRUE_RET(data_ptr != nullptr, RET_ERROR);
   auto data_shape = origin_tensor->shape();
+  MS_CHECK_GE(hidden_size, 0, RET_ERROR);
   if (data_shape.size() != 1 || data_shape[0] != 4 * hidden_size) {
     MS_LOG(DEBUG) << "bias data shape illegal";
     return RET_ERROR;
   }
 
   std::vector<int64_t> shape{1, kBidirectionalGateNum * hidden_size};
-  auto tensor_data = std::make_unique<float[]>(hidden_size * 8);
+  auto tensor_data = std::make_unique<float[]>(static_cast<size_t>(hidden_size) * 8);
   MS_CHECK_TRUE_RET(tensor_data != nullptr, lite::RET_ERROR);
   auto forget_bias_node = utils::cast<AnfNodePtr>((*body_equiv)[forget_bias_]);
   if (forget_bias_node == nullptr) {
@@ -330,8 +333,9 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     }
   }
 
-  auto tensor_info = lite::CreateTensorInfo(tensor_data.get(), hidden_size * kBidirectionalGateNum * sizeof(float),
-                                            shape, kNumberTypeFloat32);
+  auto tensor_info =
+    lite::CreateTensorInfo(tensor_data.get(), static_cast<size_t>(hidden_size) * kBidirectionalGateNum * sizeof(float),
+                           shape, kNumberTypeFloat32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
@@ -401,7 +405,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
     c_weight->set_abstract(weight->abstract()->Clone());
   }
 
-  if (SplitWeights(weight, i_weight, c_weight, hidden_shape.back()) != RET_OK) {
+  if (SplitWeights(weight, i_weight, c_weight, static_cast<int>(hidden_shape.back())) != RET_OK) {
     MS_LOG(DEBUG) << "split weight to i_weight and c_weight failed";
     return nullptr;
   }
@@ -414,7 +418,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
     bias_node->set_abstract(bias->abstract()->Clone());
   }
 
-  if (PopulateBiasNode(body_equiv, bias_node, bias, hidden_shape.back()) != RET_OK) {
+  if (PopulateBiasNode(body_equiv, bias_node, bias, static_cast<int>(hidden_shape.back())) != RET_OK) {
     MS_LOG(DEBUG) << "reorder bias failed";
     return nullptr;
   }

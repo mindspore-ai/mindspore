@@ -71,9 +71,9 @@ class SlicePreposePass : public Pass {
                                                 const std::vector<int64_t> &new_shape1, int64_t abnormal_axe_in,
                                                 int64_t count_sliced2, bool slice_at_front);
   static bool PreposeWithAbnormalReshape(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
-                                         const CNodePtr &reshape_cnode, const CNodePtr &matmul_cnode,
-                                         const std::vector<int64_t> &shape_in, const std::vector<int64_t> &shape_out,
-                                         int64_t abnormal_axe_in, int64_t abnormal_index_out);
+                                         const CNodePtr &matmul_cnode, const std::vector<int64_t> &shape_in,
+                                         const std::vector<int64_t> &shape_out, int64_t abnormal_axe_in,
+                                         int64_t abnormal_index_out);
   static bool GetArithmeticInputInfo(const CNodePtr &arithmetic_cnode, std::vector<AnfNodePtr> *inputs,
                                      std::vector<std::vector<int64_t>> *shapes, std::vector<bool> *is_default_params);
 

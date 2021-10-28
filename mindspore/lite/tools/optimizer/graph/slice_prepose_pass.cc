@@ -279,8 +279,8 @@ STATUS SlicePreposePass::VerifySliceAttrs(const CNodePtr &slice_cnode, const int
     MS_LOG(DEBUG) << "Invalid slice axe attribute";
     return RET_ERROR;
   }
-  MS_CHECK_TRUE_MSG(begin.size() >= axes.size(), RET_ERROR, "begin size is wrong");
-  MS_CHECK_TRUE_MSG(size.size() >= axes.size(), RET_ERROR, "size.size() is wrong");
+  MS_CHECK_TRUE_MSG(begin.size() <= axes.size(), RET_ERROR, "begin size is wrong");
+  MS_CHECK_TRUE_MSG(size.size() <= axes.size(), RET_ERROR, "size.size() is wrong");
   for (size_t i = 0; i < axes.size(); ++i) {
     auto axe = axes[i];
     if (dim > -1 && axe >= dim) {
@@ -702,13 +702,11 @@ CNodePtr SlicePreposePass::CreateSlice2ForReshapePrepose(const FuncGraphPtr &gra
 }
 
 bool SlicePreposePass::PreposeWithAbnormalReshape(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
-                                                  const CNodePtr &reshape_cnode, const CNodePtr &matmul_cnode,
-                                                  const std::vector<int64_t> &shape_in,
+                                                  const CNodePtr &matmul_cnode, const std::vector<int64_t> &shape_in,
                                                   const std::vector<int64_t> &shape_out, const int64_t abnormal_axe_in,
                                                   const int64_t abnormal_index_out) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
-  MS_ASSERT(reshape_cnode != nullptr);
   auto manager = graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr");
   auto slice_node = GetSlice(slice_cnode);
@@ -936,6 +934,10 @@ bool SlicePreposePass::PreposeWithReshape(const FuncGraphPtr &graph, const CNode
   bool support_abnormal_mode = true;  // if first mismatch axe are sliced and no more other axes are sliced, abnormal
   int64_t abnormal_index_out = GetReshapeAbnormalIndexOut(slice_cnode, mapped_axe, shape_out, &shape_out_copy,
                                                           &is_normal_mode, &support_abnormal_mode);
+  if (abnormal_index_out == -1) {
+    MS_LOG(ERROR) << "GetReshapeAbnormalIndexOut failed.";
+    return false;
+  }
   if (is_normal_mode) {
     return PreposeWithNormalReshape(graph, slice_cnode, reshape_cnode, shape_in, shape_out_copy, mapped_axe);
   } else if (support_abnormal_mode) {
@@ -955,8 +957,8 @@ bool SlicePreposePass::PreposeWithReshape(const FuncGraphPtr &graph, const CNode
       MS_LOG(DEBUG) << "not matmul->reshape->slice pattern";
       return false;
     }
-    return PreposeWithAbnormalReshape(graph, slice_cnode, reshape_cnode, matmul_cnode, shape_in, shape_out,
-                                      abnormal_axe_in, abnormal_index_out);
+    return PreposeWithAbnormalReshape(graph, slice_cnode, matmul_cnode, shape_in, shape_out, abnormal_axe_in,
+                                      abnormal_index_out);
   }
   return false;
 }
@@ -1448,7 +1450,8 @@ bool SlicePreposePass::MergeParallelSlice(const FuncGraphPtr &graph, const NodeU
   }
   for (size_t i = 1; i < slices->size(); ++i) {
     auto slice = utils::cast<CNodePtr>(slices->at(i).first);
-    if (slice == nullptr || !CheckPrimitiveType(slice, prim::kPrimSliceFusion)) {
+    MS_ASSERT(slice == nullptr);
+    if (!CheckPrimitiveType(slice, prim::kPrimSliceFusion)) {
       MS_LOG(ERROR) << "current node is not Slice";
       return false;
     }

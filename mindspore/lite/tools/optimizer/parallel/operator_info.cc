@@ -162,7 +162,7 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
 }
 
 AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
-                                          int32_t reduce_dim, size_t input_nodes_num) {
+                                          size_t input_nodes_num) {
   MS_EXCEPTION_IF_NULL(orig_node);
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of reduce is not equal to input nodes number.";

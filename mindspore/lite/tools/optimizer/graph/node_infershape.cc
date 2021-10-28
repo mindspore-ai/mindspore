@@ -68,7 +68,8 @@ bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   if (prim_t == nullptr) {
     return false;
   }
-  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim_t->value.type, lite::SCHEMA_CUR);
+  auto parameter_gen =
+    lite::PopulateRegistry::GetInstance()->GetParameterCreator(static_cast<int>(prim_t->value.type), lite::SCHEMA_CUR);
   if (parameter_gen == nullptr) {
     prim_t.reset();
     return false;
@@ -108,14 +109,14 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   }
   std::vector<lite::Tensor *> inputs;
   std::transform(inputs_ptr.begin(), inputs_ptr.end(), std::back_inserter(inputs),
-                 [](TensorPtr input) { return input.get(); });
+                 [](const TensorPtr &input) { return input.get(); });
   std::vector<lite::Tensor *> outputs;
   std::transform(outputs_ptr.begin(), outputs_ptr.end(), std::back_inserter(outputs),
-                 [](TensorPtr output) { return output.get(); });
+                 [](const TensorPtr &output) { return output.get(); });
   auto ret = KernelInferShape(inputs, outputs, prim, {}, lite::SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
-    auto parameter_gen =
-      lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+    auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(
+      static_cast<int>(prim->value_type()), lite::SCHEMA_CUR);
     if (parameter_gen == nullptr) {
       MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
       fbb.Clear();

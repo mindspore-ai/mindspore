@@ -110,11 +110,11 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
     [&](const tensor::TensorPtr &constant_tensor) { return (reinterpret_cast<char *>(constant_tensor->data_c())); });
   int64_t outer_total_dim = 1;
   for (int64_t i = 0; i < split_dim; i++) {
-    outer_total_dim *= constant_shape[i];
+    outer_total_dim *= static_cast<size_t>(constant_shape[i]);
   }
   int64_t inner_stride = 1;
   for (int64_t i = static_cast<int64_t>(constant_shape.size()) - 1; i > split_dim; i--) {
-    inner_stride *= constant_shape[i];
+    inner_stride *= static_cast<size_t>(constant_shape[i]);
   }
   auto constant_tensor_ptr = reinterpret_cast<char *>(constant_tensor->data_c());
   // init split_constant_tensor_data
