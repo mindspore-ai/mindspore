@@ -436,25 +436,8 @@ class FlopsParser:
         try:
             with open(_step_trace_file_path, 'r') as f:
                 lines = f.readlines()
-                # the last line is the average info.
-                op_avg_time_lines = lines[1:-1]
-                # train mode.
-                if self.is_training_mode_flag:
-                    for op_avg_idx in op_avg_time_lines:
-                        line = op_avg_idx.split(',')
-                        fp = float(line[4]) / 100000.0
-                        bp = float(line[5]) / 100000.0
-                        op_all_step_time.append([fp, bp])
-                        op_all_step_comp.append([0.0, bp - fp])
-                else:
-                    # eval mode.
-                    for op_avg_idx in op_avg_time_lines:
-                        line = op_avg_idx.split(',')
-                        fp = float(line[4]) / 100000.0
-                        end_point = float(line[2]) / 100000.0
-                        op_all_step_time.append([fp, end_point])
-                        op_all_step_comp.append([0.0, end_point - fp])
-
+                op_all_step_time, op_all_step_comp = \
+                    self._get_bp_fp_time_by_line(lines, op_all_step_time, op_all_step_comp)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
             raise ProfilerIOException()
@@ -462,6 +445,30 @@ class FlopsParser:
         if not op_all_step_time:
             logger.warning(f'Empty when read {optime_file_path} file, please check the valid'
                            'data of this file.')
+        return op_all_step_time, op_all_step_comp
+
+    def _get_bp_fp_time_by_line(self, lines, op_all_step_time, op_all_step_comp):
+        """Get the bp and fp time with lines."""
+        # the last line is the average info.
+        op_avg_time_lines = lines[1:-1]
+        # train mode.
+        if self.is_training_mode_flag:
+            op_all_step_time, op_all_step_comp = \
+                self._read_line(4, 5, op_avg_time_lines, op_all_step_time, op_all_step_comp)
+        else:
+            # eval mode.
+            op_all_step_time, op_all_step_comp = \
+                self._read_line(4, 2, op_avg_time_lines, op_all_step_time, op_all_step_comp)
+        return op_all_step_time, op_all_step_comp
+
+    def _read_line(self, start_dot, end_dot, op_avg_time_lines, op_all_step_time, op_all_step_comp):
+        """Read the bp and fp time from line."""
+        for op_avg_idx in op_avg_time_lines:
+            line = op_avg_idx.split(',')
+            fp = float(line[start_dot]) / 100000.0
+            bp = float(line[end_dot]) / 100000.0
+            op_all_step_time.append([fp, bp])
+            op_all_step_comp.append([0.0, bp - fp])
         return op_all_step_time, op_all_step_comp
 
     def _get_op_start_time(self):
