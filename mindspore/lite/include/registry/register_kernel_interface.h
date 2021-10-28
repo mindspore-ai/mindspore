@@ -81,6 +81,8 @@ class MS_API KernelInterfaceReg {
   KernelInterfaceReg(const std::string &provider, const std::string &op_type, const KernelInterfaceCreator creator) {
     RegisterKernelInterface::CustomReg(provider, op_type, creator);
   }
+
+  virtual ~KernelInterfaceReg() = default;
 };
 
 /// \brief Defined registering macro to register ordinary op, which called by user directly.
