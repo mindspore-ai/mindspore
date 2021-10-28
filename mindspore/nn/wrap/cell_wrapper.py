@@ -592,7 +592,7 @@ class WithEvalCell(Cell):
     Args:
         network (Cell): The network Cell.
         loss_fn (Cell): The loss Cell.
-        add_cast_fp32 (bool): Adjust the data type to float32.
+        add_cast_fp32 (bool): Adjust the data type to float32. Default: False.
 
     Inputs:
         - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.

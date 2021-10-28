@@ -1216,9 +1216,8 @@ class Cell(Cell_):
         """
         Add cast on all inputs of cell and child cells to run with certain float type.
 
-        If `dst_type is mindspore.dtype.float16`, all the inputs of Cell including input, Parameter, Tensor
-        as const will be cast to float16. Please refer to the usage in source code of
-        `mindspore.train.amp.build_train_network`.
+        If `dst_type` is `mindspore.dtype.float16`, all the inputs of Cell, including input, Parameter and Tensor, will
+        be cast to float16. Please refer to the usage in source code of :func:`mindspore.build_train_network`.
 
         Note:
             Multiple calls will overwrite.
@@ -1232,6 +1231,13 @@ class Cell(Cell_):
 
         Raises:
             ValueError: If dst_type is not float32 or float16.
+
+        Examples:
+            >>> import mindspore.nn as nn
+            >>> from mindspore import dtype as mstype
+            >>>
+            >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
+            >>> net.to_float(mstype.float16)
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("The dst_type should inside float32 or float16.")

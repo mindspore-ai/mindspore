@@ -287,7 +287,8 @@ class Optimizer(Cell):
         """
         Weight decay.
 
-        An approach to reduce the overfitting of a deep learning neural network model.
+        An approach to reduce the overfitting of a deep learning neural network model. User-defined optimizers based
+        on :class:`mindspore.nn.Optimizer` can also call this interface to apply weight decay.
 
         Args:
             gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
@@ -311,8 +312,9 @@ class Optimizer(Cell):
         """
         Gradients centralization.
 
-        A method for optimizing convolutional layer parameters to impore the training speed of a deep learning neural
-        network model.
+        A method for optimizing convolutional layer parameters to improve the training speed of a deep learning neural
+        network model. User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface to
+        centralize gradients.
 
         Args:
             gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
@@ -331,7 +333,8 @@ class Optimizer(Cell):
         Loss scale for mixed precision.
 
         An approach of mixed precision training to improve the speed and energy efficiency of training deep neural
-        network.
+        network. User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface to
+        restore gradients.
 
         Args:
             gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
@@ -546,7 +549,8 @@ class Optimizer(Cell):
 
     def get_lr(self):
         """
-        Get the learning rate of current step.
+        The optimizer calls this interface to get the learning rate for the current step. User-defined optimizers based
+        on :class:`mindspore.nn.Optimizer` can also call this interface before updating the parameters.
 
         Returns:
             float, the learning rate of current step.
@@ -566,13 +570,27 @@ class Optimizer(Cell):
 
     def get_lr_parameter(self, param):
         """
-        Get the learning rate of parameter.
+        When parameters is grouped and learning rate is different for each group. Get the learning rate for the
+        specified `param`.
 
         Args:
             param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
 
         Returns:
-            Parameter, single `Parameter` or `list[Parameter]` according to the input type.
+            Parameter, single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
+            `Cell` or `list[Cell]` that used to calculate the learning rate will be returned.
+
+        Examples:
+            >>> from mindspore import nn
+            >>> net = Net()
+            >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+            >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+            >>> group_params = [{'params': conv_params, 'lr': 0.05},
+            ...                 {'params': no_conv_params, 'lr': 0.01}]
+            >>> optim = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
+            >>> conv_lr = optim.get_lr_parameter(conv_params)
+            >>> print(conv_lr[0].asnumpy())
+            0.05
         """
         def get_lr_value(learning_rate):
             if isinstance(learning_rate, (_ConvertToCell, _IteratorLearningRate)):
