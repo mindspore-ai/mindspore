@@ -138,7 +138,6 @@ enum SubModuleId : int {
   SM_LITE,               // LITE
   SM_ARMOUR,             // ARMOUR
   SM_HCCL_ADPT,          // Hccl Adapter
-  SM_MINDQUANTUM,        // MindQuantum
   SM_RUNTIME_FRAMEWORK,  // Runtime framework
   SM_GE,                 // GraphEngine
   NUM_SUBMODUES          // number of submodules
