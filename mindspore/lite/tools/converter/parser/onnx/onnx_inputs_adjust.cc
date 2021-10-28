@@ -247,7 +247,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << (cnode->inputs().size() - 1);
     return lite::RET_INPUT_TENSOR_ERROR;
   }
-  int size = 0;
+  int size = 1;
   for (size_t i = 2; i < cnode->inputs().size(); ++i) {
     const auto &param_node = cnode->input(opt::kInputIndexTwo)->cast<ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
@@ -259,10 +259,9 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
       return lite::RET_ERROR;
     }
     auto shape = default_data->shape();
-    size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
-    if (size > (int64_t)INT32_MAX) {
-      MS_LOG(ERROR) << "Size of tensor should be smaller than int32_max, now is: " << size;
-      return lite::RET_ERROR;
+    for (size_t j = 0; j < shape.size(); j++) {
+      MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(size, static_cast<int>(shape.at(j))), RET_ERROR, "Int mul overflow.");
+      size = size * static_cast<int>(shape.at(j));
     }
     break;
   }
