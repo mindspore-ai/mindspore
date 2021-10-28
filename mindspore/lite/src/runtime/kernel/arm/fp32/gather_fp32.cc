@@ -42,7 +42,7 @@ int GatherCPUKernel::Prepare() {
 
 int GatherCPUKernel::ReSize() { return RET_OK; }
 
-int GatherCPUKernel::DoGather(int task_id) {
+int GatherCPUKernel::DoGather(int task_id) const {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
@@ -81,8 +81,8 @@ int GatherCPUKernel::DoGather(int task_id) {
   return error_code;
 }
 
-int GatherRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto gather_kernel = reinterpret_cast<GatherCPUKernel *>(cdata);
+int GatherRun(const void *cdata, int task_id, float, float) {
+  auto gather_kernel = reinterpret_cast<const GatherCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "GatherRun error task_id[" << task_id << "] error_code[" << error_code << "]";

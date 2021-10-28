@@ -35,7 +35,7 @@ int LocalResponseNormCPUKernel::Prepare() {
 
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 
-int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
+int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) const {
   auto input_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
   auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
@@ -67,8 +67,8 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   return RET_OK;
 }
 
-int LocalResponseNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto lrn = reinterpret_cast<LocalResponseNormCPUKernel *>(cdata);
+int LocalResponseNormRun(const void *cdata, int task_id, float, float) {
+  auto lrn = reinterpret_cast<const LocalResponseNormCPUKernel *>(cdata);
   auto error_code = lrn->DoLocalResponseNorm(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNormRun error task_id[" << task_id << "] error_code[" << error_code << "]";

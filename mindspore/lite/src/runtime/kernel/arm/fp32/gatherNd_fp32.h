@@ -37,7 +37,7 @@ class GatherNdCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoGatherNd(int task_id);
+  int DoGatherNd(int task_id) const;
 
  private:
   void InitOffset();

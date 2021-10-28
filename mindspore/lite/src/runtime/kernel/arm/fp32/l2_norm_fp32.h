@@ -36,9 +36,9 @@ class L2NormCPUKernel : public InnerKernel {
   }
   ~L2NormCPUKernel() { FreeTmpBuffer(); }
 
-  int CalcSquareSum(int task_id);
-  int DivSqrtSum(int task_id);
-  int CalcL2NormTrailingAxis(int task_id);
+  int CalcSquareSum(int task_id) const;
+  int DivSqrtSum(int task_id) const;
+  int CalcL2NormTrailingAxis(int task_id) const;
 
   int Prepare() override;
   int ReSize() override;

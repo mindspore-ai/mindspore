@@ -21,9 +21,9 @@
 using mindspore::lite::RET_NULL_PTR;
 
 namespace mindspore::kernel {
-int MatmulBaseFloatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int MatmulBaseFloatRun(const void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
-  auto op = reinterpret_cast<MatmulFp32BaseCPUKernel *>(cdata);
+  auto op = reinterpret_cast<const MatmulFp32BaseCPUKernel *>(cdata);
   auto error_code = op->FloatRun(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "MatmulFp32Run error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -126,32 +126,44 @@ int MatmulFp32BaseCPUKernel::CalBroadCastBiasDataElements() {
 }
 
 int MatmulFp32BaseCPUKernel::InitBiasData() {
-  if (in_tensors_.size() == 3) {
-    auto bias_tensor = in_tensors_[2];
-    size_t max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), col_tile_);
-    // malloc addr need to aligned to 32 bytes
+  if (in_tensors_.size() != FOURTH_INPUT) {
+    return RET_OK;
+  }
+  auto bias_tensor = in_tensors_[THIRD_INPUT];
+  if (bias_tensor == nullptr) {
+    MS_LOG(ERROR) << "bias_tensor invalid";
+    return RET_ERROR;
+  }
+
+  if (bias_tensor->ElementsNum() == 1) {
+    // broadcast bias data
+    size_t max_bias_data = CalBroadCastBiasDataElements();
     bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * static_cast<int>(sizeof(float))));
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
     }
-    // whether to broadcast bias data
-    if (bias_tensor->ElementsNum() == 1) {
-      max_bias_data = CalBroadCastBiasDataElements();
-      float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data()))[0];
-      // broadcast bias data
-      for (size_t i = 0; i < max_bias_data; ++i) {
-        bias_ptr_[i] = broadcast_data;
-      }
-    } else {
-      memset(bias_ptr_, 0, max_bias_data * static_cast<int>(sizeof(float)));
-      memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * static_cast<int>(sizeof(float)));
+    float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data()))[0];
+    // broadcast bias data
+    for (size_t i = 0; i < max_bias_data; ++i) {
+      bias_ptr_[i] = broadcast_data;
     }
+    return RET_OK;
   }
+
+  size_t max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), col_tile_);
+  // malloc addr need to aligned to 32 bytes
+  bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * static_cast<int>(sizeof(float))));
+  if (bias_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "malloc bias_ptr_ failed";
+    return RET_ERROR;
+  }
+  memset(bias_ptr_, 0, max_bias_data * static_cast<int>(sizeof(float)));
+  memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * static_cast<int>(sizeof(float)));
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
+int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) const {
   CHECK_NULL_RETURN(src_ptr);
 #ifdef ENABLE_ARM64
   if (vec_matmul_) {
@@ -175,7 +187,7 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
+int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) const {
   CHECK_NULL_RETURN(src_ptr);
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;

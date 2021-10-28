@@ -32,7 +32,7 @@ class LogSoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoLogSoftmaxLastAxis(int task_id);
+  int DoLogSoftmaxLastAxis(int task_id) const;
 
  private:
   float *tmp_data_ = nullptr;

@@ -76,6 +76,7 @@
 #define THIRD_INPUT 2
 #define FOURTH_INPUT 3
 #define FIFTH_INPUT 4
+#define SIXTH_INPUT 5
 
 #define DIMENSION_1D 1
 #define DIMENSION_2D 2

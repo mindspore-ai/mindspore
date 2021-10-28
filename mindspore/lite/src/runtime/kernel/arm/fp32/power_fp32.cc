@@ -33,9 +33,8 @@ int PowerCPUKernel::Prepare() {
 
 int PowerCPUKernel::ReSize() { return RET_OK; }
 
-int PowerImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
-  auto kernel = reinterpret_cast<PowerCPUKernel *>(cdata);
+int PowerImpl(const void *cdata, int task_id, float, float) {
+  auto kernel = reinterpret_cast<const PowerCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {
@@ -54,7 +53,7 @@ int PowerCPUKernel::Run() {
   return RET_OK;
 }
 
-int PowerCPUKernel::RunImpl(int task_id) {
+int PowerCPUKernel::RunImpl(int task_id) const {
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(x_addr);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());

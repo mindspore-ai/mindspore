@@ -27,8 +27,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
-static int PReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto PRelu = reinterpret_cast<PReluCPUKernel *>(cdata);
+static int PReluRun(const void *cdata, int task_id, float, float) {
+  auto PRelu = reinterpret_cast<const PReluCPUKernel *>(cdata);
   auto ret = PRelu->DoExcute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PReluRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -55,7 +55,7 @@ int PReluCPUKernel::Prepare() {
   return ReSize();
 }
 
-int PReluCPUKernel::DoExcute(int task_id) {
+int PReluCPUKernel::DoExcute(int task_id) const {
   int thread_num = param_->op_parameter_.thread_num_;
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread_num is 0!";

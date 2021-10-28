@@ -258,35 +258,36 @@ void PackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc
         tmp_weight[oc_remainder + oc_remainder_step * ic] = src[ic + oc_remainder * input_channel];
       }
     }
-  } else {
-    for (; oc < oc_block8; oc += (oc_block / C8NUM)) {
-      oc_block = MSMIN(C4NUM, oc_block8 - oc) * C8NUM;  // max_tile = 32 ==> 24 ==> 16 ==> 8
-      for (int oc_tmp = 0; oc_tmp < oc_block; oc_tmp += C8NUM) {
-        for (int hw = 0; hw < plane; ++hw) {
-          int ic = 0;
-          for (; ic < ic8; ic += C8NUM) {
-            Transpose8X8Fp32Avx(src + hw * input_channel + ic,
-                                tmp_weight + hw * oc_block * input_channel + ic * oc_block + oc_tmp,
-                                input_channel * plane, oc_block);
-          }
-          for (; ic < input_channel; ++ic) {
-            for (int j = 0; j < C8NUM; ++j) {
-              tmp_weight[ic * oc_block + oc_tmp + j + hw * oc_block * input_channel] =
-                src[ic + input_channel * j * plane + hw * input_channel];
-            }
-          }
-        }
-        src += C8NUM * plane * input_channel;
-      }
-      tmp_weight += oc_block * input_channel * plane;
-    }
-    oc = output_channel - oc_block8 * C8NUM;
-    for (int oc_remainder = 0; oc_remainder < oc; ++oc_remainder) {
+    return;
+  }
+
+  for (; oc < oc_block8; oc += (oc_block / C8NUM)) {
+    oc_block = MSMIN(C4NUM, oc_block8 - oc) * C8NUM;  // max_tile = 32 ==> 24 ==> 16 ==> 8
+    for (int oc_tmp = 0; oc_tmp < oc_block; oc_tmp += C8NUM) {
       for (int hw = 0; hw < plane; ++hw) {
-        for (int ic = 0; ic < input_channel; ++ic) {
-          tmp_weight[oc_remainder + oc_remainder_step * ic + hw * input_channel * oc_remainder_step] =
-            src[ic + (oc_remainder * plane + hw) * input_channel];
+        int ic = 0;
+        for (; ic < ic8; ic += C8NUM) {
+          Transpose8X8Fp32Avx(src + hw * input_channel + ic,
+                              tmp_weight + hw * oc_block * input_channel + ic * oc_block + oc_tmp,
+                              input_channel * plane, oc_block);
         }
+        for (; ic < input_channel; ++ic) {
+          for (int j = 0; j < C8NUM; ++j) {
+            tmp_weight[ic * oc_block + oc_tmp + j + hw * oc_block * input_channel] =
+              src[ic + input_channel * j * plane + hw * input_channel];
+          }
+        }
+      }
+      src += C8NUM * plane * input_channel;
+    }
+    tmp_weight += oc_block * input_channel * plane;
+  }
+  oc = output_channel - oc_block8 * C8NUM;
+  for (int oc_remainder = 0; oc_remainder < oc; ++oc_remainder) {
+    for (int hw = 0; hw < plane; ++hw) {
+      for (int ic = 0; ic < input_channel; ++ic) {
+        tmp_weight[oc_remainder + oc_remainder_step * ic + hw * input_channel * oc_remainder_step] =
+          src[ic + (oc_remainder * plane + hw) * input_channel];
       }
     }
   }

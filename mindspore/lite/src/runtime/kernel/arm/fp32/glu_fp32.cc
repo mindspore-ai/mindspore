@@ -35,7 +35,7 @@ int GluCPUKernel::MallocTmpBuffer() {
   FreeTmpBuffer();
   auto in_tensor = in_tensors_.front();
   for (int i = 0; i < kSplitNum; i++) {
-    split_ptr_[i] = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(in_tensor->Size() / kSplitNum));
+    split_ptr_[i] = ms_context_->allocator->Malloc(in_tensor->Size() / kSplitNum);
     if (split_ptr_[i] == nullptr) {
       MS_LOG(ERROR) << "GluCPUKernel malloc split ptr failed.";
       return RET_ERROR;
@@ -96,8 +96,7 @@ int GluCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int GluCPUKernel::Split(int task_id) {
-  input_ptr_ = in_tensors_.front()->data();
+int GluCPUKernel::Split(int task_id) const {
   MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_n_stride_, RET_ERROR);
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
@@ -105,8 +104,8 @@ int GluCPUKernel::Split(int task_id) {
   }
   int thread_offset = task_id * thread_n_stride_;
   auto ret =
-    DoSplit(input_ptr_, reinterpret_cast<void **>(split_ptr_.data()), in_tensors_.front()->shape().data(),
-            thread_offset, num_unit_thread, &split_param_, lite::DataTypeSize(in_tensors_.front()->data_type()));
+    DoSplit(input_ptr_, const_cast<void **>(split_ptr_.data()), in_tensors_.front()->shape().data(), thread_offset,
+            num_unit_thread, &split_param_, lite::DataTypeSize(in_tensors_.front()->data_type()));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Split error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -114,7 +113,7 @@ int GluCPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-int GluCPUKernel::Sigmoid(int task_id) {
+int GluCPUKernel::Sigmoid(int task_id) const {
   auto input_addr = reinterpret_cast<float *>(split_ptr_.at(1));
   auto output_addr = reinterpret_cast<float *>(sigmoid_ptr_);
   auto length = in_tensors_.at(0)->ElementsNum() / kGluBranchNum;
@@ -128,7 +127,7 @@ int GluCPUKernel::Sigmoid(int task_id) {
   return ::Sigmoid(input_addr + stride * task_id, count, output_addr + stride * task_id);
 }
 
-int GluCPUKernel::Mul(int task_id) {
+int GluCPUKernel::Mul(int task_id) const {
   auto input_addr0 = reinterpret_cast<float *>(split_ptr_.at(0));
   auto input_addr1 = reinterpret_cast<float *>(sigmoid_ptr_);
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
@@ -144,22 +143,24 @@ int GluCPUKernel::Mul(int task_id) {
   return ElementMul(input_addr0 + offset, input_addr1 + offset, output_addr + offset, count);
 }
 
-static int SplitRun(void *cdata, int task_id, float, float) {
-  auto g_kernel = reinterpret_cast<GluCPUKernel *>(cdata);
+static int SplitRun(const void *cdata, int task_id, float, float) {
+  auto g_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return g_kernel->Split(task_id);
 }
 
-static int SigmoidRun(void *cdata, int task_id, float, float) {
-  auto activation_kernel = reinterpret_cast<GluCPUKernel *>(cdata);
+static int SigmoidRun(const void *cdata, int task_id, float, float) {
+  auto activation_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return activation_kernel->Sigmoid(task_id);
 }
 
-static int MulRun(void *cdata, int task_id, float, float) {
-  auto g_kernel = reinterpret_cast<GluCPUKernel *>(cdata);
+static int MulRun(const void *cdata, int task_id, float, float) {
+  auto g_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return g_kernel->Mul(task_id);
 }
 
 int GluCPUKernel::Run() {
+  input_ptr_ = in_tensors_.front()->data();
+
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc tmp buffer failed";

@@ -50,7 +50,7 @@ int PoolingCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int PoolingCPUKernel::RunImpl(int task_id) {
+int PoolingCPUKernel::RunImpl(int task_id) const {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   CHECK_NULL_RETURN(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
@@ -76,8 +76,8 @@ int PoolingCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int PoolingImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto pooling = reinterpret_cast<PoolingCPUKernel *>(cdata);
+int PoolingImpl(const void *cdata, int task_id, float, float) {
+  auto pooling = reinterpret_cast<const PoolingCPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Pooling Run error task_id[" << task_id << "] error_code[" << error_code << "]";

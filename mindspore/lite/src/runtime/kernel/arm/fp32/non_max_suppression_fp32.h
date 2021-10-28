@@ -41,7 +41,8 @@ class NonMaxSuppressionCPUKernel : public InnerKernel {
 
  private:
   int GetParams();
-  int Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num, float *scores_data, float *box_data);
+  int Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num, const float *scores_data,
+                  const float *box_data);
 
  private:
   int center_point_box_ = 0;

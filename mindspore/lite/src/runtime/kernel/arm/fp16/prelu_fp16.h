@@ -27,7 +27,7 @@ class PReluFp16CPUKernel : public PReluCPUKernel {
       : PReluCPUKernel(parameter, inputs, outputs, ctx) {}
   ~PReluFp16CPUKernel() = default;
 
-  int DoExcute(int task_id) override;
+  int DoExcute(int task_id) const override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_PRELU_FP16_H_

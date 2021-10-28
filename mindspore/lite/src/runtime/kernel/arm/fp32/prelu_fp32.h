@@ -34,7 +34,7 @@ class PReluCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  virtual int DoExcute(int task_id);
+  virtual int DoExcute(int task_id) const;
 
  protected:
   PReluParameter *param_;

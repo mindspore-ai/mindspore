@@ -35,7 +35,7 @@ class LayerNormCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoLayerNorm(int thread_id);
+  int DoLayerNorm(int thread_id) const;
 
  private:
   LayerNormParameter *param_ = nullptr;

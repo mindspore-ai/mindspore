@@ -110,7 +110,7 @@ void ExpandDims(std::vector<int> *shape, size_t size) {
 }
 
 int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num,
-                                            float *scores_data, float *box_data) {
+                                            const float *scores_data, const float *box_data) {
   std::vector<NMSBox> selected_box_per_class;
   selected_box_per_class.reserve(std::min(static_cast<int32_t>(box_num), max_output_per_class_));
   std::vector<NMSIndex> selected_index;
@@ -119,8 +119,8 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
     int batch_offset = i * class_num * box_num;
     for (auto j = 0; j < class_num; ++j) {
       // per batch per class filter
-      float *per_class_scores = scores_data + batch_offset + j * box_num;
-      float *box = box_data + i * box_num * kBoxPointNum;
+      const float *per_class_scores = scores_data + batch_offset + j * box_num;
+      const float *box = box_data + i * box_num * kBoxPointNum;
       std::vector<NMSBox> above_score_candidates;
       above_score_candidates.reserve(box_num);
       for (auto k = 0; k < box_num; ++k) {

@@ -65,7 +65,7 @@ int LayerNormCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
+int LayerNormCPUKernel::DoLayerNorm(int thread_id) const {
   auto ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, mean_data_, var_data_, param_, thread_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
@@ -74,8 +74,8 @@ int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
   return RET_OK;
 }
 
-int LayerNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto kernel = reinterpret_cast<LayerNormCPUKernel *>(cdata);
+int LayerNormRun(const void *cdata, int task_id, float, float) {
+  auto kernel = reinterpret_cast<const LayerNormCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoLayerNorm(task_id);
   if (ret != RET_OK) {

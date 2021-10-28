@@ -41,8 +41,8 @@ class PadCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  virtual int RunImpl(int task_id);
-  virtual int RunMirrorPadImpl(int task_id);
+  virtual int RunImpl(int task_id) const;
+  virtual int RunMirrorPadImpl(int task_id) const;
 
  private:
   int CheckPaddings(const int *paddings, int length, const int *input_shape, int mode);
@@ -50,6 +50,7 @@ class PadCPUKernel : public InnerKernel {
   int ExtendShape(int *shape, int length, const int *ori_shape, int rank) const;
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const;
   void InitMirrorPadBlock();
+  void RunMirrorPadImplFast(const MirrorPadBlock &block, const float *input_data, float *output_data) const;
 
  protected:
   int HandleMirrorPad();
@@ -60,8 +61,8 @@ class PadCPUKernel : public InnerKernel {
   std::vector<MirrorPadBlock> mirror_pad_block_;
 };
 
-int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale);
-int MirrorPadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int PadImpl(const void *cdata, int task_id, float, float);
+int MirrorPadImpl(const void *cdata, int task_id, float, float);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_

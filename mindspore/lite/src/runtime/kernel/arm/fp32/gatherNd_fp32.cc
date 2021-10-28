@@ -102,7 +102,7 @@ void GatherNdCPUKernel::InitOffset() {
   }
 }
 
-int GatherNdCPUKernel::DoGatherNd(int task_id) {
+int GatherNdCPUKernel::DoGatherNd(int task_id) const {
   int count = MSMIN(thread_sz_stride_, count_ - task_id * thread_sz_stride_);
   if (count <= 0) {
     return RET_OK;
@@ -116,8 +116,8 @@ int GatherNdCPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto g_kernel = reinterpret_cast<GatherNdCPUKernel *>(cdata);
+int GatherNdRun(const void *cdata, int task_id, float, float) {
+  auto g_kernel = reinterpret_cast<const GatherNdCPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "GatherNdRun error task_id[" << task_id << "] error_code[" << ret << "]";
