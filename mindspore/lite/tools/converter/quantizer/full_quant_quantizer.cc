@@ -377,7 +377,7 @@ STATUS Calibrator::ComputeThreshold() {
       bool already_computed = false;
       auto input = cnode->input(i + 1);
       if (input->isa<mindspore::CNode>()) {
-        auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input);
+        auto input_cnode = input->cast<CNodePtr>();
         for (const auto &outputs_diverg_info : outputs_diverg_info_) {
           if (already_computed) {
             break;
@@ -521,12 +521,12 @@ STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNo
     MS_LOG(ERROR) << "not a parameter";
     return RET_PARAM_INVALID;
   }
-  auto parameter = std::dynamic_pointer_cast<Parameter>(weight);
+  auto parameter = weight->cast<ParameterPtr>();
   if (parameter == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not cast to Parameter";
     return RET_NULL_PTR;
   }
-  tensor::TensorPtr tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
+  auto tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
@@ -565,10 +565,10 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
-  auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+  auto bias_parameter_ptr = bias->cast<ParameterPtr>();
   MS_ASSERT(bias_parameter_ptr != nullptr);
   auto bias_default_param = bias_parameter_ptr->default_param();
-  auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+  auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
   MS_ASSERT(bias_parameter != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
@@ -734,7 +734,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
     } else if (input_node->isa<mindspore::CNode>()) {
-      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
         MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
@@ -799,7 +799,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       constexpr int tuple_get_item_input_size = 3;
       MS_CHECK_TRUE_MSG(cnode->size() == tuple_get_item_input_size, RET_ERROR, "cnode->size() != 3");
       auto index_node = cnode->input(THIRD_INPUT);
-      auto index_value_node = std::dynamic_pointer_cast<mindspore::ValueNode>(index_node);
+      auto index_value_node = index_node->cast<mindspore::ValueNodePtr>();
       if (index_value_node == nullptr) {
         MS_LOG(WARNING) << "index value node is null";
         continue;
@@ -807,7 +807,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       size_t index = opt::CastToInt(index_value_node->value()).front();
       auto input_node = cnode->input(SECOND_INPUT);
       MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
-      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
       MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode == nullptr");
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
@@ -871,7 +871,7 @@ STATUS FullQuantQuantizer::UpdateDivergeInterval() {
 STATUS FullQuantQuantizer::PreProcess() {
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
+    AnfNodePtr anf = cnode->cast<AnfNodePtr>();
     if (anf == nullptr) {
       MS_LOG(ERROR) << " cnode is null";
       return RET_NULL_PTR;
@@ -1114,9 +1114,9 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
     // compensate the existed
     auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
     auto bias = cnode->input(FOURTH_INPUT);
-    auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+    auto bias_parameter_ptr = bias->cast<ParameterPtr>();
     auto bias_default_param = bias_parameter_ptr->default_param();
-    auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+    auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
     int *bias_datas = static_cast<int *>(bias_param->data_c());
 
     if (static_cast<size_t>(bias_param->DataSize()) != bias_diff.size()) {
