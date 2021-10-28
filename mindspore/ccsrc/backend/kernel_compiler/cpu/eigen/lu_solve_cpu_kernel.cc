@@ -16,13 +16,13 @@
 
 #include "backend/kernel_compiler/cpu/eigen/lu_solve_cpu_kernel.h"
 #include <vector>
+#include <string>
 #include "utils/ms_utils.h"
+#include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
 #include "Eigen/Dense"
 #include "Eigen/LU"
-
 namespace mindspore {
 namespace kernel {
-
 namespace {
 constexpr size_t kLUInputsNum = 2;
 constexpr size_t kLUaIndex = 0;
@@ -70,6 +70,7 @@ void LUSolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     out_row_ = output_lu_shape.at(output_lu_shape.size() - kRowIndex);
     out_col_ = output_lu_shape.at(output_lu_shape.size() - kColIndex);
   }
+  trans_ = AnfAlgo ::GetNodeAttr<std::string>(kernel_node, TRANS);
 }
 
 template <typename T>
@@ -77,23 +78,28 @@ bool LUSolverCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   T *a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_a(a_value, a_row_, a_col_);
+  Map<Matrix<T, RowMajor>> input_a(a_value, a_row_, a_col_);
 
   T *b_value = reinterpret_cast<T *>(inputs[kLUbIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_b(b_value, b_row_, b_col_);
+  Map<Matrix<T, RowMajor>> input_b(b_value, b_row_, b_col_);
   T *output_lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_lu(output_lu_value, out_row_,
-                                                                                          out_col_);
-  if (a_row_ == a_col_) {
-    // partial_piv_lu
-    output_lu = input_a.lu().solve(input_b);
+  Map<Matrix<T, RowMajor>> output_lu(output_lu_value, out_row_, out_col_);
+  if (trans_ == "N") {
+    output_lu.noalias() = input_a.template triangularView<UnitLower>().solve(input_b);
+    output_lu.noalias() = input_a.template triangularView<Upper>().solve(output_lu);
+  } else if (trans_ == "T") {
+    output_lu.noalias() = input_a.template triangularView<Upper>().solve(input_b);
+    output_lu.noalias() = input_a.template triangularView<UnitLower>().solve(output_lu);
+  } else if (trans_ == "C") {
+    MS_LOG_EXCEPTION << kernel_name_ << " trans_ flag is not supported C:  " << trans_;
   } else {
-    // full_piv_lu
-    output_lu = input_a.fullPivLu().solve(input_b);
+    MS_LOG_EXCEPTION << kernel_name_ << " trans_ flag is invalid:  " << trans_;
   }
+
   if (output_lu.RowsAtCompileTime == 0 || output_lu.ColsAtCompileTime == 0) {
     MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
   }
+
   return true;
 }
 }  // namespace kernel
