@@ -99,16 +99,11 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
       transpose_tensor_num == in_out_tensor_num) {
     return InsertNone;
   }
-  InsertState ret;
-  if (need_pre_insert && !need_post_insert) {
-    ret = PreInsert;
-  } else if (need_pre_insert && need_post_insert) {
-    ret = BothInsert;
-  } else if (!need_pre_insert && need_post_insert) {
-    ret = PostInsert;
-  } else {
-    ret = InsertNone;
-  }
+  InsertState ret =
+    (need_pre_insert && need_post_insert)
+      ? BothInsert
+      : ((need_pre_insert && !need_post_insert) ? PreInsert
+                                                : ((!need_pre_insert && need_post_insert) ? PostInsert : InsertNone));
 
   return ret;
 }

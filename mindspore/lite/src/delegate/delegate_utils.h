@@ -19,7 +19,7 @@
 #include "include/ms_tensor.h"
 #include "include/api/delegate.h"
 #include "src/common/log_adapter.h"
-#include "src/delegate/tensorrt/op/tensorrt_op.h"
+#include "include/errorcode.h"
 
 namespace mindspore::lite {
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input);
@@ -73,7 +73,8 @@ std::vector<mindspore::MSTensor> GetGraphOutTensors(const std::vector<T *> &ops)
       if (find(ops.begin(), ops.end(), out_op) == ops.end()) {
         // visit the out op that is not in the subgraph
         for (auto tensor : op->outputs()) {
-          if (find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end()) {
+          if (find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end() &&
+              find(outputs.begin(), outputs.end(), tensor) == outputs.end()) {
             // find the connected tensor
             outputs.push_back(tensor);
             break;
