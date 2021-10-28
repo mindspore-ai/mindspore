@@ -446,15 +446,8 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
 
-  MS_LOG(INFO) << "start reading model file";
-  std::cout << "start reading model file" << std::endl;
-  size_t size = 0;
-  char *graph_buf = ReadFile(flags_->model_file_.c_str(), &size);
-  if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed while running " << model_name.c_str();
-    std::cerr << "Read model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
+  MS_LOG(INFO) << "start unified benchmark run";
+  std::cout << "start unified benchmark run" << std::endl;
 
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
@@ -473,8 +466,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     }
   }
 
-  auto ret = ms_model_.Build(graph_buf, size, kMindIR, context);
-  delete[] graph_buf;
+  auto ret = ms_model_.Build(flags_->model_file_, kMindIR, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();

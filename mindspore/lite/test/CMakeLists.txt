@@ -12,6 +12,10 @@ if(MSLITE_ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
 
+if(MSLITE_ENABLE_RUNTIME_CONVERT)
+    add_definitions(-DRUNTIME_CONVERT)
+endif()
+
 file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/main.cc
         ${TEST_DIR}/common/common_test.cc

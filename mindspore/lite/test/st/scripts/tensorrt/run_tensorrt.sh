@@ -39,7 +39,8 @@ function Run_Tensorrt() {
   chmod +x ./tools/benchmark/benchmark
   # copy related files to benchmark_test
   cp -a ./tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
-  cp -a ./runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+  cp -a ./runtime/lib/lib*.so* ${benchmark_test_path}/ || exit 1
+  cp -a ./runtime/third_party/glog/libglog.so.0 ${benchmark_test_path}/libglog.so.0 || exit 1
 
   echo "start push files to nvidia device ${device_ip} : ${cuda_device_id}"
   ssh tensorrt@${device_ip} "cd ${device_benchmark_test_path}; rm -rf ./*"

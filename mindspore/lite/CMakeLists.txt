@@ -30,7 +30,7 @@ option(MSLITE_ENABLE_FP16 "Whether to compile Fp16 operator" off)
 option(MSLITE_ENABLE_ACL "enable ACL" off)
 option(MSLITE_ENABLE_MODEL_ENCRYPTION "enable model encryption, only converter support" on)
 option(MSLITE_ENABLE_SPARSE_COMPUTE "enable sparse kernel" off)
-option(MSLITE_ENABLE_RUNTIME_CONVERT "enable runtime convert" off)
+option(MSLITE_ENABLE_RUNTIME_CONVERT "enable runtime convert" on)
 option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
 
 #Option that can be configured through manually
