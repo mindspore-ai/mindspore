@@ -33,7 +33,7 @@ namespace {
 constexpr int kStackStep = 64;
 }  // namespace
 
-static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
+static int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
   int copy_num = 1;
   if (axis > 0) {
     for (int j = n_dim - 1; j > axis - 1; j--) {
