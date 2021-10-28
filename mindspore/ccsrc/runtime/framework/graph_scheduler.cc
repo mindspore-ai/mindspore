@@ -296,8 +296,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   // The copy actors are built in the link, so need push into the actor set after link.
   actor_set->copy_actors_ = copy_actors_;
 
-  (void)actors_.emplace(actor_set->name_, actor_set);
-
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
     CheckActorValid(actor_set.get());
@@ -382,6 +380,7 @@ ActorSet *GraphScheduler::Fetch(const ActorInfo &actor_info) const {
 ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) {
   auto actor_set = std::make_shared<ActorSet>(graph_compiler_info.name_);
   MS_EXCEPTION_IF_NULL(actor_set);
+  (void)actors_.emplace(actor_set->name_, actor_set);
 
   auto host_queue = std::make_shared<HostTensorQueue>();
   actor_set->data_source_actors_ = BuildDataSourceActor(graph_compiler_info, host_queue);
@@ -622,14 +621,17 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
 }
 
 LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info) {
-  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+  auto actor_set = Fetch(graph_compiler_info.name_);
+  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
     return nullptr;
   }
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
-  if ((graph_compiler_info.graphs_.size() == 1) && graph_compiler_info.graphs_[0]->is_loop_count_sink()) {
+  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) ||
+      (graph_compiler_info.graphs_.size() == 1 && graph_compiler_info.graphs_[0]->is_loop_count_sink())) {
     loop_count = 1;
   }
+
   auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
   auto loop_count_actor =
     std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
@@ -641,19 +643,19 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 }
 
 OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) {
-  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+  auto actor_set = Fetch(graph_compiler_info.name_);
+  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
     return nullptr;
   }
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
-  if ((graph_compiler_info.graphs_.size() == 1) && graph_compiler_info.graphs_[0]->is_loop_count_sink()) {
+  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) ||
+      (graph_compiler_info.graphs_.size() == 1 && graph_compiler_info.graphs_[0]->is_loop_count_sink())) {
     loop_count = 1;
   }
-  auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
-  bool need_loop_count = (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) ? true : false;
 
-  auto output_actor =
-    std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_, need_loop_count);
+  auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
+  auto output_actor = std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_);
   MS_LOG(INFO) << "Create output actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(output_actor);
   InsertActor(output_actor.get());
