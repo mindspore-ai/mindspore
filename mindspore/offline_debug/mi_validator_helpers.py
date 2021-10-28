@@ -132,6 +132,7 @@ def replace_minus_one(value):
     """ replace -1 with a default value """
     return value if value != -1 else UINT32_MAX
 
+
 def check_param_id(info_param, info_name):
     """
     Check the type of info_param.
