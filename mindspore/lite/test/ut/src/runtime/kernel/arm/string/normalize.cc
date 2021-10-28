@@ -22,7 +22,7 @@
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 
 namespace mindspore {
 using mindspore::lite::StringPack;

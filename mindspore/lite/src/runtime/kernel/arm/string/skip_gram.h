@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "nnacl/skip_gram_parameter.h"
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 
 namespace mindspore::kernel {
 

@@ -17,7 +17,7 @@
 #include <string>
 #include <algorithm>
 #include "src/kernel_registry.h"
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

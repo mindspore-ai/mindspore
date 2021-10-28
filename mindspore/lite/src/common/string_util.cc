@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 #include <algorithm>
 #include <vector>
 #include <string>
