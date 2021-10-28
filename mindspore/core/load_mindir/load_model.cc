@@ -93,7 +93,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     return false;
   }
   DIR *open_dir = opendir(dir_in.c_str());
-  if (open_dir == NULL) {
+  if (open_dir == nullptr) {
     MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
   }
   dirent *p = nullptr;
