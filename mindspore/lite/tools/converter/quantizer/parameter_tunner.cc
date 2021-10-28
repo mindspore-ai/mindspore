@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/parameter_optimizer.h"
+#include "tools/converter/quantizer/parameter_tunner.h"
 #include <set>
 #include <functional>
 #include <map>
@@ -248,7 +248,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
     delete origin_model;
     return RET_OK;
   }
-  int babysitting_rounds = 20;
+  int babysitting_rounds = 25;
   step = (min_max.max - min_max.min) / babysitting_rounds;
 
   param.rounds = babysitting_rounds;

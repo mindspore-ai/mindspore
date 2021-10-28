@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_OPTIMIZER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_OPTIMIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H
 #include <utility>
 #include <map>
 #include <vector>
@@ -57,4 +57,4 @@ class ParameterOptimizer {
                            int *origin_model_size);
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_OPTIMIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H

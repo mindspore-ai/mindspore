@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite::quant {
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
@@ -117,6 +118,7 @@ int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor)
   float *output = static_cast<float *>(dst_tensor->data());
   CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
+  MS_CHECK_GT(out_sz, 0, RET_ERROR);
   // deserialize from `data`:
   BitStream bs;
 
