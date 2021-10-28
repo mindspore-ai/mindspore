@@ -33,7 +33,7 @@ from .fake_quant_perlayer import _fake_quant_per_layer_tbe
 from .fake_quant_perlayer_grad import _fake_quant_per_layer_grad_tbe
 from .minmax_update_perchannel import _minmax_update_perchannel_tbe
 from .minmax_update_perlayer import _minmax_update_perlayer_tbe
-from .matmul_dds_impl import MatmulDDSImpl
+from .matmul_dds_impl import matmul_dds
 from .matmul_dds_grad_impl import matmul_dds_grad
-from .dsd_impl import DSDMatmulimpl
+from .dsd_impl import dsd_matmul
 from .dsd_back_impl import dsdbpropimpl
