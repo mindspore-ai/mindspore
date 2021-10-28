@@ -236,7 +236,7 @@ class DebugServices {
     int zero_count = 0;
   };
 
-  TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
+  static TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
 
   void AddWatchpoint(
     unsigned int id, unsigned int watch_condition, float parameter,
@@ -259,6 +259,8 @@ class DebugServices {
     const unsigned int device_id_val, const unsigned int root_graph_id_val,
     const std::vector<parameter_t> &parameter_list);
 #endif
+
+  void CheckHistoryErrorCode(int *error_code, bool history_not_found);
 
   void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
                                  partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
@@ -412,6 +414,8 @@ class DebugServices {
 #endif
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() const;
+
+  std::shared_ptr<TensorData> GetTensor(const std::string &tensor_name) const;
 
   void AddAnalyzedTensorToCache(const bool recheck, const unsigned int id, const std::string &tensor_name);
 

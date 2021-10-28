@@ -42,6 +42,9 @@ class DumpJsonParser {
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
+  bool IsStatisticDump() const;
+  bool IsTensorDump() const;
+  bool IsFullDump() const;
   bool IsDumpIter(uint32_t iteration) const;
   bool DumpAllIter();
 
@@ -49,6 +52,7 @@ class DumpJsonParser {
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
   uint32_t dump_mode() const { return dump_mode_; }
   std::string path() const { return path_; }
+  std::string saved_data() const { return saved_data_; }
   std::string iteration_string() const { return iteration_; }
   std::string net_name() const { return net_name_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
@@ -76,6 +80,7 @@ class DumpJsonParser {
   uint32_t dump_mode_{0};
   std::string path_;
   std::string net_name_;
+  std::string saved_data_;
   std::string iteration_;
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
@@ -97,6 +102,7 @@ class DumpJsonParser {
   void ParseDumpMode(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);
   void ParseNetName(const nlohmann::json &content);
+  void ParseSavedData(const nlohmann::json &content);
   void ParseIteration(const nlohmann::json &content);
   void ParseInputOutput(const nlohmann::json &content);
   void ParseKernels(const nlohmann::json &content);

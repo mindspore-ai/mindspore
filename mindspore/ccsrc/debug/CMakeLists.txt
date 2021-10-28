@@ -41,6 +41,7 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/tensor_summary.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger_utils.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/tensor_stat_dump.cc"
         )
 endif()
 

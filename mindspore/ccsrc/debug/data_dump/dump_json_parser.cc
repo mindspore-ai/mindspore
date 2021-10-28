@@ -31,6 +31,7 @@ constexpr auto kE2eDumpSettings = "e2e_dump_settings";
 constexpr auto kDumpMode = "dump_mode";
 constexpr auto kPath = "path";
 constexpr auto kNetName = "net_name";
+constexpr auto kSavedData = "saved_data";
 constexpr auto kIteration = "iteration";
 constexpr auto kInputOutput = "input_output";
 constexpr auto kKernels = "kernels";
@@ -38,6 +39,9 @@ constexpr auto kSupportDevice = "support_device";
 constexpr auto kEnable = "enable";
 constexpr auto kOpDebugMode = "op_debug_mode";
 constexpr auto kTransFlag = "trans_flag";
+constexpr auto kStatisticDump = "statistic";
+constexpr auto kTensorDump = "tensor";
+constexpr auto kFullDump = "full";
 constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
@@ -263,6 +267,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseDumpMode(*dump_mode);
   ParseDumpPath(*common_dump_settings);  // Pass in the whole json string to parse because the path field is optional.
   ParseNetName(*net_name);
+  ParseSavedData(*common_dump_settings);  // saved data optional
   ParseIteration(*iteration);
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
@@ -355,6 +360,24 @@ void DumpJsonParser::ParseNetName(const nlohmann::json &content) {
   }
 }
 
+void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
+  saved_data_ = kTensorDump;  // default to tensor data dump
+  auto json_iter = content.find(kSavedData);
+  if (json_iter != content.end()) {
+    CheckJsonStringType(*json_iter, kSavedData);
+    saved_data_ = *json_iter;
+  }
+  if (saved_data_ != kStatisticDump && saved_data_ != kTensorDump && saved_data_ != kFullDump) {
+    MS_LOG(EXCEPTION) << "Dump Json parse failed, saved_data only supports statistic, tensor, or full, but got: "
+                      << saved_data_ << ". Please set saved_data to either statistic, tensor, or full";
+  }
+  auto context = MsContext::GetInstance();
+  if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+    MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on GPU device, please set "
+                         "saved_data to tensor or use a GPU device";
+  }
+}
+
 void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   CheckJsonStringType(content, kIteration);
   auto context = MsContext::GetInstance();
@@ -396,6 +419,12 @@ bool IsIterInRange(uint32_t iteration, const std::string &range) {
   uint32_t high_range = static_cast<uint32_t>(std::stoul(high_range_str));
   return (low_range <= iteration) && (iteration <= high_range);
 }
+
+bool DumpJsonParser::IsStatisticDump() const { return saved_data_ == kStatisticDump || IsFullDump(); }
+
+bool DumpJsonParser::IsTensorDump() const { return saved_data_ == kTensorDump || IsFullDump(); }
+
+bool DumpJsonParser::IsFullDump() const { return saved_data_ == kFullDump; }
 
 bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   // bool DumpJsonParser::IsDumpIter(uint32_t iteration) --> checks if iteration should be dumped or not.

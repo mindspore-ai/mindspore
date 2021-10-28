@@ -18,6 +18,7 @@ import tempfile
 import time
 import shutil
 import glob
+import csv
 from importlib import import_module
 from pathlib import Path
 import numpy as np
@@ -33,7 +34,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, \
-    check_dump_structure, find_nth_pos
+    generate_statistic_dump_json, check_dump_structure, find_nth_pos
 from tests.security_utils import security_off_wrap
 
 
@@ -392,3 +393,101 @@ def test_ascend_not_overflow_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     run_not_overflow_dump()
+
+def check_statistic_dump(dump_file_path):
+    output_name = "statistic.csv"
+    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+    real_path = os.path.realpath(output_path)
+    with open(real_path) as f:
+        reader = csv.DictReader(f)
+        input1 = next(reader)
+        assert input1['IO'] == 'input'
+        assert input1['Min Value'] == '1'
+        assert input1['Max Value'] == '6'
+        input2 = next(reader)
+        assert input2['IO'] == 'input'
+        assert input2['Min Value'] == '7'
+        assert input2['Max Value'] == '12'
+        output = next(reader)
+        assert output['IO'] == 'output'
+        assert output['Min Value'] == '8'
+        assert output['Max Value'] == '18'
+
+def check_data_dump(dump_file_path):
+    output_name = "Add.Add-op*.0.0.*.output.0.DefaultFormat.npy"
+    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+    real_path = os.path.realpath(output_path)
+    output = np.load(real_path)
+    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
+    assert np.array_equal(output, expect)
+
+def run_gpu_e2e_dump(saved_data):
+    """Run gpu e2e dump"""
+    if sys.platform != 'linux':
+        return
+    pwd = os.getcwd()
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'gpu_e2e_dump')
+        dump_config_path = os.path.join(tmp_dir, 'gpu_e2e_dump.json')
+        generate_statistic_dump_json(dump_path, dump_config_path, 'test_gpu_e2e_dump', saved_data)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        for _ in range(3):
+            if not os.path.exists(dump_file_path):
+                time.sleep(2)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        if saved_data in ('statistic', 'full'):
+            check_statistic_dump(dump_file_path)
+        if saved_data in ('tensor', 'full'):
+            check_data_dump(dump_file_path)
+        if saved_data == 'statistic':
+            # assert only file is statistic.csv, tensor data is not saved
+            assert len(os.listdir(dump_file_path)) == 1
+        elif saved_data == 'tensor':
+            # assert only tensor data is saved, not statistics
+            stat_path = os.path.join(dump_file_path, 'statistic.csv')
+            assert not os.path.isfile(stat_path)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_gpu_e2e_statistic_dump():
+    """
+    Feature: GPU Statistics Dump
+    Description: Test GPU statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_gpu_e2e_dump('statistic')
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_gpu_e2e_tensor_dump():
+    """
+    Feature: GPU Tensor Dump
+    Description: Test GPU tensor dump
+    Expectation: Tensor data are stored in npy files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_gpu_e2e_dump('tensor')
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_gpu_e2e_full_dump():
+    """
+    Feature: GPU Full Dump
+    Description: Test GPU full dump
+    Expectation: Tensor are stored in npy files and their statistics stored in statistic.csv
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_gpu_e2e_dump('full')

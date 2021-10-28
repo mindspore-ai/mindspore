@@ -29,6 +29,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
 #include "utils/file_utils.h"
+#include "debug/data_dump/tensor_stat_dump.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -117,8 +118,14 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
     if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
-                       debugger);
+      if (DumpJsonParser::GetInstance().IsStatisticDump()) {
+        TensorStatDump stat_dump(GetKernelNodeName(node), op_type, op_name, task_id, stream_id, timestamp, false, j);
+        stat_dump.DumpTensorStatsToFile(dump_path, debugger);
+      }
+      if (DumpJsonParser::GetInstance().IsTensorDump()) {
+        DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
+                         debugger);
+      }
     } else {
       DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
@@ -196,7 +203,13 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     MS_EXCEPTION_IF_NULL(addr);
     if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
+      if (DumpJsonParser::GetInstance().IsStatisticDump()) {
+        TensorStatDump stat_dump(tensor_name, op_type, op_name, task_id, stream_id, timestamp, true, slot);
+        stat_dump.DumpTensorStatsToFile(dump_path, debugger);
+      }
+      if (DumpJsonParser::GetInstance().IsTensorDump()) {
+        DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
+      }
     } else {
       DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
@@ -242,7 +255,13 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(task_id) + '.' +
                           std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output.0";
   if (IsDeviceTargetGPU()) {
-    DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+    if (dump_json_parser.IsStatisticDump()) {
+      TensorStatDump stat_dump(node_name, "Parameter", dump_name, task_id, stream_id, timestamp, false, 0);
+      stat_dump.DumpTensorStatsToFile(dump_path, debugger);
+    }
+    if (dump_json_parser.IsTensorDump()) {
+      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+    }
   } else {
     DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
   }
@@ -356,9 +375,15 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
 
+    if (dump_json_parser.IsStatisticDump()) {
+      CsvWriter::GetInstance().OpenFile(dump_path);
+    }
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
     DumpParametersAndConst(graph, dump_path, debugger);
+    if (dump_json_parser.IsStatisticDump()) {
+      CsvWriter::GetInstance().CloseFile();
+    }
     success = true;
   }
 

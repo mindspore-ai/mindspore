@@ -140,6 +140,19 @@ def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
+def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data):
+    """
+    Util function to generate dump configuration json file for statistic dump.
+    """
+    if test_key == "test_gpu_e2e_dump":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["saved_data"] = saved_data
+    else:
+        raise ValueError(
+            "Failed to generate statistic dump json file. The test name value " + test_key + " is invalid.")
+    with open(json_file_name, 'w') as f:
+        json.dump(data, f)
 
 def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration):
     """
