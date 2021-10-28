@@ -120,10 +120,10 @@ std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, c
   for (size_t i = 0; i < axis.size(); ++i) {
     auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
     if (axis_idx == shape_len - kIndex1) {
-      frac_nz_axis[i] = axis_idx - kIndex1;
+      frac_nz_axis[i] = axis_idx - SizeToLong(kIndex1);
       frac_nz_axis.push_back(axis_idx + kIndex2);
     } else if (axis_idx == shape_len - kIndex2) {
-      frac_nz_axis[i] = axis_idx + kIndex1;
+      frac_nz_axis[i] = axis_idx + SizeToLong(kIndex1);
       frac_nz_axis.push_back(axis_idx + kIndex2);
     } else {
       frac_nz_axis[i] = axis_idx;

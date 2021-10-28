@@ -38,10 +38,10 @@ void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo
   }
   std::string name = "mem_address_list";
   if (!RecorderManager::Instance().CheckRdrMemIsRecord()) {
-    RDR::RecordMemAddressInfo(SUBMODULE_ID, name);
+    (void)RDR::RecordMemAddressInfo(SUBMODULE_ID, name);
     RecorderManager::Instance().SetRdrMemIsRecord(true);
   } else {
-    RDR::UpdateMemAddress(SUBMODULE_ID, name, op_name, *launch_info_);
+    (void)RDR::UpdateMemAddress(SUBMODULE_ID, name, op_name, *launch_info_);
   }
 #endif
 }

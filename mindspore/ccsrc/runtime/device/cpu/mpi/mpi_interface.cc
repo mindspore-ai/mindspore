@@ -30,7 +30,7 @@ inline void *LoadLibrary(const char *name) {
 }
 
 inline void *GetMPIAdapterHandle() {
-  static void *handle = LoadLibrary("libmpi_adapter.so");
+  static void *const handle = LoadLibrary("libmpi_adapter.so");
   return handle;
 }
 

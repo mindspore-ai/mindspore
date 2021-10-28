@@ -196,7 +196,7 @@ void GraphScheduler::Clear() {
 
 using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, KernelActor *const, const KernelWithIndex &,
                                                    const KernelWithIndex &, const KernelGraphPtr &);
-static std::map<KernelTransformType, DataArrowLinkFunc> kKernelTypeToLinkFunc;
+static std::map<KernelTransformType, DataArrowLinkFunc> kKernelTypeToLinkFunc = {};
 
 void GraphScheduler::Initialize() {
   if (init_) {
@@ -1014,7 +1014,7 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchNodePosition(from_kernel);
-  if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+  if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.empty())) {
     MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
   }
 
@@ -1131,7 +1131,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Get the position of from kernel in the data source actor.
     auto position = from_actor->FetchNodePosition(from_kernel);
-    if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+    if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.empty())) {
       MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
     }
     auto from_device_context = from_actor->device_contexts_[position];

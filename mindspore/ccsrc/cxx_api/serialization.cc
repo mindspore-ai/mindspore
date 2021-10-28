@@ -299,6 +299,9 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
           err_msg << "Load model " << files_path[i] << " failed.";
         }
         MS_LOG(ERROR) << err_msg.str();
+#if !defined(_WIN32) && !defined(_WIN64)
+        DLSoClose(handle);
+#endif
         return Status(kMEInvalidInput, err_msg.str());
       }
       auto graph_data = std::make_shared<Graph::GraphData>(anf_graphs[i], kMindIR);

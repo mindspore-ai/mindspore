@@ -186,7 +186,7 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t in) { return static_cast<int64_t>(in); });
-    op_desc->AddOutputDesc(
+    (void)op_desc->AddOutputDesc(
       ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
                        transform::TransformUtil::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
   }

@@ -20,6 +20,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "transform/graph_ir/util.h"
 #include "runtime/device/memory_manager.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore::hccl {
 namespace {
@@ -90,8 +91,8 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
       if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
         MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
       }
-      (*counts)[rank_ids[i]] = real_sizes[i];
-      (*displs)[rank_ids[i]] = mem_offset[i];
+      (*counts)[rank_ids[i]] = SizeToLong(real_sizes[i]);
+      (*displs)[rank_ids[i]] = SizeToLong(mem_offset[i]);
     }
     return;
   }
@@ -101,15 +102,15 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
     if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
       MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
     }
-    rank_id_map.emplace(rank_ids[i], i);
+    rank_id_map.emplace(SizeToLong(rank_ids[i]), i);
   }
 
   size_t offset = 0;
   for (uint32_t i = 0; i < rank_size_; ++i) {
-    (*displs)[i] = offset;
+    (*displs)[i] = SizeToLong(offset);
     auto iter = rank_id_map.find(i);
     if (iter != rank_id_map.end()) {
-      (*counts)[i] = real_sizes[iter->second];
+      (*counts)[i] = SizeToLong(real_sizes[iter->second]);
       offset += mem_sizes[iter->second];
     } else {
       (*counts)[i] = 0;
