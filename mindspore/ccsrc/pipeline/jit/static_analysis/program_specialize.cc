@@ -517,9 +517,9 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
   return BuildValueNode(v, abs);
 }
 
-AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &engine,
-                                                     const BaseFuncGraphEvaluatorPtr &evaluator,
-                                                     const AbstractBasePtrList &args_spec_list) {
+inline AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &engine,
+                                                            const BaseFuncGraphEvaluatorPtr &evaluator,
+                                                            const AbstractBasePtrList &args_spec_list) {
   AbstractBasePtrList normalized_args_spec_list = evaluator->NormalizeArgs(args_spec_list);
   FuncGraphPtr fg = evaluator->GetFuncGraph(engine, normalized_args_spec_list);
   MS_EXCEPTION_IF_NULL(evaluator->parent_context());
@@ -886,7 +886,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
   }
 }
 
-AnfNodeConfigPtr FuncGraphSpecializer::MakeConfig(const AnfNodePtr &node) {
+inline AnfNodeConfigPtr FuncGraphSpecializer::MakeConfig(const AnfNodePtr &node) {
   return engine_->MakeConfig(node, context_, func_graph_);  // `func_graph_` is dummy here.
 }
 }  // namespace abstract

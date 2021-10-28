@@ -309,7 +309,7 @@ class OrderEnforcer {
   using PredFunc = std::function<bool(const AnfNodePtr &)>;
 
   // Find user nodes for the given node.
-  std::unordered_set<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, PredFunc pred = nullptr) {
+  std::unordered_set<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, const PredFunc &pred = nullptr) {
     auto &node_users = manager_->node_users();
     auto iter = node_users.find(node);
     if (iter == node_users.end()) {

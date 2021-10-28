@@ -29,6 +29,22 @@
 
 namespace mindspore {
 namespace tensor {
+static TypeId GetDataTypeBigFormat(const py::buffer_info &buf) {
+  const size_t format_size = 2;
+  if (buf.format.size() >= format_size) {
+    // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
+    if (buf.format.back() == 'w') {
+      return TypeId::kObjectTypeString;
+    } else if (buf.format == "Zf") {
+      return TypeId::kNumberTypeComplex64;
+    } else if (buf.format == "Zd") {
+      return TypeId::kNumberTypeComplex128;
+    }
+  }
+  MS_LOG(WARNING) << "Unsupported DataType format " << buf.format << ", item size " << buf.itemsize;
+  return TypeId::kTypeUnknown;
+}
+
 static TypeId GetDataType(const py::buffer_info &buf) {
   if (buf.format.size() == 1) {
     switch (buf.format.front()) {
@@ -79,18 +95,8 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       case '?':
         return TypeId::kNumberTypeBool;
     }
-  } else if (buf.format.size() >= 2) {
-    // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
-    if (buf.format.back() == 'w') {
-      return TypeId::kObjectTypeString;
-    } else if (buf.format == "Zf") {
-      return TypeId::kNumberTypeComplex64;
-    } else if (buf.format == "Zd") {
-      return TypeId::kNumberTypeComplex128;
-    }
   }
-  MS_LOG(WARNING) << "Unsupported DataType format " << buf.format << ", item size " << buf.itemsize;
-  return TypeId::kTypeUnknown;
+  return GetDataTypeBigFormat(buf);
 }
 
 static std::string GetPyTypeFormat(TypeId data_type) {

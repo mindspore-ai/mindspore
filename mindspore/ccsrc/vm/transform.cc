@@ -396,7 +396,7 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   for (size_t i = size - 1; i > 0; i--) {
     const auto iter = slots_.find(inputs[i]);
     if (iter != slots_.end() && iter->second >= height_) {
-      slots_.erase(inputs[i]);
+      (void)slots_.erase(inputs[i]);
     }
   }
   return RET_SUCCESS;
@@ -447,7 +447,7 @@ void TraverseGraphMap(
             }
             FuncGraphPtr g = get_prim_graph(GetValueNode<PrimitivePtr>(const_primitive_node),
                                             dyn_cast<AbstractFunction>(const_primitive_node->abstract()));
-            tr->SetEdge(node, key, NewValueNode(g));
+            tr->SetEdge(node, LongToInt(key), NewValueNode(g));
           }
         }
       }

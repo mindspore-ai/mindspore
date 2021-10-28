@@ -454,7 +454,7 @@ void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool
     (void)dropped.insert(func_graph);
     std::vector<AnfNodePtr> return_vec = {func_graph->get_return()};
     auto drop_graphs = MaybeDropNodes(std::move(return_vec));
-    todo.insert(todo.end(), drop_graphs.begin(), drop_graphs.end());
+    (void)todo.insert(todo.end(), drop_graphs.begin(), drop_graphs.end());
   }
   for (auto &fg : dropped) {
     MS_EXCEPTION_IF_NULL(fg);

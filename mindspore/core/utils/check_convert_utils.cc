@@ -563,7 +563,6 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
   if (ok) {
     return check_type;
   } else {
-    std::string type_str = type->ToString();
     std::ostringstream buffer;
     buffer << "Primitive[" << prim_name << "]'s input argument[" << type_name << "] must be a type of ";
     buffer << GetErrorTypeString(template_types, type) << ", but got " << type->ToString();
@@ -794,16 +793,16 @@ std::string CheckAndConvertUtils::GetErrorTypeString(const std::set<TypePtr> &ch
   std::set<std::string> type_string;
   for (const auto &item : check_list) {
     if (item->isa<Float>()) {
-      type_string.emplace("Float");
+      (void)type_string.emplace("Float");
     }
     if (item->isa<Int>()) {
-      type_string.emplace("Int");
+      (void)type_string.emplace("Int");
     }
     if (item->isa<Bool>()) {
-      type_string.emplace("Bool");
+      (void)type_string.emplace("Bool");
     }
     if (item->isa<UInt>()) {
-      type_string.emplace("UInt");
+      (void)type_string.emplace("UInt");
     }
   }
   for (const auto &item : type_string) {

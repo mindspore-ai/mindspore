@@ -70,8 +70,8 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device == kAscendDevice) {
-    (void)dynamic_shape_depends.insert({kReduceSum, {1}});
-    (void)dynamic_shape_depends.insert({kTranspose, {1}});
+    (void)dynamic_shape_depends.emplace(kReduceSum, std::vector<int64_t>{1});
+    (void)dynamic_shape_depends.emplace(kTranspose, std::vector<int64_t>{1});
   }
 
   MS_EXCEPTION_IF_NULL(cnode);

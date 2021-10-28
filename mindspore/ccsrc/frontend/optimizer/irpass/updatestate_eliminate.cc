@@ -596,7 +596,7 @@ AnfNodePtr EliminateUpdateStateBetweenMakeTupleAssign(const CNodePtr &update_sta
   return nullptr;
 }
 
-AnfNodePtr EliminateUpdateStateForAssign(const FuncGraphManagerPtr &manager, const CNodePtr &update_state) {
+AnfNodePtr EliminateUpdateStateForAssign(const CNodePtr &update_state) {
   // UpdateState(u, MakeTuple)
   auto &attach = update_state->input(kAttachIndex);
   if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
@@ -750,7 +750,7 @@ bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, con
     if (node == nullptr || !all_nodes.contains(node)) {
       continue;
     }
-    auto new_node = EliminateUpdateStateForAssign(manager, node->cast<CNodePtr>());
+    auto new_node = EliminateUpdateStateForAssign(node->cast<CNodePtr>());
     if (new_node != nullptr) {
       manager->Replace(node, new_node);
       change = true;

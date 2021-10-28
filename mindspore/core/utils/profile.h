@@ -77,7 +77,7 @@ class ProfileBase {
   virtual void Print(void) {}
   virtual ProfContext *Step(const std::string &) { return nullptr; }
   virtual ProfContext *Lap(int) { return nullptr; }
-  virtual void Pop(void) {}
+  virtual void Pop(void) noexcept {}
 
   // top level profile context
   ProfContext context_;

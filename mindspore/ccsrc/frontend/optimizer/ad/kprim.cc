@@ -57,7 +57,7 @@ constexpr char bprop_mindir_module[] = "mindspore.ops.bprop_mindir";
 
 #ifndef _WIN32
 std::string GetBpropDir() {
-  static std::string bprop_dir;
+  static std::string bprop_dir("");
   if (bprop_dir.empty()) {
     py::module mod = py::module::import("mindspore.ops._grad");
     auto grad_file_path = mod.attr("__file__").cast<std::string>();
@@ -99,7 +99,7 @@ std::unordered_set<std::string> GetSerializableBpropList() {
       MS_LOG(EXCEPTION) << "The python obj in serializable bprop list should be a Primitive, but it is "
                         << py::str(ops_list[i]);
     }
-    serializable_bprop_list.insert(prim_adapter->name());
+    (void)serializable_bprop_list.insert(prim_adapter->name());
   }
   return serializable_bprop_list;
 }
@@ -388,23 +388,8 @@ static void AdjustForAutoMonad(const PrimitivePtr &prim, const FuncGraphPtr &bpr
   }
 }
 
-FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
-                               const pipeline::ResourceBasePtr &resources) {
-  if (!IsValueNode<Primitive>(value_node)) {
-    MS_LOG(EXCEPTION) << "Primitive node is not valid.";
-  }
-
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
-  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == prim::kPrimSwitchLayer->name()) {
-    auto fprop = GetFprop(prim);
-    fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
-    return fprop;
-  } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
-    return nullptr;
-  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
-    return nullptr;
-  }
-
+FuncGraphPtr KPrim::GetBprop(const CNodePtr &cnode, const ValueNodePtr &value_node,
+                             const pipeline::ResourceBasePtr &resources, const PrimitivePtr &prim) {
   FuncGraphPtr bprop_fg = nullptr;
   if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) {
     if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
@@ -429,7 +414,27 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
       }
     }
   }
+  return bprop_fg;
+}
 
+FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
+                               const pipeline::ResourceBasePtr &resources) {
+  if (!IsValueNode<Primitive>(value_node)) {
+    MS_LOG(EXCEPTION) << "Primitive node is not valid.";
+  }
+
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == prim::kPrimSwitchLayer->name()) {
+    auto fprop = GetFprop(prim);
+    fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
+    return fprop;
+  } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
+    return nullptr;
+  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+    return nullptr;
+  }
+
+  FuncGraphPtr bprop_fg = GetBprop(cnode, value_node, resources, prim);
   AdjustForAutoMonad(prim, bprop_fg);
   std::unordered_map<std::string, ValuePtr> primal_attrs;
   std::vector<NodeDebugInfoPtr> primal_debug_infos;
