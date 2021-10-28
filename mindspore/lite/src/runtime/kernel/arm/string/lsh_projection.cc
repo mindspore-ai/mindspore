@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/string/lsh_projection.h"
 
 #include "include/errorcode.h"
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;

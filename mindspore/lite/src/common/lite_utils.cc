@@ -22,7 +22,7 @@
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #ifndef STRING_KERNEL_CLIP
-#include "src/common/string_util.h"
+#include "src/common/string_utils.h"
 #endif
 #include "tools/common/option.h"
 #include "include/errorcode.h"
