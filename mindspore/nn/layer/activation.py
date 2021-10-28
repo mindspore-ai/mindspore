@@ -458,9 +458,13 @@ class GELU(Cell):
 
     Args:
         approximate (bool): Whether to enable approximation. Default: True.
-        If approximate is True, The gaussian error linear activation is:
+
+            If approximate is True, The gaussian error linear activation is:
+
             :math:`0.5 * x * (1 + tanh(sqrt(2 / pi) * (x + 0.044715 * x^3)))`
-        else, it is
+
+            else, it is:
+
             :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / sqrt(2)))`, where P(X) ~ N(0, 1).
 
     Inputs:
