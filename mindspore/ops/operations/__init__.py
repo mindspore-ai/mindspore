@@ -101,7 +101,6 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul)
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from .quantum_ops import PQC, Evolution
 from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
                          DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy, AngleForce,
                          AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,
@@ -463,8 +462,6 @@ __all__ = [
     "Range",
     "SearchSorted",
     "IndexAdd",
-    "PQC",
-    "Evolution",
     "AdaptiveAvgPool2D",
     "TensorScatterMax",
     "TensorScatterMin",
