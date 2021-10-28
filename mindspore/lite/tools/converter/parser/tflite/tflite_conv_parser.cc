@@ -142,7 +142,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   if (!data_shape.empty()) {
     MS_CHECK_GE(static_cast<int>(data_shape.size()), DIMENSION_4D, nullptr);
     auto multiplier = tflite_attr->depth_multiplier;
-    if (INT_MUL_OVERFLOW_THRESHOLD(data_shape[kNHWC_C], static_cast<size_t>(multiplier), SIZE_MAX)) {
+    if (INT_MUL_OVERFLOW(data_shape[kNHWC_C], multiplier)) {
       MS_LOG(ERROR) << "data_size overflow";
       return nullptr;
     }
