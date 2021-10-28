@@ -57,11 +57,11 @@ std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const sche
 std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int outputIndexIdx = -1);
 
 std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                     int outputIndexIdx = -1);
+                                     int output_index_idx = -1);
 
 std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
 
-std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
+std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensor_idx);
 
 void ReplaceOutput(const uint32_t &old_index, const uint32_t &new_index, schema::MetaGraphT *graphT);
 

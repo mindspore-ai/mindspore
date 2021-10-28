@@ -1174,6 +1174,19 @@ kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKerne
   return sub_graph;
 }
 
+namespace {
+kernel::SubGraphType GetCustomKernelSubGraphType(const kernel::LiteKernel *kernel) {
+  auto desc = kernel->desc();
+  if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
+    if (desc.data_type == kNumberTypeFloat16) {
+      return kernel::kGpuFp16SubGraph;
+    }
+    return kernel::kGpuFp32SubGraph;
+  }
+  return kernel::kCustomSubGraph;
+}
+}  // namespace
+
 kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, const InnerContext &context,
                                            bool is_controlflow = false) {
   if (kernel == nullptr) {
@@ -1182,13 +1195,7 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
 
   auto desc = kernel->desc();
   if (desc.provider != kernel::kBuiltin) {
-    if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
-      if (desc.data_type == kNumberTypeFloat16) {
-        return kernel::kGpuFp16SubGraph;
-      }
-      return kernel::kGpuFp32SubGraph;
-    }
-    return kernel::kCustomSubGraph;
+    return GetCustomKernelSubGraphType(kernel);
   }
   if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
     if (desc.data_type == kNumberTypeFloat16) {

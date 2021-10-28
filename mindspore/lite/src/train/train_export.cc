@@ -33,36 +33,36 @@ namespace lite {
 namespace {
 constexpr static int kFmkVal = 3;
 constexpr static int kTransformTensorDim = 4;
-std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx) {
-  std::vector<size_t> postNodeIdx;
+std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensor_idx) {
+  std::vector<size_t> post_node_idx;
   for (size_t i = 0; i < graphT.nodes.size(); i++) {
-    auto &oldNode = graphT.nodes.at(i);
-    if (oldNode == nullptr) {
+    auto &old_node = graphT.nodes.at(i);
+    if (old_node == nullptr) {
       continue;
     }
-    auto inputIndexes = oldNode->inputIndex;
-    if (IsContain<uint32_t>(inputIndexes, tensorIdx)) {
-      postNodeIdx.emplace_back(i);
+    auto input_indexes = old_node->inputIndex;
+    if (IsContain<uint32_t>(input_indexes, tensor_idx)) {
+      post_node_idx.emplace_back(i);
     }
   }
-  return postNodeIdx;
+  return post_node_idx;
 }
 
 std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                     const int outputIndexIdx = -1) {
-  std::vector<uint32_t> outputIndexes;
-  if (outputIndexIdx == -1) {
-    outputIndexes = node.outputIndex;
+                                     const int output_index_idx = -1) {
+  std::vector<uint32_t> output_indexes;
+  if (output_index_idx == -1) {
+    output_indexes = node.outputIndex;
   } else {
-    outputIndexes.emplace_back(node.outputIndex.at(outputIndexIdx));
+    output_indexes.emplace_back(node.outputIndex.at(output_index_idx));
   }
-  std::set<size_t> outputNodeIdx;
-  for (uint32_t outputIdx : outputIndexes) {
-    auto linkedPostIdx = GetLinkedPostIdx(graphT, outputIdx);
-    outputNodeIdx.insert(linkedPostIdx.begin(), linkedPostIdx.end());
+  std::set<size_t> output_node_idx;
+  for (uint32_t outputIdx : output_indexes) {
+    auto linked_post_idx = GetLinkedPostIdx(graphT, outputIdx);
+    output_node_idx.insert(linked_post_idx.begin(), linked_post_idx.end());
   }
   std::vector<size_t> ret;
-  ret.insert(ret.end(), outputNodeIdx.begin(), outputNodeIdx.end());
+  ret.insert(ret.end(), output_node_idx.begin(), output_node_idx.end());
   return ret;
 }
 }  // namespace
