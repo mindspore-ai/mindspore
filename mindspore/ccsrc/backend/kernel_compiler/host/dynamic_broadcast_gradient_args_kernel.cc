@@ -20,14 +20,31 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const size_t kInputNum = 2;
+const int kInputNum = 2;
+const size_t one = 1;
+
+void UpdatePreIsOne(std::vector<bool> *prev_is_one, std::vector<bool> current_is_one) {
+  for (size_t i = 0; i < kInputNum; ++i) {
+    (*prev_is_one)[i] = current_is_one[i];
+  }
+}
+
+void AddElementToGradReduceIdx(std::vector<std::vector<int64_t>> *grad_reduce_idx, std::vector<bool> current_is_one,
+                               bool none_is_one, const size_t largest_rank, size_t j) {
+  MS_EXCEPTION_IF_NULL(grad_reduce_idx);
+  for (size_t i = 0; i < kInputNum; ++i) {
+    if (current_is_one[i] && !none_is_one) {
+      (void)(*grad_reduce_idx)[i].emplace_back(SizeToLong(largest_rank - one - j));
+    }
+  }
+}
 
 std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vector<int64_t>> &reverse_shape,
                                                      const size_t largest_rank) {
   std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
   // indices of j-th component of each input.
-  bool prev_is_one[kInputNum];
-  bool current_is_one[kInputNum];
+  std::vector<bool> prev_is_one(kInputNum);
+  std::vector<bool> current_is_one(kInputNum);
   for (size_t i = 0; i < kInputNum; ++i) {
     prev_is_one[i] = false;
     current_is_one[i] = false;
@@ -46,37 +63,26 @@ std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vect
       } else {
         current_is_one[i] = false;
         if (!output_dim_set || reverse_shape[i][j] == static_cast<int64_t>(output_dim)) {
-          output_dim = static_cast<int>(reverse_shape[i][j]);
+          output_dim = LongToInt(reverse_shape[i][j]);
           output_dim_set = true;
         } else {
           MS_LOG(EXCEPTION) << "Input[0] and input[1] Cannot broadcast!";
         }
       }
     }
-
     // All dimensions are 1.
     if (!output_dim_set) {
       for (size_t i = 0; i < kInputNum; ++i) {
-        (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
+        (void)grad_reduce_idx[i].emplace_back(SizeToLong(largest_rank - one - j));
       }
       continue;
-    } else if (std::equal(current_is_one, current_is_one + kInputNum, prev_is_one) && set_one) {
-      for (size_t i = 0; i < kInputNum; ++i) {
-        if (current_is_one[i] && !none_is_one) {
-          (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
-        }
-      }
+    } else if (std::equal(current_is_one.begin(), current_is_one.end(), prev_is_one.begin()) && set_one) {
+      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
     } else {
-      for (size_t i = 0; i < kInputNum; ++i) {
-        if (current_is_one[i] && !none_is_one) {
-          (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
-        }
-      }
+      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
     }
     set_one = true;
-    for (size_t i = 0; i < kInputNum; ++i) {
-      prev_is_one[i] = current_is_one[i];
-    }
+    UpdatePreIsOne(&prev_is_one, current_is_one);
   }
   return grad_reduce_idx;
 }
@@ -172,9 +178,10 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
     *(data_ptr + i) = output[i];
   }
 
-  (void)out_addr->SyncHostToDevice(out_shape, LongToSize(tensor_for_sync->data().nbytes()),
-                                   tensor_for_sync->data_type(), tensor_for_sync->data_c(),
-                                   tensor_for_sync->device_info().host_format_);
+  if (!out_addr->SyncHostToDevice(out_shape, LongToSize(tensor_for_sync->data().nbytes()), tensor_for_sync->data_type(),
+                                  tensor_for_sync->data_c(), tensor_for_sync->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "Output Value SyncHostToDevice failed.";
+  }
   return out_size;
 }
 }  // namespace
