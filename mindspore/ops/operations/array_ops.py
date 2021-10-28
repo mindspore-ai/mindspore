@@ -28,7 +28,7 @@ import numpy as np
 from mindspore import log as logger
 from mindspore.common.initializer import Zero
 from .. import signature as sig
-from .._utils import get_broadcast_shape
+from .._utils import get_broadcast_shape, is_shape_unknown
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
@@ -486,18 +486,49 @@ class Reshape(PrimitiveWithInfer):
         """Initialize Reshape"""
         self.init_prim_io_names(inputs=['tensor', 'shape'], outputs=['output'])
 
+    def _get_shape_and_range(self, x, shape):
+        """ get min and max shape when output shape is dynamic"""
+        min_shape = None
+        max_shape = None
+        x_shp = x['shape']
+        if is_shape_unknown(shape['shape']):
+            out_shape = [-2]
+            return out_shape, min_shape, max_shape
+
+        shape_rank = shape['shape'][0]
+        if not x_shp:
+            # x is a scalar, output shape fixed
+            out_shape = [1] * shape_rank
+            return out_shape, min_shape, max_shape
+
+        out_shape = [-1] * shape_rank
+        if "max_value" in shape and "min_value" in shape:
+            min_shape = shape["min_value"]
+            max_shape = shape["max_value"]
+            if len(min_shape) != shape_rank or len(max_shape) != shape_rank:
+                raise RuntimeError("The primitive[Reshape]'s input[shape] min or max value not math the shape rank.")
+            for i in range(shape_rank):
+                if min_shape[i] == max_shape[i]:
+                    out_shape[i] = min_shape[i]
+        elif is_shape_unknown(x_shp) and "max_shape" in x:
+            # when dynamic memory allocation is supported, max_shape can be left out
+            min_shape = [1] * shape_rank
+            max_shape = [int(np.prod(x["max_shape"]))] * shape_rank
+        return out_shape, min_shape, max_shape
+
     def __infer__(self, x, shape):
         shape_v = shape['value']
-        if not shape_v and shape['shape']:
-            # for shape is not const value and not none
-            shape_rank = shape['shape'][0]
-
-            # unknown dims for shape
-            if shape_rank == -1:
-                shape_rank = 1
-            out_shape = [-1] * shape_rank
-            min_shape = [1] * shape_rank
-            max_shape = [1] * shape_rank
+        x_shp = x['shape']
+        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
+        # for shape is not constant
+        if shape_v is None:
+            out_shape, min_shape, max_shape = self._get_shape_and_range(x, shape)
+            if is_shape_unknown(out_shape):
+                # `min_shape` and `max_shape` can't be None before dynamic memory allocation is supported
+                shape_shp = shape['shape']
+                shape_rank = 1 if is_shape_unknown(shape_shp) else shape_shp[0]
+                min_shape = [1] * shape_rank if min_shape is None else min_shape
+                max_shape = [1] * shape_rank if max_shape is None else max_shape
             return {
                 'shape': out_shape,
                 'dtype': x['dtype'],
@@ -506,10 +537,13 @@ class Reshape(PrimitiveWithInfer):
                 'min_shape': min_shape
             }
 
-        x_shp = x['shape']
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        validator.check_value_type("shape", shape_v, [tuple], self.name)
-        shape_v = list(shape_v)
+        if isinstance(shape_v, Tensor_):
+            validator.check_tensor_dtype_valid("shape", shape['dtype'], [mstype.int64], self.name)
+            shape_v = shape_v.asnumpy().tolist()
+        else:
+            validator.check_value_type("shape", shape_v, [tuple], self.name)
+            shape_v = list(shape_v)
+
         neg_index = -1
         dim_prod = 1
         for i, shp_i in enumerate(shape_v):
@@ -522,7 +556,7 @@ class Reshape(PrimitiveWithInfer):
             else:
                 dim_prod *= shp_i
 
-        if -1 in x_shp:
+        if is_shape_unknown(x_shp):
             if 'max_shape' in x:
                 x_max_shape = x['max_shape']
             else:

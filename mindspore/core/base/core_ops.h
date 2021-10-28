@@ -96,6 +96,7 @@ constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 constexpr auto kTranspose = "Transpose";
 constexpr auto kSplitV = "SplitV";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
+constexpr auto kDynamicReshape = "DynamicReshape";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -208,6 +209,7 @@ inline const PrimitivePtr kPrimUnsortedSegmentSum = std::make_shared<Primitive>(
 inline const PrimitivePtr kPrimUnsortedSegmentMin = std::make_shared<Primitive>("UnsortedSegmentMin");
 inline const PrimitivePtr kPrimConcatOffset = std::make_shared<Primitive>("ConcatOffset");
 inline const PrimitivePtr kPrimReshape = std::make_shared<Primitive>("Reshape");
+inline const PrimitivePtr kPrimDynamicReshape = std::make_shared<Primitive>(kDynamicReshape);
 inline const PrimitivePtr kPrimSubAndFilter = std::make_shared<Primitive>("SubAndFilter");
 inline const PrimitivePtr kPrimMapCacheIdx = std::make_shared<Primitive>("MapCacheIdx");
 inline const PrimitivePtr kPrimUpdateCache = std::make_shared<Primitive>("UpdateCache");

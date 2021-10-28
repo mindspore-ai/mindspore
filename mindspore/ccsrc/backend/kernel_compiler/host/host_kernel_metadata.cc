@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-static const std::set<std::string> host_kernel = {prim::kPrimDynamicShape->name(),
-                                                  prim::kPrimDynamicBroadcastGradientArgs->name()};
+static const std::set<std::string> host_kernel = {
+  prim::kPrimDynamicShape->name(), prim::kPrimDynamicBroadcastGradientArgs->name(), prim::kPrimDynamicReshape->name()};
 
 void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   MS_LOG(INFO) << "HostMetadataInfo.";

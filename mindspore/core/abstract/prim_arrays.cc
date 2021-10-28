@@ -811,12 +811,19 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   } else {
     ValuePtr sh = primitive->GetAttr("shape");
     MS_EXCEPTION_IF_NULL(sh);
-    auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(reshape_value_tuple);
-    auto reshape_tuple = reshape_value_tuple->value();
-
-    (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
-                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+    if (sh->isa<ValueTuple>()) {
+      auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(reshape_value_tuple);
+      auto reshape_tuple = reshape_value_tuple->value();
+      (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
+                           [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+    } else if (sh->isa<tensor::Tensor>()) {
+      auto tensor_value = sh->cast<tensor::TensorPtr>();
+      shape = CheckAndConvertUtils::CheckTensorIntValue("shape", sh, "Reshape");
+    } else {
+      MS_EXCEPTION(ValueError) << "In stage of execution， the primitive[Reshape]'s input['shape'] must be a tuple or "
+                               << "constant Tensor.";
+    }
   }
 
   auto max_shape = shape;
