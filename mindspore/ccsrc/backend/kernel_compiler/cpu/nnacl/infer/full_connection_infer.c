@@ -17,6 +17,16 @@
 #include "nnacl/infer/full_connection_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+int FullConnectionInferPreJudge(const MatMulParameter *param, size_t inputs_size, const TensorC *input0) {
+  if ((param->has_bias_ && inputs_size != 3) || (!param->has_bias_ && inputs_size != 2)) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
+  if (param->use_axis_ && (param->axis_ < 1 || param->axis_ > (int)(input0->shape_size_))) {
+    return NNACL_ERR;
+  }
+  return NNACL_OK;
+}
+
 int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
   int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
@@ -32,11 +42,9 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if ((param->has_bias_ && inputs_size != 3) || (!param->has_bias_ && inputs_size != 2)) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
-  if (param->use_axis_ && (param->axis_ < 1 || param->axis_ > (int)(input0->shape_size_))) {
-    return NNACL_ERR;
+  int pre_judge = FullConnectionInferPreJudge(param, inputs_size, input0);
+  if (pre_judge != NNACL_OK) {
+    return pre_judge;
   }
   int new_k = 1;
   if (param->use_axis_) {
