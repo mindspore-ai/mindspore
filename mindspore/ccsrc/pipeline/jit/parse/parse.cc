@@ -1194,6 +1194,9 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   {
     TraceGuard guard(std::make_shared<TraceWhileHeader>(block->func_graph()->debug_info()));
     header_block = MakeFunctionBlock(*this);
+    auto func_graph = header_block->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
   }
   {
     TraceGuard guard(std::make_shared<TraceWhileBody>(block->func_graph()->debug_info()));
