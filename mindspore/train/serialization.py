@@ -13,44 +13,42 @@
 # limitations under the License.
 # ============================================================================
 """Model and parameters serialization."""
-import os
-import sys
-import stat
-import math
-import shutil
-import time
 import copy
 import json
+import math
+import os
+import shutil
+import stat
+import sys
+import time
+from collections import defaultdict
 import threading
 from threading import Thread, Lock
-from collections import defaultdict
 
 import numpy as np
+from mindspore.train.checkpoint_pb2 import Checkpoint
+from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
+from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts
+from mindspore.train.print_pb2 import Print
 
 import mindspore
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import log as logger
-from mindspore.train.checkpoint_pb2 import Checkpoint
-from mindspore.train.print_pb2 import Print
-from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts
-from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
-from mindspore.train.mind_ir_pb2 import GraphProto as graph_proto
-from mindspore.common.tensor import Tensor
+from mindspore._checkparam import check_input_data, Validator
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore.common.api import _cell_graph_executor as _executor
-from mindspore.common import dtype as mstype
-from mindspore._checkparam import check_input_data, Validator
-from mindspore.compression.export import quant_export
-from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
-from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_rank, get_group_size
-from mindspore.parallel._tensor import _reshape_param_data_with_weight
+from mindspore.compression.export import quant_export
 from mindspore.parallel._cell_wrapper import get_allgather_cell
+from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data
+from mindspore.parallel._tensor import _reshape_param_data_with_weight
+from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
-
 
 tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
                      "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,
@@ -177,7 +175,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                         else:
                             plain_data += checkpoint_list.SerializeToString()
 
-                            max_block_size = SLICE_SIZE*1024
+                            max_block_size = SLICE_SIZE * 1024
                             while len(plain_data) >= max_block_size:
                                 cipher_data += _encrypt(plain_data[0: max_block_size], max_block_size, enc_key,
                                                         len(enc_key), enc_mode)
@@ -789,7 +787,7 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
         total_size = _calculation_net_size(net)
         if total_size > PROTO_LIMIT_SIZE:
             raise RuntimeError('Export onnx model failed. Network size is: {}G, it exceeded the protobuf: {}G limit.'
-                               .format(total_size/1024/1024, PROTO_LIMIT_SIZE/1024/1024))
+                               .format(total_size / 1024 / 1024, PROTO_LIMIT_SIZE / 1024 / 1024))
         phase_name = 'export.onnx'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(net, graph_id)
@@ -841,64 +839,54 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
             shutil.rmtree(data_path)
         os.makedirs(data_path, exist_ok=True)
         os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        index = 0
-        graphproto = graph_proto()
-        data_size = 0
+        # Reserves 4096 bytes as spare information such as check data
+        offset = 4096
+        data_file_name = os.path.join(data_path, "veriables.data")
+        if os.path.exists(data_file_name):
+            os.chmod(data_file_name, stat.S_IWUSR)
+        with open(data_file_name, "wb") as f:
+            f.write(bytes(offset))
+            for name, param in net_dict.items():
+                for param_proto in model.graph.parameter:
+                    if name == param_proto.name[param_proto.name.find(":") + 1:]:
+                        param_proto.external_data.location = data_file_name
+                        raw_data = param.data.asnumpy().tobytes()
+                        data_length = len(raw_data)
+                        param_proto.external_data.length = data_length
+                        param_proto.external_data.offset = offset
+                        write_data = raw_data
+                        offset += data_length
+                        if data_length % 64 != 0:
+                            append_size = 64 - (data_length % 64)
+                            write_data += (bytes(append_size))
+                            offset += append_size
+                        if is_encrypt():
+                            write_data = _encrypt(write_data, len(write_data), kwargs['enc_key'],
+                                                  len(kwargs['enc_key']), kwargs['enc_mode'])
+                        f.write(write_data)
 
-        for name, param in net_dict.items():
-            for param_proto in model.graph.parameter:
-                if name == param_proto.name[param_proto.name.find(":") + 1:]:
-                    parameter = graphproto.parameter.add()
-                    parameter.name = param_proto.name
-                    parameter.data_type = param_proto.data_type
-                    for dim in param_proto.dims:
-                        parameter.dims.append(dim)
-                    byte_data = param.data.asnumpy().tobytes()
-                    parameter.raw_data = byte_data
-                    data_size += sys.getsizeof(byte_data) / 1024
-                    break
-            if data_size > TOTAL_SAVE:
-                data_file_name = os.path.join(data_path, "data_" + str(index))
-                if os.path.exists(data_file_name):
-                    os.chmod(data_file_name, stat.S_IWUSR)
-                with open(data_file_name, "ab") as f:
-                    os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
-                    graph_string = graphproto.SerializeToString()
+                # save graph
+                graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
+                if os.path.exists(graph_file_name):
+                    os.chmod(graph_file_name, stat.S_IWUSR)
+                with open(graph_file_name, 'wb') as model_file:
+                    os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
+                    model_string = model.SerializeToString()
                     if is_encrypt():
-                        graph_string = _encrypt(graph_string, len(graph_string), kwargs['enc_key'],
-                                                len(kwargs['enc_key']), kwargs['enc_mode'])
-                    f.write(graph_string)
-                    os.chmod(data_file_name, stat.S_IRUSR)
-                index += 1
-                data_size = 0
-                del graphproto.parameter[:]
+                        model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'],
+                                                len(kwargs['enc_key']),
+                                                kwargs['enc_mode'])
+                    model_file.write(model_string)
+                    os.chmod(graph_file_name, stat.S_IRUSR)
 
-        if graphproto.parameter:
-            data_file_name = os.path.join(data_path, "data_" + str(index))
-            if os.path.exists(data_file_name):
-                os.chmod(data_file_name, stat.S_IWUSR)
-            with open(data_file_name, "ab") as f:
-                os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
-                graph_string = graphproto.SerializeToString()
-                if is_encrypt():
-                    graph_string = _encrypt(graph_string, len(graph_string), kwargs['enc_key'], len(kwargs['enc_key']),
-                                            kwargs['enc_mode'])
-                f.write(graph_string)
-                os.chmod(data_file_name, stat.S_IRUSR)
-
-        # save graph
-        del model.graph.parameter[:]
-        graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
-        if os.path.exists(graph_file_name):
-            os.chmod(graph_file_name, stat.S_IWUSR)
-        with open(graph_file_name, 'wb') as f:
-            os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
-            model_string = model.SerializeToString()
+            front_info = bytearray()
+            check_code = sys.byteorder == "little"
+            front_info += check_code.to_bytes(1, byteorder=sys.byteorder)
+            f.seek(0, 0)
             if is_encrypt():
-                model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'], len(kwargs['enc_key']),
-                                        kwargs['enc_mode'])
-            f.write(model_string)
-            os.chmod(graph_file_name, stat.S_IRUSR)
+                front_info = _encrypt(front_info, len(front_info), kwargs['enc_key'],
+                                      len(kwargs['enc_key']), kwargs['enc_mode'])
+            f.write(front_info)
 
 
 def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
@@ -946,6 +934,7 @@ def quant_mode_manage(func):
     """
     Inherit the quant_mode in old version.
     """
+
     def warpper(network, *inputs, file_format, **kwargs):
         if 'quant_mode' not in kwargs:
             return network
@@ -955,6 +944,7 @@ def quant_mode_manage(func):
         if quant_mode in ('AUTO', 'MANUAL'):
             kwargs['quant_mode'] = 'QUANT'
         return func(network, *inputs, file_format=file_format, **kwargs)
+
     return warpper
 
 
@@ -1447,6 +1437,7 @@ def async_ckpt_thread_status():
 
 def _check_predict_strategy(predict_strategy):
     """Check predict strategy."""
+
     def _check_int_list(arg):
         if not isinstance(arg, list):
             return False

@@ -93,7 +93,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     return false;
   }
   DIR *open_dir = opendir(dir_in.c_str());
-  if (open_dir == NULL) {
+  if (open_dir == nullptr) {
     MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
   }
   dirent *p = nullptr;
@@ -104,12 +104,14 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
       ret = stat(name.c_str(), &st);
       if (ret != 0) {
         MS_LOG(ERROR) << "stat error, ret is : " << ret;
+        closedir(open_dir);
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
         ret = get_all_files(name, files);
         if (!ret) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
+          closedir(open_dir);
           return false;
         }
       } else if (S_ISREG(st.st_mode)) {

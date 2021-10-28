@@ -48,7 +48,7 @@ class MSANFModelParser {
   void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
   void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
   void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
-  void SetMindIRDecMode(const std::string dec_mode) { mindir_dec_mode_ = dec_mode; }
+  void SetMindIRDecMode(const std::string &dec_mode) { mindir_dec_mode_ = dec_mode; }
 
  private:
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
@@ -76,6 +76,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
+  bool little_endian() { return little_endian_; }
   std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
     const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr GetAnfNode(const std::string &node_name);
@@ -90,6 +91,7 @@ class MSANFModelParser {
   const unsigned char *mindir_dec_key_{nullptr};
   size_t mindir_key_size_;
   std::string mindir_dec_mode_;
+  bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
   static std::map<std::string, tensor::TensorPtr> load_tensor_map_;
 };
