@@ -23,6 +23,8 @@ from .momentum import Momentum
 from .adam import Adam, AdamWeightDecay, AdamOffload
 from .lamb import Lamb
 from .sgd import SGD
+from .asgd import ASGD
+from .rprop import Rprop
 from .lars import LARS
 from .ftrl import FTRL
 from .rmsprop import RMSProp
@@ -33,4 +35,4 @@ from .thor import thor
 from .adafactor import AdaFactor
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam', 'AdamOffload',
-           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor', 'AdaFactor']
+           'Lamb', 'SGD', 'ASGD', 'Rprop', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor', 'AdaFactor']
