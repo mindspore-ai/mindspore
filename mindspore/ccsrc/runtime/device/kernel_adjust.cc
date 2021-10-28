@@ -989,7 +989,12 @@ void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_gr
     auto format = AnfAlgo::GetOutputFormat(param, 0);
     auto type_id = AnfAlgo::GetOutputDeviceDataType(param, 0);
 
-    device_address = std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, size, format, type_id);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_address =
+      std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, size, format, type_id, kAscendDevice, device_id);
+
     if (runtime_instance->MallocMem(kStaticMem, size, device_address) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc static memory for device loop control parameter " << name
                         << " , tensor size is : " << size;

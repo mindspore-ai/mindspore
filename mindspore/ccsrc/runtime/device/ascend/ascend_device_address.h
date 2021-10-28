@@ -36,11 +36,14 @@ namespace ascend {
 class AscendDeviceAddress : public DeviceAddress {
  public:
   explicit AscendDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
-  explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
-      : DeviceAddress(ptr, size, format, type_id) {}
+  explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
+      : DeviceAddress(ptr, size, device_name, device_id) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
-                               const KernelWithIndex &node_index)
-      : DeviceAddress(ptr, size, format, type_id, node_index) {}
+                               const std::string &device_name, uint32_t device_id)
+      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
+                               const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
+      : DeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
@@ -71,6 +74,7 @@ class AscendDeviceAddress : public DeviceAddress {
                                                       const std::string &ori_format,
                                                       const std::string &dst_format) const;
   mutable std::shared_ptr<LaunchKernel> launch_transdata_{nullptr};
+  void BindDevice() const;
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend

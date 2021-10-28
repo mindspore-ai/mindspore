@@ -33,35 +33,14 @@ using CleanOpsMap = std::map<CNodePtr, std::vector<CNodePtr>>;
 bool KernelBuild(const std::vector<CNodePtr> &kernels);
 
 /**
- * @brief preprocess of kernel build for ascend, e.g. inserting clear_zero node for max_pool, bn.
- * Must DO these changes just before kernel build, and after all of other optimizations on AnfGraph
- */
-void InsertAtomicCleanOp(const KernelGraphPtr &kernel_graph);
-
-/**
- *  @brief preprocess for mind rt
- * */
-void InsertAtomicCleanOpForMindRT(const std::vector<CNodePtr> &exe_orders, CleanOpsMap *maps);
-
-/**
- * @brief communication op input info.
- * */
-CommOpInputInfo GetCommunicationOpInputInfo(const std::vector<CNodePtr> &exe_orders);
-
-/**
  * @brief insert atomic
- * */
-void InsertAtomicOps(const std::vector<CNodePtr> &exe_orders, CleanOpsMap *clean_ops);
+ */
+void InsertAtomicCleanOps(const KernelGraphPtr &kernel_graph);
 
 /**
- * @brief gather all atomics
+ *  @brief insert atomic for mind rt
  * */
-std::vector<CNodePtr> GatherAllAtomicOps(const CleanOpsMap &node_maps);
-
-/**
- * @brief add attr for op if need insert atomic
- * */
-void AddNeedInsertAtomicAttrForAllOps(const std::vector<CNodePtr> &exe_orders);
+void InsertAtomicCleanOps(const std::vector<CNodePtr> &nodes, CleanOpsMap *maps);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

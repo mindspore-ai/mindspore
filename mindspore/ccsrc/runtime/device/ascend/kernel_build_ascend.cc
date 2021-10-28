@@ -338,7 +338,6 @@ void ProcessAtomicFusion(const std::vector<CNodePtr> &kernels, CleanOpsMap *clea
     InsertFusionAtomicOp(first_node, fusion_clear_inputs, clean_size_list, clean_ops);
   }
 }
-}  // namespace
 
 void InsertAtomicOps(const std::vector<CNodePtr> &kernels, CleanOpsMap *clean_ops) {
   // fusion
@@ -358,9 +357,9 @@ void InsertAtomicOps(const std::vector<CNodePtr> &kernels, CleanOpsMap *clean_op
   }
 }
 
-std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(const std::vector<CNodePtr> &exe_orders) {
+std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(const std::vector<CNodePtr> &kernels) {
   std::map<AnfNodePtr, std::vector<size_t>> comm_input_info_map;
-  for (auto &kernel : exe_orders) {
+  for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto input_num = AnfAlgo::GetInputTensorNum(kernel);
     if (mindspore::session::AnfRuntimeAlgorithm::IsCommunicationOp(kernel)) {
@@ -401,12 +400,12 @@ std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(const std:
   return comm_input_info_map;
 }
 
-void AddNeedInsertAtomicAttrForAllOps(const std::vector<CNodePtr> &exe_orders) {
-  if (exe_orders.empty()) {
+void TagNeedInsertAtomicAttr(const std::vector<CNodePtr> &nodes) {
+  if (nodes.empty()) {
     return;
   }
-  std::map<AnfNodePtr, std::vector<size_t>> comm_input_info_map = GetCommunicationOpInputInfo(exe_orders);
-  for (const auto &anf_node : exe_orders) {
+  std::map<AnfNodePtr, std::vector<size_t>> comm_input_info_map = GetCommunicationOpInputInfo(nodes);
+  for (const auto &anf_node : nodes) {
     if (comm_input_info_map.find(anf_node) != comm_input_info_map.end()) {
       auto indexes = comm_input_info_map[anf_node];
       if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, anf_node)) {
@@ -433,23 +432,24 @@ std::vector<CNodePtr> GatherAllAtomicOps(const CleanOpsMap &node_maps) {
   }
   return all_atomics;
 }
+}  // namespace
 
-void InsertAtomicCleanOpForMindRT(const std::vector<CNodePtr> &exe_orders, CleanOpsMap *maps) {
+void InsertAtomicCleanOps(const std::vector<CNodePtr> &nodes, CleanOpsMap *maps) {
   MS_EXCEPTION_IF_NULL(maps);
   // assign attr
-  AddNeedInsertAtomicAttrForAllOps(exe_orders);
+  TagNeedInsertAtomicAttr(nodes);
   // insert atomic
-  InsertAtomicOps(exe_orders, maps);
+  InsertAtomicOps(nodes, maps);
   std::vector<CNodePtr> all_atomics = GatherAllAtomicOps(*maps);
   // build atomic
   KernelBuild(all_atomics);
 }
 
-void InsertAtomicCleanOp(const KernelGraphPtr &kernel_graph) {
+void InsertAtomicCleanOps(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &exe_orders = kernel_graph->execution_order();
   // assign attr
-  AddNeedInsertAtomicAttrForAllOps(exe_orders);
+  TagNeedInsertAtomicAttr(exe_orders);
   // insert atomic
   CleanOpsMap node_to_cleans;
   InsertAtomicOps(exe_orders, &node_to_cleans);
