@@ -376,7 +376,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_WeightQuant) {
+  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
     this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";

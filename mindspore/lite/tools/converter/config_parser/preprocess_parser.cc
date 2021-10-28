@@ -27,6 +27,10 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kMinSize = 0;
+constexpr int kMaxSize = 65535;
+}  // namespace
 int PreprocessParser::ParseInputType(const std::string &input_type_str, preprocess::InputType *input_type) {
   if (input_type_str == "IMAGE") {
     (*input_type) = preprocess::IMAGE;
@@ -56,7 +60,7 @@ int PreprocessParser::ParsePreprocess(const DataPreProcessString &data_pre_proce
       MS_LOG(ERROR) << "calibrate_size should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (data_pre_process->calibrate_size < 0) {
+    if (data_pre_process->calibrate_size < kMinSize) {
       MS_LOG(ERROR) << "calibrate_size must larger 0.";
       return RET_INPUT_PARAM_INVALID;
     }
@@ -189,8 +193,13 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
       }
       image_dir = readdir(root);
     }
-    closedir(root);
-    std::sort(inputs->at(image_path.first).begin(), inputs->at(image_path.first).end());
+    auto ret = closedir(root);
+    if (ret != 0) {
+      MS_LOG(ERROR) << " close dir failed.";
+      return RET_ERROR;
+    }
+    auto &cur_inputs = inputs->at(image_path.first);
+    std::sort(cur_inputs.begin(), cur_inputs.end());
     if (count != limited_count) {
       MS_LOG(ERROR) << " data path: " << image_path.second << " data count:" << count
                     << " < limited_count:" << limited_count;
@@ -222,7 +231,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
       MS_LOG(ERROR) << "resize_width should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (image_pre_process->resize_width <= 0 || image_pre_process->resize_width > 65535) {
+    if (image_pre_process->resize_width <= kMinSize || image_pre_process->resize_width > kMaxSize) {
       MS_LOG(ERROR) << "resize_width must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
@@ -232,7 +241,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
       MS_LOG(ERROR) << "resize_width should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (image_pre_process->resize_height <= 0 || image_pre_process->resize_height > 65535) {
+    if (image_pre_process->resize_height <= kMinSize || image_pre_process->resize_height > kMaxSize) {
       MS_LOG(ERROR) << "resize_height must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
@@ -254,7 +263,7 @@ int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_
       MS_LOG(ERROR) << "center_crop_width should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (image_pre_process->center_crop_width <= 0 || image_pre_process->center_crop_width > 65535) {
+    if (image_pre_process->center_crop_width <= kMinSize || image_pre_process->center_crop_width > kMaxSize) {
       MS_LOG(ERROR) << "center_crop_width must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
@@ -264,7 +273,7 @@ int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_
       MS_LOG(ERROR) << "center_crop_height should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (image_pre_process->center_crop_height <= 0 || image_pre_process->center_crop_height > 65535) {
+    if (image_pre_process->center_crop_height <= kMinSize || image_pre_process->center_crop_height > kMaxSize) {
       MS_LOG(ERROR) << "center_crop_height must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }

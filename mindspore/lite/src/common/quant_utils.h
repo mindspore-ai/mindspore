@@ -55,11 +55,11 @@ inline int QuantMin(int bits, TypeId type) {
   return 0;
 }
 
-STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
+STATUS GetMaxMinPerChannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                            bool channel_at_first, float *desired_max, float *desired_min);
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
-                             int quant_min, int num_bits);
+STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
+                             int quant_max, int quant_min, int num_bits);
 
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
@@ -156,7 +156,7 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   }
   size_t one_filter_size = elem_count / channels;
   bool do_quant = quant_param_size / (sizeof(float) * 8 - bit_num) < one_filter_size;
-  if (!do_quant && quant_type == schema::QuantType_WeightQuant) {
+  if (!do_quant && quant_type == schema::QuantType_QUANT_WEIGHT) {
     MS_LOG(INFO) << "too few elements in a filter, no need to quantize. " << one_filter_size;
     return RET_QUANT_CONTINUE;
   }
@@ -164,9 +164,9 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
     float min = FLT_MAX;
     float max = -FLT_MAX;
     STATUS status =
-      GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
+      GetMaxMinPerChannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "GetMaxMinPerchannel failed" << status;
+      MS_LOG(ERROR) << "GetMaxMinPerChannel failed" << status;
       return status;
     }
     schema::QuantParamT quant_param;
@@ -188,14 +188,14 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
       auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
       (*quant_datas)[index] = quant_data;
 
-      if (quant_type == schema::QuantType_WeightQuant) {
+      if (quant_type == schema::QuantType_QUANT_WEIGHT) {
         float dequant_data = quant_param.scale * (quant_data - quant_param.zeroPoint);
         dequant_datas[index] = dequant_data;
         average_dequant += dequant_data;
         average_raw += raw_data;
       }
     }
-    if (quant_type == schema::QuantType_WeightQuant && !k_means) {
+    if (quant_type == schema::QuantType_QUANT_WEIGHT && !k_means) {
       // mean
       average_dequant = average_dequant / one_filter_size;
       average_raw = average_raw / one_filter_size;
@@ -228,7 +228,6 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   }
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore
 

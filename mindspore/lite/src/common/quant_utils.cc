@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
+STATUS GetMaxMinPerChannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                            bool channel_at_first, float *desired_max, float *desired_min) {
   float min = FLT_MAX;
   float max = -FLT_MAX;
@@ -42,34 +42,34 @@ STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_co
   return RET_OK;
 }
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
-                             int quant_min, int num_bits) {
-  MS_ASSERT(quantParam != nullptr);
-  if (mMin > 0.0f) {
-    MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
-    mMin = 0.0f;
+STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
+                             int quant_max, int quant_min, int num_bits) {
+  MS_ASSERT(quant_param != nullptr);
+  if (real_min > 0.0f) {
+    MS_LOG(DEBUG) << "min " << real_min << " is bigger then 0, set to 0, this may course low precision";
+    real_min = 0.0f;
   }
-  if (mMax < 0.0f) {
-    MS_LOG(DEBUG) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
-    mMax = 0.0f;
+  if (real_max < 0.0f) {
+    MS_LOG(DEBUG) << "real_max " << real_max << " is smaller than 0, set to 0, this may course low precision";
+    real_max = 0.0f;
   }
-  if (mMin > mMax) {
-    MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
+  if (real_min > real_max) {
+    MS_LOG(ERROR) << "cal error while min" << real_min << ">" << real_max;
     return RET_PARAM_INVALID;
   }
-  if (mMin == mMax) {
-    if (mMin != 0.0f) {
+  if (real_min == real_max) {
+    if (real_min != 0.0f) {
       MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
       return RET_ERROR;
     }
     MS_LOG(WARNING) << "The maximum and minimum values are equal to 0.";
-    quantParam->inited = true;
-    quantParam->min = mMin;
-    quantParam->max = mMax;
-    quantParam->scale = 1;
-    quantParam->zeroPoint = 0;
-    quantParam->narrowRange = narrowRange;
-    quantParam->numBits = num_bits;
+    quant_param->inited = true;
+    quant_param->min = real_min;
+    quant_param->max = real_max;
+    quant_param->scale = 1;
+    quant_param->zeroPoint = 0;
+    quant_param->narrowRange = narrow_range;
+    quant_param->numBits = num_bits;
     return RET_OK;
   }
 
@@ -79,25 +79,25 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     MS_LOG(ERROR) << "divisor cannot be 0";
     return RET_ERROR;
   }
-  double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
+  double scale = (real_max - real_min) / (quantMaxFloat - quantMinFloat);
   if (fabs(scale) <= 0.0f) {
     MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
     return RET_ERROR;
   }
-  const double zeroPointFromMin = quantMinFloat - mMin / scale;
+  const double zeroPointFromMin = quantMinFloat - real_min / scale;
   int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
 
   // The zero point should always be in the range of quantized value,
   // [qmin, qmax].
   MS_ASSERT(zeroPoint >= quant_min);
   MS_ASSERT(zeroPoint <= quant_max);
-  quantParam->inited = true;
-  quantParam->min = mMin;
-  quantParam->max = mMax;
-  quantParam->scale = scale;
-  quantParam->zeroPoint = zeroPoint;
-  quantParam->narrowRange = narrowRange;
-  quantParam->numBits = num_bits;
+  quant_param->inited = true;
+  quant_param->min = real_min;
+  quant_param->max = real_max;
+  quant_param->scale = scale;
+  quant_param->zeroPoint = zeroPoint;
+  quant_param->narrowRange = narrow_range;
+  quant_param->numBits = num_bits;
 
   return RET_OK;
 }

@@ -19,9 +19,10 @@
 #include "tools/converter/quantizer/fse_decoder.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite::quant {
-int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int symbol_frequency_count, int table_log,
+int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
                                            uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table) {
   MS_ASSERT(symbol_frequency != nullptr);
   MS_ASSERT(new_state != nullptr);
@@ -32,7 +33,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
   int step = ((table_size >> 1) + (table_size >> 3) + 3);
   int pos = 0;
   for (int sym = 0; sym < symbol_frequency_count; sym++) {
-    for (int i = 0; i < symbol_frequency[sym]; i++) {
+    for (uint32_t i = 0; i < symbol_frequency[sym]; i++) {
       symbol_table[pos] = sym;
       pos = (pos + step) & table_mask;
       while (pos > table_mask) {
@@ -44,13 +45,11 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
     return RET_ERROR;
   }
   // defensive copy to not mutate frequency:
-  std::vector<uint16_t> frequency(symbol_frequency_count);
-  for (int i = 0; i < symbol_frequency_count; i++) {
-    frequency[i] = symbol_frequency[i];
-  }
+  std::vector<uint32_t> frequency(symbol_frequency, symbol_frequency + symbol_frequency_count);
+
   for (int i = 0; i < table_size; i++) {
     uint16_t sym = symbol_table[i];
-    uint16_t x = frequency[sym];
+    uint32_t x = frequency[sym];
     frequency[sym] += 1;
 #ifdef _MSC_VER
     int num = 0;
@@ -69,7 +68,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
   return RET_OK;
 }
 
-int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint16_t *frequency, int frequency_count,
+int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
                           const float *centroids, int table_log) {
   MS_ASSERT(bs != nullptr);
   MS_ASSERT(buff != nullptr);
@@ -113,8 +112,10 @@ int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor)
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(src_tensor.data());
   auto total_size = src_tensor.data()->size();
   float *output = static_cast<float *>(dst_tensor->data());
+  CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
   // deserialize from `data`:
   BitStream bs;
@@ -144,8 +145,8 @@ int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor)
                   << " index:" << i << " total size:" << total_size;
     return RET_ERROR;
   }
-  auto *frequency = reinterpret_cast<uint16_t *>(&data8[i]);
-  i += frequency_count * sizeof(uint16_t);
+  auto *frequency = reinterpret_cast<uint32_t *>(&data8[i]);
+  i += frequency_count * sizeof(uint32_t);
   // Used for 8-byte alignment
   i = ((i + 7) >> 3) << 3;
   if (i > total_size) {
