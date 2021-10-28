@@ -79,6 +79,21 @@ void RuntimeAllocator::SetDataOffset(lite::Tensor *tensor, size_t offset) {
   return;
 }
 
+void RuntimeAllocator::Clear(AllocatorPtr default_allocator) {
+  total_size_ = 0;
+  for (auto iter : offset_map_) {
+    iter.first->set_allocator(default_allocator);
+    iter.first->set_data(nullptr);
+  }
+  if (data_ != nullptr) {
+    free(data_);
+    data_ = nullptr;
+  }
+  offset_map_.clear();
+  free_list_.clear();
+  used_list_.clear();
+}
+
 void RuntimeAllocator::MallocTensorData(lite::Tensor *tensor) {
   size_t size = tensor->Size();
   size_t offset = FindMinFree(size);

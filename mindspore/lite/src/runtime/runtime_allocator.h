@@ -44,6 +44,7 @@ class RuntimeAllocator : public Allocator {
   void FreeTensorData(lite::Tensor *tensor);
   void *MallocOptData();
   const std::unordered_map<lite::Tensor *, size_t> &GetOffsetMap() const { return offset_map_; }
+  void Clear(AllocatorPtr default_allocator);
 
  private:
   size_t FindMinFree(size_t size);
