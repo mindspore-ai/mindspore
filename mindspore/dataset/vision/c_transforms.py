@@ -432,7 +432,9 @@ class Decode(ImageTensorOperation):
         Returns:
             img (NumPy), Decoded image.
         """
-        if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
+        if isinstance(img, bytes):
+            img = np.frombuffer(img, np.uint8)
+        elif not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
             raise TypeError(
                 "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
         return super().__call__(img)

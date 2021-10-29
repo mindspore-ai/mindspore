@@ -25,8 +25,14 @@ def test_eager_decode():
 
     img = C.Decode()(img)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-
     assert img.shape == (2268, 4032, 3)
+
+    fp = open("../data/dataset/apple.jpg", "rb")
+    img2 = fp.read()
+
+    img2 = C.Decode()(img2)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img2), img2.shape))
+    assert img2.shape == (2268, 4032, 3)
 
 
 def test_eager_resize():
