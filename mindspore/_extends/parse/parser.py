@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -517,6 +517,8 @@ def eval_script(exp_str, params):
     obj = eval(exp_str, global_params, local_params)
     if obj is None:
         raise ValueError(f"When call 'eval', the result is none. exp_str: '{exp_str}'")
+    if isinstance(obj, set):
+        obj = tuple(obj)
     return obj
 
 
@@ -608,8 +610,10 @@ class Parser:
 
     def is_unsupported_builtin_type(self, value_type):
         """To check if not supported builtin type"""
-        logger.debug(f"value_type: {value_type}, {type([])}, {type(())}.")
-        return value_type in (list, tuple)
+        unsupported_builtin_type = (list, tuple, set, dict, slice, bool, int, float, str)
+        is_unsupported = value_type in unsupported_builtin_type
+        logger.debug(f"value_type: {value_type}, unsupported builtin type: {is_unsupported}.")
+        return is_unsupported
 
     def is_supported_namespace_module(self, value):
         """To check if the module is allowed to support."""
