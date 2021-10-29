@@ -25,19 +25,43 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using CommOpInputInfo = std::map<AnfNodePtr, std::vector<size_t>>;
+using CleanOpsMap = std::map<CNodePtr, std::vector<CNodePtr>>;
+
 /**
  * @brief kernel build for ascend.
  */
 bool KernelBuild(const std::vector<CNodePtr> &kernels);
+
 /**
- * @brief preporcess of kernel build for ascend, e.g. inserting clear_zero node for maxpool, bn.
+ * @brief preprocess of kernel build for ascend, e.g. inserting clear_zero node for max_pool, bn.
  * Must DO these changes just before kernel build, and after all of other optimizations on AnfGraph
  */
-void KernelBuildPreprocess(mindspore::session::KernelGraph *kernel_graph);
+void InsertAtomicCleanOp(const KernelGraphPtr &kernel_graph);
+
 /**
- * @brief Communication Op Input Info.
+ *  @brief preprocess for mind rt
  * */
-CommOpInputInfo GetCommunicationOpInputInfo(const mindspore::session::KernelGraph *kernel_graph);
+void InsertAtomicCleanOpForMindRT(const std::vector<CNodePtr> &exe_orders, CleanOpsMap *maps);
+
+/**
+ * @brief communication op input info.
+ * */
+CommOpInputInfo GetCommunicationOpInputInfo(const std::vector<CNodePtr> &exe_orders);
+
+/**
+ * @brief insert atomic
+ * */
+void InsertAtomicOps(const std::vector<CNodePtr> &exe_orders, CleanOpsMap *clean_ops);
+
+/**
+ * @brief gather all atomics
+ * */
+std::vector<CNodePtr> GatherAllAtomicOps(const CleanOpsMap &node_maps);
+
+/**
+ * @brief add attr for op if need insert atomic
+ * */
+void AddNeedInsertAtomicAttrForAllOps(const std::vector<CNodePtr> &exe_orders);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
