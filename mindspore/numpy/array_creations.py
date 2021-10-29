@@ -402,9 +402,10 @@ def arange(start, stop=None, step=None, dtype=None):
         Tensor with evenly spaced values.
 
     Raises:
-        TypeError(PyNative Mode) or RuntimeError(Graph Mode): If input arguments
-            have types not specified above, or arguments are not given in the correct
-            orders specified above.
+        TypeError(PyNative Mode): If input arguments have types not specified above,
+            or arguments are not given in the correct orders specified above.
+        RuntimeError(Graph Mode): The inputs that lead to TypeError in Pynative Mode
+            will lead to RuntimeError in Graph Mode.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
