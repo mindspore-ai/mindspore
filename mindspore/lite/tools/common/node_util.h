@@ -419,6 +419,8 @@ bool IsCall(const AnfNodePtr &node);
 
 bool IsSwitch(const AnfNodePtr &node);
 
+bool IsSwitchLayer(const AnfNodePtr &node);
+
 bool IsMakeTuple(const AnfNodePtr &node);
 
 ValueNodePtr GetPartialFusionPrim();

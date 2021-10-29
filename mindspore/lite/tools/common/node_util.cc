@@ -392,6 +392,16 @@ bool IsSwitch(const AnfNodePtr &node) {
   return opt::CheckPrimitiveType(node, prim::kPrimSwitch);
 }
 
+bool IsSwitchLayer(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (!utils::isa<CNodePtr>(node)) {
+    return false;
+  }
+  return opt::CheckPrimitiveType(node, prim::kPrimSwitchLayer);
+}
+
 bool IsMakeTuple(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;

@@ -122,7 +122,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   if (parameter->type_ == schema::PrimitiveType_PartialFusion || parameter->type_ == schema::PrimitiveType_Switch ||
-      parameter->type_ == schema::PrimitiveType_Call) {
+      parameter->type_ == schema::PrimitiveType_Call || parameter->type_ == schema::PrimitiveType_SwitchLayer) {
     MS_LOG(INFO) << "no need infer shape.";
     return RET_OK;
   }
