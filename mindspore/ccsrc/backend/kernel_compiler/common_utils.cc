@@ -714,67 +714,6 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
   }
 }
 
-bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(node_json);
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->size()) {
-    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
-                                << cnode->inputs().size() << "][" << cnode->DebugString() << "]";
-  }
-
-  auto input_node = cnode->input(input_idx + 1);
-  if (!IsValueNode<tensor::Tensor>(input_node)) {
-    return false;
-  }
-
-  auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
-  if (tensor == nullptr) {
-    MS_LOG(DEBUG) << "Value of input node is nullptr, op: [" << input_node->DebugString() << "]";
-    return false;
-  }
-
-  auto type_id = tensor->data_type();
-  auto *data = tensor->data_c();
-  MS_EXCEPTION_IF_NULL(data);
-  if (tensor->DataSize() > 1) {
-    // not const tensor.
-    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, [" << input_node->DebugString(2) << "]";
-    return false;
-  }
-
-  if (type_id == kFloat64->type_id()) {
-    (*node_json)["value"] = static_cast<double *>(data)[0];
-  } else if (type_id == kFloat32->type_id()) {
-    (*node_json)["value"] = static_cast<float *>(data)[0];
-  } else if (type_id == kFloat16->type_id()) {
-    float16 *val = static_cast<float16 *>(data);
-    (*node_json)["value"] = static_cast<float>(val[0]);
-  } else if (type_id == kUInt64->type_id()) {
-    (*node_json)["value"] = static_cast<uint64_t *>(data)[0];
-  } else if (type_id == kUInt32->type_id()) {
-    (*node_json)["value"] = static_cast<uint32_t *>(data)[0];
-  } else if (type_id == kUInt16->type_id()) {
-    (*node_json)["value"] = static_cast<uint16_t *>(data)[0];
-  } else if (type_id == kUInt8->type_id()) {
-    (*node_json)["value"] = static_cast<uint8_t *>(data)[0];
-  } else if (type_id == kInt64->type_id()) {
-    (*node_json)["value"] = static_cast<int64_t *>(data)[0];
-  } else if (type_id == kInt32->type_id()) {
-    (*node_json)["value"] = static_cast<int32_t *>(data)[0];
-  } else if (type_id == kInt16->type_id()) {
-    (*node_json)["value"] = static_cast<int16_t *>(data)[0];
-  } else if (type_id == kInt8->type_id()) {
-    (*node_json)["value"] = static_cast<int8_t *>(data)[0];
-  } else if (type_id == kBool->type_id()) {
-    (*node_json)["value"] = static_cast<bool *>(data)[0];
-  } else {
-    MS_LOG(EXCEPTION) << "Unknown value type of tensor[" << cnode->DebugString() << "]";
-  }
-  return true;
-}
-
 bool IsWeightBoundary(const AnfNodePtr &node) {
   if (node->isa<ValueNode>()) {
     return true;
