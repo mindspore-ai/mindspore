@@ -15,8 +15,9 @@
 """.. MindSpore package."""
 
 from .run_check import run_check
-from . import common, train, log
+from . import common, dataset, mindrecord, train, log
 from .common import *
+from .mindrecord import *
 from .ops import _op_impl
 from .train import *
 from .log import *

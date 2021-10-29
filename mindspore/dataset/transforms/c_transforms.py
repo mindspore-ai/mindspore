@@ -18,7 +18,7 @@ The module transforms.c_transforms provides common operations, including OneHotO
 from enum import IntEnum
 import numpy as np
 
-from mindspore import dtype as mstype
+from mindspore.common import dtype as mstype
 import mindspore._c_dataengine as cde
 
 from .validators import check_num_classes, check_ms_type, check_fill_value, check_slice_option, check_slice_op, \
