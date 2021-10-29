@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
+#include "backend/optimizer/common/helper.h"
 #include "frontend/parallel/context.h"
 
 namespace mindspore {
@@ -318,16 +319,18 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   if (end_index >= communication_op_info.communication_op_nodes.size()) {
     MS_LOG(EXCEPTION) << "end index out of communication_op_nodes size";
   }
+  std::vector<AnfNodePtr> orig_nodes;
   for (size_t idx = start_index; idx <= end_index; ++idx) {
     auto cnode = communication_op_info.communication_op_nodes[idx];
     MS_EXCEPTION_IF_NULL(cnode);
     if (idx != start_index) {
       AdjustAllReduceInputWithLoad(cnode);
     }
-    fusion_inputs.insert(fusion_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+    (void)fusion_inputs.insert(fusion_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+    (void)orig_nodes.emplace_back(cnode);
   }
   CheckInputs(fusion_inputs);
-  AnfNodePtr fused_node = func_graph->NewCNode(fusion_inputs);
+  AnfNodePtr fused_node = NewCNode(fusion_inputs, func_graph, orig_nodes);
   MS_EXCEPTION_IF_NULL(fused_node);
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -447,7 +450,7 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const float input_grad_size_num = 0.0;
   const float input_grad_time_num = 0.0;
-  // divide candidate fusion groups with same (group,op,fusion) attrs, fusion==0 means not fusion
+  // divide candidate fusion groups with same (group,op,fusion,dtype) attrs, fusion==0 means not fusion
   std::unordered_map<std::string, CommunicationOpInfo> candidate_groups;
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {

@@ -28,46 +28,8 @@
 
 namespace mindspore {
 namespace opt {
-const int axis_input_index = 2;
 namespace {
-AnfNodePtr NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) {
-  std::vector<AnfNodePtr> rank_inputs;
-  auto prim = std::make_shared<Primitive>(prim::kPrimRank->name());
-  rank_inputs.push_back(NewValueNode(prim));
-  auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, 1);
-  rank_inputs.push_back(prev_node.first);
-  auto rank_op = kernel_graph->NewCNode(rank_inputs);
-  MS_EXCEPTION_IF_NULL(rank_op);
-  rank_op->set_abstract(prev_node.first->abstract());
-  return rank_op;
-}
-
-AnfNodePtr NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) {
-  std::vector<AnfNodePtr> range_inputs;
-  auto prim = std::make_shared<Primitive>(prim::kPrimRange->name());
-  range_inputs.push_back(NewValueNode(prim));
-  // "start"
-  auto start_ = NewValueNode(SizeToLong(0));
-  MS_EXCEPTION_IF_NULL(start_);
-  auto imm_start = std::make_shared<Int64Imm>(SizeToLong(0));
-  start_->set_abstract(std::make_shared<abstract::AbstractScalar>(imm_start));
-  range_inputs.push_back(start_);
-
-  // "limit"
-  range_inputs.push_back(rank_op);
-
-  // "delta"
-  auto delta_ = NewValueNode(SizeToLong(1));
-  MS_EXCEPTION_IF_NULL(delta_);
-  auto imm_delta = std::make_shared<Int64Imm>(SizeToLong(1));
-  delta_->set_abstract(std::make_shared<abstract::AbstractScalar>(imm_delta));
-  range_inputs.push_back(delta_);
-  // new range op
-  auto range_op = kernel_graph->NewCNode(range_inputs);
-  MS_EXCEPTION_IF_NULL(range_op);
-  range_op->set_abstract(rank_op->abstract());
-  return range_op;
-}
+const int axis_input_index = 2;
 
 bool IsNeedComputeRank(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -95,8 +57,48 @@ bool IsNeedComputeRank(const CNodePtr &cnode) {
   }
   return false;
 }
+}  // namespace
 
-AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) {
+AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
+  std::vector<AnfNodePtr> rank_inputs;
+  auto prim = std::make_shared<Primitive>(prim::kPrimRank->name());
+  rank_inputs.push_back(NewValueNode(prim));
+  auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, 1);
+  rank_inputs.push_back(prev_node.first);
+  auto rank_op = NewCNode(rank_inputs, kernel_graph);
+  MS_EXCEPTION_IF_NULL(rank_op);
+  rank_op->set_abstract(prev_node.first->abstract());
+  return rank_op;
+}
+
+AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const {
+  std::vector<AnfNodePtr> range_inputs;
+  auto prim = std::make_shared<Primitive>(prim::kPrimRange->name());
+  range_inputs.push_back(NewValueNode(prim));
+  // "start"
+  auto start_ = NewValueNode(SizeToLong(0));
+  MS_EXCEPTION_IF_NULL(start_);
+  auto imm_start = std::make_shared<Int64Imm>(SizeToLong(0));
+  start_->set_abstract(std::make_shared<abstract::AbstractScalar>(imm_start));
+  range_inputs.push_back(start_);
+
+  // "limit"
+  range_inputs.push_back(rank_op);
+
+  // "delta"
+  auto delta_ = NewValueNode(SizeToLong(1));
+  MS_EXCEPTION_IF_NULL(delta_);
+  auto imm_delta = std::make_shared<Int64Imm>(SizeToLong(1));
+  delta_->set_abstract(std::make_shared<abstract::AbstractScalar>(imm_delta));
+  range_inputs.push_back(delta_);
+  // new range op
+  auto range_op = NewCNode(range_inputs, kernel_graph);
+  MS_EXCEPTION_IF_NULL(range_op);
+  range_op->set_abstract(rank_op->abstract());
+  return range_op;
+}
+
+AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
   // the input dim is unknown, need rank + range, can not supported now; ;
   MS_LOG(EXCEPTION)
     << "Can not support the case that input is dim unknown and axis is empty or axis contain value less 0. node: "
@@ -108,7 +110,7 @@ AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
   new_inputs.push_back(cnode->input(1));
   new_inputs.push_back(range_op);
-  auto new_node = kernel_graph->NewCNode(cnode);
+  auto new_node = NewCNode(cnode, kernel_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_inputs(new_inputs);
   return new_node;
@@ -121,7 +123,7 @@ AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_
 // 2: the value of axis_input contain the value less 0,
 // the new tensor of the new value node should be "shape.size() + the_old_value_less_0",
 // the shape is the first input'shape of ReduceSum;
-AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) {
+AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
   // axis is a tuple ,maybe empty or contain a value less 0;
   auto axis_input = cnode->input(axis_input_index);
   if (IsValueNode<ValueTuple>(axis_input)) {
@@ -159,7 +161,7 @@ AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kerne
       assist_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt64, axes_value));
       auto assist_value_node = kernel_graph->NewValueNode(assist_node);
       new_inputs.push_back(assist_value_node);
-      auto new_node = kernel_graph->NewCNode(cnode);
+      auto new_node = NewCNode(cnode, kernel_graph);
       MS_EXCEPTION_IF_NULL(new_node);
       new_node->set_inputs(new_inputs);
       return new_node;
@@ -167,7 +169,6 @@ AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kerne
   }
   return nullptr;
 }
-}  // namespace
 
 const AnfNodePtr ReduceSumOptimizer::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {

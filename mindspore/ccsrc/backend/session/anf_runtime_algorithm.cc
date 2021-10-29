@@ -2049,6 +2049,15 @@ bool AnfRuntimeAlgorithm::GetBooleanAttr(const AnfNodePtr &node, const std::stri
   return AnfAlgo::GetNodeAttr<bool>(node, attr);
 }
 
+std::optional<string> AnfRuntimeAlgorithm::GetDumpFlag(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr || !AnfAlgo::HasNodeAttr(kAttrDump, cnode)) {
+    return std::optional<string>{};
+  }
+  return std::optional<string>{AnfAlgo::GetNodeAttr<string>(node, kAttrDump)};
+}
+
 bool AnfRuntimeAlgorithm::HasDynamicShapeFlag(const PrimitivePtr &prim) {
   auto get_bool_attr = [](const PrimitivePtr &primitive, const std::string &attr_name) -> bool {
     MS_EXCEPTION_IF_NULL(primitive);

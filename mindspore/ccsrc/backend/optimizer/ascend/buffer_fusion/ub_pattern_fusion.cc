@@ -85,7 +85,10 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
     if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
       auto fracz_group = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFracZGroup);
       fusion_op->set_attr(kAttrFracZGroup, MakeValue(fracz_group));
-      break;
+    }
+    if (AnfAlgo::HasNodeAttr(kAttrDump, cnode)) {
+      auto dump_flag = AnfAlgo::GetNodeAttr<string>(node, kAttrDump);
+      fusion_op->set_attr(kAttrDump, MakeValue(dump_flag));
     }
   }
   std::vector<AnfNodePtr> fusion_inputs_list = inputs_list;

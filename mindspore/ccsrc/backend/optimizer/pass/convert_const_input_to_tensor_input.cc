@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,10 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
   tensor_input->set_scope(input_node->scope());
   return tensor_input;
 }
+}  // namespace
 
-AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGraphPtr &func_graph,
+                                                                   const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
@@ -89,7 +91,7 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   }
   if (need_update) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    auto new_cnode = func_graph->NewCNode(new_inputs);
+    auto new_cnode = NewCNode(new_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(new_cnode);
     if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
       new_cnode->set_abstract(new_inputs[1]->abstract());
@@ -105,7 +107,6 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   }
   return nullptr;
 }
-}  // namespace
 
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &) const {

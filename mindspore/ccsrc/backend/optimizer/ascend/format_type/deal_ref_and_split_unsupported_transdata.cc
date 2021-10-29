@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,6 +162,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::MakeDependency(const CNodePtr &get
   }
   return func_graph->NewCNode(depend_nodes);
 }
+
 CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
   const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode, const std::shared_ptr<kernel::OpInfo> &op_info) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -172,7 +173,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
   if (!update_states.empty()) {
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    cnode = kernel_graph->NewCNode(orig_cnode);
+    cnode = NewCNode(orig_cnode, kernel_graph);
     MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_inputs(orig_cnode->inputs());
     for (auto &update_state : update_states) {

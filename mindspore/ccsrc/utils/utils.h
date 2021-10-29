@@ -482,6 +482,7 @@ constexpr auto kAttrProfilingIterEnd = "PROFILING_ITER_END";
 constexpr auto kAttrHiddenSize = "hidden_size";
 constexpr auto kAttrInputSize = "input_size";
 constexpr auto kAttrDstType = "dst_type";
+constexpr auto kAttrDump = "dump";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
 constexpr auto kAttrFuncType = "func_type";
 

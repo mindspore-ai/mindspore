@@ -36,8 +36,23 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
 constexpr size_t kType32Len = 4;
 constexpr size_t kType64Len = 8;
+
+void UpdateDumpFlag(const AnfNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
+  for (auto &orig_node : orig_nodes) {
+    if (!orig_node->isa<CNode>()) {
+      continue;
+    }
+    auto orig_cnode = orig_node->cast<CNodePtr>();
+    if (AnfAlgo::HasNodeAttr(kAttrDump, orig_cnode)) {
+      AnfAlgo::CopyNodeAttr(kAttrDump, orig_cnode, node);
+      break;
+    }
+  }
+}
+}  // namespace
 
 std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int64_t> result;
@@ -99,6 +114,21 @@ bool UnVisited(const BaseRef &n) {
     return false;
   }
   return false;
+}
+
+CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+                  const std::vector<AnfNodePtr> &orig_nodes) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto node = fg->NewCNode(inputs);
+  UpdateDumpFlag(node, orig_nodes);
+  return node;
+}
+
+CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto node = fg->NewCNode(cnode);
+  UpdateDumpFlag(node, orig_nodes);
+  return node;
 }
 
 CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size) {
@@ -654,7 +684,7 @@ bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {
 }
 
 namespace {
-ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
+ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp, PrimitiveVarMap *primitive_vars) {
   if (utils::isa<int>(sexp)) {
     return NewValueNode(utils::cast<int>(sexp));
   }
@@ -668,7 +698,16 @@ ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
     return NewValueNode(utils::cast<bool>(sexp));
   }
   if (utils::isa<ValuePtr>(sexp)) {
-    return NewValueNode(utils::cast<ValuePtr>(sexp));
+    auto value = utils::cast<ValuePtr>(sexp);
+    if (utils::isa<PrimitivePtr>(sexp)) {
+      auto prim = utils::cast<PrimitivePtr>(sexp);
+      if (primitive_vars->find(prim) != primitive_vars->end()) {
+        prim = std::make_shared<Primitive>(prim->name());
+        value = prim;
+      }
+      (*primitive_vars)[prim] = std::make_shared<Var>(prim);
+    }
+    return NewValueNode(value);
   }
   return nullptr;
 }
@@ -831,7 +870,7 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
   if (utils::isa<AnfNodePtr>(sexp)) {
     return utils::cast<AnfNodePtr>(sexp);
   }
-  auto value_node = CreateValueNodeWithSexp(sexp);
+  auto value_node = CreateValueNodeWithSexp(sexp, primitive_vars);
   if (value_node == nullptr) {
     MS_LOG(EXCEPTION) << "sexp cannot converted. sexp: " + sexp.ToString();
   }
