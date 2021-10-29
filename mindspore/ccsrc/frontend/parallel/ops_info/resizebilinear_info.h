@@ -47,11 +47,11 @@ class ResizeBilinearInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+  void ReplaceNodeInputOrAttrs() override;
 
- private:
-  std::vector<int64_t> size_;  // four integers, NCHW
-  bool align_corners_;
+  std::vector<int64_t> size_;
+  std::vector<int64_t> slice_size_;
+  bool align_corners_ = false;
 };
 
 class ResizeNearestNeighborInfo : public ResizeBilinearInfo {
@@ -60,6 +60,10 @@ class ResizeNearestNeighborInfo : public ResizeBilinearInfo {
                             const PrimitiveAttrs &attrs)
       : ResizeBilinearInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~ResizeNearestNeighborInfo() override = default;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
 };
 
 }  // namespace parallel

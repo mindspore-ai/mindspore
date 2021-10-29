@@ -35,14 +35,7 @@ Status ResizeBilinearInfo::GetAttrs() {
     return FAILED;
   }
 
-  if (size_[0] != size_[1]) {
-    MS_LOG(ERROR) << name_ << ": The second two elements of size must be the same, but got (" << size_[0] << ", "
-                  << size_[1] << ")";
-    return FAILED;
-  }
-
   align_corners_ = GetBoolAttr(ALIGN_CORNERS);
-
   MS_LOG(INFO) << name_ << ": The input size is " << size_ << ", align_corners is " << align_corners_;
 
   return SUCCESS;
@@ -85,7 +78,15 @@ Status ResizeBilinearInfo::InferDevMatrixShape() {
     return FAILED;
   }
 
+  if (stra[0].size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of strategy must be 4, but got " << stra[0].size();
+    return FAILED;
+  }
+
   dev_matrix_shape_ = stra[0];
+  slice_size_ = size_;
+  slice_size_[0] = slice_size_[0] / dev_matrix_shape_[2];
+  slice_size_[1] = slice_size_[1] / dev_matrix_shape_[3];
   return SUCCESS;
 }
 
@@ -134,6 +135,41 @@ Status ResizeBilinearInfo::InitForCostModel(const StrategyPtr &strategy) {
 
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
   return SUCCESS;
+}
+
+void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
+  auto prim = GetValueNode<PrimitivePtr>(cnode_->input(0));
+  prim->set_attr(SIZE, MakeValue(slice_size_));
+}
+
+Status ResizeNearestNeighborInfo::CheckStrategy(const StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
+
+  // check input strategy
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Check input strategy failed";
+    return FAILED;
+  }
+
+  // check output strategy
+  if (CheckStrategyValue(strategy, outputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Check output strategy failed";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+std::vector<StrategyPtr> ResizeNearestNeighborInfo::GenerateOpStrategies(int64_t stage_id) {
+  Shape multiples_split(inputs_shape_[0].size(), 1);
+  Shapes splittable_inputs = {multiples_split};
+
+  std::vector<StrategyPtr> sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": generate strategies failed";
+  }
+
+  return sp_vector;
 }
 }  // namespace parallel
 }  // namespace mindspore

@@ -3841,7 +3841,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check('the dimension of input_x', len(x_shape), '', 4, Rel.EQ, self.name)
-        return tuple(x_shape)[:-2] + tuple(self.size)
+        return tuple(x_shape)[:-2] + tuple(super().get_attr_dict()['size'])
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
