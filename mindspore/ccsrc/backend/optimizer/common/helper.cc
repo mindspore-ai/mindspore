@@ -302,20 +302,20 @@ bool IsAllNopNode(const session::KernelGraph *const graph) {
   return true;
 }
 
-bool CheckNopNodeIsOutputNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool is_dynamic_graph) {
+bool NeedHideNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool is_dynamic_graph) {
   MS_EXCEPTION_IF_NULL(node);
   // if node is not a nop node, keep it in execution order
   if (!IsNopNode(node)) {
-    return true;
+    return false;
   }
   // if node is nop node and the graph is dynamic graph, check if the nop node is graph's output.
   if (is_dynamic_graph) {
     auto iter = find(outputs.begin(), outputs.end(), node);
     if (iter != outputs.end()) {
-      return true;
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 void HideNopNode(session::KernelGraph *const graph) {
@@ -330,7 +330,9 @@ void HideNopNode(session::KernelGraph *const graph) {
   std::vector<CNodePtr> new_nodes;
   for (auto &cnode : execution_order) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if (CheckNopNodeIsOutputNode(outputs, cnode, is_dynamic_graph)) {
+    if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
+      AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
+    } else {
       new_nodes.push_back(cnode);
     }
   }
@@ -352,7 +354,8 @@ void RemoveNopNode(session::KernelGraph *const graph) {
     for (auto &cnode : graph->execution_order()) {
       MS_EXCEPTION_IF_NULL(cnode);
       // ignore nop node itself
-      if (!CheckNopNodeIsOutputNode(outputs, cnode, is_dynamic_graph)) {
+      if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
+        AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
         continue;
       }
       // Replace the input which is nop node

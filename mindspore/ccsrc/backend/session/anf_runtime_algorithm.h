@@ -150,7 +150,7 @@ class AnfRuntimeAlgorithm {
   // get input format select of anf node
   static std::string GetInputFormat(const AnfNodePtr &node, size_t input_idx);
   // get prev node output width output index
-  static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool visit_nop_node = false);
+  static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
   // get reshape_type of from the output of input node.
@@ -184,18 +184,18 @@ class AnfRuntimeAlgorithm {
   // get output select data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputDeviceDataType(const AnfNodePtr &node, size_t input_idx);
   // get output device addr of anf_node
-  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
+  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = true);
   // get mutable output device addr of anf_node
-  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
+  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = true);
   // check whether output addr is exist or not
-  static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = false);
+  static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = false);
   // check whether workspace addr is exist or not
   static bool WorkspaceAddrExist(const AnfNodePtr &node, size_t output_idx);
   // get address from prev node,input_index is the input index of current node related to prev node
   static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx,
-                                                    bool visit_nop_node = true);
+                                                    bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
-                                                       bool visit_nop_node = true);
+                                                       bool skip_nop_node = true);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // set workspace device addr of anf_node
@@ -271,7 +271,7 @@ class AnfRuntimeAlgorithm {
   static bool IsFusedCommunicationOp(const AnfNodePtr &node);
   static bool IsInplaceNode(const AnfNodePtr &node, const string &type);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
-  static bool IsNeedSkipNopOp(const AnfNodePtr &node);
+  static bool IsNeedSkipNopOpAddr(const AnfNodePtr &node);
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsSwitchCall(const CNodePtr &call_node);

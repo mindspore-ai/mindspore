@@ -62,8 +62,8 @@ void DynamicKernel::RebuildDependTensor() {
   MS_EXCEPTION_IF_NULL(context);
   for (auto depend : depend_list_) {
     auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, depend);
-    bool visit_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
-    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, depend, visit_nop_node);
+    bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, depend, skip_nop_node);
     std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
     auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
     auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);

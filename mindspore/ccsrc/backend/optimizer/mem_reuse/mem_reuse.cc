@@ -501,18 +501,17 @@ uint8_t *MemReuseUtil::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index)
   return ptr;
 }
 
-session::KernelWithIndex MemReuseUtil::VisitKernelWithReturnType(const AnfNodePtr &node, size_t i,
-                                                                 bool visit_nop_node) {
+session::KernelWithIndex MemReuseUtil::VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool skip_nop_node) {
   if (!enable_visit_kernel_cache_ || i != 0) {
-    return AnfAlgo::VisitKernelWithReturnType(node, i, visit_nop_node);
+    return AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node);
   }
 
   auto &cache =
-    visit_nop_node ? visit_kernel_with_return_type_in0pos_cache_ : visit_kernel_with_return_type_in0pos_skip_nop_cache_;
+    skip_nop_node ? visit_kernel_with_return_type_in0pos_cache_ : visit_kernel_with_return_type_in0pos_skip_nop_cache_;
   std::unordered_map<AnfNodePtr, session::KernelWithIndex>::iterator tag_iter;
   if (auto iter = cache.find(node); iter == cache.end()) {
-    auto tmp_item = std::pair<AnfNodePtr, session::KernelWithIndex>{
-      node, AnfAlgo::VisitKernelWithReturnType(node, i, visit_nop_node)};
+    auto tmp_item =
+      std::pair<AnfNodePtr, session::KernelWithIndex>{node, AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node)};
     tag_iter = cache.emplace(tmp_item).first;
   } else {
     tag_iter = iter;

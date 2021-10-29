@@ -110,8 +110,8 @@ class GPUKernelRuntime : public KernelRuntime {
   bool IsDistributedTraining(const session::KernelGraph *graph);
   void FetchMemUnitSize(const session::KernelGraph *graph);
 
-  DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
-  DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
+  DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool skip_nop_node);
+  DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool skip_nop_node);
   session::KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &node, size_t i);
 
   void LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
