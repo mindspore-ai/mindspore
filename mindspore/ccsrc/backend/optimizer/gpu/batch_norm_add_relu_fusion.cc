@@ -44,6 +44,21 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(tensor_add);
   auto tuple_get_item = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), 0);
   MS_EXCEPTION_IF_NULL(tuple_get_item);
+
+  // Only fuse output[0] of BatchNorm with Add and ReLU
+  size_t output_index = AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(tuple_get_item));
+  if (output_index != 0) {
+    return nullptr;
+  }
+
+  auto outlist = GetRealNodeUsedList(graph, tuple_get_item);
+  // If output[0] of BatchNorm is used by more than one CNode, fusing BatchNorm+ReLU will affect the result of
+  // BatchNorm's user node, and may result in circle in graph.
+  const size_t node_user_num = 1;
+  if (outlist->size() != node_user_num) {
+    return nullptr;
+  }
+
   auto batch_norm = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto is_train = AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
