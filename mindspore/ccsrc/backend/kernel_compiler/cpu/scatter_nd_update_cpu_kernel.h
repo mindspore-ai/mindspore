@@ -72,6 +72,13 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   ScatterNdUpdateCPUKernel);
+MS_REG_CPU_KERNEL(ScatterNdUpdate,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeInt32),
+                  ScatterNdUpdateCPUKernel)
 }  // namespace kernel
 }  // namespace mindspore
 
