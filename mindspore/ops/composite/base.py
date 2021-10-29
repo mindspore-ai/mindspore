@@ -571,13 +571,13 @@ class Map(Map_):
     """
     Map will apply the set operation on input sequences.
 
-    Apply the operations to every elements of the sequence.
+    Apply the operations to every element of the sequence.
 
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default: None
         reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
-          general users please ignore. `reverse` is the flag to decide if apply the operation reversely.
+          general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
           Only supported in graph mode. Default is False.
 
     Inputs:
