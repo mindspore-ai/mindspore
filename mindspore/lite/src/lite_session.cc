@@ -975,6 +975,13 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     is_running_.store(false);
     return ret;
   }
+
+  if (RuntimeAllocatorInit() != RET_OK) {
+    MS_LOG(ERROR) << "Runtime allocator in resize failed.";
+    is_running_.store(false);
+    return RET_ERROR;
+  }
+
   is_running_.store(false);
   return RET_OK;
 }
@@ -1052,10 +1059,6 @@ int LiteSession::RuntimeAllocatorValid() {
   }
   if (is_infershape_ != RET_OK) {
     MS_LOG(DEBUG) << "Not support runtime allocator in runtime-infershape.";
-    return RET_ERROR;
-  }
-  if (is_control_flow_ == true) {
-    MS_LOG(DEBUG) << "Not support runtime allocator in control flow model.";
     return RET_ERROR;
   }
   if (kernels_.size() != 1) {
@@ -1166,8 +1169,11 @@ int LiteSession::RuntimeAllocatorInit() {
   if (RuntimeAllocatorValid() != RET_OK) {
     return RET_OK;
   }
-
-  runtime_allocator_ = std::shared_ptr<RuntimeAllocator>(new (std::nothrow) RuntimeAllocator());
+  if (runtime_allocator_ == nullptr) {
+    runtime_allocator_ = std::shared_ptr<RuntimeAllocator>(new (std::nothrow) RuntimeAllocator());
+  } else {
+    runtime_allocator_->Clear(context_->allocator);
+  }
   if (runtime_allocator_ == nullptr) {
     MS_LOG(ERROR) << "RuntimeAllocator is null.";
     return RET_ERROR;
@@ -1357,5 +1363,4 @@ int lite::LiteSession::CreateSessionByPath(const std::string &model_path, sessio
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
   return RET_OK;
 }
-
 }  // namespace mindspore
