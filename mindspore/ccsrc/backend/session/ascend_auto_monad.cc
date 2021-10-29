@@ -557,7 +557,7 @@ class CallInfoFinder {
         continue;
       }
       // Mark visited.
-      ctx->visited.emplace(sub_graph);
+      (void)ctx->visited.emplace(sub_graph);
       // Check call sites in the sub-graph.
       auto &call_info = context_.call_info_map[sub_graph];
       auto &sites = call_info.call_sites;

@@ -417,7 +417,7 @@ void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto
   auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int i) -> void {
     auto res = this->ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
-    multi_value_map->emplace(name, res);
+    (void)multi_value_map->emplace(name, res);
   };
   for (int i = 0; i < attr_proto.ints_size(); i++) {
     func(attr_proto, i);
@@ -737,15 +737,15 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_TENSOR: {
-      ObtainValueNodeInTensorForm(value_node_name, attr_proto.tensors(0));
+      (void)ObtainValueNodeInTensorForm(value_node_name, attr_proto.tensors(0));
       break;
     }
     case FORM_PARSE_NONE: {
-      ObtainValueNodeInNoneForm(value_node_name);
+      (void)ObtainValueNodeInNoneForm(value_node_name);
       break;
     }
     case FORM_PARSE_MONAD: {
-      ObtainValueNodeInMonadForm(value_node_name, attr_proto);
+      (void)ObtainValueNodeInMonadForm(value_node_name, attr_proto);
       break;
     }
     default:
@@ -792,7 +792,7 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
     MS_EXCEPTION_IF_NULL(tensor_info);
     auto abstract = tensor_info->ToAbstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    kv.emplace(attr_tensor.name(), abstract);
+    (void)kv.emplace(attr_tensor.name(), abstract);
   }
   return kv;
 }
