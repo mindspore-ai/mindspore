@@ -129,6 +129,11 @@ class OcclusionSensitivity(Metric):
         """
         Updates input, including `model`, `y_pred` and `label`.
 
+        Args:
+            inputs: Input `y_pred` and `label`. `y_pred` and `label` are Tensor, list or numpy.ndarray.
+                y_pred: image to test. It should be a tensor consisting of 1 batch, which could be 2D or 3D.
+                label: classification label to check for changes (normally the true label, but doesn't have to be.
+
         Inputs:
             - **model** (nn.Cell) - classification model to use for inference.
             - **y_pred** (Union[Tensor, list, np.ndarray]) - image to test. Should be a tensor consisting of 1 batch,

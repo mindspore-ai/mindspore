@@ -2155,6 +2155,7 @@ class Conv2DBackpropInput(Primitive):
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         stride (Union[int. tuple[int]]): The distance of kernel moving, an int number that represents
@@ -2276,13 +2277,14 @@ class Conv2DTranspose(Conv2DBackpropInput):
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         stride (Union[int. tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
         dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
         group (int): Splits input into groups. Default: 1.
-        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，\
             default is 'NCHW'.
 
     Inputs:

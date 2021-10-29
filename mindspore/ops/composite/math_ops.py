@@ -247,6 +247,15 @@ def tensor_dot(x1, x2, axes, prim_name='tensor_dot'):
     axes = 1 is the same as axes = ((1,),(0,)) where both `a` and `b` are 2D.
     axes = 2 is the same as axes = ((1,2),(0,1)) where both `a` and `b` are 3D.
 
+    Args:
+        x1 (Tensor): First tensor in tensor_dot with datatype float16 or float32
+        x2 (Tensor): Second tensor in tensor_dot with datatype float16 or float32
+        axes (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]): Single value or
+            tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
+            automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
+            as axes for each respectively.
+        prim_name (str): The name of primitive. Default: 'tensor_dot'.
+
     Inputs:
         - **x1** (Tensor) - First tensor in tensor_dot with datatype float16 or float32
         - **x2** (Tensor) - Second tensor in tensor_dot with datatype float16 or float32
@@ -333,6 +342,13 @@ def _get_transpose_shape(x2_shape):
 def dot(x1, x2, prim_name=None):
     """
     Computation a dot product between samples in two tensors.
+
+    Args:
+        x1 (Tensor): First tensor in Dot op with datatype float16 or float32,
+            The rank must be greater than or equal to 2.
+        x2 (Tensor): Second tensor in Dot op with datatype float16 or float32,
+            The rank must be greater than or equal to 2.
+        prim_name (Union[str, None]): The name of primitive. Default: None.
 
     Inputs:
         - **x1** (Tensor) - First tensor in Dot op with datatype float16 or float32

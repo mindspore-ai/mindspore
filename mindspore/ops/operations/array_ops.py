@@ -3810,7 +3810,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
-          The data type is the same as the `input_x`.
+        The data type is the same as the `input_x`.
 
     Raises:
         TypeError: If `size` is neither tuple nor list.

@@ -219,6 +219,15 @@ class ConfusionMatrixMetric(Metric):
         """
         Update state with predictions and targets.
 
+        Args:
+            inputs: Input `y_pred` and `y`. `y_pred` and `y` are ndarray.
+                y_pred: Input data to compute. It must be one-hot format and the first dim represents batch.
+                The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
+                As for classification tasks, `y_pred` should have the shape [BN] where N is larger than 1.
+                As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
+                y: Compute the true value of the measure. It must be one-hot format and first dim is batch.
+                The shape of `y` is :math:`(N, C, ...)`.
+
         inputs:
             Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, a list or an array.
 
