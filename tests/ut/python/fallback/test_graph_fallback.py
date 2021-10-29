@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test numpy ops """
+""" test graph fallback """
 import pytest
 import numpy as np
 
@@ -52,6 +52,22 @@ def test_use_monad():
     x = Tensor(1.0, mstype.float32)
     y = Tensor(1.0, mstype.float32)
     print(use_monad(x, y))
+
+
+@ms_function
+def use_tensor_with_mstype():
+    me_x = Tensor(1, mstype.int32)
+    return me_x
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_tensor_with_mstype():
+    """
+    Feature: JIT Fallback
+    Description: Test tensor with mstype in graph mode.
+    Expectation: No exception.
+    """
+    print(use_tensor_with_mstype())
 
 
 class Net(nn.Cell):
