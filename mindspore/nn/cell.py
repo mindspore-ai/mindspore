@@ -191,6 +191,9 @@ class Cell(Cell_):
         The current cell type is updated when a quantization aware training network is encountered.
 
         After being invoked, it can set the cell type to 'cell_type'.
+
+        Args:
+            cell_type(str): The type of cell to be updated, cell_type can be "quant" or "second-order".
         """
         self.cell_type = cell_type
 
@@ -395,6 +398,9 @@ class Cell(Cell_):
                 for all primitive ops in this cell(including ops of cells that wrapped by this cell),
                 if parallel strategy is not specified, then instead of auto-searching,
                 data parallel strategy will be generated for those primitive ops.
+
+        Args:
+            strategy(str): The parallel strategy.
         """
         strategy_gen_modes = ["data_parallel"]
         if strategy not in strategy_gen_modes:
@@ -1162,6 +1168,10 @@ class Cell(Cell_):
         Add customized attributes for cell.
 
         This method is also called when the cell class is instantiated and the class parameter 'flag' is set to True.
+
+        Args:
+            flags (dict): Network configuration information, currently it is used for the binding of network and
+            dataset. Users can also customize network attributes by this parameter. Default: None.
         """
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
@@ -1172,6 +1182,10 @@ class Cell(Cell_):
     def add_flags_recursive(self, **flags):
         """
         If a cell contains child cells, this method can recursively customize attributes of all cells.
+
+        Args:
+            flags (dict): Network configuration information, currently it is used for the binding of network and
+            dataset. Users can also customize network attributes by this parameter. Default: None.
         """
         self.add_flags(**flags)
         for cell in self.cells():

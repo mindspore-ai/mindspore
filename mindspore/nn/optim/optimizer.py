@@ -621,6 +621,9 @@ class Optimizer(Cell):
         """
         Apply Broadcast operations in the sequential order of parameter groups.
 
+        Args:
+            optim_result(ParameterTuple): The optimized results.
+
         Returns:
              bool, the status flag.
         """

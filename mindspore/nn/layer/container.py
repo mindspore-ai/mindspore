@@ -218,7 +218,11 @@ class SequentialCell(Cell):
             cell.set_grad(flag)
 
     def append(self, cell):
-        """Appends a given cell to the end of the list.
+        """
+        Appends a given cell to the end of the list.
+
+        Args:
+            cell(Cell): The subcell to be appended.
 
         Examples:
             >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
@@ -342,7 +346,13 @@ class CellList(_CellListBase, Cell):
         return self
 
     def insert(self, index, cell):
-        """Inserts a given cell before a given index in the list."""
+        """
+        Inserts a given cell before a given index in the list.
+
+        Args:
+            index(int): The Insert index in the CellList.
+            cell(Cell): The subcell to be inserted.
+        """
         cls_name = self.__class__.__name__
         idx = _valid_index(len(self), index, cls_name)
         _valid_cell(cell, cls_name)
@@ -363,6 +373,9 @@ class CellList(_CellListBase, Cell):
         """
         Appends cells from a Python iterable to the end of the list.
 
+        Args:
+            cells(list): The subcells to be extended.
+
         Raises:
             TypeError: If the cells are not a list of subcells.
         """
@@ -379,7 +392,12 @@ class CellList(_CellListBase, Cell):
         return self
 
     def append(self, cell):
-        """Appends a given cell to the end of the list."""
+        """
+        Appends a given cell to the end of the list.
+
+        Args:
+            cell(Cell): The subcell to be appended.
+        """
         if _valid_cell(cell, self.__class__.__name__):
             if self._auto_prefix:
                 prefix, _ = _get_prefix_and_index(self._cells)
