@@ -31,6 +31,15 @@ class _FirstGrad(Cell):
         return self.first_grad_op(self.fn)(*first_grad_input, u)
 
 
+class _JvpFirstGrad(Cell):
+    def __init__(self):
+        super(_JvpFirstGrad, self).__init__()
+        self.first_grad_op = C.GradOperation(sens_param=True, get_all=True)
+
+    def construct(self, u, fn, first_grad_input):
+        return self.first_grad_op(fn)(*first_grad_input, u)
+
+
 class _FirstGradSingleValue(Cell):
     def __init__(self, fn):
         super(_FirstGradSingleValue, self).__init__()
@@ -39,6 +48,16 @@ class _FirstGradSingleValue(Cell):
 
     def construct(self, u, first_grad_single_value_input):
         return self.first_grad_single_value_op(self.fn)(*first_grad_single_value_input, u)
+
+
+class _JvpFirstGradSingleValue(Cell):
+    def __init__(self):
+        super(_JvpFirstGradSingleValue, self).__init__()
+        self.first_grad_single_value_op = C.GradOperation(sens_param=True)
+
+    def construct(self, u, fn, first_grad_single_value_input):
+        return self.first_grad_single_value_op(fn)(*first_grad_single_value_input, u)
+
 
 
 class Jvp(Cell):
@@ -104,6 +123,46 @@ class Jvp(Cell):
         return output, gradient_output
 
 
+class _JvpInner(Cell):
+    """
+    Compute the jacobian-vector-product of the given network. Jvp is equivalent to forward mode autodiff.
+    This class implements the inner process of function jvp.
+    """
+    def __init__(self):
+        super(_JvpInner, self).__init__()
+        self.oneslike = P.OnesLike()
+        self.first_grad = _JvpFirstGrad()
+        self.first_grad.add_flags(enable_tuple_grad=True)
+        self.first_grad_single_value = _JvpFirstGradSingleValue()
+        self.first_grad_single_value.add_flags(enable_tuple_grad=True)
+        self.second_grad_op = C.GradOperation(sens_param=True)
+        self.issubclass_ = P.IsSubClass()
+        self.typeof = Primitive('typeof')
+        self.make_tuple = Primitive('MakeTuple')
+        self.tuple_len = Primitive("tuple_len")
+
+    def construct(self, *args):
+        fn = args[0]
+        v = args[1]
+        jvp_input = args[2:]
+        output = fn(*jvp_input)
+
+        if self.issubclass_(self.typeof(output), mstype.tuple_):
+            u = self.make_tuple()
+            for i in range(self.tuple_len(output)):
+                u = u + self.make_tuple(self.oneslike(output[i]))
+        else:
+            u = self.oneslike(output)
+
+        if self.tuple_len(jvp_input) == 1:
+            second_gradient_net = self.second_grad_op(self.first_grad_single_value)
+            gradient_output = second_gradient_net(u, fn, jvp_input, v)
+        else:
+            second_gradient_net = self.second_grad_op(self.first_grad)
+            gradient_output = second_gradient_net(u, fn, jvp_input, v)
+        return output, gradient_output
+
+
 class Vjp(Cell):
     """
     Computes the dot product between a vector `v` and the Jacobian of the given network at the point
@@ -150,4 +209,28 @@ class Vjp(Cell):
             gradient_output = self.grad_single_value(self.fn)(*args)
         else:
             gradient_output = self.grad(self.fn)(*args)
+        return output, gradient_output
+
+
+class _VjpInner(Cell):
+    """
+    Computes the dot product between a vector `v` and the Jacobian of the given network at the point
+    given by the inputs. This class implements the inner process of function vjp.
+    """
+
+    def __init__(self):
+        super(_VjpInner, self).__init__()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad_single_value = C.GradOperation(sens_param=True)
+        self.tuple_len = Primitive("tuple_len")
+
+    def construct(self, *args):
+        fn = args[0]
+        front_input = args[1:-1]
+        input_with_v = args[1:]
+        output = fn(*front_input)
+        if self.tuple_len(front_input) == 1:
+            gradient_output = self.grad_single_value(fn)(*input_with_v)
+        else:
+            gradient_output = self.grad(fn)(*input_with_v)
         return output, gradient_output
