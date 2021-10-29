@@ -226,6 +226,8 @@ constexpr char IS_TRAINING[] = "is_training";
 constexpr char EPSILON[] = "epsilon";
 constexpr char MOMENTUM[] = "momentum";
 constexpr char DEVICE_NUM[] = "device_num";
+constexpr char REPEAT_DIM_DIRECT[] = "repeat_dim_direct";
+constexpr char RIGHT[] = "right";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

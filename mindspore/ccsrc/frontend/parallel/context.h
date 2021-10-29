@@ -131,6 +131,10 @@ class ParallelContext {
   bool sharding_propagation() const { return sharding_propagation_; }
   void set_enable_all2all(const bool);
   bool enable_all2all() const { return enable_all2all_; }
+  void set_dataset_repeat_dim_right(const bool dataset_repeat_dim_right) {
+    dataset_repeat_dim_right_ = dataset_repeat_dim_right;
+  }
+  bool dataset_repeat_dim_right() const { return dataset_repeat_dim_right_; }
 
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
@@ -173,6 +177,7 @@ class ParallelContext {
   // Enable AllToAll or not. If false, use AllGather and Split.
   bool enable_all2all_;
   std::vector<std::vector<int64_t>> dataset_strategy_;
+  bool dataset_repeat_dim_right_ = false;
 };
 
 }  // namespace parallel
