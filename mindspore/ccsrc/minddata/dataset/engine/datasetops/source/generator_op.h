@@ -77,6 +77,8 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   /// \return Name of the current Op
   std::string Name() const override { return "GeneratorOp"; }
 
+  bool IsPython() const override { return true; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

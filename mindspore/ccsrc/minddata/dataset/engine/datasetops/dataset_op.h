@@ -344,6 +344,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // \brief Remove all callbacks from DatasetOp
   void ClearCallbacks() { callback_manager_.ClearCallbacks(); }
 
+  virtual bool IsPython() const { return false; }
+
  protected:
   // \brief Removes a parent operator from this operator
   // \notes External callers do not have access to this function

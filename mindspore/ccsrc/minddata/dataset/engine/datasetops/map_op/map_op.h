@@ -118,6 +118,15 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
 
   const auto &TFuncs() const { return tfuncs_; }
 
+  bool IsPython() const override {
+    for (const auto &tensorOp : tfuncs_) {
+      if (tensorOp->Name() == kPyFuncOp) {
+        return true;
+      }
+    }
+    return false;
+  }
+
  private:
   // A helper function to create jobs for workers.
   Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);

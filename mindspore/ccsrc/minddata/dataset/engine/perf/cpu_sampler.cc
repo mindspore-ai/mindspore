@@ -361,7 +361,7 @@ Status CpuSampler::UpdateTaskList() {
     }
   }
 
-  if (!fetched_all_python_multiprocesses_) {
+  if (!fetched_all_python_multiprocesses_ && tree->IsPython()) {
     py::gil_scoped_acquire gil_acquire;
     py::module ds = py::module::import("mindspore.dataset.engine.datasets");
     py::tuple process_info = ds.attr("_get_operator_process")();

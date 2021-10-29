@@ -104,6 +104,7 @@ SET(DE_UT_SRCS
         pad_op_test.cc
         path_test.cc
         perf_data_test.cc
+        profiler_test.cc
         queue_test.cc
         random_affine_op_test.cc
         random_color_adjust_op_test.cc
