@@ -1719,8 +1719,8 @@ def fmod(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor)
-        x2 (Tensor): input arrays.
+        x1 (Tensor): the first input arrays.
+        x2 (Tensor): the second input arrays.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -3513,7 +3513,7 @@ def arcsin(x, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor.
+        Output Tensor.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -4359,8 +4359,10 @@ def interp(x, xp, fp, left=None, right=None):
             x-coordinates of the data points, must be increasing.
         fp (Union[int, float, bool, list, tuple, Tensor]): 1-D sequence of floats, the
             y-coordinates of the data points, same length as `xp`.
-        left (float, optional): Value to return for ``x < xp[0]``, default is ``fp[0]``.
-        right (float, optional): Value to return for ``x > xp[-1]``, default is ``fp[-1]``.
+        left (float, optional): Value to return for ``x < xp[0]``, default is ``fp[0]``
+            once obtained.
+        right (float, optional): Value to return for ``x > xp[-1]``, default is ``fp[-1]``
+            once obtained.
 
     Returns:
         Tensor, the interpolated values, same shape as `x`.
@@ -4670,10 +4672,9 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
             the range are ignored. The first element of the range must be less than
             or equal to the second.
         weights (Union[int, float, bool, list, tuple, Tensor], optional): An array
-            of weights, of the same shape as `a`. Each value in `a` only contributes
-            its associated weight towards the bin count (instead of 1). If density
-            is True, the weights are normalized, so that the integral of the density
-            over the range remains 1.
+            of weights, of the same shape as `a`. If density is True, the weights
+            are normalized, so that the integral of the density over the range
+            remains 1.
         density (boolean, optional): If False, the result will contain the number of
             samples in each bin. If True, the result is the value of the probability
             density function at the bin, normalized such that the integral over the
@@ -5319,7 +5320,7 @@ def unwrap(p, discont=3.141592653589793, axis=-1):
     Args:
         p (Union[int, float, bool, list, tuple, Tensor): Input array.
         discont (float, optional): Maximum discontinuity between values, default is pi.
-        axis (int, optional): Axis along which unwrap will operate, default is the last axis.
+        axis (int, optional): Axis along which unwrap will operate, default is -1.
 
     Returns:
         Tensor.

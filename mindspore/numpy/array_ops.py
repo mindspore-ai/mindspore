@@ -149,8 +149,8 @@ def rollaxis(x, axis, start=0):
             If :math:`start <= axis`, the axis is rolled back until it lies in this position (`start`).
             If :math:`start > axis`: the axis is rolled until it lies before this position (`start`).
 
-            If :math:`start < 0`, the start will be normalized as shown in the table.
-            (Please refer to the source code.)
+            If :math:`start < 0`, the start will be normalized as a non-negative number (more details
+                can be seen in the source code.)
 
             .. table
                 +===========+=================+
@@ -665,13 +665,14 @@ def where(condition, x=None, y=None):
     Returns elements chosen from `x` or `y` depending on `condition`.
 
     Note:
-        As nonzero is not supported, neither `x` or `y` can be None.
+        As nonzero is not supported, both `x` and `y` must be provided Tensor
+    input.
 
     Args:
         condition (Tensor): where True, yield `x`, otherwise yield `y`.
-        x (Tensor): Values from which to choose.
+        x (Tensor): Values from which to choose. Defaults to None.
         y (Tensor): Values from which to choose. `x`, `y` and `condition` need
-            to be broadcastable to some shape.
+            to be broadcastable to some shape. Defaults to None.
 
     Returns:
         Tensor or scalar, with elements from `x` where `condition` is True, and
@@ -2015,7 +2016,7 @@ def select(condlist, choicelist, default=0):
             from which the output elements are taken. It has to be of the same length as
             `condlist`.
         default (scalar, optional): The element inserted in output when all conditions
-            evaluate to `False`.
+            evaluate to `False`. Defaults to 0.
 
     Returns:
         Tensor, the output at position `m` is the `m-th` element of the array in
