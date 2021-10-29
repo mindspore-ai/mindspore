@@ -1987,12 +1987,12 @@ void AscendSession::ExecuteAllTaskInQueue() {
     task_manager.ClearAllBuildTasks();
 
     // Launch one by one
-    auto &launch_tasks = task_manager.GetAllLaunchTasks();
+    const auto &launch_tasks = task_manager.GetAllLaunchTasks();
     while (!launch_tasks.empty()) {
       auto &launch_task = launch_tasks.front();
       const auto &context = launch_task->context();
       LaunchFunc(context->graph(), context->tensor_to_node(), context->is_dynamic_shape(), context->input_tensors());
-      launch_tasks.pop();
+      task_manager.PopLaunchTask();
     }
 
     ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);

@@ -109,8 +109,9 @@ class PynativeTaskManager {
     execute_all_ = execute_all;
     inited_ = true;
   }
-  const std::vector<std::shared_ptr<SessionTask>> &GetAllBuildTasks() { return build_tasks_; }
-  std::queue<std::shared_ptr<SessionTask>> &GetAllLaunchTasks() { return launch_tasks_; }
+  const std::vector<std::shared_ptr<SessionTask>> &GetAllBuildTasks() const { return build_tasks_; }
+  const std::queue<std::shared_ptr<SessionTask>> &GetAllLaunchTasks() const { return launch_tasks_; }
+  void PopLaunchTask() { launch_tasks_.pop(); }
   void ClearAllBuildTasks() { build_tasks_.clear(); }
   void Reset() {
     ClearAllResources();
