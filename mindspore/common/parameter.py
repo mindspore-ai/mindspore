@@ -81,7 +81,24 @@ class Parameter(Tensor_):
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
             to initialize the parameter data.
-        name (str): Name of the child parameter. Default: None.
+        name (str): Name of the parameter. Default: None.
+            1) If the parameter is not given a name, the default name is its variable name. For example, the name of
+            param_a below is name_a, and the name of param_b is the variable name param_b.
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_b = Parameter(Tensor([2], ms.float32))
+            2) If parameter in list or tuple is not given a name, will give it a unique name. For example, the names of
+            parameters below are Parameter$1 and Parameter$2.
+              self.param_list = [Parameter(Tensor([3], ms.float32)),
+                                 Parameter(Tensor([4], ms.float32))]
+            3) If the parameter is given a name, and the same name exists between different parameters, an exception
+            will be thrown. For example, "its name 'name_a' already exists." will be thrown.
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
+                                  Parameter(Tensor([6], ms.float32)))
+            4) If a parameter appear multiple times in list or tuple, check the name of the object only once. For
+            example, the following example will not throw an exception.
+              self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+              self.param_tuple = (self.param_a, self.param_a)
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
             broadcast and gradients communication would not be applied to parameters. Default: False.
