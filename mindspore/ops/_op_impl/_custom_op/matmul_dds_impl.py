@@ -21,7 +21,7 @@ matmul_dds_op_info = TBERegOp("MatmulDDS") \
     .async_flag(False) \
     .binfile_name("matmul_dds.so") \
     .compute_cost(10) \
-    .kernel_name("MatmulDDSImpl") \
+    .kernel_name("matmul_dds") \
     .partial_flag(True) \
     .attr("bs", "required", "int", "all") \
     .attr("heads", "required", "int", "all") \
@@ -38,15 +38,15 @@ matmul_dds_op_info = TBERegOp("MatmulDDS") \
 
 
 @op_info_register(matmul_dds_op_info)
-def MatmulDDSImpl(q,
-                  k,
-                  local_mask,
-                  global_mask,
-                  local_prob,
-                  global_prob,
-                  bs,
-                  heads,
-                  kernel_name="MatmulDDSImpl"):
+def matmul_dds(q,
+               k,
+               local_mask,
+               global_mask,
+               local_prob,
+               global_prob,
+               bs,
+               heads,
+               kernel_name="matmul_dds"):
     """
     :param q: the dict of input q (bs*seq_len, embedding_size) zN
     :param k: the dict of input k (bs*seq_len, embedding_size) nZ
@@ -57,9 +57,6 @@ def MatmulDDSImpl(q,
     :param kernel_name:  dds_softmax
     :return: None
     """
-
-    # bs = 4
-    # heads = 16
 
     shape_q = q.get(
         'shape')  # shape_q (embedding_size, bs*seq_length) > (embedding_size//16, bs*seq_length//16, 16, 16) zN
@@ -76,11 +73,6 @@ def MatmulDDSImpl(q,
     block_size = shape_local_mask[0]  # block size only support 64 for now
     block_num = seq_len // block_size  # block number only support 16 for now
     global_size = seq_len // 4  # global size only support 256 for now
-    # seq_len = 1024
-    # size_per_head = 128
-    # block_size = 64
-    # block_num = 16
-    # global_size = 256
 
     tik_inst = tik.Tik(tik.Dprofile('v100', 'cloud'))
 
@@ -119,17 +111,14 @@ def MatmulDDSImpl(q,
                              (global_size + block_size) * 16 // 128, 8)
             tik_inst.data_move(mat_l1_ones[0, 0, 0, 0], mat_ub_ones[0, 0, 0, 0],
                                0, (global_size + block_size) // 16, 16, 0, 0)
-        # b = block_index // heads
+
         b = tik_inst.Scalar(dtype="int32")
         b.set_as(block_index // heads)
 
-        # head = block_index - b * heads
         head = tik_inst.Scalar(dtype="int32")
         head.set_as(block_index - b * heads)
-        # s = head // 4
         s = tik_inst.Scalar(dtype="int32")
         s.set_as(head // 4)
-        # global_idx = 3 - (head - 4 * s)  # global idx for global key extraction
         global_idx = tik_inst.Scalar(dtype="int32")
         global_idx.set_as(3 - (head - 4 * s))
         # apply tensor for global key which is (128, 256) in L1 nZ
@@ -257,22 +246,6 @@ def MatmulDDSImpl(q,
                     tik_inst.mmad(mat_l0c_g, mat_l0a_g, mat_l0b_g,
                                   block_size, size_per_head // 4, global_size, 1)
 
-                # with tik_inst.for_range(0, global_size // 16, thread_num=2) as gb:
-                #     mat_ub_g = tik_inst.Tensor("float32", (1, block_size // 16, 16, 16),
-                #                                name='mat_ub_g',
-                #                                scope=tik.scope_ubuf)
-                #     tik_inst.data_move(mat_ub_g[0, 0, 0, 0], mat_l0c_g[gb, 0, 0, 0], 0,
-                #                        1, block_size // 16, 0, 0)
-                #     mat_ub_g_exp = tik_inst.Tensor("float32", (1, block_size // 16, 16, 16),
-                #                                    name='mat_ub_g_exp',
-                #                                    scope=tik.scope_ubuf)
-                #     tik_inst.vexp(64, mat_ub_g_exp[0, 0, 0, 0],
-                #                   mat_ub_g[0, 0, 0, 0], block_size * 16 // 64, 1, 1, 8, 8)
-                #     # cast fp32 exp to fp16 zN
-                #     tik_inst.vec_conv(64, "", mat_ub_lg_exp_16[gb, 0, 0, 0],
-                #                       mat_ub_g_exp[0, 0, 0, 0],
-                #                       block_size * 16 // 64, 4, 8)
-
             # local
             # apply a new scope
             with tik_inst.new_stmt_scope():
@@ -324,22 +297,6 @@ def MatmulDDSImpl(q,
                     tik_inst.mmad(mat_l0c_l, mat_l0a_l, mat_l0b_l,
                                   block_size, size_per_head // 4, block_size, 1)
 
-                # with tik_inst.for_range(0, block_size // 16, thread_num=2) as gb:
-                #     mat_ub_l = tik_inst.Tensor("float32", (1, block_size // 16, 16, 16),
-                #                                name='mat_ub_l',
-                #                                scope=tik.scope_ubuf)
-                #     tik_inst.data_move(mat_ub_l[0, 0, 0, 0], mat_l0c_l[gb, 0, 0, 0], 0,
-                #                        1, block_size // 16, 0, 0)
-                #     mat_ub_l_exp = tik_inst.Tensor("float32", (1, block_size // 16, 16, 16),
-                #                                    name='mat_ub_l_exp',
-                #                                    scope=tik.scope_ubuf)
-                #     tik_inst.vexp(64, mat_ub_l_exp[0, 0, 0, 0],
-                #                   mat_ub_l[0, 0, 0, 0], block_size * 16 // 64, 1, 1, 8, 8)
-                #     # cast fp32 exp to fp16 zN
-                #     tik_inst.vec_conv(64, "", mat_ub_lg_exp_16[global_size // 16 + gb, 0, 0, 0],
-                #                       mat_ub_l_exp[0, 0, 0, 0],
-                #                       block_size * 16 // 64, 4, 8)
-
             with tik_inst.new_stmt_scope():
                 with tik_inst.for_range(0, block_size // 16, thread_num=2) as gb:
                     mat_ub_lg = tik_inst.Tensor("float32", (1, (block_size + global_size) // 16, 16, 16),
@@ -355,9 +312,6 @@ def MatmulDDSImpl(q,
                     tik_inst.vec_conv(64, "", mat_ub_lg_16[0, 0, 0, 0],
                                       mat_ub_lg[0, 0, 0, 0],
                                       (block_size + global_size) * 16 // 64, 4, 8)
-                    # mat_ub_lg_max = tik_inst.Tensor("float16", (2,),
-                    #                                 name='mat_ub_lg_max',
-                    #                                 scope=tik.scope_ubuf)
                     with tik_inst.for_range(0, 16) as lb:
                         mat_ub_lg_lb = tik_inst.Tensor("float16", (block_size + global_size,),
                                                        name='mat_ub_lg_lb',
@@ -422,74 +376,6 @@ def MatmulDDSImpl(q,
                         tik_inst.data_move(mat_ub_lg_exp_16[0, gb, lb, 0], mat_ub_lg_exp_lb[0], 0,
                                            (block_size + global_size) // 16, 1, 0, block_size - 1)
 
-                    # max_worker = tik_inst.Tensor("float16", ((block_size + global_size) // 8,),
-                    #                              name='max_worker',
-                    #                              scope=tik.scope_ubuf)
-
-                    # with tik_inst.for_range(0, 16) as sb:
-                    #     max_16 = tik_inst.Tensor("float16", ((block_size + global_size) // 16, 2),
-                    #                                 name='max_16',
-                    #                                 scope=tik.scope_ubuf)
-                    #     tik_inst.vcmax(16, max_16[0, 0], mat_ub_lg_16[0, 0, sb, 0], (block_size + global_size) // 16,
-                    #                    1, 1, 16)
-                    #     real_max = tik_inst.Tensor("float16", ((block_size + global_size) // 16,),
-                    #                                 name='real_max',
-                    #                                 scope=tik.scope_ubuf)
-                    #     with tik_inst.for_range(0, (block_size + global_size) // 16) as mb:
-                    #         max_v = tik_inst.Scalar("float16",
-                    #                                     name='max_v',
-                    #                                     init_value=0)
-                    #         max_v.set_as(max_16[mb, 0])
-                    #         real_max[mb].set_as(max_v)
-                    #
-                    #     tik_inst.vcmax((block_size + global_size) // 16, mat_ub_lg_max[sb], real_max[0],
-                    #                    1, 1, 1, 2)
-                    # tik_inst.vec_reduce_max(16, mat_ub_lg_max[sb, 0], mat_ub_lg_16[0, 0, sb, 0],
-                    #                         max_worker, (block_size + global_size) // 16, 16, cal_index=False)
-                    # mat_ub_lg_max_sub = tik_inst.Tensor("float16", (2,),
-                    #                                     name='mat_ub_lg_max_sub',
-                    #                                     scope=tik.scope_ubuf)
-                    # tik_inst.vmuls(2, mat_ub_lg_max_sub[0], mat_ub_lg_max[0], -1.0, 1, 1, 1, 1, 1)
-                    # mat_ub_lg_subs = tik_inst.Tensor("float16", (1, (block_size + global_size) // 16, 16, 16),
-                    #                                  name='mat_ub_lg_subs',
-                    #                                  scope=tik.scope_ubuf)
-                    # max_value = tik_inst.Scalar("float16",
-                    #                             name='max_value',
-                    #                             init_value=0)
-                    # # set value for scalar prob sum rec
-                    # max_value.set_as(mat_ub_lg_max_sub[0])
-                    # max_value_int = tik_inst.Tensor("int8", (1,),
-                    #                                 name='max_value_int',
-                    #                                 scope=tik.scope_ubuf)
-                    # tik_inst.vec_conv(1, "", max_value_int, mat_ub_lg_max_sub[0], 1, 1, 1)
-                    # max_value_ints = tik_inst.Scalar("int8",
-                    #                                  name='max_value_ints',
-                    #                                  init_value=0)
-                    # max_value_ints.set_as(max_value_int[0])
-                    # with tik_inst.if_scope(max_value_ints > 0):
-                    #     tik_inst.vadds(128, mat_ub_lg_subs[0, 0, 0, 0], mat_ub_lg_16[0, 0, 0, 0],
-                    #                    0.0, (block_size + global_size) * 16 // 128, 1, 1, 8, 8)
-                    # with tik_inst.else_scope():
-                    #     tik_inst.vadds(128, mat_ub_lg_subs[0, 0, 0, 0], mat_ub_lg_16[0, 0, 0, 0],
-                    #                    max_value, (block_size + global_size) * 16 // 128, 1, 1, 8, 8)
-                    # tik_inst.vadds(128, mat_ub_lg_subs[0, 0, 0, 0], mat_ub_lg_16[0, 0, 0, 0],
-                    #                5, (block_size + global_size) * 16 // 128, 1, 1, 8, 8)
-                    # with tik_inst.for_range(0, 16) as sb:
-                    #     max_value = tik_inst.Scalar("float16",
-                    #                               name='max_value',
-                    #                               init_value=0)
-                    #     # set value for scalar prob sum rec
-                    #     max_value.set_as(mat_ub_lg_max_sub[sb])
-                    #     tik_inst.vadds(16, mat_ub_lg_subs[0, 0, sb, 0], mat_ub_lg_16[0, 0, sb, 0],
-                    #                    max_value, (block_size + global_size) // 16, 1, 1, 16, 16)
-                    # mat_ub_lg_exp = tik_inst.Tensor("float16", (1, (block_size + global_size) // 16, 16, 16),
-                    #                                 name='mat_ub_lg_exp',
-                    #                                 scope=tik.scope_ubuf)
-                    # tik_inst.vexp(128, mat_ub_lg_exp[0, 0, 0, 0],
-                    #               mat_ub_lg_subs[0, 0, 0, 0], (block_size + global_size) * 16 // 128, 1, 1, 8, 8)
-                    # tik_inst.data_move(mat_ub_lg_exp_16[0, gb, 0, 0], mat_ub_lg_exp[0, 0, 0, 0], 0,
-                    #                    (block_size + global_size) // 16, 16, 0, block_size - 16)
-
             # move exp fp16 from ub to L1 for CUBE mmad
             # the shape of exp fp16 in ub is zN
             # the shape of exp fp16 in L1 is zN
@@ -537,8 +423,7 @@ def MatmulDDSImpl(q,
                     # the stride between each (16, 16) is 0
                     # repeat 128 times
                     tik_inst.load2dv1(mat_l0b_exp[0, 0, 0, 0],
-                                      mat_l1_lg_exp_16[(
-                                          global_size + block_size) * gb // 64, 0, 0, 0], 0,
+                                      mat_l1_lg_exp_16[(global_size + block_size) * gb // 64, 0, 0, 0], 0,
                                       (global_size + block_size) * block_size // (4 * 16 * 16), 1, 0, False)
                     with tik_inst.if_scope(gb == 0):
                         tik_inst.mmad(mat_l0c_exp, mat_l0a_ones, mat_l0b_exp, 16,
@@ -568,7 +453,6 @@ def MatmulDDSImpl(q,
                 # calculate attention prob sum vec (64,)
                 tik_inst.vec_rec_high_preci(
                     64, mat_ub_exp_sum_rec, mat_ub_lg_exp_sum, worker_tensor, 1, 8, 8)
-                # tik_instance.tikdb.debug_print('mat_ub_exp_sum_rec')
                 tik_inst.vec_conv(block_size, "", mat_ub_exp_sum_rec_16[0],
                                   mat_ub_exp_sum_rec[0],
                                   block_size // 64, 4, 8)
@@ -593,12 +477,6 @@ def MatmulDDSImpl(q,
             # the shape of local out in gm is zN
             # the stride between each (16, 64) is 0
             # repeat 4 times
-            # head_id = str(head)
-            # block_id = str(block)
-            # mat_ub_l_out_shape = str(mat_ub_l_out.shape)
-            # tik_inst.tikdb.debug_print(head_id)
-            # tik_inst.tikdb.debug_print(block_id)
-            # tik_inst.tikdb.debug_print(mat_ub_l_out_shape)
             tik_inst.data_move(mat_lc[b, head, block, 0, 0, 0, 0], mat_ub_l_out[0, 0, 0, 0], 0,
                                block_size // 16, block_size, 0, 0)
             # move global out from UB to gm

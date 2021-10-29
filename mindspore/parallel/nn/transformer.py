@@ -285,7 +285,7 @@ class FeedForward(Cell):
           Float tensor.
 
     Outputs:
-        Tensor. the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size] or
+        Tensor, the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size] or
         [batch * seq_length, hidden_size]`.
 
     Raises:
