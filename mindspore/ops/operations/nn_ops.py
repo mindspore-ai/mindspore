@@ -3496,44 +3496,11 @@ class L2Normalize(PrimitiveWithInfer):
 
 class DropoutGenMask(Primitive):
     """
-    Generates the mask value for the input shape.
-
-    Dropout means that neural network units are temporarily dropped from the network according to a certain probability
-    during the deep learning network training. Generally, The effect of Dropout is the same as that of DropoutGenMask
-    and DropoutDoMask. The DropoutGenMask generates a mask shape that is specified based on the input. Next,
-    The DropoutDoMask is a mask generated using DropoutGenMask.
-    The input tensor is randomly set to zero based on the probability p.
-
-
-    Args:
-        Seed0 (int): Seed0 value for random generating. Default: 0.
-        Seed1 (int): Seed1 value for random generating. Default: 0.
-
-    Inputs:
-        - **shape** (tuple[int]) - The shape of target mask.
-        - **keep_prob** (Tensor) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units.
-
-    Outputs:
-        Tensor, the value of generated mask for Inputs `shape`.
-
-    Raises:
-        TypeError: If neither `seed0` nor `seed1` is an int.
-        TypeError: If `shape` is not a tuple.
-        TypeError: If `keep_prob` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> dropout_gen_mask = ops.DropoutGenMask()
-        >>> shape = (2, 4, 5)
-        >>> keep_prob = Tensor(0.5, mindspore.float32)
-        >>> output = dropout_gen_mask(shape, keep_prob)
-        >>> print(output.shape)
-        (16,)
+    .. warning::
+        The DropoutGenMask interface is deprecated, please use the Dropout interface.
     """
 
+    @deprecated("1.5", "Dropout", True)
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
         """Initialize DropoutGenMask."""
@@ -3544,50 +3511,12 @@ class DropoutGenMask(Primitive):
 
 
 class DropoutDoMask(Primitive):
-    r"""
-    Applies dropout mask on the input tensor.
-
-    Take the mask output of DropoutGenMask as input, and apply dropout on the input.
-
-    Dropout means that neural network units are temporarily dropped from the network according to a certain probability
-    during the deep learning network training. Generally, The effect of Dropout is the same as that of DropoutGenMask
-    and DropoutDoMask. The DropoutGenMask generates a mask shape that is specified based on the input. Next,
-    The DropoutDoMask is a mask generated using DropoutGenMask.
-    The input tensor is randomly set to zero based on the probability p.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. Tensor of shape :math:`(N, \ldots)`.
-          The data type should be float32, float16 or int32
-        - **mask** (Tensor) - The mask to be applied on `input_x`, which is the output of `DropoutGenMask`. And the
-          shape of `input_x` must be the same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
-          the output of `DropoutDoMask` are unpredictable.
-        - **keep_prob** (Union[Tensor, float]) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob =
-          0.9, means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
-          the operator `DropoutGenMask`.
-
-    Outputs:
-        Tensor, the value that applied dropout on, as the same data type and shape as `input_x`.
-
-    Raises:
-        TypeError: If `input_x`, `mask` or `keep_prob` is not a Tensor.
-        TypeError: If `keep_prob` is not a float.
-        ValueError: If value of `keep_prob` is not same as `DropoutGenMaks`.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> input_x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
-        >>> shape = (2, 2, 3)
-        >>> keep_prob = Tensor(0.5, mindspore.float32)
-        >>> dropout_gen_mask = ops.DropoutGenMask()
-        >>> dropout_do_mask = ops.DropoutDoMask()
-        >>> mask = dropout_gen_mask(shape, keep_prob)
-        >>> output = dropout_do_mask(input_x, mask, keep_prob)
-        >>> print(output.shape)
-        (2, 2, 3)
+    """
+    .. warning::
+        The DropoutDoMask interface is deprecated, please use the Dropout interface.
     """
 
+    @deprecated("1.5", "Dropout", True)
     @prim_attr_register
     def __init__(self):
         pass
@@ -7912,15 +7841,15 @@ class DynamicGRUV2(PrimitiveWithInfer):
         - **weight_hidden** (Tensor) - Hidden-hidden weight.
           Tensor of shape :math:`(\text{hidden_size}, 3 \times \text{hidden_size})`.
           The data type must be float16.
-        - **init_h** (Tensor) - Hidden state of initial time.
-          Tensor of shape :math:`(\text{batch_size}, \text{hidden_size})`.
-          The data type must be float16 or float32.
         - **bias_input** (Tensor) - Input-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
           Has the same data type with input `init_h`.
         - **bias_hidden** (Tensor) - Hidden-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`,
           or None. Has the same data type with input `init_h`.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(\text{batch_size})`.
           Only `None` is currently supported.
+        - **init_h** (Tensor) - Hidden state of initial time.
+          Tensor of shape :math:`(\text{batch_size}, \text{hidden_size})`.
+          The data type must be float16 or float32.
 
     Outputs:
         - **y** (Tensor) - A Tensor of shape:
