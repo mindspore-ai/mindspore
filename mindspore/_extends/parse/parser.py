@@ -565,8 +565,8 @@ class Parser:
                 raise e
             original_src = ''.join(lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
-            ast_tokens = Parser.ast_cache.get(hexstr)
-            if not ast_tokens:
+            ast_tokens_cache = Parser.ast_cache.get(hexstr)
+            if not ast_tokens_cache:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
@@ -579,8 +579,11 @@ class Parser:
                     idt_err.msg = f"There are incorrect indentations in definition or comment of function: " \
                                   f"'{self.fn.__qualname__}'."
                     raise idt_err
-                Parser.ast_cache[hexstr] = ast_tokens
-            return ast_tokens, ast_tokens.tree
+                ast_tokens_cache = (ast_tokens, self.col_offset)
+                Parser.ast_cache[hexstr] = ast_tokens_cache
+            else:
+                self.col_offset = ast_tokens_cache[1]
+            return ast_tokens_cache[0], ast_tokens_cache[0].tree
 
         logger.error("Fn type is invalid")
         return None, None
