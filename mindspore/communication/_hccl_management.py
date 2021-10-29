@@ -197,6 +197,8 @@ def get_local_rank_size(group="hccl_world_group"):
     Returns:
         An integer scalar with the num of local ranks.
     """
+    if context.get_context("mode") is context.PYNATIVE_MODE:
+        raise RuntimeError("get_local_rank_size is not supported in PYNATIVE_MODE.")
     check_group(group)
     c_group = c_str(group)
     c_local_rank_size = ctypes.c_uint()
@@ -216,6 +218,9 @@ def get_local_rank_id(group="hccl_world_group"):
     Returns:
         An integer scalar with the local rank id of the calling process.
     """
+
+    if context.get_context("mode") is context.PYNATIVE_MODE:
+        raise RuntimeError("get_local_rank_id is not supported in PYNATIVE_MODE.")
     check_group(group)
     c_group = c_str(group)
     c_local_rank_id = ctypes.c_uint()
@@ -236,6 +241,8 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Returns:
         An integer scalar with the rank id in the world group.
     """
+    if context.get_context("mode") is context.PYNATIVE_MODE:
+        raise RuntimeError("get_world_rank_from_group_rank is not supported in PYNATIVE_MODE.")
     check_group(group)
     check_rank_id(group_rank_id)
     c_group = c_str(group)
@@ -258,6 +265,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     Returns:
         An integer scalar with the rank id in the user group.
     """
+    if context.get_context("mode") is context.PYNATIVE_MODE:
+        raise RuntimeError("get_group_rank_from_world_rank is not supported in PYNATIVE_MODE.")
     check_group(group)
     check_rank_id(world_rank_id)
     c_group = c_str(group)
