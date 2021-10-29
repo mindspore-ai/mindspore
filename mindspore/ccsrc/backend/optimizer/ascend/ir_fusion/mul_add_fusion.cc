@@ -21,7 +21,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/common/helper.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -69,10 +68,6 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   }
   auto add = node->cast<CNodePtr>();
   if (add == nullptr || AnfAlgo::GetInputTensorNum(add) != kAddInputTensorNum) {
-    return nullptr;
-  }
-
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MulAddFusion)) {
     return nullptr;
   }
 

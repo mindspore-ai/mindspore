@@ -45,6 +45,7 @@ enum class OptPassEnum {
   Resnet50DbnDwFusionPass,
   MatmulConfusiontransposeUbFusion,
   TbeBatchMatmulElementWiseFusionPass,
+  Invalid,
 };
 
 class LicManager {

@@ -514,7 +514,7 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
   return true;
 }
 
-bool UbPatternFusion::Run(const FuncGraphPtr &graph) {
+bool UbPatternFusion::RunPass(const FuncGraphPtr &graph) {
   bool changed = false;
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();

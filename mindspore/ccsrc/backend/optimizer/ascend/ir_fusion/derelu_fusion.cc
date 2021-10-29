@@ -22,7 +22,6 @@
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {

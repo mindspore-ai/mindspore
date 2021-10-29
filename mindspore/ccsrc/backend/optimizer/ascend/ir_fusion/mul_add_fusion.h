@@ -16,13 +16,15 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MUL_ADD_FUSION_H
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MUL_ADD_FUSION_H
 
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 
 namespace mindspore {
 namespace opt {
-class MulAddFusion : public PatternProcessPass {
+class MulAddFusion : public PatternProcessPassWithSwitch {
  public:
-  explicit MulAddFusion(bool multigraph = true) : PatternProcessPass("mul_add_fusion", multigraph) {}
+  explicit MulAddFusion(bool multigraph = true) : PatternProcessPassWithSwitch("mul_add_fusion", multigraph) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MulAddFusion);
+  }
   ~MulAddFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,14 +27,15 @@ constexpr auto kConstantSelectVarName = "constant_select";
 constexpr auto kConstantGreaterVarName = "constant_greater";
 constexpr auto kConstantMaximumVarName = "constant_maximum";
 
-class ClipByNormNoDivSquareSumFusion : public PatternProcessPass {
+class ClipByNormNoDivSquareSumFusion : public PatternProcessPassWithSwitch {
  public:
   explicit ClipByNormNoDivSquareSumFusion(bool multigraph = true)
-      : PatternProcessPass("clip_by_norm_no_div_square_sum_fusion", multigraph) {
+      : PatternProcessPassWithSwitch("clip_by_norm_no_div_square_sum_fusion", multigraph) {
     input_ = std::make_shared<Var>(kInputVarName);
     constant_select_ = std::make_shared<Var>(kConstantSelectVarName);
     constant_greater_ = std::make_shared<Var>(kConstantGreaterVarName);
     constant_maximum_ = std::make_shared<Var>(kConstantMaximumVarName);
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::ClipByNormNoDivSquareSumFusion);
   }
   ~ClipByNormNoDivSquareSumFusion() override = default;
   const BaseRef DefinePattern() const override;

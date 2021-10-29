@@ -19,14 +19,14 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
-
+#include <utility>
 #include "ir/anf.h"
 #include "backend/optimizer/common/pass.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/kernel_graph.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,15 +55,15 @@ struct BufferFusionInfo_t {
   kernel::KernelBuildInfoPtr kernel_build_info;
 };
 
-class FusionBasePass : public Pass {
+class FusionBasePass : public PassWithSwitch {
  public:
   FusionBasePass(const std::string &name, FusionIdAllocatorPtr idAllocator)
-      : Pass(name), fusion_id_allocator(idAllocator) {}
+      : PassWithSwitch(name), fusion_id_allocator(std::move(idAllocator)) {}
   ~FusionBasePass() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
   bool MatchUBFusionPattern(const session::KernelGraph &kernel_graph);
 
  protected:
+  bool RunPass(const FuncGraphPtr &graph) override;
   virtual void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                         FusedNodeRecord *candidate_fusion) = 0;
   void SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record);

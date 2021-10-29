@@ -19,7 +19,6 @@
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -57,9 +56,6 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
 void MultiOutputFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MultiOutputFusionPass)) {
-    return;
-  }
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {

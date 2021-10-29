@@ -24,14 +24,16 @@
 #include "ir/anf.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "backend/optimizer/common/helper.h"
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 
 namespace mindspore {
 namespace opt {
-class TransposeReshapeFusion : public PatternProcessPass {
+class TransposeReshapeFusion : public PatternProcessPassWithSwitch {
  public:
-  explicit TransposeReshapeFusion(bool multigraph = true) : PatternProcessPass("transpose_reshape_fusion", multigraph) {
+  explicit TransposeReshapeFusion(bool multigraph = true)
+      : PatternProcessPassWithSwitch("transpose_reshape_fusion", multigraph) {
     input_varptr_ = std::make_shared<Var>();
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::TransposeReshapeFusion);
   }
   ~TransposeReshapeFusion() override = default;
   const BaseRef DefinePattern() const override;
