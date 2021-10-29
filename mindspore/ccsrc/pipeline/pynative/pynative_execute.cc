@@ -148,6 +148,11 @@ std::string GetPyObjId(const py::handle &obj) {
 std::string GetId(const py::handle &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     auto tensor_ptr = py::cast<tensor::TensorPtr>(obj);
+    if (tensor_ptr->is_parameter()) {
+      const auto &param_info = tensor_ptr->param_info();
+      MS_EXCEPTION_IF_NULL(param_info);
+      return param_info->name();
+    }
     return tensor_ptr->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {
     auto type_ptr = py::cast<mindspore::TypePtr>(obj);
@@ -1388,7 +1393,7 @@ AnfNodePtr GradExecutor::GetInput(const py::object &obj, bool op_mask) {
     }
     node = graph_info->params.at(obj_id);
     MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(DEBUG) << "Get input param node " << node->ToString() << " " << obj_id;
+    MS_LOG(DEBUG) << "Get input param node " << node->ToString() << ", obj id " << obj_id;
     return node;
   }
 
