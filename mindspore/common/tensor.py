@@ -349,6 +349,14 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same data type as input array.
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = np.array([1, 2])
+            >>> output = Tensor.from_numpy(x)
+            >>> print(output)
+            [1 2]
         """
         return Tensor(Tensor_.from_numpy(array))
 
@@ -359,7 +367,7 @@ class Tensor(Tensor_):
 
     def item(self, index=None):
         """
-        Getitem from the Tensor with the index.
+        Get item from the Tensor with the index.
 
         Note:
             Tensor.item returns a Tensor scalar instead of a Python scalar.
@@ -371,7 +379,7 @@ class Tensor(Tensor_):
             A Tensor scalar, dtype is the same with the original Tensor.
 
         Raises:
-            ValueError: If the length of the `index` is not euqal to self.ndim.
+            ValueError: If the length of the `index` is not equal to self.ndim.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -407,7 +415,7 @@ class Tensor(Tensor_):
             A new Tensor, with value set by :math:`tensor[args] = item`.
 
         Raises:
-            ValueError: If the length of the first argument is not euqal to self.ndim.
+            ValueError: If the length of the first argument is not equal to self.ndim.
             IndexError: If only one argument is provided, and the original Tensor is not scalar.
 
         Supported Platforms:
@@ -426,7 +434,20 @@ class Tensor(Tensor_):
         return output
 
     def asnumpy(self):
-        """Convert tensor to numpy array."""
+        """
+        Convert tensor to numpy array.
+
+        Returns:
+            numpy.array.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor([1, 2, 3], dtype=mstype.float32)
+            >>> output = x.asnumpy()
+            >>> print(output)
+            [1. 2. 3.]
+        """
         self._init_check()
         PynativeExecutor_.get_instance().execute_all_task()
         return Tensor_.asnumpy(self)
@@ -518,11 +539,22 @@ class Tensor(Tensor_):
         Expand the dimension of target tensor to the dimension of input tensor.
 
         Args:
-            x (Tensor): The input tensor. The shape of input tensor must obey
+            x (Tensor): The input tensor. The shape of the input tensor must obey
                 the broadcasting rule.
 
         Returns:
             Tensor, has the same dimension as input tensor.
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor([1, 2, 3], dtype=mstype.float32)
+            >>> y = Tensor(np.ones((2, 3)), dtype=mstype.float32)
+            >>> output = x.expand_as(y)
+            >>> print(output)
+            [[1. 2. 3.]
+            [1. 2. 3.]]
         """
         self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
@@ -579,7 +611,7 @@ class Tensor(Tensor_):
         r"""
         Return a view of the tensor with axes transposed.
 
-        - For a 1-D tensor this has no effect, as a transposed vector is simply the same vector.
+        - For a 1-D tensor, this has no effect, as a transposed vector is simply the same vector.
         - For a 2-D tensor, this is a standard matrix transpose.
         - For an n-D tensor, if axes are given, their order indicates how the axes are permuted.
 
@@ -598,7 +630,7 @@ class Tensor(Tensor_):
 
         Raises:
             TypeError: If input arguments have types not specified above.
-            ValueError: If the number of `axes` is not euqal to a.ndim.
+            ValueError: If the number of `axes` is not equal to a.ndim.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -827,7 +859,7 @@ class Tensor(Tensor_):
 
         Args:
             axis (int, optional): By default, the index is into
-                the flattened tensor, otherwise along the specified axis.
+                the flattened tensor, otherwise along the specified axis. Default: None.
 
         Returns:
             Tensor, indices into the input tensor. It has the same
@@ -861,7 +893,7 @@ class Tensor(Tensor_):
 
         Args:
             axis (int, optional): By default, the index is into
-                the flattened tensor, otherwise along the specified axis.
+                the flattened tensor, otherwise along the specified axis. Default: None.
 
         Returns:
             Tensor, indices into the input tensor. It has the same
@@ -1155,16 +1187,16 @@ class Tensor(Tensor_):
 
         Args:
             xmin (Tensor, scalar, None): Minimum value. If None, clipping is not performed
-                on lower interval edge. Not more than one of `xmin` and `xmax` may be None.
+                on the lower interval edge. Not more than one of `xmin` and `xmax` may be None.
             xmax (Tensor, scalar, None): Maximum value. If None, clipping is not performed
-                on upper interval edge. Not more than one of `xmin` and `xmax` may be None.
+                on the upper interval edge. Not more than one of `xmin` and `xmax` may be None.
                 If `xmin` or `xmax` are tensors, then the three tensors will be broadcasted
                 to match their shapes.
             dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
                 output Tensor. Default is None.
 
         Returns:
-            Tensor, a tensor with the elements of input tensor, but where values
+            Tensor, a tensor with the elements of the input tensor, but where values
             < `xmin` are replaced with `xmin`, and those > `xmax` with `xmax`.
 
         Raises:
@@ -1779,9 +1811,9 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
-                If None, sum all of the elements of the input array.
+                If None, sum all the elements of the input array.
                 If the axis is negative, it counts from the last to the first axis.
-                If the axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple
+                If the axis is a tuple of ints, a sum is performed on all the axes specified in the tuple
                 instead of a single axis or all the axes as before.
             dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
                 output Tensor.
@@ -1794,7 +1826,7 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor. A tensor with the same shape as input, with the specified axis removed.
-            If input tensor is a 0-d array, or if the axis is None, a scalar is returned.
+            If the input tensor is a 0-d array, or if the axis is None, a scalar is returned.
 
         Raises:
             TypeError: If input is not array_like, or `axis` is not int or tuple of ints,
