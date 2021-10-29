@@ -52,7 +52,7 @@ struct PatternOp {
   PatternOp() = default;
   explicit PatternOp(std::string inId) : id(std::move(inId)) {}
   ~PatternOp() = default;
-  void SetPath(size_t subGraphIdx, size_t nodeIdx) {
+  void SetPath(int64_t subGraphIdx, size_t nodeIdx) {
     if (this->path == nullptr) {
       return;
     }

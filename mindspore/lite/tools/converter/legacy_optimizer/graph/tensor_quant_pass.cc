@@ -41,7 +41,11 @@ bool TensorNeedQuant(const std::unique_ptr<TensorT> &tensor) {
   return !tensor->data.empty();
 }
 
-STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) {
+namespace {
+#define kHalfUInt 128
+}  // namespace
+
+STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor) {
   MS_ASSERT(tensor != nullptr);
   size_t wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
   void *oriWeightData = tensor->data.data();
@@ -59,9 +63,9 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
   } else {  // convert uint8 to int8
     auto *weightData = static_cast<uint8_t *>(oriWeightData);
     for (size_t j = 0; j < wShapeSize; j++) {
-      qDatas[j] = (int32_t)weightData[j] - 128;
+      qDatas[j] = static_cast<int8_t>(static_cast<int32_t>(weightData[j]) - kHalfUInt);
     }
-    weightQauntParam->zeroPoint -= 128;
+    weightQauntParam->zeroPoint -= kHalfUInt;
     tensor->quantParams.clear();
     tensor->quantParams.emplace_back(weightQauntParam.release());
   }
@@ -111,6 +115,14 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   bool channel_at_first = true;
   int channel_cnt = -1;
   auto used_nodes_idx = GetLinkedPostIdx(graph, tensor_index);
+  if (tensor->dataType != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Tensor is not in fp32";
+    return RET_ERROR;
+  }
+  if (tensor->data.size() < sizeof(float)) {
+    MS_LOG(ERROR) << "Tensor has no data";
+    return RET_ERROR;
+  }
   if (used_nodes_idx.size() != 1) {
     MS_LOG(ERROR) << "Tensor is used by nodes more than one";
     return RET_ERROR;
@@ -134,9 +146,12 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(elem_count, sizeof(int32_t), SIZE_MAX), RET_ERROR, "int mul overflow");
   size_t data_size = dst_dtype == kNumberTypeInt32 ? elem_count * sizeof(int32_t) : elem_count * sizeof(int8_t);
   std::vector<int8_t> dst_data(data_size);
-  MS_CHECK_TRUE_MSG(channels != 0, RET_ERROR, "divide 0");
-  size_t one_filter_size = elem_count / channels;
-  for (int i = 0; i < channels; i++) {
+  if (channels <= 0) {
+    MS_LOG(ERROR) << "channels is invalid.";
+    return RET_ERROR;
+  }
+  size_t one_filter_size = elem_count / static_cast<size_t>(channels);
+  for (size_t i = 0; i < static_cast<size_t>(channels); i++) {
     if (tensor->quantParams.at(i)->scale <= 0.0f) {
       MS_LOG(ERROR) << "scale:" << tensor->quantParams.at(i)->scale << " <= 0";
       return RET_OK;
@@ -145,7 +160,7 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
     for (size_t j = 0; j < one_filter_size; j++) {
       auto index = j + i * one_filter_size;
       if (!channel_at_first) {
-        index = j * channels + i;
+        index = j * static_cast<size_t>(channels) + i;
       }
       MS_CHECK_TRUE_MSG(index < elem_count, RET_ERROR, "out of range");
       float raw_data = raw_datas[index];
@@ -198,7 +213,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
     auto &quantParam = tensor->quantParams.front();
     if (quantParam->dstDtype == TypeId::kNumberTypeInt8 || quantParam->dstDtype == TypeId::kNumberTypeUInt8 ||
         quantParam->dstDtype == TypeId::kNumberTypeFloat32 || quantParam->dstDtype == TypeId::kNumberTypeFloat) {
-      status = ComputeDataToInt8(tensor, index);
+      status = ComputeDataToInt8(tensor);
       int bit_num = tensor->quantParams.front()->numBits;
       if (DoBitPack(bit_num, tensor.get()) != RET_OK) {
         MS_LOG(ERROR) << "bit pack failed.";

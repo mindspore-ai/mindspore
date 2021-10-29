@@ -113,7 +113,7 @@ class ConverterInnerContext {
   const std::vector<std::string> GetGraphOutputTensorNames() const { return graph_output_tensor_names_; }
 
  private:
-  ConverterInnerContext() {}
+  ConverterInnerContext() = default;
   virtual ~ConverterInnerContext() = default;
   std::map<int32_t, int32_t> graph_input_data_type_map_;
   std::map<int32_t, int32_t> graph_output_data_type_map_;

@@ -22,6 +22,14 @@
 #include "ops/batch_norm.h"
 #include "ops/elu.h"
 #include "ops/fused_batch_norm.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/fusion/div_fusion.h"
+#include "ops/fusion/exp_fusion.h"
+#include "ops/fusion/l2_normalize_fusion.h"
+#include "ops/fusion/layer_norm_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/fusion/pad_fusion.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/adder_fusion.h"
@@ -31,14 +39,6 @@
 #include "ops/fusion/conv2d_backprop_filter_fusion.h"
 #include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_transpose_fusion.h"
-#include "ops/fusion/div_fusion.h"
-#include "ops/fusion/exp_fusion.h"
-#include "ops/fusion/l2_normalize_fusion.h"
-#include "ops/fusion/layer_norm_fusion.h"
-#include "ops/fusion/max_pool_fusion.h"
-#include "ops/fusion/mul_fusion.h"
-#include "ops/fusion/pad_fusion.h"
 #include "ops/partial.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/fusion/pow_fusion.h"
@@ -146,6 +146,8 @@ constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
 constexpr auto kNameTanhGrad = "TanhGrad";
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
+constexpr int kNCHW_H = 2;
+constexpr int kNCHW_W = 3;
 
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},
@@ -223,46 +225,42 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapActivation(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::Activation>();
-  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
-  dst_prim->SetAttrs(src_prim->attrs());
+  auto act_prim = std::make_shared<ops::Activation>();
+  MS_CHECK_TRUE_MSG(act_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
+  act_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
   if (iter == activation_map.end()) {
     MS_LOG(ERROR) << "activation mode is unsupported.";
     return lite::RET_ERROR;
   }
-  dst_prim->set_activation_type(iter->second);
-  value_node->set_value(dst_prim);
+  act_prim->set_activation_type(iter->second);
+  value_node->set_value(act_prim);
   return lite::RET_OK;
 }
 
 int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::ActivationGrad>();
-  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
-  dst_prim->SetAttrs(src_prim->attrs());
+  auto act_grad_prim = std::make_shared<ops::ActivationGrad>();
+  MS_CHECK_TRUE_MSG(act_grad_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
+  act_grad_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
   if (iter == activation_map.end()) {
     MS_LOG(ERROR) << "activation mode is unsupported.";
     return lite::RET_ERROR;
   }
-  dst_prim->set_activation_type(iter->second);
-  value_node->set_value(dst_prim);
+  act_grad_prim->set_activation_type(iter->second);
+  value_node->set_value(act_grad_prim);
   return lite::RET_OK;
 }
 
@@ -289,6 +287,27 @@ int MoveAttrMapReduce(const CNodePtr &cnode) {
   return lite::RET_OK;
 }
 
+namespace {
+int AdjustConvAttr(const PrimitivePtr &prim) {
+  auto status = AttrAdjust(prim, ops::kStride, {kNCHW_H, kNCHW_W});
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "adjust stride failed.";
+    return status;
+  }
+  status = AttrAdjust(prim, ops::kDilation, {kNCHW_H, kNCHW_W});
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "adjust dilation failed.";
+    return status;
+  }
+  status = AttrAdjust(prim, ops::kKernelSize, {0, 1});
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "adjust kernel size failed.";
+    return status;
+  }
+  return RET_OK;
+}
+}  // namespace
+
 int MoveAttrMapConv2D(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -306,19 +325,9 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
   }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
-  auto status = AttrAdjust(dst_prim, ops::kStride, {2, 3});
+  auto status = AdjustConvAttr(dst_prim);
   if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust stride failed.";
-    return status;
-  }
-  status = AttrAdjust(dst_prim, ops::kDilation, {2, 3});
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust dilation failed.";
-    return status;
-  }
-  status = AttrAdjust(dst_prim, ops::kKernelSize, {0, 1});
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust kernel size failed.";
+    MS_LOG(ERROR) << "adjust conv attrs failed.";
     return status;
   }
   int64_t group = 1;
@@ -421,19 +430,9 @@ int MoveAttrMapAdder(const CNodePtr &cnode) {
   auto dst_prim = std::make_shared<ops::AdderFusion>();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
-  auto status = AttrAdjust(dst_prim, ops::kStride, {2, 3});
+  auto status = AdjustConvAttr(dst_prim);
   if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust stride failed.";
-    return status;
-  }
-  status = AttrAdjust(dst_prim, ops::kDilation, {2, 3});
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust dilation failed.";
-    return status;
-  }
-  status = AttrAdjust(dst_prim, ops::kKernelSize, {0, 1});
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "adjust kernel size failed.";
+    MS_LOG(ERROR) << "adjust conv attrs failed.";
     return status;
   }
   value_node->set_value(dst_prim);
@@ -503,7 +502,7 @@ int MoveAttrSlice(const CNodePtr &cnode) {
 
   std::vector<int64_t> axes(begin_value.size());
   for (size_t i = 0; i < begin_value.size(); i++) {
-    axes[i] = i;
+    axes[i] = static_cast<int64_t>(i);
   }
   dst_prim->set_axes(axes);
   dst_prim->SetAttrs(src_prim->attrs());
@@ -544,7 +543,7 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
   MS_ASSERT(func_graphs != nullptr);
   if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
-    return lite::RET_OK;
+    return true;
   }
   MS_ASSERT(graph != nullptr);
   static auto root_func_manager = Manage(func_graphs);

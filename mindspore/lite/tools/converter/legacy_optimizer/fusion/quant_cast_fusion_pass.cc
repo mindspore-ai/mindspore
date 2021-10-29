@@ -101,9 +101,9 @@ STATUS QuantCastFusionPass::DefinePattern() {
 
     auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastFusionPattern);
     MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern return nullptr");
-    fusionPattern->AddPatternOp(srcOp);
-    fusionPattern->AddPatternOp(dstOp);
-    fusionPattern->Finish();
+    (void)fusionPattern->AddPatternOp(srcOp);
+    (void)fusionPattern->AddPatternOp(dstOp);
+    (void)fusionPattern->Finish();
 
     this->patterns.emplace_back(fusionPattern.release());
   }
@@ -126,10 +126,10 @@ STATUS QuantCastFusionPass::DefinePattern() {
 
     auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastPassFusionPattern);
     MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern return nullptr");
-    fusionPattern->AddPatternOp(srcOp);
-    fusionPattern->AddPatternOp(formatOp);
-    fusionPattern->AddPatternOp(dstOp);
-    fusionPattern->Finish();
+    (void)fusionPattern->AddPatternOp(srcOp);
+    (void)fusionPattern->AddPatternOp(formatOp);
+    (void)fusionPattern->AddPatternOp(dstOp);
+    (void)fusionPattern->Finish();
 
     this->patterns.emplace_back(fusionPattern.release());
   }

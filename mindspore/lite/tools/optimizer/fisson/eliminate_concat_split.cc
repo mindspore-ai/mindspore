@@ -71,7 +71,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   }
 
   size_t pre_inputs_size = pre_cnode->inputs().size();
-  int pre_inputs_node_size = pre_inputs_size - 1;
+  auto pre_inputs_node_size = static_cast<int64_t>(pre_inputs_size - 1);
   auto pre_prim = GetValueNode<std::shared_ptr<ops::Concat>>(pre_cnode->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_MSG(pre_prim != nullptr, lite::RET_ERROR, "pre_cnode is not a ops::Concat");
   auto prim = GetValueNode<std::shared_ptr<ops::SplitWithOverlap>>(cnode->input(kAnfPrimitiveIndex));
@@ -91,13 +91,13 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   if (it == graph_node_outputs.end()) {
     return RET_ERROR;
   }
-  int out_num = it->second.size();
+  auto out_num = static_cast<int64_t>(it->second.size());
   if (out_num != prim->get_number_split()) {
     return RET_OK;
   }
 
   std::vector<CNodePtr> inputs_node;
-  for (int i = 0; i < out_num; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(out_num); i++) {
     auto tmp = it->second[i];
     auto tmp_cnode = tmp->cast<CNodePtr>();
     if (tmp_cnode == nullptr) {

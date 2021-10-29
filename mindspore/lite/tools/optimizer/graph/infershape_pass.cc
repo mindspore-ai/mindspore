@@ -114,11 +114,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "infer shape failed.";
     return false;
   }
-  if (ResetSubGraphInput() != lite::RET_OK) {
-    MS_LOG(ERROR) << "ResetSubGraphInput failed.";
-    return false;
-  }
-  return true;
+  return ResetSubGraphInput();
 }
 
 bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
@@ -194,10 +190,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
         return lite::RET_ERROR;
       }
-      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
-        MS_LOG(ERROR) << "SetSubGraphOutput failed.";
-        return lite::RET_ERROR;
-      }
+      SetSubGraphOutput(sub_func_graph);
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -212,10 +205,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
         return lite::RET_ERROR;
       }
-      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
-        MS_LOG(ERROR) << "SetSubGraphOutput failed.";
-        return lite::RET_ERROR;
-      }
+      SetSubGraphOutput(sub_func_graph);
       ret = SetSubGraphAbstract(cnode, sub_func_graph);
       if (ret != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphAbstract failed: " << ret;
@@ -298,7 +288,7 @@ STATUS InferShapePass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPt
   return RET_OK;
 }
 
-STATUS InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
+void InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
   MS_ASSERT(sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   MS_ASSERT(return_node != nullptr);
@@ -327,7 +317,6 @@ STATUS InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
     trans_cnode->set_fullname_with_scope(trans_input_name);
   }
   return_node->set_inputs(origin_input);
-  return lite::RET_OK;
 }
 
 STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
@@ -382,7 +371,7 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   return RET_OK;
 }
 
-int InferShapePass::ResetSubGraphInput() {
+bool InferShapePass::ResetSubGraphInput() {
   for (auto iter = sub_inputs_map_.begin(); iter != sub_inputs_map_.end(); ++iter) {
     auto &sub_graph = iter->first;
     auto &sub_inputs = iter->second;
@@ -390,7 +379,7 @@ int InferShapePass::ResetSubGraphInput() {
     MS_ASSERT(manager != nullptr);
     for (auto &sub_input : sub_inputs) {
       auto param_node = sub_graph->add_parameter();
-      MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "Add parameter Failed");
+      MS_CHECK_TRUE_MSG(param_node != nullptr, false, "Add parameter Failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
       manager->Replace(sub_input, param_node);
@@ -399,7 +388,7 @@ int InferShapePass::ResetSubGraphInput() {
       sub_param_input->set_default_param(nullptr);
     }
   }
-  return lite::RET_OK;
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -18,22 +18,34 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+int CheckKFormat(const PrimitivePtr &prim, const std::string &node_name) {
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
+    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    if (node_format == mindspore::NHWC) {
+      MS_LOG(DEBUG) << "node's format has been nhwc, no need to transfer, " << node_name;
+      return lite::RET_NO_CHANGE;
+    }
+    if (node_format != mindspore::NCHW) {
+      MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
+                    << ", node name is " << node_name;
+      return lite::RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+}  // namespace
+
 STATUS ToNHWCFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) {
   MS_ASSERT(cnode != nullptr && trans_info != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
   MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (node_format == mindspore::NHWC) {
-      MS_LOG(DEBUG) << "node's format has been nhwc, no need to transfer, " << cnode->fullname_with_scope();
-      return lite::RET_OK;
-    }
-    if (node_format != mindspore::NCHW) {
-      MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
-                    << ", node name is " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
+  auto status = CheckKFormat(prim, cnode->fullname_with_scope());
+  if (status == lite::RET_NO_CHANGE) {
+    return lite::RET_OK;
+  } else if (status == lite::RET_ERROR) {
+    return lite::RET_ERROR;
   }
   if (sensitive_ops_.find(prim->name()) != sensitive_ops_.end()) {
     trans_info->pre_ = opt::kNCHW2NHWC;
@@ -46,17 +58,11 @@ STATUS ToNHWCFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, sche
                                                      schema::Format *dst_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr && dst_format != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (node_format == mindspore::NHWC) {
-      MS_LOG(DEBUG) << "node's format has been nhwc, no need to transfer, " << cnode->fullname_with_scope();
-      return lite::RET_OK;
-    }
-    if (node_format != mindspore::NCHW) {
-      MS_LOG(ERROR) << "node's format is invalid, which must be nhwc or nchw, now is " << node_format
-                    << ", node name is " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
+  auto status = CheckKFormat(prim, cnode->fullname_with_scope());
+  if (status == lite::RET_NO_CHANGE) {
+    return lite::RET_OK;
+  } else if (status == lite::RET_ERROR) {
+    return lite::RET_ERROR;
   }
   *src_format = schema::Format_KCHW;
   *dst_format = schema::Format_KHWC;

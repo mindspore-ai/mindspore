@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace lite {
 #define kMinInputNum 1
-#define kOutputNum 1
 
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
   CHECK_NULL_RETURN(graph);
@@ -68,7 +67,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
     }
 
     if (this->input_data_dtype == TypeId::kTypeUnknown) {
-      auto origin_input_dtype = ConverterInnerContext::GetInstance()->GetGraphInputDType(i);
+      auto origin_input_dtype = ConverterInnerContext::GetInstance()->GetGraphInputDType(static_cast<int32_t>(i));
       if (origin_input_dtype != kTypeUnknown && tensor->dataType != origin_input_dtype) {
         MS_LOG(ERROR) << "Change graph input dtype is not allowed.";
         return RET_ERROR;
@@ -117,7 +116,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
     }
 
     if (this->output_data_dtype == TypeId::kTypeUnknown) {
-      auto origin_output_dtype = ConverterInnerContext::GetInstance()->GetGraphOutputDType(i);
+      auto origin_output_dtype = ConverterInnerContext::GetInstance()->GetGraphOutputDType(static_cast<int32_t>(i));
       if (origin_output_dtype != kTypeUnknown && tensor->dataType != origin_output_dtype) {
         MS_LOG(ERROR) << "Change graph output dtype is not allowed.";
         return RET_ERROR;

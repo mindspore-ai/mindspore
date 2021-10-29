@@ -40,9 +40,7 @@ class GraphDefTransform {
   inline schema::MetaGraphT *GetOutput() const { return graph_defT_; }
 
  protected:
-  std::vector<schema::CNodeT *> GetGraphNodes();
   schema::MetaGraphT *graph_defT_ = nullptr;
-  Optimizer *optimizer = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

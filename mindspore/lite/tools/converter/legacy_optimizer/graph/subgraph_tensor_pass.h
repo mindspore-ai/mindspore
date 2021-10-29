@@ -32,10 +32,10 @@ class SubgraphTensorPass : public GraphPass {
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
-  STATUS RemoveUselessTensors(schema::MetaGraphT *graph);
-  bool IsUsing(schema::MetaGraphT *graph, const uint32_t &tensor_idx);
-  STATUS UpdateTensorIdx(schema::MetaGraphT *graph, const uint32_t &tensor_idx);
-  STATUS SyncMainGraphInputAndOutput(schema::MetaGraphT *graph);
+  void RemoveUselessTensors(schema::MetaGraphT *graph);
+  bool IsUsing(const schema::MetaGraphT *graph, const uint32_t &tensor_idx);
+  void UpdateTensorIdx(schema::MetaGraphT *graph, const uint32_t &tensor_idx);
+  void SyncMainGraphInputAndOutput(const schema::MetaGraphT *graph);
 
   template <typename T>
   void UpdateVec(std::vector<T> *vec, T element) {

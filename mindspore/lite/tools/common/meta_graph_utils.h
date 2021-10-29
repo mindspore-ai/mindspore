@@ -49,8 +49,6 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, schema::CNodeT *node, bool 
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor = true);
 
-STATUS SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
-
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTIL_H

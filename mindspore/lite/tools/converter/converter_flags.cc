@@ -95,8 +95,9 @@ int Flags::InitInputOutputDataType() {
   } else if (this->inputDataTypeStr == "DEFAULT") {
     this->inputDataType = TypeId::kTypeUnknown;
   } else {
-    std::cerr << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->inputDataTypeStr.c_str();
+    std::cerr
+      << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT, got: "
+      << this->inputDataTypeStr << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -110,8 +111,8 @@ int Flags::InitInputOutputDataType() {
     this->outputDataType = TypeId::kTypeUnknown;
   } else {
     std::cerr
-      << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->outputDataTypeStr.c_str();
+      << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT, got: "
+      << this->outputDataTypeStr << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -262,25 +263,24 @@ int Flags::InitConfigFile() {
     MS_LOG(ERROR) << "Parse config file failed.";
     return ret;
   }
-  lite::PreprocessParser preprocess_parser;
-  ret = preprocess_parser.ParsePreprocess(config_file_parser.GetDataPreProcessString(), &this->dataPreProcessParam);
+  ret =
+    lite::PreprocessParser::ParsePreprocess(config_file_parser.GetDataPreProcessString(), &this->dataPreProcessParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse preprocess failed.";
     return ret;
   }
-  lite::QuantParamParser quant_param_parser;
-  ret = quant_param_parser.ParseCommonQuant(config_file_parser.GetCommonQuantString(), &this->commonQuantParam);
+  ret = lite::QuantParamParser::ParseCommonQuant(config_file_parser.GetCommonQuantString(), &this->commonQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse common quant param failed.";
     return ret;
   }
-  ret = quant_param_parser.ParseFullQuant(config_file_parser.GetFullQuantString(), &this->fullQuantParam);
+  ret = lite::QuantParamParser::ParseFullQuant(config_file_parser.GetFullQuantString(), &this->fullQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse full quant param failed.";
     return ret;
   }
-  ret = quant_param_parser.ParseMixedBitWeightQuant(config_file_parser.GetMixedBitWeightQuantString(),
-                                                    &this->mixedBitWeightQuantParam);
+  ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_file_parser.GetMixedBitWeightQuantString(),
+                                                         &this->mixedBitWeightQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
     return ret;

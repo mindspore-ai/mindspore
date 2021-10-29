@@ -46,7 +46,7 @@ class InferShapePass : public GraphPass {
   STATUS Run(MetaGraphT *graph) override;
 
  private:
-  int InitSearchTensor(const int &subgraph_index, MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes);
+  int InitSearchTensor(const int64_t &subgraph_index, MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes);
   void AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
                              std::vector<uint32_t> next_nodes_indexes, size_t index);
   void AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes, uint32_t infer_node_index);
@@ -55,9 +55,9 @@ class InferShapePass : public GraphPass {
   int InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
   int InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph);
   int CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph);
-  int RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph);
+  void RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph);
   void InitInferTensor(MetaGraphT *graph);
-  int InferSubgraph(const int &subgraph_index, MetaGraphT *graph);
+  int InferSubgraph(const int64_t &subgraph_index, MetaGraphT *graph);
 
   converter::FmkType fmk_type_ = kFmkTypeTf;
   std::vector<InferTensor> tensors_ = {};
