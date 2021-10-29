@@ -123,18 +123,17 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     int64_t out_h = -1;
     int64_t out_w = -1;
     if (x_h != Shape::SHP_ANY) {
-      out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] -
-                                                   static_cast<double>((kernel[0] - 1) * (dilation[0] - 1))) /
-                                                    stride[0]));
+      out_h = static_cast<int64_t>(std::floor(
+        1 + ((x_h * 1) + pad_list->at(0) + pad_list->at(1) - kernel[0] - ((kernel[0] - 1) * (dilation[0] - 1))) /
+              stride[0]));
       if (is_min_shape && out_h < 1) {
         out_h = 1L;
       }
     }
     if (x_w != Shape::SHP_ANY) {
-      out_w =
-        static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pad_list->at(kInputIndex2) + pad_list->at(kInputIndex3) -
-                                             kernel[1] - static_cast<double>((kernel[1] - 1) * (dilation[1] - 1))) /
-                                              stride[1]));
+      out_w = static_cast<int64_t>(std::floor(1 + ((x_w * 1) + pad_list->at(kInputIndex2) + pad_list->at(kInputIndex3) -
+                                                   kernel[1] - ((kernel[1] - 1) * (dilation[1] - 1))) /
+                                                    stride[1]));
       if (is_min_shape && out_w < 1) {
         out_w = 1L;
       }
