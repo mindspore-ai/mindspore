@@ -105,7 +105,7 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
     if (kernel_graph->graph_id() != graph_id) {
       iter = node_users.erase(iter);
     } else {
-      iter++;
+      ++iter;
     }
   }
 

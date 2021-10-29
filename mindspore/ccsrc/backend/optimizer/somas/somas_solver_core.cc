@@ -72,7 +72,7 @@ Status SomasSolverCore::MemoryAllocationSolver() {
             best_branching = branching_strategy_;
             best_sorting = sort_strategy_;
             best_sol = sol_count_;
-            best_timing = timing_;
+            best_timing = LongToSize(timing_);
           }
           Verify();
           sol_count_++;

@@ -91,8 +91,8 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
       if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
         MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
       }
-      (*counts)[rank_ids[i]] = SizeToLong(real_sizes[i]);
-      (*displs)[rank_ids[i]] = SizeToLong(mem_offset[i]);
+      (*counts)[LongToSize(rank_ids[i])] = SizeToLong(real_sizes[i]);
+      (*displs)[LongToSize(rank_ids[i])] = SizeToLong(mem_offset[i]);
     }
     return;
   }
@@ -102,7 +102,7 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
     if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
       MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
     }
-    rank_id_map.emplace(SizeToLong(rank_ids[i]), i);
+    rank_id_map.emplace(rank_ids[i], i);
   }
 
   size_t offset = 0;

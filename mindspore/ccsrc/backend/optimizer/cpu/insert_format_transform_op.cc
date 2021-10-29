@@ -126,7 +126,7 @@ void InsertTransformOpForInput(const FuncGraphPtr &graph, const AnfNodePtr &node
     }
     auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
     MS_EXCEPTION_IF_NULL(input_node);
-    auto transpose_perm = TransposeAxis(dim, ChannelFirst2ChannelLast);
+    auto transpose_perm = TransposeAxis(SizeToInt(dim), ChannelFirst2ChannelLast);
     auto transpose_op = InsertTransposeOp(graph, input_node, node, i, transpose_perm);
     SetTransposeOpBuildInfo(kOpFormat_DEFAULT, inputs_format[i], transpose_op);
   }
@@ -144,7 +144,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
     if (dim < kMinDimNeedToTransform) {
       continue;
     }
-    auto transpose_perm = TransposeAxis(dim, ChannelLast2ChannelFirst);
+    auto transpose_perm = TransposeAxis(SizeToInt(dim), ChannelLast2ChannelFirst);
     // Find all nodes connected with node output, and change their inputs to transpose.
     auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
     for (size_t j = 0; j < used_node_list->size(); ++j) {
@@ -168,7 +168,6 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
     }
   }
 }
-
 }  // namespace
 
 const std::unordered_set<std::string> kChannelLastKernel = {prim::kPrimBiasAdd->name()};

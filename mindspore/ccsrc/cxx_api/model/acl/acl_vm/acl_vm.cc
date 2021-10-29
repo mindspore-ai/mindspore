@@ -50,7 +50,7 @@ VectorRef AclBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const 
       MS_LOG(EXCEPTION) << "Invalid item " << arg.ToString();
     }
     auto wrapper = utils::cast<MSTensorRef>(arg);
-    inputs.emplace_back(wrapper.GetTensor());
+    (void)inputs.emplace_back(wrapper.GetTensor());
   }
 
   VectorRef outputs;

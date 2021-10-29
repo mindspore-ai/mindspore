@@ -610,7 +610,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
         }
 
         if (dyn_input_sizes.empty()) {
-          input_index.emplace_back(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0));
+          (void)input_index.emplace_back(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0));
           found = true;
           break;
         }
@@ -620,8 +620,9 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
         for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
           accum_idx += LongToInt(dyn_input_sizes[dyn_i]);
           if (used_as_idx < accum_idx) {
-            input_index.emplace_back(
-              anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i]))));
+            (void)input_index.emplace_back(
+              anf_node,
+              std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - LongToInt(dyn_input_sizes[dyn_i])))));
             break;
           }
           if (dyn_i != dyn_input_sizes.size()) {

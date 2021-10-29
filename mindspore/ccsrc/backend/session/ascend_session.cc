@@ -256,7 +256,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *next_val = 0;
   next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  if (inputs) {
+  if (inputs != nullptr) {
     inputs->push_back(next_loop_tensor);
   } else {
     auto device_address = next_loop_tensor->device_address();
@@ -273,7 +273,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   MS_EXCEPTION_IF_NULL(epoch_val);
   *epoch_val = SizeToInt(graph->current_epoch());
   epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
-  if (inputs) {
+  if (inputs != nullptr) {
     inputs->push_back(epoch_tensor);
   } else {
     auto device_address = epoch_tensor->device_address();

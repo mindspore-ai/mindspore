@@ -558,16 +558,16 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   if (t_size != 1) {
     auto dw_reduce_sum = CreateDwReduceSum(func_graph, dynamic_rnn_grad_cnode, batch_matmul);
-    make_tuple_inputs.emplace_back(dw_reduce_sum);
+    (void)make_tuple_inputs.emplace_back(dw_reduce_sum);
   } else {
     auto dw_reshape = CreateDwReshape(func_graph, dynamic_rnn_grad_cnode, batch_matmul);
-    make_tuple_inputs.emplace_back(dw_reshape);
+    (void)make_tuple_inputs.emplace_back(dw_reshape);
   }
 
   auto value_node = CreateValueNode(func_graph, dynamic_rnn_grad_cnode);
   // create reduce_sum_2
   auto db_reduce_sum = CreateDbReduceSum(func_graph, dynamic_rnn_grad_cnode, lstm_input_grad, value_node);
-  make_tuple_inputs.emplace_back(db_reduce_sum);
+  (void)make_tuple_inputs.emplace_back(db_reduce_sum);
   make_tuple_inputs.insert(make_tuple_inputs.end(), new_outputs.begin(), new_outputs.end());
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   return make_tuple;
