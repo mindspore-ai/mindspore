@@ -42,6 +42,33 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 int Conv2DOpenCLKernel::CheckSpecs() {
+  auto ret = InputOutputCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  ret = FilterBiasCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
+  switch (static_cast<int>(param_->act_type_)) {
+    case ActType_No:
+    case ActType_Relu:
+    case ActType_Relu6:
+    case ActivationType_LEAKY_RELU:
+    case ActivationType_TANH:
+      break;
+    default: {
+      MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int Conv2DOpenCLKernel::InputOutputCheckSpecs() {
   int inputs_num = in_tensors_.size();
   if (inputs_num != INPUT_TENSOR_SIZE_2 && inputs_num != INPUT_TENSOR_SIZE_3) {
     MS_LOG(WARNING) << "Conv2D only supports 2 or 3 input Tensor but get " << inputs_num;
@@ -64,7 +91,10 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
 
+int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
   auto *filter_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(filter_tensor);
   int filter_ndim = filter_tensor->shape().size();
@@ -73,26 +103,20 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   if (!filter_tensor->IsConst()) {
-    MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
-    return RET_ERROR;
+    bool is_const = filter_tensor->category() == lite::Tensor::CONST_TENSOR ||
+                    filter_tensor->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_filter_)) {
+      MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
+      return RET_ERROR;
+    }
   }
 
   auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
   if (bias_tensor != nullptr && !bias_tensor->IsConst()) {
-    MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
-    return RET_ERROR;
-  }
-
-  // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
-  switch (static_cast<int>(param_->act_type_)) {
-    case ActType_No:
-    case ActType_Relu:
-    case ActType_Relu6:
-    case ActivationType_LEAKY_RELU:
-    case ActivationType_TANH:
-      break;
-    default: {
-      MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;
+    bool is_const =
+      bias_tensor->category() == lite::Tensor::CONST_TENSOR || bias_tensor->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_bias_)) {
+      MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
       return RET_ERROR;
     }
   }
@@ -698,10 +722,18 @@ kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inpu
   int output_channel = conv_param->output_channel_;
   int group = conv_param->group_;
 
+  kernel::OpenCLKernel *kernel = nullptr;
   // case 1: depthwise conv2d
   if (group == input_channel && group == output_channel) {
-    return OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>(inputs, outputs, opParameter,
-                                                            static_cast<const lite::InnerContext *>(ctx), desc);
+    kernel = new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
+                                                            outputs, static_cast<const lite::InnerContext *>(ctx));
+    auto ret = reinterpret_cast<DepthwiseConv2dOpenCLKernel *>(kernel)->StoreConstData();
+    if (ret != mindspore::lite::RET_OK) {
+      MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
+      delete kernel;
+      return nullptr;
+    }
+    return kernel;
   }
 
   // case 2: group conv2d
@@ -712,7 +744,6 @@ kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inpu
   }
 
   // case 3: common conv2d
-  kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
