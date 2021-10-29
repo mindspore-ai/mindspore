@@ -67,6 +67,16 @@ static inline void SetOMPThreadNum() {
   std::string OMP_env = std::to_string(OMP_thread_num);
   (void)SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
 }
+
+static inline bool IsLittleByteOrder() {
+  uint32_t check_code = 0x12345678;
+  auto check_pointer = reinterpret_cast<uint8_t *>(&check_code);
+  uint8_t head_code = 0x78;
+  if (check_pointer[0] == head_code) {
+    return true;
+  }
+  return false;
+}
 }  // namespace common
 }  // namespace mindspore
 

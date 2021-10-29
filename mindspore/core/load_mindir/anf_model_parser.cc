@@ -37,6 +37,7 @@ using std::string;
 
 namespace mindspore {
 std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
+namespace {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kCNodeShapeAttr[] = "shape";
 static constexpr char kCNodeShape1Attr[] = "shape1";
@@ -226,6 +227,18 @@ ValuePtr ParseAttrInSingleScalar_double_double(const mind_ir::AttributeProto &at
   return MakeValue<double>(value);
 }
 
+string GetTypeString(const std::string &ref_attr_name, size_t *pos) {
+  if ((*pos = ref_attr_name.find("scalar:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("scalar:").length() - 1);
+  } else if ((*pos = ref_attr_name.find("type:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("type:").length() - 1);
+  } else if ((*pos = ref_attr_name.find("tensor:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("tensor:").length() - 1);
+  }
+  return "";
+}
+}  // namespace
+
 tensor::TensorPtr MSANFModelParser::BuildTensorInfoForFuncGraph(const mind_ir::TensorProto &tensor_proto) {
   ShapeVector shape;
   for (int i = 0; i < tensor_proto.dims_size(); ++i) {
@@ -265,12 +278,12 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   if (tensor_info == nullptr) {
     return false;
   }
-  MS_LOG(DEBUG) << "Load parameter name: " << debug_info_name;
-  if (!IsIncLoad() || load_tensor_map_.find(debug_info_name) == load_tensor_map_.end()) {
-    load_tensor_map_[debug_info_name] = tensor_info;
+  MS_LOG(DEBUG) << "Load parameter name: " << parameter_proto.name();
+  if (!IsIncLoad() || load_tensor_map_.find(parameter_proto.name()) == load_tensor_map_.end()) {
+    load_tensor_map_[parameter_proto.name()] = tensor_info;
   } else {
-    MS_LOG(DEBUG) << "Parameter: " << debug_info_name << " has been already loaded, use it again.";
-    tensor::TensorPtr load_tensor_info = load_tensor_map_[debug_info_name];
+    MS_LOG(DEBUG) << "Parameter: " << parameter_proto.name() << " has been already loaded, use it again.";
+    tensor::TensorPtr load_tensor_info = load_tensor_map_[parameter_proto.name()];
     auto tensor_abstract = load_tensor_info->ToAbstract();
     MS_EXCEPTION_IF_NULL(tensor_abstract);
     node->set_abstract(tensor_abstract);
@@ -339,6 +352,13 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       fid.clear();
       fid.seekg(0);
       auto plain_data = std::make_unique<Byte[]>(file_size);
+      constexpr Byte is_little_endian = 1;
+      constexpr int byte_order_index = 0;
+      // if byte order is not same return false
+      if ((plain_data[byte_order_index] == is_little_endian) != little_endian()) {
+        MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
+        return false;
+      }
       fid.read(plain_data.get(), file_size);
       fid.close();
       tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
@@ -474,30 +494,25 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
 void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                                    std::unordered_map<std::string, ValuePtr> *multi_value_map) {
   string name;
-  for (int i = 0; i < attr_proto.ints_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
+  auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int i) -> void {
+    auto res = this->ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
     multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+  };
+  for (int i = 0; i < attr_proto.ints_size(); i++) {
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.doubles_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.floats_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.strings_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    func(attr_proto, i);
   }
 }
 
@@ -577,15 +592,9 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  string type = "";
   std::size_t pos(0);
-  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
-  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("type:").length() - 1);
-  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
-  }
+  string type = GetTypeString(ref_attr_name, &pos);
+
   std::unordered_map<std::string, ValuePtr> multi_value_map;
   switch (kParseTypeSwitchMap[type]) {
     case FORM_PARSE_TYPE: {
@@ -1034,7 +1043,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
   }
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
-    inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     AbstractBasePtrList elem;
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
@@ -1060,7 +1068,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     outputFuncGraph->set_return(return_node);
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success.";
   } else {
-    inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     auto nodeName = importProto.output(0).name();
     auto anfNode = GetAnfNode(nodeName);
@@ -1153,9 +1160,15 @@ bool MSANFModelParser::MSANFParseModelConfigureInfo(const mind_ir::ModelProto &m
 
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
   FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
-  MS_EXCEPTION_IF_NULL(dstGraph);
   if (!MSANFParseModelConfigureInfo(model_proto)) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
+  }
+
+  if (model_proto.has_little_endian()) {
+    if (model_proto.little_endian() != this->little_endian()) {
+      MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
+      return nullptr;
+    }
   }
   const mind_ir::GraphProto &graphBuild = model_proto.graph();
 

@@ -76,7 +76,8 @@ message ModelProto {
   optional string doc_string = 6;
   optional GraphProto graph = 7;
   repeated GraphProto functions = 8; // all the graphs without the main graph.
-  optional string preprocessor = 9;  // data graph from MindData. 
+  optional string preprocessor = 9;  // data graph from MindData.
+  optional bool little_endian = 10; // bytes order in load device
 }
 
 

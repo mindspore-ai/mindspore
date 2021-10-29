@@ -28,6 +28,7 @@
 #include "proto/mind_ir.pb.h"
 #include "utils/check_convert_utils.h"
 #include "debug/dump_proto.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -180,6 +181,7 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_ir_version(ir_version);
   model_->set_producer_name(mindspore_name);
   model_->set_model_version(VERSION);
+  model_->set_little_endian(common::IsLittleByteOrder());
 }
 
 bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data) {
