@@ -37,6 +37,5 @@ MS_REG_GPU_KERNEL_ONE(DepthToSpace, KernelAttr().AddInputAttr(kNumberTypeUInt32)
                       DepthToSpaceFwdKernel, uint32_t)
 MS_REG_GPU_KERNEL_ONE(DepthToSpace, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
                       DepthToSpaceFwdKernel, uint64_t)
-
 }  // namespace kernel
 }  // namespace mindspore

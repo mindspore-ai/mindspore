@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 #define MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(OPNAME, T0_MS_DTYPE, T1_MS_DTYPE, T0_DTYPE, T1_DTYPE)                      \
   MS_REG_GPU_KERNEL_THREE(OPNAME,                                                                                      \
                           KernelAttr().AddInputAttr(T0_MS_DTYPE).AddInputAttr(T0_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \

@@ -280,7 +280,6 @@ def get_bprop_micro_step_all_gather(self):
     dtype = P.DType()
     out_tensor = Tensor(1.0, mstype.float16)
 
-    # z: accu_grad
     def bprop(x, z, out, dout):
         z = F.depend(z, dout)
         real_grad = all_reduce(z)

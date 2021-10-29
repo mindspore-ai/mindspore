@@ -337,6 +337,7 @@ def get_bprop_adaptive_avg_pool2d_grad(self):
 
     return bprop
 
+
 @bprop_getters.register(P.AvgPool3D)
 def get_bprop_avg_pool_3d_grad(self):
     """Grad definition for `AvgPool3D` operation."""
