@@ -100,6 +100,7 @@ class Cell(Cell_):
         self._create_time = int(time.time() * 1e9)
         self.arguments_key = ""
         self.parameter_broadcast_done = False
+        self._id = 1
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -488,8 +489,22 @@ class Cell(Cell_):
         params_list = self.__dict__.get('_params_list')
         if params is None:
             raise AttributeError("Can not assign params before Cell.__init__() call.")
+        exist_names = set("")
+        exist_objs = set()
         for item in value:
-            self.insert_param_to_cell(item.name, item, check_name=False)
+            if item in exist_objs:
+                # If there are multiple identical objects, their names only check once.
+                continue
+            exist_objs.add(item)
+            if item.name == PARAMETER_NAME_DEFAULT:
+                item.name = item.name + "$" + str(self._id)
+                self._id += 1
+            self.insert_param_to_cell(item.name, item, check_name_contain_dot=False)
+            if item.name in exist_names:
+                raise ValueError("The value {} , its name '{}' already exists.".
+                                 format(value, item.name))
+            exist_names.add(item.name)
+
         if context.get_context("mode") == context.PYNATIVE_MODE:
             if name in self.__dict__:
                 del self.__dict__[name]
@@ -515,6 +530,17 @@ class Cell(Cell_):
         if hasattr(self, '_cell_init_args'):
             self.cell_init_args += str({name: value})
 
+    def _check_param_list_tuple(self, value):
+        """
+        Check the type of input in list or tuple is Parameter.
+        :param value: list or tuple.
+        :return: The types of all inputs are parameter.
+        """
+        for item in value:
+            if not isinstance(item, Parameter):
+                return False
+        return True
+
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -522,6 +548,8 @@ class Cell(Cell_):
         if isinstance(value, Parameter):
             self._set_attr_for_parameter(name, value)
         elif isinstance(value, ParameterTuple):
+            self._set_attr_for_parameter_tuple(name, value)
+        elif isinstance(value, (list, tuple)) and value and self._check_param_list_tuple(value):
             self._set_attr_for_parameter_tuple(name, value)
         elif isinstance(value, Cell):
             self._set_attr_for_cell(name, value)
@@ -710,7 +738,7 @@ class Cell(Cell_):
         """Executes saving checkpoint graph operation."""
         _cell_graph_executor(self, phase='save')
 
-    def insert_param_to_cell(self, param_name, param, check_name=True):
+    def insert_param_to_cell(self, param_name, param, check_name_contain_dot=True):
         """
         Adds a parameter to the current cell.
 
@@ -720,7 +748,7 @@ class Cell(Cell_):
         Args:
             param_name (str): Name of the parameter.
             param (Parameter): Parameter to be inserted to the cell.
-            check_name (bool): Determines whether the name input is compatible. Default: True.
+            check_name_contain_dot (bool): Determines whether the name input is compatible. Default: True.
 
         Raises:
             KeyError: If the name of parameter is null or contains dot.
@@ -729,7 +757,7 @@ class Cell(Cell_):
         """
         if not param_name:
             raise KeyError("The name of parameter should not be null.")
-        if check_name and '.' in param_name:
+        if check_name_contain_dot and '.' in param_name:
             raise KeyError("The name of parameter should not contain \".\"")
         if '_params' not in self.__dict__:
             raise AttributeError("You need call init() first.")
