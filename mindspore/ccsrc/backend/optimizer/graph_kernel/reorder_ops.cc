@@ -347,7 +347,6 @@ bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) {
 }
 
 bool ReorderOps::Run(const FuncGraphPtr &func_graph) {
-  auto mng = GetFuncGraphManager(func_graph);
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (const auto &anf_node : todos) {

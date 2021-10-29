@@ -40,7 +40,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 constexpr int32_t MAX_ERROR_LEN = 1024;
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;

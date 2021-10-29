@@ -982,7 +982,7 @@ FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph) {
   return manager;
 }
 
-void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph) {
+void UpdateMng(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph) {
   mng->RemoveRoots();
   mng->KeepRoots({func_graph});
 }
