@@ -49,6 +49,22 @@ class RollingCpuKernel : public CPUKernel {
  private:
   void RollingBoundsCalculate();
   void MethodSwitch();
+  S Var(const T *input_addr, const size_t *ids, size_t start, size_t end) const {
+    // float for division
+    float n = SizeToFloat(end - start);
+    T sum1 = 0;
+    for (size_t x = start; x < end; ++x) {
+      sum1 += input_addr[ids[x]];
+    }
+    double mean = sum1 / n;
+    double sum2 = 0;
+    for (size_t x = start; x < end; ++x) {
+      double diff = input_addr[ids[x]] - mean;
+      sum2 += diff * diff;
+    }
+    // ddof = 1
+    return sum2 / (n - 1);
+  }
 
   int32_t window_{0};
   int64_t min_periods_{0};
