@@ -114,12 +114,9 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   }  // use LoadIm2Col only for THOR optimizer
 
   // Use AKG_KERNEL if func_type of Custom is not tbe
-  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
-    auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
-    auto func_type = primitive->GetAttr("func_type");
-    if (func_type && GetValue<std::string>(func_type) != "tbe") {
-      kernel_type = KernelType::AKG_KERNEL;
-    }
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom) &&
+      AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType) != kCustomTypeTbe) {
+    kernel_type = KernelType::AKG_KERNEL;
   }
 
   switch (kernel_type) {

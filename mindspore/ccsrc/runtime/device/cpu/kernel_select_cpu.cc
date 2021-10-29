@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
+#include "backend/kernel_compiler/cpu/pyfunc/py_func_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/custom/custom_aot_cpu_kernel.h"
 #include "utils/trace_base.h"
 
@@ -317,9 +318,16 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // Select for dynamic kernel(both the number and data type are undetermined).
   const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
+
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom) &&
       !kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
-    kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
+    auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+    if (tp == kCustomTypePyfunc) {
+      kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::PyFuncCpuKernel>(); });
+    } else if (tp == kCustomTypeAOT) {
+      kernel::CPUKernelRegistrar(op_name, KernelAttr(),
+                                 []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
+    }
   }
 
   if (IsDynamicParamKernel(op_name)) {

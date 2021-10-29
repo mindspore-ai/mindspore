@@ -35,14 +35,15 @@ struct PyFuncArgumentInfo {
   // Empty vector indicate the Python object is Scalar and non-empty means Numpy Array.
   std::vector<std::vector<int64_t>> shapes;
   // Data type as int, float, bool.
-  std::vector<TypePtr> dtypes;
+  std::vector<TypeId> dtypes;
   // Python object type
   std::vector<PythonOjectType> object_types;
 };
 
 class PyFuncCpuKernel : public CPUKernel {
  public:
-  PyFuncCpuKernel() : init_(false), func_id_(-1) {}
+  PyFuncCpuKernel()
+      : is_custom_(false), init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
   ~PyFuncCpuKernel() = default;
 
   // Init kernel including analyse PyFunc input and output info.
@@ -55,12 +56,18 @@ class PyFuncCpuKernel : public CPUKernel {
   // Analyse PyFunc input/output spec.
   void BuildFuncInfo(const CNodePtr &kernel_node);
   // Get Python function from anchor.
-  py::function GetPythonFunc(const int64_t &func_id);
+  py::function GetPythonFunc();
   bool ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  // both mindspore.ops.operations.custom_ops.Custom and mindspore.ops.operations.PyFunc will launch
+  // this kernel (these two have similar features, will further be unified);if is_custom_ is true, then it's
+  // launched from Custom; if not, it's from PyFunc
+  bool is_custom_;
   bool init_;
+  bool fake_output_;
+  bool single_scalar_output_;
   // The Python object is not acceptable for `Primitive` attribute. So we pass an unique key instead of Python function.
-  // ME store the Python function to a dict, and pass the key to backend kernel.
+  // mindspore.ops.operations.PyFunc store the Python function to a dict, and pass the key to backend kernel.
   // The kernel get the Python functhon by the key from the dict when the kernel is first invoked.
   int64_t func_id_;
   py::function py_func_;

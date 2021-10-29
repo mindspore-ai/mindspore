@@ -889,6 +889,7 @@ class identity(Primitive):
     def __call__(self, x):
         return x
 
+
 pyfunc_register = PyFuncRegistry()
 
 
@@ -961,6 +962,14 @@ class PyFunc(PrimitiveWithInfer):
         validator.check("out_types length", len(out_types), "out_shapes length", len(out_shapes), Rel.EQ, self.name)
         self.add_prim_attr("side_effect_io", stateful)
         self.add_prim_attr("primitive_target", "CPU")
+        fake_output = False
+        single_scalar_output = False
+        if not out_types:
+            fake_output = True
+        elif not out_shapes:
+            single_scalar_output = True
+        self.add_prim_attr("fake_output", fake_output)
+        self.add_prim_attr("single_scalar_output", single_scalar_output)
 
     def infer_shape(self, *args):
         if self.out_shapes:
