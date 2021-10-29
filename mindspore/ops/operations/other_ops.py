@@ -401,7 +401,7 @@ class Partial(Primitive):
         - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.
 
     Outputs:
-        FunctionType, partial function binded with arguments.
+        FunctionType, partial function bound with arguments.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
