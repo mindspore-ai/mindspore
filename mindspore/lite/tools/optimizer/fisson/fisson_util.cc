@@ -114,7 +114,7 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
 }
 
 bool CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, const SplitInfo *split_info,
-                     const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t index_node,
+                     const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, size_t index_node,
                      std::vector<std::vector<int64_t>> *split_axis_inputs_shape,
                      std::vector<std::vector<int64_t>> *split_axis_reduce_inputs_shape) {
   MS_ASSERT(split_info != nullptr && ori_conv_prim != nullptr && split_axis_inputs_shape != nullptr &&
@@ -152,7 +152,7 @@ bool CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_sh
         tmp = stride_h * split_axis_dim - ori_conv_prim->get_pad_list()[kPadDown] +
               ori_conv_prim->get_kernel_size()[kIndexH];
       } else {
-        tmp = stride_h * split_axis_dim - 0 + ori_conv_prim->get_kernel_size()[kIndexH];
+        tmp = stride_h * split_axis_dim + ori_conv_prim->get_kernel_size()[kIndexH];
       }
     }
     split_axis_shape.push_back(tmp);
@@ -232,7 +232,8 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
     // 0-> in-shape 1->out-shape
     // only one in and one output
     MS_ASSERT(!input_shapes.empty() && !output_shapes.empty());
-    node_in_out_shapes.push_back({input_shapes.front(), output_shapes.front()});
+    std::vector<ShapeVector> shape_vec = {input_shapes.front(), output_shapes.front()};
+    node_in_out_shapes.emplace_back(shape_vec);
     index_node++;
   }
   if (node_in_out_shapes.empty() || node_in_out_shapes.size() < (node_size - 1) || node_in_out_shapes[0].size() <= 1 ||
@@ -274,7 +275,7 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   split_info->extend_top.clear();
   split_info->extend_bottom.clear();
 
-  int32_t top = 0;
+  int64_t top = 0;
   int32_t bottom = 0;
   split_info->size_splits.push_back(split_axis_inputs_shape[node_size][0]);
   split_info->extend_top.push_back(top);
@@ -301,7 +302,7 @@ bool GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
   for (size_t i = 0; i < output_num; i++) {
     auto index = NewValueNode(SizeToInt(i));
     MS_CHECK_TRUE_MSG(index != nullptr, false, "create ValueNode return nullptr");
-    size_t temp = SizeToInt(i);
+    auto temp = SizeToInt(i);
     auto imm = std::make_shared<Int32Imm>(temp);
     MS_CHECK_TRUE_MSG(imm != nullptr, false, "create Int32Imm return nullptr");
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
@@ -324,8 +325,8 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
   MS_CHECK_TRUE_MSG(conv_cnode != nullptr, nullptr, "input AnfNodePtr is nullptr");
   MS_CHECK_TRUE_MSG(split_info != nullptr, nullptr, "input SplitInfo is nullptr");
 
-  int32_t nodes_num = conv_outputs.size();
-  if (nodes_num != static_cast<int32_t>(split_info->out_num)) {
+  auto nodes_num = static_cast<int64_t>(conv_outputs.size());
+  if (nodes_num != split_info->out_num) {
     MS_LOG(ERROR) << "Conv outputs has wrong input size";
     return nullptr;
   }
@@ -338,7 +339,7 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
   auto concate_primitive = NewValueNode(concat_prim);
   MS_CHECK_TRUE_MSG(concate_primitive != nullptr, nullptr, "create concate_primitive return nullptr");
   std::vector<AnfNodePtr> concate_inputs = {concate_primitive};
-  for (int32_t i = 0; i < nodes_num; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(nodes_num); i++) {
     concate_inputs.push_back(conv_outputs[i]);
   }
 
@@ -384,6 +385,10 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   MS_CHECK_TRUE_MSG(split_cnode != nullptr, false, "create split_cnode return nullptr");
 
   split_cnode->set_fullname_with_scope(node_name + "_Split");
+  if (split_info->out_num < 0) {
+    MS_LOG(ERROR) << "out_num should greater then zero";
+    return false;
+  }
   // create outputs op split
   if (!GetMultipleOutputsOfAnfNode(func_graph, split_cnode, split_info->out_num, split_outputs)) {
     MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
@@ -392,7 +397,6 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
 
   AbstractBasePtrList ptr_list;
   for (int64_t i = 0; i < split_info->out_num; i++) {
-    auto node = (*split_outputs)[i];
     // set date_type same with weight
     auto type_id = static_cast<TypeId>(kNumberTypeFloat32);
     auto type_ptr = TypeIdToType(type_id);
@@ -405,10 +409,9 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   return true;
 }
 
-bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_size, int split_dim_size, int pad,
-                              int stride) {
+bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_size, int split_dim_size) {
   MS_CHECK_TRUE_MSG(ratio != nullptr, false, "input ratio is nullptr");
-  int total_block_count = 0;
+  int64_t total_block_count = 0;
   for (size_t i = 0; i < split_size; i++) {
     total_block_count += ratio[i];
   }
@@ -416,16 +419,20 @@ bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_siz
     MS_LOG(ERROR) << "out of ratio range";
     return false;
   }
+  if (total_block_count < 0) {
+    MS_LOG(ERROR) << "divide by zero";
+    return false;
+  }
 
   std::vector<int64_t> new_ratio(split_size);
-  int visited_block = 0;
+  int64_t visited_block = 0;
   for (size_t i = 0; i < split_size - 1; i++) {
     visited_block += ratio[i];
     if (INT_MUL_OVERFLOW_THRESHOLD(split_dim_size, visited_block, INT64_MAX)) {
       MS_LOG(ERROR) << "int mul overflow";
       return false;
     }
-    int cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
+    int64_t cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
     new_ratio[i + 1] = cur_border;
   }
 

@@ -76,6 +76,8 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
 
 STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
 
+void SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
+
 std::string GetModelName(const std::string &modelFile);
 
 std::vector<int> GetTransposePerm(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &cnode);

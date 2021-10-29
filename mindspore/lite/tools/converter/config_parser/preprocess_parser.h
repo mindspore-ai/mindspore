@@ -26,30 +26,30 @@ namespace mindspore {
 namespace lite {
 class PreprocessParser {
  public:
-  int ParsePreprocess(const DataPreProcessString &data_pre_process_str,
-                      preprocess::DataPreProcessParam *data_pre_process);
+  static int ParsePreprocess(const DataPreProcessString &data_pre_process_str,
+                             preprocess::DataPreProcessParam *data_pre_process);
 
  private:
-  int ParseInputType(const std::string &input_type_str, preprocess::InputType *input_type);
+  static int ParseInputType(const std::string &input_type_str, preprocess::InputType *input_type);
 
-  int ParseImagePreProcess(const DataPreProcessString &data_pre_process_str,
-                           preprocess::ImagePreProcessParam *image_pre_process);
+  static int ParseImagePreProcess(const DataPreProcessString &data_pre_process_str,
+                                  preprocess::ImagePreProcessParam *image_pre_process);
 
-  int ParseImageNormalize(const DataPreProcessString &data_pre_process_str,
-                          preprocess::ImagePreProcessParam *image_pre_process);
+  static int ParseImageNormalize(const DataPreProcessString &data_pre_process_str,
+                                 preprocess::ImagePreProcessParam *image_pre_process);
 
-  int ParseImageResize(const DataPreProcessString &data_pre_process_str,
-                       preprocess::ImagePreProcessParam *image_pre_process);
+  static int ParseImageResize(const DataPreProcessString &data_pre_process_str,
+                              preprocess::ImagePreProcessParam *image_pre_process);
 
-  int ParseImageCenterCrop(const DataPreProcessString &data_pre_process_str,
-                           preprocess::ImagePreProcessParam *image_pre_process);
+  static int ParseImageCenterCrop(const DataPreProcessString &data_pre_process_str,
+                                  preprocess::ImagePreProcessParam *image_pre_process);
 
-  int ParseImageToFormat(const std::string &image_to_format_str, preprocess::ImageToFormat *image_to_format);
+  static int ParseImageToFormat(const std::string &image_to_format_str, preprocess::ImageToFormat *image_to_format);
 
-  int ParseCalibratePath(const std::string &str, std::map<std::string, std::string> *value);
+  static int ParseCalibratePath(const std::string &str, std::map<std::string, std::string> *value);
 
-  int CollectCalibInputs(const std::map<std::string, std::string> &calibrate_data_path, size_t limited_count,
-                         std::map<std::string, std::vector<std::string>> *inputs);
+  static int CollectCalibInputs(const std::map<std::string, std::string> &calibrate_data_path, size_t limited_count,
+                                std::map<std::string, std::vector<std::string>> *inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

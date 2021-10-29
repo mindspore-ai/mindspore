@@ -20,14 +20,14 @@
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "tools/common/meta_graph_utils.h"
+#include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
-bool SubgraphTensorPass::IsUsing(schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
+bool SubgraphTensorPass::IsUsing(const schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
   for (const auto &node : graph->nodes) {
     if (IsContain<uint32_t>(node->inputIndex, tensor_idx)) {
       return true;
@@ -47,7 +47,7 @@ bool SubgraphTensorPass::IsUsing(schema::MetaGraphT *graph, const uint32_t &tens
   return false;
 }
 
-STATUS SubgraphTensorPass::UpdateTensorIdx(schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
+void SubgraphTensorPass::UpdateTensorIdx(schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
   for (const auto &subgraph : graph->subGraph) {
     UpdateVec<uint32_t>(&(subgraph->inputIndices), tensor_idx);
     UpdateVec<uint32_t>(&(subgraph->outputIndices), tensor_idx);
@@ -58,10 +58,9 @@ STATUS SubgraphTensorPass::UpdateTensorIdx(schema::MetaGraphT *graph, const uint
   }
   UpdateVec<uint32_t>(&(graph->inputIndex), tensor_idx);
   UpdateVec<uint32_t>(&(graph->outputIndex), tensor_idx);
-  return RET_OK;
 }
 
-STATUS SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
+void SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
   for (auto it = graph->allTensors.begin(); it != graph->allTensors.end();) {
     uint32_t idx = it - graph->allTensors.begin();
     if (IsUsing(graph, idx)) {
@@ -71,35 +70,21 @@ STATUS SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
       UpdateTensorIdx(graph, idx);
     }
   }
-  return RET_OK;
 }
 
-STATUS SubgraphTensorPass::SyncMainGraphInputAndOutput(schema::MetaGraphT *graph) {
+void SubgraphTensorPass::SyncMainGraphInputAndOutput(const schema::MetaGraphT *graph) {
   MS_ASSERT(graph->subGraph.size() > 0);
   graph->subGraph[0]->inputIndices.assign(graph->inputIndex.begin(), graph->inputIndex.end());
-  return RET_OK;
 }
 
 STATUS SubgraphTensorPass::Run(schema::MetaGraphT *graph) {
   CHECK_NULL_RETURN(graph);
 
-  int ret = RemoveUselessTensors(graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "RemoveUselessTensors failed, ret: " << ret;
-    return ret;
-  }
+  RemoveUselessTensors(graph);
 
-  ret = SetSubgraphTensorIndices(graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SetSubgraphTensorIndices failed, ret: " << ret;
-    return ret;
-  }
+  SetSubgraphTensorIndices(graph);
 
-  ret = SyncMainGraphInputAndOutput(graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SetSubgraphTensorIndices failed, ret: " << ret;
-    return ret;
-  }
+  SyncMainGraphInputAndOutput(graph);
 
   return RET_OK;
 }

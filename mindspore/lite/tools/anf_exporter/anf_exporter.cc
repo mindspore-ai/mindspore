@@ -486,12 +486,7 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
     return ret;
   }
 
-  ret = SetSubgraphTensorIndices(meta_graphT.get());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SetSubgraphTensorIndices failed";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
-    return ret;
-  }
+  SetSubgraphTensorIndices(meta_graphT.get());
 
   return RET_OK;
 }

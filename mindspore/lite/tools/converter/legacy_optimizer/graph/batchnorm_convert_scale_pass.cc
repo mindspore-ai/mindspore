@@ -102,16 +102,24 @@ STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std:
 STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
-  GetTransParam(graph, bnNode);
+  auto ret = GetTransParam(graph, bnNode);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "GetTransParam error: " << ret;
+    delete[] transScale;
+    delete[] transBias;
+    transScale = nullptr;
+    transBias = nullptr;
+    return RET_ERROR;
+  }
   newScaleWeightTensor = std::make_unique<TensorT>();
   CHECK_NULL_RETURN(newScaleWeightTensor);
   newScaleWeightTensor->dataType = bnMeanTensor->dataType;
   newScaleWeightTensor->format = bnMeanTensor->format;
-  newScaleWeightTensor->refCount = NodeType_ValueNode;
+  newScaleWeightTensor->nodeType = static_cast<int>(NodeType_ValueNode);
   newScaleWeightTensor->dims = bnMeanTensor->dims;
   auto weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleWeightTensor->data.resize(weightShapeSize * sizeof(float));
-  auto ret =
+  ret =
     memcpy_s(newScaleWeightTensor->data.data(), weightShapeSize * sizeof(float), transScale, bnChannel * sizeof(float));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy error: " << ret;
@@ -127,7 +135,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   newScaleBiasTensor->dataType = bnMeanTensor->dataType;
   newScaleBiasTensor->format = bnMeanTensor->format;
 
-  newScaleBiasTensor->refCount = NodeType_ValueNode;
+  newScaleBiasTensor->nodeType = static_cast<int>(NodeType_ValueNode);
   newScaleBiasTensor->dims = bnMeanTensor->dims;
   weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleBiasTensor->data.resize(weightShapeSize * sizeof(float));
@@ -225,6 +233,36 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
   return RET_OK;
 }
 
+namespace {
+bool CheckBNWeightTensorsDTAndData(const BNWeightTensors &bnWeightTensors) {
+  if (bnWeightTensors.meanTensor->dataType != kNumberTypeFloat32 ||
+      bnWeightTensors.meanTensor->data.size() < sizeof(float)) {
+    MS_LOG(DEBUG) << "mean tensor is not a const float tensor";
+    return false;
+  }
+  if (bnWeightTensors.varianceTensor->dataType != kNumberTypeFloat32 ||
+      bnWeightTensors.varianceTensor->data.size() < sizeof(float)) {
+    MS_LOG(DEBUG) << "variance tensor is not a const float tensor";
+    return false;
+  }
+  if (bnWeightTensors.scaleTensor != nullptr) {
+    if (bnWeightTensors.scaleTensor->dataType != kNumberTypeFloat32 ||
+        bnWeightTensors.scaleTensor->data.size() < sizeof(float)) {
+      MS_LOG(DEBUG) << "scale tensor is not a const float tensor";
+      return false;
+    }
+  }
+  if (bnWeightTensors.biasTensor != nullptr) {
+    if (bnWeightTensors.biasTensor->dataType != kNumberTypeFloat32 ||
+        bnWeightTensors.biasTensor->data.size() < sizeof(float)) {
+      MS_LOG(DEBUG) << "bias tensor is not a const float tensor";
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 // caffe:estimated_mean:0 estimated_variance:1
 // tensorflow scale:0,bias:1,estimated_mean:2,estimated_variance:3
 STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeightTensors *bnWeightTensors,
@@ -242,6 +280,10 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
     bnWeightTensors->biasTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_BIAS_INDEX]).get();
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_VARIANCE_INDEX]).get();
+  }
+  if (!CheckBNWeightTensorsDTAndData(*bnWeightTensors)) {
+    MS_LOG(ERROR) << "weight tensor of batchnorm has non-const-float tensor";
+    return RET_ERROR;
   }
   if (fmkType == converter::kFmkTypeCaffe) {
     auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
@@ -261,9 +303,9 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
   }
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD(bnWeightTensors->meanTensor->data.size(), sizeof(uint8_t), SIZE_MAX),
                      RET_ERROR, "Int mul overflow");
-  bnChannel = bnWeightTensors->meanTensor->data.size() * sizeof(uint8_t) / sizeof(float);
-  if (bnChannel <= 0) {
-    MS_LOG(ERROR) << "BatchNorm's channel less or equal 0";
+  bnChannel = static_cast<uint32_t>(bnWeightTensors->meanTensor->data.size() * sizeof(uint8_t) / sizeof(float));
+  if (bnChannel == 0) {
+    MS_LOG(ERROR) << "BatchNorm's channel equal to 0";
     return RET_ERROR;
   }
   bnMeanTensor = bnWeightTensors->meanTensor;

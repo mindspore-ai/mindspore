@@ -15,7 +15,6 @@
  */
 
 #include "tools/optimizer/graph/node_infershape.h"
-#include <algorithm>
 #include <memory>
 #include <vector>
 #include "tools/common/node_util.h"

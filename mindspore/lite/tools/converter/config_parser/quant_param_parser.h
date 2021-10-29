@@ -23,16 +23,16 @@ namespace mindspore {
 namespace lite {
 class QuantParamParser {
  public:
-  int ParseCommonQuant(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
-  int ParseMixedBitWeightQuant(const MixedBitWeightQuantString &mixed_bit_weight_quant_string,
-                               quant::MixedBitWeightQuantParam *mixed_bit_weight_quant);
-  int ParseFullQuant(const FullQuantString &full_quant_string, quant::FullQuantParam *full_quant);
+  static int ParseCommonQuant(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
+  static int ParseMixedBitWeightQuant(const MixedBitWeightQuantString &mixed_bit_weight_quant_string,
+                                      quant::MixedBitWeightQuantParam *mixed_bit_weight_quant);
+  static int ParseFullQuant(const FullQuantString &full_quant_string, quant::FullQuantParam *full_quant);
 
  private:
-  int ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type);
+  static int ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type);
 
-  int ParseActivationQuantizedMethod(const std::string &activation_quant_method_str,
-                                     quant::ActivationQuantizedMethod *activation_quant_method);
+  static int ParseActivationQuantizedMethod(const std::string &activation_quant_method_str,
+                                            quant::ActivationQuantizedMethod *activation_quant_method);
 };
 }  // namespace lite
 }  // namespace mindspore

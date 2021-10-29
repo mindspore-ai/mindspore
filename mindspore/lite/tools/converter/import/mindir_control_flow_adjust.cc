@@ -276,7 +276,7 @@ int MindIRControlFlowAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<Fun
 bool MindIRControlFlowAdjust::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != FmkType::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be MindIR.";
-    return lite::RET_OK;
+    return true;
   }
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   std::set<FuncGraphPtr> all_func_graphs = {};

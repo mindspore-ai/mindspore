@@ -348,7 +348,7 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
+        return lite::RET_NULL_PTR;
       }
       if (ConvWeightFormatTrans(sub_func_graph, has_visited) != lite::RET_OK) {
         MS_LOG(ERROR) << "transform conv weight format failed.";
@@ -357,7 +357,7 @@ STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<A
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
+        return lite::RET_NULL_PTR;
       }
       if (ConvWeightFormatTrans(sub_func_graph, has_visited) != lite::RET_OK) {
         MS_LOG(ERROR) << "transform conv weight format failed.";

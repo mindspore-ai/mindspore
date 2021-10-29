@@ -357,6 +357,32 @@ STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType
   }
 }
 
+void SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT) {
+  for (auto &subgraph : meta_graphT->subGraph) {
+    std::vector<uint32_t> subgraph_indices{};
+    subgraph_indices.assign(subgraph->inputIndices.begin(), subgraph->inputIndices.end());
+    subgraph_indices.assign(subgraph->outputIndices.begin(), subgraph->outputIndices.end());
+    for (auto &node_idx : subgraph->nodeIndices) {
+      auto &node = meta_graphT->nodes.at(node_idx);
+      for (auto &input_idx : node->inputIndex) {
+        if (IsContain(subgraph_indices, input_idx)) {
+          continue;
+        } else {
+          subgraph_indices.push_back(input_idx);
+        }
+      }
+      for (auto &output_idx : node->outputIndex) {
+        if (IsContain(subgraph_indices, output_idx)) {
+          continue;
+        } else {
+          subgraph_indices.push_back(output_idx);
+        }
+      }
+    }
+    subgraph->tensorIndices.assign(subgraph_indices.begin(), subgraph_indices.end());
+  }
+}
+
 std::string GetModelName(const std::string &modelFile) {
   std::string modelName = modelFile;
   modelName = modelName.substr(modelName.find_last_of('/') + 1);

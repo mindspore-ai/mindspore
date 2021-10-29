@@ -34,14 +34,14 @@ class SubgraphNodePass : public GraphPass {
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
-  void DecreaseSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph);
-  void IncreaseSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph);
+  static void DecreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT *graph);
+  static void IncreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT *graph);
   STATUS GetSubgraphAllTensorIndices(const std::unique_ptr<SubGraphT> &subgraph, schema::MetaGraphT *graph,
                                      std::set<uint32_t> *tensors_indices);
   bool IsNodeInputInSubgraph(const std::set<uint32_t> &tensors_indices, const std::unique_ptr<CNodeT> &node,
                              const std::unique_ptr<SubGraphT> &subgraph);
-  bool IsNodeOutputInSubgraph(const std::set<uint32_t> &tensors_indices, const std::unique_ptr<CNodeT> &node,
-                              const std::unique_ptr<SubGraphT> &subgraph);
+  static bool IsNodeOutputInSubgraph(const std::set<uint32_t> &tensors_indices, const std::unique_ptr<CNodeT> &node,
+                                     const std::unique_ptr<SubGraphT> &subgraph);
   std::vector<schema::CNodeT *> old_nodes_;
 };
 }  // namespace lite

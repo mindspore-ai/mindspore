@@ -44,7 +44,7 @@ STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode
   }
   // NHWC
   auto shape_size = graph->allTensors.at(addBiasIndex)->dims.size();
-  scaleParam->axis = 0 - shape_size;
+  scaleParam->axis = -static_cast<int64_t>(shape_size);
   mulNode->inputIndex.push_back(addBiasIndex);
   MS_ASSERT(addNode->primitive != nullptr);
   MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
@@ -96,9 +96,9 @@ STATUS MulAddFusionPass::DefinePattern() {
 
   auto fusionPattern = std::make_unique<FusionPattern>("MulAddFusion");
   MS_CHECK_TRUE_MSG(fusionPattern != nullptr, RET_NULL_PTR, "create FusionPattern failed");
-  fusionPattern->AddPatternOp(mulOp);
-  fusionPattern->AddPatternOp(baOp);
-  fusionPattern->Finish();
+  (void)fusionPattern->AddPatternOp(mulOp);
+  (void)fusionPattern->AddPatternOp(baOp);
+  (void)fusionPattern->Finish();
 
   this->patterns.emplace_back(fusionPattern.release());
 
