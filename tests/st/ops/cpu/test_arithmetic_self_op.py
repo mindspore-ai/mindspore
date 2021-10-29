@@ -144,6 +144,13 @@ def test_floor():
     print(output.asnumpy())
     assert np.all(output.asnumpy() == expect_output)
 
+    x = np.random.randn(4, 3).astype(np.float64)
+    x = x * 100
+    output = net(Tensor(x))
+    expect_output = np.floor(x)
+    print(output.asnumpy())
+    assert np.all(output.asnumpy() == expect_output)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -161,6 +168,11 @@ def test_rint():
     expect_output = np.rint(x).astype(np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
+    x = np.random.randn(3, 4, 5, 6).astype(np.float64) * prop
+    output = net(Tensor(x))
+    expect_output = np.rint(x).astype(np.float64)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -176,6 +188,11 @@ def test_round():
     x = np.array([0.9920, -0.4077, 0.9734, -1.0362, 1.5, -2.5, 4.5]).astype(np.float32)
     output = net(Tensor(x))
     expect_output = np.round(x).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    x = np.array([0.9920, -0.4077, 0.9734, -1.0362, 1.5, -2.5, 4.5]).astype(np.float64)
+    output = net(Tensor(x))
+    expect_output = np.round(x).astype(np.float64)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
@@ -197,6 +214,13 @@ def test_reciprocal():
     expect_output = (1. / x).astype(np.float32)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * 1.0e-5
+    assert np.all(np.abs(diff) < error)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float64) * prop
+    output = net(Tensor(x))
+    expect_output = (1. / x).astype(np.float64)
+    diff = output.asnumpy() - expect_output
+    error = np.ones(shape=expect_output.shape) * 1.0e-7
     assert np.all(np.abs(diff) < error)
 
 

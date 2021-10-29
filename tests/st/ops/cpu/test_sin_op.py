@@ -44,3 +44,11 @@ def test_sin():
     print(output)
     expect = np.sin(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float64')
+    input_x = Tensor(np_array)
+    net = NetSin()
+    output = net(input_x)
+    print(output)
+    expect = np.sin(np_array)
+    assert np.allclose(output.asnumpy(), expect)

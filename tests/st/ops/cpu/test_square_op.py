@@ -47,8 +47,14 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
-    x = np.random.randn(2, 3, 3, 4).astype(np.float32)
+@pytest.mark.parametrize('dtype', [np.int32, np.int64, np.float32, np.float64])
+def test_net(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Square
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(dtype)
     y_expect = x * x
     net = Net()
     out = net(Tensor(x))
@@ -56,7 +62,7 @@ def test_net():
     err = np.ones(shape=y_expect.shape) * 1.0e-5
     assert np.all(diff < err)
     assert out.shape == y_expect.shape
-    sens = np.random.randn(2, 3, 3, 4).astype(np.float32)
+    sens = np.random.randn(2, 3, 3, 4).astype(dtype)
     backword_net = Grad(Net())
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))

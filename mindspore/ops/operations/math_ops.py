@@ -1845,7 +1845,7 @@ class SquaredDifference(_MathBinaryOp):
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
-        valid_type = [mstype.float16, mstype.float32, mstype.int32]
+        valid_type = [mstype.float16, mstype.float32, mstype.float64, mstype.int32]
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, valid_type, self.name)
 
 
@@ -2974,7 +2974,7 @@ class Floor(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

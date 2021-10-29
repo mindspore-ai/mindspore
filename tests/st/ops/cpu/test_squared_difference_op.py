@@ -56,6 +56,14 @@ def test_net01():
     assert np.all(expect2 == output2)
     assert output2.shape == expect2.shape
 
+    x2 = np.random.randn(2, 3).astype(np.float64)
+    y2 = np.random.randn(2, 3).astype(np.float64)
+    output2 = net(Tensor(x2), Tensor(y2)).asnumpy()
+    diff = x2 - y2
+    expect2 = diff * diff
+    assert np.all(expect2 == output2)
+    assert output2.shape == expect2.shape
+
     x3 = np.random.randn(2, 3).astype(np.bool)
     y3 = np.random.randn(2, 3).astype(np.bool)
     try:

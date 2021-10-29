@@ -36,8 +36,14 @@ class NetAsinh(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_asinh():
-    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_asinh(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Asinh
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
     input_x = Tensor(np_array)
     net = NetAsinh()
     output = net(input_x)

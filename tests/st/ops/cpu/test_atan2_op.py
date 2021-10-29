@@ -44,3 +44,11 @@ def test_atan2():
     print(output)
     expect = np.arctan2(np_array, np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+    np_array = np.array([1, 2, 3, 4, 5], dtype=np.float64)
+    input_x = Tensor(np_array)
+    net = NetAtan2()
+    output = net(input_x, input_x)
+    print(output)
+    expect = np.arctan2(np_array, np_array)
+    assert np.allclose(output.asnumpy(), expect)

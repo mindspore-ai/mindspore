@@ -38,6 +38,7 @@ class EltWiseGradCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void InitComputeFunc();
   void ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -52,7 +53,8 @@ class EltWiseGradCPUKernel : public CPUKernel {
   void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
 
-  std::string kernel_name_ = "";
+  using TypeComputeFunc = std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>;
+  TypeComputeFunc compute_func_{nullptr};
 };
 
 MS_REG_CPU_KERNEL_T(
@@ -75,6 +77,10 @@ MS_REG_CPU_KERNEL_T(
   SqrtGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  SqrtGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EltWiseGradCPUKernel, double);
 MS_REG_CPU_KERNEL_T(
   TanhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

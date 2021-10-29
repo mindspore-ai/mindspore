@@ -49,6 +49,14 @@ MS_REG_CPU_KERNEL_T(Select,
 MS_REG_CPU_KERNEL_T(Select,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeBool)
+                      .AddInputAttr(kNumberTypeFloat64)
+                      .AddInputAttr(kNumberTypeFloat64)
+                      .AddOutputAttr(kNumberTypeFloat64),
+                    SelectCPUKernel, double);
+
+MS_REG_CPU_KERNEL_T(Select,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddOutputAttr(kNumberTypeFloat16),

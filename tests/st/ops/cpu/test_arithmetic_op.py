@@ -80,6 +80,14 @@ def test_sub():
     expect_output = x - y
     assert np.all(output.asnumpy() == expect_output)
 
+    # float64
+    x = np.random.rand(2, 3, 4, 4).astype(np.float64)
+    y = np.random.rand(4, 1).astype(np.float64)
+    net = SubNet()
+    output = net(Tensor(x), Tensor(y, mindspore.float64))
+    expect_output = x - y
+    assert np.all(output.asnumpy() == expect_output)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -102,6 +110,8 @@ def test_div():
     y6_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     x7_np = np.random.randint(1, 100, (2, 1, 1, 4)).astype(np.int64) * prop
     y7_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.int64) * prop
+    x8_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float64) * prop
+    y8_np = np.random.randint(1, 100, (2, 1, 4, 4)).astype(np.float64) * prop
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)
@@ -119,6 +129,8 @@ def test_div():
     y6 = Tensor(y6_np)
     x7 = Tensor(x7_np)
     y7 = Tensor(y7_np)
+    x8 = Tensor(x8_np)
+    y8 = Tensor(y8_np)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     div = DivNet()
@@ -173,6 +185,13 @@ def test_div():
     assert np.all(output7.asnumpy() == expect7)
     assert output7.shape == expect7.shape
 
+    output8 = div(x8, y8)
+    expect8 = np.divide(x8_np, y8_np)
+    diff8 = output8.asnumpy() - expect8
+    error8 = np.ones(shape=expect8.shape) * 1.0e-7
+    assert np.all(diff8 < error8)
+    assert output8.shape == expect8.shape
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -189,6 +208,8 @@ def test_floor_div():
     y3_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     x4_np = np.random.randint(1, 100, (2, 1, 1, 4)).astype(np.int64) * prop
     y4_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.int64) * prop
+    x5_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float64) * prop
+    y5_np = np.random.randint(1, 100, (2, 1, 4, 4)).astype(np.float64) * prop
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)
@@ -200,6 +221,8 @@ def test_floor_div():
     y3 = Tensor(y3_np)
     x4 = Tensor(x4_np)
     y4 = Tensor(y4_np)
+    x5 = Tensor(x5_np)
+    y5 = Tensor(y5_np)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     floor_div = FloorDivNet()
@@ -237,6 +260,13 @@ def test_floor_div():
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
+
+    output5 = floor_div(x5, y5)
+    expect5 = np.floor_divide(x5_np, y5_np)
+    diff5 = output5.asnumpy() - expect5
+    error5 = np.ones(shape=expect5.shape) * 1.0e-7
+    assert np.all(diff5 < error5)
+    assert output5.shape == expect5.shape
 
 
 @pytest.mark.level0

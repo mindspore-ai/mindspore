@@ -71,6 +71,9 @@ MS_REG_CPU_KERNEL_T(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, int64_t);
 MS_REG_CPU_KERNEL_T(
+  Less, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticLogicCPUKernel, double);
+MS_REG_CPU_KERNEL_T(
   Equal, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, bool);
 MS_REG_CPU_KERNEL_T(
@@ -147,6 +150,10 @@ MS_REG_CPU_KERNEL_T(
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, float);
 MS_REG_CPU_KERNEL_T(
+  Greater,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticLogicCPUKernel, double);
+MS_REG_CPU_KERNEL_T(
   Greater, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, int64_t);
 MS_REG_CPU_KERNEL_T(
@@ -162,6 +169,10 @@ MS_REG_CPU_KERNEL_T(
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, int64_t);
 MS_REG_CPU_KERNEL_T(
+  GreaterEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticLogicCPUKernel, double);
+MS_REG_CPU_KERNEL_T(
   LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, int);
 MS_REG_CPU_KERNEL_T(
@@ -171,6 +182,10 @@ MS_REG_CPU_KERNEL_T(
   LessEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticLogicCPUKernel, double);
 MS_REG_CPU_KERNEL_T(
   LogicalAnd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCPUKernel, bool);
