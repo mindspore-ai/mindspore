@@ -328,14 +328,9 @@ kernel::InnerKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor
   MS_CHECK_TRUE_RET(inputs.front() != nullptr, nullptr);
   MS_CHECK_TRUE_RET(outputs.front() != nullptr, nullptr);
 
-  MS_ASSERT(!inputs.empty());
-  MS_ASSERT(!outputs.empty());
-  MS_ASSERT(inputs.front()->shape().size() == DIMENSION_4D);
-  MS_ASSERT(outputs.front()->shape().size() == DIMENSION_4D);
-
   auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  int input_channel = inputs.front()->shape().at(3);
-  int output_channel = outputs.front()->shape().at(3);
+  int input_channel = conv_param->input_channel_;
+  int output_channel = conv_param->output_channel_;
   int group = conv_param->group_;
 
   // case 1: depthwise Conv2dTranspose
