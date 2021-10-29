@@ -55,7 +55,6 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   // Delete the duplicate axis.
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
 
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == prim::kPrimReduceAll->name()) {
