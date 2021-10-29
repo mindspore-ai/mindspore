@@ -26,81 +26,58 @@
 #include "src/common/utils.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore::lite {
 namespace {
 constexpr size_t kModelSizeLimit = 2 * 1024 * 1024;
 constexpr size_t kExternalDataHeadSize = 4096;
 constexpr size_t kMagicNumberSize = 4;
+constexpr size_t kFlatbuffersBuilderInitSize = 1024;
 
-std::fstream *OpenFile(const std::string &save_path, bool append) {
-#ifndef _MSC_VER
-  if (access(save_path.c_str(), F_OK) == 0) {
-    chmod(save_path.c_str(), S_IWUSR);
-  }
-#endif
-  auto fs = new (std::nothrow) std::fstream();
+std::fstream *ReopenFile(const std::string &file_path, std::ios_base::openmode open_mode = std::ios::in | std::ios::out,
+                         std::fstream *fs = nullptr) {
   if (fs == nullptr) {
-    MS_LOG(DEBUG) << "Create file stream failed";
-    return nullptr;
-  }
-  if (append) {
-    fs->open(save_path, std::ios::app);
+    return OpenFile(file_path, open_mode);
   } else {
-    fs->open(save_path);
+    fs->close();
+    fs->open(file_path, open_mode);
+    if (!fs->good()) {
+      MS_LOG(DEBUG) << "File is not exist: " << file_path;
+      return nullptr;
+    }
+    if (!fs->is_open()) {
+      MS_LOG(DEBUG) << "Can not open file: " << file_path;
+      return nullptr;
+    }
+    return fs;
   }
-  if (!fs->is_open()) {
-    MS_LOG(DEBUG) << "Can not open output file: " << save_path;
-    delete fs;
-    return nullptr;
-  }
-  return fs;
-}
-
-bool SerializeModel(const std::string &save_path, const void *content, size_t size) {
-  if (size == 0 || content == nullptr) {
-    MS_LOG(ERROR) << "Input meta graph buffer is nullptr";
-    return false;
-  }
-#ifndef _MSC_VER
-  if (access(save_path.c_str(), F_OK) == 0) {
-    chmod(save_path.c_str(), S_IWUSR);
-  }
-#endif
-  std::ofstream output(save_path, std::ofstream::binary);
-  if (!output.is_open()) {
-    MS_LOG(ERROR) << "Can not open output file: " << save_path;
-    return RET_ERROR;
-  }
-
-  output.write((const char *)content, size);
-  if (output.bad()) {
-    output.close();
-    MS_LOG(ERROR) << "Write output file : " << save_path << " failed";
-    return RET_ERROR;
-  }
-  output.close();
-#ifndef _MSC_VER
-  chmod(save_path.c_str(), S_IRUSR);
-#endif
-  return true;
 }
 }  // namespace
 
-void MetaGraphSerializer::InitPath(const std::string &output_path) {
+bool MetaGraphSerializer::InitPath(const std::string &output_path) {
   this->save_path_.clear();
   this->model_name_.clear();
-  if (output_path.empty()) {
-    return;
-  }
   auto pos = output_path.find_last_of('/');
+  if (pos == std::string::npos) {
+    pos = output_path.find_last_of('\\');
+  }
   std::string model_name;
   if (pos == std::string::npos) {
+#ifdef _WIN32
+    this->save_path_ = ".\\";
+#else
     this->save_path_ = "./";
+#endif
     model_name = output_path;
   } else {
     this->save_path_ = output_path.substr(0, pos + 1);
     model_name = output_path.substr(pos + 1);
+  }
+  this->save_path_ = RealPath(this->save_path_.c_str());
+  if (this->save_path_.empty()) {
+    MS_LOG(DEBUG) << "File path not regular: " << this->save_path_;
+    return false;
   }
   auto suffix_pos = model_name.find_last_of('.');
   if (suffix_pos == std::string::npos) {
@@ -112,26 +89,36 @@ void MetaGraphSerializer::InitPath(const std::string &output_path) {
       this->model_name_ = model_name;
     }
   }
-  save_model_path_ = save_path_ + model_name_ + ".ms";
-  save_data_path_ = save_path_ + model_name_ + ".msw";
+#ifdef _WIN32
+  save_model_path_ = save_path_ + "\\" + model_name_ + ".ms";
+  save_data_path_ = save_path_ + "\\" + model_name_ + ".msw";
+#else
+  save_model_path_ = save_path_ + "/" + model_name_ + ".ms";
+  save_data_path_ = save_path_ + "/" + model_name_ + ".msw";
+#endif
+  return true;
 }
 
-bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::string &output_path) {
-  InitPath(output_path);
-  // delete exist file
-  struct stat file_state {};
-  if (stat(save_model_path_.c_str(), &file_state) == 0) {
-    remove(save_model_path_.c_str());
-  }
-  if (stat(save_data_path_.c_str(), &file_state) == 0) {
-    remove(save_data_path_.c_str());
-  }
-  // write weight file head
-  auto file = OpenFile(save_data_path_, true);
-  if (file == nullptr) {
-    MS_LOG(ERROR) << "Open file failed: " << save_data_path_;
+bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::string &output_path, bool save_together) {
+  if (!InitPath(output_path)) {
+    MS_LOG(ERROR) << "Init path failed";
     return false;
   }
+  // init file streams
+  model_fs_ = OpenFile(save_model_path_, std::ios::out | std::ios::binary | std::ios::trunc);
+  if (model_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Open " << save_model_path_ << " failed";
+    return false;
+  }
+  if (save_together) {
+    return true;
+  }
+  data_fs_ = OpenFile(save_data_path_, std::ios::out | std::ios::binary | std::ios::trunc);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Open " << save_data_path_ << " failed";
+    return false;
+  }
+  // write weight file head
   auto head_data = reinterpret_cast<char *>(malloc(kExternalDataHeadSize));
   if (head_data == nullptr) {
     MS_LOG(ERROR) << "Malloc data for file head failed";
@@ -140,30 +127,25 @@ bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::strin
   auto ret = memset_s(head_data, kExternalDataHeadSize, 0, kExternalDataHeadSize);
   if (ret != EOK) {
     MS_LOG(ERROR) << "memset failed: " << ret;
+    free(head_data);
     return false;
   }
   // magic number of weight file: 0x12345678
-  head_data[0] = 0x12;
-  head_data[1] = 0x34;
-  head_data[2] = 0x56;
-  head_data[3] = 0x78;
-  file->write(head_data, kExternalDataHeadSize);
-  if (file->bad()) {
+  auto sum_data = reinterpret_cast<uint32_t *>(head_data);
+  sum_data[0] = 0x12345678;
+  data_fs_->write(head_data, kExternalDataHeadSize);
+  if (data_fs_->bad()) {
     MS_LOG(ERROR) << "Write file head failed";
     free(head_data);
-    file->close();
-    delete file;
     return false;
   }
   free(head_data);
-  file->close();
-  delete file;
   cur_offset_ = kExternalDataHeadSize;
   return true;
 }
 
-schema::ExternalDataT *MetaGraphSerializer::AddExternalData(std::fstream *file, const char *data, size_t size) {
-  MS_ASSERT(file != nullptr);
+schema::ExternalDataT *MetaGraphSerializer::AddExternalData(const char *data, size_t size) {
+  MS_ASSERT(data_fs_ != nullptr);
   auto external_data = new (std::nothrow) schema::ExternalDataT;
   if (external_data == nullptr) {
     MS_LOG(ERROR) << "Create ExternalDataT failed";
@@ -175,8 +157,8 @@ schema::ExternalDataT *MetaGraphSerializer::AddExternalData(std::fstream *file, 
   if (data == nullptr || size == 0) {
     return external_data;
   }
-  file->write(data, static_cast<int64_t>(size));
-  if (file->bad()) {
+  data_fs_->write(data, static_cast<int64_t>(size));
+  if (data_fs_->bad()) {
     MS_LOG(ERROR) << "Write file failed";
     delete external_data;
     return nullptr;
@@ -189,13 +171,17 @@ schema::ExternalDataT *MetaGraphSerializer::AddExternalData(std::fstream *file, 
 }
 
 bool MetaGraphSerializer::ExtraAndSerializeModelWeight(const schema::MetaGraphT &graph) {
-  if (this->cur_offset_ != kExternalDataHeadSize) {
-    MS_LOG(ERROR) << "Serialized model weight already";
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Weight file stream is not inited";
     return false;
   }
-  auto file = OpenFile(save_data_path_, true);
-  if (file == nullptr) {
-    MS_LOG(ERROR) << "Open file failed: " << save_data_path_;
+  data_fs_ = ReopenFile(save_data_path_, std::ios::out | std::ios::app, data_fs_);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Reopen weight file stream failed";
+    return false;
+  }
+  if (this->cur_offset_ != kExternalDataHeadSize) {
+    MS_LOG(ERROR) << "Serialized model weight already";
     return false;
   }
   for (const auto &tensor : graph.allTensors) {
@@ -206,66 +192,67 @@ bool MetaGraphSerializer::ExtraAndSerializeModelWeight(const schema::MetaGraphT 
       continue;
     }
     auto external_data =
-      this->AddExternalData(file, reinterpret_cast<const char *>(tensor->data.data()), tensor->data.size());
+      this->AddExternalData(reinterpret_cast<const char *>(tensor->data.data()), tensor->data.size());
     if (external_data == nullptr) {
       MS_LOG(ERROR) << "Serialized model weight failed";
-      file->close();
-      delete file;
       return false;
     }
     tensor->data.clear();
     tensor->externalData.emplace_back(external_data);
   }
-  file->close();
-  delete file;
   return true;
 }
 
 bool MetaGraphSerializer::SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT) {
-  flatbuffers::FlatBufferBuilder builder(1024);
+  // serialize model
+  flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &meta_graphT);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   auto content = builder.GetBufferPointer();
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return false;
-  }
-  auto model_crc32 = std::hash<uint8_t>()(content[0]);
-  if (!SerializeModel(save_model_path_, content, size)) {
+  if (!SerializeModel(content, size)) {
     MS_LOG(ERROR) << "Serialize graph failed";
     return false;
   }
-  auto file = OpenFile(save_data_path_, false);
-  if (file == nullptr) {
-    MS_LOG(ERROR) << "Open file failed: " << save_data_path_;
+
+  // update weight file using check-sum of model-buffer
+  auto model_crc32 = std::hash<uint8_t>()(content[0]);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Weight file stream is not inited";
     return false;
   }
-  file->seekp(kMagicNumberSize, std::ios::beg);
-  file->write(reinterpret_cast<const char *>(&model_crc32), kMagicNumberSize);
-  file->close();
-  delete file;
+  data_fs_ = ReopenFile(save_data_path_, std::ios::in | std::ios::out, data_fs_);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Reopen weight file stream failed";
+    return false;
+  }
+  data_fs_->seekp(kMagicNumberSize, std::ios::beg);
+  data_fs_->write(reinterpret_cast<const char *>(&model_crc32), kMagicNumberSize);
 #ifndef _MSC_VER
   chmod(save_data_path_.c_str(), S_IRUSR);
 #endif
-  std::cout << "sum: " << model_crc32 << std::endl;
   return true;
 }
 
 int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string &output_path) {
-  flatbuffers::FlatBufferBuilder builder(1024);
+  flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
-  auto save_together = size < kModelSizeLimit;
-  if (!save_together && false) {
-    MetaGraphSerializer meta_graph_serializer;
-    if (!meta_graph_serializer.Init(graph, output_path)) {
-      MS_LOG(ERROR) << "Init MetaGraphSerializer failed";
+  auto save_together = (size < kModelSizeLimit) || true;
+  MetaGraphSerializer meta_graph_serializer;
+  if (!meta_graph_serializer.Init(graph, output_path, save_together)) {
+    MS_LOG(ERROR) << "Init MetaGraphSerializer failed";
+    return RET_ERROR;
+  }
+  if (save_together) {
+    if (!meta_graph_serializer.SerializeModel(builder.GetBufferPointer(), size)) {
+      MS_LOG(ERROR) << "Serialize graph failed";
       return RET_ERROR;
     }
+  } else {
     if (!meta_graph_serializer.ExtraAndSerializeModelWeight(graph)) {
       MS_LOG(ERROR) << "Serialize graph weight failed";
       return RET_ERROR;
@@ -274,21 +261,36 @@ int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string
       MS_LOG(ERROR) << "Serialize graph and adjust weight failed";
       return RET_ERROR;
     }
-  } else {
-    std::string file_name = output_path;
-    if (file_name.substr(file_name.find_last_of('.') + 1) != "ms") {
-      file_name = file_name + ".ms";
-    }
-    auto content = builder.GetBufferPointer();
-    if (content == nullptr) {
-      MS_LOG(ERROR) << "GetBufferPointer nullptr";
-      return RET_ERROR;
-    }
-    if (!SerializeModel(file_name, content, size)) {
-      MS_LOG(ERROR) << "Serialize graph failed";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
+}
+
+MetaGraphSerializer::~MetaGraphSerializer() {
+  if (model_fs_ != nullptr) {
+    model_fs_->close();
+    delete model_fs_;
+  }
+  if (data_fs_ != nullptr) {
+    data_fs_->close();
+    delete data_fs_;
+  }
+}
+
+bool MetaGraphSerializer::SerializeModel(const void *content, size_t size) {
+  MS_ASSERT(model_fs_ != nullptr);
+  if (size == 0 || content == nullptr) {
+    MS_LOG(ERROR) << "Input meta graph buffer is nullptr";
+    return false;
+  }
+
+  model_fs_->write((const char *)content, static_cast<int64_t>(size));
+  if (model_fs_->bad()) {
+    MS_LOG(ERROR) << "Write model file failed: " << save_model_path_;
+    return RET_ERROR;
+  }
+#ifndef _MSC_VER
+  chmod(save_model_path_.c_str(), S_IRUSR);
+#endif
+  return true;
 }
 }  // namespace mindspore::lite
