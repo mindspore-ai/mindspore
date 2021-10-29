@@ -57,12 +57,12 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 ## MindSpore Lite benchmark test result
 
-We test a couple of networks on HUAWEI Mate40 (Hisilicon Kirin9000) mobile phone, and get the test results below for your reference.
+We test a couple of networks on HUAWEI Mate40 (Hisilicon Kirin9000e) mobile phone, and get the test results below for your reference.
 
 | NetWork             | Thread Number | Average Run Time(ms) |
 | ------------------- | ------------- | -------------------- |
-| basic_squeezenet    | 4             | 7.246                |
+| basic_squeezenet    | 4             | 6.415                |
 | inception_v3        | 4             | 36.767               |
-| mobilenet_v1_10_224 | 4             | 5.187                |
-| mobilenet_v2_10_224 | 4             | 4.153                |
+| mobilenet_v1_10_224 | 4             | 4.936                |
+| mobilenet_v2_10_224 | 4             | 3.644                |
 | resnet_v2_50        | 4             | 25.071               |

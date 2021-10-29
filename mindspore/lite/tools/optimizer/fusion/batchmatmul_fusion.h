@@ -30,6 +30,8 @@ class BatchMatMulFusion : public PatternProcessPass {
  private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  bool CheckCnodeProper(const CNodePtr &stack_cnode, const CNodePtr &fullconnect_cnode,
+                        const CNodePtr &left_slice_cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore

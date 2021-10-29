@@ -21,6 +21,7 @@
 #include "src/inner_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "include/errorcode.h"
+#include "src/common/common.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -61,11 +62,22 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeBuffSrcB();
   int CalBroadCastBiasDataElements();
   int InitTmpOutBuffer();
+  int NormalMatmulRun();
+  int BroadcastMatmulRun();
 
  protected:
   MatMulParameter *params_ = nullptr;
   float *a_pack_ptr_ = nullptr;
   float *b_pack_ptr_ = nullptr;
+  bool a_broadcast_ = false;
+  bool b_broadcast_ = false;
+  int a_batch_ = 1;
+  int b_batch_ = 1;
+  int batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  int a_batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  int b_batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
 
  private:
   int col_tile_ = 0;
