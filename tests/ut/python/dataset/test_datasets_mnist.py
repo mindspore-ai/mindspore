@@ -217,7 +217,6 @@ def test_mnist_exception():
     with pytest.raises(RuntimeError, match=error_msg_8):
         data = ds.MnistDataset(DATA_DIR)
         data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
         for _ in data.__iter__():
             pass
     with pytest.raises(RuntimeError, match=error_msg_8):

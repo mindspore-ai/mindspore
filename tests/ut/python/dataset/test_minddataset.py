@@ -1117,7 +1117,7 @@ def inputs(vectors, maxlen=50):
 
 
 def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         if os.path.exists("{}".format(mindrecord_file_name)):
             os.remove("{}".format(mindrecord_file_name))
@@ -1373,7 +1373,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
 
 
 def test_write_with_multi_bytes_and_MindDataset():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         data = [{"file_name": "001.jpg", "label": 43,
                  "image1": bytes("image1 bytes abc", encoding='UTF-8'),
@@ -1554,7 +1554,7 @@ def test_write_with_multi_bytes_and_MindDataset():
 
 
 def test_write_with_multi_array_and_MindDataset():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         data = [{"source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
                  "source_sos_mask": np.array([6, 7, 8, 9, 10, 11, 12], dtype=np.int64),
