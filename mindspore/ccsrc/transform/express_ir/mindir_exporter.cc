@@ -554,11 +554,9 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   }
 
   // Need to build input node before dealing with cnode
-  std::vector<AnfNodePtr> op_inputs;
   std::vector<string> input_names;
   for (size_t i = 1; i < inputs_size; i++) {
     auto input = node->input(i);
-    op_inputs.push_back(input);
     std::string node_name = BuildInputNode(input, graph_proto);
     if (node_name.empty()) {
       MS_LOG(ERROR) << "Build input node for " << input->DebugString() << " failed.";
@@ -612,6 +610,12 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
 }
 
 std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto) {
+  // Return the NodeName that the node has been processed.
+  auto iter = node_index_map_.find(node);
+  if (iter != node_index_map_.end()) {
+    return iter->second;
+  }
+
   std::string node_name = GetUniqueNodeName(node);
   // FuncGraph will be added to functions and the input name is the function name.
   if (IsValueNode<FuncGraph>(node)) {
@@ -620,6 +624,7 @@ std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::Gra
     return fg->ToString();
   }
   if (node->isa<ValueNode>()) {
+    nodeName_.insert(node_name);
     // When node input is a ValueNode, need to create a Constant Node
     mind_ir::NodeProto *node_proto = graph_proto->add_node();
     node_proto->set_name(node_name);
