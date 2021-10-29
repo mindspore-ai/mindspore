@@ -260,6 +260,7 @@ class KernelGraph : public FuncGraph {
   void UpdateChildGraphOrder();
   const std::vector<AnfNodePtr> &child_graph_result() const { return child_graph_result_; }
   void AddChildGraphResult(const AnfNodePtr &parameter) { child_graph_result_.push_back(parameter); }
+  bool IsChildGraphResult(const AnfNodePtr &node);
   void set_child_graph_result(const std::vector<AnfNodePtr> &child_graph_result) {
     child_graph_result_ = child_graph_result;
   }
