@@ -612,7 +612,7 @@ Status DeviceQueueOp::SendDataToGPU() {
     if (current_row.eoe()) {
       MS_LOG(INFO) << "EOE Detected";
       TensorRow eoe_flag(TensorRow::kFlagEOE);
-      RETURN_IF_NOT_OK(receive_queues_[num_buf % num_workers_]->Add(std::move(eoe_flag)));
+      RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(eoe_flag)));
     }
 
     if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
