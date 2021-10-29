@@ -53,6 +53,9 @@ class ReduceInt8Coder final : public ReduceBaseCoder {
   int MallocTmpBuffer();
   int CalculateQuantArgs();
   void GetQuantArgs(size_t index);
+  int CalReduceMeanQuantParam();
+  int CalReduceProdQuantParam();
+  int CalReduceSumSquareQuantParam();
 
  private:
   ReduceQuantArg quant_arg_{0};
@@ -65,6 +68,10 @@ class ReduceInt8Coder final : public ReduceBaseCoder {
   std::vector<QuantMulArg *> mean_multipliers_;
   std::vector<QuantMulArg *> prod_multipliers_;
   std::vector<QuantMulArg *> sum_square_multipliers_;
+  bool axes_hw_pattern_{false};  // the second input tensor is [1 2](axes)
+  int32_t bias_{0};
+  QuantMulArg reduce_mean_quant_param_{};  // used for axes_hw_pattern_
+  int8_t *nchw_in_data_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_

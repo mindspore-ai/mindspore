@@ -88,8 +88,6 @@ int ReduceBaseCoder::Init() {
                       "memcpy_s failed!");
   }
   mode_ = reduce_param->mode_;
-  MS_CHECK_RET_CODE(memcpy_s(axes_, sizeof(axes_), reduce_param->axes_, sizeof(reduce_param->axes_)),
-                    "memcpy_s failed!");
   reduce_to_end_ = reduce_param->reduce_to_end_;
   MS_CHECK_RET_CODE(CheckInputsOutputs(), "CheckInputsOutputs failed!");
   return RET_OK;
