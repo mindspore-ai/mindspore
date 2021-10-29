@@ -17,7 +17,6 @@
 #include <math.h>
 #include <type_traits>
 #include <functional>
-#include <limits>
 #include <map>
 #include "common/thread_pool.h"
 
@@ -141,14 +140,7 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
     values[i] = input_addr[iter.GetPos(i)];
   }
 
-  std::iota(sort_idx, sort_idx + iter.AxisSize(), 0);
-  if (ascending_) {
-    std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                     [values](size_t lhs, size_t rhs) { return values[lhs] < values[rhs]; });
-  } else {
-    std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                     [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
-  }
+  SortIndex(sort_idx, values, iter);
 
   int culmutive_rank = 1;
   int duplicate_count = 0;
@@ -182,12 +174,7 @@ template <typename T>
 void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
                                      const AxisIterator &iter, float *output_addr) const {
   const size_t n = axisIterator_.AxisSize();
-  T nan_padding_value;
-  if (ascending_ != (option_ == NaOption::Top)) {
-    nan_padding_value = std::numeric_limits<T>::max();
-  } else {
-    nan_padding_value = std::numeric_limits<T>::min();
-  }
+  T nan_padding_value = get_padding_value();
 
   for (size_t i = 0; i < n; ++i) {
     const T value = input_addr[iter.GetPos(i)];
@@ -200,14 +187,7 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
     }
   }
 
-  std::iota(sort_idx, sort_idx + iter.AxisSize(), 0);
-  if (ascending_) {
-    std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                     [values](size_t lhs, size_t rhs) { return values[lhs] < values[rhs]; });
-  } else {
-    std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
-                     [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
-  }
+  SortIndex(sort_idx, values, iter);
 
   int culmutive_rank = 1;
   int duplicate_count = 0;
@@ -215,7 +195,6 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
 
   for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
-
     if ((i == n - 1) || std::not_equal_to<T>()(values[sort_idx[i]], values[sort_idx[i + 1]]) ||
         (is_nan[sort_idx[i]] != is_nan[sort_idx[i + 1]])) {
       if ((option_ == NaOption::Keep) && is_nan[sort_idx[i]]) {

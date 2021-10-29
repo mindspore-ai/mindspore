@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include <limits>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
@@ -60,6 +61,23 @@ class RankCpuKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  inline void SortIndex(size_t *sort_idx, const T *values, const AxisIterator &iter) const {
+    std::iota(sort_idx, sort_idx + iter.AxisSize(), 0);
+    if (ascending_) {
+      std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
+                       [values](size_t lhs, size_t rhs) { return values[lhs] < values[rhs]; });
+    } else {
+      std::stable_sort(sort_idx, sort_idx + iter.AxisSize(),
+                       [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
+    }
+  }
+  inline T get_padding_value() const {
+    if (ascending_ != (option_ == rank::NaOption::Top)) {
+      return std::numeric_limits<T>::max();
+    } else {
+      return std::numeric_limits<T>::min();
+    }
+  }
   // shape info
   AxisIterator axisIterator_{};
   // parameters

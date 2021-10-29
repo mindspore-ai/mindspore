@@ -17,6 +17,7 @@
 #include <math.h>
 #include <map>
 #include <limits>
+#include <algorithm>
 #include <type_traits>
 #include "common/thread_pool.h"
 
@@ -139,39 +140,13 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     case Method::Var:
-      reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
-        // float for division
-        float n = SizeToFloat(end - start);
-        T sum1 = 0;
-        for (size_t x = start; x < end; ++x) {
-          sum1 += input_addr[ids[x]];
-        }
-        double mean = sum1 / n;
-        double sum2 = 0;
-        for (size_t x = start; x < end; ++x) {
-          double diff = input_addr[ids[x]] - mean;
-          sum2 += diff * diff;
-        }
-        // ddof = 1
-        return sum2 / (n - 1);
+      reduceMethod_ = [this](const T *input_addr, const size_t *ids, size_t start, size_t end) {
+        return Var(input_addr, ids, start, end);
       };
       break;
     case Method::Std:
-      reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
-        // float for division
-        float n = SizeToFloat(end - start);
-        T sum1 = 0;
-        for (size_t x = start; x < end; ++x) {
-          sum1 += input_addr[ids[x]];
-        }
-        double mean = sum1 / n;
-        double sum2 = 0;
-        for (size_t x = start; x < end; ++x) {
-          double diff = input_addr[ids[x]] - mean;
-          sum2 += diff * diff;
-        }
-        // ddof = 1
-        return std::sqrt(sum2 / (n - 1));
+      reduceMethod_ = [this](const T *input_addr, const size_t *ids, size_t start, size_t end) {
+        return std::sqrt(Var(input_addr, ids, start, end));
       };
       break;
     default:
