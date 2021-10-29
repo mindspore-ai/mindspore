@@ -307,8 +307,10 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
     ValuePtr format = prim->GetAttr("format");
     MS_EXCEPTION_IF_NULL(format);
     if (format->isa<Int64Imm>()) {
-      CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &format);
-      return GetValue<std::string>(format);
+      bool converted = CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &format);
+      if (converted) {
+        return GetValue<std::string>(format);
+      }
     } else {
       return GetValue<std::string>(format);
     }

@@ -414,30 +414,25 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
 void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                                    std::unordered_map<std::string, ValuePtr> *multi_value_map) {
   string name;
-  for (int i = 0; i < attr_proto.ints_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
+  auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int i) -> void {
+    auto res = this->ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
     multi_value_map->emplace(name, res);
+  };
+  for (int i = 0; i < attr_proto.ints_size(); i++) {
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.doubles_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->emplace(name, res);
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.floats_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->emplace(name, res);
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.strings_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->emplace(name, res);
+    func(attr_proto, i);
   }
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
-    auto res = ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->emplace(name, res);
+    func(attr_proto, i);
   }
 }
 
@@ -509,6 +504,17 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
   return true;
 }
 
+string GetTypeString(const std::string &ref_attr_name, size_t *pos) {
+  if ((*pos = ref_attr_name.find("scalar:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("scalar:").length() - 1);
+  } else if ((*pos = ref_attr_name.find("type:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("type:").length() - 1);
+  } else if ((*pos = ref_attr_name.find("tensor:")) != std::string::npos) {
+    return ref_attr_name.substr(*pos, string("tensor:").length() - 1);
+  }
+  return "";
+}
+
 bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto) {
   MS_EXCEPTION_IF_NULL(prim);
   const std::string &attr_name = attr_proto.name();
@@ -517,15 +523,9 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  string type = "";
+
   std::size_t pos(0);
-  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
-  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("type:").length() - 1);
-  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
-    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
-  }
+  string type = GetTypeString(ref_attr_name, &pos);
   std::unordered_map<std::string, ValuePtr> multi_value_map;
   switch (kParseTypeSwitchMap[type]) {
     case FORM_PARSE_TYPE: {
@@ -974,7 +974,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
-    inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     AbstractBasePtrList elem;
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
@@ -991,7 +990,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     auto maketuple_ptr = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(maketuple_ptr);
     maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
-    inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     inputs.push_back(maketuple_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
