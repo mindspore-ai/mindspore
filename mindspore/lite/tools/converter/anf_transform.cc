@@ -77,7 +77,7 @@
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl_pass.h"
-#include "tools/converter/quantizer/parameter_optimizer.h"
+#include "tools/converter/quantizer/parameter_tunner.h"
 
 using std::string;
 namespace mindspore::lite {

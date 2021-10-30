@@ -379,7 +379,7 @@ STATUS Calibrator::ComputeThreshold() {
       bool already_computed = false;
       auto input = cnode->input(i + 1);
       if (input->isa<mindspore::CNode>()) {
-        auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input);
+        auto input_cnode = input->cast<CNodePtr>();
         for (const auto &outputs_diverg_info : outputs_diverg_info_) {
           if (already_computed) {
             break;
@@ -523,12 +523,12 @@ STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNo
     MS_LOG(ERROR) << "not a parameter";
     return RET_PARAM_INVALID;
   }
-  auto parameter = std::dynamic_pointer_cast<Parameter>(weight);
+  auto parameter = weight->cast<ParameterPtr>();
   if (parameter == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not cast to Parameter";
     return RET_NULL_PTR;
   }
-  tensor::TensorPtr tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
+  auto tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
@@ -567,10 +567,10 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
-  auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+  auto bias_parameter_ptr = bias->cast<ParameterPtr>();
   MS_ASSERT(bias_parameter_ptr != nullptr);
   auto bias_default_param = bias_parameter_ptr->default_param();
-  auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+  auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
   MS_ASSERT(bias_parameter != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
@@ -735,7 +735,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
     } else if (input_node->isa<mindspore::CNode>()) {
-      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
         MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
@@ -800,7 +800,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       constexpr int tuple_get_item_input_size = 3;
       MS_CHECK_TRUE_MSG(cnode->size() == tuple_get_item_input_size, RET_ERROR, "cnode->size() != 3");
       auto index_node = cnode->input(THIRD_INPUT);
-      auto index_value_node = std::dynamic_pointer_cast<mindspore::ValueNode>(index_node);
+      auto index_value_node = index_node->cast<mindspore::ValueNodePtr>();
       if (index_value_node == nullptr) {
         MS_LOG(WARNING) << "index value node is null";
         continue;
@@ -808,7 +808,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       size_t index = opt::CastToInt(index_value_node->value()).front();
       auto input_node = cnode->input(SECOND_INPUT);
       MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
-      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
       MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode == nullptr");
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
@@ -872,7 +872,7 @@ STATUS FullQuantQuantizer::UpdateDivergeInterval() {
 STATUS FullQuantQuantizer::PreProcess() {
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
+    AnfNodePtr anf = cnode->cast<AnfNodePtr>();
     if (anf == nullptr) {
       MS_LOG(ERROR) << " cnode is null";
       return RET_NULL_PTR;
@@ -965,6 +965,7 @@ STATUS FullQuantQuantizer::DoInference() {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_CHECK_TRUE_MSG(tensor_data != nullptr, false, "tensor_data is nullptr.");
         size_t elem_count = tensor->ElementsNum();
+        MS_CHECK_GT(elem_count, 0, false);
         vector<float> data(tensor_data, tensor_data + elem_count);
         auto ret = this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][i]);
         MS_CHECK_TRUE_MSG(ret == RET_OK, false, "Record MaxMinValue failed!");
@@ -996,6 +997,7 @@ STATUS FullQuantQuantizer::DoInference() {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         CHECK_NULL_RETURN(tensor_data);
         size_t elem_count = tensor->ElementsNum();
+        MS_CHECK_GT(elem_count, 0, false);
         vector<float> data(tensor_data, tensor_data + elem_count);
         auto ret = this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
         MS_CHECK_TRUE_MSG(ret == RET_OK, false, "Record MaxMinValue failed!");
@@ -1103,9 +1105,9 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
     // compensate the existed
     auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
     auto bias = cnode->input(THIRD_INPUT + 1);
-    auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+    auto bias_parameter_ptr = bias->cast<ParameterPtr>();
     auto bias_default_param = bias_parameter_ptr->default_param();
-    auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+    auto bias_param = bias_default_param->cast<tensor::TensorPtr>();
     int *bias_datas = static_cast<int *>(bias_param->data_c());
 
     if (static_cast<size_t>(bias_param->DataSize()) != bias_diff.size()) {
@@ -1209,6 +1211,7 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
+        MS_CHECK_GT(elem_count, 0, false);
         vector<float> data(tensor_data, tensor_data + elem_count);
         auto ret = this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[callParam.node_name][input_i++]);
         if (ret != RET_OK) {
@@ -1234,6 +1237,7 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
+        MS_CHECK_GT(elem_count, 0, false);
         vector<float> data(tensor_data, tensor_data + elem_count);
         auto ret = this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[call_param.node_name][output_i++]);
         if (ret != RET_OK) {
@@ -1411,6 +1415,7 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
         auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
         size_t elem_count = tensor->ElementsNum();
+        MS_CHECK_GT(elem_count, 0, false);
         std::vector<float> fp32_op_input(elem_count);
         auto ret =
           memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor->MutableData(), tensor->Size());
@@ -1435,18 +1440,13 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
         }
         auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
-        auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        if (lite_tensor == nullptr) {
-          MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-          return false;
-        }
         if (tensor->data_type() != kNumberTypeInt8) {
           MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
           return false;
         }
         // do quantization: activation is always per layer quantized
         std::vector<int8_t> quant_datas;
-        auto quant_params = lite_tensor->quant_params();
+        auto quant_params = tensor->quant_params();
         if (quant_params.size() != 1) {
           MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size();
           return false;
@@ -1497,17 +1497,13 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
-      auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-      if (lite_tensor == nullptr) {
-        MS_LOG(ERROR) << "Before inputs is not a lite::Tensor";
-        return false;
-      }
       if (tensor->data_type() != kNumberTypeInt8) {
         MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
         return false;
       }
       const int8_t *tensor_data = static_cast<int8_t *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
+      MS_CHECK_GT(elem_count, 0, false);
       auto shapes = tensor->shape();
       if (shapes.size() != DIMENSION_4D) {
         MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
@@ -1519,7 +1515,7 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
         MS_LOG(ERROR) << "unexpected channels: 0";
         return false;
       }
-      auto quant_params = lite_tensor->quant_params();
+      auto quant_params = tensor->quant_params();
       if (quant_params.size() != 1) {
         MS_LOG(ERROR) << "unexpected activatation quant_params size: " << quant_params.size();
         return false;
@@ -1575,6 +1571,7 @@ KernelCallBack FullQuantQuantizer::GetFloatAfterCallBack() {
       MS_ASSERT(tensor != nullptr);
       const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
+      MS_CHECK_GT(elem_count, 0, false);
       auto shapes = tensor->shape();
       if (shapes.size() != DIMENSION_4D) {
         MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
