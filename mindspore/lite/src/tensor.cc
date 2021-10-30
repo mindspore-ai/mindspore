@@ -207,10 +207,17 @@ int Tensor::ElementsNum() const {
   if (this->category_ == CONST_SCALAR) {
     return 1;
   }
-  auto num = std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int64_t>());
-  if (num > (int64_t)INT32_MAX) {
-    MS_LOG(ERROR) << "Element number of tensor should be smaller than int32_max: " << num << " return INT32_MAX";
-    return INT32_MAX;
+  int64_t num = 1;
+  for (size_t i = 0; i < shape_.size(); ++i) {
+    if (shape_[i] < 0) {
+      MS_LOG(ERROR) << "shapes contains negative value: " << shape_[i] << " return 0";
+      return 0;
+    }
+    num *= shape_[i];
+    if (num > static_cast<int64_t>(INT32_MAX) || num < 0) {
+      MS_LOG(ERROR) << "extend INT32_MAX: " << num << " return INT32_MAX";
+      return INT32_MAX;
+    }
   }
   return (int32_t)num;
 }
