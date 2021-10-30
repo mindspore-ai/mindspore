@@ -32,7 +32,7 @@ class Net(nn.Cell):
     def construct(self, indices, data):
         return self.stitch(indices, data)
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_int32():
