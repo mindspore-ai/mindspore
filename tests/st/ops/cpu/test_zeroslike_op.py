@@ -34,9 +34,15 @@ class NetZerosLike(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ZerosLike():
-    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    x1_np = np.random.uniform(-2, 2, 1).astype(np.float32)
+@pytest.mark.parametrize('dtype', [np.int32, np.float32, np.float64])
+def test_ZerosLike(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ZerosLike
+    Expectation: the result match to numpy
+    """
+    x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(dtype)
+    x1_np = np.random.uniform(-2, 2, 1).astype(dtype)
 
     x0 = Tensor(x0_np)
     x1 = Tensor(x1_np)

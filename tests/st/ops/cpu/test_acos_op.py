@@ -36,8 +36,14 @@ class NetACos(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_acos():
-    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_acos(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ACos
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
     input_x = Tensor(np_array)
     net = NetACos()
     output = net(input_x)

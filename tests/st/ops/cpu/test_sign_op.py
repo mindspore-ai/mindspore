@@ -61,6 +61,25 @@ def test_sign_int32():
     assert np.allclose(outputs.asnumpy(), [[1, 0, -1]])
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sign_float64():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Sign of float64
+    Expectation: the result match to numpy
+    """
+    op = P.Sign()
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.array([[2.0, 0.0, -1.0]]).astype(np.float64))
+    outputs = op_wrapper(input_x)
+
+    print(outputs)
+    assert np.allclose(outputs.asnumpy(), [[1., 0., -1.]])
+
+
 if __name__ == '__main__':
     test_sign_float32()
     test_sign_int32()

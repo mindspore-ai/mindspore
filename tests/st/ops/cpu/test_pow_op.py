@@ -35,15 +35,28 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Pow
+    Expectation: the result match to numpy
+    """
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     y1_np = np.array(3).astype(np.float32)
+    x2_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
+    y2_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
+    x3_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
+    y3_np = np.array(3).astype(np.float64)
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)
     x1 = Tensor(x1_np)
     y1 = Tensor(y1_np)
+    x2 = Tensor(x2_np)
+    y2 = Tensor(y2_np)
+    x3 = Tensor(x3_np)
+    y3 = Tensor(y3_np)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = Net()
@@ -54,5 +67,15 @@ def test_net():
 
     out = net(x1, y1).asnumpy()
     expect = np.power(x1_np, y1_np)
+    assert np.all(out == expect)
+    assert out.shape == expect.shape
+
+    out = net(x2, y2).asnumpy()
+    expect = np.power(x2_np, y2_np)
+    assert np.all(out == expect)
+    assert out.shape == expect.shape
+
+    out = net(x3, y3).asnumpy()
+    expect = np.power(x3_np, y3_np)
     assert np.all(out == expect)
     assert out.shape == expect.shape

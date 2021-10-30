@@ -32,17 +32,23 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
-    x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
-    y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
-    x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
-    y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(np.float32)
-    x2_np = np.random.randint(1, 5, (2, 1, 1, 4)).astype(np.float32)
-    y2_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
-    x3_np = np.random.randint(1, 5, 1).astype(np.float32)
-    y3_np = np.random.randint(1, 5, 1).astype(np.float32)
-    x4_np = np.array(768).astype(np.float32)
-    y4_np = np.array(3072.5).astype(np.float32)
+@pytest.mark.parametrize('dtype', [np.int32, np.int64, np.float32, np.float64])
+def test_net(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Less
+    Expectation: the result match to numpy
+    """
+    x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(dtype)
+    y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(dtype)
+    x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(dtype)
+    y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(dtype)
+    x2_np = np.random.randint(1, 5, (2, 1, 1, 4)).astype(dtype)
+    y2_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(dtype)
+    x3_np = np.random.randint(1, 5, 1).astype(dtype)
+    y3_np = np.random.randint(1, 5, 1).astype(dtype)
+    x4_np = np.array(768).astype(dtype)
+    y4_np = np.array(3072.5).astype(dtype)
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)

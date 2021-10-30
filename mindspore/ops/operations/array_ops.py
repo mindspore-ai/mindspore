@@ -2973,7 +2973,7 @@ class Rint(PrimitiveWithInfer):
         Tensor, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is not in [float16, float32, float64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3001,7 +3001,7 @@ class Rint(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32, mstype.float64], self.name)
         return x_dtype
 
 

@@ -222,30 +222,55 @@ void EltWiseGradCPUKernel<T>::SoftplusGrad(const T *input1, const T *input2, T *
 }
 
 template <typename T>
+void EltWiseGradCPUKernel<T>::InitComputeFunc() {
+  if constexpr (std::is_same_v<T, double>) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimSqrtGrad->name(), &EltWiseGradCPUKernel<T>::SqrtGrad},
+              {prim::kPrimGeLUGrad->name(), &EltWiseGradCPUKernel<T>::GeluGrad},
+              {prim::kPrimAsinGrad->name(), &EltWiseGradCPUKernel<T>::AsinGrad},
+              {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
+              {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
+              {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
+              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+  } else {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::ReluGrad},
+              {prim::kPrimRelu6Grad->name(), &EltWiseGradCPUKernel<T>::ReLU6Grad},
+              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCPUKernel<T>::SigmoidGrad},
+              {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad},
+              {prim::kPrimTanhGrad->name(), &EltWiseGradCPUKernel<T>::TanhGrad},
+              {prim::kPrimSqrtGrad->name(), &EltWiseGradCPUKernel<T>::SqrtGrad},
+              {prim::kPrimGeLUGrad->name(), &EltWiseGradCPUKernel<T>::GeluGrad},
+              {prim::kPrimAsinGrad->name(), &EltWiseGradCPUKernel<T>::AsinGrad},
+              {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
+              {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
+              {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
+              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
+              {prim::kPrimSoftplusGrad->name(), &EltWiseGradCPUKernel<T>::SoftplusGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+  }
+}
+
+template <typename T>
 void EltWiseGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  InitComputeFunc();
 }
 
 template <typename T>
 bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  static const std::map<std::string,
-                        std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-    elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::ReluGrad},
-            {prim::kPrimRelu6Grad->name(), &EltWiseGradCPUKernel<T>::ReLU6Grad},
-            {prim::kPrimSigmoidGrad->name(), &EltWiseGradCPUKernel<T>::SigmoidGrad},
-            {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad},
-            {prim::kPrimTanhGrad->name(), &EltWiseGradCPUKernel<T>::TanhGrad},
-            {prim::kPrimSqrtGrad->name(), &EltWiseGradCPUKernel<T>::SqrtGrad},
-            {prim::kPrimGeLUGrad->name(), &EltWiseGradCPUKernel<T>::GeluGrad},
-            {prim::kPrimAsinGrad->name(), &EltWiseGradCPUKernel<T>::AsinGrad},
-            {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
-            {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
-            {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
-            {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
-            {prim::kPrimSoftplusGrad->name(), &EltWiseGradCPUKernel<T>::SoftplusGrad}};
   if (inputs.size() < kInputMinNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " requires at least 2 inputs and 1 output, but got " << inputs.size()
                   << " inputs and " << outputs.size() << " output.";
@@ -260,7 +285,7 @@ bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
   ParallelLaunchAutoSearch(
-    std::bind(elt_map.at(kernel_name_), this, input0, input1, output, std::placeholders::_1, std::placeholders::_2),
+    std::bind(compute_func_, this, input0, input1, output, std::placeholders::_1, std::placeholders::_2),
     outputs[0]->size / sizeof(T), this, &parallel_search_info_);
   return true;
 }

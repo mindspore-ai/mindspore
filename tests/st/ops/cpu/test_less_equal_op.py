@@ -177,11 +177,15 @@ def test_net_int64():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_float64():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LessEqual of float64
+    Expectation: the result match to numpy
+    """
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
     y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(np.float64)
     x1 = Tensor(x1_np)
     y1 = Tensor(y1_np)
-
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = Net()

@@ -36,7 +36,13 @@ class AssignAdd(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_assign_add():
+@pytest.mark.parametrize('dtype', [np.int32, np.int64, np.float32, np.float64])
+def test_assign_add(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for AssignAdd
+    Expectation: the result match to numpy
+    """
     expect1 = np.array([[[[0, 2, 4.],
                           [6, 8, 10.],
                           [12, 14, 16.]],
@@ -56,8 +62,8 @@ def test_assign_add():
                           [63, 66, 69],
                           [72, 75, 78]]]])
 
-    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(dtype))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(dtype))
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     add = AssignAdd(x2)

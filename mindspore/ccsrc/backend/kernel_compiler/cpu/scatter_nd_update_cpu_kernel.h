@@ -72,6 +72,7 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   ScatterNdUpdateCPUKernel);
+
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
@@ -79,6 +80,30 @@ MS_REG_CPU_KERNEL(ScatterNdUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
                   ScatterNdUpdateCPUKernel)
+
+MS_REG_CPU_KERNEL(TensorScatterUpdate,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeInt32),
+                  ScatterNdUpdateCPUKernel);
+
+MS_REG_CPU_KERNEL(ScatterNdUpdate,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddOutputAttr(kNumberTypeFloat64),
+                  ScatterNdUpdateCPUKernel);
+
+MS_REG_CPU_KERNEL(TensorScatterUpdate,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddOutputAttr(kNumberTypeFloat64),
+                  ScatterNdUpdateCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
