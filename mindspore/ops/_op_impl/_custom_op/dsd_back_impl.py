@@ -201,7 +201,6 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                                       16 * head_size // (16 * 16),
                                       1, 0, True)
 
-                    # shape: d_v_l0c = (v_embedding // 16, head_size // 16, 16, 16)
                     with tik_inst.if_scope(w_idx_1 == 0):
                         tik_inst.mmad(d_v_global_32_l0c, w_global_l0a, d_a_l0b,
                                       16, head_size, v_embedding, 0)
@@ -256,8 +255,7 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                 tik_inst.load2dv1(d_local_l0a[0, 0, 0, 0], d_a_l1[w_idx*(block_size//16), 0, 0, 0],
                                   0, (block_size*v_embedding)//(16*16), 1, 0, False)
 
-                # shape is: v_gm = (batch_size, seq_len // 16, head, v_embedding // 16, 16, 16)
-                # shape is: v_local_l1 = (v_embedding//16, head_size//16, 16, 16)
+
                 with tik_inst.for_range(0, head_size//16) as brick_i:
                     tik_inst.data_move(v_local_l1[0, brick_i, 0, 0],
                                        v_gm[bs_idx*seq_len//16+w_idx *
@@ -325,8 +323,7 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                                                  cpt_idx*v_embedding//(16*cpt_time), 0, 0],
                                           0, (16*v_embedding)//(16*16*cpt_time), 1, 0, False)
 
-                    # shape is: (head_size, global_size) =  (head_size, v_embedding//cpttime) *
-                    # shape is: (v_embedding//cpttime, global_size)
+
                     with tik_inst.if_scope(cpt_idx == 0):
                         tik_inst.mmad(d_w_global_l0c, d_global_l0a, v_global_l0b,
                                       head_size//ub_time, v_embedding//cpt_time, global_size, 0)
