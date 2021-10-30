@@ -43,6 +43,7 @@ class MindIRControlFlowAdjust {
   int InsertPartialFusionForRawCall(const std::set<FuncGraphPtr> &all_func_graphs);
   CNodePtr GetMainFgSwitchNode(const FuncGraphPtr &fg);
   int ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs);
+  int MoveCallInputsToPartialFusionInputs(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   FmkType fmk_type_ = FmkType::kFmkTypeMs;

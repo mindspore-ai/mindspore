@@ -422,7 +422,7 @@ int LiteSession::IsolateOutputTensor() {
     Tensor *new_tensor =
       new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
     if (new_tensor == nullptr) {
-      MS_LOG(ERROR) << "duplicate new outptu failed.";
+      MS_LOG(ERROR) << "duplicate new output failed.";
       return RET_NULL_PTR;
     }
     new_tensor->set_allocator(src_tensor->allocator()); /* GPU use opencl allocator */
