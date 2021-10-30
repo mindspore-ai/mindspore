@@ -210,6 +210,7 @@ class GradOperation(GradOperation_):
 
     Examples:
         >>> from mindspore import ParameterTuple
+        >>> from mindspore.ops.composite import GradOperation
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -246,12 +247,12 @@ class GradOperation(GradOperation_):
         ...         return gradient_function(x, y)
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
-        >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
+        >>> y = Tensor([[0.1, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
         >>> output = GradNetWrtXY(Net())(x, y)
         >>> print(output)
         (Tensor(shape=[2, 3], dtype=Float32, value=
-        [[ 4.50999975e+00,  2.70000005e+00,  3.60000014e+00],
-         [ 4.50999975e+00,  2.70000005e+00,  3.60000014e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
+        [[ 4.50000000e+00,  2.70000005e+00,  3.60000014e+00],
+         [ 4.50000000e+00,  2.70000005e+00,  3.60000014e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
         [[ 2.59999990e+00,  2.59999990e+00,  2.59999990e+00],
          [ 1.89999998e+00,  1.89999998e+00,  1.89999998e+00],
          [ 1.30000007e+00,  1.30000007e+00,  1.30000007e+00]]))
