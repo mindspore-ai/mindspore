@@ -54,15 +54,45 @@ Status TreeConsumer::Terminate() {
 }
 
 #ifndef ENABLE_SECURITY
-Status TreeConsumer::RegisterProfilingManager() {
+Status IteratorConsumer::RegisterProfilingManager() {
   profiling_manager_ = GlobalContext::profiling_manager();
   // Profiling infrastructures need to be initialized before Op launching
   if (profiling_manager_->IsProfilingEnable()) {
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
+    // dataset_iterator node is used for graph mode
+    std::shared_ptr<Tracing> iterator_tracing = std::make_shared<DatasetIteratorTracing>();
+    RETURN_IF_NOT_OK(profiling_manager_->RegisterTracingNode(iterator_tracing));
+
+    RETURN_IF_NOT_OK(tree_adapter_->SetProfilingManagerPtr(profiling_manager_, iterator_tracing));
+    // Launch Monitor Thread
+    RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
+  }
+  return Status::OK();
+}
+
+Status ToDevice::RegisterProfilingManager() {
+  profiling_manager_ = GlobalContext::profiling_manager();
+  // Profiling infrastructures need to be initialized before Op launching
+  if (profiling_manager_->IsProfilingEnable()) {
+    // Setup profiling manager
+    RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
+    // device_queue node is used for graph mode
+
+    std::shared_ptr<Tracing> device_queue_tracing = std::make_shared<DeviceQueueTracing>();
+    RETURN_IF_NOT_OK(profiling_manager_->RegisterTracingNode(device_queue_tracing));
+
     RETURN_IF_NOT_OK(tree_adapter_->SetProfilingManagerPtr(profiling_manager_));
     // Launch Monitor Thread
     RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
+  }
+  return Status::OK();
+}
+
+Status TreeConsumer::RegisterProfilingManager() {
+  profiling_manager_ = GlobalContext::profiling_manager();
+  if (profiling_manager_->IsProfilingEnable()) {
+    return Status(StatusCode::kMDUnexpectedError, "Profiling is not supported for this consumer.");
   }
   return Status::OK();
 }

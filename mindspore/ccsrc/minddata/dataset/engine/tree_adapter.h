@@ -80,11 +80,10 @@ class TreeAdapter {
 
 #ifndef ENABLE_SECURITY
   /// \brief Setter for Profiling Manager
-  Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager) {
+  Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
+                                std::shared_ptr<Tracing> tracing_node = nullptr) {
     profiling_manager_ = profiling_manager;
-    std::shared_ptr<Tracing> node;
-    RETURN_IF_NOT_OK(profiling_manager_->GetTracingNode(kDatasetIteratorTracingName, &node));
-    tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+    if (tracing_node != nullptr) tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(tracing_node);
     return Status::OK();
   }
 
