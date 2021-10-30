@@ -4284,6 +4284,10 @@ class Cos(Primitive):
     r"""
     Computes cosine of input element-wise.
 
+    .. warning::
+        Currently support Float16, Float32 data type. If use Float64, there may
+        be a problem of missing precision.
+
     .. math::
         out_i = cos(x_i)
 

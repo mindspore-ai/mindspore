@@ -22,9 +22,15 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr CosInferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
+abstract::ShapePtr CosInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
 }
 
 TypePtr CosInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -37,9 +43,9 @@ AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(CosInferShape(input_args), CosInferType(primitive, input_args));
+  return abstract::MakeAbstract(CosInferShape(primitive, input_args), CosInferType(primitive, input_args));
 }
 }  // namespace
 REGISTER_PRIMITIVE_EVAL_IMPL(Cos, prim::kPrimCos, CosInfer, nullptr, true);
