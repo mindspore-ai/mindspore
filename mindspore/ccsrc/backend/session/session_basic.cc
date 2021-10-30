@@ -1397,6 +1397,13 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
       MS_LOG(EXCEPTION) << "Index should be 0 for Tensor ValueNode, but is " << output_index;
     }
     return value->cast<TensorPtr>();
+  } else if (value->isa<StringImm>()) {
+    auto value_string = GetValue<std::string>(value);
+    const ShapeVector shape = {1, SizeToLong(value_string.size())};
+    TensorPtr tensor = std::make_shared<Tensor>(kObjectTypeString, shape, value_string.data(), value_string.size());
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->set_sync_status(kNeedSyncHostToDevice);
+    return tensor;
   }
   return nullptr;
 }
@@ -1445,22 +1452,27 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
+      input_tensor_info->input_tensors_mask.emplace_back(
+        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
+      input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
+                                                                                : kParameterDataTensorMask);
     } else if (real_input->isa<CNode>()) {
       tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
       if (AnfAlgo::IsControlOpExecInBackend(real_input)) {
         CheckInputTensorShape(tensor, cnode, i - 1);
       }
       input_tensor_info->input_kernel.insert(kernel_with_index);
+      input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
+                                                                                : kParameterDataTensorMask);
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
     }
     MS_EXCEPTION_IF_NULL(tensor);
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
-    input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
-                                                                              : kParameterDataTensorMask);
+
     input_tensor_info->input_tensors.emplace_back(tensor);
   }
 }
@@ -2589,8 +2601,8 @@ void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
     if (!ps::ps_cache_instance.initialized_ps_cache()) {
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
-      auto devcie_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-      auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(devcie_target, device_id_);
+      auto device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_target, device_id_);
       MS_EXCEPTION_IF_NULL(runtime_instance);
       auto context = runtime_instance->context();
       const auto &kernels = kernel_graph->execution_order();

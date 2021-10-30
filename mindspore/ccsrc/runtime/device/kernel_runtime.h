@@ -178,6 +178,7 @@ class KernelRuntime {
                                       std::vector<size_t> *align_size_list) const;
   void RunOpGetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, std::vector<size_t> *align_size_list,
                                        std::vector<DeviceAddressPtr> *device_address_list) const;
+  DeviceAddressPtr CreateDeviceAddressForStringValue(const ValuePtr &value, bool use_mem_pool, uint32_t graph_id);
 
  protected:
   uint32_t device_id_{0};
