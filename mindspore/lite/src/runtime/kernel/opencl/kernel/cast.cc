@@ -29,6 +29,14 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
+namespace {
+const std::map<int, std::string> dtype_names = {
+  {kNumberTypeFloat32, "fp32"},
+  {kNumberTypeFloat16, "fp16"},
+  {kNumberTypeInt32, "int32"},
+};
+}
+
 int CastOpenCLKernel::CheckSpecs() {
   // the 2nd tensor is DstType
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
@@ -41,13 +49,14 @@ int CastOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto input_dtype = in_tensors_.front()->data_type();
-  if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat16) {
-    MS_LOG(WARNING) << "input dtype must be float32/float16";
+  if (dtype_names.count(input_dtype) == 0) {
+    MS_LOG(WARNING) << "input dtype must be float32/float16/int32";
     return RET_ERROR;
   }
+
   auto output_dtype = out_tensors_.front()->data_type();
-  if (output_dtype != kNumberTypeFloat32 && output_dtype != kNumberTypeFloat16) {
-    MS_LOG(WARNING) << "output dtype must be float32/float16";
+  if (dtype_names.count(output_dtype) == 0) {
+    MS_LOG(WARNING) << "input dtype must be float32/float16/int32";
     return RET_ERROR;
   }
   return RET_OK;
@@ -69,13 +78,10 @@ void CastOpenCLKernel::SetGlobalLocal() {
 
 int CastOpenCLKernel::Prepare() {
   shape_ = GpuTensorInfo(in_tensors_.front());
-  std::map<int, std::string> dtype_names = {
-    {kNumberTypeFloat32, "fp32"},
-    {kNumberTypeFloat16, "fp16"},
-  };
+
   const std::string program_name = "Cast";
-  const std::string kernel_name =
-    "Cast_" + dtype_names[in_tensors_.front()->data_type()] + "_to_" + dtype_names[out_tensors_.front()->data_type()];
+  const std::string kernel_name = "Cast_" + dtype_names.at(in_tensors_.front()->data_type()) + "_to_" +
+                                  dtype_names.at(out_tensors_.front()->data_type());
   if (!ocl_runtime_->LoadSource(program_name, cast_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;

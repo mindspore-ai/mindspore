@@ -40,8 +40,12 @@ class GatherOpenCLKernel : public OpenCLKernel {
   int ConvertTensorToweight();
 
  private:
+  int InitConstInput();
+
   int32_t *indices_data_{nullptr};
+  void *input_data_{nullptr};
   int axis_ = {0};
+  bool intensor0_is_const_tensor_{false};
   bool intensor1_is_tensor{true};
   bool enable_fp16_{false};
 };
