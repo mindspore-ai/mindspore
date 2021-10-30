@@ -392,12 +392,16 @@ class BatchNorm2d(_BatchNorm):
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
         changed after net was initialized.
-        Note that the formula for updating the running_mean and running_var is
-        :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
-        where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.
+        Note that the formula for updating the moving_mean and moving_var is
+        .. math::
+            \text{moving_mean}=\text{moving_mean∗momentum}+μ_β\text{∗(1−momentum)}\\
+            \text{moving_var}=\text{moving_var∗momentum}+σ^2_β\text{∗(1−momentum)}
+        where :math:`moving_mean, moving_var` are the updated mean and variance,
+        :math:`μ_β, σ^2_β` are the observed value (mean and variance) of each batch of data.
 
     Args:
-        num_features (int): `C` from an expected input of size (N, C, H, W).
+        num_features (int): The number of channels of the input tensor. Expected input size is (N, C, H, W),
+            `C` represents the number of channels
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
@@ -415,10 +419,9 @@ class BatchNorm2d(_BatchNorm):
             - If true, use the mean value and variance value of current batch data and track running mean
               and running variance.
             - If false, use the mean value and variance value of specified value, and not track statistical value.
-            - If None, The use_batch_statistics is automatically assigned a process according to
-              the training and eval mode. During training, batchnorm2d process will be the same
-              with use_batch_statistics=True. Contrarily, in eval, batchnorm2d process will be the same
-              with use_batch_statistics=False. Default: None.
+            - If None, the use_batch_statistics is automatically set to true or false according to the training
+              and evaluation mode. During training, the parameter is set to true, and during evaluation, the
+              parameter is set to false. Default: None.
 
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
