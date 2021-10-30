@@ -245,7 +245,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
       opt::ParserSplitStrategy(config->parallel_split_config_.parallel_compute_rates_,
                                config->parallel_split_config_.parallel_devices_, split_mode);
     if (split_strategys.empty()) {
-      MS_LOG(ERROR) << "parse split_strategy error.";
+      MS_LOG(WARNING) << "No valid split_strategy. Run convert without split";
       return RET_OK;
     }
     opt::Spliter::GetInstance()->RecordGraphInfo(old_graph);
