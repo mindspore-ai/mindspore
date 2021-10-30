@@ -252,8 +252,9 @@ class Tensor(Tensor_):
 
     def __getitem__(self, index):
         out = tensor_operator_registry.get('__getitem__')(self, index)
-        out.parent_tensor_ = self
-        out.index_of_parent_ = index
+        if out is not self:
+            out.parent_tensor_ = self
+            out.index_of_parent_ = index
         return out
 
     def __setitem__(self, index, value):
