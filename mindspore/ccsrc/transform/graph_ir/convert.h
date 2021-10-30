@@ -76,53 +76,30 @@ class DfGraphConvertor {
   static void RegisterAdapter(const std::string &name, OpAdapterPtr adpt);
   static void RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt);
 
-  void DrawComputeGraph(const std::string &name) {
-#ifndef ENABLE_SECURITY
+  void WriteFile(const std::string &name, std::ostringstream &stream) {
     std::ofstream fout(name);
     if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
       char err_info[kMaxFilenameLength];
-      auto ret = strerror_r(errno, err_info, sizeof(err_info));
-      if (ret != nullptr) {
-        MS_LOG(ERROR) << " ErrInfo:" << ret;
-      }
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!"
+                    << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
       return;
     }
-    fout << compute_sout_.str();
+    fout << stream.str();
     fout.close();
+  }
+
+  void DrawComputeGraph(const std::string &name) {
+#ifndef ENABLE_SECURITY
+    WriteFile(name, compute_sout_);
 #endif
   }
 
   void DrawInitGraph(const std::string &name) {
 #ifndef ENABLE_SECURITY
-    std::ofstream fout(name);
-    if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
-      char err_info[kMaxFilenameLength];
-      auto ret = strerror_r(errno, err_info, sizeof(err_info));
-      if (ret != nullptr) {
-        MS_LOG(ERROR) << " ErrInfo:" << ret;
-      }
-      return;
-    }
-    fout << init_sout_.str();
-    fout.close();
+    WriteFile(name, init_sout_);
 #endif
   }
-  void DrawSaveCheckpointGraph(const std::string &name) {
-    std::ofstream fout(name);
-    if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
-      char err_info[kMaxFilenameLength];
-      auto ret = strerror_r(errno, err_info, sizeof(err_info));
-      if (ret != nullptr) {
-        MS_LOG(ERROR) << " ErrInfo:" << ret;
-      }
-      return;
-    }
-    fout << checkpoint_sout_.str();
-    fout.close();
-  }
+  void DrawSaveCheckpointGraph(const std::string &name) { WriteFile(name, checkpoint_sout_); }
 
   DfGraphConvertor &ConvertAllNode();
   DfGraphConvertor &BuildGraph();
