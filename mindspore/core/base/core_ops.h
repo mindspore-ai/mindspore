@@ -350,6 +350,7 @@ inline const PrimitivePtr kPrimSoftMarginLoss = std::make_shared<Primitive>("Sof
 inline const PrimitivePtr kPrimSoftMarginLossGrad = std::make_shared<Primitive>("SoftMarginLossGrad");
 inline const PrimitivePtr kPrimSoftmaxCrossEntropyWithLogits =
   std::make_shared<Primitive>("SoftmaxCrossEntropyWithLogits");
+inline const PrimitivePtr kPrimL2Loss = std::make_shared<Primitive>("L2Loss");
 inline const PrimitivePtr kPrimSigmoidCrossEntropyWithLogits =
   std::make_shared<Primitive>("SigmoidCrossEntropyWithLogits");
 inline const PrimitivePtr kPrimSigmoidCrossEntropyWithLogitsGrad =

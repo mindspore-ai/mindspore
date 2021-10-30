@@ -2894,7 +2894,7 @@ class SoftMarginLoss(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
-class L2Loss(PrimitiveWithInfer):
+class L2Loss(Primitive):
     """
     Calculates half of the L2 norm of a tensor without using the `sqrt`.
 
@@ -2927,15 +2927,6 @@ class L2Loss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize L2Loss"""
-
-    def infer_shape(self, input_x):
-        loss_shape = []
-        return loss_shape
-
-    def infer_dtype(self, x_type):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensor_dtype_valid('x_type', x_type, valid_dtypes, self.name)
-        return x_type
 
 
 class DataFormatDimMap(PrimitiveWithInfer):
