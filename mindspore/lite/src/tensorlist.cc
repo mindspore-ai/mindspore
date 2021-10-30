@@ -179,7 +179,9 @@ int TensorList::SetTensor(int index, const Tensor *src_tensor) {
                   << " must be equal to tensors_data_type_:" << this->tensors_data_type_;
     return RET_ERROR;
   }
-  if (index < 0 || index > (this->ElementsNum() - 1)) {
+  auto element_num = this->ElementsNum();
+  MS_CHECK_GE(element_num, 0, RET_ERROR);
+  if (index < 0 || index > (element_num - 1)) {
     MS_LOG(ERROR) << "index:" << index << " must in [0, " << this->ElementsNum() - 1 << "]!";
     return RET_ERROR;
   }
@@ -259,6 +261,14 @@ STATUS TensorList::Decode(const int *data) {
     return RET_ERROR;
   }
   tensors_data_type_ = TypeId(data[0]);
+  if (tensors_data_type_ < kTypeUnknown || tensors_data_type_ > kMonadTypeEnd) {
+    MS_LOG(ERROR) << "TypeId illegal.";
+    return RET_ERROR;
+  }
+  if (data[1] < 0) {
+    MS_LOG(ERROR) << "element shape size illegal.";
+    return RET_ERROR;
+  }
   for (int j = 0; j < data[1]; ++j) {
     element_shape_.push_back(data[2 + j]);
   }

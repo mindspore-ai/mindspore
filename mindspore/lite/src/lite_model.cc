@@ -197,7 +197,7 @@ int LiteModel::VersionVerify(flatbuffers::Verifier *verify) const {
 
 int LiteModel::NodeVerify() const {
   auto tensor_size = this->all_tensors_.size();
-  uint32_t subgraph_size = this->sub_graphs_.size();
+  uint32_t subgraph_size = static_cast<uint32_t>(this->sub_graphs_.size());
 
   for (auto &node : this->all_nodes_) {
     if (node == nullptr || node->primitive_ == nullptr) {
@@ -291,7 +291,7 @@ bool LiteModel::ModelVerify() const {
   return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
 }
 
-const void *LiteModel::GetMetaGraphByVerison() {
+const void *LiteModel::GetMetaGraphByVerison() const {
   MS_ASSERT(this->buf != nullptr);
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
     return reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
@@ -344,7 +344,7 @@ int LiteModel::GenerateModelByVersion(const void *meta_graph) {
 }
 
 int LiteModel::ConstructModel() {
-  if (this->buf == nullptr || this->buf_size_ <= 0) {
+  if (this->buf == nullptr || this->buf_size_ == 0) {
     MS_LOG(ERROR) << "cannot construct model.";
     return RET_NULL_PTR;
   }
@@ -426,7 +426,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
 Model *Model::Import(const char *model_buf, size_t size) { return ImportFromBuffer(model_buf, size, false); }
 
 Model *Model::Import(const char *filename) {
-  size_t size = -1;
+  size_t size = 0;
   auto buf = ReadFile(filename, &size);
   if (buf == nullptr) {
     return nullptr;

@@ -78,7 +78,7 @@ class Scheduler {
   int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                     kernel::LiteKernel **kernel);
-  int CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels);
+  int CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels) const;
   void ResetByExecutionPlan(std::string node_name, TypeId *data_type);
 
 #ifdef GPU_OPENCL

@@ -484,7 +484,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
-      if (!IsPackedOp(kernel->type())) {
+      if (!IsPackedOp(static_cast<int>(kernel->type()))) {
         continue;
       }
     } else {

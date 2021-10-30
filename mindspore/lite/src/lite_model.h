@@ -259,7 +259,7 @@ class LiteModel : public Model {
 
   int VersionVerify(flatbuffers::Verifier *verify) const;
 
-  const void *GetMetaGraphByVerison();
+  const void *GetMetaGraphByVerison() const;
 
   int GenerateModelByVersion(const void *meta_graph);
 

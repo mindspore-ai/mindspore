@@ -66,7 +66,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 int Tensor2TensorC(const Tensor *src, TensorC *dst) {
   MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
-  dst->format_ = src->format();
+  dst->format_ = static_cast<int>(src->format());
   dst->data_ = src->data();
   dst->data_type_ = src->data_type();
   dst->shape_size_ = src->shape().size();
@@ -102,7 +102,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
-  dst->format_ = src->format();
+  dst->format_ = static_cast<int>(src->format());
   dst->shape_value_ = src->shape().empty() ? 0 : src->shape().front();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
 
@@ -142,7 +142,7 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
 
   // Set Tensors
   for (size_t i = 0; i < src->element_num_; i++) {
-    auto ret = TensorC2Tensor(&src->tensors_[i], dst->GetTensor(i));
+    auto ret = TensorC2Tensor(&src->tensors_[i], dst->GetTensor(static_cast<int>(i)));
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "TensorC2Tensor failed";
       return ret;
@@ -156,8 +156,8 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
 
 #endif
 
-int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c) {
+int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
+                       std::vector<TensorC *> *out_tensor_c) {
   MS_CHECK_TRUE_RET(out_tensor_c != nullptr && parameter != nullptr, RET_ERROR);
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
@@ -181,7 +181,7 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
 }
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c) {
+                      std::vector<TensorC *> *in_tensor_c) {
   MS_CHECK_TRUE_RET(in_tensor_c != nullptr, RET_ERROR);
   int ret = RET_OK;
   for (auto input : inputs) {

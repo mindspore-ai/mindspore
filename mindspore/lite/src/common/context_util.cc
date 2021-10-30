@@ -133,7 +133,7 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
       return nullptr;
     }
     if (device_type == DT_CPU) {
-      ms_context->SetThreadAffinity(device_context.device_info_.cpu_device_info_.cpu_bind_mode_);
+      ms_context->SetThreadAffinity(static_cast<int>(device_context.device_info_.cpu_device_info_.cpu_bind_mode_));
     }
     device_infos.push_back(device_info);
   }

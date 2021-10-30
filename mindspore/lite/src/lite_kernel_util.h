@@ -30,7 +30,6 @@ class LiteKernelUtil {
   static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels);
   static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
   static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
-  static int SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchCall(kernel::LiteKernel *kernel);
 #endif

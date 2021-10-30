@@ -127,12 +127,12 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return RET_OK;
   }
 
-  int ret = GenerateInTensorC(parameter, inputs, outputs, &in_tensors);
+  int ret = GenerateInTensorC(parameter, inputs, &in_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     return RET_ERROR;
   }
-  ret = GenerateOutTensorC(parameter, inputs, outputs, &out_tensors);
+  ret = GenerateOutTensorC(parameter, outputs, &out_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     FreeAllTensorC(&out_tensors);
