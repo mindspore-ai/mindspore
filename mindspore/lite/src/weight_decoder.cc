@@ -310,13 +310,12 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
     return RET_NULL_PTR;
   }
   dst_data = dst_tensor->data();
+  auto dst_element_num = dst_tensor->ElementsNum();
   int origin_bit = quant_param->numBits();
   if (origin_bit < kBitNum8 && origin_bit >= kBitNum1) {
-    UnPackUtil<int8_t, uint8_t>(&src_tensor, origin_bit, dst_data);
-    return RET_OK;
+    return UnPackUtil<int8_t, uint8_t>(&src_tensor, dst_element_num, origin_bit, dst_data);
   } else if (origin_bit < kBitNum16 && origin_bit > kBitNum8) {
-    UnPackUtil<int16_t, uint16_t>(&src_tensor, origin_bit, dst_data);
-    return RET_OK;
+    return UnPackUtil<int16_t, uint16_t>(&src_tensor, dst_element_num, origin_bit, dst_data);
   } else {
     MS_LOG(ERROR) << "Unsupported bit number: " << origin_bit;
     return RET_NOT_SUPPORT;
