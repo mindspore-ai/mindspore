@@ -98,11 +98,13 @@ class GlobalComm:
     INITED = False
     CHECK_ENVS = True
 
+
 class _ExistingGroup:
     """
     The communication groups which exist in the progress.
     """
     ITEMS = {}
+
 
 def is_hccl_available():
     """
@@ -112,6 +114,7 @@ def is_hccl_available():
         Boolean. Return whether HCCL is available or not.
     """
     return _HCCL_AVAILABLE
+
 
 def is_mpi_available():
     """

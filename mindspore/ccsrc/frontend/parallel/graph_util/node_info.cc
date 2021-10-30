@@ -414,6 +414,5 @@ void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_a
     }
   }
 }
-
 }  // namespace parallel
 }  // namespace mindspore

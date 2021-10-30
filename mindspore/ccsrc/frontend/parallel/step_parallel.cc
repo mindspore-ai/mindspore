@@ -2716,7 +2716,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
         }
         std::vector<std::pair<int64_t, int64_t>> manual_shape;
         for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
-          manual_shape.push_back({param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]});
+          manual_shape.emplace_back(std::make_pair(param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]));
         }
         manual_shape_map[param_name] = manual_shape;
       }
