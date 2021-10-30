@@ -30,6 +30,9 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_common.h"
 #include "runtime/hardware/gpu/optimizer.h"
+#ifdef ENABLE_MPI
+#include "runtime/hardware/gpu/nvidia_collective_comm_lib.h"
+#endif
 #include "common/trans.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/gpu/gpu_bucket.h"
@@ -522,6 +525,16 @@ std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint3
 
   bucket->Init({streams_[0]}, {streams_[1]});
   return bucket;
+}
+
+bool GPUDeviceContext::InitCollectiveCommLib() {
+#ifdef ENABLE_MPI
+  collective_comm_lib_ = &NvidiaCollectiveCommLib::GetInstance();
+  collective_comm_lib_->Initialize();
+  return true;
+#else
+  return false;
+#endif
 }
 
 bool GPUDeviceContext::BindDeviceToCurrentThread() const {

@@ -22,6 +22,7 @@
 #include <memory>
 #include "runtime/device/device_address.h"
 #include "runtime/device/bucket.h"
+#include "runtime/hardware/collective/collective_communication_lib.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
@@ -47,7 +48,8 @@ struct DeviceContextKey {
 // DeviceContext is unified interface of interaction with device.
 class DeviceContext {
  public:
-  explicit DeviceContext(const DeviceContextKey &device_context_key) : device_context_key_(device_context_key) {}
+  explicit DeviceContext(const DeviceContextKey &device_context_key)
+      : device_context_key_(device_context_key), collective_comm_lib_(nullptr) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -142,8 +144,17 @@ class DeviceContext {
   // one bucket handles all resource to launch and sync allreduce operator.
   virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 
+  // Collective communication APIs.
+  // Initialize collecitve communication through device context.
+  // Currently four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
+  virtual bool InitCollectiveCommLib() { return true; }
+
+  // Return collective communication object for caller to access
+  CollectiveCommunicationLibPtr collective_comm_lib() const { return collective_comm_lib_; }
+
  protected:
   DeviceContextKey device_context_key_;
+  CollectiveCommunicationLibPtr collective_comm_lib_;
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 }  // namespace device
