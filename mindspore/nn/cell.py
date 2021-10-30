@@ -334,6 +334,10 @@ class Cell(Cell_):
     def cast_inputs(self, inputs, dst_type):
         """
         Cast inputs to specified type.
+
+        Args:
+            inputs (tuple): The cell inputs.
+            dst_type (mindspore.dtype): The specified data type.
         """
         res = list()
         for item in inputs:
@@ -1175,7 +1179,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-            dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter. Default: None.
         """
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
@@ -1189,7 +1193,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-            dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter. Default: None.
         """
         self.add_flags(**flags)
         for cell in self.cells():
