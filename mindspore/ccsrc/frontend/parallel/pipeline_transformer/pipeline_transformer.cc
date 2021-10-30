@@ -886,7 +886,6 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
 }
 
 std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer::CutBorder(const FuncGraphPtr &graph) {
-  OperatorAttrs depend_attrs;
   std::vector<AnfNodePtr> send_ops;
   std::vector<AnfNodePtr> receive_ops;
   auto ret = graph->get_return();

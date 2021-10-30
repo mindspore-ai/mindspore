@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
@@ -217,7 +216,7 @@ Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
   if (axis >= SizeToLong(s.size())) {
     MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
   }
-  s[axis] = 1;
+  s[LongToSize(axis)] = 1;
   strategies.push_back(s);
 
   return strategies;
@@ -232,7 +231,7 @@ Strategys PrepareGatherV2P(const std::vector<std::shared_ptr<OperatorInfo>> &ops
     index[i] = SizeToLong(i);
   }
   std::sort(index.begin(), index.end(), [&output_shape](const int64_t &a, const int64_t &b) {
-    return (output_shape[a + 1] > output_shape[b + 1]);
+    return (output_shape[LongToSize(a + 1)] > output_shape[LongToSize(b + 1)]);
   });
   std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
   index.insert(index.begin(), 0);
@@ -294,7 +293,7 @@ Dimensions PrepareGatherV2POutputStrategy(const std::vector<std::shared_ptr<Oper
   auto output_shape = ops[incoming_op_index]->outputs_tensor_info()[0].shape();
   Dimensions index(output_shape.size() - 1, 0);
   for (size_t i = 0; i < index.size(); i++) {
-    index[i] = LongToSize(i);
+    index[i] = SizeToLong(i);
   }
   std::sort(index.begin(), index.end(),
             [&output_shape](const size_t &a, const size_t &b) { return (output_shape[a + 1] > output_shape[b + 1]); });
@@ -797,7 +796,7 @@ Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<Ope
   }
 
   for (size_t i = 0; i < (size_t)stra_dim_list.size(); i++) {
-    s_Squeeze.push_back(s[stra_dim_list[i]]);
+    s_Squeeze.push_back(s[LongToSize(stra_dim_list[i])]);
   }
   return s_Squeeze;
 }
@@ -1076,7 +1075,7 @@ Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
 
 // Check whether the operator can be divided by the current strategy.
 Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         Dimensions basic_stra) {
+                         const Dimensions basic_stra) {
   Dimensions s_empty = {};
   Strategys stra;
 
@@ -1167,7 +1166,7 @@ Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<Ope
 
   size_t cut = 1;
   for (size_t i = 0; i < s_Squeeze.size(); i++) {
-    cut *= s_Squeeze[i];
+    cut *= LongToSize(s_Squeeze[i]);
   }
   if (cut != g_device_manager->DeviceNum()) {
     s_Squeeze.clear();
