@@ -345,7 +345,7 @@ Status Serialization::ExportModel(const Model &, ModelType, Buffer *) {
 
 Status Serialization::ExportModel(const Model &, ModelType, const std::string &, QuantizationType, bool,
                                   std::vector<std::string> output_tensor_name) {
-  MS_LOG(ERROR) << "Unsupported feature.";
+  MS_LOG(ERROR) << "Unsupported feature." << output_tensor_name;
   return kMEFailed;
 }
 }  // namespace mindspore

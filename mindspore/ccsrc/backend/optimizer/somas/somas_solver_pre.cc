@@ -54,7 +54,7 @@ Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &cont
     for (size_t i = 0; i < aux.size() - 1; i++) {
       auto index1 = aux[i];
       auto index2 = aux[i + 1];
-      if (CheckTensors(pTensors, index1, index2) == FAILED) {
+      if (CheckTensors(pTensors, SizeToInt(index1), SizeToInt(index2)) == FAILED) {
         return FAILED;
       }
       tensors[index1]->right_ = tensors[index2];
@@ -71,7 +71,7 @@ Status SomasSolverPre::AddContiguousInfoInMultiMaps(const vector<vector<size_t>>
     for (size_t i = 0; i < aux.size() - 1; i++) {
       auto index1 = aux[i];
       auto index2 = aux[i + 1];
-      if (CheckTensors(pTensors, index1, index2) == FAILED) {
+      if (CheckTensors(pTensors, SizeToInt(index1), SizeToInt(index2)) == FAILED) {
         return FAILED;
       }
       for (size_t sol = 0; sol < vecTensorsMap->size(); sol++) {
@@ -146,7 +146,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         if (upperbound <= best) {
           best = upperbound;
           best_sol = sol;
-          best_timing = solver->timing_;
+          best_timing = LongToSize(solver->timing_);
         }
       }
       auto end = std::chrono::system_clock::now();

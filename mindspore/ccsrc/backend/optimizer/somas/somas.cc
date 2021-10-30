@@ -1000,8 +1000,8 @@ void Somas::ComputeConflictPairs() {
     MS_LOG(INFO) << "Threads Num is " << process_num;
 
     int64_t start_index = 0;
-    int64_t total_size = tensors_list_.size();
-    int64_t job_size = total_size / process_num;
+    int64_t total_size = SizeToLong(tensors_list_.size());
+    int64_t job_size = total_size / SizeToLong(process_num);
     if (job_size == 0) {
       job_size = total_size;
     }
@@ -1340,7 +1340,7 @@ std::map<size_t, size_t> Somas::GetRefTensorsInContiguousList() {
                       << tensors_map_[ref_node_list[0]]->contiguous_ << ", " << ref_node_list[1] << ":"
                       << tensors_map_[ref_node_list[1]]->contiguous_;
     }
-    if (ref_node_list.size() == kRefNodeTensorNum && contiguous_in_ref_list == kRefNodeTensorNum) {
+    if (ref_node_list.size() == kRefNodeTensorNum && contiguous_in_ref_list == SizeToLong(kRefNodeTensorNum)) {
       ref_tensors_in_contiguous_map[ref_node_list[0]] = ref_node_list[1];
     }
   }

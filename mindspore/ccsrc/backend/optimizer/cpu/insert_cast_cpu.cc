@@ -107,7 +107,7 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
         if (used_node != func_output) {
           continue;
         }
-        auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
+        auto used_node_index = IntToSize(used_node_list->at(j).second - 1);
         auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(used_node), used_node_index);
         const std::vector<size_t> origin_shape =
           AnfAlgo::GetPrevNodeOutputInferShape(utils::cast<CNodePtr>(used_node), i);
