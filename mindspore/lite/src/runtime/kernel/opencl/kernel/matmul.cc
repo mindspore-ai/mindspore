@@ -57,7 +57,14 @@ int MatMulOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   transposeB = param->b_transpose_;
-  act_weight_ = !in_tensors_[1]->IsConst();
+
+  act_weight_ = !in_tensors_.at(1)->IsConst();
+  bool is_const = in_tensors_.at(1)->category() == lite::Tensor::CONST_TENSOR ||
+                  in_tensors_.at(1)->category() == lite::Tensor::CONST_SCALAR;
+  if (is_const && stored_weight_) {
+    act_weight_ = false;
+  }
+
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
       in_tensors_[0]->shape().size() < DIMENSION_2D || in_tensors_[0]->shape().size() > DIMENSION_4D) {

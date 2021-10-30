@@ -46,6 +46,9 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
   int StoreConstData() override;
 
  private:
+  int InputOutputCheckSpecs();
+  int FilterBiasCheckSpecs();
+
   void *packed_weight_{nullptr};
   void *stored_weight_{nullptr};
   void *bias_data_{nullptr};
