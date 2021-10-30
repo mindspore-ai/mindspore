@@ -646,6 +646,7 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
     CloneUserData(node);
     set_kernel_info(node->kernel_info_ptr());
     set_primal_debug_infos(node->primal_debug_infos());
+    set_fused_debug_infos(node->fused_debug_infos());
   }
 
   /// \brief Set the number of input tensors.
@@ -663,6 +664,28 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
   /// \param[in] handled Boolean.
   void SetEffectHandled(bool handled) { effect_handled_ = handled; }
 
+  /// \brief Get the debug infos of fused nodes.
+  ///
+  /// \return A vector of debug infos.
+  std::vector<NodeDebugInfoPtr> fused_debug_infos() const { return fused_debug_infos_; }
+
+  /// \brief Set the debug infos for CNode.
+  ///
+  /// \param fused_debug_infos The debuf infos to be set.
+  void set_fused_debug_infos(const std::vector<NodeDebugInfoPtr> &fused_debug_infos) {
+    fused_debug_infos_ = fused_debug_infos;
+  }
+
+  /// \brief Add a node's debug info or fused debug info.
+  ///
+  /// \param node An anf node.
+  void AddFusedDebugInfo(const AnfNodePtr &node) {}
+
+  /// \brief Add a vector of nodes' debug info or fused debug info.
+  ///
+  /// \param nodes A vector of anf nodes.
+  void AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes) {}
+
  private:
   std::vector<AnfNodePtr> inputs_;
   VarPtr func_graph_as_var_;
@@ -677,6 +700,7 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
   std::unordered_map<std::string, ValuePtr> attrs_;
   std::unordered_map<std::string, ValuePtr> primal_attrs_;
   std::vector<NodeDebugInfoPtr> primal_debug_infos_;
+  std::vector<NodeDebugInfoPtr> fused_debug_infos_;
   ssize_t input_tensor_num_ = -1;
 };
 
