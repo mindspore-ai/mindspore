@@ -36,8 +36,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
-  constexpr size_t x_dim_limit = 2;
-  constexpr size_t y_dim_limit = 3;
+  constexpr size_t x_dim_limit = 3;
+  constexpr size_t y_dim_limit = 2;
   if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
     MS_EXCEPTION(ValueError) << "For BatchMatMul, input x should be greater or equal to 3, input y should be greater "
                                 "or equal to 2 while x size = "
