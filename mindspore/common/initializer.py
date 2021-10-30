@@ -168,7 +168,7 @@ def _calculate_correct_fan(shape, mode):
     mode = mode.lower()
     valid_modes = ['fan_in', 'fan_out']
     if mode not in valid_modes:
-        raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes))
+        raise ValueError("'mode' {} not supported, please use one of {}".format(mode, valid_modes))
     fan_in, fan_out = _calculate_fan_in_and_fan_out(shape)
     return fan_in if mode == 'fan_in' else fan_out
 
@@ -198,12 +198,13 @@ def _calculate_gain(nonlinearity, param=None):
             # True/False are instances of int, hence check above
             negative_slope = param
         else:
-            raise ValueError("negative_slope {} is not a valid number. "
-                             "It should be bool, int, or float type.".format(param))
+            raise ValueError("'negative_slope' {} is not a valid number. When 'nonlinearity' has been set to "
+                             "'leaky_relu', 'negative_slope' should be int or float type, but got "
+                             "{}.".format(param, type(param)))
         res = math.sqrt(2.0 / (1 + negative_slope ** 2))
     else:
-        raise ValueError("Unsupported nonlinearity {}, the argument 'nonlinearity' should be one of "
-                         "'sigmoid', 'tanh', 'relu' or 'leaky_relu'.".format(nonlinearity))
+        raise ValueError("The argument 'nonlinearity' should be one of ['sigmoid', 'tanh', 'relu' or 'leaky_relu'], "
+                         "but got {}.".format(nonlinearity))
     return res
 
 
@@ -219,7 +220,8 @@ def _calculate_in_and_out(arr):
     """
     dim = len(arr.shape)
     if dim < 2:
-        raise ValueError("If initialize data with xavier uniform, the dimension of data must be greater than 1.")
+        raise ValueError("If initialize data with xavier uniform, the dimension of data must be greater than 1, "
+                         "but got {}.".format(dim))
 
     n_in = arr.shape[1]
     n_out = arr.shape[0]
