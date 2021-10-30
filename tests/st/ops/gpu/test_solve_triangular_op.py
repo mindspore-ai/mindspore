@@ -79,7 +79,7 @@ def match(a, b, lower, unit_diagonal, trans):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [10, 20])
 @pytest.mark.parametrize('trans', ["N", "T"])
@@ -99,7 +99,7 @@ def test_2D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [10, 20])
 @pytest.mark.parametrize('trans', ["N", "T"])
@@ -115,4 +115,28 @@ def test_1D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
     # add Identity matrix to make matrix A non-singular
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random(n).astype(dtype)
+    match(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(4, 5), (10, 20)])
+@pytest.mark.parametrize('trans', ["N", "T"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('lower', [False, True])
+@pytest.mark.parametrize('unit_diagonal', [False, True])
+def test_matrix(shape: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for [N x N] X [N]
+    Expectation: the result match scipy
+    """
+    if trans == 'T':
+        n, m = shape
+    else:
+        m, n = shape
+    # add Identity matrix to make matrix A non-singular
+    a = (np.random.random((m, m)) + np.eye(m)).astype(dtype)
+    b = np.random.random((m, n)).astype(dtype)
     match(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
