@@ -44,7 +44,7 @@ bool DynamicStitchKernel::Init(const CNodePtr &kernel_node) {
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, n_);
   // Index type is restricted to int32 by kernel prim.
   size_t index_type_size = sizeof(int);
-  data_type_size_ = GetDtypeNbyte(TypeIdToString(data_type, false));
+  data_type_size_ = GetDtypeNbyte(TypeIdToString(data_type, true));
   auto first_data_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, n_);
   one_data_ele_num_ = first_data_shape[first_data_shape.size() - 1];
   for (size_t i = 0; i < n_; i++) {
