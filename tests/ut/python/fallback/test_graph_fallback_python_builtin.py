@@ -73,7 +73,6 @@ def test_fallback_bin():
     assert foo() == '0b11'
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_bool():
     """
     Feature: JIT Fallback
@@ -114,7 +113,6 @@ def test_fallback_complex():
     assert foo() == (1 + 2j)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_dict():
     """
     Feature: JIT Fallback
@@ -141,7 +139,6 @@ def test_fallback_divmod():
     assert foo() == (3, 1)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_float():
     """
     Feature: JIT Fallback
@@ -183,7 +180,6 @@ def test_fallback_hex():
     assert foo() == '0xff'
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_int():
     """
     Feature: JIT Fallback
@@ -289,7 +285,6 @@ def test_fallback_round():
     assert foo() == 1
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_set():
     """
     Feature: JIT Fallback
@@ -300,10 +295,9 @@ def test_fallback_set():
     def foo():
         x = set([1, 2, 1])
         return x
-    print(foo())
+    assert list(foo()) == [1, 2]
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_slice():
     """
     Feature: JIT Fallback
@@ -315,7 +309,7 @@ def test_fallback_slice():
         slice_x = slice(5)
         arr = range(10)
         return arr[slice_x]
-    print(foo())
+    assert list(foo()) == [0, 1, 2, 3, 4]
 
 
 def test_fallback_sorted():
@@ -331,7 +325,6 @@ def test_fallback_sorted():
     assert list(foo()) == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_str():
     """
     Feature: JIT Fallback
