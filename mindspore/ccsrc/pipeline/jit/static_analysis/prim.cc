@@ -540,8 +540,9 @@ void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBa
                         << res_spec->ToString();
     } else if (res_spec->isa<AbstractTuple>() &&
                (res_spec->cast<AbstractTuplePtr>()->size() != LongToSize(output_num))) {
-      MS_LOG(EXCEPTION) << "Custom primitive[" << prim->ToString() << "]'s attribute[output_num]:" << output_num
-                        << " not matches the infer result " << res_spec->ToString();
+      MS_LOG(EXCEPTION) << "Custom operator primitive[" << prim->ToString()
+                        << "]'s attribute[output_num]:" << output_num << " not matches the infer result "
+                        << res_spec->ToString();
     }
   }
 }
