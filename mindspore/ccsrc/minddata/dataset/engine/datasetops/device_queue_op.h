@@ -170,7 +170,7 @@ class DeviceQueueOp : public PipelineOp {
   Status DetectFirstBatch();
 
   // Detect the cost time of each batch, present alarm message if cost too long
-  void DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time);
+  void DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time);
 #endif
 
   std::unique_ptr<ChildIterator> child_iterator_;
