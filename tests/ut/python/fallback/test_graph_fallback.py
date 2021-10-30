@@ -201,6 +201,7 @@ def np_fallback_func_tensor_index(x):
     return me_x[x]
 
 
+# NameError: name 'array_x' is not defined.
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_fallback_func_tensor_index():
     """
@@ -232,6 +233,7 @@ class ControlNet(nn.Cell):
         return self.inner_function_2(a, b)
 
 
+# NameError: name 'mstype' is not defined.
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_control_sink_tensor():
     """
@@ -244,3 +246,54 @@ def test_fallback_control_sink_tensor():
     output = net(x)
     output_expect = Tensor(9, mstype.int32)
     assert output == output_expect
+
+
+# NameError: name 'mytype' is not defined
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_np_tensor_list():
+    """
+    Feature: Fallback feature
+    Description: support Basic method of Tensor list.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_tensor_list():
+        a = Tensor(np.array(4), mstype.int32)
+        b = Tensor(np.array(5), mstype.int32)
+        c = Tensor(np.array(6), mstype.int32)
+        tensor_list = [a, b]
+        for tensor in tensor_list:
+            print(tensor)
+        tensor_list.append(tensor_list[-1] + c)
+        return tensor_list
+
+    tensor_list = np_tensor_list()
+    print("tensor_list:", tensor_list)
+    assert len(tensor_list) == 3
+
+
+# EvalCNode: This may be not defined, or it can't be a operator.
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_np_tensor_add():
+    """
+    Feature: Fallback feature
+    Description: support Tensor add.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_tensor_add():
+        a = Tensor(np.array(4))
+        b = Tensor(np.array(5))
+        tensor_list = [a, b]
+        for tensor in tensor_list:
+            print(tensor)
+        x = 6
+        np_x = np.array(x)
+        c = Tensor(np_x)
+        d = tensor_list[-1] + c
+        tensor_list.append(d)
+        return tensor_list
+
+    tensor_list = np_tensor_add()
+    print("tensor_list:", tensor_list)
+    assert tensor_list[-1] == 11
