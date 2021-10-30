@@ -35,7 +35,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, 
     MS_LOG(ERROR) << "cal error while min" << real_min << ">" << real_max;
     return RET_PARAM_INVALID;
   }
-  if (real_min == real_max) {
+  if (real_max - real_min <= 0.0f) {
     if (real_min != 0.0f) {
       MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
       return RET_ERROR;

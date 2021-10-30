@@ -61,7 +61,7 @@ inline int QuantMax(int bits, TypeId type) {
 
 inline int QuantMin(int bits, TypeId type) {
   if (type == kNumberTypeInt8) {
-    return -(1 << (bits - 1));
+    return -(1 << static_cast<unsigned int>(bits - 1));
   }
   return 0;
 }

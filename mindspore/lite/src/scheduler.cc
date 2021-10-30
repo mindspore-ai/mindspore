@@ -271,8 +271,8 @@ int Scheduler::SchedulePreProcess() {
   return RET_OK;
 }
 
-int Scheduler::CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels) {
-  if (context_->IsCpuEnabled() == true) {
+int Scheduler::CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels) const {
+  if (context_->IsCpuEnabled()) {
     return RET_OK;
   }
   for (auto kernel : *dst_kernels) {

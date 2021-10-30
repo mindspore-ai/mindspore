@@ -147,7 +147,9 @@ class WeightDecoder {
   template <typename ST, typename DT = float>
   static DT *DequantPerLayerData(const lite::Tensor *input_tensor, const ST *quant_datas) {
     auto quant_param = input_tensor->quant_params();
-    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor->ElementsNum() * sizeof(DT)));
+    auto input_tensor_element_num = input_tensor->ElementsNum();
+    MS_CHECK_GT(input_tensor_element_num, 0, nullptr);
+    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor_element_num * sizeof(DT)));
     if (dequant_datas == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
@@ -156,7 +158,7 @@ class WeightDecoder {
     auto param = quant_param.front();
     auto scale = param.scale;
     auto zero_point = param.zeroPoint;
-    for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
+    for (int64_t j = 0; j < input_tensor_element_num; j++) {
       if (!quant_clusters.empty()) {
         int8_t index = quant_datas[j];
         if (index > INT8_MAX || index < INT8_MIN) {
@@ -180,7 +182,9 @@ class WeightDecoder {
   template <typename ST, typename DT = float>
   static DT *DequantPerChannelData(const lite::Tensor *input_tensor, const ST *quant_datas, int preferred_dim) {
     auto quant_param = input_tensor->quant_params();
-    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor->ElementsNum() * sizeof(DT)));
+    auto input_tensor_element_num = input_tensor->ElementsNum();
+    MS_CHECK_GT(input_tensor_element_num, 0, nullptr);
+    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor_element_num * sizeof(DT)));
     if (dequant_datas == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
@@ -194,7 +198,7 @@ class WeightDecoder {
       return nullptr;
     }
     MS_CHECK_GT(channels, 0, nullptr);
-    size_t per_channel_size = input_tensor->ElementsNum() / channels;
+    size_t per_channel_size = input_tensor_element_num / channels;
     for (size_t i = 0; i < channels; i++) {
       auto param = quant_param.at(i);
       auto scale = param.scale;

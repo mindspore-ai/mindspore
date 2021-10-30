@@ -74,7 +74,7 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   auto *string_info = reinterpret_cast<int32_t *>(data);
   char *string_data = reinterpret_cast<char *>(data);
 
-  string_info[0] = num;
+  string_info[0] = static_cast<int32_t>(num);
   for (size_t i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
@@ -112,7 +112,7 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
   auto *string_info = reinterpret_cast<int32_t *>(data);
   auto *string_data = reinterpret_cast<char *>(data);
 
-  string_info[0] = num;
+  string_info[0] = static_cast<int32_t>(num);
   for (size_t i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
