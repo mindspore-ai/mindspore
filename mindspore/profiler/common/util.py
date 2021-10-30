@@ -130,7 +130,7 @@ def get_file_join_name(input_path, file_name):
     return file_join_name
 
 
-def get_file_names(input_path, file_name):
+def get_file_path(input_path, file_name):
     """
     Search files under the special path.
 
@@ -139,20 +139,18 @@ def get_file_names(input_path, file_name):
         file_name (str): The target of the filename, such as 'host_start_log'.
 
     Returns:
-        list, file name list.
+        str, a special file path. If there can not find the special path, will return None.
     """
 
     input_path = os.path.realpath(input_path)
-    name_list = []
     if os.path.exists(input_path):
         files = os.listdir(input_path)
         for f in files:
             if file_name in f and not f.endswith('.done') \
                     and not f.endswith('.zip'):
-                name_list.append(f)
-                break
+                return os.path.join(input_path, f)
 
-    return name_list
+    return None
 
 
 def parse_device_id(filename, device_id_list, profiler_file_prefix):
