@@ -414,7 +414,8 @@ bool CheckTailGradFristSequence(const abstract::AbstractSequeuePtr &sequeue, boo
            CheckSequenceAllTensor((*sequeue)[1]->cast<abstract::AbstractTuplePtr>())));
 }
 
-FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const {
+FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue,
+                                            const abstract::AbstractSequeuePtr &pos) const {
   MS_EXCEPTION_IF_NULL(sequeue);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -442,6 +443,42 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
     return ret;
   }
 
+  if (tail_type_ == kGradByPosition) {
+    if (pos == nullptr) {
+      MS_LOG(EXCEPTION) << "Return grad by position, but the grad_position is empty!";
+    }
+    std::vector<AnfNodePtr> pos_elems;
+    PrimitivePtr pos_op = nullptr;
+    if (pos->isa<AbstractTuple>()) {
+      pos_elems.push_back(NewValueNode(prim::kPrimMakeTuple));
+      pos_op = prim::kPrimTupleGetItem;
+    } else {
+      pos_elems.push_back(NewValueNode(prim::kPrimMakeList));
+      pos_op = prim::kPrimListGetItem;
+    }
+    AnfNodePtr pos_value = nullptr;
+    AnfNodePtr pos_value_adjust = nullptr;
+    auto ptrpos = ret->add_parameter();
+    if (pos->size() == 1) {
+      pos_value = ret->NewCNode({NewValueNode(pos_op), ptrpos, NewValueNode(SizeToLong(0))});
+      pos_value_adjust = ret->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
+      if (CheckTailGradFristSequence(sequeue, enable_tuple_grad_)) {
+        ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, pos_value_adjust}));
+      } else {
+        ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
+      }
+      return ret;
+    } else {
+      for (size_t i = 0; i < pos->size(); ++i) {
+        pos_value = ret->NewCNode({NewValueNode(pos_op), ptrpos, NewValueNode(SizeToLong(i))});
+        pos_value_adjust = ret->NewCNode({NewValueNode(prim::kPrimScalarAdd), pos_value, NewValueNode(SizeToLong(1))});
+        pos_elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, pos_value_adjust}));
+      }
+    }
+    ret->set_output(ret->NewCNodeInOrder(pos_elems));
+    return ret;
+  }
+
   for (size_t i = 1; i < sequeue->size(); ++i) {
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
@@ -460,12 +497,20 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
 }
 
 FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.size() != 1) {
+  if (args_spec_list.size() < 1) {
     MS_LOG(EXCEPTION) << "Tail requires a non-empty tuple.";
   }
 
   AbstractBasePtr a = args_spec_list[0];
   if (a->isa<AbstractTuple>() || a->isa<AbstractList>()) {
+    if (args_spec_list.size() > 1) {
+      AbstractBasePtr pos = args_spec_list[1];
+      if (pos->isa<AbstractTuple>() || pos->isa<AbstractList>()) {
+        return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>(),
+                                        pos->cast<abstract::AbstractSequeuePtr>());
+      }
+      MS_LOG(EXCEPTION) << "'Tail' arg1 must be AbstractTuple or AbstractList, but: " << pos->ToString();
+    }
     return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>());
   }
 
@@ -559,9 +604,20 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   return fg;
 }
 
-GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param)
-    : MetaFuncGraph(name), get_all_(get_all), get_by_list_(get_by_list), sens_param_(sens_param) {
-  if (get_by_list) {
+GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param,
+                             bool get_by_position)
+    : MetaFuncGraph(name),
+      get_all_(get_all),
+      get_by_list_(get_by_list),
+      sens_param_(sens_param),
+      get_by_position_(get_by_position) {
+  if (get_by_position) {
+    signatures_ =
+      // def grad(func:read, weight_list:ref, position_list:ref):
+      std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
+                              {"weight_list", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault},
+                              {"position_list", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault}});
+  } else if (get_by_list) {
     signatures_ =
       // def grad(func:read, weight_list:ref):
       std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
@@ -569,17 +625,21 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
   }
 }
 
-FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights,
+FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights, const AnfNodePtr &position,
                                     const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                                     const std::vector<AnfNodePtr> &weight_args) {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
   AnfNodePtr weights_node = nullptr;
+  AnfNodePtr position_node = nullptr;
   if (weights != nullptr) {
     weights_node = weights;
   } else if (!weight_args.empty()) {
     weights_node = k_child->NewCNodeInOrder(weight_args);
+  }
+  if (position != nullptr) {
+    position_node = position;
   }
 
   std::vector<AnfNodePtr> inputs;
@@ -593,13 +653,13 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weigh
   auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
   auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
 
-  GradByParameter(k_child, f_app, bprop, weights_node, enable_tuple_grad);
+  GradByParameter(k_child, f_app, bprop, weights_node, position_node, enable_tuple_grad);
   return k_child;
 }
 
 // Do grad by the parameter of GradOperation.
 void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                                    const AnfNodePtr &weights, bool enable_tuple_grad) {
+                                    const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad) {
   MS_EXCEPTION_IF_NULL(k_child);
 
   AnfNodePtr bprop_arg = nullptr;
@@ -624,6 +684,12 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   }
 
   CNodePtr inputs_bprop = nullptr;
+  if (get_by_position_) {
+    TailPtr tail_grad_by_position = std::make_shared<Tail>("tail_grad_by_position", kGradByPosition);
+    inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_by_position), b_app, position});
+    k_child->set_output(inputs_bprop);
+    return;
+  }
   if (get_all_) {
     TailPtr tail_grad_all = std::make_shared<Tail>("tail_grad_all", kGradAll);
     inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_all), b_app});
@@ -692,6 +758,11 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   if (get_by_list_) {
     weights = grad_fg->add_parameter();
   }
+  AnfNodePtr position = nullptr;
+  if (get_by_position_) {
+    weights = grad_fg->add_parameter();
+    position = grad_fg->add_parameter();
+  }
 
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimJ));
@@ -701,7 +772,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   FuncGraphPtr k_child = nullptr;
   {
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
-    k_child = GetGrad(j, weights, forward_graph->parameters(), forward_graph->has_flag("enable_tuple_grad"));
+    k_child = GetGrad(j, weights, position, forward_graph->parameters(), forward_graph->has_flag("enable_tuple_grad"));
   }
   grad_fg->set_output(NewValueNode(k_child));
 
@@ -712,8 +783,8 @@ REGISTER_PYBIND_DEFINE(GradOperation_, ([](const py::module *m) {
                          (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(
                            *m, "GradOperation_")
                            .def(py::init<std::string &>(), py::arg("fn"))
-                           .def(py::init<std::string &, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
-                                py::arg("get_by_list"), py::arg("sens_param"));
+                           .def(py::init<std::string &, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
+                                py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"));
                        }));
 
 // Generate the ListMap func graph.

@@ -20,7 +20,7 @@ Pre-defined combination of operators.
 """
 
 
-from .base import GradOperation, HyperMap, Map, MultitypeFuncGraph, add_flags, \
+from .base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
                   core, env_get, tail, zip_operation
 from .clip_ops import clip_by_value, clip_by_global_norm
 from .multitype_ops.add_impl import hyper_add
@@ -58,4 +58,5 @@ __all__ = [
     'batch_dot',
     'repeat_elements',
     'sequence_mask',
-    'matmul']
+    'matmul',
+    '_Grad']

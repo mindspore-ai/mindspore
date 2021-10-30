@@ -69,18 +69,12 @@ grad1 = C.GradOperation()
 def f1(x, y):
     return grad1(grad1(TargetNet()))(x, y)
 
-# Recursive GradOperaton with F.grad.
-@ms_function
-def f2(x, y):
-    return F.grad(F.grad(TargetNet()))(x, y)
-
 def test_recursive_grad():
     x = Tensor(3, mstype.float32)
     y = Tensor(1, mstype.float32)
 
     Grad(Grad(TargetNet()))(x, y)
     f1(x, y)
-    f2(x, y)
 
 
 class IndexAdd(nn.Cell):

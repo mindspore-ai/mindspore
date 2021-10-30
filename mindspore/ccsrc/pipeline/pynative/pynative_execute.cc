@@ -2534,7 +2534,7 @@ std::string GradExecutor::GetGradCellId(bool has_sens, const py::object &cell, c
 }
 
 void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
-                                const py::object &weights, const py::args &args) {
+                                const py::object &weights, const py::object &grad_position, const py::args &args) {
   MS_EXCEPTION_IF_NULL(ret);
   MS_EXCEPTION_IF_NULL(grad);
   auto size = args.size();
@@ -2554,12 +2554,13 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
 
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
+  auto p_args = GetGradPositionArgs(grad_position);
   if (w_args.empty() && !df_builder->parameters().empty()) {
     MS_LOG(DEBUG) << "Add weights params to w_args";
     w_args.insert(w_args.end(), df_builder->parameters().begin(), df_builder->parameters().end());
   }
   // Get bprop graph of top cell
-  auto bprop_graph = GetBpropGraph(grad, cell, w_args, size, args);
+  auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -2627,6 +2628,20 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
+std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position) {
+  std::vector<size_t> pos_args;
+  if (py::isinstance<py::tuple>(grad_position)) {
+    const auto &tuple = grad_position.cast<py::tuple>();
+    for (size_t it = 0; it < tuple.size(); ++it) {
+      auto param = tuple[it];
+      auto param_id = GetId(param);
+      pos_args.push_back(std::stoi(param_id));
+    }
+    return pos_args;
+  }
+  MS_LOG(EXCEPTION) << "Grad position only support tuple.";
+}
+
 void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph) {
   MS_EXCEPTION_IF_NULL(bprop_graph);
   const auto &bprop_params = bprop_graph->parameters();
@@ -2679,7 +2694,8 @@ void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
-                                         const std::vector<AnfNodePtr> &weights, size_t arg_size,
+                                         const std::vector<AnfNodePtr> &weights,
+                                         const std::vector<size_t> &grad_position, size_t arg_size,
                                          const py::args &args) {
   bool build_formal_param = false;
   if (!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) {
@@ -2693,8 +2709,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
   MS_EXCEPTION_IF_NULL(grad);
-  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_,
-                                                     grad->sens_param_, build_formal_param);
+  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad->get_all_,
+                                                     grad->get_by_list_, grad->sens_param_, build_formal_param);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;
@@ -3228,9 +3244,9 @@ py::object PynativeExecutor::GradMsFunction(const py::object &out, const py::arg
 }
 
 void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-                               const py::args &args) {
+                               const py::object &grad_position, const py::args &args) {
   py::object ret;
-  PynativeExecutorTry(grad_executor()->GradGraph, &ret, grad, cell, weights, args);
+  PynativeExecutorTry(grad_executor()->GradGraph, &ret, grad, cell, weights, grad_position, args);
 }
 
 void PynativeExecutor::Sync() {

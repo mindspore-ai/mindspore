@@ -389,8 +389,8 @@ class _PynativeExecutor:
     def check_run(self, grad, obj, *args, **kwargs):
         return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
 
-    def grad(self, grad, obj, weights, *args, **kwargs):
-        self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
+    def grad(self, grad, obj, weights, grad_position, *args, **kwargs):
+        self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
     def del_cell(self, cell_id=""):
         self._executor.clear_cell(cell_id)
