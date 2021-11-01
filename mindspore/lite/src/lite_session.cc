@@ -52,32 +52,36 @@
 namespace mindspore {
 namespace lite {
 namespace {
-bool NeedBitUppackCheck(const schema::Tensor &src_tensor) {
-  if (src_tensor.enableHuffmanCode()) {
+bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
+  if (src_tensor.handler()->enableHuffmanCode()) {
     return true;
   }
-  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
-                         src_tensor.quantParams()->Get(0) != nullptr;
+  bool need_bit_unpack = src_tensor.handler()->quantParams() != nullptr &&
+                         src_tensor.handler()->quantParams()->size() > 0 &&
+                         src_tensor.handler()->quantParams()->Get(0) != nullptr;
   if (need_bit_unpack) {
-    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
+    auto num_bits = src_tensor.handler()->quantParams()->Get(0)->numBits();
     need_bit_unpack = ((num_bits >= kBitNum1 && num_bits < kBitNum8) || (num_bits > kBitNum8 && num_bits < kBitNum16));
   }
 
   return need_bit_unpack;
 }
 
-int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
 #ifndef WEIGHT_DECODE_CLIP
-  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
+  if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
     return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
-  } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
-  } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
+  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
     return SparseDecompress(src_tensor, dst_tensor);
   }
 #else
-  if (src_tensor.weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
+  if (src_tensor.handler()->weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
     MS_LOG(ERROR) << unsupport_weight_decode_log;
     return RET_ERROR;
   }
@@ -131,11 +135,12 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
   }
 }
 
-int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
-                                    lite::Tensor *dst_tensor) {
-  MS_ASSERT(src_tensor != nullptr);
+int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_index, lite::Tensor *dst_tensor) {
+  MS_ASSERT(model != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  if (src_tensor->data() == nullptr || src_tensor->data()->size() <= 0) {
+  auto src_tensor = model->GetSchemaTensor(tensor_index);
+  if (src_tensor == nullptr || src_tensor->handler() == nullptr || src_tensor->data() == nullptr ||
+      src_tensor->data()->length_ == 0) {
     MS_LOG(DEBUG) << "No valid data converted.";
     return RET_OK;
   }
@@ -144,7 +149,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   if (dst_tensor->data_type() == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
+    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data_)) != RET_OK) {
       MS_LOG(ERROR) << "Decode tensorlist data failed";
       return RET_ERROR;
     }
@@ -159,17 +164,17 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   auto shape_info = dst_tensor->shape();
   if (shape_info.end() !=
       std::find_if(shape_info.begin(), shape_info.end(), [](const int shape) { return shape <= 0; })) {
-    MS_LOG(ERROR) << "Invalid shape size." << src_tensor->name()->c_str();
+    MS_LOG(ERROR) << "Invalid shape size." << src_tensor->handler()->name()->c_str();
     return RET_ERROR;
   }
 
   auto ret = DecompressTensor(*src_tensor, dst_tensor);
   if (ret == RET_NO_CHANGE) {
-    if (src_tensor->data()->size() < dst_tensor->Size()) {
+    if (src_tensor->data()->length_ < dst_tensor->Size()) {
       MS_LOG(ERROR) << "Tensor data shape invalid";
       return RET_ERROR;
     }
-    dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+    dst_tensor->set_data(src_tensor->data()->data_);
     dst_tensor->set_own_data(false);
   } else if (ret != RET_OK) {
     MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
@@ -184,7 +189,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
     MS_LOG(ERROR) << "invalid data type. " << data_type;
     return nullptr;
   }
-  auto src_category = TensorCategory(&src_tensor);
+  auto src_category = TensorCategory(src_tensor);
   std::vector<int> shape;
   if (src_tensor.dims() == nullptr) {
     MS_LOG(DEBUG) << "Dims of src_tensor is nullptr";
@@ -221,6 +226,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
 
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
+  auto lite_model = reinterpret_cast<const lite::LiteModel *>(model);
   uint32_t tensor_count = model->all_tensors_.size();
   auto model_input_indices = model->input_indices_;
   auto model_output_indices = model->output_indices_;
@@ -235,7 +241,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       MS_LOG(ERROR) << "Convert new " << i << "th tensor failed!";
       return RET_NULL_PTR;
     }
-    auto ret = ConvertTensorsData(model, i, src_tensor, dst_tensor);
+    auto ret = ConvertTensorsData(lite_model, i, dst_tensor);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Convert data of " << i << "th tensor failed";
       delete dst_tensor;
@@ -248,7 +254,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         delete dst_tensor;
         return RET_ERROR;
       }
-      dst_tensor->set_category(Tensor::GRAPH_INPUT);
+      dst_tensor->set_category(Category::GRAPH_INPUT);
     }
     if (IsContain(model_output_indices, i)) {
       if (dst_tensor->data() != nullptr) {
@@ -258,7 +264,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       }
       // a tensor is as both input and output, would be treated as an input.
       if (!dst_tensor->IsGraphInput()) {
-        dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
+        dst_tensor->set_category(Category::GRAPH_OUTPUT);
       }
     }
     if (src_tensor->name() != nullptr) {
@@ -420,7 +426,7 @@ int LiteSession::IsolateOutputTensor() {
       continue;
     }
     Tensor *new_tensor =
-      new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
+      new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Category::GRAPH_OUTPUT);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "duplicate new output failed.";
       return RET_NULL_PTR;

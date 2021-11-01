@@ -17,11 +17,13 @@
 #include "src/lite_model.h"
 #include <sys/stat.h>
 #include <iostream>
-#include <fstream>
+#include <functional>
 #include <vector>
+#include <algorithm>
 #include <set>
 #include <unordered_map>
 #include <memory>
+#include <numeric>
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
@@ -118,6 +120,12 @@ void LiteModel::Free() {
     node_buf = nullptr;
   }
   node_bufs_.resize(0);
+
+  for (auto *schema_tensor_wrapper : inner_all_tensors_) {
+    delete schema_tensor_wrapper;
+  }
+  inner_all_tensors_.clear();
+
 #ifdef ENABLE_MODEL_OBF
   for (auto &prim : deobf_prims_) {
     free(prim);
@@ -377,7 +385,45 @@ int LiteModel::ConstructModel() {
     return RET_ERROR;
   }
 
-  return ModelVerify() ? RET_OK : RET_ERROR;
+  if (!ModelVerify()) {
+    MS_LOG(ERROR) << "ModelVerify failed.";
+    return RET_ERROR;
+  }
+
+  if (!PrepareInnerTensors()) {
+    MS_LOG(ERROR) << "PrepareInnerTensors failed.";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+bool LiteModel::PrepareInnerTensors() {
+  if (!this->inner_all_tensors_.empty()) {
+    MS_LOG(ERROR) << "Already prepared tensors";
+    return false;
+  }
+  this->inner_all_tensors_.resize(all_tensors_.size());
+  for (size_t i = 0; i < all_tensors_.size(); i++) {
+    auto tensor_data = new (std::nothrow) SchemaTensorWrapper::TensorData(i);
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "Create SchemaTensorWrapper return nullptr";
+      return false;
+    }
+    if (!tensor_data->Init(*(all_tensors_.at(i)), static_cast<SCHEMA_VERSION>(schema_version_))) {
+      delete tensor_data;
+      return false;
+    }
+    this->inner_all_tensors_[i] = new SchemaTensorWrapper(all_tensors_.at(i), tensor_data);
+  }
+  return true;
+}
+
+SchemaTensorWrapper *LiteModel::GetSchemaTensor(const size_t &tensor_index) const {
+  if (tensor_index >= this->inner_all_tensors_.size()) {
+    return nullptr;
+  }
+  return this->inner_all_tensors_.at(tensor_index);
 }
 
 namespace {

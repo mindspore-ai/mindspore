@@ -17,6 +17,7 @@
 #include <queue>
 #include <utility>
 #include <memory>
+#include <algorithm>
 #include <vector>
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/common/node_util.h"

@@ -20,6 +20,7 @@
 #include <cstdint>
 #include "tools/converter/quantizer/fse_bit_stream.h"
 #include "src/tensor.h"
+#include "src/lite_model.h"
 
 namespace mindspore::lite::quant {
 class FSEDecoder {
@@ -27,7 +28,7 @@ class FSEDecoder {
   FSEDecoder() = default;
   ~FSEDecoder() = default;
 
-  static int DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
+  static int DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
 
  private:
   static int FSEDecode(BitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,

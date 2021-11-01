@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "nnacl/fp32/crop_fp32.h"
+#include "src/tensor_category.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/crop_fp32.h"
 
 namespace mindspore {
@@ -257,12 +258,12 @@ TEST_F(CropTestFp32, CropTest11) {
   std::vector<int> out_shape = {1, 4, 2, 2};
   std::vector<lite::Tensor *> inputs;
   std::vector<lite::Tensor *> outputs;
-  auto in_t = new lite::Tensor(kNumberTypeFloat, in_shape, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto in_t = new lite::Tensor(kNumberTypeFloat, in_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   memcpy(in_t->MutableData(), input, sizeof(float) * in_t->ElementsNum());
   inputs.push_back(in_t);
 
-  auto out_t = new lite::Tensor(kNumberTypeFloat, out_shape, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto out_t = new lite::Tensor(kNumberTypeFloat, out_shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs.push_back(out_t);
 

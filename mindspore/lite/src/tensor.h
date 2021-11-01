@@ -30,6 +30,7 @@
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #include "src/common/utils.h"
+#include "src/tensor_category.h"
 
 namespace mindspore {
 namespace lite {
@@ -52,13 +53,6 @@ struct LiteQuantParam {
 
 class Tensor : public mindspore::tensor::MSTensor {
  public:
-  enum Category {
-    CONST_TENSOR,  // weight tensor
-    CONST_SCALAR,  // weight scalar
-    VAR,           // activation tensor
-    GRAPH_INPUT,
-    GRAPH_OUTPUT,
-  };
   Tensor() = default;
 
   Tensor(TypeId data_type, std::vector<int> shape, const mindspore::Format &format = mindspore::NHWC,
@@ -243,60 +237,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   bool own_data_{false};
   float scale_ = 1.0f;
 };
-
-inline size_t DataTypeSize(const TypeId type) {
-  switch (type) {
-    case kNumberTypeFloat64:
-      return sizeof(double);
-    case kNumberTypeFloat:
-    case kNumberTypeFloat32:
-      return sizeof(float);
-    case kNumberTypeInt8:
-      return sizeof(int8_t);
-    case kNumberTypeUInt8:
-      return sizeof(uint8_t);
-    case kNumberTypeFloat16:
-    case kNumberTypeInt16:
-      return sizeof(int16_t);
-    case kNumberTypeInt32:
-      return sizeof(int32_t);
-    case kNumberTypeInt64:
-      return sizeof(int64_t);
-    case kNumberTypeUInt16:
-      return sizeof(uint16_t);
-    case kNumberTypeUInt32:
-      return sizeof(uint32_t);
-    case kNumberTypeUInt64:
-      return sizeof(uint64_t);
-    case kNumberTypeBool:
-      return sizeof(bool);
-    case kObjectTypeString:
-      return sizeof(char);
-    case kObjectTypeTensorType:
-      return 0;
-    default:
-      MS_LOG(ERROR) << "Not support the type: " << type;
-      return 0;
-  }
-}
-
-inline Tensor::Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type,
-                                       const size_t data_size) {
-  return (node_type == NodeType_ValueNode)
-           ? (shape_num == 0 && data_size == DataTypeSize(data_type) ? Tensor::Category::CONST_SCALAR
-                                                                     : Tensor::Category::CONST_TENSOR)
-           : Tensor::Category::VAR;
-}
-
-inline Tensor::Category TensorCategory(const schema::Tensor *tensor) {
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "tensor is nullptr";
-    return Tensor::VAR;
-  }
-  auto shape_num = tensor->dims() == nullptr ? 0 : tensor->dims()->size();
-  auto data_size = tensor->data() == nullptr ? 0 : tensor->data()->size();
-  return TensorCategory(tensor->nodeType(), shape_num, TypeId(tensor->dataType()), data_size);
-}
 
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src);
 }  // namespace lite

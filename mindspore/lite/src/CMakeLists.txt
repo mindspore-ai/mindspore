@@ -96,6 +96,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ms_tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc

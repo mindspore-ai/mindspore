@@ -59,8 +59,8 @@ int MatMulOpenCLKernel::CheckSpecs() {
   transposeB = param->b_transpose_;
 
   act_weight_ = !in_tensors_.at(1)->IsConst();
-  bool is_const = in_tensors_.at(1)->category() == lite::Tensor::CONST_TENSOR ||
-                  in_tensors_.at(1)->category() == lite::Tensor::CONST_SCALAR;
+  bool is_const = in_tensors_.at(1)->category() == lite::Category::CONST_TENSOR ||
+                  in_tensors_.at(1)->category() == lite::Category::CONST_SCALAR;
   if (is_const && stored_weight_) {
     act_weight_ = false;
   }

@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <sys/time.h>
 #include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "src/common/file_utils.h"
 #include "nnacl/matmul_parameter.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
 

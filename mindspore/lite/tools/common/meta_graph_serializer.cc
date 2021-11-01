@@ -188,7 +188,7 @@ bool MetaGraphSerializer::ExtraAndSerializeModelWeight(const schema::MetaGraphT 
     if (tensor->nodeType == NodeType_CNode) {
       continue;
     }
-    if (tensor->dataType == kObjectTypeTensorType) {
+    if (tensor->dataType == kObjectTypeTensorType) {  // not support control-flow now
       continue;
     }
     auto external_data =

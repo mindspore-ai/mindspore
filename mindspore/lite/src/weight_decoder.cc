@@ -32,14 +32,17 @@ std::vector<bool> StringToBitVector(const std::string &str) {
   return vec;
 }
 
-STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   MS_LOG(DEBUG) << "un-index weight";
-  MS_CHECK_TRUE_MSG(src_tensor.quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
-  MS_CHECK_TRUE_MSG((*src_tensor.quantParams()).size() > 0, RET_ERROR, "quant params size need bigger than 0");
-  MS_CHECK_TRUE_MSG(src_tensor.quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
-  auto bit_num = src_tensor.quantParams()->Get(0)->numBits();
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
+                    "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
+  auto bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data()), src_tensor.data()->size());
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data_), src_tensor.data()->length_);
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse unique_value_cnt
@@ -97,14 +100,17 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
   return RET_OK;
 }
 
-STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   MS_LOG(DEBUG) << "un-sparse weight";
-  MS_CHECK_TRUE_MSG(src_tensor.quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
-  MS_CHECK_TRUE_MSG((*src_tensor.quantParams()).size() > 0, RET_ERROR, "quant params size need bigger than 0");
-  MS_CHECK_TRUE_MSG(src_tensor.quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
-  size_t bit_num = src_tensor.quantParams()->Get(0)->numBits();
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
+                    "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
+  size_t bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data()), src_tensor.data()->size());
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data_), src_tensor.data()->length_);
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse coor_best_bit
@@ -175,11 +181,13 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   auto dst_data = dst_tensor->data();
 
   if (bit_num <= kBit8) {
-    ret = UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.quantParams(),
-                                     elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
+    ret =
+      UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
+                                 elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
   } else {
-    ret = UnSparseTensorData<int16_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.quantParams(),
-                                      elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
+    ret =
+      UnSparseTensorData<int16_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
+                                  elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnSparseTensorData error";
@@ -259,19 +267,21 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, 
   return RET_OK;
 }
 
-int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+int WeightDecoder::DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  if (!dst_tensor->IsConst() || !src_tensor.enableHuffmanCode()) {
+  if (!dst_tensor->IsConst() || !src_tensor.handler()->enableHuffmanCode()) {
     return RET_NO_CHANGE;
   }
-  if (src_tensor.data() == nullptr) {
+  if (src_tensor.data()->data_ == nullptr) {
     return RET_NO_CHANGE;
   }
-  auto data = reinterpret_cast<const char *>(src_tensor.data()->data());
+  auto data = reinterpret_cast<const char *>(src_tensor.data()->data_);
   if (data == nullptr) {
     return RET_NO_CHANGE;
   }
-  std::string encode_str(data, src_tensor.data()->size());
+  std::string encode_str(data, src_tensor.data()->length_);
   dst_tensor->FreeData();
   dst_tensor->set_data(nullptr);
   auto ret = dst_tensor->MallocData();
@@ -289,9 +299,11 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
   return RET_OK;
 }
 
-int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+int WeightDecoder::UnPackToInt(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  auto quant_params = src_tensor.quantParams();
+  auto quant_params = src_tensor.handler()->quantParams();
   if (quant_params == nullptr || quant_params->size() == 0) {
     return RET_NO_CHANGE;
   }
@@ -313,18 +325,20 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
   auto dst_element_num = dst_tensor->ElementsNum();
   int origin_bit = quant_param->numBits();
   if (origin_bit < kBitNum8 && origin_bit >= kBitNum1) {
-    return UnPackUtil<int8_t, uint8_t>(&src_tensor, dst_element_num, origin_bit, dst_data);
+    return UnPackUtil<int8_t, uint8_t>(src_tensor, dst_element_num, origin_bit, dst_data);
   } else if (origin_bit < kBitNum16 && origin_bit > kBitNum8) {
-    return UnPackUtil<int16_t, uint16_t>(&src_tensor, dst_element_num, origin_bit, dst_data);
+    return UnPackUtil<int16_t, uint16_t>(src_tensor, dst_element_num, origin_bit, dst_data);
   } else {
     MS_LOG(ERROR) << "Unsupported bit number: " << origin_bit;
     return RET_NOT_SUPPORT;
   }
 }
 
-int WeightDecoder::UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   STATUS ret = RET_OK;
-  if (src_tensor.enableHuffmanCode()) {
+  if (src_tensor.handler()->enableHuffmanCode()) {
     ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Decode huffman code failed: " << ret;

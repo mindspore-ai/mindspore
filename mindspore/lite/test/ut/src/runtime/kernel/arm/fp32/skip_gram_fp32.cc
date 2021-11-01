@@ -18,6 +18,7 @@
 #include "src/runtime/kernel/arm/string/skip_gram.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"
+#include "src/tensor_category.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
 #include "src/common/string_utils.h"
@@ -33,14 +34,14 @@ class TestSkipGramFp32 : public mindspore::CommonTest {
 
 void SkipGramTestInit(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_,
                       SkipGramParameter *skip_gram_param) {
-  Tensor *in_t_first = new Tensor(kObjectTypeString, {}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  Tensor *in_t_first = new Tensor(kObjectTypeString, {}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   char sentence[] = "The quick brown fox jumps over the lazy dog";
   std::vector<StringPack> str;
   str.push_back({43, sentence});
   mindspore::lite::WriteStringsToTensor(in_t_first, str);
   inputs_->push_back(in_t_first);
 
-  Tensor *output = new Tensor(kObjectTypeString, {}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  Tensor *output = new Tensor(kObjectTypeString, {}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   outputs_->push_back(output);
 
   skip_gram_param->ngram_size = 3;

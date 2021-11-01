@@ -384,14 +384,14 @@ TEST_F(SchedulerTest, TestScheduleInt32OpToFp16Subgraph) {
   abs->name = "abs";
 
   auto tensor0 = std::make_unique<mindspore::schema::TensorT>();
-  tensor0->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor0->nodeType = mindspore::lite::NodeType_Parameter;
   tensor0->format = mindspore::schema::Format_NHWC;
   tensor0->dataType = mindspore::TypeId::kNumberTypeInt32;
   tensor0->dims = {1, 16, 16, 3};
   tensor0->offset = -1;
 
   auto tensor1 = std::make_unique<mindspore::schema::TensorT>();
-  tensor1->nodeType = mindspore::lite::NodeType_Parameter;
+  tensor1->nodeType = mindspore::lite::NodeType_ValueNode;
   tensor1->format = mindspore::schema::Format_NHWC;
   tensor1->dataType = mindspore::TypeId::kNumberTypeInt32;
   std::vector<int> dst_type = {43};
@@ -401,14 +401,14 @@ TEST_F(SchedulerTest, TestScheduleInt32OpToFp16Subgraph) {
   tensor1->offset = -1;
 
   auto tensor2 = std::make_unique<mindspore::schema::TensorT>();
-  tensor2->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor2->nodeType = mindspore::lite::NodeType_CNode;
   tensor2->format = mindspore::schema::Format_NHWC;
   tensor2->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor2->dims = {1, 16, 16, 3};
   tensor2->offset = -1;
 
   auto tensor3 = std::make_unique<mindspore::schema::TensorT>();
-  tensor3->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor3->nodeType = mindspore::lite::NodeType_CNode;
   tensor3->format = mindspore::schema::Format_NHWC;
   tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor3->dims = {1, 16, 16, 3};

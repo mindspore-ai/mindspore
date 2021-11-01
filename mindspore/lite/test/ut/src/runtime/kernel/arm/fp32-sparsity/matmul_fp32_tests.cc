@@ -40,8 +40,7 @@ class TestSPMMFp32 : public mindspore::CommonTest {
   std::vector<lite::Tensor *> GetInputs() {
     GenerateData();
     std::vector<lite::Tensor *> inputs;
-    auto *in_tensor =
-      new (std::nothrow) Tensor(kNumberTypeFloat, {row_, deep_}, mindspore::NHWC, lite::Tensor::Category::VAR);
+    auto *in_tensor = new (std::nothrow) Tensor(kNumberTypeFloat, {row_, deep_}, mindspore::NHWC, lite::Category::VAR);
     if (in_tensor == nullptr) {
       std::cerr << "New tensor failed" << std::endl;
       FreeTensors(&inputs);
@@ -50,7 +49,7 @@ class TestSPMMFp32 : public mindspore::CommonTest {
     inputs.emplace_back(in_tensor);
 
     auto *filter_tensor =
-      new (std::nothrow) Tensor(kNumberTypeFloat, {deep_, col_}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+      new (std::nothrow) Tensor(kNumberTypeFloat, {deep_, col_}, mindspore::NHWC, lite::Category::CONST_TENSOR);
     if (filter_tensor == nullptr) {
       std::cerr << "New tensor failed" << std::endl;
       FreeTensors(&inputs);
@@ -71,7 +70,7 @@ class TestSPMMFp32 : public mindspore::CommonTest {
     }
 
     auto *bias_tensor =
-      new (std::nothrow) Tensor(kNumberTypeFloat, {col_}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+      new (std::nothrow) Tensor(kNumberTypeFloat, {col_}, mindspore::NHWC, lite::Category::CONST_TENSOR);
     if (bias_tensor == nullptr) {
       std::cerr << "New tensor failed" << std::endl;
       FreeTensors(&inputs);
@@ -175,7 +174,7 @@ class TestSPMMFp32Accuracy : public TestSPMMFp32 {
 TEST_F(TestSPMMFp32Accuracy, DenseMatmul) {
   std::vector<lite::Tensor *> inputs = GetInputs();
   ASSERT_FALSE(inputs.empty());
-  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Category::VAR);
   ASSERT_NE(out_tensor, nullptr);
   std::vector<lite::Tensor *> outputs = {out_tensor};
 
@@ -211,7 +210,7 @@ TEST_F(TestSPMMFp32Accuracy, DenseMatmul) {
 TEST_F(TestSPMMFp32Accuracy, SparsityMatmul) {
   std::vector<lite::Tensor *> inputs = GetInputs();
   ASSERT_FALSE(inputs.empty());
-  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Category::VAR);
   ASSERT_NE(out_tensor, nullptr);
   std::vector<lite::Tensor *> outputs = {out_tensor};
 
@@ -282,7 +281,7 @@ class TestSPMMFp32Performance : public TestSPMMFp32 {
     if (inputs.empty()) {
       return false;
     }
-    auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Tensor::Category::VAR);
+    auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Category::VAR);
     if (out_tensor == nullptr) {
       return false;
     }
@@ -361,7 +360,7 @@ class TestSPMMFp32Performance : public TestSPMMFp32 {
 TEST_F(TestSPMMFp32Performance, DenseMatmul) {
   std::vector<lite::Tensor *> inputs = GetInputs();
   ASSERT_FALSE(inputs.empty());
-  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto out_tensor = new Tensor(kNumberTypeFloat, {}, mindspore::NHWC, lite::Category::VAR);
   ASSERT_NE(out_tensor, nullptr);
   std::vector<lite::Tensor *> outputs = {out_tensor};
 

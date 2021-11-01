@@ -81,7 +81,7 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
     if (CheckConstantTensor(tensor)) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
       cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
-    } else if (tensor->category() == Tensor::Category::VAR) {
+    } else if (tensor->category() == lite::Category::VAR) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << "*" << name << ";\n";
       cofs << GetTensorDataType(tensor->data_type()) << "*" << name << " = NULL;\n";
     }

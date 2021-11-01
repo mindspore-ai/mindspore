@@ -34,7 +34,10 @@ namespace lite {
 class Converter {
  public:
   Converter() = default;
-  ~Converter() { delete model_parser_; }
+  ~Converter() {
+    delete model_parser_;
+    this->model_parser_ = nullptr;
+  }
   schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag);
   FuncGraphPtr BuildFuncGraph(const converter::Flags &flag);
 

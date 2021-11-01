@@ -24,10 +24,11 @@ Optimizer::~Optimizer() {
   for (auto pass : graph_passes_) {
     delete (pass);
   }
-
+  graph_passes_.clear();
   for (auto pass : node_passes_) {
     delete (pass);
   }
+  node_passes_.clear();
 }
 
 void Optimizer::AddPass(GraphPass *graph_pass) {

@@ -17,6 +17,7 @@
 #include "src/ops/compat/attr_transfer_common.h"
 #include <vector>
 #include "src/common/log_adapter.h"
+#include "src/tensor_category.h"
 
 namespace mindspore {
 namespace lite {
@@ -26,9 +27,8 @@ schema::Tensor *AttrToTensor(const void *data, int data_size, bool is_array, Typ
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return nullptr;
   }
-  auto dst_tensor =
-    (is_array ? new (std::nothrow) Tensor(type_id, {data_size}, mindspore::NHWC, Tensor::Category::CONST_TENSOR)
-              : new (std::nothrow) Tensor(type_id, {}, mindspore::NHWC, Tensor::Category::CONST_SCALAR));
+  auto dst_tensor = (is_array ? new (std::nothrow) Tensor(type_id, {data_size}, mindspore::NHWC, Category::CONST_TENSOR)
+                              : new (std::nothrow) Tensor(type_id, {}, mindspore::NHWC, Category::CONST_SCALAR));
   auto dst_data = dst_tensor->MutableData();
   if (dst_data == nullptr) {
     MS_LOG(ERROR) << "Data from tensor is nullptr";

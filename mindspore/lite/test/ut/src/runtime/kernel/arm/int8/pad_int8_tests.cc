@@ -18,6 +18,7 @@
 #include "schema/inner/model_generated.h"
 #include "include/context.h"
 #include "src/tensor.h"
+#include "src/tensor_category.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "nnacl/pad_parameter.h"
@@ -33,7 +34,7 @@ class TestPadInt8 : public mindspore::CommonTest {
 
 int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_, PadParameter *pad_param,
                      int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {3}, mindspore::NHWC, lite::Tensor::CONST_TENSOR);
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {3}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   int8_t in[] = {1, 1, 1};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
@@ -42,7 +43,7 @@ int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {7}, mindspore::NHWC, lite::Tensor::CONST_TENSOR);
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {7}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
@@ -84,7 +85,7 @@ TEST_F(TestPadInt8, PadInt8Test1) {
 
 int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_, PadParameter *pad_param,
                      int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {6, 2}, mindspore::NHWC, lite::Tensor::VAR);
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {6, 2}, mindspore::NHWC, lite::Category::VAR);
   in_t->MallocData();
   int8_t in[] = {18, 71, 99, -6, 5, -119, 86, 13, 15, -85, -41, -77};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
@@ -93,7 +94,7 @@ int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {10, 5}, mindspore::NHWC, lite::Tensor::VAR);
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {10, 5}, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
   LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
@@ -137,7 +138,7 @@ TEST_F(TestPadInt8, PadInt8Test2) {
 
 int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_, PadParameter *pad_param,
                      int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {2, 3, 2, 1}, mindspore::NHWC, lite::Tensor::VAR);
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {2, 3, 2, 1}, mindspore::NHWC, lite::Category::VAR);
   in_t->MallocData();
   int8_t in[] = {73, 24, 7, -31, -109, -2, 69, -64, 51, -45, 38, 53};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
@@ -146,7 +147,7 @@ int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {6, 6, 4, 3}, mindspore::NHWC, lite::Tensor::VAR);
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {6, 6, 4, 3}, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
   LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;

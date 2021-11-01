@@ -107,15 +107,17 @@ int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint32_t *
   return ret;
 }
 
-int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
   if (dst_tensor->MutableData() == nullptr) {
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(src_tensor.data());
-  auto total_size = src_tensor.data()->size();
-  float *output = static_cast<float *>(dst_tensor->data());
+  CHECK_NULL_RETURN(src_tensor.data()->data_);
+  auto total_size = src_tensor.data()->length_;
+  auto *output = static_cast<float *>(dst_tensor->data());
   CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
   MS_CHECK_GT(out_sz, 0, RET_ERROR);
@@ -123,7 +125,7 @@ int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor)
   BitStream bs;
 
   size_t i = 0;
-  auto data8 = const_cast<unsigned char *>(src_tensor.data()->data());
+  auto data8 = reinterpret_cast<unsigned char *>(src_tensor.data()->data_);
 
   int frequency_count = *(reinterpret_cast<uint16_t *>(&data8[i]));
   i += sizeof(uint16_t);

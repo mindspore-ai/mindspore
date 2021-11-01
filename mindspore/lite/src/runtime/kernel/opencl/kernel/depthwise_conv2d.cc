@@ -63,16 +63,16 @@ int DepthwiseConv2dOpenCLKernel::InputOutputCheckSpecs() {
 
 int DepthwiseConv2dOpenCLKernel::FilterBiasCheckSpecs() {
   if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    bool is_const = in_tensors_.at(kWeightIndex)->category() == lite::Tensor::CONST_TENSOR ||
-                    in_tensors_.at(kWeightIndex)->category() == lite::Tensor::CONST_SCALAR;
+    bool is_const = in_tensors_.at(kWeightIndex)->category() == lite::Category::CONST_TENSOR ||
+                    in_tensors_.at(kWeightIndex)->category() == lite::Category::CONST_SCALAR;
     if (!(is_const && stored_weight_)) {
       MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant weight yet.";
       return RET_ERROR;
     }
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(kBiasIndex)->IsConst()) {
-    bool is_const = in_tensors_.at(kBiasIndex)->category() == lite::Tensor::CONST_TENSOR ||
-                    in_tensors_.at(kBiasIndex)->category() == lite::Tensor::CONST_SCALAR;
+    bool is_const = in_tensors_.at(kBiasIndex)->category() == lite::Category::CONST_TENSOR ||
+                    in_tensors_.at(kBiasIndex)->category() == lite::Category::CONST_SCALAR;
     if (!(is_const && stored_bias_)) {
       MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant bias yet.";
       return RET_ERROR;

@@ -235,7 +235,7 @@ int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file
     const char *delimiter = ";";
     auto relative_path = lite::SplitStringToVector(extended_info.plugin_path, *delimiter);
     if (relative_path.size() > kPluginPathMaxNum) {
-      MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than 10.";
+      MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than " << kPluginPathMaxNum;
       return RET_INPUT_PARAM_INVALID;
     }
     for (auto &i : relative_path) {

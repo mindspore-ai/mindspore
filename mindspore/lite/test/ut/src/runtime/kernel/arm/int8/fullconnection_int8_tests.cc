@@ -42,7 +42,7 @@ extern void QuantProcess(float *input, int len, float min, float max, float *sca
 extern lite::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp);
 
 lite::Tensor *MakeIntTensor(int *data, int len, std::vector<int> *shape) {
-  auto tensor = new lite::Tensor(kNumberTypeInt32, *shape, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto tensor = new lite::Tensor(kNumberTypeInt32, *shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
   tensor->MallocData();
   auto tensor_ptr = reinterpret_cast<int *>(tensor->MutableData());
   memcpy(tensor_ptr, data, len * sizeof(int));

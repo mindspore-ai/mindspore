@@ -81,7 +81,7 @@ int CoderGraph::ConvertTensors() {
     int origin_data_type = static_cast<int>(origin_tensor->dataType());
     Tensor *dstTensor = new (std::nothrow)
       lite::Tensor(TypeId(origin_data_type), shape, static_cast<mindspore::Format>(origin_tensor->format()),
-                   TensorCategory(origin_tensor));
+                   TensorCategory(*origin_tensor));
     MS_CHECK_PTR(dstTensor);
     if (origin_tensor->nodeType() == NodeType_ValueNode && origin_tensor->data() != nullptr &&
         origin_tensor->data()->size() > 0) {

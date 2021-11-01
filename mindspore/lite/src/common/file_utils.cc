@@ -98,6 +98,60 @@ std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode ope
   return fs;
 }
 
+// read file in [offset, offset + len)
+char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
+  if (len == 0) {
+    return nullptr;
+  }
+  if (offset < 0) {
+    MS_LOG(DEBUG) << "offset is invalid, offset: " << offset;
+    return nullptr;
+  }
+  auto offset_pos = static_cast<size_t>(offset);
+  std::string real_path = lite::RealPath(file.c_str());
+  if (lite::AccessFile(real_path, R_OK) != 0) {
+    MS_LOG(DEBUG) << "cannot access file:" << real_path << ".please check file if exists and file mod";
+    return nullptr;
+  }
+  std::ifstream ifs(real_path, std::ifstream::in | std::ifstream::binary);
+  if (!ifs.good()) {
+    MS_LOG(DEBUG) << "file: " << real_path << " is not exist";
+    return nullptr;
+  }
+
+  if (!ifs.is_open()) {
+    MS_LOG(DEBUG) << "file: " << real_path << " open failed";
+    return nullptr;
+  }
+
+  ifs.seekg(0, std::ios::end);
+  size_t total_size = ifs.tellg();
+  size_t len_pos;
+  if (len < 0) {
+    len_pos = total_size - offset_pos;
+  } else {
+    len_pos = static_cast<size_t>(len);
+  }
+  if (offset_pos + len_pos > total_size) {
+    MS_LOG(ERROR) << "file segment out of range";
+    ifs.close();
+    return nullptr;
+  }
+
+  auto buf = std::make_unique<char[]>(len);
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
+    ifs.close();
+    return nullptr;
+  }
+
+  ifs.seekg(offset, std::ios::beg);
+  ifs.read(buf.get(), len);
+  ifs.close();
+
+  return buf.release();
+}
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";
