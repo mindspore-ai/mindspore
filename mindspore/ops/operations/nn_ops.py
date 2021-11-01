@@ -5546,7 +5546,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         return x_type
 
 
-class ApplyAdaMax(PrimitiveWithInfer):
+class ApplyAdaMax(Primitive):
     r"""
     Updates relevant entries according to the adamax scheme.
 
@@ -5657,45 +5657,6 @@ class ApplyAdaMax(PrimitiveWithInfer):
     def __init__(self):
         """Initialize ApplyAdaMax"""
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, lr_shape,
-                    beta1_shape, beta2_shape, epsilon_shape, grad_shape):
-        validator.check("m_shape", m_shape, "var_shape", var_shape, Rel.EQ, self.name)
-        validator.check("v_shape", v_shape, "var_shape", var_shape, Rel.EQ, self.name)
-        validator.check("grad_shape", grad_shape, "var_shape", var_shape, Rel.EQ, self.name)
-        beta1_power_shp_len = len(beta1_power_shape)
-        validator.check_int(beta1_power_shp_len, 1, Rel.LE, "beta1 power's rank", self.name)
-        if beta1_power_shp_len == 1:
-            validator.check_int(beta1_power_shape[0], 1, Rel.EQ, "beta1_power_shape[0]", self.name)
-        lr_shp_len = len(lr_shape)
-        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
-        if lr_shp_len == 1:
-            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
-        beta1_shp_len = len(beta1_shape)
-        validator.check_int(beta1_shp_len, 1, Rel.LE, "beta1's rank", self.name)
-        if beta1_shp_len == 1:
-            validator.check_int(beta1_shape[0], 1, Rel.EQ, "beta1_shape[0]", self.name)
-        beta2_shp_len = len(beta2_shape)
-        validator.check_int(beta2_shp_len, 1, Rel.LE, "beta2's rank", self.name)
-        if beta2_shp_len == 1:
-            validator.check_int(beta2_shape[0], 1, Rel.EQ, "beta2_shape[0]", self.name)
-        epsilon_shp_len = len(epsilon_shape)
-        validator.check_int(epsilon_shp_len, 1, Rel.LE, "epsilon's rank", self.name)
-        if epsilon_shp_len == 1:
-            validator.check_int(epsilon_shape[0], 1, Rel.EQ, "epsilon_shape[0]", self.name)
-        return var_shape, m_shape, v_shape
-
-    def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, lr_dtype,
-                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"beta1_power": beta1_power_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"beta1": beta1_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"beta2": beta2_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"epsilon": epsilon_dtype}, valid_dtypes, self.name)
-        return var_dtype, m_dtype, v_dtype
 
 
 class ApplyAdadelta(PrimitiveWithInfer):
