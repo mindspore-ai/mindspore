@@ -33,7 +33,7 @@ constexpr auto kNameBatchToSpaceND = "BatchToSpaceND";
 class MS_CORE_API BatchToSpaceND : public PrimitiveC {
  public:
   /// \brief Constructor.
-  BatchToSpaceND() : PrimitiveC(kNameBatchToSpaceND) {}
+  BatchToSpaceND() : PrimitiveC(kNameBatchToSpaceND) { InitIOName({"x"}, {"y"}); }
   /// \brief Destructor.
   ~BatchToSpaceND() = default;
   MS_DECLARE_PARENT(BatchToSpaceND, PrimitiveC);
@@ -54,6 +54,7 @@ class MS_CORE_API BatchToSpaceND : public PrimitiveC {
 };
 AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
+using kPrimBatchToSpaceNDPtr = std::shared_ptr<BatchToSpaceND>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -26,13 +26,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_min_shape = shape_map[kMinShape];
+  auto input_max_shape = shape_map[kMaxShape];
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto out_shape = x_shape;
+
   int64_t block_shape_prod = 1;
   size_t offset = 2;
   auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
@@ -50,15 +55,44 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
                              << " should be divisible by block_shape_prod " << block_shape_prod;
   }
   out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
-  return std::make_shared<abstract::Shape>(out_shape);
+  if (input_min_shape.size() == 0 || input_max_shape.size() == 0) {
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  auto output_min_shape = input_min_shape;
+  auto output_max_shape = input_max_shape;
+  for (size_t i = 0; i < size; i++) {
+    block_shape_prod = block_shape_prod * block_shape[i];
+    auto x_block_prod_min = output_min_shape[i + offset] * block_shape[i];
+    auto x_block_prod_max = output_max_shape[i + offset] * block_shape[i];
+    auto crops_sum = crops[i][0] + crops[i][1];
+    CheckAndConvertUtils::Check("x block shape prod min", x_block_prod_min, kGreaterThan, "crops sum", crops_sum,
+                                prim_name);
+    CheckAndConvertUtils::Check("x block shape prod max", x_block_prod_max, kGreaterThan, "crops sum", crops_sum,
+                                prim_name);
+    output_min_shape[i + offset] = x_block_prod_min - crops_sum;
+    output_max_shape[i + offset] = x_block_prod_max - crops_sum;
+  }
+  if (output_min_shape[0] % block_shape_prod != 0) {
+    MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_min_shape[0]
+                             << " should be divisible by block_shape_prod " << block_shape_prod;
+  }
+  if (output_max_shape[0] % block_shape_prod != 0) {
+    MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_max_shape[0]
+                             << " should be divisible by block_shape_prod " << block_shape_prod;
+  }
+  output_min_shape[0] = int64_t(floor(output_min_shape[0] / static_cast<float>(block_shape_prod)));
+  output_max_shape[0] = int64_t(floor(output_max_shape[0] / static_cast<float>(block_shape_prod)));
+  return std::make_shared<abstract::Shape>(out_shape, output_min_shape, output_max_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
+TypePtr BatchToSpaceNDInferType(const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = input_args[0]->BuildType();
-  return infer_type;
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  // check_scalar_or_tensor_types_same
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "BatchToSpaceND");
 }
 }  // namespace
 
@@ -100,10 +134,18 @@ void BatchToSpaceND::Init(const std::vector<int64_t> block_shape, const std::vec
   this->set_crops(crops);
   this->set_block_shape(block_shape);
 }
+
 AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kInputNum = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
+                                           prim_name);
+  auto infer_type = BatchToSpaceNDInferType(input_args);
+  auto infer_shape = BatchToSpaceNDInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameBatchToSpaceND, BatchToSpaceND);
+REGISTER_PRIMITIVE_EVAL_IMPL(BatchToSpaceND, prim::kPrimBatchToSpaceND, BatchToSpaceNDInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
