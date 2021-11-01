@@ -136,6 +136,9 @@ class DynamicLossScaleUpdateCell(Cell):
     def get_loss_scale(self):
         """
         Get Loss Scale value.
+
+        Returns:
+            float, the loss scale value.
         """
         return self.loss_scale_value
 
@@ -210,6 +213,9 @@ class FixedLossScaleUpdateCell(Cell):
     def get_loss_scale(self):
         """
         Get Loss Scale value.
+
+        Returns:
+            float, the loss scale value.
         """
         return self.loss_scale_value
 
@@ -286,8 +292,13 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> net_with_loss = nn.WithLossCell(net, loss)
         >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
         >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
-        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
+        >>> scaling_sens = Tensor([1024], dtype=mstype.float32)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
+        >>> output = train_network(inputs, label)
+        >>>
+        >>> # update scaling sens and train the network
+        >>> scaling_sens = Tensor([1], dtype=mstype.float32)
+        >>> train_network.set_sense_scale(scaling_sens)
         >>> output = train_network(inputs, label)
     """
     def __init__(self, network, optimizer, scale_sense):
@@ -353,7 +364,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         Specify the argument 'pre_cond' and 'compute_input' to make sure overflow status is cleared at the right time.
         Taking this situation as an example, we need to execute state clearing after loss calculation and then detect
         overflow in the process of gradient calculation. In this case, pre_cond should be the output of the loss
-        function, and compute_input should be the input of gradients-computing function.
+        function, and compute_input should be the input of gradients-computing function. User-defined training network
+        based on this class can also call this interface to process the overflow.
 
         Args:
             - **pre_cond** (Tensor) - A precondition for starting overflow detection. It determines the executing order
@@ -383,7 +395,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         Get floating-point overflow status.
 
-        Get overflow results after executing the target process for overflow detection.
+        Get overflow results after executing the target process for overflow detection. User-defined training network
+        based on this class can also call this interface to process the overflow.
 
         Args:
             - **status** (object) - A status instance used to detect the overflow.
@@ -417,6 +430,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     def process_loss_scale(self, overflow):
         """
         Calculate loss scale according to the overflow.
+
+        User-defined training network based on this class can also call this interface to process the overflow.
 
         Args:
             - **overflow** (bool) - Whether the overflow occurs or not.
