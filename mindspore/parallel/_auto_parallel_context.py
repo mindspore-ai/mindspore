@@ -72,6 +72,8 @@ class _AutoParallelContext:
         self.check_context_handle()
         if device_num < 1 or device_num > 4096:
             raise ValueError("Device num must be in [1, 4096], but got {}".format(device_num))
+        from mindspore.communication._comm_helper import _HCCL_TEST_AVAILABLE
+        self._context_handle.set_hccl_test_avaible(_HCCL_TEST_AVAILABLE)
         self._context_handle.set_device_num(device_num)
 
     def get_device_num(self):

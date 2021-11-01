@@ -125,6 +125,9 @@ class ParallelContext {
   }
   bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
 
+  void set_hccl_test_available(bool hccl_test_available) { hccl_test_available_ = hccl_test_available; }
+  bool hccl_test_available() const { return hccl_test_available_; }
+
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
   void set_sharding_propagation(const bool);
@@ -178,6 +181,7 @@ class ParallelContext {
   bool enable_all2all_;
   std::vector<std::vector<int64_t>> dataset_strategy_;
   bool dataset_repeat_dim_right_ = false;
+  bool hccl_test_available_ = false;
 };
 
 }  // namespace parallel

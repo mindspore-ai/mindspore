@@ -135,6 +135,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")
     .def("get_device_num", &ParallelContext::device_num, "Get device num.")
+    .def("set_hccl_test_avaible", &ParallelContext::set_hccl_test_available, "Set hccl test available.")
     .def("set_device_num", &ParallelContext::set_device_num, "Set device num.")
     .def("get_device_num_is_set", &ParallelContext::device_num_is_set, "Get device num is set.")
     .def("get_global_rank", &ParallelContext::global_rank, "Get global rank.")
