@@ -52,7 +52,7 @@ class CustomAOTGpuKernel : public GpuKernel {
     }
 
     if (!handle_) {
-      handle_ = dlopen(cuda_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
+      handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
         MS_LOG(ERROR) << "Open Error: " << dlerror();
         return false;
@@ -71,10 +71,16 @@ class CustomAOTGpuKernel : public GpuKernel {
 
     int nparam = SizeToInt(params.size());
     int ret = 0;
-    if (nparam == 0) {
-      ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, stream_ptr, nullptr);
-    } else {
-      ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr, nullptr);
+    try {
+      if (nparam == 0) {
+        ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, stream_ptr, nullptr);
+      } else {
+        ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr, nullptr);
+      }
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "CustomAOT operator failed when running user defined file " << file_path_ << "! "
+                    << "Error message is " << e.what();
+      return false;
     }
 
     switch (ret) {
@@ -99,7 +105,7 @@ class CustomAOTGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
-      cuda_path_ = exec_info.substr(0, pos);
+      file_path_ = exec_info.substr(0, pos);
       func_name_ = exec_info.substr(pos + 1);
     } else {
       MS_LOG(ERROR) << "Wrong execute info:" << exec_info;
@@ -119,9 +125,9 @@ class CustomAOTGpuKernel : public GpuKernel {
       std::vector<int64_t> in_shape_tmp;
       std::for_each(in_shape.begin(), in_shape.end(),
                     [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-      shape_list_.push_back(in_shape_tmp);
+      shape_list_.emplace_back(in_shape_tmp);
       ndims_.push_back(SizeToInt(in_shape_tmp.size()));
-      type_list_.push_back(TypeIdToString(input_type_list[i], true));
+      type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
     }
 
     num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -138,9 +144,9 @@ class CustomAOTGpuKernel : public GpuKernel {
       std::vector<int64_t> out_shape_tmp;
       std::for_each(out_shape.begin(), out_shape.end(),
                     [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-      shape_list_.push_back(out_shape_tmp);
+      shape_list_.emplace_back(out_shape_tmp);
       ndims_.push_back(SizeToInt(out_shape_tmp.size()));
-      type_list_.push_back(TypeIdToString(output_type_list[i], true));
+      type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
     }
 
     std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
@@ -182,7 +188,7 @@ class CustomAOTGpuKernel : public GpuKernel {
 
   size_t num_input_;
   size_t num_output_;
-  std::string cuda_path_;
+  std::string file_path_;
   std::string func_name_;
   void *handle_;
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);

@@ -27,8 +27,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-py::object RawMemoryToScalar(const void *data, const TypePtr &type) {
-  switch (type->type_id()) {
+py::object RawMemoryToScalar(const void *data, const TypeId &type) {
+  switch (type) {
     case kNumberTypeBool:
       return py::bool_(*reinterpret_cast<const bool *>(data));
     case kNumberTypeInt16:
@@ -56,12 +56,12 @@ py::object RawMemoryToScalar(const void *data, const TypePtr &type) {
     case kNumberTypeFloat64:
       return py::float_(*reinterpret_cast<const double *>(data));
     default:
-      MS_LOG(EXCEPTION) << "Type: " << type->type_id() << " not supported.";
+      MS_LOG(EXCEPTION) << "Type: " << type << " not supported.";
   }
 }
 
-void ScalarToRawMemory(const py::object &obj, const TypePtr &type, const AddressPtr &address) {
-  switch (type->type_id()) {
+void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressPtr &address) {
+  switch (type) {
     case kNumberTypeBool: {
       bool data = py::cast<bool>(obj);
       CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(bool)), EOK, "memcpy failed.");
@@ -128,7 +128,7 @@ void ScalarToRawMemory(const py::object &obj, const TypePtr &type, const Address
       return;
     }
     default:
-      MS_LOG(EXCEPTION) << "Type: " << type->type_id() << " not supported.";
+      MS_LOG(EXCEPTION) << "Type: " << type << " not supported.";
   }
 }
 
@@ -155,7 +155,7 @@ void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
   }
 }
 
-void ObjectToRawMemory(const py::object &object, const PythonOjectType &object_type, const TypePtr &data_type,
+void ObjectToRawMemory(const py::object &object, const PythonOjectType &object_type, const TypeId &data_type,
                        const AddressPtr &address) {
   switch (object_type) {
     case PythonOjectType::kScalar:
@@ -212,14 +212,17 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }  // namespace
 
 void PyFuncCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+  is_custom_ = IsPrimitiveCNode(kernel_node, prim::kPrimCustom);
   func_id_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
+  fake_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
+  single_scalar_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
   BuildFuncInfo(kernel_node);
 }
 
 bool PyFuncCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                              const std::vector<AddressPtr> &outputs) {
   if (!init_) {
-    py_func_ = GetPythonFunc(func_id_);
+    py_func_ = GetPythonFunc();
     init_ = true;
   }
 
@@ -227,15 +230,40 @@ bool PyFuncCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
 }
 
 void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
-  const auto &in_shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
-  const auto &in_types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
-  const auto &out_shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
-  const auto &out_types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
+  std::vector<TypeId> in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
+  std::vector<TypeId> out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
+  std::vector<std::vector<int64_t>> in_shapes;
+  std::vector<std::vector<int64_t>> out_shapes;
+
+  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel_node); i++) {
+    std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+    std::vector<int64_t> in_shape_tmp;
+    std::for_each(in_shape.begin(), in_shape.end(),
+                  [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
+    in_shapes.emplace_back(in_shape_tmp);
+  }
+
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
+    std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    std::vector<int64_t> out_shape_tmp;
+    std::for_each(out_shape.begin(), out_shape.end(),
+                  [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
+    out_shapes.emplace_back(out_shape_tmp);
+  }
+
+  if (in_shapes.size() != in_types.size()) {
+    MS_LOG(EXCEPTION) << "Input shapes'size is " << in_shapes.size() << ", while input types' size is "
+                      << in_types.size();
+  }
+  if (out_shapes.size() != out_types.size()) {
+    MS_LOG(EXCEPTION) << "Output shapes'size is " << out_shapes.size() << ", while output types' size is "
+                      << out_types.size();
+  }
 
   input_infos_.dtypes = in_types;
   input_infos_.shapes = in_shapes;
   for (size_t i = 0; i < in_shapes.size(); i++) {
-    auto tensor = std::make_shared<tensor::Tensor>(in_types[i]->type_id(), in_shapes[i]);
+    auto tensor = std::make_shared<tensor::Tensor>(in_types[i], in_shapes[i]);
     input_tensors_.push_back(tensor);
 
     const auto &object_type = in_shapes[i].empty() ? PythonOjectType::kScalar : PythonOjectType::kNumpyArray;
@@ -244,9 +272,13 @@ void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
 
   output_infos_.dtypes = out_types;
   output_infos_.shapes = out_shapes;
-  for (size_t j = 0; j < out_shapes.size(); j++) {
-    const auto &object_type = out_shapes[j].empty() ? PythonOjectType::kScalar : PythonOjectType::kNumpyArray;
-    (void)output_infos_.object_types.emplace_back(object_type);
+  if (single_scalar_output_) {
+    (void)output_infos_.object_types.emplace_back(PythonOjectType::kScalar);
+  } else {
+    for (size_t j = 0; j < out_shapes.size(); j++) {
+      const auto &object_type = out_shapes[j].empty() ? PythonOjectType::kScalar : PythonOjectType::kNumpyArray;
+      (void)output_infos_.object_types.emplace_back(object_type);
+    }
   }
 }
 
@@ -265,28 +297,35 @@ bool PyFuncCpuKernel::ExecuteKernel(const std::vector<AddressPtr> &inputs, const
     result = py_func_();
   }
 
-  if (output_infos_.shapes.empty()) {
-    return true;
+  if (fake_output_) {
+    if (result.is_none()) {
+      return true;
+    } else {
+      MS_LOG(ERROR) << "This CustomPyfunc should have no outputs, but got 1";
+      return false;
+    }
   }
 
   PyObjectToRawMemorys(result, output_infos_, outputs);
+
   return true;
 }
 
-py::function PyFuncCpuKernel::GetPythonFunc(const int64_t &func_id) {
+py::function PyFuncCpuKernel::GetPythonFunc() {
   py::gil_scoped_acquire gil_acquire;
-  static const std::string &module_name = "mindspore.ops.operations.other_ops";
-  static const std::string &func_name = "get_pyfunc";
+  static const std::string &module_name =
+    is_custom_ ? "mindspore.ops.operations.custom_ops" : "mindspore.ops.operations.other_ops";
+  static const std::string &entrance = "get_pyfunc";
   py::module module = py::module::import(module_name.c_str());
-  py::object get_pyfunc_obj = module.attr(func_name.c_str());
+  py::object get_pyfunc_obj = module.attr(entrance.c_str());
   if (get_pyfunc_obj.is_none()) {
-    MS_LOG(EXCEPTION) << "Cannot find a python function named " << func_name << "in module" << module_name;
+    MS_LOG(EXCEPTION) << "Cannot find a python function named " << entrance << "in module" << module_name;
   }
 
   py::function get_pyfunc = get_pyfunc_obj.cast<py::function>();
-  py::object py_func_obj = get_pyfunc(py::int_(func_id));
+  py::object py_func_obj = get_pyfunc(py::int_(func_id_));
   if (py_func_obj.is_none()) {
-    MS_LOG(EXCEPTION) << "Cannot find python func with id: " << func_id;
+    MS_LOG(EXCEPTION) << "Cannot find python func with id: " << func_id_;
   }
 
   return py_func_obj.cast<py::function>();

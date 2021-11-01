@@ -43,7 +43,7 @@ class CustomAOTCpuKernel : public CPUKernel {
 
   size_t num_input_;
   size_t num_output_;
-  std::string cuda_path_;
+  std::string file_path_;
   std::string func_name_;
   void *handle_;
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);

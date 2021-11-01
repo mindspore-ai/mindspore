@@ -78,7 +78,6 @@ def aot_single_output(get_file_path, source, execf, reg):
 
 
 add_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y") \
@@ -101,7 +100,6 @@ def test_aot_single_output_gpu():
 
 
 add_cpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y") \
@@ -128,7 +126,6 @@ def test_aot_single_output_cpu():
 
 
 reorganize_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y") \
@@ -166,7 +163,6 @@ def test_reorganize():
 
 
 hetero_square_mul_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y") \
@@ -215,7 +211,6 @@ class SquareGradNet(Cell):
 
 
 square_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .output(0, "y") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
@@ -224,7 +219,6 @@ square_gpu_info = CustomRegOp() \
 
 
 square_bprop_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .input(2, "x3") \
@@ -326,7 +320,6 @@ class AOTMultiOutputNet(Cell):
 
 
 multioutput_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y1") \
@@ -339,7 +332,6 @@ multioutput_gpu_info = CustomRegOp() \
 
 
 multioutput_bprop_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x1") \
     .input(1, "x2") \
     .input(2, "x3") \

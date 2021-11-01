@@ -19,7 +19,10 @@ import inspect
 import json
 import functools
 from mindspore import ops
-from mindspore.ops.op_info_register import RegOp
+from mindspore import log as logger
+from mindspore.ops.op_info_register import RegOp, DataType
+from mindspore.ops._register_for_op import PyFuncRegistry
+from mindspore.common import dtype as mstype
 from mindspore._c_expression import Oplib
 
 
@@ -91,8 +94,8 @@ class CustomRegOp(RegOp):
                 Please note that target and the `func_type` of `Custom` op have some constraints.
                 If func_type is "akg", target can be one of ["Ascend", "GPU"].
                 If func_type is "tbe", target can only be "Ascend".
-                If func_type is "aot", target can only be ["GPU", "CPU"].
-                If func_type is "py_func", target can only be "CPU".
+                If func_type is "aot", target can be one of ["GPU", "CPU"].
+                If func_type is "pyfunc", target can only be "CPU".
                 Default: None.
         """
         self._is_string(target)
@@ -126,6 +129,10 @@ def custom_op_info_register(*reg_info):
     return decorator
 
 
+def get_pyfunc(fn):
+    return Custom.registered_py_id.get(fn)
+
+
 class Custom(ops.PrimitiveWithInfer):
     r"""
     `Custom` primitive is used for user defined operators and is to enhance the expressive ability of built-in
@@ -143,6 +150,7 @@ class Custom(ops.PrimitiveWithInfer):
                 the computation logic of a user defined operator. The function can be one of the following:
                 1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
                 2. A TBE operator implementation function.
+                3. A pure python function
 
             str:
                 If func is of str type, then str should be a path of binary file along with a function name. This could
@@ -198,7 +206,7 @@ class Custom(ops.PrimitiveWithInfer):
             function or the value of output dtype of func.
             If func has single output, then the value of output shape is a mindspore.dtype.
             If func has multiple outputs, then the value of output shape is a tuple of mindspore.dtype.
-        func_type (str): The implementation type of func, should be one of ["akg", "tbe", "aot", "py_func"].
+        func_type (str): The implementation type of func, should be one of ["akg", "tbe", "aot", "pyfunc"].
         bprop (function): The gradient function of func. Default: None.
         reg_info (Union[str, dict, list, tuple]): Represents the registration information of func with json format of
             type str or dict. The registration information specifies supported formats of input and output, attributes
@@ -223,11 +231,13 @@ class Custom(ops.PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
         >>> from mindspore.ops.op_info_register import DataType
         >>> from mindspore.nn import Cell
-        >>>
-        >>> #func_type="tbe"
-        >>>
+        >>> #-----------------------------------------------
+        >>> #--------------func_type="tbe"------------------
         >>> square_with_bias_op_info = CustomRegOp() \
         ...     .fusion_type("OPAQUE") \
         ...     .attr("bias", "required", "float") \
@@ -237,7 +247,6 @@ class Custom(ops.PrimitiveWithInfer):
         ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
         ...     .target("Ascend") \
         ...     .get_op_info()
-        >>>
         >>> @custom_op_info_register(square_with_bias_op_info)
         ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
         ...     import te.lang.cce
@@ -261,42 +270,53 @@ class Custom(ops.PrimitiveWithInfer):
         ...               "tensor_list": [data, res]}
         ...
         ...     te.lang.cce.cce_build_code(sch, config)
-        >>>
         >>> class Net(Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
         ...                                        func_type="tbe")
-        ...
         ...     def construct(self, x):
         ...         res = self.square_with_bias(x, 1.0)
         ...         return res
-        >>>
-        >>> #func_type="aot", platform=GPU
-        >>>
-        >>> class AOTSingleOutputNet(Cell):
-        ...     def __init__(self, func, out_shapes, out_types, reg=None):
-        ...         super(AOTSingleOutputNet, self).__init__()
-        ...         self.program = Custom(func, out_shapes, out_types, "aot", reg_info=reg)
-        ...     def construct(self, x, y):
-        ...         return self.program(x, y)
-        >>>
+        >>> #-----------------------------------------------
+        >>> #--------func_type="aot", platform=GPU----------
         >>> reorganize_op_info = CustomRegOp() \
-        ...     .fusion_type("OPAQUE") \
         ...     .input(0, "x1") \
         ...     .input(1, "x2") \
         ...     .output(0, "y") \
         ...     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
         ...     .target("GPU") \
         ...     .get_op_info()
-        >>>
-        >>> #test = AOTSingleOutputNet("./reorganize.so:CustomReorganize", shape, mstype.float32, reorganize_gpu_info)
-        >>> #output = test(Tensor(input_x), Tensor(input_y))
-        >>> #see more details in tests/st/ops/graph_kernel/custom/test_custom_aot.py
+        >>> class AOTSingleOutputNet(Cell):
+        ...     def __init__(self, func, out_shapes, out_types, reg=None):
+        ...         super(AOTSingleOutputNet, self).__init__()
+        ...         self.program = Custom("./reorganize.so:CustomReorganize", (2,3), mstype.float32, "aot", \
+        ...                                              reorganize_gpu_info)
+        ...     def construct(self, x, y):
+        ...         return self.program(x, y)
+        >>> #-----------------------------------------------
+        >>> #------------func_type="pyfunc"-----------------
+        >>> multi_output_op_info = CustomRegOp() \
+        ...     .input(0, "x1") \
+        ...     .input(1, "x2") \
+        ...     .output(0, "y1") \
+        ...     .output(1, "y2") \
+        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+        ...     .get_op_info()
+        >>> @custom_op_info_register(multi_output_op_info)
+        >>> def func_multi_output(x1, x2):
+        ...     return (x1 + x2), (x1 - x2)
+        >>> class PyFuncNet(nn.Cell):
+        ...     def __init__(self, fn, out_shapes, out_types,):
+        ...         super().__init__()
+        ...         self.func = Custom(func_multi_output, ((2,3), (2,3)), (ms.float32, ms.float32), "pyfunc")
+        ...     def construct(self, x1, x2):
+        ...         return self.func(x1, x2)
     """
 
     registered_func = {}
     attr_dict = {}  # Save input_names and attr_names for func.
+    registered_py_id = PyFuncRegistry()
 
     def __init__(self, func, out_shape, out_dtype, func_type, bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -305,6 +325,7 @@ class Custom(ops.PrimitiveWithInfer):
         self.func = func
         self.func_name = ""
         self.uniq_name = ""
+        self.fn_id = -1
         self.imply_path = ""
         if callable(self.func):
             # Get the original function if func is decorated
@@ -312,7 +333,10 @@ class Custom(ops.PrimitiveWithInfer):
                 self.func = self.func.__dict__["__wrapped__"]
             self.imply_path = os.path.realpath(inspect.getfile(self.func))
             self.func_name = self.func.__name__
-            self.uniq_name = self.name + "_" + self.func_name + "_" + str(id(self.func))
+            self.fn_id = id(self.func)
+            self.uniq_name = self.name+"_"+self.func_name+"_"+str(self.fn_id)
+            if func_type == "pyfunc":
+                Custom.registered_py_id.register(self.fn_id, self.func)
         elif isinstance(self.func, str):
             self.func_name = self.func
             self.uniq_name = self.name + "_" + self.func_name
@@ -320,11 +344,22 @@ class Custom(ops.PrimitiveWithInfer):
             raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
+        self.add_prim_attr("fn_id", self.fn_id)
         self.add_prim_attr("imply_path", self.imply_path)
         self.out_shape = out_shape
         self.out_dtype = out_dtype
         self.bprop = bprop
         self.func_type = func_type
+        self.fake_output = False
+        self.single_scalar_output = False
+        if not self.out_dtype:
+            self.fake_output = True
+        elif not self.out_shape:
+            self.single_scalar_output = True
+
+        self.add_prim_attr("fake_output", self.fake_output)
+        self.add_prim_attr("single_scalar_output", self.single_scalar_output)
+
         # Register info
         self.register_info(reg_info)
 
@@ -346,12 +381,20 @@ class Custom(ops.PrimitiveWithInfer):
     def infer_shape(self, *args):
         if callable(self.out_shape):
             return self.out_shape(*args)
-        return self.out_shape
+        if self.out_shape:
+            return self.out_shape
+        logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                       "Do not use it as it could be any uninitialized data.")
+        return (1,)
 
     def infer_dtype(self, *args):
         if callable(self.out_dtype):
             return self.out_dtype(*args)
-        return self.out_dtype
+        if self.out_dtype:
+            return self.out_dtype
+        logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                       "Do not use it as it could be any uninitialized data.")
+        return mstype.int32
 
     def get_bprop(self):
         return self.bprop
@@ -367,6 +410,12 @@ class Custom(ops.PrimitiveWithInfer):
                 continue
             if isinstance(reg_info, str):
                 reg_info = json.loads(reg_info)
+            if self.fake_output:
+                reg_info["outputs"].append(dict({"index": 0, "name": "y", "param_type": "required"}))
+                new_dtype_format = []
+                for i in reg_info["dtype_format"]:
+                    new_dtype_format.append(i+(DataType.I32_Default,))
+                reg_info["dtype_format"] = new_dtype_format
             target = self.get_target(reg_info)
             # Reg info for func is only registered once for a certain target
             if self.has_registered(target):
@@ -379,6 +428,24 @@ class Custom(ops.PrimitiveWithInfer):
                 raise ValueError('Invalid reg info {}: {}\n'.format(self.imply_path, reg_info_str))
             self.save_attr(reg_info)
             self.save_register_status(target)
+        registered_targets = getattr(self.func, "registered_targets", [])
+        if self.func_type == "pyfunc":
+            self.add_prim_attr("primitive_target", "CPU")
+            if registered_targets != ["CPU"]:
+                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}. We will\
+                run CustomPyfunc on CPU".format(registered_targets))
+        elif self.func_type == "aot":
+            if set(registered_targets) == set(["GPU", "CPU"]):
+                logger.warning(
+                    "Both GPU and CPU target are registered for CustomAOT. Target will be set according to context.")
+            elif registered_targets == ["GPU"]:
+                self.add_prim_attr("primitive_target", "GPU")
+            elif registered_targets == ["CPU"]:
+                self.add_prim_attr("primitive_target", "CPU")
+            else:
+                logger.warning(
+                    "CustomPyfunc only supports CPU/GPU platform, but gets registered target as {}. Target\
+                         will be set according to context.".format(registered_targets))
 
     def get_expanded_list(self, data):
         """Recursive function to parse elements in list or tuple."""
@@ -453,7 +520,7 @@ class Custom(ops.PrimitiveWithInfer):
                 target = imply_type_to_target.get(reg_info.get("imply_type"))
         # Infer target from func_type
         if target not in self.supported_targets:
-            func_type_to_target = {"tbe": "Ascend"}
+            func_type_to_target = {"tbe": "Ascend", "pyfunc": "CPU"}
             target = func_type_to_target.get(self.func_type)
         if target not in self.supported_targets:
             raise ValueError("target should be one of {}, but got {}".format(self.supported_targets, target))
@@ -466,7 +533,7 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "py_func": target}
+        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "pyfunc": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def save_attr(self, reg_info):

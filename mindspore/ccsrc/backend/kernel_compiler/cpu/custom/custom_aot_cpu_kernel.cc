@@ -40,7 +40,7 @@ CustomAOTCpuKernel::~CustomAOTCpuKernel() {
 void CustomAOTCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
-    cuda_path_ = exec_info.substr(0, pos);
+    file_path_ = exec_info.substr(0, pos);
     func_name_ = exec_info.substr(pos + 1);
   } else {
     MS_LOG(EXCEPTION) << "Wrong execute info:" << exec_info;
@@ -58,9 +58,9 @@ void CustomAOTCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     std::vector<int64_t> in_shape_tmp;
     std::for_each(in_shape.begin(), in_shape.end(),
                   [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-    shape_list_.push_back(in_shape_tmp);
+    shape_list_.emplace_back(in_shape_tmp);
     ndims_.push_back(SizeToInt(in_shape_tmp.size()));
-    type_list_.push_back(TypeIdToString(input_type_list[i], true));
+    type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
 
   num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -75,9 +75,9 @@ void CustomAOTCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     std::vector<int64_t> out_shape_tmp;
     std::for_each(out_shape.begin(), out_shape.end(),
                   [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-    shape_list_.push_back(out_shape_tmp);
+    shape_list_.emplace_back(out_shape_tmp);
     ndims_.push_back(SizeToInt(out_shape_tmp.size()));
-    type_list_.push_back(TypeIdToString(output_type_list[i], true));
+    type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
   }
 
   std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
@@ -99,7 +99,7 @@ bool CustomAOTCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std
 
 #if !defined(_WIN32) && !defined(_WIN64)
   if (!handle_) {
-    handle_ = dlopen(cuda_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
     if (!handle_) {
       MS_LOG(EXCEPTION) << "Open Error: " << dlerror();
     }
@@ -116,10 +116,15 @@ bool CustomAOTCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std
 
   int nparam = SizeToInt(params.size());
   int ret = 0;
-  if (nparam == 0) {
-    ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-  } else {
-    ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], nullptr, nullptr);
+  try {
+    if (nparam == 0) {
+      ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+    } else {
+      ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], nullptr, nullptr);
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "CustomAOT operator failed when running user defined file " << file_path_ << "! "
+                      << "Error message is " << e.what();
   }
 
   switch (ret) {

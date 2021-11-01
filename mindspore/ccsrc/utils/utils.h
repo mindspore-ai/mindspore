@@ -481,6 +481,12 @@ constexpr auto kAttrHiddenSize = "hidden_size";
 constexpr auto kAttrInputSize = "input_size";
 constexpr auto kAttrDstType = "dst_type";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
+constexpr auto kAttrFuncType = "func_type";
+
+// custom operator func type
+constexpr auto kCustomTypeAOT = "aot";
+constexpr auto kCustomTypePyfunc = "pyfunc";
+constexpr auto kCustomTypeTbe = "tbe";
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
