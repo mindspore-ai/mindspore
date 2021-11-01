@@ -150,9 +150,10 @@ class AdaSum(Cell):
     parallel training of Deep Learning models.
 
     Args:
-        network (Cell): The training network. The network only supports single output.
-        optimizer (Union[Cell]): Optimizer for updating the weights.
-        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
+        rank (int): Rank number.
+        device_number (int): Device number.
+        group_number (int): Group number.
+        parameter_tuple (Tuple(Parameter)): Tuple of parameters.
 
     Inputs:
         - **delta_weights** (Tuple(Tensor)) - Tuple of gradients.

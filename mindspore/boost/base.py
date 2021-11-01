@@ -25,7 +25,7 @@ __all__ = ["OptimizerProcess", "ParameterProcess"]
 
 
 class OptimizerProcess:
-    """
+    r"""
     Process optimizer for Boost. Currently, this class supports adding GC(grad centralization) tags
     and creating new optimizers.
 
@@ -68,7 +68,12 @@ class OptimizerProcess:
         self.origin_params = opt.init_params["params"]
 
     def build_params_dict(self, network):
-        """Build the params dict of the network"""
+        r"""
+        Build the parameter's dict of the network.
+
+        Inputs:
+            - **network** (Cell) - The training network.
+        """
         cells = network.cells_and_names()
         params_dict = {}
         for _, cell in cells:
@@ -77,7 +82,13 @@ class OptimizerProcess:
         return params_dict
 
     def build_gc_params_group(self, params_dict, parameters):
-        """Build the params group that needs gc"""
+        r"""
+        Build the parameter's group with grad centralization.
+
+        Inputs:
+            - **params_dict** (dict) - The network's parameter dict.
+            - **parameters** (list) - The network's parameter list.
+        """
         group_params = []
         for group_param in parameters:
             if 'order_params' in group_param.keys():
@@ -107,7 +118,12 @@ class OptimizerProcess:
         return group_params
 
     def add_grad_centralization(self, network):
-        """Add gradient centralization."""
+        r"""
+        Add gradient centralization.
+
+        Inputs:
+            - **network** (Cell) - The training network.
+        """
         params_dict = self.build_params_dict(network)
 
         parameters = self.origin_params
@@ -137,7 +153,7 @@ class OptimizerProcess:
 
 
 class ParameterProcess:
-    """
+    r"""
     Process parameter for Boost. Currently, this class supports creating group parameters
     and automatically setting gradient segmentation point.
 
@@ -171,7 +187,13 @@ class ParameterProcess:
         self._parameter_indices = 1
 
     def assign_parameter_group(self, parameters, split_point=None):
-        """Assign parameter group."""
+        r"""
+        Assign parameter group.
+
+        Inputs:
+            - **parameters** (list) - The network's parameter list.
+            - **split_point** (list) - The gradient split point of this network. default: None.
+        """
         if not isinstance(parameters, (list, tuple)) or not parameters:
             return parameters
 
@@ -187,7 +209,13 @@ class ParameterProcess:
         return parameters
 
     def generate_group_params(self, parameters, origin_params):
-        """Generate group parameters."""
+        r"""
+        Generate group parameters.
+
+        Inputs:
+            - **parameters** (list) - The network's parameter list.
+            - **origin_params** (list) - The network's origin parameter list.
+        """
         origin_params_copy = origin_params
         if origin_params_copy is not None:
             if not isinstance(origin_params_copy, list):
