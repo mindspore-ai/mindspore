@@ -412,7 +412,7 @@ void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const st
   if (job_type == kPreCompile) {
     SavePreBuildResult(task_id, compile_info);
     return;
-  } else if (job_type == kCompile) {
+  } else {
     auto task_info = task_map_[task_id];
     auto json_name = task_info.json_name;
     TbeUtils::UpdateCache(json_name);
@@ -429,15 +429,11 @@ void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const st
         MS_LOG(EXCEPTION) << "Save json file failed, op: " << json_name << ", compile_info:" << compile_info;
       }
     }
-  } else if (job_type == kFusionCompile) {
-    auto task_info = task_map_[task_id];
-    auto json_name = task_info.json_name;
-    TbeUtils::UpdateCache(json_name);
   }
 }
 
 void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
-                                             const std::string &job_type, const std::vector<AnfNodePtr> &output_nodes) {
+                                             const std::vector<AnfNodePtr> &output_nodes) {
   MS_LOG(DEBUG) << "Save io size info for " << json_name;
   if (kernel_io_size_info_.find(json_name) != kernel_io_size_info_.end()) {
     MS_LOG(DEBUG) << "Io size info of " << json_name << " already exist, skip.";
@@ -446,7 +442,7 @@ void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const s
   struct KernelIOSizeInfo info;
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
-  if (job_type == kFusionCompile) {
+  if (!output_nodes.empty()) {
     (void)TbeKernelBuild::GetIOSize(json[kOpList], output_nodes, &input_size_list, &output_size_list);
   } else {
     (void)TbeKernelBuild::GetIOSize(json, &input_size_list, &output_size_list);
@@ -457,16 +453,17 @@ void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const s
   kernel_io_size_info_[json_name] = info;
 }
 
-void TbeKernelCompileManager::SaveTaskInfo(const std::string &job_type, const bool is_dynamic,
-                                           const nlohmann::json &json, const std::string &json_name,
-                                           const std::string &full_name, int task_id, int64_t scope_id) {
+void TbeKernelCompileManager::SaveTaskInfo(const bool is_dynamic, const nlohmann::json &json,
+                                           const std::string &json_name, const std::string &full_name, int task_id,
+                                           int64_t scope_id) {
   struct TaskInfo task_info;
   task_info.json_name = json_name;
   task_info.full_name = full_name;
   task_info.build_json = json;
   task_info.task_id = task_id;
   task_info.is_dynamic = is_dynamic;
-  if (job_type == kFusionCompile) {
+  // only fusion save scope_id
+  if (scope_id != INT64_MAX) {
     task_info.scope_id = scope_id;
   }
   task_map_[task_id] = task_info;
@@ -501,9 +498,8 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
         MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
                           << "\n except_msg : " << target_status.except_msg
                           << "\n node trace: " << trace::DumpSourceLines(target_node);
-      } else if (type == kFusionCompile) {
-        MS_LOG(INFO) << "Fusion op compile failed, op: " << kernel_name
-                     << "\n except_msg : " << target_status.except_msg;
+      } else {
+        MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
         (void)success_job->emplace_back(target_status.target_job_id);
       }
     }
@@ -550,8 +546,13 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     auto json_name = full_name_to_json_name_[full_name];
     auto kernel_pack = tbe::TbeUtils::SearchCache(json_name, false);
     if (kernel_pack == nullptr) {
-      MS_LOG(EXCEPTION) << "Can not find .json file or the .o file for op:" << json_name
-                        << ", trace: " << trace::DumpSourceLines(node);
+      auto *bin_map = tbe::KernelMeta::GetInstance();
+      MS_EXCEPTION_IF_NULL(bin_map);
+      kernel_pack = bin_map->SearchInFile(json_name);
+      if (kernel_pack == nullptr) {
+        MS_LOG(EXCEPTION) << "Can not find .json file or the .o file for op:" << json_name
+                          << ", trace: " << trace::DumpSourceLines(node);
+      }
     }
     auto kernel_info_json = kernel_pack->kernel_json_info();
     auto kernel_mod_ptr = std::make_shared<TbeKernelMod>(kernel_pack);
@@ -657,7 +658,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     auto json_name = json_creator->GetJsonName();
     full_name_to_json_name_[full_name] = json_name;
     // save all task io size info for gen kernel mod
-    SaveIOSizeInfo(kernel_json, json_name, job_type);
+    SaveIOSizeInfo(kernel_json, json_name);
     if (job_type == kCompile || job_type == kTune) {
       if (single_processed_kernels_.find(json_name) != single_processed_kernels_.end()) {
         continue;  // same op no need build
@@ -676,7 +677,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     }
     auto task_id = GetJsonValue<int>(build_json, kJobId);
     auto is_dynamic = AnfAlgo::IsDynamicShape(node);
-    SaveTaskInfo(job_type, is_dynamic, build_json, json_name, full_name, task_id, 0);
+    SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
 
     // save pair<task_id, node> for exception print and get node trace
     (void)job_id_to_node_.insert(std::pair<int, CNodePtr>(task_id, node));
@@ -735,7 +736,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     auto json_name = json_creator->GetJsonName();
     full_name_to_json_name_[full_name] = json_name;
     all_fusion_ops_[fusion_scope_iter.scope_id] = full_name;
-    SaveIOSizeInfo(fusion_op, json_name, job_type, fusion_scope_iter.output_nodes);
+    SaveIOSizeInfo(fusion_op, json_name, fusion_scope_iter.output_nodes);
     if (fusion_processed_kernels_.find(json_name) != fusion_processed_kernels_.end()) {
       continue;  // same op no need build
     }
@@ -752,7 +753,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     auto json_obj = TurnStrToJson(build_result);
     PrintCompileResult(json_obj);
     auto task_id = GetJsonValue<int>(json_obj, kJobId);
-    SaveTaskInfo(job_type, false, build_json, json_name, full_name, task_id, fusion_scope_iter.scope_id);
+    SaveTaskInfo(false, build_json, json_name, full_name, task_id, fusion_scope_iter.scope_id);
   }
   Query(job_type);
   // only fusion op compile succeed can be return

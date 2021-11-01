@@ -89,8 +89,8 @@ class TbeKernelCompileManager {
   // tbe kernel build client interface
   std::string DispatchCompileTask(const nlohmann::json &kernel_json);
   // save all build task: pre-build, single-build, fusion-build
-  void SaveTaskInfo(const std::string &job_type, const bool is_dynamic, const nlohmann::json &json,
-                    const std::string &json_name, const std::string &full_name, int task_id, int64_t scope_id);
+  void SaveTaskInfo(const bool is_dynamic, const nlohmann::json &json, const std::string &json_name,
+                    const std::string &full_name, int task_id, int64_t scope_id);
   // after job build, save some result info
   // for 'pre-build', save op-pattern and output_data_desc;
   // for 'dynamic', save compile_res
@@ -109,7 +109,7 @@ class TbeKernelCompileManager {
   std::string ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node);
   void ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *task_info);
   nlohmann::json TurnStrToJson(const std::string &str) const;
-  void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name, const std::string &job_type,
+  void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
                       const std::vector<AnfNodePtr> &output_nodes = {});
   void ClearOldTask();
   void LoadPreBuildResult(const std::vector<CNodePtr> &nodes);

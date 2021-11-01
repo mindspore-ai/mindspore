@@ -97,10 +97,12 @@ class KernelMeta {
   bool ReadIndex(const std::string &bin_dir);
   KernelPackPtr GetKernelPack(const std::string &kernel_name, const bool is_akg = false);
   void UpdateCache(const std::string &kernel_name);
+  KernelPackPtr SearchInFile(const std::string &kernel_name);
 
  private:
   KernelMeta() = default;
   ~KernelMeta() = default;
+  KernelPackPtr LoadFromFile(const std::string &kernel_name);
   std::unordered_map<std::string, std::string> kernel_index_map_{};
   std::unordered_map<std::string, KernelPackPtr> kernel_pack_map_{};
 };
