@@ -43,7 +43,8 @@ abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr SquareInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto x_dtype = input_args[kInputIndex0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types, prim->name());
+  const std::set<TypePtr> valid_types = {kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
   return x_dtype;
 }
 
@@ -52,8 +53,9 @@ AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-
-  return abstract::MakeAbstract(SquareInferShape(primitive, input_args), SquareInferType(primitive, input_args));
+  auto types = SquareInferType(primitive, input_args);
+  auto shapes = SquareInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
 }
 
 ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

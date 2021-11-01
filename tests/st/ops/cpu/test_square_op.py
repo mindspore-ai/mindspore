@@ -24,7 +24,6 @@ from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
-
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
@@ -34,7 +33,6 @@ class Grad(nn.Cell):
     @ms_function
     def construct(self, input_, output_grad):
         return self.grad(self.network)(input_, output_grad)
-
 
 class Net(nn.Cell):
     def __init__(self):
@@ -67,3 +65,4 @@ def test_net(dtype):
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
+    

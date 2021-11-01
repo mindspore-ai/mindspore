@@ -19,6 +19,10 @@
 
 #include <memory>
 #include <vector>
+#include <complex>
+#include <set>
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
@@ -41,6 +45,9 @@ class ArithmeticSelfCPUKernel : public CPUKernel {
 
   void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  template <typename T>
+  void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   TypeId dtype_{kTypeUnknown};
 };
 
@@ -61,6 +68,10 @@ MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutpu
 MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                   ArithmeticSelfCPUKernel);
 MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
                   ArithmeticSelfCPUKernel);
 MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCPUKernel);
@@ -187,6 +198,10 @@ MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddO
                     IdentityCPUKernel, float16);
 MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                     IdentityCPUKernel, bool);
+MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                    IdentityCPUKernel, complex64);
+MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                    IdentityCPUKernel, complex128);
 }  // namespace kernel
 }  // namespace mindspore
 
