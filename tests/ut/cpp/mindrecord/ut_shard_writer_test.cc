@@ -1156,5 +1156,90 @@ TEST_F(TestShardWriter, TestOpenForAppend) {
   }
 }
 
+/// Feature: OverWriting in FileWriter
+/// Description: old mindrecord files exist in output path
+/// Expectation: generated mindrecord files
+TEST_F(TestShardWriter, TestOverWrite) {
+
+ MS_LOG(INFO) << common::SafeCStr(FormatInfo("OverWrite imageNet"));
+
+  // load binary data
+  std::vector<std::vector<uint8_t>> bin_data;
+  std::vector<std::string> filenames;
+  if (-1 == mindrecord::GetAbsoluteFiles("./data/mindrecord/testImageNetData/images", filenames)) {
+    MS_LOG(INFO) << "-- ATTN -- Missed data directory. Skip this case. -----------------";
+    return;
+  }
+  mindrecord::Img2DataUint8(filenames, bin_data);
+
+  // init shardHeader
+  ShardHeader header_data;
+  MS_LOG(INFO) << "Init ShardHeader Already.";
+
+  // create schema
+  json anno_schema_json = R"({"file_name": {"type": "string"}, "label": {"type": "int32"}})"_json;
+  std::shared_ptr<mindrecord::Schema> anno_schema = mindrecord::Schema::Build("annotation", anno_schema_json);
+  if (anno_schema == nullptr) {
+    MS_LOG(ERROR) << "Build annotation schema failed";
+    return;
+  }
+
+  // add schema to shardHeader
+  int anno_schema_id = header_data.AddSchema(anno_schema);
+  MS_LOG(INFO) << "Init Schema Already.";
+
+  // create index
+  std::pair<uint64_t, std::string> index_field1(anno_schema_id, "file_name");
+  std::pair<uint64_t, std::string> index_field2(anno_schema_id, "label");
+  std::vector<std::pair<uint64_t, std::string>> fields;
+  fields.push_back(index_field1);
+  fields.push_back(index_field2);
+
+  // add index to shardHeader
+  header_data.AddIndexFields(fields);
+  MS_LOG(INFO) << "Init Index Fields Already.";
+  // load  meta data
+  std::vector<json> annotations;
+  LoadDataFromImageNet("./data/mindrecord/testImageNetData/annotation.txt", annotations, 10);
+
+  // add data
+  std::map<std::uint64_t, std::vector<json>> rawdatas;
+  rawdatas.insert(pair<uint64_t, vector<json>>(anno_schema_id, annotations));
+  MS_LOG(INFO) << "Init Images Already.";
+
+  // init file_writer
+  std::vector<std::string> file_names;
+  int file_count = 4;
+  for (int i = 1; i <= file_count; i++) {
+    file_names.emplace_back(std::string("./imagenet.shard0") + std::to_string(i));
+    MS_LOG(INFO) << "shard name is: " << common::SafeCStr(file_names[i - 1]);
+  }
+
+  std::ofstream outfile(file_names[0]);
+  outfile << "dummy data!" << std::endl;
+  outfile.close();
+  MS_LOG(INFO) << "Init Output Files Already.";
+  {
+    ShardWriter fw_init;
+    fw_init.Open(file_names, false, true);
+    // set shardHeader
+    fw_init.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
+    // close file_writer
+    fw_init.Commit();
+  }
+
+  {
+    mindrecord::ShardWriter fw;
+    fw.OpenForAppend(file_names[0]);
+    fw.WriteRawData(rawdatas, bin_data);
+    fw.Commit();
+  }
+
+  for (const auto &oneFile : file_names) {
+    remove(common::SafeCStr(oneFile));
+  }
+
+}
+
 }  // namespace mindrecord
 }  // namespace mindspore

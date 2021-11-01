@@ -36,7 +36,7 @@ class ShardWriter:
         self._header = None
         self._is_open = False
 
-    def open(self, paths):
+    def open(self, paths, override):
         """
         Open a new MindRecord File and prepare to write raw data.
 
@@ -49,7 +49,7 @@ class ShardWriter:
         Raises:
             MRMOpenError: If failed to open MindRecord File.
         """
-        ret = self._writer.open(paths, False)
+        ret = self._writer.open(paths, False, override)
         if ret != ms.MSRStatus.SUCCESS:
             logger.critical("Failed to open paths")
             raise MRMOpenError

@@ -54,9 +54,10 @@ class __attribute__((visibility("default"))) ShardWriter {
 
   /// \brief Open file at the beginning
   /// \param[in] paths the file names list
-  /// \param[in] append new data at the end of file if true, otherwise overwrite file
+  /// \param[in] append new data at the end of file if true, otherwise try to overwrite file
+  /// \param[in] overwrite a file with the same name if true
   /// \return Status
-  Status Open(const std::vector<std::string> &paths, bool append = false);
+  Status Open(const std::vector<std::string> &paths, bool append = false, bool overwrite = false);
 
   /// \brief Open file at the ending
   /// \param[in] paths the file names list
@@ -215,7 +216,7 @@ class __attribute__((visibility("default"))) ShardWriter {
   Status GetFullPathFromFileName(const std::vector<std::string> &paths);
 
   /// \brief Open files
-  Status OpenDataFiles(bool append);
+  Status OpenDataFiles(bool append, bool overwrite);
 
   /// \brief Remove lock file
   Status RemoveLockFile();

@@ -15,6 +15,7 @@
 """test mindrecord base"""
 import os
 import uuid
+import pytest
 import numpy as np
 from utils import get_data, get_nlp_data
 
@@ -1079,3 +1080,168 @@ def test_write_read_process_without_ndarray_type():
 
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
+
+def test_cv_file_overwrite_01():
+    """
+    Feature: Overwriting in FileWriter
+    Description: full mindrecord files exist
+    Expectation: generated new mindrecord files
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
+
+    writer = FileWriter(mindrecord_file_name, FILES_NUM, True)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name + "0")
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+    reader.close()
+
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+
+def test_cv_file_overwrite_02():
+    """
+    Feature: Overwriting in FileWriter
+    Description: lack 1 mindrecord file
+    Expectation: generated new mindrecord files
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
+    # remove 1 mindrecord file
+    os.remove(mindrecord_file_name + "0")
+
+    writer = FileWriter(mindrecord_file_name, FILES_NUM, True)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name + "0")
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+    reader.close()
+
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+
+def test_cv_file_overwrite_03():
+    """
+    Feature: Overwriting in FileWriter
+    Description: lack 1 db file
+    Expectation: generated new mindrecord files
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
+    # remove 1 db file
+    os.remove(mindrecord_file_name + "0" + ".db")
+
+    writer = FileWriter(mindrecord_file_name, FILES_NUM, True)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name + "0")
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+    reader.close()
+
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+
+def test_cv_file_overwrite_04():
+    """
+    Feature: Overwriting in FileWriter
+    Description: lack 1 db file and mindrecord file
+    Expectation: generated new mindrecord files
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
+
+    os.remove(mindrecord_file_name + "0")
+    os.remove(mindrecord_file_name + "0" + ".db")
+
+    writer = FileWriter(mindrecord_file_name, FILES_NUM, True)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name + "0")
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+    reader.close()
+
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+
+def test_cv_file_overwrite_exception_01():
+    """
+    Feature: Overwriting in FileWriter
+    Description: default write mode, detect mindrecord file
+    Expectation: exception occur
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    with open(mindrecord_file_name + "0", 'w'):
+        pass
+    with pytest.raises(RuntimeError) as err:
+        writer = FileWriter(mindrecord_file_name, FILES_NUM)
+        data = get_data("../data/mindrecord/testImageNetData/")
+        cv_schema_json = {"file_name": {"type": "string"},
+                          "label": {"type": "int64"}, "data": {"type": "bytes"}}
+        writer.add_schema(cv_schema_json, "img_schema")
+        writer.write_raw_data(data)
+    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+
+def test_cv_file_overwrite_exception_02():
+    """
+    Feature: Overwriting in FileWriter
+    Description: default write mode, detect db file
+    Expectation: exception occur
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    with open(mindrecord_file_name + "0" + ".db", 'w'):
+        pass
+    with pytest.raises(RuntimeError) as err:
+        writer = FileWriter(mindrecord_file_name, FILES_NUM)
+        data = get_data("../data/mindrecord/testImageNetData/")
+        cv_schema_json = {"file_name": {"type": "string"},
+                          "label": {"type": "int64"}, "data": {"type": "bytes"}}
+        writer.add_schema(cv_schema_json, "img_schema")
+        writer.write_raw_data(data)
+    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
