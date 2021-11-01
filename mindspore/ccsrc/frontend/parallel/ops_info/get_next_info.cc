@@ -42,7 +42,11 @@ Status GetNextInfo::InferTensorMap() {
       if (dim == 1) {
         tensor_map_index.push_back(MAP_NONE);
       } else if (dim == shard_num_) {
-        tensor_map_index.push_back(dev_matrix_shape_origin_.size() - 1 - slice_dim);
+        if (repeated_num_in_dev_matrix_right_ && dev_matrix_shape_origin_.size() != dev_matrix_shape_.size()) {
+          tensor_map_index.push_back(dev_matrix_shape_origin_.size() - slice_dim);
+        } else {
+          tensor_map_index.push_back(dev_matrix_shape_origin_.size() - 1 - slice_dim);
+        }
       } else {
         MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support fully shard in one dim.";
         return FAILED;
@@ -222,6 +226,10 @@ void GetNextInfo::InferReplaceOps(const StrategyPtr &) {
 }
 
 Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
+  repeated_num_in_dev_matrix_right_ = false;
+  if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
+    repeated_num_in_dev_matrix_right_ = true;
+  }
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
