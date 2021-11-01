@@ -133,6 +133,7 @@ message TensorProto {
   repeated double double_data = 10;
   repeated uint64 uint64_data = 11;
   optional ExternalDataProto external_data = 12;
+  optional string ref_key = 13;
 }
 
 

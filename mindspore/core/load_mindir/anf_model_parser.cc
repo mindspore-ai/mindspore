@@ -394,11 +394,36 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
     const mind_ir::TensorProto &tensor_proto = value_proto.tensor(0);
     tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(tensor_proto);
     if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "Get tensor_info fail.";
       return false;
     }
-    auto tensor_abstract = tensor_info->ToAbstract();
-    node->set_abstract(tensor_abstract);
+    if (tensor_proto.has_ref_key() && top_graph_ != nullptr) {
+      auto ref_key = std::make_shared<RefKey>(tensor_proto.ref_key());
+      auto abs_ref_key = ref_key->ToAbstract();
+      auto abs_value = tensor_info->ToAbstract()->Broaden()->cast<abstract::AbstractTensorPtr>();
+      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
+      node->set_abstract(abs_ref);
+      auto parameters = top_graph_->parameters();
+      for (auto parameter : parameters) {
+        auto parameter_abs = parameter->abstract();
+        if (parameter_abs->isa<abstract::AbstractRef>()) {
+          auto parameter_abs_value = parameter_abs->cast<abstract::AbstractRefPtr>()->ref_key_value();
+          if (parameter_abs_value->name() == tensor_proto.ref_key()) {
+            node->set_default_param(parameter->cast<ParameterPtr>()->default_param());
+            break;
+          }
+        }
+      }
+    } else {
+      auto tensor_abstract = tensor_info->ToAbstract();
+      node->set_abstract(tensor_abstract);
+    }
   } else if (value_proto.has_denotation()) {
+    if (value_proto.denotation() == "UMonadType") {
+      node->set_abstract(kUMonad->ToAbstract());
+    } else if (value_proto.denotation() == "IOMonadType") {
+      node->set_abstract(kIOMonad->ToAbstract());
+    }
     MS_LOG(DEBUG) << "Not tensor. parameter type: " << value_proto.denotation();
   }
   anfnode_build_map_[value_proto.name()] = node;
@@ -849,9 +874,17 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
     tensor::TensorPtr tensor_info =
       std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor.data_type()], shape_vec);
     MS_EXCEPTION_IF_NULL(tensor_info);
-    auto abstract = tensor_info->ToAbstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abstract));
+    if (attr_tensor.has_ref_key()) {
+      auto ref_key = std::make_shared<RefKey>(attr_tensor.ref_key());
+      auto abs_ref_key = ref_key->ToAbstract();
+      auto abs_value = tensor_info->ToAbstract()->Broaden()->cast<abstract::AbstractTensorPtr>();
+      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
+      kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abs_ref));
+    } else {
+      auto abstract = tensor_info->ToAbstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abstract));
+    }
   }
   return kv;
 }
@@ -1198,6 +1231,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
     return nullptr;
   }
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! " << graphBuild.name();
+  top_graph_ = dstGraph;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
     const auto &graph_proto = model_proto.functions(i);
     FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[graph_proto.name()]);
