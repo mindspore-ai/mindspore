@@ -23,6 +23,9 @@ import mindspore.ops as ops
 from mindspore.ops.operations import _inner_ops as inner
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
+from mindspore.ops.bprop_mindir import serializable_bprop_ops
+from mindspore._c_expression import load_mindir
+import mindspore.ops._grad as g
 
 
 class Net(nn.Cell):
@@ -52,6 +55,21 @@ class GradNet(nn.Cell):
     def construct(self, *inputs):
         gout = self.grad(self.network)(*inputs)
         return gout
+
+
+def test_load_mindir_dir():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Load all the mindir files of serializable bprop.
+    Expectation: All are loaded successfully.
+    """
+    bprop_path = g.__file__
+    bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
+    bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
+    for op in serializable_bprop_ops:
+        file_name = bprop_mindir_export_dir + "/" + op.name + "_bprop.mindir"
+        graph = load_mindir(file_name)
+        assert not graph is None
 
 
 def test_relu():
