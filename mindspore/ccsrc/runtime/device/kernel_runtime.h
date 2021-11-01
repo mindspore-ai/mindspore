@@ -119,6 +119,11 @@ class KernelRuntime {
   virtual DeviceAddressPtr AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, size_t index);
   virtual void *GetModelStream(uint32_t graph_id) const { return nullptr; }
 
+  // add for MindRT
+  std::shared_ptr<MemoryManager> GetMemoryManager() { return mem_manager_; }
+  void AssignStaticMemoryOutput(const session::KernelGraph &graph);
+  void AssignDynamicMemory(const session::KernelGraph &graph);
+
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) const = 0;
@@ -128,7 +133,6 @@ class KernelRuntime {
   virtual bool KernelMemNotReuse(const AnfNodePtr &node);
 
   void AssignStaticMemory(const session::KernelGraph &graph);
-  void AssignDynamicMemory(const session::KernelGraph &graph);
   void AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index);
   void AssignWorkSpaceMem(MemType type, const AnfNodePtr &node);
 
@@ -154,7 +158,6 @@ class KernelRuntime {
                              const AnfNodePtr &kernel, bool mock);
 
   void AssignCommunicationMem(const session::KernelGraph &graph);
-  void AssignStaticMemoryOutput(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
   void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index) const;
   void DebugStreamSync(const CNodePtr &kernel);

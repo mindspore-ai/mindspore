@@ -26,6 +26,8 @@
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "runtime/device/ascend/ascend_launch_transdata.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "runtime/hardware/ascend/ascend_device_context.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
 #include "abstract/utils.h"
@@ -162,6 +164,25 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
   return true;
 }
 
+void AscendDeviceAddress::BindDevice() const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    return;
+  }
+
+  // Bind device by device name and device id on the current thread.
+  if (device_name_ != "") {
+    auto device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    auto ascend_device_context = dynamic_cast<AscendDeviceContext *>(device_context);
+    MS_EXCEPTION_IF_NULL(ascend_device_context);
+    if (!ascend_device_context->BindDeviceToCurrentThread()) {
+      MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
+    }
+  }
+}
+
 void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "SyncStream Start!";
   auto ms_context = MsContext::GetInstance();
@@ -183,6 +204,7 @@ void AscendDeviceAddress::SyncStream() const {
 
 bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  BindDevice();
   SyncStream();
   SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
   return true;
@@ -190,6 +212,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) co
 
 bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  BindDevice();
   SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
   return true;
 }
@@ -201,6 +224,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
+  BindDevice();
   SyncStream();
   bool sync_ok = false;
   std::vector<size_t> host_shape;
@@ -368,7 +392,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
-
+  BindDevice();
   bool sync_ok = false;
   std::vector<size_t> host_shape;
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
@@ -416,6 +440,7 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, T
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
+  BindDevice();
   bool sync_ok = false;
   if (format_ == format && type_id_ == type) {
     if (!DataSync(ptr_, src_ptr, size)) {

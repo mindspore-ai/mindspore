@@ -404,12 +404,19 @@ bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
 
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id) const {
-  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, kAscendDevice, device_id);
 }
 
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id, const KernelWithIndex &node_index) const {
-  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node_index);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node_index, kAscendDevice,
+                                               device_id);
 }
 
 bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) {

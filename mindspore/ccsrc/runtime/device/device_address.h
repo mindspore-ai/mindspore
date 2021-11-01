@@ -38,6 +38,7 @@ class CPUDeviceContext;
 namespace ascend {
 class AscendKernelRuntime;
 class AscendMemoryManager;
+class AscendDeviceContext;
 #ifndef ENABLE_SECURITY
 class DataDumper;
 #endif
@@ -71,9 +72,21 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_(node_index) {}
-  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
-                         const std::string &device_name, uint32_t device_id)
+
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
+      : ptr_(ptr), size_(size), device_name_(device_name), device_id_(device_id) {}
+  explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id, const std::string &device_name,
+                         uint32_t device_id)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id), device_name_(device_name), device_id_(device_id) {}
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
+                         const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
+      : ptr_(ptr),
+        size_(size),
+        format_(format),
+        type_id_(type_id),
+        node_index_(node_index),
+        device_name_(device_name),
+        device_id_(device_id) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
 
   const void *GetPtr() const { return ptr_; }
@@ -133,6 +146,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::device::gpu::GPUDeviceContext;
   friend class mindspore::device::ascend::AscendKernelRuntime;
   friend class mindspore::device::ascend::AscendMemoryManager;
+  friend class mindspore::device::ascend::AscendDeviceContext;
 #ifndef ENABLE_SECURITY
   friend class mindspore::device::ascend::DataDumper;
 #endif

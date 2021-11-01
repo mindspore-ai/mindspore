@@ -192,8 +192,11 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     device_info.format_ = output_format;
     device_info.data_type_ = TypeIdToType(output_type);
     stub_output_tensor->set_device_info(device_info);
-    device::DeviceAddressPtr device_address =
-      std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, 0, output_format, output_type);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device::DeviceAddressPtr device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
+      nullptr, 0, output_format, output_type, kAscendDevice, device_id);
     stub_output_tensor->set_device_address(device_address);
     output_tensor_info.output_stub_tensor = stub_output_tensor;
     auto kernel_info = dynamic_cast<const device::KernelInfo *>(output_node->kernel_info());
@@ -721,7 +724,7 @@ void AscendSession::BatchBuildKernel(const std::vector<std::shared_ptr<SessionTa
 
   std::vector<CNodePtr> atomic_node_to_build;
   for (auto &graph : graphs) {
-    device::ascend::InsertAtomicCleanOp(graph);
+    device::ascend::InsertAtomicCleanOps(graph);
     const auto &nodes = graph->execution_order();
     std::copy(nodes.begin(), nodes.end(), std::back_inserter(atomic_node_to_build));
   }
@@ -998,10 +1001,10 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   InitRuntimeResource();
   // Compile all kernels parallel
   BuildKernel(kernels);
-  // Some new kernel may be added after InsertAtomicCleanOp, so collect and build kernels again
+  // Some new kernel may be added after InsertAtomicCleanOps, so collect and build kernels again
   kernels.clear();
   for (const auto &graph_item : single_op_graphs) {
-    device::ascend::InsertAtomicCleanOp(graph_item.first);
+    device::ascend::InsertAtomicCleanOps(graph_item.first);
     const auto &execution_order = graph_item.first->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
   }
@@ -1078,7 +1081,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
-  device::ascend::InsertAtomicCleanOp(kernel_graph);
+  device::ascend::InsertAtomicCleanOps(kernel_graph);
   device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
   device::KernelAdjust::GetInstance().ProcessLoopSink(kernel_graph);
 #ifdef ENABLE_DUMP_IR
@@ -1098,7 +1101,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
-  device::ascend::InsertAtomicCleanOp(kernel_graph);
+  device::ascend::InsertAtomicCleanOps(kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
