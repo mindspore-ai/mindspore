@@ -207,7 +207,10 @@ void Executor::WorkerLoop() {
       task = ready_tasks_.front();
       ready_tasks_.pop();
     }
-    if (task->type_ == kExit) {
+    MS_EXCEPTION_IF_NULL(task);
+    enum TaskType task_type = task->type_;
+    bool task_sync_flag = task->sync_run_;
+    if (task_type == kExit) {
       OnWorkerExit();
       return;
     }
@@ -228,9 +231,9 @@ void Executor::WorkerLoop() {
     }
     {
       std::lock_guard<std::mutex> lock(done_task_mutex_);
-      done_tasks_.emplace_back(task);
+      done_tasks_.emplace_back(std::move(task));
     }
-    if (task->type_ != kRunGraph || task->sync_run_) {
+    if (task_type != kRunGraph || task_sync_flag) {
       std::lock_guard<std::mutex> lock(task_mutex_);
       sync_run_task_finished_ = true;
       sync_cond_var_.notify_all();
