@@ -88,7 +88,16 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   if (kernel_info_list.empty()) {
     return nullptr;
   }
+
   kernel_select_->SelectKernel(transpose);
+  auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(transpose);
+  MS_EXCEPTION_IF_NULL(ori_build_info);
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(ori_build_info);
+  auto input_format = AnfAlgo::GetInputFormat(node, 0);
+  auto output_format = AnfAlgo::GetOutputFormat(node, 0);
+  builder->SetInputsFormat({input_format, kOpFormat_DEFAULT});
+  builder->SetOutputsFormat({output_format});
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transpose.get());
   kernel_graph->AddValueNodeToGraph(perm_vnode);
   return transpose;
 }
