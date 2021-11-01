@@ -428,7 +428,7 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   MS_ASSERT(conv_kernel);
   MS_ASSERT(scale_kernel);
   auto *scale_param =
-    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel)->GetParameter());
+    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel->kernel())->GetParameter());
   MS_ASSERT(scale_param);
   MS_ASSERT(conv_kernel->in_tensors().size() >= INPUT_TENSOR_SIZE_2);
   auto *filter = conv_kernel->in_tensors().at(1);

@@ -41,10 +41,11 @@ Status RegisterKernelInterface::CustomReg(const std::string &provider, const std
 #endif
 }
 
-std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(
-  const std::string &provider, const schema::Primitive *primitive) {
+std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(const std::string &provider,
+                                                                                     const schema::Primitive *primitive,
+                                                                                     const kernel::Kernel *kernel) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
+  return KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive, kernel);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;
