@@ -1731,8 +1731,7 @@ void LableBatchSizeSplit(const CNodePtr &node) {
       for (auto &data_user : data_users) {
         PrimitivePtr prim = GetCNodePrimitive(data_user.first);
         MS_EXCEPTION_IF_NULL(prim);
-        auto attrs = prim->attrs();
-        if (attrs.count(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
+        if (prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
           SetStridedSliceStrategy(data_user.first);
         }
       }

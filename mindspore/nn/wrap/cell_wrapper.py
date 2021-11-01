@@ -450,11 +450,12 @@ class _MicroBatch(Cell):
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
             strided_slice_begin = (micro_batch_begin,)
             strided_slice_strides = (1,)
-            for i in range(len(input_shape) - 1):
+            for _ in range(len(input_shape) - 1):
                 strided_slice_begin += (0,)
                 strided_slice_strides += (1,)
             strided_slice_end = (micro_batch_end,)
-            micro_input = self.strided_slice(each_input, strided_slice_begin, strided_slice_end)
+            strided_slice_end += input_shape[1:]
+            micro_input = self.strided_slice(each_input, strided_slice_begin, strided_slice_end, strided_slice_strides)
             micro_inputs += (micro_input,)
         return micro_inputs
 
