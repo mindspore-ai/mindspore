@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ class MS_CORE_API BaseShape : public Base {
 };
 
 /// \brief NoShape defines an invalid shape.
-class MS_CORE_API NoShape : public BaseShape {
+class MS_CORE_API NoShape final : public BaseShape {
  public:
   MS_DECLARE_PARENT(NoShape, BaseShape)
 
@@ -104,7 +104,7 @@ class MS_CORE_API NoShape : public BaseShape {
 inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
 
 /// \brief Shape defines dimensions of tensor.
-class MS_CORE_API Shape : public BaseShape {
+class MS_CORE_API Shape final : public BaseShape {
  public:
   static const int64_t SHP_ANY = -1;
 
@@ -247,7 +247,7 @@ class MS_CORE_API SequeueShape : public BaseShape {
 using SequeueShapePtr = std::shared_ptr<SequeueShape>;
 
 /// \brief TupleShape defines shape used by tuple with tensor inside.
-class MS_CORE_API TupleShape : public SequeueShape {
+class MS_CORE_API TupleShape final : public SequeueShape {
  public:
   /// \brief Constructor of TupleShape.
   TupleShape() : SequeueShape() {}
@@ -270,7 +270,7 @@ class MS_CORE_API TupleShape : public SequeueShape {
 using TupleShapePtr = std::shared_ptr<TupleShape>;
 
 /// \brief ListShape defines shape used by list with tensor inside.
-class MS_CORE_API ListShape : public SequeueShape {
+class MS_CORE_API ListShape final : public SequeueShape {
  public:
   /// \brief Constructor of ListShape.
   ListShape() : SequeueShape() {}

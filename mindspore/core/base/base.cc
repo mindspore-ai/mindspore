@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,4 @@
  */
 
 #include "base/base.h"
-#include <atomic>
-#include <mutex>
-#include <string>
-#include <unordered_map>
-
-namespace mindspore {
-const bool Base::IsFromTypeId(uint32_t tid) const {
-  static const uint32_t node_id = GetTypeId(typeid(Base).name());
-  return tid == node_id;
-}
-
-uint32_t Base::GetTypeId(const char *const type_name) {
-  TypeIdManager *t = TypeIdManager::Get();
-  std::lock_guard<std::mutex>(t->mutex);
-  auto it = t->map.find(type_name);
-  if (it != t->map.end()) {
-    return it->second;
-  }
-  uint32_t tid = std::hash<std::string>()(type_name);
-  t->map[type_name] = tid;
-  return tid;
-}
-}  // namespace mindspore
+// This file is kept to make cmake happy.

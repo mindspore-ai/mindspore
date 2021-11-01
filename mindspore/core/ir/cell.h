@@ -31,7 +31,7 @@ using abstract::AbstractBasePtr;
 using abstract::AbstractBasePtrList;
 
 /// \brief The Cell class of MindSpore is the base class for building all networks and the basic unit of a network.
-class MS_CORE_API Cell : public Named {
+class MS_CORE_API Cell final : public Named {
  public:
   /// \brief Constructor.
   ///

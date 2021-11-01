@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 
 namespace mindspore {
 
-using TypeInfoToProtoTypeMap = std::vector<std::pair<const char *, debugger::DataType>>;
+using TypeInfoToProtoTypeMap = std::vector<std::pair<uint32_t, debugger::DataType>>;
 
 void SetOutputType(const TypePtr &node, const BaseShapePtr &shape, debugger::TypeProto *type_proto);
 
@@ -76,12 +76,12 @@ void SetListTypeProto(const TypePtr &type, debugger::TypeProto *type_proto) {
 }
 
 static TypeInfoToProtoTypeMap type_info_to_proto_type = {
-  {typeid(TensorType).name(), debugger::DT_TENSOR},     {typeid(Tuple).name(), debugger::DT_TUPLE},
-  {typeid(TypeType).name(), debugger::DT_TYPE},         {typeid(List).name(), debugger::DT_LIST},
-  {typeid(TypeAnything).name(), debugger::DT_ANYTHING}, {typeid(RefKeyType).name(), debugger::DT_REFKEY},
-  {typeid(RefType).name(), debugger::DT_REF},           {typeid(Function).name(), debugger::DT_GRAPH},
-  {typeid(TypeNone).name(), debugger::DT_NONE},         {typeid(String).name(), debugger::DT_STRING},
-  {typeid(UMonadType).name(), debugger::DT_UMONAD},     {typeid(IOMonadType).name(), debugger::DT_IOMONAD}};
+  {TensorType::kTypeId, debugger::DT_TENSOR},     {Tuple::kTypeId, debugger::DT_TUPLE},
+  {TypeType::kTypeId, debugger::DT_TYPE},         {List::kTypeId, debugger::DT_LIST},
+  {TypeAnything::kTypeId, debugger::DT_ANYTHING}, {RefKeyType::kTypeId, debugger::DT_REFKEY},
+  {RefType::kTypeId, debugger::DT_REF},           {Function::kTypeId, debugger::DT_GRAPH},
+  {TypeNone::kTypeId, debugger::DT_NONE},         {String::kTypeId, debugger::DT_STRING},
+  {UMonadType::kTypeId, debugger::DT_UMONAD},     {IOMonadType::kTypeId, debugger::DT_IOMONAD}};
 
 void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::TypeProto *type_proto) {
   if (type_proto == nullptr) {
@@ -93,7 +93,7 @@ void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::Typ
   }
   CheckIfValidType(type, type_proto);
   for (auto &it : type_info_to_proto_type) {
-    if (type->IsFromTypeId(Base::GetTypeId(it.first))) {
+    if (type->IsFromTypeId(it.first)) {
       type_proto->set_data_type(it.second);
       break;
     }

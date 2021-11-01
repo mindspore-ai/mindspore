@@ -50,7 +50,7 @@ class MS_CORE_API AbstractFuncAtom : public AbstractFunction {
 };
 
 /// \brief AbstractFuncUnion defines interface for abstract of union function.
-class MS_CORE_API AbstractFuncUnion : public AbstractFunction {
+class MS_CORE_API AbstractFuncUnion final : public AbstractFunction {
  public:
   /// \brief Constructor AbstractFuncUnion from AbstractFuncAtom list.
   ///
@@ -101,7 +101,7 @@ class MS_CORE_API AbstractFuncUnion : public AbstractFunction {
 };
 
 /// \brief PrimitiveAbstractClosure defines interface for abstract of Primitive.
-class MS_CORE_API PrimitiveAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of PrimitiveAbstractClosure
   ///
@@ -142,7 +142,7 @@ class MS_CORE_API PrimitiveAbstractClosure : public AbstractFuncAtom {
 using PrimitiveAbstractClosurePtr = std::shared_ptr<PrimitiveAbstractClosure>;
 
 /// \brief FuncGraphAbstractClosure defines interface for abstract of FuncGraph.
-class MS_CORE_API FuncGraphAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of FuncGraphAbstractClosure.
   ///
@@ -196,7 +196,7 @@ class MS_CORE_API FuncGraphAbstractClosure : public AbstractFuncAtom {
 using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 
 /// \brief MetaFuncGraphAbstractClosure defines interface for abstract of MetaFuncGraph.
-class MS_CORE_API MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of FuncGraphAbstractClosure.
   ///
@@ -245,7 +245,7 @@ class MS_CORE_API MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
 using MetaFuncGraphAbstractClosurePtr = std::shared_ptr<MetaFuncGraphAbstractClosure>;
 
 /// \brief PartialAbstractClosure defines the abstract AbstractFuncAtom interface provided by some args in advance.
-class MS_CORE_API PartialAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of PartialAbstractClosure.
   ///
@@ -302,7 +302,7 @@ using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 
 /// \brief JTransformedAbstractClosure defines interface for abstract of Function
 /// transformed through the application of J.
-class MS_CORE_API JTransformedAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API JTransformedAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of JTransformedAbstractClosure
   ///
@@ -332,7 +332,7 @@ class MS_CORE_API JTransformedAbstractClosure : public AbstractFuncAtom {
 
 /// \brief VirtualAbstractClosure defines interface for function with an explicitly
 /// fixed type signature.
-class MS_CORE_API VirtualAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of VirtualAbstractClosure.
   ///
@@ -380,7 +380,7 @@ using VirtualAbstractClosurePtr = std::shared_ptr<VirtualAbstractClosure>;
 
 /// \brief TypedPrimitiveAbstractClosure defines interface for Primitive with an explicitly
 /// fixed type signature.
-class MS_CORE_API TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
+class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of TypedPrimitiveAbstractClosure.
   ///

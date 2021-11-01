@@ -139,7 +139,7 @@ class WaitEvent : public ExceptionListener {
 };
 
 // Tensor entity class
-class MS_CORE_API Tensor : public MetaTensor {
+class MS_CORE_API Tensor final : public MetaTensor {
  public:
   abstract::AbstractBasePtr ToAbstract() override;
 

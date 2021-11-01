@@ -35,7 +35,7 @@
 
 namespace mindspore {
 /// \brief List defines interface for list data type.
-class MS_CORE_API List : public Object {
+class MS_CORE_API List final : public Object {
  public:
   /// \brief Default constructor for List.
   List() : Object(kObjectTypeList) {}
@@ -91,7 +91,7 @@ using ListPtr = std::shared_ptr<List>;
 using ClassAttrVector = std::vector<std::pair<std::string, TypePtr>>;
 
 /// \brief Class defines interface for class data type.
-class MS_CORE_API Class : public Object {
+class MS_CORE_API Class final : public Object {
  public:
   /// \brief Constructor for Class.
   Class() : Object(kObjectTypeClass), tag_(Named("Class")) {}
@@ -154,7 +154,7 @@ class MS_CORE_API Class : public Object {
 using ClassPtr = std::shared_ptr<Class>;
 
 /// \brief Tuple defines interface for tuple data type.
-class MS_CORE_API Tuple : public Object {
+class MS_CORE_API Tuple final : public Object {
  public:
   /// \brief Default constructor for Tuple.
   Tuple() : Object(kObjectTypeTuple) {}
@@ -209,7 +209,7 @@ class MS_CORE_API Tuple : public Object {
 using TuplePtr = std::shared_ptr<Tuple>;
 
 /// \brief Dictionary defines interface for dictionary data type.
-class MS_CORE_API Dictionary : public Object {
+class MS_CORE_API Dictionary final : public Object {
  public:
   /// \brief Default constructor for Dictionary.
   Dictionary() : Object(kObjectTypeDictionary) {}

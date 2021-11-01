@@ -57,7 +57,7 @@ MS_CORE_API TypePtr TypeIdToType(TypeId id);
 MS_CORE_API std::string TypeIdToString(TypeId id, bool to_lower = false);
 
 /// \brief String defines a type of string.
-class MS_CORE_API String : public Object {
+class MS_CORE_API String final : public Object {
  public:
   /// \brief The constructor of String.
   ///
@@ -78,7 +78,7 @@ class MS_CORE_API String : public Object {
 using StringPtr = std::shared_ptr<String>;
 
 /// \brief Keyword defines a type of keyword.
-class MS_CORE_API Keyword : public Object {
+class MS_CORE_API Keyword final : public Object {
  public:
   /// \brief The constructor of Keyword.
   ///
@@ -122,7 +122,7 @@ class MS_CORE_API Keyword : public Object {
 using KeywordPtr = std::shared_ptr<Keyword>;
 
 /// \brief Slice defines a type of slice.
-class MS_CORE_API Slice : public Object {
+class MS_CORE_API Slice final : public Object {
  public:
   /// \brief The constructor of Slice.
   ///
@@ -175,7 +175,7 @@ class MS_CORE_API Slice : public Object {
 using SlicePtr = std::shared_ptr<Slice>;
 
 /// \brief Function defines a type of function.
-class MS_CORE_API Function : public Object {
+class MS_CORE_API Function final : public Object {
  public:
   /// \brief The constructor of Function.
   ///
@@ -224,7 +224,7 @@ class MS_CORE_API Function : public Object {
 using FunctionPtr = std::shared_ptr<Function>;
 
 /// \brief JTagged defines a type representing an object is tagged with J.
-class MS_CORE_API JTagged : public Object {
+class MS_CORE_API JTagged final : public Object {
  public:
   /// \brief The constructor of JTagged.
   ///
@@ -254,7 +254,7 @@ class MS_CORE_API JTagged : public Object {
 using JTaggedPtr = std::shared_ptr<JTagged>;
 
 /// \brief SymbolicKeyType defines a type of symbolic key.
-class MS_CORE_API SymbolicKeyType : public Object {
+class MS_CORE_API SymbolicKeyType final : public Object {
  public:
   /// \brief The constructor of SymbolicKeyType.
   ///
@@ -272,7 +272,7 @@ class MS_CORE_API SymbolicKeyType : public Object {
 };
 
 /// \brief EnvType defines a type of environment variable.
-class MS_CORE_API EnvType : public Object {
+class MS_CORE_API EnvType final : public Object {
  public:
   /// \brief The constructor of EnvType.
   ///
@@ -290,7 +290,7 @@ class MS_CORE_API EnvType : public Object {
 using EnvTypePtr = std::shared_ptr<EnvType>;
 
 /// \brief TypeType defines a type of type itself.
-class MS_CORE_API TypeType : public Type {
+class MS_CORE_API TypeType final : public Type {
  public:
   /// \brief The constructor of TypeType.
   ///
@@ -309,7 +309,7 @@ class MS_CORE_API TypeType : public Type {
 using TypeTypePtr = std::shared_ptr<TypeType>;
 
 /// \brief Problem defines a type of problem.
-class MS_CORE_API Problem : public Type {
+class MS_CORE_API Problem final : public Type {
  public:
   /// \brief The constructor of Problem.
   ///
@@ -347,7 +347,7 @@ class MS_CORE_API Problem : public Type {
 using ProblemPtr = std::shared_ptr<Problem>;
 
 /// \brief External defines a type which is external.
-class MS_CORE_API External : public Type {
+class MS_CORE_API External final : public Type {
  public:
   /// \brief The constructor of External.
   ///

@@ -231,8 +231,7 @@ bool isa(const BaseRef &handle) {
 // isa<BaseRef>(handle), judge reference or ptr
 template <typename T, typename std::enable_if<is_base_ref<T>::value, int64_t>::type = static_cast<int64_t>(0)>
 bool isa(const BaseRef &handle) {
-  static const uint32_t tid = Base::GetTypeId(typeid(T).name());
-  return handle.IsFromTypeId(tid) || (handle.m_ptr && handle.m_ptr->isa<T>());
+  return handle.isa<T>() || (handle.m_ptr && handle.m_ptr->isa<T>());
 }
 
 // valueref -> C++ type

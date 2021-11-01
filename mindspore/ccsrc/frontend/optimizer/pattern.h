@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ class Pattern : public Base {
  public:
   Pattern() : unique_name_(std::to_string(g_id_++)) {}
   ~Pattern() = default;
+  MS_DECLARE_PARENT(Pattern, Base);
   virtual MatchResultPtr match(const AnfNodePtr &node) { return nullptr; }
   virtual bool operator==(const Pattern &other) const { return unique_name_ == other.unique_name_; }
   string unique_name() const { return unique_name_; }
@@ -83,7 +84,7 @@ struct PatternHasher {
   }
 };
 
-class Prim : public Pattern {
+class Prim final : public Pattern {
  public:
   Prim() { unique_name_ = std::to_string(g_id_++); }
   ~Prim() = default;
@@ -118,7 +119,7 @@ class Prim : public Pattern {
   PrimitivePyPtr matched_prim_{nullptr};
 };
 
-class Call : public Pattern {
+class Call final : public Pattern {
  public:
   Call() { unique_name_ = std::to_string(g_id_++); }
   ~Call() = default;
@@ -153,7 +154,7 @@ class Call : public Pattern {
   string name_;
 };
 
-class OneOf : public Pattern {
+class OneOf final : public Pattern {
  public:
   OneOf() { unique_name_ = std::to_string(g_id_++); }
   ~OneOf() = default;
@@ -170,7 +171,7 @@ class OneOf : public Pattern {
   vector<PatternPtr> patterns_;
 };
 
-class NoneOf : public Pattern {
+class NoneOf final : public Pattern {
  public:
   NoneOf() { unique_name_ = std::to_string(g_id_++); }
   ~NoneOf() = default;
@@ -187,7 +188,7 @@ class NoneOf : public Pattern {
   vector<PatternPtr> patterns_;
 };
 
-class Any : public Pattern {
+class Any final : public Pattern {
  public:
   Any() { unique_name_ = std::to_string(g_id_++) + "_Any"; }
   ~Any() = default;
@@ -195,7 +196,7 @@ class Any : public Pattern {
   MatchResultPtr match(const AnfNodePtr &node) override;
 };
 
-class NewTensor : public Pattern {
+class NewTensor final : public Pattern {
  public:
   NewTensor() { unique_name_ = std::to_string(g_id_++); }
   ~NewTensor() = default;
@@ -212,7 +213,7 @@ class NewTensor : public Pattern {
   tensor::TensorPtr input_tensor_;
 };
 
-class NewParameter : public Pattern {
+class NewParameter final : public Pattern {
  public:
   NewParameter() { unique_name_ = std::to_string(g_id_++); }
   explicit NewParameter(string para_name, tensor::TensorPtr default_tensor, bool requires_grad, bool layerwise_parallel)
@@ -245,7 +246,7 @@ class NewParameter : public Pattern {
   tensor::TensorPtr default_tensor_;
 };
 
-class Imm : public Pattern {
+class Imm final : public Pattern {
  public:
   Imm() { unique_name_ = std::to_string(g_id_++); }
   explicit Imm(int value) : value_(value) { unique_name_ = std::to_string(g_id_++) + "Imm_" + std::to_string(value); }
