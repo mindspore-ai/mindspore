@@ -2031,8 +2031,7 @@ def select(condlist, choicelist, default=0):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> condlist = [[True, True, True, False, False], \
-                       [False, False, True, False, True]]
+        >>> condlist = [[True, True, True, False, False], [False, False, True, False, True]]
         >>> choicelist = [[0, 1, 2, 3, 4], [0, 1, 4, 9, 16]]
         >>> output = np.select(condlist, choicelist)
         >>> print(output)
