@@ -27,6 +27,7 @@ set(SRC_FILES_LIST
         consumers/pull_based_tree_consumer.cc
         consumers/tree_consumer.cc
         serdes.cc
+        tree_modifier.cc
         )
 if(ENABLE_PYTHON)
     set(SRC_FILES_LIST

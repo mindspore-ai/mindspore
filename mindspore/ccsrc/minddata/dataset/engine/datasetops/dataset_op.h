@@ -116,6 +116,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     return Status(StatusCode::kMDUnexpectedError, "Add new workers is not supported for non-ParallelOps");
   }
 
+  virtual Status RemoveWorkers(int32_t num_workers = 1) {
+    return Status(StatusCode::kMDUnexpectedError, "Remove workers is not supported for non-ParallelOps");
+  }
+
   // \brief Inserts a operator as the parent current op.
   // \notes Inserted op will become the sole parent of the current op.
   //     The existing parent of the current op will be transferred to the inserted op.
@@ -239,6 +243,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // \return - the column name map as a string
   std::string ColumnNameMapAsString() const;
 
+  OperatorConnector *OutputConnector() const { return out_connector_.get(); }
+
   // \brief Getter function
   // \return connector size of current op
   int32_t ConnectorSize() const {
@@ -327,6 +333,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // They would automatically wait on the QueueList when they are done.
   // \return Status
   virtual Status WaitForWorkers() { return Status::OK(); }
+
+  virtual int32_t NumWorkers() { return 0; }
+
+  virtual Status SendQuitFlagToWorker(int32_t worker_id) { return Status::OK(); }
 
   // \brief Add callback to DatasetOp, only MapOp supports Callback at the moment
   void AddCallbacks(std::vector<std::shared_ptr<DSCallback>> callbacks) { callback_manager_.AddCallbacks(callbacks); }

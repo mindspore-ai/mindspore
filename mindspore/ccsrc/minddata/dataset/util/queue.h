@@ -271,6 +271,11 @@ class QueueList {
     queue_list_.emplace_back(std::make_unique<Queue<T>>(queue_list_[0]->capacity()));
     return queue_list_[queue_list_.size() - 1]->Register(vg);
   }
+  Status RemoveLastQueue() {
+    CHECK_FAIL_RETURN_UNEXPECTED(queue_list_.size() > 1, "Cannot remove more than the current queues.");
+    queue_list_.pop_back();
+    return Status::OK();
+  }
 
  private:
   // Queue contains non-copyable objects, so it cannot be added to a vector due to the vector

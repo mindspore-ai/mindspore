@@ -30,11 +30,13 @@
 namespace mindspore {
 namespace dataset {
 class DatasetNode;
+class TreeModifier;
 
 class TreeAdapter {
 #ifndef ENABLE_SECURITY
   friend ProfilingManager;
 #endif
+  friend TreeModifier;
 
  public:
   // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
@@ -90,7 +92,7 @@ class TreeAdapter {
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 #endif
 
- private:
+ protected:
   // Run the mandatory pass checking the syntax and semantics of the IR tree
   Status PrePass(std::shared_ptr<DatasetNode> ir);
 
