@@ -24,6 +24,8 @@ from mindspore.ops.operations import _inner_ops as inner
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
 import mindspore.ops._grad as g
+from mindspore.ops.bprop_mindir import serializable_bprop_ops
+from mindspore._c_expression import load_mindir
 
 
 class Net(nn.Cell):
@@ -68,6 +70,16 @@ def test_remove_mindir_dir():
     grad = GradNet(relu)
     grad.compile(x)
     os.rename(bprop_mindir_export_dir + "_bak", bprop_mindir_export_dir)
+
+
+def test_load_mindir_dir():
+    bprop_path = g.__file__
+    bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
+    bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
+    for op in serializable_bprop_ops:
+        file_name = bprop_mindir_export_dir + "/" + op.name + "_bprop.mindir"
+        graph = load_mindir(file_name)
+        assert not graph is None
 
 
 def test_relu():
