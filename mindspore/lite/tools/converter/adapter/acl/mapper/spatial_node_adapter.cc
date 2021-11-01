@@ -87,14 +87,14 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
     auto input_cnode = input->cast<CNodePtr>();
     std::string input_func_name = GetCNodeFuncName(input_cnode);
     if (kCNodeWithMultiOutputs.find(input_func_name) != kCNodeWithMultiOutputs.end()) {
-      MS_LOG(INFO) << "Adapter cnode with multioutputs: " << cnode_func_name;
+      MS_LOG(INFO) << "Input " << input_func_name << " of cnode " << cnode_func_name << " has multioutputs";
       CNodePtr get_item_cnode = CreateTupleGetItemNode(func_graph, input_cnode);
       if (get_item_cnode == nullptr) {
-        MS_LOG(ERROR) << "Create tuple item for " << cnode_func_name << " failed.";
+        MS_LOG(ERROR) << "Create tuple item for " << input_func_name << " of " << cnode_func_name << " failed.";
         return lite::RET_ERROR;
       }
       if (!manager->Replace(input_cnode, get_item_cnode)) {
-        MS_LOG(ERROR) << "Replace " << cnode_func_name << " failed.";
+        MS_LOG(ERROR) << "Replace " << input_func_name << " of " << cnode_func_name << " failed.";
         return lite::RET_ERROR;
       }
     }

@@ -164,6 +164,7 @@ class DfGraphConvertor {
   void ConvertMakeTuple(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
   void ConvertReshape(const CNodePtr node);
+  void ConvertConv2D(const CNodePtr node);
   std::vector<int64_t> CastToInt(const ValuePtr &value);
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void TraceOutput(AnfNodePtr node);
@@ -177,6 +178,7 @@ class DfGraphConvertor {
   void BuildSaveCheckpointGraph();
   void DrawCNode(const CNodePtr node, const OpAdapterPtr adpt);
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
+  void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
   OperatorPtr ToOperatorPtr(const AnfNodePtr &node);
   bool IsSourceEdgeNode(const AnfNodePtr &node);

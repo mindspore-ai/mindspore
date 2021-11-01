@@ -89,11 +89,15 @@ STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &
     MS_LOG(ERROR) << name << " Value num must be two.";
     return lite::RET_ERROR;
   }
-  std::vector<int64_t> new_value;
-  new_value.push_back(1);
-  new_value.push_back(1);
-  new_value.push_back(static_cast<int64_t>(origin_value[0]));
-  new_value.push_back(static_cast<int64_t>(origin_value[1]));
+  int64_t format = Format::NCHW;
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
+    format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+  }
+  std::vector<int64_t> new_value = {1, 1, static_cast<int64_t>(origin_value[0]), static_cast<int64_t>(origin_value[1])};
+  if (format == Format::NHWC) {
+    std::vector<int64_t> tmp = {1, static_cast<int64_t>(origin_value[0]), static_cast<int64_t>(origin_value[1]), 1};
+    new_value.swap(tmp);
+  }
   prim->AddAttr(name, MakeValue(new_value));
   return lite::RET_OK;
 }

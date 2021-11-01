@@ -30,6 +30,9 @@ class Conv2DFusionMapper : public PrimitiveMapper {
   ~Conv2DFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  STATUS AdjustAttrPad(const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore
