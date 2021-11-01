@@ -102,14 +102,24 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+  switch (dtype_) {
+    case kNumberTypeFloat16:
+      LaunchKernel<float16>(inputs, outputs);
+      break;
+    case kNumberTypeFloat32:
+      LaunchKernel<float>(inputs, outputs);
+      break;
+    case kNumberTypeFloat64:
+      LaunchKernel<double>(inputs, outputs);
+      break;
+    case kNumberTypeInt32:
+      LaunchKernel<int>(inputs, outputs);
+      break;
+    case kNumberTypeInt64:
+      LaunchKernel<int64_t>(inputs, outputs);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }
