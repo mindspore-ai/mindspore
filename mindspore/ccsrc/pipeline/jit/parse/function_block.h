@@ -27,6 +27,8 @@
 #include <memory>
 #include <utility>
 #include <tuple>
+
+#include "ir/meta_func_graph.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
@@ -99,7 +101,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   }
   void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
     // Ignore the FuncGraph node.
-    if (IsValueNode<FuncGraph>(node)) {
+    if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
       return;
     }
     MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
