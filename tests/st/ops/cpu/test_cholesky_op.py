@@ -16,27 +16,11 @@ class Cholesky(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, lower=False, clean=False, split_dim=0):
+    def __init__(self, lower=False, clean=True):
         super().__init__(name="Cholesky")
         self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
         self.clean = validator.check_value_type("clean", clean, [bool], self.clean)
-        self.split_dim = validator.check_value_type("split_dim", split_dim, [int], self.split_dim)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        if self.split_dim != 0:
-            height = x_shape[0]
-            width = x_shape[1]
-            if height <= self.split_dim:
-                out_shape = [1, height, width]
-            else:
-                batch = height // self.split_dim
-                if height != batch * self.split_dim:
-                    batch += 1
-                out_shape = [batch, self.split_dim, self.split_dim]
-        else:
-            out_shape = x_shape
-        return out_shape
 
     def __infer__(self, x):
         x_shape = x['shape']
@@ -54,10 +38,9 @@ class CholeskySolver(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, lower=False, split_dim=0):
+    def __init__(self, lower=False):
         super().__init__(name="CholeskySolver")
         self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
-        self.split_dim = validator.check_value_type("split_dim", split_dim, [int], self.split_dim)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def __infer__(self, x, b):
@@ -71,18 +54,18 @@ class CholeskySolver(PrimitiveWithInfer):
 
 
 class CholeskyNet(nn.Cell):
-    def __init__(self, lower=False, clean=False, split_dim=0):
+    def __init__(self, lower=False, clean=False):
         super(CholeskyNet, self).__init__()
-        self.cholesky = Cholesky(lower, clean, split_dim)
+        self.cholesky = Cholesky(lower, clean)
 
     def construct(self, x):
         return self.cholesky(x)
 
 
 class CholeskySolverNet(nn.Cell):
-    def __init__(self, lower=False, split_dim=0):
+    def __init__(self, lower=False):
         super(CholeskySolverNet, self).__init__()
-        self.cholesky_solver = CholeskySolver(lower, split_dim)
+        self.cholesky_solver = CholeskySolver(lower)
 
     def construct(self, c, b):
         return self.cholesky_solver(c, b)
@@ -167,10 +150,12 @@ def test_cholesky_solver():
     b = np.array([1, 1, 1, 1], dtype=np.float32)
     tensor_a = Tensor(a)
     tensor_b = Tensor(b)
-    scp_c, lower = scp.linalg.cho_factor(a, lower=True)
-    scp_x = scp.linalg.cho_solve((scp_c, lower), b)
-
-    mscp_c, mscp_lower = cho_factor(tensor_a, lower=True)
-    mscp_x = cho_solve((tensor_a, mscp_lower), tensor_b)
+    scp_c, lower = scp.linalg.cho_factor(a, lower=False)
+    mscp_c, mscp_lower = cho_factor(tensor_a, lower=False)
     assert np.allclose(scp_c, mscp_c.asnumpy())
+
+    scp_factor = (scp_c, lower)
+    ms_cho_factor = (mscp_c, mscp_lower)
+    scp_x = scp.linalg.cho_solve(scp_factor, b)
+    mscp_x = cho_solve(ms_cho_factor, tensor_b)
     assert np.allclose(scp_x, mscp_x.asnumpy())

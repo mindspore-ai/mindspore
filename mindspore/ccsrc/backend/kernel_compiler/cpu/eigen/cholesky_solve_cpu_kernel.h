@@ -42,6 +42,7 @@ class CholeskySolverCPUKernel : public CPUKernel {
   size_t output_row_{1};
   size_t output_col_{1};
   TypeId dtype_{kNumberTypeFloat32};
+  bool lower_{false};
 };
 
 MS_REG_CPU_KERNEL_T(
