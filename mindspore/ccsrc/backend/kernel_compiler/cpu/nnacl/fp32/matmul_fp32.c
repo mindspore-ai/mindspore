@@ -23,7 +23,7 @@
 #include <x86intrin.h>
 #endif
 #endif
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
@@ -889,6 +889,114 @@ void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, 
     if (act_type == ActType_Relu || act_type == ActType_Relu6) value = MSMAX(0.0f, value);
     c[ci] = value;
   }
+}
+
+void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
+                         int col) {
+  int col8 = col / C8NUM * C8NUM;
+  int ci = 0;
+  for (; ci < col8; ci += C8NUM, c += C8NUM) {
+#ifdef ENABLE_NEON
+    float32x4_t value0 = vdupq_n_f32(0.0f);
+    float32x4_t value1 = vdupq_n_f32(0.0f);
+    for (int di = 0; di < depth; ++di, b += C8NUM) {
+      value0 += vdupq_n_f32(a[di]) * vld1q_f32(b);
+      value1 += vdupq_n_f32(a[di]) * vld1q_f32(b + 4);
+    }
+    if (bias != NULL) {
+      value0 += vld1q_f32(bias[ci]);
+      value1 += vld1q_f32(bias[ci + 4]);
+    }
+    if (act_type == ActType_Relu || act_type == ActType_Relu6) {
+      value0 = vmaxq_f32(value0, 0.0f);
+      value1 = vmaxq_f32(value1, 0.0f);
+    }
+    if (act_type == ActType_Relu6) {
+      value0 = vminq_f32(value0, 6.0f);
+      value1 = vminq_f32(value1, 6.0f);
+    }
+    vst1q_f32(c, value0);
+    vst1q_f32(c + 4, value1);
+#else
+    float value[C8NUM] = {0};
+    for (int di = 0; di < depth; ++di, b += C8NUM) {
+      for (int j = 0; j < C8NUM; ++j) {
+        value[j] += a[di] * b[j];
+      }
+    }
+    for (int j = 0; j < C8NUM; ++j) {
+      ADD_BIAS(value[j], bias, ci + j);
+      DO_RELU(value[j], act_type);
+      DO_RELU6(value[j], act_type);
+    }
+    memcpy(c, value, C8NUM * sizeof(float));
+#endif
+  }
+  int res = col - col8;
+  float value[C8NUM] = {0};
+  for (int di = 0; di < depth; ++di, b += C8NUM) {
+    for (int j = 0; j < res; ++j) {
+      value[j] += a[di] * b[j];
+    }
+  }
+  for (int j = 0; j < res; ++j) {
+    ADD_BIAS(value[j], bias, ci + j);
+    DO_RELU(value[j], act_type);
+    DO_RELU6(value[j], act_type);
+  }
+  memcpy(c, value, res * sizeof(float));
+}
+#endif
+
+#ifdef ENABLE_ARM32
+void MatVecMulFp32Block4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
+                         int col) {
+  int col4 = col / C4NUM * C4NUM;
+  int ci = 0;
+  for (; ci < col4; ci += C4NUM, c += C4NUM) {
+#ifdef ENABLE_NEON
+    float32x4_t value = vdupq_n_f32(0.0f);
+    for (int di = 0; di < depth; ++di, b += C4NUM) {
+      value += vdupq_n_f32(a[di]) * vld1q_f32(b);
+    }
+    if (bias != NULL) {
+      value += vld1q_f32(&(bias[ci]));
+    }
+    if (act_type == ActType_Relu || act_type == ActType_Relu6) {
+      value = vmaxq_f32(value, vdupq_n_f32(0.0f));
+    }
+    if (act_type == ActType_Relu6) {
+      value = vminq_f32(value, vdupq_n_f32(6.0f));
+    }
+    vst1q_f32(c, value);
+#else
+    float value[C4NUM] = {0};
+    for (int di = 0; di < depth; ++di, b += C4NUM) {
+      for (int j = 0; j < C4NUM; ++j) {
+        value[j] += a[di] * b[j];
+      }
+    }
+    for (int j = 0; j < C4NUM; ++j) {
+      ADD_BIAS(value[j], bias, ci + j);
+      DO_RELU(value[j], act_type);
+      DO_RELU6(value[j], act_type);
+    }
+    memcpy(c, value, C4NUM * sizeof(float));
+#endif
+  }
+  int res = col - col4;
+  float value[C4NUM] = {0};
+  for (int di = 0; di < depth; ++di, b += C4NUM) {
+    for (int j = 0; j < res; ++j) {
+      value[j] += a[di] * b[j];
+    }
+  }
+  for (int j = 0; j < res; ++j) {
+    ADD_BIAS(value[j], bias, ci + j);
+    DO_RELU(value[j], act_type);
+    DO_RELU6(value[j], act_type);
+  }
+  memcpy(c, value, res * sizeof(float));
 }
 #endif
 

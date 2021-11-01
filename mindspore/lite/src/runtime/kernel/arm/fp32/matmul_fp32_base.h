@@ -59,7 +59,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void ResizeParameter();
   void FreeResizeBufA();
   void FreeResizeBufB();
-  void FreeBuffSrcB();
   int CalBroadCastBiasDataElements();
   int InitTmpOutBuffer();
   int NormalMatmulRun();
@@ -93,7 +92,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   float *output_data_ = nullptr;
   int matrix_a_pack_size_ = -1;
   int matrix_b_pack_size_ = -1;
-  float *src_b_ = nullptr;
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
 };

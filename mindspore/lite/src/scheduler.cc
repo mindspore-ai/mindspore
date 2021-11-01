@@ -352,19 +352,20 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "InitKernels failed.";
     return ret;
   }
-
-  MS_LOG(DEBUG) << "schedule kernels success.";
-  for (auto subgraph : *dst_kernels) {
-    MS_LOG(DEBUG) << "[subgraph] : " << subgraph->name() << ",  type:" << subgraph->subgraph_type();
-    if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
-      continue;
-    }
-    std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
-    for (auto kernel : kernel_list) {
-      MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] "
-                    << "TypeId(" << kernel->desc().data_type << "); "
-                    << "OpType(" << PrimitiveCurVersionTypeName(kernel->desc().type) << "); "
-                    << "arch(" << kernel->desc().arch << ")";
+  if (IsPrintDebug()) {
+    MS_LOG(DEBUG) << "schedule kernels success.";
+    for (auto subgraph : *dst_kernels) {
+      MS_LOG(DEBUG) << "[subgraph] : " << subgraph->name() << ",  type:" << subgraph->subgraph_type();
+      if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
+        continue;
+      }
+      std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
+      for (auto kernel : kernel_list) {
+        MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] "
+                      << "TypeId(" << kernel->desc().data_type << "); "
+                      << "OpType(" << PrimitiveCurVersionTypeName(kernel->desc().type) << "); "
+                      << "arch(" << kernel->desc().arch << ")";
+      }
     }
   }
   return RET_OK;

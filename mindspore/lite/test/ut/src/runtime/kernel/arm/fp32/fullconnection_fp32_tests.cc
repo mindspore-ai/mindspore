@@ -234,4 +234,90 @@ TEST_F(TestFcFp32, FcTest3) {
   delete ctx;
 }
 
+int FcTest4_Init(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *> *outputs, lite::InnerContext *context,
+                 MatMulParameter *param, float **correct) {
+  auto *in_t = new Tensor(kNumberTypeFloat, {1, 4}, mindspore::NHWC);
+  in_t->MallocData();
+  float in[] = {1, 2, 3, 4};
+  memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
+  inputs->push_back(in_t);
+
+  auto *weight_t = new Tensor(kNumberTypeFloat, {10, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  weight_t->MallocData();
+  float weight[] = {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
+                    6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 1, 2, 3, 4};
+  memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
+  inputs->push_back(weight_t);
+
+  auto bias_t = new Tensor(kNumberTypeFloat32, {10}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  bias_t->MallocData();
+  float bias_data[] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2};
+  memcpy(bias_t->MutableData(), bias_data, sizeof(float) * bias_t->ElementsNum());
+  inputs->push_back(bias_t);
+
+  auto *out_t = new Tensor(kNumberTypeFloat, {1, 10}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  out_t->MallocData();
+  outputs->push_back(out_t);
+
+  *correct = new float[out_t->ElementsNum()];
+  float nchw_co[] = {11, 21, 31, 41, 51, 62, 72, 82, 92, 32};
+  memcpy(*correct, nchw_co, out_t->ElementsNum() * sizeof(float));
+
+  param->a_transpose_ = false;
+  param->b_transpose_ = true;
+  param->has_bias_ = false;
+  param->act_type_ = ActType_No;
+
+  param->op_parameter_.thread_num_ = 1;
+  context->thread_num_ = 1;
+  EXPECT_EQ(lite::RET_OK, context->Init());
+  return out_t->ElementsNum();
+}
+
+int FcTest4_Resize(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *> *outputs, float **correct) {
+  auto &in_tensor = inputs->at(0);
+  in_tensor->FreeData();
+  in_tensor->set_shape({2, 4});
+  float in[] = {1, 2, 3, 4, 2, 3, 1, 2};
+  memcpy(in_tensor->MutableData(), in, in_tensor->Size());
+
+  auto &out_tensor = outputs->at(0);
+  out_tensor->FreeData();
+  out_tensor->set_shape({2, 10});
+  out_tensor->MallocData();
+
+  *correct = new float[out_tensor->ElementsNum()];
+  float nchw_co[] = {11, 21, 31, 41, 51, 62, 72, 82, 92, 32, 9, 17, 25, 33, 41, 50, 58, 66, 74, 21};
+  memcpy(*correct, nchw_co, sizeof(nchw_co));
+  return out_tensor->ElementsNum();
+}
+
+TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
+  lite::InnerContext context;
+  MatMulParameter *param = static_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  float *correct;
+  int total_size = FcTest4_Init(&inputs, &outputs, &context, param, &correct);
+  auto *kernel = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, &context);
+  kernel->Prepare();
+#ifdef SUPPORT_TRAIN
+  kernel->AllocWorkspace();
+#endif
+  kernel->Run();
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs[0]->MutableData()), correct, total_size, 0.0001));
+
+  total_size = FcTest4_Resize(&inputs, &outputs, &correct);
+  kernel->ReSize();
+  kernel->Run();
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs[0]->MutableData()), correct, total_size, 0.0001));
+  delete[] correct;
+  for (auto &input : inputs) {
+    delete input;
+  }
+  for (auto &output : outputs) {
+    delete output;
+  }
+  delete kernel;
+}
 }  // namespace mindspore
