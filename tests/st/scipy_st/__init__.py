@@ -12,14 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Scipy-like interfaces in mindspore."""
+"""setup for pytest in mindspore.scipy"""
+import mindspore.context as context
 
-from . import optimize, linalg
-from .optimize import *
-from .linalg import *
 
-__all__ = []
-__all__.extend(optimize.__all__)
-__all__.extend(linalg.__all__)
-
-__all__.sort()
+# pylint: disable=unused-argument
+def setup_module(module):
+    context.set_context(mode=context.PYNATIVE_MODE)

@@ -278,6 +278,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/parallel
         ${CMAKE_SOURCE_DIR}/mindspore/mindrecord
         ${CMAKE_SOURCE_DIR}/mindspore/numpy
+        ${CMAKE_SOURCE_DIR}/mindspore/scipy
         ${CMAKE_SOURCE_DIR}/mindspore/train
         ${CMAKE_SOURCE_DIR}/mindspore/boost
         ${CMAKE_SOURCE_DIR}/mindspore/common

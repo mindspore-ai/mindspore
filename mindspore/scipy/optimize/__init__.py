@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Scipy-like interfaces in mindspore."""
+"""Optimize submodule"""
+from .minimize import minimize
+from .line_search import line_search
 
-from . import optimize, linalg
-from .optimize import *
-from .linalg import *
-
-__all__ = []
-__all__.extend(optimize.__all__)
-__all__.extend(linalg.__all__)
-
-__all__.sort()
+__all__ = ["minimize", "line_search"]

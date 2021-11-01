@@ -1,0 +1,43 @@
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""utility functions for mindspore.scipy st tests"""
+import numpy as onp
+from mindspore import Tensor
+import mindspore.numpy as mnp
+
+
+def to_tensor(obj, dtype=None):
+    if dtype is None:
+        res = Tensor(obj)
+        if res.dtype == mnp.float64:
+            res = res.astype(mnp.float32)
+        if res.dtype == mnp.int64:
+            res = res.astype(mnp.int32)
+    else:
+        res = Tensor(obj, dtype)
+    return res
+
+
+def match_array(actual, expected, error=0):
+    if isinstance(actual, int):
+        actual = onp.asarray(actual)
+
+    if isinstance(expected, (int, tuple)):
+        expected = onp.asarray(expected)
+
+    if error > 0:
+        onp.testing.assert_almost_equal(actual, expected, decimal=error)
+    else:
+        onp.testing.assert_equal(actual, expected)
