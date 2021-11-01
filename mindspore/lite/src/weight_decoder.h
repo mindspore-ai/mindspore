@@ -284,10 +284,11 @@ class WeightDecoder {
   }
 
   template <typename T1, typename T2>
-  static void UnPackUtil(const schema::Tensor *input_tensor, int origin_bit, void *unpack_int_data) {
+  static int UnPackUtil(const schema::Tensor *input_tensor, const size_t &unpack_int_up_limit_size, int origin_bit,
+                        void *unpack_int_data) {
     if (input_tensor == nullptr || input_tensor->data() == nullptr) {
       MS_LOG(ERROR) << "tensor data is null";
-      return;
+      return RET_NULL_PTR;
     }
     auto weight_data = input_tensor->data()->data();
     int pack_size =
@@ -297,8 +298,13 @@ class WeightDecoder {
     for (int i = 0; i < pack_size; ++i) {
       T2 pack_data = (static_cast<const T2 *>(static_cast<const void *>(weight_data)))[i];
       bool is_last = i == pack_size - 1;
+      if (count >= unpack_int_up_limit_size) {
+        MS_LOG(ERROR) << "extend unpack_int_up_limit_size, which is " << unpack_int_up_limit_size;
+        return RET_ERROR;
+      }
       UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, is_last);
     }
+    return RET_OK;
   }
 
   template <typename T2>
