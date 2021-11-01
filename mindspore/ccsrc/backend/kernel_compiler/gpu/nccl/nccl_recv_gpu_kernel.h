@@ -52,11 +52,6 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 0) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but NCCL receive needs 0 input.";
-      return false;
-    }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but NCCL receive needs 1 output.";
