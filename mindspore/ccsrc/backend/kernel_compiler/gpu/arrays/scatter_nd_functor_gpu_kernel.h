@@ -37,11 +37,7 @@ template <typename T, typename S>
 class ScatterNdFunctorKernel : public GpuKernel {
  public:
   ScatterNdFunctorKernel() { ResetResource(); }
-  ~ScatterNdFunctorKernel() {
-    if (indices_stride_ != nullptr) {
-      device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(indices_stride_));
-    }
-  }
+  ~ScatterNdFunctorKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -53,18 +49,14 @@ class ScatterNdFunctorKernel : public GpuKernel {
     S *indices = GetDeviceAddress<S>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
-
     const size_t indices_len = sizeof(S) * out_strides_.size();
-    void *indices_stride_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
-    if (indices_stride_work == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to alloc indices_stride_work, size: " << indices_len;
-    }
-    indices_stride_ = static_cast<S *>(indices_stride_work);
+    S *indices_stride = GetDeviceAddress<S>(workspace, 0);
+
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(indices_stride_, &out_strides_[0], indices_len, cudaMemcpyHostToDevice,
+                               cudaMemcpyAsync(indices_stride, &out_strides_[0], indices_len, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::Launch.");
-    CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride_, indices,
+    CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices,
                         updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
@@ -164,6 +156,7 @@ class ScatterNdFunctorKernel : public GpuKernel {
     input_size_list_.push_back(indices_size_ * sizeof(S));
     input_size_list_.push_back(updates_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
+    workspace_size_list_.push_back(sizeof(S) * out_strides_.size());
   }
 
  private:
@@ -179,8 +172,6 @@ class ScatterNdFunctorKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-
-  S *indices_stride_;
 };
 }  // namespace kernel
 }  // namespace mindspore
