@@ -75,6 +75,22 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
 
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddOutputAttr(kNumberTypeFloat64),
+                  ScatterNdUpdateCPUKernel);
+
+MS_REG_CPU_KERNEL(TensorScatterUpdate,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddOutputAttr(kNumberTypeFloat64),
+                  ScatterNdUpdateCPUKernel);
+
+MS_REG_CPU_KERNEL(ScatterNdUpdate,
+                  KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
@@ -91,18 +107,18 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
 
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  ScatterNdUpdateCPUKernel);
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  ScatterNdUpdateCPUKernel)
 
 MS_REG_CPU_KERNEL(TensorScatterUpdate,
                   KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
                   ScatterNdUpdateCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
