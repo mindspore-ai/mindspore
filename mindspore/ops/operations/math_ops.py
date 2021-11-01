@@ -5292,6 +5292,8 @@ class IndexAdd(Primitive):
 
     Args:
         axis (int): The dimension along which to index.
+        use_lock (bool): If true, use lock mode. If false, don't use lock mode. Default: True.
+        check_index_bound (bool): If true, check index boundary. If false, don't check index boundary. Default: True.
 
     Inputs:
         - **x** (Parameter) - The input tensor to add to.

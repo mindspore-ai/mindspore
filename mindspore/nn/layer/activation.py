@@ -961,6 +961,7 @@ def get_activation(name, prim_name=None):
 
     Args:
         name (str): The name of the activation function.
+        prim_name (Union[str, None]): The name of primitive. Default: None.
 
     Returns:
         Function, the activation function.

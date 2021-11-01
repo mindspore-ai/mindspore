@@ -524,6 +524,9 @@ class CheckBprop(PrimitiveWithInfer):
     """
     Checks whether the data type and the shape of corresponding elements from tuples x and y are the same.
 
+    Args:
+        prim_to_check (str): The name of the primitive being checked. Default: ''.
+
     Inputs:
         - **input_x** (tuple[Tensor]) - The `input_x` contains the outputs of bprop to be checked.
         - **input_y** (tuple[Tensor]) - The `input_y` contains the inputs of bprop to check against.

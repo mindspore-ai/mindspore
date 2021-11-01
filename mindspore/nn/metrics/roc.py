@@ -165,7 +165,22 @@ class ROC(Metric):
         return fpr, tpr, thresholds
 
     def roc(self, y_pred, y, class_num=None, pos_label=None, sample_weights=None):
-        """roc"""
+        """
+        Update curve and return the result of the ROC curve.
+
+        Args:
+            y_pred (Union[Tensor, list, np.ndarray]): In most cases (not strictly), y_pred is a list of floating numbers
+                in range :math:`[0, 1]` and the shape is :math:`(N, C)`, where :math:`N` is the number of cases
+                and :math:`C` is the number of categories.
+            y (Union[Tensor, list, np.ndarray]): values of integers.
+            class_num (int): Integer with the number of classes. For the problem of binary classification, it is not
+                necessary to provide this argument. Default: None.
+            pos_label (int): Determine the integer of positive class. Default: None. For binary problems, it is
+                translated to 1. For multiclass problems, this argument should not be set, as it is iteratively changed
+                in the range [0,num_classes-1]. Default: None.
+            sample_weights (Union[None, np.ndarray]): If sample_weights is None, the weight value is 1.
+                If sample_weights is ndarray, the weight value is the ndarray value.
+        """
         y_pred, y, class_num, pos_label = self._precision_recall_curve_update(y_pred, y, class_num, pos_label)
 
         return self._roc_eval(y_pred, y, class_num, pos_label, sample_weights)

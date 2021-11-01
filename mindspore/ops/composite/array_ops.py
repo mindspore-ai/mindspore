@@ -133,6 +133,13 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
     If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type and shape
     [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
 
+    Args:
+        lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be
+            less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
+        maxlen (int): size of the last dimension of returned tensor. Must be positive and same
+            type as elements in `lengths`. Default is None.
+        prim_name (str): The name of primitive. Default: 'sequence_mask'.
+
     Inputs:
         - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor should be
           less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
