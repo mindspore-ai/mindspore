@@ -3484,7 +3484,7 @@ def tan(x, dtype=None):
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
     Raises:
-        TypeError: If the input is not a tensor or is :class:`tensor.dtype` is :class:`mindsproe.float64`.
+        TypeError: If the input is not a tensor or is :class:`tensor.dtype` is :class:`mindspore.float64`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
