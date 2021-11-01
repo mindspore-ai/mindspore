@@ -88,7 +88,7 @@ class IrExportBuilder {
  public:
   IrExportBuilder() = default;
   ~IrExportBuilder() { google::protobuf::ShutdownProtobufLibrary(); }
-  std::string GetProtoString();
+  std::string GetProtoString() const;
   void BuildModelInfo();
   void BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
   mind_ir::ModelProto Model() { return model_; }
@@ -163,7 +163,7 @@ mind_ir::ModelProto IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, boo
   return builder_->Model();
 }
 
-std::string IrExportBuilder::GetProtoString() {
+std::string IrExportBuilder::GetProtoString() const {
   MS_LOG(DEBUG) << "BuildModel complete!";
   return model_.SerializeAsString();
 }
