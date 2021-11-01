@@ -52,6 +52,16 @@ class Affine final : public TensorTransform {
   /// \param[in] fill_value A vector representing the value to fill the area outside the transformation
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto affine_op = vision::Affine({30, 60}, {0.0, 0.0}, 0.8);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, affine_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   explicit Affine(float_t degrees, const std::vector<float> &translation = {0.0, 0.0}, float scale = 0.0,
                   const std::vector<float> &shear = {0.0, 0.0},
                   InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
@@ -76,6 +86,16 @@ class CenterCrop final : public TensorTransform {
   /// \param[in] size A vector representing the output size of the cropped image.
   ///     If the size is a single value, a squared crop of size (size, size) is returned.
   ///     If the size has 2 values, it should be (height, width).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto crop_op = vision::CenterCrop({32, 32});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, crop_op},  // operations
+  ///                            {"image"});            // input columns
+  /// \endcode
   explicit CenterCrop(std::vector<int32_t> size);
 
   /// \brief Destructor.
@@ -101,6 +121,16 @@ class Crop final : public TensorTransform {
   /// \param[in] size Size of the cropped area.
   ///     If the size is a single value, a squared crop of size (size, size) is returned.
   ///     If the size has 2 values, it should be (height, width).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto crop_op = vision::Crop({0, 0}, {32, 32});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, crop_op},  // operations
+  ///                            {"image"});            // input columns
+  /// \endcode
   Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
 
   /// \brief Destructor.
@@ -121,6 +151,15 @@ class Decode final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rgb A boolean indicating whether to decode the image in RGB mode or not.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op},  // operations
+  ///                            {"image"});   // input columns
+  /// \endcode
   explicit Decode(bool rgb = true);
 
   /// \brief Destructor.
@@ -145,6 +184,16 @@ class GaussianBlur final : public TensorTransform {
   /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The value must be positive and odd.
   /// \param[in] sigma A vector of Gaussian kernel standard deviation sigma for width and height. The values must be
   ///     positive. Using default value 0 means to calculate the sigma according to the kernel size.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto gaussian_op = vision::GaussianBlur({7, 7});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, gaussian_op},  // operations
+  ///                            {"image"});                // input columns
+  /// \endcode
   GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
 
   /// \brief Destructor.
@@ -168,6 +217,16 @@ class Normalize final : public TensorTransform {
   ///     The mean values must be in range [0.0, 255.0].
   /// \param[in] std A vector of standard deviations for each channel, with respect to channel order.
   ///     The standard deviation values must be in range (0.0, 255.0].
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto normalize_op = vision::Normalize({128, 128, 128}, {1.0, 1.0, 1.0});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, normalize_op},  // operations
+  ///                            {"image"});                 // input columns
+  /// \endcode
   Normalize(std::vector<float> mean, std::vector<float> std);
 
   /// \brief Destructor.
@@ -207,6 +266,16 @@ class RandomAffine final : public TensorTransform {
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G and B channels respectively.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto random_op = vision::RandomAffine({45, 90});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, random_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   explicit RandomAffine(const std::vector<float_t> &degrees,
                         const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
                         const std::vector<float_t> &scale_range = {1.0, 1.0},
@@ -239,6 +308,16 @@ class Resize final : public TensorTransform {
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
   ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto resize_op = vision::Resize({224, 224}, InterpolationMode::kLinear);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, resize_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   explicit Resize(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
@@ -271,6 +350,16 @@ class ResizePreserveAR final : public TensorTransform {
   ///     - img_orientation = 6, Rotate 90 degree.
   ///     - img_orientation = 7, Rotate 270 degree and apply horizontal flip.
   ///     - img_orientation = 8, Rotate 270 degree.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto resize_op = vision::ResizePreserveAR(224, 224);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, resize_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation = 0);
 
   /// \brief Destructor.
@@ -291,6 +380,16 @@ class ResizePreserveAR final : public TensorTransform {
 class RGB2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rgb2bgr_op = vision::RGB2BGR();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rgb2bgr_op},  // operations
+  ///                            {"image"});               // input columns
+  /// \endcode
   RGB2BGR() = default;
 
   /// \brief Destructor.
@@ -308,6 +407,16 @@ class RGB2BGR final : public TensorTransform {
 class RGB2GRAY final : public TensorTransform {
  public:
   /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rgb2gray_op = vision::RGB2GRAY();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rgb2gray_op},  // operations
+  ///                            {"image"});                // input columns
+  /// \endcode
   RGB2GRAY() = default;
 
   /// \brief Destructor.
@@ -333,6 +442,16 @@ class Rotate final : public TensorTransform {
   ///     - FixRotationAngle::k90Degree = 6, Rotate 90 degree.
   ///     - FixRotationAngle::k270DegreeAndMirror = 7, Rotate 270 degree and apply horizontal flip.
   ///     - FixRotationAngle::k270Degree = 8, Rotate 270 degree.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rotate_op = vision::Rotate(FixRotationAngle::k90Degree);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rotate_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   explicit Rotate(FixRotationAngle angle_id = FixRotationAngle::k0Degree);
 
   /// \brief Constructor.
@@ -348,6 +467,16 @@ class Rotate final : public TensorTransform {
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rotate_op = vision::Rotate(90);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rotate_op},  // operations
+  ///                            {"image"});              // input columns
+  /// \endcode
   Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
          std::vector<float> center = {}, std::vector<uint8_t> fill_value = {0, 0, 0});
 

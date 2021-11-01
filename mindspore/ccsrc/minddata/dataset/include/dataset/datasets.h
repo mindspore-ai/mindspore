@@ -649,85 +649,91 @@ class SchemaObj {
   /// \brief Destructor
   ~SchemaObj() = default;
 
-  /// \brief SchemaObj Init function
-  /// \return bool true if schema initialization is successful
+  /// \brief SchemaObj Init function.
+  /// \return bool true if schema initialization is successful.
   Status Init();
 
-  /// \brief Add new column to the schema with unknown shape of rank 1
+  /// \brief Add new column to the schema with unknown shape of rank 1.
   /// \param[in] name Name of the column.
   /// \param[in] ms_type Data type of the column(mindspore::DataType).
-  /// \return Status code
+  /// \return Status code.
   Status add_column(const std::string &name, mindspore::DataType ms_type) {
     return add_column_char(StringToChar(name), ms_type);
   }
 
-  /// \brief Add new column to the schema with unknown shape of rank 1
+  /// \brief Add new column to the schema with unknown shape of rank 1.
   /// \param[in] name Name of the column.
   /// \param[in] ms_type Data type of the column(std::string).
   /// \param[in] shape Shape of the column.
-  /// \return Status code
+  /// \return Status code.
   Status add_column(const std::string &name, const std::string &ms_type) {
     return add_column_char(StringToChar(name), StringToChar(ms_type));
   }
 
-  /// \brief Add new column to the schema
+  /// \brief Add new column to the schema.
   /// \param[in] name Name of the column.
   /// \param[in] ms_type Data type of the column(mindspore::DataType).
   /// \param[in] shape Shape of the column.
-  /// \return Status code
+  /// \return Status code.
   Status add_column(const std::string &name, mindspore::DataType ms_type, const std::vector<int32_t> &shape) {
     return add_column_char(StringToChar(name), ms_type, shape);
   }
 
-  /// \brief Add new column to the schema
+  /// \brief Add new column to the schema.
   /// \param[in] name Name of the column.
   /// \param[in] ms_type Data type of the column(std::string).
   /// \param[in] shape Shape of the column.
-  /// \return Status code
+  /// \return Status code.
   Status add_column(const std::string &name, const std::string &ms_type, const std::vector<int32_t> &shape) {
     return add_column_char(StringToChar(name), StringToChar(ms_type), shape);
   }
 
-  /// \brief Get a JSON string of the schema
-  /// \return JSON string of the schema
+  /// \brief Get a JSON string of the schema.
+  /// \return JSON string of the schema.
   std::string to_json() { return CharToString(to_json_char()); }
 
+  /// \brief Serialize schema config to JSON.
+  /// \return Status code.
   Status schema_to_json(nlohmann::json *out_json);
 
-  /// \brief Get a JSON string of the schema
+  /// \brief Get a JSON string of the schema.
+  /// \return JSON string of the schema.
   std::string to_string() { return to_json(); }
 
-  /// \brief Set a new value to dataset_type
+  /// \brief Set a new value to dataset_type.
+  /// \param[in] dataset_type Data type of the schema.
   void set_dataset_type(std::string dataset_type);
 
-  /// \brief Set a new value to num_rows
+  /// \brief Set a new value to num_rows.
+  /// \param[in] dataset_type Number of rows of the schema.
   void set_num_rows(int32_t num_rows);
 
   /// \brief Get the current num_rows
+  /// \return Number of rows.
   int32_t get_num_rows() const;
 
-  /// \brief Get schema file from JSON file
-  /// \param[in] json_obj parsed JSON object
-  /// \return Status code
+  /// \brief Get schema file from JSON file.
+  /// \param[in] json_obj parsed JSON object.
+  /// \return Status code.
   Status from_json(nlohmann::json json_obj);
 
-  /// \brief Get schema file from JSON file
+  /// \brief Get schema file from JSON file.
   /// \param[in] json_string Name of JSON file to be parsed.
-  /// \return Status code
+  /// \return Status code.
   Status FromJSONString(const std::string &json_string) { return FromJSONStringCharIF(StringToChar(json_string)); }
 
-  /// \brief Parse and add column information
+  /// \brief Parse and add column information.
   /// \param[in] json_string Name of JSON string for column dataset attribute information, decoded from schema file.
-  /// \return Status code
+  /// \return Status code.
   Status ParseColumnString(const std::string &json_string) {
     return ParseColumnStringCharIF(StringToChar(json_string));
   }
 
  private:
-  /// \brief Parse the columns and add them to columns
+  /// \brief Parse the columns and add them to columns.
   /// \param[in] columns Dataset attribution information, decoded from schema file.
   ///    Support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
-  /// \return Status code
+  /// \return Status code.
   Status parse_column(nlohmann::json columns);
 
   // Char constructor of SchemaObj
@@ -3673,7 +3679,7 @@ class VOCDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
-/// \return Shared pointer to the VOCDataset
+/// \return Shared pointer to the VOCDataset.
 /// \par Example
 /// \code
 ///      /* Define dataset path and MindData object */
@@ -3774,6 +3780,18 @@ std::shared_ptr<DatasetCache> CreateDatasetCacheCharIF(session_id_type id, uint6
 /// \param[in] num_connections optional number of connections (default=12).
 /// \param[in] prefetch_sz optional prefetch size (default=20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
+/// \par Example
+/// \code
+///      /* Define a Cache object */
+///      std::shared_ptr<DatasetCache> cache = CreateDatasetCache(233, 0, false, "127.0.0.1", 50053, 1, 1);
+///
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/image_directory";
+///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, nullptr, {}, {}, cache);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+/// \endcode
 inline std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
                                                         std::optional<std::string> hostname = std::nullopt,
                                                         std::optional<int32_t> port = std::nullopt,

@@ -163,7 +163,7 @@ def get_prefetch_size():
 
     Examples:
         >>> # Get the global configuration of prefetch size.
-        >>> # If set_prefetch_size() is never called before, the default value(20) will be returned.
+        >>> # If set_prefetch_size() is never called before, the default value(16) will be returned.
         >>> prefetch_size = ds.config.get_prefetch_size()
     """
     return _config.get_op_connector_size()

@@ -132,12 +132,49 @@ class Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto resize_op(new vision::Resize({30, 30}));
+  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     auto compose_op(new transforms::Compose({resize_op, random_crop_op, center_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({compose_op},  // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit Compose(const std::vector<TensorTransform *> &transforms);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
+  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     std::shared_ptr<TensorTransform> compose_op(new transforms::Compose({resize_op, random_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({compose_op},  // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     vision::Resize resize_op = vision::Resize({30, 30});
+  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
+  ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
+  ///     transforms::Compose compose_op = transforms::Compose({resize_op, random_crop_op, center_crop_op});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({compose_op},  // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit Compose(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
@@ -160,6 +197,17 @@ class Concatenate final : public TensorTransform {
   /// \param[in] axis Concatenate the tensors along given axis, only support 0 or -1 so far (default=0).
   /// \param[in] prepend MSTensor to be prepended to the concatenated tensors (default={}).
   /// \param[in] append MSTensor to be appended to the concatenated tensors (default={}).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     mindspore::MSTensor append_MSTensor;
+  ///     mindspore::MSTensor prepend_MSTensor
+  ///     auto concatenate_op = transforms::Concatenate(0, append_MSTensor, prepend_MSTensor);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({concatenate_op},  // operations
+  ///                            {"column"});        // input columns
+  /// \endcode
   explicit Concatenate(int8_t axis = 0, const MSTensor &prepend = {}, const MSTensor &append = {});
 
   /// \brief Destructor
@@ -180,6 +228,16 @@ class Concatenate final : public TensorTransform {
 class Duplicate final : public TensorTransform {
  public:
   /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto duplicate_op = transforms::Duplicate();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({duplicate_op},               // operations
+  ///                            {"column"},                   // input columns
+  ///                            {"column", "column_copy"});   // output columns
+  /// \endcode
   Duplicate();
 
   /// \brief Destructor
@@ -199,6 +257,16 @@ class Fill final : public TensorTransform {
   /// \param[in] fill_value Scalar value to fill the tensor with.
   ///               It can only be MSTensor of the following types from mindspore::DataType:
   ///               String, Bool, Int8/16/32/64, UInt8/16/32/64, Float16/32/64.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     mindspore::MSTensor tensor;
+  ///     auto fill_op = transforms::Fill(tensor);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({fill_op},     // operations
+  ///                            {"column"});   // input columns
+  /// \endcode
   explicit Fill(const MSTensor &fill_value);
 
   /// \brief Destructor
@@ -224,6 +292,16 @@ class Mask final : public TensorTransform {
   ///                from mindspore::DataType: String, Int, Float, Bool.
   /// \param[in] de_type Type of the generated mask. It can only be numeric or boolean datatype.
   ///               (default=mindspore::DataType::kNumberTypeBool)
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     mindspore::MSTensor constant;
+  ///     auto mask_op = transforms::Mask(RelationalOp::kEqual, tensor);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({mask_op},     // operations
+  ///                            {"column"});   // input columns
+  /// \endcode
   explicit Mask(RelationalOp op, const MSTensor &constant,
                 mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
 
@@ -245,6 +323,16 @@ class OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_classes number of classes.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     mindspore::MSTensor constant;
+  ///     auto one_hot_op = transforms::OneHot(10);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({one_hot_op},    // operations
+  ///                            {"column"});     // input columns
+  /// \endcode
   explicit OneHot(int32_t num_classes);
 
   /// \brief Destructor
@@ -268,6 +356,16 @@ class PadEnd final : public TensorTransform {
   ///               Dimensions that set to `-1` will not be padded (i.e., original dim will be used).
   ///               Shorter dimensions will truncate the values.
   /// \param[in] pad_value Value used to pad (default={}).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     mindspore::MSTensor constant;
+  ///     auto pad_end_op = transforms::PadEnd({224, 224, 1}, {constant});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({pad_end_op},    // operations
+  ///                            {"column"});     // input columns
+  /// \endcode
   explicit PadEnd(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value = {});
 
   /// \brief Destructor
@@ -289,14 +387,51 @@ class RandomApply final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
   /// \param[in] prob The probability to apply the transformation list (default=0.5).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto resize_op(new vision::Resize({30, 30}));
+  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     auto random_op(new transforms::RandomApply({resize_op, random_crop_op, center_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomApply(const std::vector<TensorTransform *> &transforms, double prob = 0.5);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
   /// \param[in] prob The probability to apply the transformation list (default=0.5).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
+  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomApply({resize_op, random_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob = 0.5);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of TensorTransform objects to be applied.
   /// \param[in] prob The probability to apply the transformation list (default=0.5).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     vision::Resize resize_op = vision::Resize({30, 30});
+  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
+  ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
+  ///     transforms::RandomApply random_op = transforms::RandomApply({resize_op, random_crop_op, center_crop_op});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob = 0.5);
 
   /// \brief Destructor
@@ -317,12 +452,49 @@ class RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto resize_op(new vision::Resize({30, 30}));
+  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     auto random_op(new transforms::RandomChoice({resize_op, random_crop_op, center_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomChoice(const std::vector<TensorTransform *> &transforms);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
+  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
+  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomChoice({resize_op, random_crop_op}));
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+
   /// \brief Constructor.
   /// \param[in] transforms A vector of TensorTransform objects to be applied.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     vision::Resize resize_op = vision::Resize({30, 30});
+  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
+  ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
+  ///     transforms::RandomChoice random_op = transforms::RandomChoice({resize_op, random_crop_op, center_crop_op});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({random_op},   // operations
+  ///                            {"image"});    // input columns
+  /// \endcode
   explicit RandomChoice(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
@@ -344,7 +516,17 @@ class RandomChoice final : public TensorTransform {
 class Slice final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] slice_input Vector of SliceOption
+  /// \param[in] slice_input Vector of SliceOption.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     SliceOption slice_option = SliceOption(Slice(0, 3, 2));
+  ///     transforms::Slice slice_op = transforms::Slice({slice_option});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({slice_op},      // operations
+  ///                            {"column"});     // input columns
+  /// \endcode
   explicit Slice(const std::vector<SliceOption> &slice_input);
 
   /// \brief Destructor
@@ -365,6 +547,15 @@ class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore::DataType to be cast to.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto typecast_op = transforms::TypeCast(mindspore::DataType::kNumberTypeUInt8);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({typecast_op},      // operations
+  ///                            {"column"});        // input columns
+  /// \endcode
   explicit TypeCast(mindspore::DataType data_type);
 
   /// \brief Destructor
@@ -385,6 +576,15 @@ class TypeCast final : public TensorTransform {
 class Unique final : public TensorTransform {
  public:
   /// \brief Constructor.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto unique_op = transforms::Unique();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({unique_op},      // operations
+  ///                            {"column"});      // input columns
+  /// \endcode
   Unique();
 
   /// \brief Destructor
