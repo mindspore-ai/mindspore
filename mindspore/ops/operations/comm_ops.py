@@ -82,11 +82,12 @@ target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
 
 def check_hcom_group_valid(group, prim_name=None):
     """Check if hcom group is valid."""
-    msg_prefix = f"For '{prim_name}', only" if prim_name else "Only"
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if context.get_context("mode") == context.PYNATIVE_MODE and \
             context.get_context("device_target") == "Ascend" and \
             group != GlobalComm.WORLD_COMM_GROUP:
-        raise RuntimeError(f"{msg_prefix} hccl_world_group is supported in Pynative mode, but got 'group': {group}.")
+        raise RuntimeError(f"{msg_prefix} 'group' only support 'hccl_world_group' in pynative mode, but got "
+                           f"'group': {group}.")
 
 
 class AllReduce(PrimitiveWithInfer):
