@@ -33,17 +33,17 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 1;
 
 template <typename T>
-void Square(const T *in, T *out, size_t size) {
+void Square(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = in[i] * in[i];
     }
   };
-  ParallelLaunch(task, size, kMaxSquareSerialSize);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Sign(const T *in, T *out, size_t size) {
+void Sign(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (in[i] < 0) {
@@ -55,11 +55,11 @@ void Sign(const T *in, T *out, size_t size) {
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Neg(const T *in, T *out, size_t size) {
+void Neg(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
@@ -68,77 +68,77 @@ void Neg(const T *in, T *out, size_t size) {
   ParallelLaunch(task, size, kMaxNegSerialSize);
 }
 
-void LogicalNot(const bool *in, bool *out, size_t size) {
+void LogicalNot(ArithmeticSelfCPUKernel *content, const bool *in, bool *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = !in[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void OnesLike(const T *, T *out, size_t size) {
+void OnesLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size) {
   auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void ZerosLike(const T *, T *out, size_t size) {
+void ZerosLike(ArithmeticSelfCPUKernel *content, const T *, T *out, size_t size) {
   auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(0);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Floor(const T *in, T *out, size_t size) {
+void Floor(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(floor(in[i]));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Rint(const T *in, T *out, size_t size) {
+void Rint(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(rint(in[i]));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Round(const T *in, T *out, size_t size) {
+void Round(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(nearbyint(in[i]));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Reciprocal(const T *in, T *out, size_t size) {
+void Reciprocal(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1.0 / in[i]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Gelu(const T *in, T *out, size_t size) {
+void Gelu(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     auto factor_a = static_cast<T>(0.7978845608);
     auto factor_b = static_cast<T>(0.044715);
@@ -149,137 +149,137 @@ void Gelu(const T *in, T *out, size_t size) {
       out[i] = x * (static_cast<T>(1.0) + tanh_res) / static_cast<T>(2.0);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Asin(const T *in, T *out, size_t size) {
+void Asin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(asin(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void ACos(const T *in, T *out, size_t size) {
+void ACos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(acos(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Atan(const T *in, T *out, size_t size) {
+void Atan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(atan(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Sin(const T *in, T *out, size_t size) {
+void Sin(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Cos(const T *in, T *out, size_t size) {
+void Cos(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cos(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Tan(const T *in, T *out, size_t size) {
+void Tan(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Sinh(const T *in, T *out, size_t size) {
+void Sinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(sinh(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Cosh(const T *in, T *out, size_t size) {
+void Cosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cosh(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Asinh(const T *in, T *out, size_t size) {
+void Asinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(asinh(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Acosh(const T *in, T *out, size_t size) {
+void Acosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(acosh(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Atanh(const T *in, T *out, size_t size) {
+void Atanh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Abs(const T *in, T *out, size_t size) {
+void Abs(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = abs(in[i]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
-void Sqrt(const T *in, T *out, size_t size) {
+void Sqrt(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = sqrt(in[i]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
@@ -316,49 +316,49 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 void ArithmeticSelfCPUKernel::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) const {
+                                               const std::vector<AddressPtr> &outputs) {
   auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
   auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
   size_t lens = outputs[0]->size / sizeof(bool);
-  LogicalNot(input, output, lens);
+  LogicalNot(this, input, output, lens);
 }
 
 template <typename T>
 void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) const {
+                                           const std::vector<AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t lens = outputs[0]->size / sizeof(T);
-  static const std::unordered_map<std::string, std::function<void(const T *, T *, size_t)>> arithmeticSelfFuncMap{
-    {prim::kPrimSquare->name(), Square<T>},
-    {prim::kPrimSign->name(), Sign<T>},
-    {prim::kPrimNeg->name(), Neg<T>},
-    {prim::kPrimAtanh->name(), Atanh<T>},
-    {prim::kPrimAcosh->name(), Acosh<T>},
-    {prim::kPrimFloor->name(), Floor<T>},
-    {prim::kPrimSin->name(), Sin<T>},
-    {prim::kPrimGeLU->name(), Gelu<T>},
-    {prim::kPrimCos->name(), Cos<T>},
-    {prim::kPrimTan->name(), Tan<T>},
-    {prim::kPrimAsin->name(), Asin<T>},
-    {prim::kPrimACos->name(), ACos<T>},
-    {prim::kPrimAtan->name(), Atan<T>},
-    {prim::kPrimSinh->name(), Sinh<T>},
-    {prim::kPrimCosh->name(), Cosh<T>},
-    {prim::kPrimAsinh->name(), Asinh<T>},
-    {prim::kPrimZerosLike->name(), ZerosLike<T>},
-    {prim::kPrimOnesLike->name(), OnesLike<T>},
-    {prim::kPrimReciprocal->name(), Reciprocal<T>},
-    {prim::kPrimRint->name(), Rint<T>},
-    {prim::kPrimRound->name(), Round<T>},
-    {prim::kPrimAbs->name(), Abs<T>},
-    {prim::kPrimSqrt->name(), Sqrt<T>}};
+  static const std::unordered_map<std::string, std::function<void(ArithmeticSelfCPUKernel *, const T *, T *, size_t)>>
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
+                          {prim::kPrimSign->name(), Sign<T>},
+                          {prim::kPrimNeg->name(), Neg<T>},
+                          {prim::kPrimAtanh->name(), Atanh<T>},
+                          {prim::kPrimAcosh->name(), Acosh<T>},
+                          {prim::kPrimFloor->name(), Floor<T>},
+                          {prim::kPrimSin->name(), Sin<T>},
+                          {prim::kPrimGeLU->name(), Gelu<T>},
+                          {prim::kPrimCos->name(), Cos<T>},
+                          {prim::kPrimTan->name(), Tan<T>},
+                          {prim::kPrimAsin->name(), Asin<T>},
+                          {prim::kPrimACos->name(), ACos<T>},
+                          {prim::kPrimAtan->name(), Atan<T>},
+                          {prim::kPrimSinh->name(), Sinh<T>},
+                          {prim::kPrimCosh->name(), Cosh<T>},
+                          {prim::kPrimAsinh->name(), Asinh<T>},
+                          {prim::kPrimZerosLike->name(), ZerosLike<T>},
+                          {prim::kPrimOnesLike->name(), OnesLike<T>},
+                          {prim::kPrimReciprocal->name(), Reciprocal<T>},
+                          {prim::kPrimRint->name(), Rint<T>},
+                          {prim::kPrimRound->name(), Round<T>},
+                          {prim::kPrimAbs->name(), Abs<T>},
+                          {prim::kPrimSqrt->name(), Sqrt<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCPUKernel does not support " << kernel_name_;
   }
-  func_pair->second(input, output, lens);
+  func_pair->second(this, input, output, lens);
 }
 
 template <typename T>

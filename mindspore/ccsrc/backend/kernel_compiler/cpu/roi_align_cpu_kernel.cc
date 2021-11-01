@@ -109,8 +109,7 @@ bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
       out_data[thread_idx] = accumulate_val;
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
-
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 

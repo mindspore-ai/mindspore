@@ -59,7 +59,7 @@ bool HSigmoidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, tensor_size_);
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

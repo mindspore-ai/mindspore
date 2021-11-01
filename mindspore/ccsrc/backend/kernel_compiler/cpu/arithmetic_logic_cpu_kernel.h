@@ -39,14 +39,14 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
 
  private:
   void InitComputeFunc();
-  void Less(const T *input1, const T *input2, bool *out) const;
-  void Equal(const T *input1, const T *input2, bool *out) const;
-  void NotEqual(const T *input1, const T *input2, bool *out) const;
-  void Greater(const T *input1, const T *input2, bool *out) const;
-  void GreaterEqual(const T *input1, const T *input2, bool *out) const;
-  void LessEqual(const T *input1, const T *input2, bool *out) const;
-  void LogicalAnd(const T *input1, const T *input2, bool *out) const;
-  void LogicalOr(const T *input1, const T *input2, bool *out) const;
+  void Less(const T *input1, const T *input2, bool *out);
+  void Equal(const T *input1, const T *input2, bool *out);
+  void NotEqual(const T *input1, const T *input2, bool *out);
+  void Greater(const T *input1, const T *input2, bool *out);
+  void GreaterEqual(const T *input1, const T *input2, bool *out);
+  void LessEqual(const T *input1, const T *input2, bool *out);
+  void LogicalAnd(const T *input1, const T *input2, bool *out);
+  void LogicalOr(const T *input1, const T *input2, bool *out);
 
   using TypeComputeFunc = std::function<void(ArithmeticLogicCPUKernel *, const T *, const T *, bool *)>;
   TypeComputeFunc compute_func_{nullptr};

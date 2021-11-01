@@ -93,7 +93,7 @@ bool IOUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, iou_size_);
+  ParallelLaunchAutoSearch(task, iou_size_, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

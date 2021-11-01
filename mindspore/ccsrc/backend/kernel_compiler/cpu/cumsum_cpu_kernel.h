@@ -65,7 +65,7 @@ class CumSumCPUKernel : public CPUKernel {
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs) const;
+                    const std::vector<AddressPtr> &outputs);
 
   template <typename T>
   void LaunchCumSum(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end) const;

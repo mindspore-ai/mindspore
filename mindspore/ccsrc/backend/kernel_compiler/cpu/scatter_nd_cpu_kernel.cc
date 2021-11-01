@@ -27,7 +27,8 @@ constexpr size_t kScatterNdOutputSize = 1;
 constexpr size_t kMinIndiceRank = 2;
 
 template <typename S, typename T>
-void Compute(const ComputeParams<S, T> *params, const size_t start, const size_t end) {
+void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *params, const size_t start,
+             const size_t end) {
   T *target = params->target_;
   S *indices = params->indices_;
   T *updates = params->updates_;
@@ -47,7 +48,7 @@ void Compute(const ComputeParams<S, T> *params, const size_t start, const size_t
         target[IntToSize(offset) + idx] += updates[IntToSize(params->unit_size_) * i + idx];
       }
     };
-    CPUKernelUtils::ParallelFor(task, IntToSize(params->unit_size_));
+    ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
   }
 }
 }  // namespace
@@ -113,10 +114,10 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
 
   auto task = [this, &params](size_t start, size_t end) {
     for (size_t idx = start; idx < end; idx++) {
-      Compute<S, T>(&params, idx, idx + 1);
+      Compute<S, T>(this, &params, idx, idx + 1);
     }
   };
-  CPUKernelUtils::ParallelFor(task, num_units_);
+  ParallelLaunchAutoSearch(task, num_units_, this, &parallel_search_info_);
   return true;
 }
 

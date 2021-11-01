@@ -90,7 +90,7 @@ void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t 
       (*denominator_addr)[i] = sqrt(denominator);
     }
   };
-  CPUKernelUtils::ParallelFor(task, reduce_size);
+  ParallelLaunchAutoSearch(task, reduce_size, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -120,7 +120,7 @@ void L2NormalizeCPUKernel<T>::CalcOutput(const T *input_addr, const std::vector<
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size);
+  ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
 }
 
 template <typename T>

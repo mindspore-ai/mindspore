@@ -141,8 +141,7 @@ bool BoundingBoxDecodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
       bboxes[right_y] = y2;
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
-
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

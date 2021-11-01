@@ -214,7 +214,7 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, IntToSize(output_size_));
+  ParallelLaunchAutoSearch(task, IntToSize(output_size_), this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

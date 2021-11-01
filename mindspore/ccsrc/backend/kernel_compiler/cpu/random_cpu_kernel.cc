@@ -34,35 +34,16 @@ void StandardNormal(float *output, std::normal_distribution<float> distribution,
   }
 }
 
-void LaunchStandardNormal(unsigned int seed, const std::vector<AddressPtr> &outputs) {
+void LaunchStandardNormal(RandomCPUKernel *content, unsigned int seed, const std::vector<AddressPtr> &outputs) {
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  std::vector<std::thread> threads;
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  std::normal_distribution<float> distribution;
-  while (start < lens) {
-    // avoid different threads using the same seed to generate the same random number
+  auto task = [&seed, &output](size_t start, size_t end) {
+    std::normal_distribution<float> distribution;
     std::default_random_engine random_generator(++seed);
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    (void)threads.emplace_back(std::thread(StandardNormal, output, distribution, random_generator, start, end));
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
+    StandardNormal(output, distribution, random_generator, start, end);
+  };
+  ParallelLaunchAutoSearch(task, lens, content, &content->parallel_search_info_);
 }
 
 void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
@@ -138,7 +119,7 @@ bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
 
   if (random_op_type_ == RANDOM_OP_NORMAL) {
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_name_);
-    LaunchStandardNormal(RNG_seed, outputs);
+    LaunchStandardNormal(this, RNG_seed, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformIntInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformIntOutputsNum, kernel_name_);

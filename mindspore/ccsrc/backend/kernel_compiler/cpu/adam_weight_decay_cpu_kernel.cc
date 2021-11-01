@@ -61,7 +61,7 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPt
       var[i] -= lr * update;
     }
   };
-  CPUKernelUtils::ParallelFor(task, lens);
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
 void AdamWeightDecayCPUKernel::LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs,

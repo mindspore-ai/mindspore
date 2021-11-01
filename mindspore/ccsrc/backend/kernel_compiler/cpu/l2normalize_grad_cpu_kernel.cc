@@ -65,7 +65,7 @@ bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
       GetOutput(input_x_vector, y_vector, dout_vector, high_dim_index, &output[i]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size);
+  ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 

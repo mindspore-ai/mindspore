@@ -44,7 +44,7 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, 
       }
     };
   }
-  CPUKernelUtils::ParallelFor(task, size_);
+  ParallelLaunchAutoSearch(task, size_, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -70,7 +70,7 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUseCenter(T *variable, T *mean_square, T 
       }
     };
   }
-  CPUKernelUtils::ParallelFor(task, size_);
+  ParallelLaunchAutoSearch(task, size_, this, &parallel_search_info_);
 }
 
 template <typename T>

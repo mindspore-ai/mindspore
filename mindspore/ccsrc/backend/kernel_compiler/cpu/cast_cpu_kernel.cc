@@ -30,13 +30,13 @@ constexpr size_t kCastOutputsNum = 1;
 }  // namespace
 
 template <typename S, typename T>
-void Cast(const S *in, T *out, size_t size) {
+void Cast(CastCPUKernel<S, T> *content, const S *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(in[i]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename S, typename T>
@@ -59,7 +59,7 @@ bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   const auto *input = reinterpret_cast<S *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
-  Cast<S, T>(input, output, outputs[0]->size / sizeof(T));
+  Cast<S, T>(this, input, output, outputs[0]->size / sizeof(T));
   return true;
 }
 }  // namespace kernel

@@ -60,7 +60,7 @@ void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, co
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, lens);
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
 void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,

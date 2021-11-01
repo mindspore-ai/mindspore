@@ -86,11 +86,11 @@ bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
     const auto input_1 = reinterpret_cast<int *>(inputs[1]->addr);
     auto output = reinterpret_cast<int *>(outputs[0]->addr);
     auto task_0 = std::bind(AddInt, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
-    CPUKernelUtils::ParallelFor(task_0, elements_num);
+    ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
     for (size_t index = 2; index < input_num_; ++index) {
       const auto input = reinterpret_cast<int *>(inputs[index]->addr);
       auto task = std::bind(AddInt, input, output, output, std::placeholders::_1, std::placeholders::_2);
-      CPUKernelUtils::ParallelFor(task, elements_num);
+      ParallelLaunchAutoSearch(task, elements_num, this, &parallel_search_info_);
     }
   } else if (dtype_ == kNumberTypeFloat64) {
     size_t elements_num = outputs[0]->size / sizeof(double);
