@@ -148,9 +148,8 @@ def rollaxis(x, axis, start=0):
         start (int): Default: 0.
             If :math:`start <= axis`, the axis is rolled back until it lies in this position (`start`).
             If :math:`start > axis`: the axis is rolled until it lies before this position (`start`).
-
             If :math:`start < 0`, the start will be normalized as a non-negative number (more details
-                can be seen in the source code.)
+            can be seen in the source code.)
 
             .. table
                 +===========+=================+
