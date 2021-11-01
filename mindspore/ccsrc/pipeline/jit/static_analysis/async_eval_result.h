@@ -42,7 +42,7 @@ using AsyncInferTaskPtr = std::shared_ptr<AsyncInferTask>;
 using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
 class AnalysisSchedule {
  public:
-  ~AnalysisSchedule() { Stop(); }
+  ~AnalysisSchedule() = default;
   AnalysisSchedule(const AnalysisSchedule &) = delete;
   AnalysisSchedule &operator=(const AnalysisSchedule &) = delete;
   static AnalysisSchedule &GetInstance() {
@@ -52,12 +52,7 @@ class AnalysisSchedule {
   static void SetThreadID(const std::string &caller);
   static std::string &GetThreadID();
   void HandleException(const std::exception &ex);
-  void Stop() {
-    notExit_ = false;
-    MS_LOG(DEBUG) << " Set AnalysisSchedule::Exit . The active thread count: " << activate_threads_.size()
-                  << " The infer_thread_count: " << infer_thread_count_
-                  << " schedule list size: " << scheduleList_.size();
-  }
+  void Stop();
   void Wait();
   void Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr);
   void Yield(const AsyncInferTask *asyncTask);
