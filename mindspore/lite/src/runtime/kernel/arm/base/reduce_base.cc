@@ -106,7 +106,7 @@ int ReduceBaseCPUKernel::Prepare() {
     MS_CHECK_FALSE_MSG((axes_tensor->data_type() != kNumberTypeInt && axes_tensor->data_type() != kNumberTypeInt32),
                        RET_ERROR, "The data type of axes tensor should be int32");
     num_axes_ = axes_tensor->ElementsNum();
-    if (axes_tensor->ElementsNum() > MAX_SHAPE_SIZE) {
+    if (num_axes_ <= 0 && num_axes_ > MAX_SHAPE_SIZE) {
       MS_LOG(ERROR) << "input axes invalid.";
       return RET_ERROR;
     }
@@ -121,6 +121,7 @@ int ReduceBaseCPUKernel::Prepare() {
         return RET_ERROR;
       }
     } else {
+      MS_CHECK_FALSE(axes_tensor->Size() == 0, RET_ERROR);
       memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
     }
   } else {

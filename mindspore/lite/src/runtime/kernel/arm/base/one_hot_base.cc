@@ -82,7 +82,7 @@ int OneHotCPUKernel::ReSize() {
     return RET_ERROR;
   }
   inner_size_ = indices->ElementsNum() / outer_size_;
-
+  MS_CHECK_GT(inner_size_, 0, RET_ERROR);
   return RET_OK;
 }
 

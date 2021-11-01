@@ -49,6 +49,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
   params_->selected_ = nullptr;
   params_->anchors_ = nullptr;
   auto anchor_tensor = in_tensors_.at(2);
+  MS_CHECK_GT(anchor_tensor->ElementsNum(), 0, RET_ERROR);
   CHECK_NULL_RETURN(anchor_tensor->data());
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     auto quant_param = anchor_tensor->quant_params().front();
@@ -78,6 +79,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
+    MS_CHECK_FALSE(anchor_tensor->Size() == 0, RET_ERROR);
     memcpy(params_->anchors_, anchor_tensor->data(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();

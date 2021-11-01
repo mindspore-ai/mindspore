@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_INCLUDE_API_DATA_TYPE_H_
 #define MINDSPORE_INCLUDE_API_DATA_TYPE_H_
 
+#include <stdint.h>
+
 namespace mindspore {
 enum class DataType : int {
   kTypeUnknown = 0,

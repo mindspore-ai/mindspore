@@ -75,6 +75,7 @@ int SelectCPUKernel::Run() {
     }
     MS_ASSERT(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size());
     auto size = in_tensors_.at(1)->ElementsNum();
+    MS_CHECK_GT(size, 0, RET_ERROR);
     auto condition = static_cast<bool *>(bool_tensor->data());
     auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data());
     auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data());

@@ -71,6 +71,7 @@ int ConstantOfShapeCPUKernel::Run() {
   CHECK_NULL_RETURN(output);
   param_->data_type_ = output->data_type();
   param_->element_size_ = output->ElementsNum();
+  MS_CHECK_GT(param_->element_size_, 0, RET_ERROR);
   output_ptr_ = output->data();
   CHECK_NULL_RETURN(output_ptr_);
 
