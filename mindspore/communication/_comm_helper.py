@@ -19,6 +19,7 @@ from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
 
 _HCCL_AVAILABLE = False
+_HCCL_TEST_AVAILABLE = False
 _NCCL_AVAILABLE = False
 _MPI_AVAILABLE = False
 try:
@@ -45,6 +46,7 @@ else:
     try:
         import hccl_test.manage.api as hccl
         _HCCL_AVAILABLE = True
+        _HCCL_TEST_AVAILABLE = True
     except ImportError:
         _HCCL_AVAILABLE = False
 
