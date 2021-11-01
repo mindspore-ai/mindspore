@@ -629,8 +629,8 @@ def set_context(**kwargs):
 
             configure RDR:
 
-            - enable: controls whether the RDR is enabled to collects the key data during training and
-              saves key data in the fault scenario. When set to true, the RDR will be turned on.
+            - enable: controls whether the RDR is enabled to collect the key data during training and
+              save key data in the fault scenario. When set to true, the RDR will be turned on.
               When set to false, the RDR will be turned off.
             - path: sets the path where RDR saves data. The current path must be absolute.
 
