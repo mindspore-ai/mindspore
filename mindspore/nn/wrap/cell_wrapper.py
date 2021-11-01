@@ -440,6 +440,7 @@ class _MicroBatch(Cell):
         super(_MicroBatch, self).__init__()
         self.shape = P.Shape()
         self.micro_size = micro_size
+        self.strided_slice = P.StridedSlice()
 
     def construct(self, i, *inputs):
         micro_inputs = ()
@@ -447,7 +448,13 @@ class _MicroBatch(Cell):
             input_shape = self.shape(each_input)
             micro_batch_begin = i * input_shape[0] // self.micro_size
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
-            micro_input = each_input[micro_batch_begin:micro_batch_end]
+            strided_slice_begin = (micro_batch_begin,)
+            strided_slice_strides = (1,)
+            for i in range(len(input_shape) - 1):
+                strided_slice_begin += (0,)
+                strided_slice_strides += (1,)
+            strided_slice_end = (micro_batch_end,)
+            micro_input = self.strided_slice(each_input, strided_slice_begin, strided_slice_end)
             micro_inputs += (micro_input,)
         return micro_inputs
 
@@ -471,6 +478,7 @@ class MicroBatchInterleaved(Cell):
         self.interleave_inputs = nn.CellList()
         for _ in range(interleave_num):
             interleave_data = _MicroBatch(interleave_num)
+            interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
             self.interleave_inputs.append(interleave_data)
 
     def construct(self, *inputs):
