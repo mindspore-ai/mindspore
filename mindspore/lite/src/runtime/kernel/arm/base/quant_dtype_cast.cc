@@ -62,10 +62,7 @@ int QuantDTypeCastCPUKernel::ReSize() {
   MS_ASSERT(in_tensor != nullptr);
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
-  if (thread_n_num_ == 0) {
-    MS_LOG(ERROR) << "div zero";
-    return RET_ERROR;
-  }
+  MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
@@ -178,6 +175,7 @@ int QuantDTypeCastCPUKernel::Run() {
     if (int8_ptr_ == nullptr || int8_out_ptr_ == nullptr) {
       return RET_NULL_PTR;
     }
+    MS_CHECK_GT(in_tensors_[0]->ElementsNum(), 0, RET_ERROR);
     float32_ptr_ = new (std::nothrow) float[in_tensors_[0]->ElementsNum()];
     if (float32_ptr_ == nullptr) {
       MS_LOG(ERROR) << "new float[] failed";

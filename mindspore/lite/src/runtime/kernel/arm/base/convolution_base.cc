@@ -139,6 +139,7 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   }
 
   if (in_tensors_.size() == kInputSize2) {
+    MS_CHECK_FALSE(in_tensors_.at(kBiasIndex)->Size() == 0, RET_ERROR);
     memcpy(bias_data_, origin_bias_, in_tensors_.at(kBiasIndex)->Size());
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);

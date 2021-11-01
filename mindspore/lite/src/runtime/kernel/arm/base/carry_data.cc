@@ -85,9 +85,11 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
   CHECK_NULL_RETURN(src_tensor->data());
   CHECK_NULL_RETURN(dst_tensor->data());
   // need replace with increase data ref count
+  MS_CHECK_FALSE(src_tensor->Size() == 0, RET_ERROR);
   memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;
 }
+
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
   // shape may change, because tensors.size() can be change in RunGraph
