@@ -46,7 +46,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     transpose_a_ = nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = nvinfer1::MatrixOperation::kTRANSPOSE;
   }
-  auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape().size());
+  auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape().size(), op_name_);
 
   nvinfer1::ITensor *matmul_input = tensorrt_in_tensors_[0].trt_tensor_;
   Format out_format = tensorrt_in_tensors_[0].format_;
@@ -68,7 +68,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
 
   if (in_tensors_.size() == BIAS_INDEX + 1) {
-    auto bias = ConvertTensorWithExpandDims(network, in_tensors_[BIAS_INDEX], in_tensors_[0].Shape().size());
+    auto bias = ConvertTensorWithExpandDims(network, in_tensors_[BIAS_INDEX], in_tensors_[0].Shape().size(), op_name_);
     auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
     auto bias_layer_name = op_name_ + "_bias";
     bias_layer->setName(bias_layer_name.c_str());

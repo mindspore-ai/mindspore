@@ -154,10 +154,11 @@ int PoolTensorRT::ParseParams() {
 
       auto padding = pool_primitive->pad();
       if (padding == nullptr) {
-        MS_LOG(ERROR) << "get padding failed: " << op_name_;
-        return RET_ERROR;
+        MS_LOG(INFO) << "get padding is null, set to default 0: " << op_name_;
+        padding_ = {0, 0, 0, 0};
+      } else {
+        padding_ = std::vector<int64_t>(padding->begin(), padding->end());
       }
-      padding_ = std::vector<int64_t>(padding->begin(), padding->end());
 
       pad_mode_ = pool_primitive->pad_mode();
       activation_type_ = pool_primitive->activation_type();

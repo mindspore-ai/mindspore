@@ -100,10 +100,6 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
       }
       resize_layer->setInput(1, *tensorrt_in_tensors_[1].trt_tensor_);
     } else {
-      if (in_tensors_[1].ElementNum() != resize_in_tensor->getDimensions().nbDims) {
-        MS_LOG(ERROR) << "output shape tensor value is invalid for " << op_name_;
-        return RET_ERROR;
-      }
       switch (in_tensors_[1].DataType()) {
         case DataType::kNumberTypeFloat32: {
           const float *shape_data_fp32 = static_cast<const float *>(shape_data);
@@ -119,10 +115,24 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
           }
           break;
         }
+        case DataType::kNumberTypeInt32: {
+          const int *shape_data_fp16 = static_cast<const int *>(shape_data);
+          for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
+            out_shape.push_back(*(shape_data_fp16 + i));
+          }
+          break;
+        }
         default:
           MS_LOG(WARNING) << op_name_
                           << " more datatype need to check: " << static_cast<int>(in_tensors_[1].DataType());
           break;
+      }
+      if (out_shape.size() == DIMENSION_2D &&
+          tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
+        // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
+        out_shape.insert(out_shape.begin(),
+                         tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
+        out_shape.push_back(in_tensors_[0].Shape()[kNHWC_C]);                         // channel is const
       }
       if (SameDims(out_shape, out_tensors_[0].Shape())) {
         // static dims
@@ -137,8 +147,12 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
         std::copy(out_shape.begin(), out_shape.end(), scales);
         resize_layer->setScales(scales, out_shape.size());
       } else {
-        MS_LOG(ERROR) << "output shape tensor value is invalid for " << op_name_;
-        return RET_ERROR;
+        MS_LOG(DEBUG) << op_name_ << " output shape tensor value is const, but set to scales for dynamic input shape";
+        float scales[out_tensors_[0].Shape().size()];
+        for (size_t i = 0; i < out_tensors_[0].Shape().size(); i++) {
+          scales[i] = static_cast<float>(out_tensors_[0].Shape()[i]) / static_cast<float>(in_tensors_[0].Shape()[i]);
+        }
+        resize_layer->setScales(scales, out_tensors_[0].Shape().size());
       }
     }
   }

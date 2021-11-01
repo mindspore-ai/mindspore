@@ -165,23 +165,21 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
 
   // axis
-  auto squeeze_shape = in_tensors_[0].Shape();
-  auto begin = std::begin(squeeze_shape);
+  auto squeeze_shape = std::vector<int64_t>(in_tensors_[0].Shape().begin(), in_tensors_[0].Shape().end());
   auto axis = squeeze_op->axis();
   if (axis == nullptr) {
     MS_LOG(ERROR) << "AddSqueezeOp has invalid axis";
     return RET_ERROR;
   }
 
-  for (size_t i = 0; i < axis->size(); i++) {
+  for (int i = axis->size() - 1; i >= 0; i--) {
     if (squeeze_shape[axis->Get(i)] != 1) {
       MS_LOG(WARNING) << "squeeze_shape value is not 1, need check";
     }
-    squeeze_shape.erase(begin + axis->Get(i));
+    squeeze_shape.erase(squeeze_shape.begin() + axis->Get(i));
   }
 
   nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(squeeze_shape);
-  MS_LOG(DEBUG) << "AddSqueezeOp: " << op_name_ << " squeeze_dims.nbDims: " << squeeze_dims.nbDims;
 
   shuffle_layer->setReshapeDimensions(squeeze_dims);
   return shuffle_layer->getOutput(0) == nullptr ? RET_ERROR : RET_OK;
@@ -218,7 +216,7 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(ERROR) << "AddTransposeOp convert failed";
     return RET_ERROR;
   }
-  if (in_tensors_.size() != 2) {
+  if (in_tensors_.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "AddTransposeOp size of in tensort needs check: " << in_tensors_.size();
     return RET_ERROR;
   }

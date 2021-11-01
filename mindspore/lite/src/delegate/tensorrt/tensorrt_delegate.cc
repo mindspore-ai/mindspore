@@ -37,6 +37,7 @@
 #include "src/delegate/tensorrt/op/pool_tensorrt.h"
 #include "src/delegate/tensorrt/op/pad_tensorrt.h"
 #include "src/delegate/tensorrt/op/resize_tensorrt.h"
+#include "src/delegate/tensorrt/op/topk_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -85,6 +86,8 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_MulFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Minimum, GetTensorRTOp<ElementWiseTensorRT>},
+    {schema::PrimitiveType_Maximum, GetTensorRTOp<ElementWiseTensorRT>},
+    {schema::PrimitiveType_BiasAdd, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_FullConnection, GetTensorRTOp<MatMulTensorRT>},
@@ -103,6 +106,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_ExpandDims, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Softmax, GetTensorRTOp<SoftMaxTensorRT>},
+    {schema::PrimitiveType_ArgMaxFusion, GetTensorRTOp<TopKTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};

@@ -105,8 +105,8 @@ int TensorRTSubGraph::SetDeviceConfig() {
     input_hw_index_ = -1;
   }
 
-  // config setMaxWorkspaceSize to 32 MB for max limit
-  config_->setMaxWorkspaceSize(32 * (1 << 20));
+  // config setMaxWorkspaceSize to 1024 MB for max limit
+  config_->setMaxWorkspaceSize(1024 * (1 << 20));
   return RET_OK;
 }
 
@@ -231,7 +231,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
             MS_LOG(ERROR) << "Weight Tensor data is nullptr.";
             return RET_ERROR;
           }
-          trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(this->network_, in_tensor);
+          trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(this->network_, in_tensor, cur_op->GetOpName());
           trt_tensor.format_ = Format::NHWC;
           MS_LOG(INFO) << "auto convert constant tensor for: " << in_tensor.Name();
           cur_op->AddInnerInTensors(trt_tensor);
