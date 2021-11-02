@@ -1213,22 +1213,13 @@ class LayerNormGradGrad(PrimitiveWithInfer):
         return x, dy, gamma
 
 
-class LogSoftmaxGrad(PrimitiveWithInfer):
+class LogSoftmaxGrad(Primitive):
     """Computes gradient for the Log Softmax activation."""
 
     @prim_attr_register
     def __init__(self, axis=-1):
         """Initialize LogSoftmaxGrad"""
         validator.check_value_type("axis", axis, [int], self.name)
-
-    def infer_shape(self, dout, logits):
-        rank = len(logits)
-        validator.check_int_range(self.axis, -rank - 1, rank, Rel.INC_BOTH, 'axis', self.name)
-        return logits
-
-    def infer_dtype(self, dout, logits):
-        validator.check_subclass("logits", logits, mstype.tensor, self.name)
-        return logits
 
 
 class LSTMGradData(PrimitiveWithInfer):
