@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ir/anf_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {

@@ -27,7 +27,7 @@
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
-#include "ir/anf_utils.h"
+#include "utils/anf_utils.h"
 #ifdef ENABLE_GE
 #include "transform/graph_ir/convert.h"
 #endif
