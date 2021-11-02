@@ -129,6 +129,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
+  void DivComplex(const T *input1, const T *input2, T *out);
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                const std::vector<AddressPtr> &outputs) override {
@@ -171,7 +172,8 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
       dtype_desc = "complex data";
       arithmeticMathFuncMap = {
         {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
-        {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub}};
+        {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
+        {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
@@ -365,6 +367,30 @@ void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
           out[i] = dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
         } else {
           out[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
+        continue;
+      }
+      out[i] = dividend / divisor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+      auto zero = (T)0;
+      if (divisor == zero) {
+        if (dividend == zero) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
         }
         continue;
       }
@@ -597,14 +623,34 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithFunc<bool>}}},
   {prim::kPrimDiv->name(),
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeArithFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>}}},
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {prim::kPrimPow->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
