@@ -2617,7 +2617,7 @@ std::set<FuncGraphPtr> AnfRuntimeAlgorithm::GetFuncGraphbyCallNode(const AnfNode
     }
   } else if (AnfAlgo::CheckPrimitiveType(call_input0, prim::kPrimSwitchLayer)) {
     // First input node of call is switch layer node.
-    const auto &tuple_node = cnode->cast<CNodePtr>()->input(kSwitchLayerBranchPos);
+    const auto &tuple_node = call_input0->cast<CNodePtr>()->input(kSwitchLayerBranchPos);
     if (!AnfAlgo::CheckPrimitiveType(tuple_node, prim::kPrimMakeTuple)) {
       MS_LOG(EXCEPTION) << "Invalid input tuple node:" << tuple_node->DebugString()
                         << " for switch layer node:" << cnode->DebugString();
