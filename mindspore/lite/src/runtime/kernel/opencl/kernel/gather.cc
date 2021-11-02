@@ -27,6 +27,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
@@ -132,6 +133,14 @@ int GatherOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
+  if (in_tensors_.at(0)->IsConst()) {
+    intensor0_is_const_tensor_ = true;
+    ret = InitConstInput();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+
   if (in_tensors_.at(1)->IsConst()) {
     intensor1_is_tensor = false;
     ret = InitWeights();
@@ -188,6 +197,41 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   }
   if (allocator->UnmapBuffer(indices_tensor->data()) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int GatherOpenCLKernel::InitConstInput() {
+  auto input_tensor = in_tensors_.at(0);
+
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto fp16_enable = ocl_runtime_->GetFp16Enable();
+  if (input_tensor->data_type() == kNumberTypeFloat32 || input_tensor->data_type() == kNumberTypeFloat16) {
+    size_t FLT_size = fp16_enable ? sizeof(cl_half) : sizeof(cl_float);
+    size_t FLT_type = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
+
+    GpuTensorInfo input_shape = GpuTensorInfo(input_tensor);
+    std::vector<char> input_data(input_shape.ElementsC4Num * FLT_size, 0);
+    bool input_dtype_flag = input_tensor->data_type() == kNumberTypeFloat16;
+
+    if (input_tensor->format() == mindspore::NHWC) {
+      PackNHWCToNHWC4(input_tensor->data(), input_data.data(), input_dtype_flag, fp16_enable, input_shape);
+    } else if (input_tensor->format() == mindspore::NCHW) {
+      PackNCHWToNHWC4(input_tensor->data(), input_data.data(), input_dtype_flag, fp16_enable, input_shape);
+    } else {
+      MS_LOG(ERROR) << "Unsupported format : " << input_tensor->format();
+      return RET_ERROR;
+    }
+
+    ImageSize input_img_size{input_shape.width, input_shape.height, FLT_type};
+    input_data_ = allocator->Malloc(input_img_size, input_data.data());
+    if (input_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type : " << input_tensor->data_type();
     return RET_ERROR;
   }
   return RET_OK;
@@ -275,6 +319,10 @@ int GatherOpenCLKernel::PreProcess() {
 
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
+  if (!intensor0_is_const_tensor_) {
+    input_data_ = in_tensors_.front()->data();
+  }
+
   if (intensor1_is_tensor) {
     int ret = ConvertTensorToweight();
     if (ret != RET_OK) {
@@ -286,7 +334,7 @@ int GatherOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, input_data_) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
