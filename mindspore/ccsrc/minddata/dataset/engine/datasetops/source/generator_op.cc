@@ -249,11 +249,13 @@ Status GeneratorOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   // Create new generator object
   RETURN_IF_NOT_OK(CreateGeneratorObject());
+  // Once the master thread is waked up, that means a new epoch is started,
+  // so the counter must be reset before master thread starts increasing it.
+  generator_counter_ = 0;
   if (this->GetOpTotalRepeats() < 0) {
     // Wake up master thread
     wp_.Set();
   }
-  generator_counter_ = 0;
   return Status(StatusCode::kSuccess, "GeneratorOp Reset Succeed");
 }
 
