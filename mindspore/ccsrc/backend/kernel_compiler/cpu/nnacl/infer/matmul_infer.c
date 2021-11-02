@@ -19,8 +19,8 @@
 
 #define MIN_SHAPE_SIZE 2
 
-int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_t b_shape_size,
-                          const MatMulParameter *param) {
+int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_t b_shape_size, int *bias_shape,
+                          size_t bias_shape_size, const MatMulParameter *param) {
   if (a_shape_size < MIN_SHAPE_SIZE || b_shape_size < MIN_SHAPE_SIZE) {
     return NNACL_PARAM_INVALID;
   }
@@ -42,6 +42,9 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
       return NNACL_ERR;
     }
     iswap(&b_shape[b_shape_size - 1], &b_shape[b_shape_size - 2]);
+    if (bias_shape_size == DIMENSION_1D && bias_shape[0] != b_shape[b_shape_size - 1]) {
+      return NNACL_ERR;
+    }
   }
   if (a_shape[a_shape_size - 1] != b_shape[b_shape_size - 2]) {
     return NNACL_ERR;
@@ -82,6 +85,13 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int b_shape[MAX_SHAPE_SIZE] = {0};
   size_t b_shape_size = 0;
   ShapeSet(b_shape, &b_shape_size, input1->shape_, input1->shape_size_);
+  int bias_shape[MAX_AXIS_SIZE] = {0};
+  size_t bias_shape_size = 0;
+  if (inputs_size == kInputSize2) {
+    TensorC *bias = (TensorC *)inputs[2];
+    ShapeSet(bias_shape, &bias_shape_size, bias->shape_, bias->shape_size_);
+    MS_CHECK_TRUE_RET(bias_shape_size == b_shape_size || bias_shape_size == DIMENSION_1D, NNACL_ERR);
+  }
 
   if (a_shape_size == 4 && a_shape[2] == 1 && a_shape[3] == 1) {
     a_shape_size = 2;
@@ -103,7 +113,7 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     SetShapeArray(input1, b_shape, b_shape_size);
     del_end = true;
   }
-  int ret = CheckMatmulInputShape(a_shape, a_shape_size, b_shape, b_shape_size, param);
+  int ret = CheckMatmulInputShape(a_shape, a_shape_size, b_shape, b_shape_size, bias_shape, bias_shape_size, param);
   if (ret != NNACL_OK) {
     return NNACL_ERR;
   }
