@@ -26,6 +26,7 @@
 #include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/db_to_amplitude_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
@@ -195,6 +196,19 @@ Contrast::Contrast(float enhancement_amount) : data_(std::make_shared<Data>(enha
 
 std::shared_ptr<TensorOperation> Contrast::Parse() {
   return std::make_shared<ContrastOperation>(data_->enhancement_amount_);
+}
+
+// DBToAmplitude Transform Operation.
+struct DBToAmplitude::Data {
+  explicit Data(float ref, float power) : ref_(ref), power_(power) {}
+  float ref_;
+  float power_;
+};
+
+DBToAmplitude::DBToAmplitude(float ref, float power) : data_(std::make_shared<Data>(power, power)) {}
+
+std::shared_ptr<TensorOperation> DBToAmplitude::Parse() {
+  return std::make_shared<DBToAmplitudeOperation>(data_->ref_, data_->power_);
 }
 
 // DCShift Transform Operation.

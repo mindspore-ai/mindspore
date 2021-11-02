@@ -256,6 +256,27 @@ class Contrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Turn a waveform from the decibel scale to the power/amplitude scale.
+class DBToAmplitude final : public TensorTransform {
+ public:
+  /// \brief Constructor
+  /// \param[in] ref Reference which the output will be scaled by.
+  /// \param[in] power If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
+  explicit DBToAmplitude(float ref, float power);
+
+  /// \brief Destructor.
+  ~DBToAmplitude() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply a DC shift to the audio.
 class DCShift : public TensorTransform {
  public:

@@ -13,6 +13,7 @@ add_library(audio-kernels OBJECT
         biquad_op.cc
         complex_norm_op.cc
         contrast_op.cc
+        db_to_amplitude_op.cc
         dc_shift_op.cc
         deemph_biquad_op.cc
         detect_pitch_frequency_op.cc
