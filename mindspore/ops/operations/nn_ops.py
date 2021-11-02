@@ -3057,7 +3057,7 @@ class SGD(PrimitiveWithCheck):
     initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
     Note:
-        For more details, please refer to :class:`nn.SGD`.
+        For more details, please refer to :class:`mindspore.nn.SGD`.
 
     Args:
         dampening (float): The dampening for momentum. Default: 0.0.
@@ -3133,7 +3133,7 @@ class SGD(PrimitiveWithCheck):
 class ApplyRMSProp(PrimitiveWithInfer):
     r"""
     Optimizer that implements the Root Mean Square prop(RMSProp) algorithm.
-    Please refer to the usage in source code of :class:`nn.RMSProp`.
+    Please refer to the usage in source code of :class:`mindspore.nn.RMSProp`.
 
     The updating formulas of ApplyRMSProp algorithm are as follows,
 
@@ -3242,7 +3242,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
     r"""
     Optimizer that implements the centered RMSProp algorithm.
-    Please refer to the usage in source code of :class:`nn.RMSProp`.
+    Please refer to the usage in source code of :class:`mindspore.nn.RMSProp`.
 
     The updating formulas of ApplyCenteredRMSProp algorithm are as follows,
 
@@ -3842,7 +3842,7 @@ class PReLU(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type as `x`.
 
-    For detailed information, please refer to :class:`nn.PReLU`.
+    For detailed information, please refer to :class:`mindspore.nn.PReLU`.
 
     Raises:
         TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
@@ -3912,7 +3912,7 @@ class LSTM(PrimitiveWithInfer):
     """
     Performs the Long Short-Term Memory (LSTM) on the input.
 
-    For detailed information, please refer to :class:`nn.LSTM`.
+    For detailed information, please refer to :class:`mindspore.nn.LSTM`.
 
     Args:
         input_size (int): Number of features of input.
@@ -4523,7 +4523,7 @@ class Adam(PrimitiveWithInfer):
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
-    For more details, please refer to :class:`nn.Adam`.
+    For more details, please refer to :class:`mindspore.nn.Adam`.
 
     The updating formulas are as follows,
 
@@ -6877,7 +6877,7 @@ class LARSUpdate(PrimitiveWithInfer):
     """
     Conducts LARS (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
-    For more details, please refer to :class:`nn.LARS`.
+    For more details, please refer to :class:`mindspore.nn.LARS`.
 
     Args:
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
@@ -6940,7 +6940,7 @@ class ApplyFtrl(PrimitiveWithInfer):
     """
     Updates relevant entries according to the FTRL scheme.
 
-    For more details, please refer to :class:`nn.FTRL`.
+    For more details, please refer to :class:`mindspore.nn.FTRL`.
 
     Args:
         use_locking (bool): Use locks for updating operation if true . Default: False.
@@ -7034,7 +7034,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
     """
     Updates relevant entries according to the FTRL-proximal scheme.
 
-    For more details, please refer to :class:`nn.FTRL`.
+    For more details, please refer to :class:`mindspore.nn.FTRL`.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
