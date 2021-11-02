@@ -257,6 +257,7 @@ constexpr auto kApproximate = "approximate";
 constexpr auto kNumOutput = "num_output";
 constexpr auto kUseGlobalStats = "use_global_stats";
 constexpr auto kFmkType = "fmk_type";
+constexpr auto kIsOriPadMode = "is_ori_pad_mode";
 
 enum Index : size_t {
   kInputIndex0 = 0,

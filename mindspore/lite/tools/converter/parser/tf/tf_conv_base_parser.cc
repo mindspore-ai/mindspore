@@ -126,12 +126,13 @@ STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, con
   return RET_OK;
 }
 
-mindspore::PadMode TFConvBaseParser::ParsePadMode(const tensorflow::NodeDef &node_def) {
+mindspore::PadMode TFConvBaseParser::ParsePadMode(const tensorflow::NodeDef &node_def, bool *is_ori_pad_mode) {
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "padding", &attr_value)) {
     MS_LOG(ERROR) << "The attr padding should be specified";
     return mindspore::PadMode::VALID;
   }
+  *is_ori_pad_mode = true;
   if (attr_value.s() == "SAME") {
     return mindspore::PadMode::SAME;
   } else if (attr_value.s() == "EXPLICIT") {

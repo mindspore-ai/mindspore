@@ -46,7 +46,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (out_type == DataType::kTypeUnknown) {
     // do nothing
   } else if (iter == kSupportedDtypeOptionMap.end()) {
-    MS_LOG(WARNING) << "Unsupported output type " << out_type << ", use FP32 as default.";
+    MS_LOG(INFO) << "Unsupported output type " << out_type << ", use FP32 as default.";
   } else {
     output_type_ = iter->second;
   }

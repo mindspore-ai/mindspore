@@ -40,7 +40,7 @@ constexpr auto kNameCeilMode = "ceil_mode";
 STATUS PrimitiveMapper::Mapper(const CNodePtr &cnode) { return lite::RET_OK; }
 
 STATUS PrimitiveMapper::GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, ValueNodePtr *value_node,
-                                                     PrimitivePtr *prim_ptr) {
+                                                     PrimitivePtr *prim_ptr) const {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(value_node);
   CHECK_NULL_RETURN(prim_ptr);
@@ -58,7 +58,7 @@ STATUS PrimitiveMapper::GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, Valu
   return lite::RET_OK;
 }
 
-STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &name) {
+STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &name) const {
   auto value_ptr = prim->GetAttr(name);
   if (value_ptr == nullptr) {
     MS_LOG(WARNING) << prim->name() << " has no attr " << name;
@@ -102,7 +102,7 @@ STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &
   return lite::RET_OK;
 }
 
-void PrimitiveMapper::AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) {
+void PrimitiveMapper::AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const {
   int64_t mode = src_prim_name == ops::kNameAvgPoolFusion ? 1 : 0;
   dst_prim->AddAttr(ops::kMode, MakeValue(mode));
 
@@ -112,7 +112,7 @@ void PrimitiveMapper::AdjustCaffePoolAttr(const std::string &src_prim_name, cons
   dst_prim->set_attr(ops::kRoundMode, MakeValue(run_mode_ge));
 }
 
-void PrimitiveMapper::AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) {
+void PrimitiveMapper::AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) const {
   static std::map<int64_t, std::string> kPadModToStrMap = {
     {PadMode::PAD, "CALCULATED"},
     {PadMode::SAME, "SAME"},
@@ -132,7 +132,8 @@ void PrimitiveMapper::AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) {
   dst_prim->AddAttr(kNameCeilMode, MakeValue(ceil_mode));
 }
 
-STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim_name, const PrimitivePtr &dst_prim) {
+STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim_name,
+                                       const PrimitivePtr &dst_prim) const {
   if (fmk_type == converter::kFmkTypeCaffe) {
     AdjustCaffePoolAttr(src_prim_name, dst_prim);
     return lite::RET_OK;
@@ -153,7 +154,7 @@ STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim
   return lite::RET_OK;
 }
 
-STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &dst_prim) {
+STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &dst_prim) const {
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
   if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
@@ -170,7 +171,7 @@ STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &d
 }
 
 STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                       const PrimitivePtr &dst_prim, const std::string &attr_name, size_t flag) {
+                                       const PrimitivePtr &dst_prim, const std::string &attr_name, size_t flag) const {
   auto attr_val = dst_prim->GetAttr(attr_name);
   if (attr_val == nullptr) {
     MS_LOG(INFO) << "There is no attr: " << attr_name;
@@ -201,7 +202,7 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   return lite::RET_OK;
 }
 
-STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) {
+STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(cnode->input(0));
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -213,6 +214,19 @@ STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const
   if (num > 1) {
     prim->AddAttr(attr_name, MakeValue(num - 1));
   }
+  return lite::RET_OK;
+}
+
+STATUS PrimitiveMapper::AdjustAttrFormat(const PrimitivePtr &prim, const std::string &name) const {
+  int64_t format = Format::NCHW;
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
+    format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+  }
+  std::string format_str = "NCHW";
+  if (format == Format::NHWC) {
+    format_str = "NHWC";
+  }
+  prim->AddAttr(name, MakeValue(format_str));
   return lite::RET_OK;
 }
 }  // namespace lite

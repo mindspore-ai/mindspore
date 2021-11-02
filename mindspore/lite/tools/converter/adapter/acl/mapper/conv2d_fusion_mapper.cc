@@ -32,6 +32,7 @@ static const std::map<int64_t, std::string> kPadModToStrMap = {
 };
 namespace {
 constexpr auto kNamePaddingMode = "padding";
+constexpr auto kIsOriPadMode = "is_ori_pad_mode";
 }  // namespace
 
 STATUS Conv2DFusionMapper::Mapper(const CNodePtr &cnode) {
@@ -81,12 +82,19 @@ STATUS Conv2DFusionMapper::AdjustAttrPad(const PrimitivePtr &prim) {
     prim->AddAttr(ops::kPadList, MakeValue(pad_list));
   }
   // attr pad mode
-  auto pad_mode_val = prim->GetAttr(ops::kPadMode);
-  if (pad_mode_val != nullptr) {
-    auto pad_mode = GetValue<int64_t>(pad_mode_val);
-    if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
-      std::string padding_mode = kPadModToStrMap.at(pad_mode);
-      prim->AddAttr(kNamePaddingMode, MakeValue(padding_mode));
+  if (prim->GetAttr(kIsOriPadMode) != nullptr) {
+    bool is_ori_pad_mode = GetValue<bool>(prim->GetAttr(kIsOriPadMode));
+    if (!is_ori_pad_mode) {
+      MS_LOG(INFO) << "No need to add attr padding mode";
+      return lite::RET_OK;
+    }
+    auto pad_mode_val = prim->GetAttr(ops::kPadMode);
+    if (pad_mode_val != nullptr) {
+      auto pad_mode = GetValue<int64_t>(pad_mode_val);
+      if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
+        std::string padding_mode = kPadModToStrMap.at(pad_mode);
+        prim->AddAttr(kNamePaddingMode, MakeValue(padding_mode));
+      }
     }
   }
   return lite::RET_OK;

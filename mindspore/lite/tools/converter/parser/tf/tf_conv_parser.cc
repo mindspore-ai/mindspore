@@ -63,7 +63,8 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
 
-  auto pad_mode = ParsePadMode(tf_op);
+  bool is_ori_pad_mode = false;
+  auto pad_mode = ParsePadMode(tf_op, &is_ori_pad_mode);
   prim->set_pad_mode(pad_mode);
   if (pad_mode == PadMode::PAD) {
     std::vector<int64_t> explicit_paddings;
@@ -73,6 +74,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     prim->set_pad_list(explicit_paddings);
   }
+  prim->AddAttr(ops::kIsOriPadMode, MakeValue<bool>(is_ori_pad_mode));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
