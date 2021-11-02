@@ -110,6 +110,10 @@ MS_REG_CPU_KERNEL_T(
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
+  AsinGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EltWiseGradCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(
   ACosGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCpuKernelMod, float);

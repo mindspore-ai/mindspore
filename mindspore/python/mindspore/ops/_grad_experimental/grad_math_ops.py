@@ -287,6 +287,18 @@ def get_bprop_bessel_i1(self):
     return bprop
 
 
+@bprop_getters.register(P.Asin)
+def get_bprop_asin(self):
+    """Grad definition for `Asin` operation."""
+    input_grad = G.AsinGrad()
+
+    def bprop(input_x, out, dout):
+        dx = input_grad(input_x, dout)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Trunc)
 def get_bprop_trunc(self):
     """Grad definition for `Trunc` operation."""

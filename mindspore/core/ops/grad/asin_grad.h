@@ -16,24 +16,32 @@
 
 #ifndef MINDSPORE_CORE_OPS_ASIN_GRAD_H_
 #define MINDSPORE_CORE_OPS_ASIN_GRAD_H_
+
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAsinGrad = "AsinGrad";
+
 class AsinGrad : public PrimitiveC {
  public:
-  AsinGrad() : PrimitiveC(kNameAsinGrad) {}
+  AsinGrad() : PrimitiveC(kNameAsinGrad) { InitIOName({"y", "dy"}, {"z"}); }
   ~AsinGrad() = default;
+
   MS_DECLARE_PARENT(AsinGrad, PrimitiveC);
 };
+
+AbstractBasePtr AsinGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const std::vector<AbstractBasePtr> &input_args);
+using PrimAsinGradPtr = std::shared_ptr<AsinGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

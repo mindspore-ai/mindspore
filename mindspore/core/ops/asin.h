@@ -16,13 +16,16 @@
 
 #ifndef MINDSPORE_CORE_OPS_ASIN_H_
 #define MINDSPORE_CORE_OPS_ASIN_H_
+
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/primitive_c.h"
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -32,13 +35,19 @@ constexpr auto kNameAsin = "Asin";
 class MS_CORE_API Asin : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Asin() : PrimitiveC(kNameAsin) { InitIOName({"x"}, {"output"}); }
+  Asin() : PrimitiveC(kNameAsin) { InitIOName({"x"}, {"y"}); }
   /// \brief Destructor.
   ~Asin() = default;
+
   MS_DECLARE_PARENT(Asin, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Asin for the inputs.
   void Init() const {}
 };
+
+AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args);
+
+using PrimAsinPtr = std::shared_ptr<Asin>;
 }  // namespace ops
 }  // namespace mindspore
 
