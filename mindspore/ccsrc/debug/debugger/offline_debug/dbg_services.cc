@@ -62,6 +62,7 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
   auto cache_mem_ratio = 0.5;
   const uint64_t memlimit = max_mem_usage * kMegabytesToBytes * cache_mem_ratio;
   debug_services_->SetMemLimit(memlimit);
+  debug_services_->SetGraphsHistory();
   return 0;
 }
 

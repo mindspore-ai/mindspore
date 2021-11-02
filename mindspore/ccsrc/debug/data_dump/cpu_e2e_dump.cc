@@ -18,6 +18,7 @@
 #include <map>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/common.h"
 
 namespace mindspore {
 void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
@@ -37,6 +38,31 @@ void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
   if (dump_json_parser.OutputNeedDump()) {
     DumpCNodeOutputs(node, dump_path);
   }
+}
+
+void CPUE2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
+  auto &json_parser = DumpJsonParser::GetInstance();
+  if (!(json_parser.e2e_dump_enabled())) {
+    return;
+  }
+  std::string execution_order_path = json_parser.path() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
+  std::string file_name_to_check =
+    execution_order_path + "/ms_global_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv";
+  auto real_path = Common::CreatePrefixPath(file_name_to_check);
+  if (!real_path.has_value()) {
+    MS_LOG(WARNING) << "Check file path: " << file_name_to_check << " failed.";
+    return;
+  }
+  std::string file_name = real_path.value();
+  ChangeFileMode(file_name, S_IWUSR);
+  std::ofstream fout(file_name, std::ofstream::app);
+  if (!fout.is_open()) {
+    MS_LOG(WARNING) << "Open file for saving graph global execution order failed.";
+    return;
+  }
+  fout << std::to_string(json_parser.cur_dump_iter()) + "\n";
+  fout.close();
+  ChangeFileMode(file_name, S_IRUSR);
 }
 
 void CPUE2eDump::DumpCNodeInputs(const CNodePtr &node, const std::string &dump_path) {

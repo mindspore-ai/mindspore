@@ -229,6 +229,10 @@ class TensorData {
 
   void SetIteration(unsigned int iteration) { this->iteration_ = iteration; }
 
+  unsigned int GetPrevIteration() const { return this->prev_iteration_; }
+
+  void SetPrevIteration(unsigned int prev_iteration) { this->prev_iteration_ = prev_iteration; }
+
   unsigned int GetDeviceId() const { return this->device_id_; }
 
   void SetDeviceId(unsigned int device_id) { this->device_id_ = device_id; }
@@ -430,6 +434,7 @@ class TensorData {
   std::string name_;
   uint64_t slot_;
   unsigned int iteration_{0};
+  unsigned int prev_iteration_{0};
   unsigned int device_id_{0};
   unsigned int root_graph_id_{0};
   bool is_output_{true};

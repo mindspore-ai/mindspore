@@ -290,13 +290,9 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
     MS_LOG(INFO) << "No need to update iteration for dataset graph.";
     return;
   }
-  if (starting_graph_id == INT32_MAX) {
-    // Identify the first graph id and not increasing dump iter for the first iteration (initial dump iter = 0).
-    starting_graph_id = graph_id;
-  } else {
-    // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
-    dump_json_parser.UpdateDumpIter();
-  }
+
+  // In multi network scripts, dump iter is equal to the number of networks that have been executed so far.
+  dump_json_parser.UpdateDumpIter();
 }
 
 void E2eDump::DumpSetup(const session::KernelGraph *graph) {
@@ -308,10 +304,31 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   }
 }
 
-void E2eDump::UpdateIterGPUDump() {
-  if (starting_graph_id != INT32_MAX) {
-    DumpJsonParser::GetInstance().UpdateDumpIter();
+void E2eDump::UpdateIterGPUDump() { DumpJsonParser::GetInstance().UpdateDumpIter(); }
+
+void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
+  auto &json_parser = DumpJsonParser::GetInstance();
+  if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
+    return;
   }
+  std::string execution_order_path = json_parser.path() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
+  std::string file_name_to_check =
+    execution_order_path + "/ms_global_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv";
+  auto real_path = Common::CreatePrefixPath(file_name_to_check);
+  if (!real_path.has_value()) {
+    MS_LOG(WARNING) << "Check file path: " << file_name_to_check << " failed.";
+    return;
+  }
+  std::string file_name = real_path.value();
+  ChangeFileMode(file_name, S_IWUSR);
+  std::ofstream fout(file_name, std::ofstream::app);
+  if (!fout.is_open()) {
+    MS_LOG(WARNING) << "Open file for saving graph global execution order failed.";
+    return;
+  }
+  fout << std::to_string(json_parser.cur_dump_iter()) + "\n";
+  fout.close();
+  ChangeFileMode(file_name, S_IRUSR);
 }
 
 void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {

@@ -282,7 +282,6 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   if (device_target_ != kGPUDevice) {
     return;
   }
-  E2eDump::UpdateIterGPUDump();
   // Store graphs that are run in one step.
   graph_ptr_step_vec_ = graphs;
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
@@ -290,7 +289,6 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
     if (debugger_) {
       debugger_->PreExecute(graph);
     }
-    DumpSetup(graph);
   }
 }
 
@@ -390,6 +388,7 @@ uint32_t Debugger::GetRankID() {
 
 void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   uint32_t rank_id = GetRankID();
+  E2eDump::DumpRunIter(kernel_graph, rank_id);
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     (void)E2eDump::DumpParametersAndConstData(kernel_graph.get(), rank_id, debugger_.get());
@@ -458,6 +457,7 @@ void Debugger::PostExecuteGraphDebugger() {
   if (debugger_) {
     debugger_->PostExecute();
   }
+  E2eDump::UpdateIterGPUDump();
 }
 
 void Debugger::PostExecute() {

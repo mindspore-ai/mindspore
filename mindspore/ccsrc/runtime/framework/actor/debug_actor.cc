@@ -23,6 +23,7 @@
 #include "utils/log_adapter.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/cpu_e2e_dump.h"
+#include "debug/data_dump/e2e_dump.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
@@ -52,6 +53,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       MS_EXCEPTION_IF_NULL(kernel_graph);
       CPUE2eDump::DumpCNodeData(cnode, kernel_graph->graph_id());
+      CPUE2eDump::DumpRunIter(kernel_graph);
     }
 #endif
   } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {

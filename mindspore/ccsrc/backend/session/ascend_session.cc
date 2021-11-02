@@ -621,6 +621,9 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
     debugger_->PostExecute();
   }
 #endif
+#ifndef ENABLE_SECURITY
+  DumpSetup(kernel_graph);
+#endif
 }
 
 void AscendSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { Execute(kernel_graph, true); }
@@ -1342,11 +1345,6 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-#ifndef ENABLE_SECURITY
-  if (is_task && is_task_sink) {
-    DumpSetup(kernel_graph);
-  }
-#endif
   bool ret_ok = runtime_instance->Run(*kernel_graph, is_task_sink);
 #ifndef ENABLE_SECURITY
   if (is_task && is_task_sink) {
@@ -1373,6 +1371,7 @@ void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) 
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  E2eDump::DumpRunIter(kernel_graph, rank_id_);
   E2eDump::DumpData(kernel_graph.get(), rank_id_);
   MS_LOG(DEBUG) << "Finish!";
 }
