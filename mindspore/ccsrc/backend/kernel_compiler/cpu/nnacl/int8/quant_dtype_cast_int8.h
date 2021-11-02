@@ -30,7 +30,14 @@ extern "C" {
 #endif
 int DoDequantizeInt8ToFp32(const int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size,
-                         bool uint8_flag);
+                         int32_t min_value, int32_t max_value);
+int DoQuantizeFp32ToInt8FromUint8Source(const float *real_values, int8_t *quant_values, float scale, int32_t zp,
+                                        int size, int32_t min_value, int32_t max_value);
+#ifdef ENABLE_ARM64
+void Fp32ToInt8_arm64(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size,
+                      int32_t min_value, int32_t max_value);
+void Int8ToFp32_arm64(const int8_t *quant_values, float *dst, float scale, int32_t zp, int size);
+#endif
 int DoDequantizeUInt8ToFp32(const uint8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int DoQuantizeFp32ToUInt8(const float *real_values, uint8_t *quant_values, float scale, int32_t zp, int size);
 int Int8ToUInt8(const int8_t *quant_values, uint8_t *real_values, int size);
