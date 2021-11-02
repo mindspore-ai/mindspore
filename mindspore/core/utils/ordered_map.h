@@ -95,8 +95,10 @@ class OrderedMap {
   }
 
   void clear() {
-    map_data_.clear();
-    sequential_data_.clear();
+    if (!map_data_.empty()) {
+      map_data_.clear();
+      sequential_data_.clear();
+    }
   }
 
   void swap(OrderedMap &rhs) noexcept {
@@ -267,8 +269,10 @@ class OrderedMap<std::shared_ptr<T>, ValueT> {
   }
 
   void clear() {
-    map_data_.clear();
-    sequential_data_.clear();
+    if (!map_data_.empty()) {
+      map_data_.clear();
+      sequential_data_.clear();
+    }
   }
 
   void swap(OrderedMap &rhs) noexcept {
