@@ -100,6 +100,7 @@ constexpr char TRANS[] = "trans";
 constexpr char MODE[] = "mode";
 constexpr char UNIT_DIAGONAL[] = "unit_diagonal";
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
+constexpr char ADJOINT[] = "adjoint";
 
 struct ParallelSearchInfo {
   double min_cost_time{DBL_MAX};

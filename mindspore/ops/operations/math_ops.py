@@ -5252,7 +5252,7 @@ class MatrixInverse(PrimitiveWithInfer):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[-0.710504  , -1.1207525],
