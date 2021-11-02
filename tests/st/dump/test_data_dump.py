@@ -32,7 +32,7 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
-from dump_test_utils import generate_dump_json
+from tests.st.dump.dump_test_utils import generate_dump_json
 from tests.security_utils import security_off_wrap
 
 
@@ -56,8 +56,7 @@ y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 @security_off_wrap
 def test_async_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump')
         dump_config_path = os.path.join(tmp_dir, 'async_dump.json')
         generate_dump_json(dump_path, dump_config_path, 'test_async_dump')
@@ -74,8 +73,7 @@ def test_async_dump():
 def run_e2e_dump():
     if sys.platform != 'linux':
         return
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'e2e_dump')
         dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
         generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
@@ -186,8 +184,7 @@ class ReluReduceMeanDenseRelu(Cell):
 @security_off_wrap
 def test_async_dump_net_multi_layer_mode1():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump_net_multi_layer_mode1')
         json_file_path = os.path.join(tmp_dir, "test_async_dump_net_multi_layer_mode1.json")
         generate_dump_json(dump_path, json_file_path, 'test_async_dump_net_multi_layer_mode1')
@@ -234,8 +231,7 @@ def test_dump_with_diagnostic_path():
     Data is expected to be dumped into MS_DIAGNOSTIC_DATA_PATH/debug_dump.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
         generate_dump_json('', dump_config_path, 'test_e2e_dump')
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
@@ -253,8 +249,7 @@ def run_e2e_dump_execution_graph():
     """Run e2e dump and check execution order."""
     if sys.platform != 'linux':
         return
-    pwd = os.getcwd()
-    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'e2e_dump_exe_graph')
         dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
         generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
