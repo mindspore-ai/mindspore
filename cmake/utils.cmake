@@ -244,7 +244,7 @@ function(mindspore_add_pkg pkg_name)
 
     message("${pkg_name} config hash: ${${pkg_name}_CONFIG_HASH}")
 
-    set(${pkg_name}_BASE_DIR ${_MS_LIB_CACHE}/${pkg_name}_${${pkg_name}_CONFIG_HASH})
+    set(${pkg_name}_BASE_DIR ${_MS_LIB_CACHE}/${pkg_name}_${PKG_VER}_${${pkg_name}_CONFIG_HASH})
     set(${pkg_name}_DIRPATH ${${pkg_name}_BASE_DIR} CACHE STRING INTERNAL)
 
     if(EXISTS ${${pkg_name}_BASE_DIR}/options.txt AND PKG_HEAD_ONLY)
