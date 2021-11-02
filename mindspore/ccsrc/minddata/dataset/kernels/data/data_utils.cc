@@ -212,6 +212,10 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
       RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype.");
       break;
     }
+    default:
+      RETURN_STATUS_UNEXPECTED(
+        "Fill: unsupported input datatype, This input datatype is: " + std::to_string(input_type.value()) + ".");
+      break;
   }
   return Status::OK();
 }
