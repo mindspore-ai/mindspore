@@ -35,11 +35,11 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "base/core_ops.h"
 #include "utils/contract.h"
+#include "utils/anf_utils.h"
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace session {
-using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 using AnfVisitFuncion = std::function<Any(const AnfNodePtr &node, int index)>;
 using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
@@ -236,10 +236,6 @@ class AnfRuntimeAlgorithm {
   static kernel::KernelMod *GetKernelMod(const AnfNodePtr &node);
   // set kernel mod
   static void SetKernelMod(const kernel::KernelModPtr &kernel_mod, AnfNode *node);
-  // checkout whether the anf node is a real kernel that can run on device,parameter and constant is real kernel too
-  static bool IsRealKernel(const AnfNodePtr &node);
-  // checkout whether the anf node is a real kernel that is a cnode and can run on device
-  static bool IsRealCNodeKernel(const AnfNodePtr &node);
   // checkout whether the anf node is a graph kernel.
   static bool IsGraphKernel(const AnfNodePtr &node);
   // checkout whether the anf node is an inner node of graph kernel.
@@ -321,7 +317,6 @@ class AnfRuntimeAlgorithm {
     }
     return result;
   }
-  static bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 
   // Judge a control operator need be compiled into kernel graph rather than be cut into single op and
   // executed in vm. For example, the operator "bprop_cut" will be compiled into kernel graph and be launch

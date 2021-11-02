@@ -64,7 +64,7 @@ void RewriteOutputShape::Process(const AnfNodePtr &node, size_t index, const Abs
   }
 
   // do not process from real kernel
-  if (AnfAlgo::IsRealKernel(node)) return;
+  if (AnfUtils::IsRealKernel(node)) return;
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() <= 1) return;

@@ -29,7 +29,7 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
   for (auto &node : node_list) {
     bool has_changed = false;
     MS_EXCEPTION_IF_NULL(node);
-    if (!node->cast<CNodePtr>() || !AnfAlgo::IsRealKernel(node)) {
+    if (!node->cast<CNodePtr>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

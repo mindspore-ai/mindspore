@@ -190,7 +190,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
 
       auto prenode_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
       MS_EXCEPTION_IF_NULL(prenode_with_index.first);
-      if (AnfAlgo::IsRealCNodeKernel(prenode_with_index.first)) {
+      if (AnfUtils::IsRealCNodeKernel(prenode_with_index.first)) {
         if ((AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitOpName ||
              AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitVOpName) &&
             AnfAlgo::HasNodeAttr(kAttrNonTask, prenode_with_index.first->cast<CNodePtr>())) {

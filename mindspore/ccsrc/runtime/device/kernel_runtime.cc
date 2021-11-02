@@ -633,7 +633,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
   for (const auto &node : nodes) {
     auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-    if (!kernel_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_with_index.first)) {
+    if (!kernel_with_index.first->isa<CNode>() || !AnfUtils::IsRealKernel(kernel_with_index.first)) {
       continue;
     }
     if (AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {

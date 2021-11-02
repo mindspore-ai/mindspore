@@ -22,7 +22,7 @@ namespace mindspore {
 namespace opt {
 const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const AnfNodePtr &node,
                                                    const EquivPtr &) const {
-  if (node == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
+  if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
 

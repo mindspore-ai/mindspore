@@ -36,7 +36,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
     write_input = input_cnode->input(kIndex1);
   }
   MS_EXCEPTION_IF_NULL(write_input);
-  if (!write_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(write_input) ||
+  if (!write_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(write_input) ||
       fusion_id_allocator->HasFusionIdAttr(write_input)) {
     return;
   }
@@ -49,7 +49,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
     (void)record.insert(write_input);
     auto conv_input = conv_cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(conv_input);
-    if (!conv_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(conv_input) ||
+    if (!conv_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(conv_input) ||
         fusion_id_allocator->HasFusionIdAttr(conv_input)) {
       return;
     }
@@ -66,7 +66,7 @@ void StridedReadConvStridedWriteFusionPass::MatchSingleFusionPattern(const sessi
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
-    if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
+    if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }

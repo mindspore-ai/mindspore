@@ -526,7 +526,7 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
       MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
     }
     MS_EXCEPTION_IF_NULL(prenode_index.first);
-    if (!AnfAlgo::IsRealCNodeKernel(prenode_index.first)) {
+    if (!AnfUtils::IsRealCNodeKernel(prenode_index.first)) {
       auto op_name = AnfAlgo::GetCNodeName(kernel);
       TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel, i);
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
@@ -814,7 +814,7 @@ void Somas::RefNodeProcess(const session::KernelGraph *graph) {
         output_tensor->type_ = kRefNodeOutput;
         total_output_size += size;
 
-        if (AnfAlgo::IsRealCNodeKernel(origin_pair.first)) {
+        if (AnfUtils::IsRealCNodeKernel(origin_pair.first)) {
           auto ori_node = origin_pair.first->cast<CNodePtr>();
           auto ori_index = origin_pair.second;
           if (nodes_map_.find(ori_node.get()) == nodes_map_.end()) {

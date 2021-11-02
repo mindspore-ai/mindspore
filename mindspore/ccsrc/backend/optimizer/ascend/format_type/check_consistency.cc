@@ -86,7 +86,7 @@ const BaseRef CheckConsistency::DefinePattern() const {
 }
 
 const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
-  if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
+  if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
 

@@ -33,7 +33,7 @@ const BaseRef InsertTransOp::DefinePattern() const {
 
 const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
-  if (node == nullptr || !AnfAlgo::IsRealKernel(node)) {
+  if (node == nullptr || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);

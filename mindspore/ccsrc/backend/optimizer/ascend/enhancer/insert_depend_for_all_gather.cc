@@ -27,7 +27,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
   std::map<int64_t, AnfNodePtr> all_gather_node;
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!node->cast<CNodePtr>() || !AnfAlgo::IsRealKernel(node)) {
+    if (!node->cast<CNodePtr>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

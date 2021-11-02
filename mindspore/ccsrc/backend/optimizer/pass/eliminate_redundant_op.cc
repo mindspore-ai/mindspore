@@ -35,7 +35,7 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::IsRealCNodeKernel(cnode)) {
+  if (AnfUtils::IsRealCNodeKernel(cnode)) {
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
     return cnode;
   }

@@ -149,7 +149,7 @@ void RectifyDoMaskKernelInfo::ReSelecChildNodeKernelInfo(const CNodePtr &cnode, 
   for (const auto &out_node_info : *output_node_list) {
     MS_EXCEPTION_IF_NULL(out_node_info.first);
     auto out_node = out_node_info.first->cast<CNodePtr>();
-    if (AnfAlgo::IsRealKernel(out_node_info.first)) {
+    if (AnfUtils::IsRealKernel(out_node_info.first)) {
       auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(out_node);
       kernel_selecter->SelectKernel(out_node);
       auto new_build_info = AnfAlgo::GetSelectKernelBuildInfo(out_node);

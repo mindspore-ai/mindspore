@@ -241,7 +241,7 @@ void KernelGraph::SetExecOrderByDefault() {
       }
       // add execute node
       MS_EXCEPTION_IF_NULL(node);
-      if (node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+      if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
         execution_order_.push_back(node->cast<CNodePtr>());
       }
       // delay execute comm ops that need optimize
@@ -527,7 +527,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     if (AnfAlgo::GetInputTensorNum(node) == 0) {
       kernel_info->set_feature_map_flag(true);
     }
-    if (AnfAlgo::IsRealKernel(node)) {
+    if (AnfUtils::IsRealKernel(node)) {
       // if the node only has the primitive(such as getNext) or the node's input has a feature map input
       // then the node's output is a feature map output
       AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), node);

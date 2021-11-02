@@ -235,7 +235,7 @@ void MemSwapManager::SaveUserKernelTopoOrder() {
     auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
     for (auto &node_pair : node_set) {
       auto user_kernel = node_pair.first;
-      if (!AnfAlgo::IsRealCNodeKernel(user_kernel)) {
+      if (!AnfUtils::IsRealCNodeKernel(user_kernel)) {
         continue;
       }
 

@@ -72,7 +72,7 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (auto node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (node != nullptr && node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+    if (node != nullptr && node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
       size_t input_num = AnfAlgo::GetInputTensorNum(node);
       size_t output_num = AnfAlgo::GetOutputTensorNum(node);
       for (size_t i = 0; i < input_num; i++) {

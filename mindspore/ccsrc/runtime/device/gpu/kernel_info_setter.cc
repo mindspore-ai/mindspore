@@ -263,7 +263,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   if (!FormatTransformChecker::GetInstance().format_transform()) {
     return false;
   }
-  if (!AnfAlgo::IsRealCNodeKernel(kernel_node)) {
+  if (!AnfUtils::IsRealCNodeKernel(kernel_node)) {
     return false;
   }
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);

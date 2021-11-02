@@ -143,7 +143,7 @@ bool InsertCastCPU::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   for (auto node : node_list) {
-    if (node != nullptr && node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+    if (node != nullptr && node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
       CNodePtr cnode = node->cast<CNodePtr>();
       InsertCast(func_graph, cnode);
     }
@@ -155,7 +155,7 @@ bool InsertCastCPU::Run(const FuncGraphPtr &func_graph) {
     kernel::GetFuncGraphOutputNodes(func_graph, &outputs);
     auto func_output = func_graph->output();
     for (auto node : outputs) {
-      if (node != nullptr && node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+      if (node != nullptr && node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
         auto cnode = node->cast<CNodePtr>();
         InsertCastForGraphOutput(func_graph, cnode, func_output);
       }

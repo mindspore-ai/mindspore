@@ -55,7 +55,7 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
   std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
+    if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }

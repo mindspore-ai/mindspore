@@ -797,7 +797,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
-      if (AnfAlgo::IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
+      if (IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph);
       }
       if (HasAbstractMonad(input_node)) {
@@ -1069,7 +1069,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
     // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
     // node in this scene.
-    if (AnfAlgo::IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
+    if (IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
       real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     }
   } else if (AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
@@ -1101,7 +1101,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     }
 
     // The monad node and make tuple node need recursion.
-    if (AnfAlgo::IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
+    if (IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
       LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph);
       continue;
     }

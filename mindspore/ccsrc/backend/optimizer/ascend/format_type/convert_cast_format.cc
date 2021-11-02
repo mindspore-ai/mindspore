@@ -33,7 +33,7 @@ const BaseRef ConvertCastFormat::DefinePattern() const {
 
 const AnfNodePtr ConvertCastFormat::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const EquivPtr &) const {
-  if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node)) {
+  if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   auto node_name = AnfAlgo::GetCNodeName(node);

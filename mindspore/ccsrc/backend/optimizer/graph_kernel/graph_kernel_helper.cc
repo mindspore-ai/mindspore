@@ -530,7 +530,7 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
     name << prefix << "_";
   }
   for (const auto &node : cnodes) {
-    if (node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+    if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
       name << AnfAlgo::GetCNodeName(node) << "_";
     }
   }
@@ -655,7 +655,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   if (inputs.size() == 1) {
     kernel_info->set_feature_map_flag(true);
   }
-  if (AnfAlgo::IsRealKernel(cnode)) {
+  if (AnfUtils::IsRealKernel(cnode)) {
     // if the node only has the primitive(such as getNext) or the node's input has a feature map input
     // then the node's output is a feature map output
     SetNodeAttrSafely(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);

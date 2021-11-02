@@ -369,7 +369,7 @@ void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::Kern
   auto all_nodes = kernel_graph->execution_order();
   for (const auto &anf_node : all_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    if (!AnfAlgo::IsRealKernel(anf_node)) {
+    if (!AnfUtils::IsRealKernel(anf_node)) {
       continue;
     }
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
