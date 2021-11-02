@@ -77,7 +77,7 @@ using IrExportBuilderPtr = std::shared_ptr<IrExportBuilder>;
 
 class IrExporter {
  public:
-  explicit IrExporter(IrExportBuilderPtr builder) : builder_(builder) {}
+  explicit IrExporter(IrExportBuilderPtr builder) : builder_(std::move(builder)) {}
   virtual ~IrExporter() = default;
   std::string GetDumpString(const FuncGraphPtr &func_graph);
   ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
@@ -90,12 +90,11 @@ class IrExportBuilder {
  public:
   IrExportBuilder() : model_(std::make_shared<mind_ir::ModelProto>()) {}
   ~IrExportBuilder() { google::protobuf::ShutdownProtobufLibrary(); }
-  std::string GetProtoString(const FuncGraphPtr &func_graph);
+  std::string GetProtoString() const;
   void BuildModelInfo();
   bool BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
   ModelProtoPtr Model() { return model_; }
 
- private:
   bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
                       bool save_tensor_data = false);
   bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
@@ -152,7 +151,7 @@ std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   if (dump_proto == nullptr) {
     MS_LOG(EXCEPTION) << "Get dump proto for graph " << func_graph->ToString() << " failed.";
   }
-  return builder_->GetProtoString(func_graph);
+  return builder_->GetProtoString();
 }
 
 ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, bool save_tensor_data) {
@@ -170,7 +169,7 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, bool save
   return builder_->Model();
 }
 
-std::string IrExportBuilder::GetProtoString(const FuncGraphPtr &func_graph) {
+std::string IrExportBuilder::GetProtoString() const {
   MS_LOG(DEBUG) << "BuildModel complete!";
   return model_->SerializeAsString();
 }
@@ -193,7 +192,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   todo_.clear();
   nodeName_.clear();
   // Build the main funcGraph
-  nodeName_.insert(func_graph->ToString());
+  (void)nodeName_.insert(func_graph->ToString());
   top_graph = true;
   if (!BuildFuncGraph(func_graph, graph_proto, save_tensor_data)) {
     MS_LOG(ERROR) << "Build func_graph " << func_graph->ToString() << " failed.";
@@ -201,7 +200,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   }
 
   std::set<FuncGraphPtr> graphVisited;
-  graphVisited.insert(func_graph);
+  (void)graphVisited.insert(func_graph);
   top_graph = false;
   while (!todo_.empty()) {
     FuncGraphPtr fg = todo_.back();
@@ -213,8 +212,8 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
       MS_LOG(ERROR) << "There is a duplicate name: " << fg->ToString();
       return false;
     }
-    nodeName_.insert(fg->ToString());
-    graphVisited.insert(fg);
+    (void)nodeName_.insert(fg->ToString());
+    (void)graphVisited.insert(fg);
     auto graph = model_->add_functions();
     if (!BuildFuncGraph(fg, graph, save_tensor_data)) {
       MS_LOG(ERROR) << "Build func_graph " << fg->ToString() << " failed.";
@@ -256,7 +255,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
     }
     std::string param_name = GetUniqueNodeName(param);
     if (top_graph && param->has_default()) {
-      MS_LOG(DEBUG) << "Parameter: '" << item->DebugString() << "' has default. address: " << (size_t)param.get();
+      MS_LOG(DEBUG) << "Parameter: '" << item->DebugString();
       mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
       parameter_proto->set_name(param_name);
       if (!SetParamToTensorProto(param, parameter_proto)) {
@@ -279,7 +278,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       MS_LOG(ERROR) << "parameter name is duplicate:" << param_name;
       return false;
     }
-    nodeName_.insert(param_name);
+    (void)nodeName_.insert(param_name);
   }
   return true;
 }
@@ -573,7 +572,7 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   if (nodeName_.count(output_name) > 0) {
     MS_LOG(EXCEPTION) << "There is a duplicate name: " << output_name;
   }
-  nodeName_.insert(output_name);
+  (void)nodeName_.insert(output_name);
   node_proto->add_output(output_name);
   node_proto->set_name(output_name);
   node_proto->set_domain(node->fullname_with_scope());
@@ -805,7 +804,8 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
     attr_proto->set_s(GetValue<std::string>(value));
   } else if (value->isa<BoolImm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
-    attr_proto->set_i(GetValue<bool>(value));
+    int64_t attr_value = GetValue<bool>(value) ? 1 : 0;
+    attr_proto->set_i(attr_value);
   } else if (value->isa<Int8Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_INT8);
     attr_proto->set_i(value->cast<Int8ImmPtr>()->value());
@@ -829,7 +829,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
     attr_proto->set_i(value->cast<UInt32ImmPtr>()->value());
   } else if (value->isa<UInt64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UINT64);
-    attr_proto->set_i(value->cast<UInt64ImmPtr>()->value());
+    attr_proto->set_i(UlongToLong(value->cast<UInt64ImmPtr>()->value()));
   } else if (value->isa<FP32Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
     attr_proto->set_f(GetValue<float>(value));
@@ -897,7 +897,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
     attr_proto->add_ints(value->cast<UInt32ImmPtr>()->value());
   } else if (value->isa<UInt64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UINT64);
-    attr_proto->add_ints(value->cast<UInt64ImmPtr>()->value());
+    attr_proto->add_ints(SizeToInt(value->cast<UInt64ImmPtr>()->value()));
   } else if (value->isa<FP32Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
     attr_proto->add_floats(GetValue<float>(value));
