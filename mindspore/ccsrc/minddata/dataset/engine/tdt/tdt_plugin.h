@@ -19,6 +19,7 @@
 #include <dlfcn.h>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,11 +56,18 @@ class TdtPlugin {
 
   Status getTdtType(DataType d_type, aclDataType &datatype);
 
+  Status ParseType(const aclDataType &acl_data_type, std::string &data_type);
+
   Status translate(acltdtTensorType tdt_type, const TensorRow &ts_row, acltdtDataset **output_acl_dataset);
 
   void ReportErrorMessage();
 
   void *tdt_handle_ = nullptr;
+
+  std::map<aclDataType, std::string> parse_map = {
+    {ACL_INT8, "int8"},       {ACL_UINT8, "uint8"},   {ACL_INT16, "int16"},    {ACL_UINT16, "uint16"},
+    {ACL_INT32, "int32"},     {ACL_UINT32, "uint32"}, {ACL_INT64, "int64"},    {ACL_UINT64, "uint64"},
+    {ACL_FLOAT16, "float16"}, {ACL_FLOAT, "float32"}, {ACL_DOUBLE, "float64"}, {ACL_BOOL, "bool"}};
 };
 }  // namespace dataset
 }  // namespace mindspore
