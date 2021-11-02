@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp16/deconvolution_winograd_fp16.h"
 
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
@@ -64,16 +65,6 @@ void DeConvWinogradFp16CPUKernel::FreeResizeBuf() {
     free(tile_input_);
     tile_input_ = nullptr;
   }
-
-  if (tile_output_ != nullptr) {
-    free(tile_output_);
-    tile_output_ = nullptr;
-  }
-
-  if (nc4hw4_output_ != nullptr) {
-    free(nc4hw4_output_);
-    nc4hw4_output_ = nullptr;
-  }
   return;
 }
 
@@ -114,12 +105,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
   deconv_param_->input_plane_ = conv_param_->input_h_ * conv_param_->input_w_;
   deconv_param_->output_plane_ = conv_param_->output_h_ * conv_param_->output_w_;
 
-  nc4hw4_output_ =
-    reinterpret_cast<float16_t *>(malloc(deconv_param_->oc_up_ * deconv_param_->output_plane_ * sizeof(float16_t)));
-  if (nc4hw4_output_ == nullptr) {
-    return RET_NULL_PTR;
-  }
-
   deconv_param_->in_tile_w_count_ = UP_DIV(conv_param_->input_w_, DECONV_WINOGRAD_DEFAULT_UNIT);
   deconv_param_->in_tile_h_count_ = UP_DIV(conv_param_->input_h_, DECONV_WINOGRAD_DEFAULT_UNIT);
 
@@ -141,12 +126,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
 
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
   deconv_param_->out_tile_h_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_h_ + conv_param_->kernel_h_;
-  size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
-         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up_;
-  tile_output_ = reinterpret_cast<float16_t *>(malloc(size * sizeof(float16_t)));
-  if (tile_output_ == nullptr) {
-    return RET_NULL_PTR;
-  }
 
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
@@ -433,6 +412,37 @@ int DeConvWinogradFp16CPUKernel::Prepare() {
   return ReSize();
 }
 
+int DeConvWinogradFp16CPUKernel::InitRunBuf() {
+  int size = deconv_param_->oc_up_ * deconv_param_->output_plane_;
+  nc4hw4_output_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(size * sizeof(float16_t)));
+  if (nc4hw4_output_ == nullptr) {
+    MS_LOG(ERROR) << "de conv wg Malloc nc4hw4_output_ error!";
+    return RET_MEMORY_FAILED;
+  }
+
+  size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
+         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up_;
+  tile_output_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(size * sizeof(float16_t)));
+  if (tile_output_ == nullptr) {
+    MS_LOG(ERROR) << "de conv wg Malloc tile_output_ error!";
+    return RET_MEMORY_FAILED;
+  }
+  return RET_OK;
+}
+
+void DeConvWinogradFp16CPUKernel::FreeRunBuf() {
+  if (nc4hw4_output_ != nullptr) {
+    ctx_->allocator->Free(nc4hw4_output_);
+    nc4hw4_output_ = nullptr;
+  }
+
+  if (tile_output_ != nullptr) {
+    ctx_->allocator->Free(tile_output_);
+    tile_output_ = nullptr;
+  }
+  return;
+}
+
 int DeConvWinogradFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
@@ -441,18 +451,27 @@ int DeConvWinogradFp16CPUKernel::Run() {
   CHECK_NULL_RETURN(input_ptr);
   CHECK_NULL_RETURN(output_ptr);
 
+  if (InitRunBuf() != RET_OK) {
+    MS_LOG(ERROR) << "InitRunBuf fail!";
+    FreeRunBuf();
+    return RET_ERROR;
+  }
+
   if (!valid_weight_shape_) {
     if (InitComputeParam() != RET_OK) {
       MS_LOG(ERROR) << "InitDataParam error!";
+      FreeRunBuf();
       return RET_ERROR;
     }
     if (!valid_weight_shape_ || InitParameter() != RET_OK) {
       MS_LOG(ERROR) << "InitDataParam error!";
+      FreeRunBuf();
       return RET_ERROR;
     }
   }
   if (IsRepack() && InitDataParam() != RET_OK) {
     MS_LOG(ERROR) << "InitDataParam error!";
+    FreeRunBuf();
     return RET_ERROR;
   }
 
@@ -464,16 +483,18 @@ int DeConvWinogradFp16CPUKernel::Run() {
     auto ret = ParallelLaunch(this->ms_context_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeConvWgFp16Run failed!";
+      FreeRunBuf();
       return ret;
     }
     // post bias activate and nhwc
     ret = ParallelLaunch(this->ms_context_, DeConvWgPostFp16Run, this, thread_num_hw_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeConvWgPostFp16Run failed!";
+      FreeRunBuf();
       return ret;
     }
   }
-
+  FreeRunBuf();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

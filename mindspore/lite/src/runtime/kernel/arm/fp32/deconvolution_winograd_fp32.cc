@@ -479,15 +479,18 @@ int DeConvolutionWinogradCPUKernel::Run() {
   if (!valid_weight_shape_) {
     if (InitComputeParam() != RET_OK) {
       MS_LOG(ERROR) << "InitDataParam error!";
+      FreeRunBuf();
       return RET_ERROR;
     }
     if (!valid_weight_shape_ || InitParameter() != RET_OK) {
       MS_LOG(ERROR) << "InitDataParam error!";
+      FreeRunBuf();
       return RET_ERROR;
     }
   }
   if (IsRepack() && InitDataParam() != RET_OK) {
     MS_LOG(ERROR) << "InitDataParam error!";
+    FreeRunBuf();
     return RET_ERROR;
   }
 
