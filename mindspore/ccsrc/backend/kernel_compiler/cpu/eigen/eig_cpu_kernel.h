@@ -27,8 +27,6 @@ namespace kernel {
 
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
-using c_float_complex = std::complex<float>;
-using c_double_complex = std::complex<double>;
 
 template <typename T, typename C>
 class EighCPUKernel : public CPUKernel {
@@ -66,14 +64,14 @@ MS_REG_CPU_KERNEL_T_S(Eigh,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeComplex64)
                         .AddOutputAttr(kNumberTypeComplex64),
-                      EighCPUKernel, float, c_float_complex);
+                      EighCPUKernel, float_complex, float_complex);
 MS_REG_CPU_KERNEL_T_S(Eigh,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex128)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
-                      EighCPUKernel, double, c_double_complex);
+                      EighCPUKernel, double_complex, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 
