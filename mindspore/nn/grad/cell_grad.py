@@ -55,8 +55,12 @@ class Jvp(Cell):
 
     Outputs:
         A tuple with 2 Tensors or Tuple of Tensors:
+
         - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
         - **jvp** (Tensors or Tuple of Tensors) - The result of the jacobian vector product.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.nn import Jvp
@@ -67,6 +71,10 @@ class Jvp(Cell):
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
         >>> output = Jvp(Net())(x, y, (v, v))
+        >>> print(output[0])
+        [[2, 10], [20, 68]]
+        >>> print(output[1])
+        [[4, 13], [28, 49]]
     """
     def __init__(self, fn):
         super(Jvp, self).__init__()
@@ -119,8 +127,12 @@ class Vjp(Cell):
 
     Outputs:
         A tuple with 2 Tensors or Tuple of Tensors:
+
         - **net_output** (Tensors or Tuple of Tensors) - The output of `network(inputs)`.
         - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.nn import Vjp
@@ -131,6 +143,10 @@ class Vjp(Cell):
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
         >>> output = Vjp(Net())(x, y, v)
+        >>> print(output[0])
+        [[2, 10], [20, 68]]
+        >>> print(output[1])
+        ([[3, 12], [27, 48]], [[1, 1], [1, 1]])
     """
 
     def __init__(self, fn):
