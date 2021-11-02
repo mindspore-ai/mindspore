@@ -124,7 +124,6 @@ def matmul_dds_grad(q,
 
         s = tik_inst.Scalar(dtype="int32")
         s.set_as(head // 4)
-        # formula: global_idx = 3 - (head - 4 * s)  # global idx for global key extraction
         global_idx = tik_inst.Scalar(dtype="int32")
         global_idx.set_as(3 - (head - 4 * s))
         # apply tensor in l1 for global k (256, 128) nZ
@@ -148,7 +147,6 @@ def matmul_dds_grad(q,
                                0, size_per_head // 16, 16, bs * seq_len - 16, 0)
         with tik_inst.for_range(0, block_num) as block:
             # do backward softmax
-            # formula: grad_x = grad_softmax * softmax - sum(grad_softmax * softmax) * softmax
             # apply for tensor in ub for grad_x out (64, 320) zN
             mat_ub_lg_d = tik_inst.Tensor("float16",
                                           ((global_size + block_size) //
