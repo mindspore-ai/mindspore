@@ -40,8 +40,7 @@ const BaseRef PatternProcessPass::DefinePattern() const {
 
 void PatternProcessPass::Build() {
   VarPtr fg = std::make_shared<Var>("RootG");
-  BaseRef pattern = std::move(DefinePattern());
-  pattern_ = SexpToNode(pattern, fg, primitive_vars_.get(), multigraph_);
+  pattern_ = SexpToNode(DefinePattern(), fg, primitive_vars_.get(), multigraph_);
 }
 
 AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {

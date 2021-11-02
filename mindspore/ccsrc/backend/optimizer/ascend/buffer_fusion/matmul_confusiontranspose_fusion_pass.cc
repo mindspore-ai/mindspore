@@ -19,7 +19,6 @@
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,11 +40,6 @@ void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNode
 void MatmulConfusionTranposeFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MatmulConfusiontransposeUbFusion)) {
-    return;
-  }
-
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||

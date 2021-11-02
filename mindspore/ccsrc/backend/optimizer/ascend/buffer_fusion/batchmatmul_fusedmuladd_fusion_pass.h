@@ -34,7 +34,9 @@ using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 class BatchMatmulFusedMulAddFusionPass : public FusionBasePass {
  public:
   explicit BatchMatmulFusedMulAddFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("BatchMatmulFusedMulAddFusionPass", idAllocator) {}
+      : FusionBasePass("BatchMatmulFusedMulAddFusionPass", idAllocator) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatmulFusedMulAddFusionPass);
+  }
   ~BatchMatmulFusedMulAddFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

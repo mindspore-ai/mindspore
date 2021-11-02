@@ -34,7 +34,9 @@ using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 class MultiOutputFusionPass : public FusionBasePass {
  public:
   explicit MultiOutputFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("MultiOutputFusionPass", idAllocator) {}
+      : FusionBasePass("MultiOutputFusionPass", idAllocator) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MultiOutputFusionPass);
+  }
   ~MultiOutputFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

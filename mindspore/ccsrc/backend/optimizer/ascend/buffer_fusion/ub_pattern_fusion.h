@@ -32,13 +32,14 @@ namespace mindspore {
 namespace opt {
 using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
-class UbPatternFusion : public Pass {
+class UbPatternFusion : public PassWithSwitch {
  public:
-  UbPatternFusion() : Pass("TbeBufferFusion") {}
+  UbPatternFusion() : PassWithSwitch("TbeBufferFusion") {}
   ~UbPatternFusion() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  bool RunPass(const FuncGraphPtr &graph) override;
+
   void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                            std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
   bool ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,

@@ -51,9 +51,6 @@ void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::Kerne
 void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::EltwiseFusionPass)) {
-    return;
-  }
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {

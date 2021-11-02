@@ -33,7 +33,7 @@ class Pass {
   explicit Pass(const std::string &name = "pass") : name_(name) {}
   virtual ~Pass() = default;
   virtual bool Run(const FuncGraphPtr &func_graph) = 0;
-  virtual std::string name() const { return name_; }
+  const std::string &name() const { return name_; }
   void SetCacheManager(const CacheManagerPtr &cm) { cache_manager_ = cm; }
   const CacheManagerPtr &GetCacheManager() const { return cache_manager_; }
 

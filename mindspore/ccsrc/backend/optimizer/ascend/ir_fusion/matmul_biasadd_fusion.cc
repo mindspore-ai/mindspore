@@ -19,7 +19,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "utils/trace_base.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,10 +32,6 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
                                               const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MatmulBiasaddFusion)) {
-    return nullptr;
-  }
-
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
   if (matmul == nullptr || !matmul->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"

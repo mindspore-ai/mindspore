@@ -23,7 +23,6 @@
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -73,10 +72,6 @@ const AnfNodePtr BNReduceGradConv2dBackpropFilterFusion::Process(const FuncGraph
                                                                  const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::Resnet50DbnDwFusionPass)) {
-    return nullptr;
-  }
 
   auto conv_back_filter = CheckAnfNodeIfCNodeAndInputSize(node, kConv2DBackpropFilterInputNum);
   auto bnreduce_grad = CheckAnfNodeIfCNodeAndInputSize(conv_back_filter->input(kIndex1), kBNTrainingReduceGradInputNum);

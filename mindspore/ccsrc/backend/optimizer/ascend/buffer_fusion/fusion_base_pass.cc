@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/buffer_fusion/fusion_base_pass.h"
+#include <memory>
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -105,7 +106,7 @@ bool FusionBasePass::MatchUBFusionPattern(const session::KernelGraph &kernel_gra
   return true;
 }
 
-bool FusionBasePass::Run(const FuncGraphPtr &graph) {
+bool FusionBasePass::RunPass(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);

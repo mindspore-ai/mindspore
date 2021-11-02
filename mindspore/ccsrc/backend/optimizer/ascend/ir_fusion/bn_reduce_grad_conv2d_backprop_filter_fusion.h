@@ -17,14 +17,16 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_BN_REDUCE_GRAD_CONV2D_BACKPROP_FILTER_FUSION_H_
 
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 
 namespace mindspore {
 namespace opt {
-class BNReduceGradConv2dBackpropFilterFusion : public PatternProcessPass {
+class BNReduceGradConv2dBackpropFilterFusion : public PatternProcessPassWithSwitch {
  public:
   explicit BNReduceGradConv2dBackpropFilterFusion(bool multigraph = true)
-      : PatternProcessPass("bn_reduce_grad_conv2d_backprop_filter_fusion", multigraph) {}
+      : PatternProcessPassWithSwitch("bn_reduce_grad_conv2d_backprop_filter_fusion", multigraph) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::Resnet50DbnDwFusionPass);
+  }
   ~BNReduceGradConv2dBackpropFilterFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

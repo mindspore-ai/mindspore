@@ -17,17 +17,19 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MATMUL_BIASADD_FUSION_H_
 
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_pass_control.h"
 
 namespace mindspore {
 namespace opt {
-class MatmulBiasaddFusion : public PatternProcessPass {
+class MatmulBiasaddFusion : public PatternProcessPassWithSwitch {
  public:
-  explicit MatmulBiasaddFusion(bool multigraph = true) : PatternProcessPass("matmul_biasadd_fusion", multigraph) {
+  explicit MatmulBiasaddFusion(bool multigraph = true)
+      : PatternProcessPassWithSwitch("matmul_biasadd_fusion", multigraph) {
     x0_ = std::make_shared<Var>();
     x1_ = std::make_shared<Var>();
     x2_ = std::make_shared<Var>();
     matmul_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimMatMul->name()));
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MatmulBiasaddFusion);
   }
 
   ~MatmulBiasaddFusion() override = default;

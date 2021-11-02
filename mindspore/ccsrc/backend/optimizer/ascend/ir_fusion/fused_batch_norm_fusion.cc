@@ -20,7 +20,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "utils/trace_base.h"
-#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
