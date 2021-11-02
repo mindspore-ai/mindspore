@@ -48,7 +48,6 @@
 
 namespace mindspore {
 namespace transform {
-const int kMaxFilenameLength = 128;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 using HcomBroadcast = ge::op::HcomBroadcast;
 class DfGraphConvertor {
@@ -76,30 +75,38 @@ class DfGraphConvertor {
   static void RegisterAdapter(const std::string &name, OpAdapterPtr adpt);
   static void RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt);
 
-  void WriteFile(const std::string &name, std::ostringstream &stream) {
-    std::ofstream fout(name);
-    if (!fout.is_open()) {
-      char err_info[kMaxFilenameLength];
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!"
-                    << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
-      return;
-    }
-    fout << stream.str();
-    fout.close();
-  }
-
   void DrawComputeGraph(const std::string &name) {
 #ifndef ENABLE_SECURITY
-    WriteFile(name, compute_sout_);
+    std::ofstream fout(name);
+    if (!fout.is_open()) {
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
+      return;
+    }
+    fout << compute_sout_.str();
+    fout.close();
 #endif
   }
 
   void DrawInitGraph(const std::string &name) {
 #ifndef ENABLE_SECURITY
-    WriteFile(name, init_sout_);
+    std::ofstream fout(name);
+    if (!fout.is_open()) {
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
+      return;
+    }
+    fout << init_sout_.str();
+    fout.close();
 #endif
   }
-  void DrawSaveCheckpointGraph(const std::string &name) { WriteFile(name, checkpoint_sout_); }
+  void DrawSaveCheckpointGraph(const std::string &name) {
+    std::ofstream fout(name);
+    if (!fout.is_open()) {
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
+      return;
+    }
+    fout << checkpoint_sout_.str();
+    fout.close();
+  }
 
   DfGraphConvertor &ConvertAllNode();
   DfGraphConvertor &BuildGraph();
