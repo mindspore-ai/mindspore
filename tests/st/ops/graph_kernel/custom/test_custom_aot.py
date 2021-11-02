@@ -37,15 +37,16 @@ class AOTSingleOutputNet(Cell):
 
 def get_file_path_gpu(cuda, so):
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    cmd = "nvcc --shared -Xcompiler -fPIC  -o "+dir_path+"/aot_test_files/"+so+" "+dir_path+"/aot_test_files/"+cuda
-    func_path = dir_path+"/aot_test_files/"+so
+    cmd = "nvcc --shared -Xcompiler -fPIC  -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + \
+          "/aot_test_files/" + cuda
+    func_path = dir_path + "/aot_test_files/" + so
     return cmd, func_path
 
 
 def get_file_path_cpu(cc, so):
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    cmd = "g++ --shared -fPIC -o "+dir_path+"/aot_test_files/"+so+" "+dir_path+"/aot_test_files/"+cc
-    func_path = dir_path+"/aot_test_files/"+so
+    cmd = "g++ --shared -fPIC -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + "/aot_test_files/" + cc
+    func_path = dir_path + "/aot_test_files/" + so
     return cmd, func_path
 
 
@@ -57,7 +58,7 @@ def check_exec_file(cmd, func_path, source, execf):
     else:
         if os.path.exists(func_path):
             os.remove(func_path)
-        assert False, "Failed to compile " + source+" to "+execf
+        assert False, "Failed to compile " + source + " to " + execf
 
 
 def aot_single_output(get_file_path, source, execf, reg):
@@ -67,7 +68,7 @@ def aot_single_output(get_file_path, source, execf, reg):
     cmd, func_path = get_file_path(source, execf)
     check_exec_file(cmd, func_path, source, execf)
     try:
-        test = AOTSingleOutputNet(func_path+":CustomAdd", (shape,), (mstype.float32,), reg)
+        test = AOTSingleOutputNet(func_path + ":CustomAdd", (shape,), (mstype.float32,), reg)
         output = test(Tensor(input_x), Tensor(input_y))[0]
     except Exception as e:
         if os.path.exists(func_path):
@@ -77,18 +78,9 @@ def aot_single_output(get_file_path, source, execf, reg):
     assert np.allclose(input_x + input_y, output.asnumpy(), 0.001, 0.001)
 
 
-add_gpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_aot_single_output_gpu():
     """
     Feature: custom aot operator, multiple inputs, single output, GPU
@@ -96,21 +88,21 @@ def test_aot_single_output_gpu():
     Expectation: nn result matches numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    aot_single_output(get_file_path_gpu, "add.cu", "add.so", add_gpu_info)
+    aot_single_output(get_file_path_gpu, "add.cu", "add.so", None)
 
 
 add_cpu_info = CustomRegOp() \
     .input(0, "x1") \
     .input(1, "x2") \
     .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None) \
     .target("CPU") \
     .get_op_info()
 
 
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_cpu
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_aot_single_output_cpu():
     """
     Feature: custom aot operator, multiple inputs, single output, CPU
@@ -125,18 +117,9 @@ def test_aot_single_output_cpu():
         aot_single_output(get_file_path_cpu, "add.cc", "add.so", add_cpu_info)
 
 
-reorganize_gpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_reorganize():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,int64_t), single output, GPU
@@ -152,7 +135,7 @@ def test_reorganize():
     cmd, func_path = get_file_path_gpu("reorganize.cu", "reorganize.so")
     check_exec_file(cmd, func_path, "reorganize.cu", "reorganize.so")
     try:
-        test = AOTSingleOutputNet(func_path+":CustomReorganize", (shape,), (mstype.float32,), reorganize_gpu_info)
+        test = AOTSingleOutputNet(func_path + ":CustomReorganize", (shape,), (mstype.float32,), None)
         output = test(Tensor(input_x), Tensor(input_y))[0]
     except Exception as e:
         if os.path.exists(func_path):
@@ -162,18 +145,9 @@ def test_reorganize():
     assert np.allclose(expect, output.asnumpy(), 0.001, 0.001)
 
 
-hetero_square_mul_gpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F16_Default, DataType.F16_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_hetero_square_mul():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,float16), single output(dtype:float16), GPU
@@ -188,8 +162,7 @@ def test_hetero_square_mul():
     cmd, func_path = get_file_path_gpu("hetero_square_mul.cu", "hetero_square_mul.so")
     check_exec_file(cmd, func_path, "hetero_square_mul.cu", "hetero_square_mul.so")
     try:
-        test = AOTSingleOutputNet(func_path+":CustomHSquareMul", (shape,),
-                                  (mstype.float16,), hetero_square_mul_gpu_info)
+        test = AOTSingleOutputNet(func_path + ":CustomHSquareMul", (shape,), (mstype.float16,), None)
         output = test(Tensor(input_x), Tensor(input_y))[0]
     except Exception as e:
         if os.path.exists(func_path):
@@ -210,27 +183,9 @@ class SquareGradNet(Cell):
         return res2
 
 
-square_gpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-square_bprop_gpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .input(2, "x3") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_square_py_bprop():
     """
     Feature: custom aot operator, bprop(pyfunc), GPU
@@ -248,8 +203,9 @@ def test_square_py_bprop():
         gradient = x * 2
         dx = gradient * dout
         return (dx,)
+
     try:
-        net = SquareGradNet(func_path+":CustomSquare", ([3],), (mstype.float32,), bprop=bprop, reg=square_gpu_info)
+        net = SquareGradNet(func_path + ":CustomSquare", ([3],), (mstype.float32,), bprop=bprop, reg=None)
         dx = ops.GradOperation(sens_param=True)(net)(Tensor(x), Tensor(sens))
     except Exception as e:
         if os.path.exists(func_path):
@@ -260,9 +216,9 @@ def test_square_py_bprop():
     assert np.allclose(expect, dx_np, 0.0001, 0.0001)
 
 
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_square_aot_bprop():
     """
     Feature: custom aot operator, bprop(Cell), GPU
@@ -276,8 +232,8 @@ def test_square_aot_bprop():
     cmd_bprop, func_path_bprop = get_file_path_gpu("square_bprop.cu", "square_bprop.so")
     check_exec_file(cmd_bprop, func_path_bprop, "square_bprop.cu", "square_bprop.so")
     try:
-        aot_bprop = Custom(func_path_bprop+":CustomSquareBprop",
-                           ([3],), (mstype.float32,), "aot", reg_info=square_bprop_gpu_info)
+        aot_bprop = Custom(func_path_bprop + ":CustomSquareBprop",
+                           ([3],), (mstype.float32,), "aot", reg_info=None)
     except Exception as e:
         if os.path.exists(func_path_bprop):
             os.remove(func_path_bprop)
@@ -290,7 +246,7 @@ def test_square_aot_bprop():
     cmd, func_path = get_file_path_gpu("square.cu", "square.so")
     check_exec_file(cmd, func_path, "square_bprop.cu", "square_bprop.so")
     try:
-        net = SquareGradNet(func_path+":CustomSquare", ([3],), (mstype.float32,), bprop=bprop, reg=square_gpu_info)
+        net = SquareGradNet(func_path + ":CustomSquare", ([3],), (mstype.float32,), bprop=bprop, reg=None)
         dx = ops.GradOperation(sens_param=True)(net)(Tensor(x), Tensor(sens))
     except Exception as e:
         if os.path.exists(func_path):
@@ -330,7 +286,6 @@ multioutput_gpu_info = CustomRegOp() \
     .target("GPU") \
     .get_op_info()
 
-
 multioutput_bprop_gpu_info = CustomRegOp() \
     .input(0, "x1") \
     .input(1, "x2") \
@@ -345,12 +300,12 @@ multioutput_bprop_gpu_info = CustomRegOp() \
     .get_op_info()
 
 
-@ pytest.mark.level0
-@ pytest.mark.env_onecard
-@ pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_add_mul_div_bprop():
     """
-    Feature: custom aot operator, bprop(Cell), multiple outputs, GPU
+    Feature: custom aot operator with reg info, bprop(Cell), multiple outputs, GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
@@ -364,7 +319,7 @@ def test_add_mul_div_bprop():
     cmd_bprop, func_path_bprop = get_file_path_gpu("add_mul_div_bprop.cu", "add_mul_div_bprop.so")
     check_exec_file(cmd_bprop, func_path_bprop, "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
     try:
-        aot_bprop = Custom(func_path_bprop+":CustomAddMulDivBprop",
+        aot_bprop = Custom(func_path_bprop + ":CustomAddMulDivBprop",
                            ([3], [3]), (mstype.float32, mstype.float32), "aot", reg_info=multioutput_bprop_gpu_info)
     except Exception as e:
         if os.path.exists(func_path_bprop):
@@ -378,7 +333,7 @@ def test_add_mul_div_bprop():
     cmd, func_path = get_file_path_gpu("add_mul_div.cu", "add_mul_div.so")
     check_exec_file(cmd, func_path, "add_mul_div.cu", "add_mul_div.so")
     try:
-        net = AOTMultiOutputNet(func_path+":CustomAddMulDiv", ([3], [3], [3]),
+        net = AOTMultiOutputNet(func_path + ":CustomAddMulDiv", ([3], [3], [3]),
                                 (mstype.float32, mstype.float32, mstype.float32), bprop=bprop, reg=multioutput_gpu_info)
 
         dx, dy = ops.GradOperation(sens_param=True, get_all=True)(net)(Tensor(x), Tensor(y), Tensor(sens))

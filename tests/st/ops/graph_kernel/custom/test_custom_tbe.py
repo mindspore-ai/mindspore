@@ -24,7 +24,6 @@ from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_i
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 square_with_bias_op_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .attr("bias", "required", "float") \
     .input(0, "x") \
     .output(0, "y") \
@@ -60,7 +59,6 @@ def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"
 
 
 square_with_bias_v2_op_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .attr("bias", "required", "float") \
     .input(0, "input_x") \
     .output(0, "output1") \
