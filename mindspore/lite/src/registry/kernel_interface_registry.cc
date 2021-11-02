@@ -20,6 +20,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "schema/model_generated.h"
+#include "include/api/kernel.h"
 
 using mindspore::registry::KernelInterfaceCreator;
 using mindspore::schema::PrimitiveType_MAX;
@@ -32,12 +33,10 @@ static constexpr auto KMaxCustomTypeNum = 200;
 static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN + 1;
 std::string GetCustomType(const schema::Primitive *primitive) {
   auto param = primitive->value_as_Custom();
-  if (param == nullptr) {
+  if (param == nullptr || param->type() == nullptr) {
     return "";
   }
-  if (param->type() == nullptr) {
-    return "";
-  }
+
   return param->type()->str();
 }
 }  // namespace
@@ -92,15 +91,19 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomCache
 }
 
 std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomKernelInterface(
-  const schema::Primitive *primitive) {
-  MS_ASSERT(primitive != nullptr);
+  const schema::Primitive *primitive, const kernel::Kernel *kernel) {
   std::unique_lock<std::mutex> lock(mutex_);
-  auto &&type = GetCustomType(primitive);
+  std::string type;
+  if (kernel == nullptr) {
+    type = GetCustomType(primitive);
+  } else {
+    type = kernel->GetAttr("type");
+  }
   for (auto &&item : custom_creators_) {
     auto &&provider = item.first;
-    auto kernel = GetCustomCacheInterface(provider, type);
-    if (kernel != nullptr) {
-      return kernel;
+    auto kernel_interface = GetCustomCacheInterface(provider, type);
+    if (kernel_interface != nullptr) {
+      return kernel_interface;
     }
     auto provider_iter = custom_creators_.find(provider);
     if (provider_iter == custom_creators_.end()) {
@@ -108,32 +111,38 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomKerne
     }
     auto creator_iter = provider_iter->second.find(type);
     if (creator_iter != provider_iter->second.end()) {
-      kernel = creator_iter->second();
-      custom_kernels_[provider][type] = kernel;
-      return kernel;
+      kernel_interface = creator_iter->second();
+      custom_kernels_[provider][type] = kernel_interface;
+      return kernel_interface;
     }
   }
 
   return nullptr;
 }
 
-std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInterface(
-  const std::string &provider, const schema::Primitive *primitive) {
-  if (primitive == nullptr) {
+std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInterface(const std::string &provider,
+                                                                                     const schema::Primitive *primitive,
+                                                                                     const kernel::Kernel *kernel) {
+  if (primitive == nullptr && kernel == nullptr) {
     return nullptr;
   }
-  int op_type = static_cast<int>(primitive->value_type());
+  int op_type;
+  if (kernel == nullptr) {
+    op_type = static_cast<int>(primitive->value_type());
+  } else {
+    op_type = static_cast<int>(kernel->type());
+  }
   if (op_type > PrimitiveType_MAX || op_type <= PrimitiveType_MIN) {
     return nullptr;
   }
   if (op_type == schema::PrimitiveType_Custom) {
-    return GetCustomKernelInterface(primitive);
+    return GetCustomKernelInterface(primitive, kernel);
   }
 
   std::unique_lock<std::mutex> lock(mutex_);
-  auto kernel = GetCacheInterface(provider, op_type);
-  if (kernel != nullptr) {
-    return kernel;
+  auto kernel_interface = GetCacheInterface(provider, op_type);
+  if (kernel_interface != nullptr) {
+    return kernel_interface;
   }
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
@@ -142,9 +151,9 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
 
   auto creator = iter->second[op_type];
   if (creator != nullptr) {
-    kernel = creator();
-    kernel_interfaces_[provider][op_type] = kernel;
-    return kernel;
+    kernel_interface = creator();
+    kernel_interfaces_[provider][op_type] = kernel_interface;
+    return kernel_interface;
   }
   return nullptr;
 }

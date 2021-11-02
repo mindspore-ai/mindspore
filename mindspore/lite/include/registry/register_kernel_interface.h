@@ -25,6 +25,9 @@
 #include "schema/model_generated.h"
 
 namespace mindspore {
+namespace kernel {
+class Kernel;
+}
 namespace registry {
 /// \brief KernelInterfaceCreator defined a functor to create KernelInterface.
 using KernelInterfaceCreator = std::function<std::shared_ptr<kernel::KernelInterface>()>;
@@ -55,10 +58,12 @@ class MS_API RegisterKernelInterface {
   ///
   /// \param[in] provider Define the identification of user.
   /// \param[in] primitive Define the attributes of a certain op.
+  /// \param[in] kernel Define the kernel of a certain op.
   ///
   /// \return Boolean value to represent registration of a certain op is existing or not.
   static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
-                                                                     const schema::Primitive *primitive);
+                                                                     const schema::Primitive *primitive,
+                                                                     const kernel::Kernel *kernel = nullptr);
 };
 
 /// \brief KernelInterfaceReg defined registration class of KernelInterface.
