@@ -547,7 +547,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
-            new_param = parameter_dict[param.name]
+            new_param = copy.deepcopy(parameter_dict[param.name])
             if not isinstance(new_param, Parameter):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
