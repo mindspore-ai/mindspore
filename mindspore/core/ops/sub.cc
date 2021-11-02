@@ -16,9 +16,10 @@
 
 #include "ops/sub.h"
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -29,35 +30,28 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr SubInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   return BroadCastInferShape(prim_name, input_args);
 }
 
 TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto op_name = prim->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kGreaterEqual, input_num, op_name);
   std::map<std::string, TypePtr> types;
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 
 MIND_API_BASE_IMPL(Sub, PrimitiveC, BaseOperator);
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  auto shape = SubInferShape(primitive, input_args);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto type = SubInferType(primitive, input_args);
+  auto shape = SubInferShape(primitive, input_args);
   if (shape->IsDimZero()) {
     type = input_args[0]->BuildType();
   }
