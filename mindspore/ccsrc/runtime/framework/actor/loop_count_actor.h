@@ -52,7 +52,6 @@ class LoopCountActor : public DebugAwareActor {
   // Get the member.
   size_t loop_count() const { return loop_count_; }
   const AID &data_prepare_aid() const { return data_prepare_aid_; }
-  const AID &output_aid() const { return output_aid_; }
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -69,9 +68,7 @@ class LoopCountActor : public DebugAwareActor {
   // The total running count represents the toal step running count.
   size_t total_running_count_;
 
-  // The output controls contain the data prepare actor and output actor.
   AID data_prepare_aid_;
-  AID output_aid_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;

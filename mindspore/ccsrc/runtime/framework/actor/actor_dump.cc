@@ -86,23 +86,6 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
       ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
     }
   }
-
-  if (actor->output_result_arrows().size() != actor->output_result_nodes().size()) {
-    MS_LOG(EXCEPTION) << "The size of output result arrows is not equal to the output nodes.";
-  }
-  if (actor->output_result_arrows().size() > 0) {
-    ofs << "\t\toutput_result_arrows:" << actor->output_result_arrows().size() << "\n ";
-    for (size_t i = 0; i < actor->output_result_arrows().size(); ++i) {
-      auto result_arrow = actor->output_result_arrows()[i];
-      auto output_node = actor->output_result_nodes()[i];
-      MS_EXCEPTION_IF_NULL(result_arrow);
-      MS_EXCEPTION_IF_NULL(output_node);
-      ofs << "\t\t\tfrom_output_node:" << GetSplitName(output_node->fullname_with_scope())
-          << "\tfrom_output_index:" << result_arrow->from_output_index_
-          << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
-          << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";
-    }
-  }
 }
 
 void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
@@ -233,10 +216,7 @@ void DumpLoopCountActor(const LoopCountActorPtr &actor, std::ofstream &ofs) {
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count() << "\n";
   DumpAbstractActor(actor.get(), ofs);
 
-  const size_t kOutputControlArrowsNum = 2;
-  ofs << "\t\toutput_control_arrows:" << kOutputControlArrowsNum << "\n ";
-  ofs << "\t\t\tto_actor_name:" << actor->output_aid().Name() << "\n";
-  ofs << "\t\t\tto_actor_name:" << actor->data_prepare_aid().Name() << "\n";
+  ofs << "\t\t\tto_data_prepare_actor:" << actor->data_prepare_aid().Name() << "\n";
 }
 
 void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {
@@ -249,11 +229,6 @@ void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {
       << "\toutputs_num:" << actor->outputs_num() << "\n";
 
   DumpAbstractActor(actor.get(), ofs);
-
-  ofs << "\t\tinput_result_arrows:" << actor->input_result_arrow_aids().size() << "\n ";
-  for (const auto &input_result_arrow_aid : actor->input_result_arrow_aids()) {
-    ofs << "\t\t\tfrom_actor_name:" << input_result_arrow_aid.Name() << "\n";
-  }
 
   ofs << "\t\toutput_address_persisted_nodes:" << actor->output_address_persisted_nodes().size() << "\n ";
   for (const auto &output_address_persisted_node : actor->output_address_persisted_nodes()) {

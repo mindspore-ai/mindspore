@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <map>
 #include <unordered_map>
 #include <set>
 #include "runtime/framework/control_node_parser.h"
@@ -56,11 +57,10 @@ class OutputActor : public AbstractActor {
   void Init() override;
 
   // The output actor collects loop count when receive the input control of loop count actor.
-  void CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context);
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
   // The output actor collects output result when receive the data of actor.
-  void CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
-                     OpContext<DeviceTensor> *const context);
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
 
   // The graph output need be set new device address every step or loop, to avoid that the device address
   // context of tensor be rewritten in the next step or next loop.
@@ -69,7 +69,6 @@ class OutputActor : public AbstractActor {
   // Get the member.
   size_t loop_count() const { return loop_count_; }
   size_t outputs_num() const { return outputs_num_; }
-  const std::vector<AID> &input_result_arrow_aids() const { return input_result_arrow_aids_; }
   const std::set<AnfNodePtr> &output_address_persisted_nodes() const { return output_address_persisted_nodes_; }
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
@@ -83,9 +82,6 @@ class OutputActor : public AbstractActor {
   size_t loop_count_;
   size_t current_count_;
 
-  // The dependent input result arrow actors.
-  std::vector<AID> input_result_arrow_aids_;
-
   // The outputs.
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
@@ -94,6 +90,8 @@ class OutputActor : public AbstractActor {
   std::set<AnfNodePtr> output_address_persisted_nodes_;
   size_t outputs_num_;
   size_t current_outputs_num_;
+
+  std::map<KernelWithIndex, DeviceTensorPtr> output_node_to_tensor_device_address_;
 };
 
 using OutputActorPtr = std::shared_ptr<OutputActor>;

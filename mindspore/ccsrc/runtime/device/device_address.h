@@ -90,17 +90,26 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual ~DeviceAddress() { ptr_ = nullptr; }
 
   const void *GetPtr() const { return ptr_; }
+  void set_ptr(void *ptr) { ptr_ = ptr; }
   size_t GetSize() const { return size_; }
   void SetSize(size_t size) { size_ = size; }
+
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
+  void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
+
   virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
+  KernelWithIndex GetNodeIndex() const {
+    return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
+                                       : KernelWithIndex{node_index_.first.lock(), node_index_.second};
+  }
+
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                              TypeId host_type, bool trans_flag) const {
     return true;
@@ -115,11 +124,7 @@ class DeviceAddress : public mindspore::DeviceSync {
  protected:
   const void *ptr() const { return ptr_; }
   size_t size() const { return size_; }
-  void set_ptr(void *ptr) { ptr_ = ptr; }
-  KernelWithIndex GetNodeIndex() const {
-    return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
-                                       : KernelWithIndex{node_index_.first.lock(), node_index_.second};
-  }
+
   mutable void *ptr_{nullptr};
   size_t size_{0};
   string format_{"DefaultFormat"};

@@ -64,8 +64,11 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
     Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
   }
 
-  // Send loop count to output actor.
-  Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
+  // Send output control.
+  auto from_aid = const_cast<AID *>(&GetAID());
+  for (auto &output_control : output_control_arrows_) {
+    Async(output_control, &OpActor::RunOpControl, from_aid, context);
+  }
 
   // The LoopCountActor exits.
   if (current_count_ == loop_count_) {
