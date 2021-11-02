@@ -364,7 +364,7 @@ class Dataset:
 
     def notify_watchdog(self):
         """
-        Close watchdog thread in dataset. Now GeneratorDataset/map/batch will use a thread named watch_dog tp monitor
+        Close watchdog thread in dataset. Now GeneratorDataset/map/batch will use a thread named watch_dog to monitor
         multiprocess, for get_dataset_size/output_shapes/output_types/get_col_name/num_classes, we need notify_watchdog
         to close watch_dog thread manually.
         """

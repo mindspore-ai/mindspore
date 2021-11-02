@@ -211,7 +211,7 @@ def test_resnet_thor_imagenet_8p():
     """
     Feature: Resnet50 thor network
     Description: Train and evaluate resnet50 thor network on imagenet dataset
-    Expectation: accuracy > 0.28, time cost < 22.
+    Expectation: accuracy > 0.28, time cost < 25.
     """
     context.set_context(enable_graph_kernel=False, enable_sparse=False)
     context.reset_auto_parallel_context()
