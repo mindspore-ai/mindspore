@@ -36,7 +36,6 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "runtime/device/kernel_info.h"
-#include "vm/segment_runner.h"
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore::graphkernel {

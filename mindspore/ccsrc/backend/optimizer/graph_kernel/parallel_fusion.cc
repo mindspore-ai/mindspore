@@ -24,7 +24,6 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
-#include "vm/segment_runner.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
 namespace mindspore::graphkernel {

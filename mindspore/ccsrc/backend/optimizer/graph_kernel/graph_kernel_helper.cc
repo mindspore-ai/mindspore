@@ -28,12 +28,12 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/const_input_to_attr_registry.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/action.h"
 #include "utils/context/graph_kernel_flags.h"
-#include "vm/segment_runner.h"
 #if ENABLE_D
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #elif ENABLE_GPU
@@ -118,65 +118,6 @@ bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, Anf
   MS_LOG(DEBUG) << "Collect fusion json: " << fused_name;
   return true;
 }
-
-AnfNodePtr ConvertToScalarTensor(const AnfNodePtr &value_node) {
-  auto tensor = GetValueNode<tensor::TensorPtr>(value_node);
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto type_id = tensor->data_type();
-  ShapeVector new_shape;
-  auto origin_ndim = IntToSize(tensor->DataDim());
-  for (size_t i = 0; i < origin_ndim; ++i) {
-    new_shape.push_back(1);
-  }
-  tensor::TensorPtr scalar_tensor = std::make_shared<tensor::Tensor>(type_id, new_shape);
-  scalar_tensor->set_device_info(tensor->device_info());
-  auto data_ptr = scalar_tensor->data_c();
-  MS_EXCEPTION_IF_NULL(data_ptr);
-  auto itemsize = static_cast<size_t>(tensor->data().itemsize());
-  if (memcpy_s(data_ptr, static_cast<size_t>(itemsize), tensor->data_c(), itemsize) != 0) {
-    MS_LOG(EXCEPTION) << "Failed to copy data from tensor into scalar.";
-  }
-
-  ValueNodePtr new_value_node = std::make_shared<ValueNode>(scalar_tensor);
-  new_value_node->set_abstract(scalar_tensor->ToAbstract());
-  new_value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{GetFormat(value_node)});
-  kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{type_id});
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
-
-  return new_value_node;
-}
-
-void ReplaceTensorWithScalar(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &scalar_tensors) {
-  MS_EXCEPTION_IF_NULL(fg);
-  if (scalar_tensors.empty()) {
-    return;
-  }
-
-  auto sub_mng = fg->manager();
-  if (sub_mng == nullptr) {
-    sub_mng = Manage(fg, true);
-    fg->set_manager(sub_mng);
-  }
-
-  std::map<AnfNodePtr, AnfNodePtr> to_be_replaced;
-  for (auto scalar_tensor_node : scalar_tensors) {
-    auto scalar = ConvertToScalarTensor(scalar_tensor_node);
-    auto format = GetFormat(scalar_tensor_node);
-    auto dst_shape_vec = GetShape(scalar_tensor_node);
-    AnfNodePtrList new_broadcast_inputs = {NewValueNode(prim::kPrimBroadcastTo), scalar};
-    auto broadcast_node = CreateCNode(new_broadcast_inputs, fg,
-                                      {.format = format, .shape = dst_shape_vec, .type = GetType(scalar_tensor_node)});
-    auto device_shape = GetDeviceShape(scalar_tensor_node);
-    SetNodeAttrSafely("shape", MakeValue(device_shape), broadcast_node);
-    to_be_replaced[scalar_tensor_node] = broadcast_node;
-  }
-
-  for (auto [old_value_node, new_node] : to_be_replaced) {
-    sub_mng->Replace(old_value_node, new_node);
-  }
-}
 }  // namespace
 
 AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx) {
@@ -192,7 +133,6 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
   auto nodes = TopoSort(fg->get_return());
 
   std::vector<std::pair<tensor::TensorPtr, AnfNodePtrList>> v_replace;
-  std::vector<AnfNodePtr> scalar_tensors;
   for (const auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -214,8 +154,6 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       }
     }
   }
-
-  ReplaceTensorWithScalar(fg, scalar_tensors);
 
   if (v_replace.empty()) {
     return false;
@@ -255,7 +193,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
   AnfNodePtrList *soutputs = (src_outputs != nullptr) ? src_outputs : &outputs;
-  std::tie(fg, inputs, *soutputs) = compile::TransformSegmentToAnfGraph(fuse_nodes);
+  std::tie(fg, inputs, *soutputs) = BuildGraphFromNodes(fuse_nodes);
 
   FuncGraphManagerPtr mng = fg->manager();
   if (mng == nullptr) {
@@ -508,7 +446,7 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
     kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
   } else if (!has_graph_kernel) {
-    std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(nodes);
+    std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes);
     op_nodes = nodes;
   } else {
     // When there are basic and composite ops, the composite ops should be inline to the basic ones' graph,
