@@ -762,6 +762,7 @@ STATUS OnnxModelParser::ConvertIfSubgraph(const onnx::GraphProto &subgraph_proto
   }
   auto return_node = subgraph->get_return();
   MS_CHECK_TRUE_MSG(return_node != nullptr, RET_ERROR, "subgraph has no return");
+  MS_CHECK_GE(return_node->inputs().size(), kInputSize1, RET_ERROR);
   std::vector<AnfNodePtr> return_act_inputs;
   int start_index = 0;
   if (subgraph_proto.output_size() > 1) {

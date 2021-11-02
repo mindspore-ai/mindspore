@@ -37,9 +37,6 @@ namespace lite {
 ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   const auto &custom_attr = tflite_op->custom_options;
   const auto &opnode = tflite_model->operator_codes.at(tflite_op->opcode_index);
   if (opnode == nullptr) {
@@ -136,8 +133,11 @@ ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_
   auto prim = std::make_unique<ops::CustomPredict>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   MS_CHECK_TRUE_RET(custom_attr.data() != nullptr, nullptr);
-  prim->set_output_num(reinterpret_cast<const int64_t *>(custom_attr.data())[0]);
-  prim->set_weight_threshold(reinterpret_cast<const float *>(custom_attr.data())[1]);
+  MS_CHECK_GE(custom_attr.size(), kInputSize1, nullptr);
+  auto out_num = reinterpret_cast<const int *>(custom_attr.data())[0];
+  auto weight_thres = reinterpret_cast<const float *>(custom_attr.data())[1];
+  prim->set_output_num(static_cast<int64_t>(out_num));
+  prim->set_weight_threshold(weight_thres);
   return prim.release();
 }
 

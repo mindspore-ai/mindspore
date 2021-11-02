@@ -27,11 +27,6 @@ ops::PrimitiveC *TFUniformRealParser::Parse(const tensorflow::NodeDef &tf_op,
                                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                             std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF UniformRealParser";
-  if (output_size == nullptr) {
-    MS_LOG(ERROR) << "output_size is nullptr";
-    return nullptr;
-  }
-
   auto prim = std::make_unique<ops::UniformReal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;

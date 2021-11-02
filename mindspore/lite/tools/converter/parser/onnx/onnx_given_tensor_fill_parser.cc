@@ -31,6 +31,7 @@ STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::Primit
   MS_ASSERT(prim != nullptr);
   int data_count = 1;
   for (size_t i = 0; i < shape.size(); i++) {
+    MS_CHECK_GE(shape.at(i), 0, RET_ERROR);
     MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(data_count, shape.at(i)), RET_ERROR, "Int mul overflow.");
     data_count = data_count * shape.at(i);
   }
@@ -59,6 +60,7 @@ STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::Primitive
   MS_ASSERT(prim != nullptr);
   int data_count = 1;
   for (size_t i = 0; i < shape.size(); i++) {
+    MS_CHECK_GE(shape.at(i), 0, RET_ERROR);
     MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(data_count, shape.at(i)), RET_ERROR, "Int mul overflow.");
     data_count = data_count * shape.at(i);
   }

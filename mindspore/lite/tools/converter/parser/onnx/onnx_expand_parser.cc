@@ -25,6 +25,7 @@ namespace lite {
 ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::BroadcastTo>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
   std::vector<int64_t> dst_shape;
   if (onnx_node.input_size() != kInputSize1) {
     for (const auto &onnx_node_attr : onnx_node.attribute()) {

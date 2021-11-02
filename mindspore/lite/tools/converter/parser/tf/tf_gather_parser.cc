@@ -52,12 +52,14 @@ ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
       if (tensor_proto.int_val_size() > 0) {
         axis = tensor_proto.int_val(0);
       } else {
+        MS_CHECK_GE(tensor_proto.tensor_content().size(), sizeof(int32_t), nullptr);
         axis = (reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data()))[0];
       }
     } else if (tensor_proto.dtype() == tensorflow::DT_INT64) {
       if (tensor_proto.int64_val_size() > 0) {
         axis = tensor_proto.int64_val(0);
       } else {
+        MS_CHECK_GE(tensor_proto.tensor_content().size(), sizeof(int64_t), nullptr);
         axis = (reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data()))[0];
       }
     } else {
