@@ -62,6 +62,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
+    MS_CHECK_GT(bias_tensor->ElementsNum(), 0, RET_ERROR);
     memcpy(bias_data_, ori_bias, static_cast<size_t>(bias_tensor->ElementsNum()) * sizeof(int32_t));
   }
 

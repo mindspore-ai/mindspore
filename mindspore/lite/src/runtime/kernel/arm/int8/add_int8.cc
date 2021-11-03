@@ -88,6 +88,8 @@ int QuantizedAddCPUKernel::ReSize() {
   auto *input0 = in_tensors_.at(0);
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
+  MS_CHECK_GT(input0->ElementsNum(), 0, RET_ERROR);
+  MS_CHECK_GT(input1->ElementsNum(), 0, RET_ERROR);
   support_opt_add_ = (input0->ElementsNum() == 1) || (input1->ElementsNum() == 1);
   if (support_opt_add_) {
     arith_para_->broadcasting_ = false;

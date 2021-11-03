@@ -86,6 +86,8 @@ void MulInt8CPUKernel::CheckSameShapeSize(std::vector<int> in_tensor0_shape, std
 void MulInt8CPUKernel::CheckIfFastImpl() {
   auto in_tensor0 = in_tensors_.at(0);
   auto in_tensor1 = in_tensors_.at(1);
+  MS_CHECK_TRUE_RET_VOID(in_tensors_.at(0)->ElementsNum() > 0);
+  MS_CHECK_TRUE_RET_VOID(in_tensors_.at(1)->ElementsNum() > 0);
   if (in_tensor0->ElementsNum() != in_tensor1->ElementsNum()) {
     if (in_tensor0->shape().size() == COMM_SHAPE_SIZE && in_tensor1->shape().size() == COMM_SHAPE_SIZE) {
       CheckSameShapeSize(in_tensor0->shape(), in_tensor1->shape());
@@ -159,9 +161,13 @@ int MulInt8CPUKernel::Run() {
   }
 
   elements_num_ = out_tensors_.at(0)->ElementsNum();
+  MS_CHECK_GT(elements_num_, 0, RET_ERROR);
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
   int ret = RET_ERROR;
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
+    MS_CHECK_GT(in_tensors_.at(0)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(1)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(out_tensors_.at(0)->Size(), 0, RET_ERROR);
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (input0_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc input0_data_  failed.";

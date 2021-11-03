@@ -113,6 +113,7 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto output_data = reinterpret_cast<uint8_t *>(out_tensors_[0]->MutableData());
   CHECK_NULL_RETURN(output_data);
   auto element_num = out_tensors_[0]->ElementsNum();
+  MS_CHECK_GT(element_num, 0, RET_ERROR);
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   int error_code;
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
@@ -149,6 +150,7 @@ int ArithmeticInt8CPUKernel::Run() {
     CHECK_NULL_RETURN(input_data0);
     auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
     CHECK_NULL_RETURN(input_data1);
+    MS_CHECK_GT(out_tensors_[0]->Size(), 0, RET_ERROR);
     tile_data0_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
     tile_data1_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
     if (tile_data0_ == nullptr || tile_data1_ == nullptr) {

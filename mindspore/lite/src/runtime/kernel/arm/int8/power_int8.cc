@@ -58,6 +58,7 @@ int PowerInt8CPUKernel::ReSize() { return RET_OK; }
 
 int PowerInt8CPUKernel::DoPower(int task_id) {
   auto size = in_tensors_.at(0)->ElementsNum();
+  MS_CHECK_GT(size, 0, RET_ERROR);
   int stride = UP_DIV(size, op_parameter_->thread_num_);
   int count = MSMIN(stride, size - stride * task_id);
   int8_t *cur_exp = nullptr;

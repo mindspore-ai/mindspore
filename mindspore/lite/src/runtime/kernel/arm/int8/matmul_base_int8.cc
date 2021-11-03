@@ -269,6 +269,7 @@ int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
 int MatmulBaseInt8CPUKernel::InitBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
+    MS_CHECK_GT(bias_tensor->ElementsNum(), 0, RET_ERROR);
     int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C4NUM);
     bias_ptr_ = reinterpret_cast<int *>(malloc(max_bias_data * sizeof(int)));
     if (bias_ptr_ == nullptr) {
