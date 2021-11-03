@@ -4958,7 +4958,7 @@ class ManifestDataset(MappableDataset):
 
     Args:
         dataset_file (str): File to be read.
-        usage (str, optional): Acceptable usages include `train`, `eval` and `inference` (default=`train`).
+        usage (str, optional): Acceptable usages include `train`, `eval` and `inference` (default= `train`).
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -5583,8 +5583,8 @@ class VOCDataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str, optional): Set the task type of reading voc data, now only support `Segmentation` or `Detection`
-            (default=`Segmentation`).
-        usage (str, optional): Set the task type of ImageSets(default=`train`). If task is `Segmentation`, image and
+            (default= `Segmentation`).
+        usage (str, optional): Set the task type of ImageSets(default= `train`). If task is `Segmentation`, image and
             annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
             annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage are not set, image and
             annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
@@ -5794,7 +5794,7 @@ class CocoDataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation JSON file.
         task (str, optional): Set the task type for reading COCO data. Supported task types:
-            `Detection`, `Stuff`, `Panoptic` and `Keypoint` (default=`Detection`).
+            `Detection`, `Stuff`, `Panoptic` and `Keypoint` (default= `Detection`).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -5998,7 +5998,7 @@ class CelebADataset(MappableDataset):
             the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
         usage (str, optional): Specify the `train`, `valid`, `test` part or `all` parts of dataset
-            (default=`all`, will read all samples).
+            (default= `all`, will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
@@ -7360,8 +7360,8 @@ class SBDataset(GeneratorDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Acceptable tasks include `Boundaries` or `Segmentation` (default=`Boundaries`).
-        usage (str, optional): Acceptable usages include `train`, `val`, `train_noval` and `all` (default=`all`).
+        task (str, optional): Acceptable tasks include `Boundaries` or `Segmentation` (default= `Boundaries`).
+        usage (str, optional): Acceptable usages include `train`, `val`, `train_noval` and `all` (default= `all`).
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -7564,9 +7564,9 @@ class CityscapesDataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str): Acceptable usages include `train`, `test`, `val` or `all` if quality_mode is `fine`
-            otherwise `train`, `train_extra`, `val` or `all` (default=`train`).
-        quality_mode (str): Acceptable quality_modes include `fine` or `coarse` (default=`fine`).
-        task (str): Acceptable tasks include `instance`, `semantic`, `polygon` or `color` (default=`instance`).
+            otherwise `train`, `train_extra`, `val` or `all` (default= `train`).
+        quality_mode (str): Acceptable quality_modes include `fine` or `coarse` (default= `fine`).
+        task (str): Acceptable tasks include `instance`, `semantic`, `polygon` or `color` (default= `instance`).
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -7732,9 +7732,9 @@ class DIV2KDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str): Acceptable usages include `train`, `valid` or `all` (default=`train`).
+        usage (str): Acceptable usages include `train`, `valid` or `all` (default= `train`).
         downgrade (str): Acceptable downgrades include `bicubic`, `unknown`, `mild`, `difficult` or
-            `wild` (default=`bicubic`).
+            `wild` (default= `bicubic`).
         scale (int): Acceptable scales include 2, 3, 4 or 8 (default=2).
             When `downgrade` is `bicubic`, scale can be 2, 3, 4, 8.
             When `downgrade` is `unknown`, scale can only be 2, 3, 4.
