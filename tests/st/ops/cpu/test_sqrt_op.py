@@ -43,8 +43,14 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
-    x = np.abs(np.random.randn(2, 3, 3, 4)).astype(np.float32)
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_sqrt(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Sqrt
+    Expectation: the result match to numpy
+    """
+    x = np.abs(np.random.randn(2, 3, 3, 4)).astype(dtype)
     y_expect = np.sqrt(x)
     net = Net()
     out = net(Tensor(x))
@@ -57,16 +63,22 @@ def test_net():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sqrt_grad():
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_sqrt_grad(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ACos
+    Expectation: the result match to numpy
+    """
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
-                           [10, 1, -1]]]]).astype(np.float32))
+                           [10, 1, -1]]]]).astype(dtype))
     dx = Tensor(np.array([[[[1, 1, 1],
                             [2, 2, 2],
-                            [3, 3, 3]]]]).astype(np.float32))
+                            [3, 3, 3]]]]).astype(dtype))
     expect = np.array([[[[-0.5, 0.5, 0.05,],
                          [0.16949153, 0.16393442, 0.16666667,],
-                         [0.15, 1.5, -1.5,]]]]).astype(np.float32)
+                         [0.15, 1.5, -1.5,]]]]).astype(dtype)
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
     sqrt_grad = NetSqrtGrad()

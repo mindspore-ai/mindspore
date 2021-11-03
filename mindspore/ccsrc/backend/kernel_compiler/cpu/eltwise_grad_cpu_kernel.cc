@@ -51,13 +51,19 @@ void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
-  if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "AbsGrad only support float";
+  if constexpr (!std::is_same<T, float>::value && !std::is_same<T, double>::value) {
+    MS_LOG(EXCEPTION) << "AbsGrad only support float or double.";
   }
-
-  int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
-  if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "AbsGrad execute failed.";
+  if constexpr (std::is_same<T, float>::value) {
+    int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "AbsGrad execute failed.";
+    }
+  }
+  if constexpr (std::is_same<T, double>::value) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = (input1[i] < 0.f) ? -input2[i] : ((input1[i] > 0.f) ? input2[i] : 0);
+    }
   }
 }
 
@@ -232,7 +238,8 @@ void EltWiseGradCPUKernel<T>::InitComputeFunc() {
               {prim::kPrimACosGrad->name(), &EltWiseGradCPUKernel<T>::ACosGrad},
               {prim::kPrimAtanGrad->name(), &EltWiseGradCPUKernel<T>::AtanGrad},
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCPUKernel<T>::AsinhGrad},
-              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad}};
+              {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
+              {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
     }

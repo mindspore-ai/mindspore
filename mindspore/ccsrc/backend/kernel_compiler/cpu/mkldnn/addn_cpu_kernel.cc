@@ -34,6 +34,12 @@ void AddInt(const int *in_0, const int *in_1, int *out, int start, int end) {
     MS_LOG(EXCEPTION) << "Add failed.";
   }
 }
+
+void AddDouble(const double *in0, const double *in1, double *out, int start, int end) {
+  for (int index = start; index < end; index++) {
+    out[index] = in0[index] + in1[index];
+  }
+}
 }  // namespace
 
 void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -86,8 +92,20 @@ bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
       auto task = std::bind(AddInt, input, output, output, std::placeholders::_1, std::placeholders::_2);
       CPUKernelUtils::ParallelFor(task, elements_num);
     }
+  } else if (dtype_ == kNumberTypeFloat64) {
+    size_t elements_num = outputs[0]->size / sizeof(double);
+    const auto input_0 = reinterpret_cast<double *>(inputs[0]->addr);
+    const auto input_1 = reinterpret_cast<double *>(inputs[1]->addr);
+    auto output = reinterpret_cast<double *>(outputs[0]->addr);
+    auto task_0 = std::bind(AddDouble, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
+    CPUKernelUtils::ParallelFor(task_0, elements_num);
+    for (size_t index = 2; index < input_num_; ++index) {
+      const auto input = reinterpret_cast<double *>(inputs[index]->addr);
+      auto task = std::bind(AddDouble, input, output, output, std::placeholders::_1, std::placeholders::_2);
+      CPUKernelUtils::ParallelFor(task, elements_num);
+    }
   } else {
-    MS_LOG(EXCEPTION) << "AddN only support float32 and int32, but got " << TypeIdToType(dtype_)->ToString();
+    MS_LOG(EXCEPTION) << "AddN only support float32, float64 and int32, but got " << TypeIdToType(dtype_)->ToString();
   }
   return true;
 }
