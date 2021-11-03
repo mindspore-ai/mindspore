@@ -32,6 +32,7 @@ option(MSLITE_ENABLE_MODEL_ENCRYPTION "enable model encryption, only converter s
 option(MSLITE_ENABLE_SPARSE_COMPUTE "enable sparse kernel" off)
 option(MSLITE_ENABLE_RUNTIME_CONVERT "enable runtime convert" on)
 option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
+option(MSLITE_ENABLE_COVERAGE "enable code coverage" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -104,11 +105,16 @@ endif()
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
     set(MSLITE_ENABLE_MODEL_ENCRYPTION $ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
 endif()
+
 if(DEFINED ENV{MSLITE_ENABLE_RUNTIME_CONVERT})
     set(MSLITE_ENABLE_RUNTIME_CONVERT $ENV{MSLITE_ENABLE_RUNTIME_CONVERT})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_RUNTIME_GLOG})
     set(MSLITE_ENABLE_RUNTIME_GLOG $ENV{MSLITE_ENABLE_RUNTIME_GLOG})
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_COVERAGE})
+    set(MSLITE_ENABLE_COVERAGE $ENV{MSLITE_ENABLE_COVERAGE})
 endif()
 
 if(TOOLCHAIN_NAME STREQUAL "himix200")
@@ -234,6 +240,7 @@ message(STATUS "\tMSLITE_ENABLE_MODEL_ENCRYPTION    = \t${MSLITE_ENABLE_MODEL_EN
 message(STATUS "\tMSLITE_ENABLE_SPARSE_COMPUTE      = \t${MSLITE_ENABLE_SPARSE_COMPUTE}")
 message(STATUS "\tMSLITE_ENABLE_RUNTIME_CONVERT     = \t${MSLITE_ENABLE_RUNTIME_CONVERT}")
 message(STATUS "\tMSLITE_ENABLE_RUNTIME_GLOG        = \t${MSLITE_ENABLE_RUNTIME_GLOG}")
+message(STATUS "\tMSLITE_ENABLE_COVERAGE            = \t${MSLITE_ENABLE_COVERAGE}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -268,6 +275,11 @@ if(ENABLE_ASAN)
         add_definitions(-mllvm -asan-use-private-alias=1)
     endif()
     add_link_options(-fsanitize=address)
+endif()
+
+if(MSLITE_ENABLE_COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g --coverage -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g --coverage -fprofile-arcs -ftest-coverage")
 endif()
 
 if(MSLITE_ENABLE_ACL)
