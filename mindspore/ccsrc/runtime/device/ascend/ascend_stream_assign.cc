@@ -214,8 +214,7 @@ void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
 }
 }  // namespace
 
-void AscendStreamAssign::AssignStreamForNonTaskSink(const NotNull<KernelGraphPtr> &graph_ptr) {
-  auto &kernels = graph_ptr->execution_order();
+void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels) {
   if (kernels.empty()) {
     return;
   }
@@ -255,7 +254,8 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const NotNull<KernelGraphPtr
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
   if (!IsTaskSink()) {
-    AssignStreamForNonTaskSink(graph_ptr);
+    auto kernels = graph_ptr->execution_order();
+    AssignStreamForNonTaskSink(kernels);
     return;
   }
   if (!graph_ptr->is_dynamic_shape()) {
