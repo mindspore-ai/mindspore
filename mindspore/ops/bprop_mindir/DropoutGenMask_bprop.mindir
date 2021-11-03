@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.5.0.20211027:œ
+0.1.0	MindSpore*1.5.0:œ
 ã
 bprop.17:shapebprop.17:[CNode]:1bprop.17:[CNode]:1"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op35
 è
@@ -11,4 +11,4 @@
 bprop.17:keep_prob*
 bprop.17:out*
 bprop.17:dout2
-bprop.17:[CNode]:3:@5f6486474eab638624ee1777f9652b2edd3f5f2873c570e2992de1d8b0e87873
+bprop.17:[CNode]:3:@ff3ca86129a77e54496a41a353e9f6355edfba79f3c040cf990522596d638b7fP

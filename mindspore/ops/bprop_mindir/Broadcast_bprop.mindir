@@ -1,8 +1,8 @@
 
-0.1.0	MindSpore*1.5.0.20211027:ó
+0.1.0	MindSpore*1.5.0:ó
 e
 bprop.8:doutbprop.8:[CNode]:1bprop.8:[CNode]:1"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op13bprop.8*
 	bprop.8:x*
 bprop.8:out*
 bprop.8:dout2
-bprop.8:[CNode]:1:@13f1e8534ff98b1256889fc50eb483e05dc629e575bb06330ae1f2238e2372e8
+bprop.8:[CNode]:1:@13f1e8534ff98b1256889fc50eb483e05dc629e575bb06330ae1f2238e2372e8P
