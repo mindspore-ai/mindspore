@@ -24,7 +24,6 @@
 #include "actor/op_actor.h"
 
 namespace mindspore {
-
 template <typename T>
 class SwitchActorBase : public OpActor<T> {
  public:
@@ -38,7 +37,6 @@ class SwitchActorBase : public OpActor<T> {
   // Different output branches according to the input.
   std::vector<std::vector<DataArrowPtr>> output_branch_arrows_;
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_SWITCH_ACTOR_H

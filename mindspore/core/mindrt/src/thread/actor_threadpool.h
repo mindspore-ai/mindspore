@@ -29,7 +29,6 @@
 #define USE_HQUEUE
 namespace mindspore {
 class ActorThreadPool;
-
 class ActorWorker : public Worker {
  public:
   void CreateThread(ActorThreadPool *pool);

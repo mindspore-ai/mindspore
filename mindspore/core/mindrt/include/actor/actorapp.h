@@ -25,7 +25,6 @@
 #include "actor/actor.h"
 
 namespace mindspore {
-
 class MessageLocal : public MessageBase {
  public:
   MessageLocal(const AID &from, const AID &to, const std::string &name, void *aPtr)
@@ -91,7 +90,6 @@ class AppActor : public ActorBase {
  private:
   std::map<std::string, APPBehavior> appBehaviors;
 };
-
 }  // namespace mindspore
 
 #endif

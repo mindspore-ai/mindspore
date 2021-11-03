@@ -31,10 +31,8 @@
 #include "thread/hqueue.h"
 
 namespace mindspore {
-
 class ActorBase;
 class IOMgr;
-
 class ActorMgr {
  public:
   static inline ActorMgr *GetActorMgrRef() { return &actorMgr; }
@@ -101,6 +99,5 @@ class ActorMgr {
   static ActorMgr actorMgr;
   static std::map<std::string, std::shared_ptr<IOMgr> > ioMgrs;
 };  // end of class ActorMgr
-
 };  // end of namespace mindspore
 #endif

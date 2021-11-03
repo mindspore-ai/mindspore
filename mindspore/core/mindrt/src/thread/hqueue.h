@@ -22,10 +22,8 @@
 namespace mindspore {
 // implement a lock-free queue
 // refer to https://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
-
 template <typename T>
 class HQueue;
-
 struct Pointer {
   int32_t index = -1;
   uint32_t version = 0;
@@ -169,7 +167,6 @@ class HQueue {
   std::atomic<Pointer> qtail;
   std::vector<HQNode<T> *> nodes;
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_HQUEUE_H_

@@ -134,5 +134,4 @@ void SetHttpKmsgFlag(int flag) {
 }
 
 int GetHttpKmsgFlag() { return g_httpKmsgEnable; }
-
 }  // namespace mindspore

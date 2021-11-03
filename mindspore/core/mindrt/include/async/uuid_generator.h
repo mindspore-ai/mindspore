@@ -21,7 +21,6 @@
 #include "async/uuid_base.h"
 
 namespace mindspore {
-
 namespace uuid_generator {
 struct UUID : public mindspore::uuids::uuid {
  public:
@@ -38,8 +37,6 @@ int GenLocalActorId();
 int GenHttpClientConnId();
 int GenHttpServerConnId();
 #endif
-
 }  // namespace localid_generator
-
 }  // namespace mindspore
 #endif

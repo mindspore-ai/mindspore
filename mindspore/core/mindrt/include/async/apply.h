@@ -20,7 +20,6 @@
 #include <utility>
 
 namespace mindspore {
-
 template <typename T, T... Ints>
 struct IntegerSequenceBase {
   static constexpr std::size_t Size() noexcept { return sizeof...(Ints); }
@@ -77,7 +76,6 @@ auto Apply(T *ptr, Func &&func, Tuple &&tuple)
   return ApplyHelper(ptr, std::forward<Func>(func), std::forward<Tuple>(tuple),
                      make_index_sequence<std::tuple_size<typename std::decay<Tuple>::type>::value>{});
 }
-
 }  // namespace mindspore
 
 #endif

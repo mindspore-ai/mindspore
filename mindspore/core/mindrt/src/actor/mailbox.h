@@ -99,7 +99,6 @@ class HQueMailBox : public MailBox {
   HQueue<MessageBase> mailbox;
   static const int32_t MAX_MSG_QUE_SIZE = 4096;
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MAILBOX_H

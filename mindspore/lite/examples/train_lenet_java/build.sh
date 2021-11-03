@@ -64,7 +64,6 @@ fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/${MINDSPORE_FILE_NAME} --strip-components=1
 
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/* ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/glog/* ${BASEPATH}/lib
 cp ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/libjpeg-turbo/lib/libjpeg.so.62 ${BASEPATH}/lib
 cd ${BASEPATH}/ || exit
 

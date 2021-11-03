@@ -30,13 +30,11 @@
 #include "async/status.h"
 
 namespace mindspore {
-
 template <typename T>
 class Future;
 
 template <typename T>
 class Promise;
-
 class LessFuture {
  public:
   LessFuture() {}
@@ -104,7 +102,6 @@ struct FutureData {
 };
 
 namespace internal {
-
 template <typename T>
 class DeferredHelper;
 
@@ -179,9 +176,7 @@ static void Afterf(const std::function<Future<T>(const Future<T> &)> &f, const s
 }
 
 void Waitf(const AID &aid);
-
 }  // namespace internal
-
 }  // namespace mindspore
 
 #endif

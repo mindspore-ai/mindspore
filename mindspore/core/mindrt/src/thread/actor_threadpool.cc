@@ -183,16 +183,14 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret;
-  std::vector<int> core_list;
-#ifdef BIND_CORE
-  ret = pool->InitAffinityInfo();
+
+  auto ret = pool->InitAffinityInfo();
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
   }
-  core_list = pool->affinity_->GetCoreId(all_thread_num, bind_mode);
-#endif  // BIND_CORE
+  auto core_list = pool->affinity_->GetCoreId(all_thread_num, bind_mode);
+
   ret = pool->CreateThreads(actor_thread_num, all_thread_num, core_list);
   if (ret != THREAD_OK) {
     delete pool;
@@ -208,14 +206,11 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret;
-#ifdef BIND_CORE
-  ret = pool->InitAffinityInfo();
+  int ret = pool->InitAffinityInfo();
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
   }
-#endif  // BIND_CORE
   ret = pool->CreateThreads(actor_thread_num, all_thread_num, core_list);
   if (ret != THREAD_OK) {
     delete pool;

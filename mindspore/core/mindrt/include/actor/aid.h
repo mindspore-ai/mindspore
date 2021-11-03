@@ -22,7 +22,6 @@
 #include "actor/log.h"
 
 namespace mindspore {
-
 constexpr auto MINDRT_TCP = "tcp";
 constexpr auto MINDRT_UDP = "udp";
 
