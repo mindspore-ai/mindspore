@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/eigen/cholesky_solve_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
 #include "Eigen/Dense"
 #include "Eigen/Cholesky"
 namespace mindspore {
@@ -41,7 +42,6 @@ void CholeskySolverCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape
     *row = shape.at(shape.size() - kRowIndex);
     *col = shape.at(shape.size() - kColIndex);
   }
-  return;
 }
 
 template <typename T>
@@ -59,30 +59,37 @@ void CholeskySolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(input_b_shape, &input_b_row_, &input_b_col_);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
+  lower_ = AnfAlgo ::GetNodeAttr<bool>(kernel_node, LOWER);
+  if (input_a_row_ != input_b_row_) {
+    MS_LOG_EXCEPTION << kernel_name_ << "llt solve input row is not equal to b row: " << input_a_row_ << " vs "
+                     << input_b_row_;
+  }
 }
 
 template <typename T>
 bool CholeskySolverCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs) {
   T *input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input(input_value, input_a_row_,
-                                                                                      input_a_col_);
+  Map<Matrix<T, RowMajor>> input(input_value, input_a_row_, input_a_col_);
 
   T *input_b_value = reinterpret_cast<T *>(inputs[kInputBIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_b(input_b_value, input_b_row_,
-                                                                                        input_b_col_);
+  Map<Matrix<T, RowMajor>> input_b(input_b_value, input_b_row_, input_b_col_);
 
   T *output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output(output_value, output_row_,
-                                                                                       output_col_);
-  Eigen::LLT<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> llt(input);
+  Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
 
-  output = llt.solve(input_b);
+  if (lower_) {
+    output.noalias() = input.template triangularView<Lower>().solve(input_b);
+    input.adjoint().template triangularView<Upper>().solveInPlace(output);
+  } else {
+    output.noalias() = input.adjoint().template triangularView<Lower>().solve(input_b);
+    input.template triangularView<Upper>().solveInPlace(output);
+  }
 
   if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
     return true;
   }
-  MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
+  MS_LOG_EXCEPTION << kernel_name_ << " output cholesky solve shape invalid.";
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/cpu/eigen/cholesky_cpu_kernel.h"
 #include <vector>
+#include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Dense"
 #include "Eigen/Cholesky"
@@ -46,7 +47,6 @@ void CholeskyCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size
   if (*row != *col) {
     MS_LOG_EXCEPTION << kernel_name_ << "input shape is invalid: " << *row << ", " << *col;
   }
-  return;
 }
 
 template <typename T>
@@ -70,15 +70,12 @@ template <typename T>
 bool CholeskyCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                   const std::vector<AddressPtr> &outputs) {
   T *input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input(input_value, input_row_,
-                                                                                      input_col_);
+  Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
 
   T *output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output(output_value, output_row_,
-                                                                                       output_col_);
-  Eigen::LLT<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> llt;
+  Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
+  Eigen::LLT<Matrix<T, RowMajor>> llt;
   llt.compute(input);
-
   if (clean_) {
     if (lower_) {
       output = llt.matrixL();
@@ -86,12 +83,16 @@ bool CholeskyCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const s
       output = llt.matrixU();
     }
   } else {
-    output = llt.matrixLLT();
+    if (lower_) {
+      output = llt.matrixLLT();
+    } else {
+      output = llt.matrixLLT().transpose();
+    }
   }
   if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
     return true;
   }
-  MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
+  MS_LOG_EXCEPTION << kernel_name_ << " output cholesky shape invalid.";
 }
 }  // namespace kernel
 }  // namespace mindspore
