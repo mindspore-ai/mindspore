@@ -39,16 +39,19 @@ int CropBaseCPUKernel::ReSize() {
   crop_para_->out_shape_ = output_shape_.data();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   crop_para_->input_dim_ = input_dim;
-  PadOffset(input_dim, crop_para_);
+  if (PadOffset(input_dim, crop_para_) != RET_OK) {
+    MS_LOG(ERROR) << "Pad offset failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const {
+int CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const {
   auto axis = crop_para->axis_;
   auto offsets_size = crop_para->offset_size_;
   MS_ASSERT(axis <= input_dim);
   if (offsets_size > 1) {
-    MS_ASSERT(axis + offsets_size == input_dim);
+    MS_CHECK_TRUE_MSG(axis + offsets_size == input_dim, RET_ERROR, "The axis and offsets is invalid");
   }
   for (int i = 0; i < input_dim; i++) {
     int crop_offset = 0;
@@ -63,5 +66,6 @@ void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const
     }
     crop_para->in_offset_[i] = crop_offset;
   }
+  return RET_OK;
 }
 }  // namespace mindspore::kernel

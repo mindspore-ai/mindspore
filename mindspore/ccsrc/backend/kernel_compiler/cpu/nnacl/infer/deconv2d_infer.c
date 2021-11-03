@@ -47,7 +47,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   int32_t output_h = 0;
   int32_t output_w = 0;
   int32_t output_c = GetChannel(weight);
-  if (param->group_ == GetChannel(input) && param->group_ == GetBatch(weight) && 1 == GetChannel(weight)) {
+  MS_CHECK_TRUE_RET(GetChannel(input) == GetBatch(weight), NNACL_ERR);
+  if (param->group_ == GetChannel(input) && 1 == GetChannel(weight)) {
     output_c = GetBatch(weight); /* depthwise */
   }
 
@@ -57,8 +58,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
 
   int stride_w = param->stride_w_;
   int stride_h = param->stride_h_;
-  MS_CHECK_FALSE(stride_w == 0, NNACL_ERR);
-  MS_CHECK_FALSE(stride_h == 0, NNACL_ERR);
+  MS_CHECK_FALSE(stride_w <= 0, NNACL_ERR);
+  MS_CHECK_FALSE(stride_h <= 0, NNACL_ERR);
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_h, stride_h), NNACL_ERR);
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_w, stride_w), NNACL_ERR);
 

@@ -71,8 +71,10 @@ int DeConvolutionFp16CPUKernel::MallocWeightBiasData() {
   auto output_channel = weight_tensor->Channel();
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
+  MS_CHECK_TRUE_RET(input_channel > 0 && output_channel > 0 && kernel_h > 0 && kernel_w > 0, RET_ERROR);
   size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
   if (!op_parameter_->is_train_session_) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, weight_pack_size);
     packed_weight_ = malloc(weight_pack_size);
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
@@ -81,6 +83,7 @@ int DeConvolutionFp16CPUKernel::MallocWeightBiasData() {
     memset(packed_weight_, 0, weight_pack_size);
   }
   auto bias_size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, bias_size);
   bias_data_ = malloc(bias_size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "deconv malloc bias_data_ error!";

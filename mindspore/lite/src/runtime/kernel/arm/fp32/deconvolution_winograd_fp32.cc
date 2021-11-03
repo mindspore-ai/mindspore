@@ -120,6 +120,7 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
 
   int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size * sizeof(float));
   tile_input_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
   if (tile_input_ == nullptr) {
     MS_LOG(ERROR) << "tile_input_ error!";

@@ -42,6 +42,7 @@ int ConvolutionFP16CPUKernel::MallocWeightBiasData() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
+  MS_CHECK_TRUE_RET(in_channel > 0 && out_channel > 0, RET_ERROR);
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   int oc8 = UP_ROUND(out_channel, col_tile_);
@@ -51,19 +52,18 @@ int ConvolutionFP16CPUKernel::MallocWeightBiasData() {
   // init weight
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
+      CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float16_t));
       packed_weight_ = malloc(pack_weight_size * sizeof(float16_t));
       if (packed_weight_ == nullptr) {
-        packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
-        if (packed_weight_ == nullptr) {
-          MS_LOG(ERROR) << "malloc packed_weight_ failed.";
-          return RET_ERROR;
-        }
+        MS_LOG(ERROR) << "malloc packed_weight_ failed.";
+        return RET_ERROR;
       }
     }
     memset(packed_weight_, 0, pack_weight_size * sizeof(float16_t));
   }
   // init bias
   if (bias_data_ == nullptr) {
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, oc8 * sizeof(float16_t));
     bias_data_ = malloc(oc8 * sizeof(float16_t));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_data_ failed.";

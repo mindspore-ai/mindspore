@@ -138,6 +138,7 @@ int ResizeCPUKernel::MallocTmpBuffer() {
   }
 
   {
+    MS_CHECK_TRUE_RET(in_tensors_.at(0)->Channel() > 0, RET_ERROR);
     line_buffer_ =
       reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * x_len * in_tensors_.at(0)->Channel() *
                                        kResizeSizeDouble * op_parameter_->thread_num_));
