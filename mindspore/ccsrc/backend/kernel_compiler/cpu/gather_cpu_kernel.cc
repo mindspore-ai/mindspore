@@ -90,7 +90,7 @@ void GatherV2CPUKernel<T>::ParallelRun(const int8_t *input_addr, const int *indi
   std::vector<common::Task> tasks;
   int thread_index = 0;
   while (thread_index < thread_num) {
-    int count = SizeToInt(MSMIN(stride, outer_size - stride * IntToSize(thread_index)));
+    int count = MSMIN(SizeToInt(stride), SizeToInt(outer_size) - SizeToInt(stride) * thread_index);
     if (count <= 0) {
       break;
     }
