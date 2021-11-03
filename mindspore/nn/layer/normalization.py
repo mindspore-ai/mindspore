@@ -1041,10 +1041,10 @@ class InstanceNorm2d(Cell):
         for key, _ in args_dict.items():
             val = args_dict[key]
             if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
-                raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be in "
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' should be in "
                                 f"[Tensor, numbers.Number, str, Initializer], but got type {type(val).__name__}.")
             if isinstance(val, Tensor) and val.dtype != mstype.float32:
-                raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be float32, "
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' should be float32, "
                                 f"but got {val.dtype}.")
 
 

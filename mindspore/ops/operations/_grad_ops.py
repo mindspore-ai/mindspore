@@ -1799,10 +1799,13 @@ class SliceGrad(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['dy', 'x', 'begin', 'size'], outputs=['dx'])
 
     def __infer__(self, dy, x, begin, size):
-        dy_shape, x_shape, size_value = dy['shape'], x['shape'], size['value']
+        dy_shape, x_shape, size_value, begin_v = dy['shape'], x['shape'], size['value'], begin['value']
         dy_shape_len = len(dy_shape)
         if (size_value is not None) and (-1 not in x_shape):
+            size_value = list(size_value)
             for i in range(dy_shape_len):
+                if size_value[i] == -1:
+                    size_value[i] = x_shape[i] - begin_v[i]
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
 
