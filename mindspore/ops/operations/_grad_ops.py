@@ -761,22 +761,12 @@ class NeighborExchangeV2Grad(PrimitiveWithInfer):
         raise NotImplementedError
 
 
-class GeLUGrad(PrimitiveWithInfer):
+class GeLUGrad(Primitive):
     """Gradients of GeLU operation."""
 
     @prim_attr_register
     def __init__(self):
-        """Initialize GeLUGrad"""
-
-    def infer_shape(self, y_backprop_shape, x_shape, y_shape):
-        return x_shape
-
-    def infer_dtype(self, y_backprop_dtype, x_dtype, y_dtype):
-        tuple(map(partial(validator.check_tensor_dtype_valid,
-                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
-                  ("y_backprop", "x", "y"),
-                  (y_backprop_dtype, x_dtype, y_dtype)))
-        return x_dtype
+        self.init_prim_io_names(inputs=['dy', 'x', 'y'], outputs=['z'])
 
 
 class FastGeLUGrad(PrimitiveWithInfer):
