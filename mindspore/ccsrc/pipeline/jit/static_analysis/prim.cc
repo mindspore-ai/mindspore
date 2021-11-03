@@ -1316,8 +1316,10 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     // Make the global parameters.
     auto global_dict = dyn_cast<AbstractDictionary>(args_spec_list[1]);  // Global parameters dict.
     MS_EXCEPTION_IF_NULL(global_dict);
-    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString() << ", [" << global_dict->type_name() << "]";
-    ValuePtr global_dict_value = global_dict->BuildValue();
+    auto filtered_global_dict = FilterParameters(global_dict);
+    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
+                  << ", filtered_global_dict: " << filtered_global_dict->ToString();
+    ValuePtr global_dict_value = filtered_global_dict->BuildValue();
     py::object global_params_dict = ValueToPyData(global_dict_value);
     MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
                   << py::str(global_params_dict);
@@ -1326,13 +1328,27 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     // Make the local parameters.
     auto local_dict = dyn_cast<AbstractDictionary>(args_spec_list[2]);  // Local parameters dict.
     MS_EXCEPTION_IF_NULL(local_dict);
-    MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString() << ", [" << local_dict->type_name() << "]";
-    ValuePtr local_dict_value = local_dict->BuildValue();
+    auto filtered_local_dict = FilterParameters(local_dict);
+    MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()
+                  << ", filtered_local_dict:" << filtered_local_dict->ToString();
+    ValuePtr local_dict_value = filtered_local_dict->BuildValue();
     py::object local_params_dict = ValueToPyData(local_dict_value);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
     params[1] = local_params_dict;
     return params;
+  }
+
+  AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
+    std::vector<AbstractAttribute> kv;
+    const auto &keys_values = abstract_dict->elements();
+    // Filter out the element of Function type.
+    (void)std::copy_if(keys_values.cbegin(), keys_values.cend(), std::back_inserter(kv),
+                       [](const AbstractAttribute &item) {
+                         MS_EXCEPTION_IF_NULL(item.second);
+                         return (!item.second->isa<abstract::AbstractFunction>());
+                       });
+    return std::make_shared<AbstractDictionary>(kv);
   }
 };
 
