@@ -219,7 +219,9 @@ static ValueNameToConverterVector value_name_to_converter = {
   // Monad
   {Monad::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }},
   // Ellipsis
-  {Ellipsis::kTypeId, [](const ValuePtr &value) -> py::object { return py::ellipsis(); }}};
+  {Ellipsis::kTypeId, [](const ValuePtr &value) -> py::object { return py::ellipsis(); }},
+  // Primitive
+  {Primitive::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }}};
 
 py::object ValueToPyData(const ValuePtr &value) {
   if (value == nullptr) {
