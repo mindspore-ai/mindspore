@@ -536,7 +536,7 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
   return RET_OK;
 }
 
-int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims) {
+int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
   size_t last_first_index = dims.size() - 1;
   size_t last_second_index = dims.size() - 2;
   auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
@@ -560,7 +560,7 @@ int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const 
   return 0;
 }
 
-int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first) {
+int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first) {
   auto channels = dims[0];
   if (!(*channel_at_first)) {
     if (dims.size() != 2) {
@@ -575,7 +575,7 @@ int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first
   return channels;
 }
 
-int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims) {
+int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
   if (primitive->name() == ops::kNameMatMul) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   }
@@ -586,7 +586,12 @@ int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeV
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims) {
   std::vector<int> shape;
   for (auto dim : dims) {
-    shape.push_back(dim);
+    if (dim > INT32_MAX || dim < INT32_MIN) {
+      MS_LOG(ERROR) << dim << " over int32 range.";
+      shape.push_back(-1);
+    } else {
+      shape.push_back(dim);
+    }
   }
   return shape;
 }

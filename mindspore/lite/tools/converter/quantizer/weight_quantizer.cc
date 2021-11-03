@@ -120,7 +120,7 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
-    int preferred_dim = GetPreferredDim(primitive, idx - 1, tensor_info->shape());
+    int preferred_dim = GetPreferredDim(primitive, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     if (!quant_strategy_->CanTensorQuantized(input, preferred_dim)) {
       MS_LOG(INFO) << "Input " << idx << "of Optimizer is not quantizable";
       continue;

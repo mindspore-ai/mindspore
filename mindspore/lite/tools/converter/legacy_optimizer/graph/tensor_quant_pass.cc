@@ -133,10 +133,7 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   quant::CalQuantAssitInfo(*primitive, tensor->dims, input_index, &channel_at_first, &channel_cnt);
 
   auto *raw_datas = reinterpret_cast<float *>(tensor->data.data());
-  ShapeVector dims;
-  std::transform(tensor->dims.begin(), tensor->dims.end(), std::back_inserter(dims),
-                 [&](int32_t dim) { return (int64_t)dim; });
-  auto channels = quant::CalChannels(dims, channel_cnt, &channel_at_first);
+  auto channels = quant::CalChannels(tensor->dims, channel_cnt, &channel_at_first);
   if (channels == 0) {
     MS_LOG(ERROR) << "channels is zero";
     return RET_ERROR;

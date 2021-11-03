@@ -39,7 +39,6 @@
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
-#include "src/common/quant_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/preprocess/image_preprocess.h"
