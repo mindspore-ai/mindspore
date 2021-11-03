@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <cstdlib>
 #include <fstream>
+#include <algorithm>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
 #ifdef ENABLE_GPUQUE
@@ -81,10 +82,52 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
   std::lock_guard<std::mutex> guard(lock_);
   (void)records_.emplace_back(record);
   (void)value_.emplace_back(record.ToString());
+  // save timestamp per batch
+  if (records_.size() % records_per_step_ == 0) {
+    (void)ts_.emplace_back(time_stamp);
+  }
 }
 
-Status Tracing::GetRecordEntry(int32_t start_step, int32_t end_step, int32_t record_offset,
-                               std::vector<int32_t> *result) {
+Status Tracing::TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts) {
+  std::lock_guard<std::mutex> guard(lock_);
+  MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
+  CHECK_FAIL_RETURN_UNEXPECTED(start_step > 0,
+                               "Expected start_step > 0. Got start_step: " + std::to_string(start_step));
+  CHECK_FAIL_RETURN_UNEXPECTED(end_step >= start_step,
+                               "Expected end_step >= start_step. Got start_step: " + std::to_string(start_step) +
+                                 " end_step: " + std::to_string(end_step));
+  CHECK_FAIL_RETURN_UNEXPECTED(end_step < ts_.size(),
+                               "Expected end_step < ts_.size(). Got end_step: " + std::to_string(end_step) +
+                                 " ts_.size: " + std::to_string(ts_.size()));
+  // end timestamp of (start_step - 1) step
+  *start_ts = ts_[start_step - 1];
+  *end_ts = ts_[end_step];
+  return Status::OK();
+}
+
+Status Tracing::StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step) {
+  CHECK_FAIL_RETURN_UNEXPECTED(start_ts < end_ts, "Expected start_ts < end_ts. Got start_ts: " +
+                                                    std::to_string(start_ts) + " end_ts: " + std::to_string(end_ts));
+  std::lock_guard<std::mutex> guard(lock_);
+  CHECK_FAIL_RETURN_UNEXPECTED(ts_.size() > 1, "No tracing data available yet.");
+  // find first ts that is not less than start_ts
+  auto lower = std::lower_bound(ts_.begin(), ts_.end(), start_ts);
+  CHECK_FAIL_RETURN_UNEXPECTED(lower != ts_.end(),
+                               "No data available for time >= start_ts. start_ts: " + std::to_string(start_ts));
+  // there is no 0th step. If start_ts == 0, then lower == ts_.begin()
+  *start_step = std::max(1, static_cast<int32_t>(std::distance(ts_.begin(), lower)));
+  // find first ts that is greater than end_ts
+  auto upper = std::upper_bound(ts_.begin(), ts_.end(), end_ts);
+  if (upper == ts_.end()) {
+    *end_step = std::max(1, static_cast<int32_t>(std::distance(ts_.begin(), upper) - 1));
+  } else {
+    *end_step = std::max(1, static_cast<int32_t>(std::distance(ts_.begin(), upper)));
+  }
+  return Status::OK();
+}
+
+Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset,
+                                         const std::string field, std::vector<int32_t> *result) {
   std::lock_guard<std::mutex> guard(lock_);
   auto total_steps = records_.size() / records_per_step_;
   MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
@@ -99,10 +142,15 @@ Status Tracing::GetRecordEntry(int32_t start_step, int32_t end_step, int32_t rec
                                  " end_step: " + std::to_string(end_step));
 
   for (auto step_num = start_step; step_num <= end_step; step_num++) {
-    // each step has 4 entries in device queue tracing
     auto idx = (step_num - 1) * records_per_step_ + record_offset;
-    assert(idx < records_.size());
-    (void)result->emplace_back(records_[idx].value);
+    if (field == "value") {
+      (void)result->emplace_back(records_[idx].value);
+    } else if (field == "extra_info") {
+      (void)result->emplace_back(records_[idx].extra_info);
+    } else {
+      return {StatusCode::kMDUnexpectedError,
+              "Received unexpected field: " + field + R"(. Expected: ["value", "extra_info"].)"};
+    }
   }
   return Status::OK();
 }
@@ -294,41 +342,84 @@ Status ProfilingManager::ChangeFileMode() {
 }
 
 #ifndef ENABLE_ANDROID
-Status ProfilingManager::GetUserCpuUtil(int32_t epoch_num, std::vector<uint8_t> *result) {
-  std::shared_ptr<CpuSampler> cpu_node;
+Status ProfilingManager::GetUserCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result) {
   uint64_t start_ts, end_ts;
-  RETURN_IF_NOT_OK(PopulateCpuSamplerAPIInputs(epoch_num, &start_ts, &end_ts, &cpu_node));
-  return cpu_node->GetSystemUserCpuUtil(start_ts, end_ts, result);
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetUserCpuUtilByTime(start_ts, end_ts, result);
 }
 
-Status ProfilingManager::GetSysCpuUtil(int32_t epoch_num, std::vector<uint8_t> *result) {
-  std::shared_ptr<CpuSampler> cpu_node;
+Status ProfilingManager::GetUserCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result) {
   uint64_t start_ts, end_ts;
-  RETURN_IF_NOT_OK(PopulateCpuSamplerAPIInputs(epoch_num, &start_ts, &end_ts, &cpu_node));
-  return cpu_node->GetSystemSysCpuUtil(start_ts, end_ts, result);
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetUserCpuUtilByTime(start_ts, end_ts, result);
 }
 
-Status ProfilingManager::GetUserCpuUtil(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
-  std::shared_ptr<CpuSampler> cpu_node;
-  uint64_t start_ts, end_ts;
-  RETURN_IF_NOT_OK(PopulateCpuSamplerAPIInputs(epoch_num, &start_ts, &end_ts, &cpu_node));
-  return cpu_node->GetOpUserCpuUtil(op_id, start_ts, end_ts, result);
-}
-
-Status ProfilingManager::GetSysCpuUtil(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
-  std::shared_ptr<CpuSampler> cpu_node;
-  uint64_t start_ts, end_ts;
-  RETURN_IF_NOT_OK(PopulateCpuSamplerAPIInputs(epoch_num, &start_ts, &end_ts, &cpu_node));
-  return cpu_node->GetOpSysCpuUtil(op_id, start_ts, end_ts, result);
-}
-
-Status ProfilingManager::PopulateCpuSamplerAPIInputs(int32_t epoch_num, uint64_t *start_ts, uint64_t *end_ts,
-                                                     std::shared_ptr<CpuSampler> *node) {
-  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, start_ts, end_ts));
+Status ProfilingManager::GetUserCpuUtilByTime(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result) {
   std::shared_ptr<Sampling> sampling_node;
   RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
-  *node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
-  return Status::OK();
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetSystemUserCpuUtil(start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetSysCpuUtilByTime(start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetSysCpuUtilByTime(start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByTime(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result) {
+  std::shared_ptr<Sampling> sampling_node;
+  RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetSystemSysCpuUtil(start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetUserCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetUserCpuUtilByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetUserCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step,
+                                              std::vector<uint16_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetUserCpuUtilByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetUserCpuUtilByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts,
+                                              std::vector<uint16_t> *result) {
+  std::shared_ptr<Sampling> sampling_node;
+  RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetOpUserCpuUtil(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetSysCpuUtilByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step,
+                                             std::vector<uint16_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetSysCpuUtilByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetSysCpuUtilByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts,
+                                             std::vector<uint16_t> *result) {
+  std::shared_ptr<Sampling> sampling_node;
+  RETURN_IF_NOT_OK(GetSamplingNode(kCpuSamplerName, &sampling_node));
+  auto node = std::dynamic_pointer_cast<CpuSampler>(sampling_node);
+  return node->GetOpSysCpuUtil(op_id, start_ts, end_ts, result);
 }
 #endif
 
@@ -354,18 +445,58 @@ Status ProfilingManager::EpochToStepInterval(int32_t epoch_num, uint32_t *start_
   return Status::OK();
 }
 
-Status ProfilingManager::GetConnectorSize(int32_t op_id, int32_t epoch_num, std::vector<int32_t> *result) {
+Status ProfilingManager::StepToTimeInterval(int32_t start_step, int32_t end_step, uint64_t *start_ts,
+                                            uint64_t *end_ts) {
+  std::shared_ptr<Tracing> node;
+  if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
+      GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
+    return node->TimeIntervalForStepRange(start_step, end_step, start_ts, end_ts);
+  } else {
+    return {StatusCode::kMDUnexpectedError,
+            "Cannot find appropriate tracing node to convert step range to time interval."};
+  }
+}
+
+Status ProfilingManager::TimeToStepInterval(uint64_t start_ts, uint64_t end_ts, int32_t *start_step,
+                                            int32_t *end_step) {
+  std::shared_ptr<Tracing> node;
+  if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
+      GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
+    return node->StepIntervalForTimeRange(start_ts, end_ts, start_step, end_step);
+  } else {
+    return {StatusCode::kMDUnexpectedError,
+            "Cannot find appropriate tracing node to convert step range to time interval."};
+  }
+}
+
+Status ProfilingManager::GetConnectorSizeByEpoch(int32_t op_id, int32_t epoch_num, std::vector<int32_t> *result) {
   uint64_t start_ts, end_ts;
   RETURN_IF_NOT_OK(EpochToTimeInterval(epoch_num, &start_ts, &end_ts));
+  return GetConnectorSizeByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetConnectorSizeByStep(int32_t op_id, int32_t start_step, int32_t end_step,
+                                                std::vector<int32_t> *result) {
+  uint64_t start_ts, end_ts;
+  RETURN_IF_NOT_OK(StepToTimeInterval(start_step, end_step, &start_ts, &end_ts));
+  return GetConnectorSizeByTime(op_id, start_ts, end_ts, result);
+}
+
+Status ProfilingManager::GetConnectorSizeByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts,
+                                                std::vector<int32_t> *result) {
   std::shared_ptr<Sampling> node;
   RETURN_IF_NOT_OK(GetSamplingNode(kConnectorSizeSamplingName, &node));
   auto connector_node = std::dynamic_pointer_cast<ConnectorSize>(node);
   return connector_node->GetOpConnectorSize(op_id, start_ts, end_ts, result);
 }
 
-Status ProfilingManager::GetPipelineTime(int32_t epoch_num, std::vector<int32_t> *result) {
+Status ProfilingManager::GetPipelineTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
   uint32_t start_step, end_step;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetPipelineTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetPipelineTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
   std::shared_ptr<Tracing> node;
   if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
       GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
@@ -375,9 +506,19 @@ Status ProfilingManager::GetPipelineTime(int32_t epoch_num, std::vector<int32_t>
   }
 }
 
-Status ProfilingManager::GetPushTime(int32_t epoch_num, std::vector<int32_t> *result) {
+Status ProfilingManager::GetPipelineTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetPipelineTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetPushTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
   uint32_t start_step, end_step;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetPushTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetPushTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
   std::shared_ptr<Tracing> node;
   if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
       GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
@@ -387,9 +528,19 @@ Status ProfilingManager::GetPushTime(int32_t epoch_num, std::vector<int32_t> *re
   }
 }
 
-Status ProfilingManager::GetBatchTime(int32_t epoch_num, std::vector<int32_t> *result) {
+Status ProfilingManager::GetPushTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetPushTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetBatchTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
   uint32_t start_step, end_step;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetBatchTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetBatchTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
   std::shared_ptr<Tracing> node;
   if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
       GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
@@ -399,9 +550,19 @@ Status ProfilingManager::GetBatchTime(int32_t epoch_num, std::vector<int32_t> *r
   }
 }
 
-Status ProfilingManager::GetConnectorSize(int32_t epoch_num, std::vector<int32_t> *result) {
+Status ProfilingManager::GetBatchTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetBatchTimeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetConnectorSizeByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
   uint32_t start_step, end_step;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetConnectorSizeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetConnectorSizeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
   std::shared_ptr<Tracing> node;
   if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
       GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
@@ -411,9 +572,19 @@ Status ProfilingManager::GetConnectorSize(int32_t epoch_num, std::vector<int32_t
   }
 }
 
-Status ProfilingManager::GetEmptyQueueFrequency(int32_t epoch_num, float_t *result) {
+Status ProfilingManager::GetConnectorSizeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetConnectorSizeByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetEmptyQueueFrequencyByEpoch(int32_t epoch_num, float_t *result) {
   uint32_t start_step, end_step;
   RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetEmptyQueueFrequencyByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetEmptyQueueFrequencyByStep(int32_t start_step, int32_t end_step, float_t *result) {
   std::shared_ptr<Tracing> node;
   if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
       GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
@@ -421,6 +592,35 @@ Status ProfilingManager::GetEmptyQueueFrequency(int32_t epoch_num, float_t *resu
   } else {
     return {StatusCode::kMDUnexpectedError, "Cannot find appropriate tracing node"};
   }
+}
+
+Status ProfilingManager::GetEmptyQueueFrequencyByTime(uint64_t start_ts, uint64_t end_ts, float_t *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetEmptyQueueFrequencyByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetConnectorCapacityByEpoch(int32_t epoch_num, std::vector<int32_t> *result) {
+  uint32_t start_step, end_step;
+  RETURN_IF_NOT_OK(EpochToStepInterval(epoch_num, &start_step, &end_step));
+  return GetConnectorCapacityByStep(start_step, end_step, result);
+}
+
+Status ProfilingManager::GetConnectorCapacityByStep(int32_t start_step, int32_t end_step,
+                                                    std::vector<int32_t> *result) {
+  std::shared_ptr<Tracing> node;
+  if (GetTracingNode(kDeviceQueueTracingName, &node).IsOk() ||
+      GetTracingNode(kDatasetIteratorTracingName, &node).IsOk()) {
+    return node->GetConnectorCapacity(start_step, end_step, result);
+  } else {
+    return {StatusCode::kMDUnexpectedError, "Cannot find appropriate tracing node"};
+  }
+}
+
+Status ProfilingManager::GetConnectorCapacityByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result) {
+  int32_t start_step, end_step;
+  RETURN_IF_NOT_OK(TimeToStepInterval(start_ts, end_ts, &start_step, &end_step));
+  return GetConnectorCapacityByStep(start_step, end_step, result);
 }
 
 void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {

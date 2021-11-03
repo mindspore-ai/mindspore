@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,16 +100,21 @@ class Tracing : public Profiling {
   virtual Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
   virtual Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
   virtual Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
+  virtual Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
   virtual Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) = 0;
   void Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value,
               const uint64_t time_stamp);
+  Status TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts);
+  Status StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step);
 
  protected:
   explicit Tracing(int32_t records_per_step);
   const int32_t records_per_step_;
   std::vector<std::string> value_;
   std::vector<TracingRecord> records_;
-  Status GetRecordEntry(int32_t start_step, int32_t end_step, int32_t record_offset, std::vector<int32_t> *result);
+  std::vector<uint64_t> ts_;  // End time of each step or batch
+  Status GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset, std::string field,
+                                  std::vector<int32_t> *result);
 };
 
 // ProfilingManager is a class manages all profiling infrastructure
@@ -179,27 +184,87 @@ class ProfilingManager {
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the sampled User CPU Utilization for the entire system
   /// \return Status object with the error code
-  Status GetUserCpuUtil(int32_t epoch_num, std::vector<uint8_t> *result);
+  Status GetUserCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result);
+
+  /// \brief API to get User CPU utilization for the system
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the sampled User CPU Utilization for the entire system
+  /// \return Status object with the error code
+  Status GetUserCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result);
+
+  /// \brief API to get User CPU utilization for the system
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the sampled User CPU Utilization for the entire system
+  /// \return Status object with the error code
+  Status GetUserCpuUtilByTime(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
 
   /// \brief API to get System CPU utilization for the system
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the sampled System CPU Utilization for the entire system
   /// \return Status object with the error code
-  Status GetSysCpuUtil(int32_t epoch_num, std::vector<uint8_t> *result);
+  Status GetSysCpuUtilByEpoch(int32_t epoch_num, std::vector<uint8_t> *result);
+
+  /// \brief API to get System CPU utilization for the system
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the sampled System CPU Utilization for the entire system
+  /// \return Status object with the error code
+  Status GetSysCpuUtilByStep(int32_t start_step, int32_t end_step, std::vector<uint8_t> *result);
+
+  /// \brief API to get System CPU utilization for the system
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the sampled System CPU Utilization for the entire system
+  /// \return Status object with the error code
+  Status GetSysCpuUtilByTime(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
 
   /// \brief API to get User CPU Utilization of an MD operator
   /// \param [in] op_id The id of the operator
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the sampled User CPU Utilization of the operator.
   /// \return Status object with the error code
-  Status GetUserCpuUtil(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result);
+  Status GetUserCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result);
+
+  /// \brief API to get User CPU Utilization of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the sampled User CPU Utilization of the operator.
+  /// \return Status object with the error code
+  Status GetUserCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step, std::vector<uint16_t> *result);
+
+  /// \brief API to get User CPU Utilization of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the sampled User CPU Utilization of the operator.
+  /// \return Status object with the error code
+  Status GetUserCpuUtilByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
 
   /// \brief API to get System CPU Utilization of an MD operator
   /// \param [in] op_id The id of the operator
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the sampled System CPU Utilization of the operator.
   /// \return Status object with the error code
-  Status GetSysCpuUtil(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result);
+  Status GetSysCpuUtilByEpoch(int32_t op_id, int32_t epoch_num, std::vector<uint16_t> *result);
+
+  /// \brief API to get System CPU Utilization of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the sampled System CPU Utilization of the operator.
+  /// \return Status object with the error code
+  Status GetSysCpuUtilByStep(int32_t op_id, int32_t start_step, int32_t end_step, std::vector<uint16_t> *result);
+
+  /// \brief API to get System CPU Utilization of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the sampled System CPU Utilization of the operator.
+  /// \return Status object with the error code
+  Status GetSysCpuUtilByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
 #endif
 
   /// \brief API to get the connector size of an MD operator
@@ -207,37 +272,143 @@ class ProfilingManager {
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the sampled connector sizes of the operator
   /// \return Status object with the error code
-  Status GetConnectorSize(int32_t op_id, int32_t epoch_num, std::vector<int32_t> *result);
+  Status GetConnectorSizeByEpoch(int32_t op_id, int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector size of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the sampled connector sizes of the operator
+  /// \return Status object with the error code
+  Status GetConnectorSizeByStep(int32_t op_id, int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector size of an MD operator
+  /// \param [in] op_id The id of the operator
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the sampled connector sizes of the operator
+  /// \return Status object with the error code
+  Status GetConnectorSizeByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
   /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with connector size at each step
   /// \return Status object with the error code
-  Status GetConnectorSize(int32_t epoch_num, std::vector<int32_t> *result);
+  Status GetConnectorSizeByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with connector size at each step
+  /// \return Status object with the error code
+  Status GetConnectorSizeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with connector size at each step
+  /// \return Status object with the error code
+  Status GetConnectorSizeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \param [in] epoch_num The epoch number for which results are requested
+  /// \param [out] result A vector with connector capacity at each step
+  /// \return Status object with the error code
+  Status GetConnectorCapacityByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with connector capacity at each step
+  /// \return Status object with the error code
+  Status GetConnectorCapacityByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with connector capacity for steps in the given time range
+  /// \return Status object with the error code
+  Status GetConnectorCapacityByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
   /// \brief API to get the pipeline time of batches
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the pipeline time for each step
   /// \return Status object with the error code
-  Status GetPipelineTime(int32_t epoch_num, std::vector<int32_t> *result);
+  Status GetPipelineTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the pipeline time of batches
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the pipeline time for each step
+  /// \return Status object with the error code
+  Status GetPipelineTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the pipeline time of batches
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the pipeline time for steps in the given time range
+  /// \return Status object with the error code
+  Status GetPipelineTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
   /// \brief API to get the push time of batches
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the push time for each each step
   /// \return Status object with the error code
-  Status GetPushTime(int32_t epoch_num, std::vector<int32_t> *result);
+  Status GetPushTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the push time of batches
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the push time for each each step
+  /// \return Status object with the error code
+  Status GetPushTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the push time of batches
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the push time for steps in the given time range
+  /// \return Status object with the error code
+  Status GetPushTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
   /// \brief API to get the batch time of batches
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with the batch time for each step
   /// \return Status object with the error code
-  Status GetBatchTime(int32_t epoch_num, std::vector<int32_t> *result);
+  Status GetBatchTimeByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
+
+  /// \brief API to get the batch time of batches
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result A vector with the batch time for each step
+  /// \return Status object with the error code
+  Status GetBatchTimeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+
+  /// \brief API to get the batch time of batches
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result A vector with the batch time for steps in the given time range
+  /// \return Status object with the error code
+  Status GetBatchTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
   /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result The empty queue frequency
   /// \return Status object with the error code
-  Status GetEmptyQueueFrequency(int32_t epoch_num, float_t *result);
+  Status GetEmptyQueueFrequencyByEpoch(int32_t epoch_num, float_t *result);
+
+  /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result The empty queue frequency
+  /// \return Status object with the error code
+  Status GetEmptyQueueFrequencyByStep(int32_t start_step, int32_t end_step, float_t *result);
+
+  /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result The empty queue frequency
+  /// \return Status object with the error code
+  Status GetEmptyQueueFrequencyByTime(uint64_t start_ts, uint64_t end_ts, float_t *result);
 
  protected:
   std::unique_ptr<Monitor> perf_monitor_;
@@ -260,13 +431,35 @@ class ProfilingManager {
   // @return Status The status code returned
   Status RegisterSamplingNode(std::shared_ptr<Sampling> node);
 
+  /// \brief Helper to convert a given epoch number to a step interval
+  /// \param [in] epoch_num The epoch number to be converted
+  /// \param [out] start_step The corresponding start step for the given epoch
+  /// \param [out] end_step The corresponding end step for the given epoch
+  /// \return
   Status EpochToStepInterval(int32_t epoch_num, uint32_t *start_step, uint32_t *end_step);
-  // get start and ending timestamp of an epoch
+
+  /// \brief Helper to convert a given epoch number to a time interval
+  /// \param [in] epoch_num The epoch number to be converted
+  /// \param [out] start_ts The corresponding starting timestamp in ms for the given epoch
+  /// \param [out] end_ts The corresponding ending timestamp in ms for the given epoch
+  /// \return Status object with the error code
   Status EpochToTimeInterval(int32_t epoch_num, uint64_t *start_ts, uint64_t *end_ts);
-#ifndef ENABLE_ANDROID
-  Status PopulateCpuSamplerAPIInputs(int32_t epoch_num, uint64_t *start_ts, uint64_t *end_ts,
-                                     std::shared_ptr<CpuSampler> *node);
-#endif
+
+  /// \brief Helper to convert step interval to a time interval
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] start_ts The corresponding starting timestamp in ms for the given step interval
+  /// \param [out] end_ts The corresponding ending timestamp in ms for the given step interval
+  /// \return Status object with the error code
+  Status StepToTimeInterval(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts);
+
+  /// \brief Helper to convert time interval to a step interval
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] start_step The corresponding start step for the given time interval
+  /// \param [out] end_step The corresponding end step for the given time interval
+  /// \return Status object with the error code
+  Status TimeToStepInterval(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step);
 };
 
 enum ProfilingType { TIME, CONNECTOR_DEPTH };

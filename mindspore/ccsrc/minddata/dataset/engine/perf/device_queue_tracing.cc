@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,27 +31,28 @@ namespace dataset {
 constexpr int32_t PUSH_TIME_OFFSET = 0;
 constexpr int32_t BATCH_TIME_OFFSET = 1;
 constexpr int32_t PIPELINE_TIME_OFFSET = 2;
-constexpr int32_t CONNECTOR_CAPACITY_OFFSET = 3;
+constexpr int32_t CONNECTOR_DEPTH_OFFSET = 3;
 
 Status DeviceQueueTracing::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("device_queue_profiling_" + device_id + ".txt")).ToString();
+  (void)ts_.emplace_back(0);
   return Status::OK();
 }
 
 Status DeviceQueueTracing::GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
-  return GetRecordEntry(start_step, end_step, PIPELINE_TIME_OFFSET, result);
+  return GetRecordEntryFieldValue(start_step, end_step, PIPELINE_TIME_OFFSET, "value", result);
 }
 
 Status DeviceQueueTracing::GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
-  return GetRecordEntry(start_step, end_step, PUSH_TIME_OFFSET, result);
+  return GetRecordEntryFieldValue(start_step, end_step, PUSH_TIME_OFFSET, "value", result);
 }
 
 Status DeviceQueueTracing::GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
-  return GetRecordEntry(start_step, end_step, BATCH_TIME_OFFSET, result);
+  return GetRecordEntryFieldValue(start_step, end_step, BATCH_TIME_OFFSET, "value", result);
 }
 
 Status DeviceQueueTracing::GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
-  return GetRecordEntry(start_step, end_step, CONNECTOR_CAPACITY_OFFSET, result);
+  return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "value", result);
 }
 
 Status DeviceQueueTracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) {
@@ -71,11 +72,15 @@ Status DeviceQueueTracing::GetEmptyQueueFrequency(int32_t start_step, int32_t en
   uint32_t total = end_step - start_step + 1;
   uint32_t count = 0U;
   for (auto step_num = start_step; step_num <= end_step; step_num++) {
-    auto idx = (step_num - 1) * records_per_step_ + CONNECTOR_CAPACITY_OFFSET;
+    auto idx = (step_num - 1) * records_per_step_ + CONNECTOR_DEPTH_OFFSET;
     count += static_cast<uint32_t>(records_[idx].value == 0);
   }
   *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
   return Status::OK();
+}
+
+Status DeviceQueueTracing::GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "extra_info", result);
 }
 }  // namespace dataset
 }  // namespace mindspore
