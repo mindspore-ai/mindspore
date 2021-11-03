@@ -212,12 +212,9 @@ bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
   if (src_device_addr.get() == nullptr) {
     return false;
   }
-  if (src_device_addr->DeviceType() == dst_device_addr->DeviceType() &&
-      src_device_addr->format() == dst_device_addr->format() &&
-      src_device_addr->type_id() == dst_device_addr->type_id()) {
-    return true;
-  }
-  return false;
+  return (src_device_addr->DeviceType() == dst_device_addr->DeviceType() &&
+          src_device_addr->format() == dst_device_addr->format() &&
+          src_device_addr->type_id() == dst_device_addr->type_id());
 }
 
 bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfNodePtr &parameter,
@@ -239,7 +236,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
       auto status = device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
                                                        tensor_address->GetSize(), tensor_address->type_id(),
                                                        tensor_address->GetPtr(), tensor_address->format());
-      if (status == false) {
+      if (!status) {
         MS_LOG(EXCEPTION) << "SyncDeviceToDevice failed.";
       }
       MS_EXCEPTION_IF_NULL(memcpy_nums);
@@ -935,7 +932,8 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-      input_tensor_info->input_tensors_mask.emplace_back(kParameterDataTensorMask);
+      input_tensor_info->input_tensors_mask.emplace_back(
+        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       auto parameter = real_input->cast<ParameterPtr>();

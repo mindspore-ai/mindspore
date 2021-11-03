@@ -196,6 +196,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
       MS_EXCEPTION_IF_NULL(cnode);
       auto input_node = cnode->inputs()[input_index + 1];
       auto value_ptr = GetValueNode(input_node);
+      MS_EXCEPTION_IF_NULL(value_ptr);
       auto value = GetValue<std::string>(value_ptr);
       input_shape.push_back(1);
       input_shape.push_back(value.size());
