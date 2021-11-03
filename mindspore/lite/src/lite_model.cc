@@ -223,7 +223,13 @@ int LiteModel::NodeVerify() const {
       MS_LOG(ERROR) << "Index of node->output_indices_ is beyond size.";
       return RET_ERROR;
     }
-
+    if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [&](const uint32_t &idx) {
+          return this->all_tensors_[idx]->nodeType() == NodeType_ValueNode &&
+                 this->all_tensors_[idx]->data() != nullptr;
+        })) {
+      MS_LOG(ERROR) << "node output tensor node type is ValueNode, node name: " << node->name_;
+      return RET_ERROR;
+    }
     if (IsPartialNode(node->primitive_, schema_version_)) {
       auto subgraph_index = GetPartialGraphIndex(node->primitive_, schema_version_);
       if (static_cast<uint32_t>(subgraph_index) >= subgraph_size) {
@@ -276,6 +282,16 @@ int LiteModel::SubGraphVerify() const {
 bool LiteModel::ModelVerify() const {
   if (this->sub_graphs_.empty()) {
     MS_LOG(ERROR) << "Model does not have a main graph.";
+    return false;
+  }
+
+  if (this->input_indices_.empty()) {
+    MS_LOG(ERROR) << "Model does not have inputs.";
+    return false;
+  }
+
+  if (this->output_indices_.empty()) {
+    MS_LOG(ERROR) << "Model does not have outputs.";
     return false;
   }
 

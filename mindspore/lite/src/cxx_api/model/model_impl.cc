@@ -335,7 +335,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   }
   auto outputs = session_->GetOutputs();
   if (outputs.empty()) {
-    MS_LOG(ERROR) << "The outputs of model is null.";
+    MS_LOG(ERROR) << "The output tensor name of this model is null.";
     return empty;
   }
   if (names.size() != outputs.size()) {

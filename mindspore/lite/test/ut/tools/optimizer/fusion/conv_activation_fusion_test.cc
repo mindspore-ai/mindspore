@@ -99,7 +99,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType
 
   // input 0: data
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = lite::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_Parameter;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 5, 5, 3};
