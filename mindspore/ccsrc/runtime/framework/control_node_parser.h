@@ -38,6 +38,7 @@ constexpr int kInvalidBranchID = -1;
 constexpr int kMainBranchID = 0;
 constexpr int kSubBranchStartID = 1;
 constexpr size_t kSwitchInputNum = 4;
+constexpr size_t kSwitchCondPos = 1;
 constexpr size_t kSwitchPartialNum = 2;
 constexpr size_t kSwitchLayerCondPos = 1;
 constexpr size_t kSwitchLayerBranchPos = 2;
@@ -48,7 +49,11 @@ constexpr size_t kPartialFuncGraphPos = 1;
 constexpr size_t kPartialInputStartPos = 2;
 constexpr size_t kCallInputStartPos = 1;
 constexpr size_t kMakeTupleInputStartPos = 1;
+constexpr size_t kCNodeInputStartPos = 1;
+constexpr size_t kReturnInputPos = 1;
+constexpr size_t kSingleControlNode = 1;
 
+const char kEntranceActorNameSuffix[] = "_EntranceActor";
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToParameter = std::unordered_map<FuncGraphPtr, std::vector<std::vector<AnfNodePtr>>>;
@@ -96,6 +101,8 @@ class ControlNodeParser {
   void Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph);
 
+  bool IsInited() { return is_inited_; }
+  bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
   const HostParameterToWeight &host_parameter_to_weights() const { return host_parameter_to_weights_; }
@@ -257,6 +264,7 @@ class ControlNodeParser {
 
   // The dependency between kernel and call node in auto monad.
   std::unordered_map<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
+  bool is_inited_{false};
 };
 
 using ControlNodeParserPtr = std::shared_ptr<ControlNodeParser>;

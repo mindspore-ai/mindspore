@@ -82,14 +82,6 @@ std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
   }
-  for (auto &switch_actor : actor_set->switch_actors_) {
-    MS_EXCEPTION_IF_NULL(switch_actor);
-    (void)actors.emplace_back(static_cast<AbstractActorPtr>(switch_actor));
-  }
-  for (auto &gather_actor : actor_set->gather_actors_) {
-    MS_EXCEPTION_IF_NULL(gather_actor);
-    (void)actors.emplace_back(static_cast<AbstractActorPtr>(gather_actor));
-  }
   for (auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(copy_actor));
@@ -171,7 +163,7 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
     auto base_actors = CollectActors(actor_set.get());
     for (auto &base_actor : base_actors) {
       MS_EXCEPTION_IF_NULL(base_actor);
-      (void)actor_name_to_actor_.erase(base_actor->GetAID().Name());
+      EraseActor(base_actor->GetAID().Name());
       actor_manager->Terminate(base_actor->GetAID());
     }
   }
@@ -196,7 +188,7 @@ void GraphScheduler::Clear() {
 
   // Clear global maps.
   actors_.clear();
-  actor_name_to_actor_.clear();
+  ClearAllActors();
 }
 
 using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, AbstractActor *const, const KernelWithIndex &,
@@ -304,7 +296,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
 
   // Local maps and vectors clear.
   graph_output_to_actor_.clear();
-  front_node_to_actor_.clear();
   copy_actors_.clear();
 
   return actor_set.get();
@@ -390,7 +381,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->output_actor_ = BuildOutputActor(graph_compiler_info);
   actor_set->data_prepare_actor_ =
     BuildDataPrepareActor(graph_compiler_info, actor_set->data_source_actors_, host_queue);
-
+  actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info);
   return actor_set;
 }
 
@@ -448,8 +439,9 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   }
 
   // Link the arrow in the control flow scene.
-  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
-    LinkArrowByControlNode(graph_compiler_info, actor_set);
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline &&
+      graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {
+    control_node_scheduler_.Link(actor_set, graph_compiler_info);
   }
 
   LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
@@ -589,10 +581,6 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
-        auto front_node = graph->GetFrontAnfByBackendAnf(kernel);
-        if (front_node != nullptr) {
-          front_node_to_actor_[front_node] = kernel_actor;
-        }
       }
     }
   }
@@ -837,39 +825,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
-  if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
-    const auto &kernel_with_index = GetFrontNodeByKernelGraph(from_kernel, graph);
-    const auto &real_front_node_with_index =
-      AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, kernel_with_index.second, false);
-    if (HasAbstractRef(real_front_node_with_index.first)) {
-      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
-                                                             real_front_node_with_index.first);
-      return;
-    }
-    // When there is a call input in the kernel graph, all the inputs of the kernel graph needs to be sent by gather.
-    const auto actor_name = graph->ToString();
-    auto actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
-    LinkDataArrowForGatherActor(dynamic_cast<GatherActor *>(actor), to_actor, real_front_node_with_index,
-                                to_kernel_with_input_idx);
-    return;
-  }
-
-  auto front_node = GetFrontNodeByBackendNode(from_kernel);
-  if (front_node != nullptr && IsGatherActor(front_node, actor_name_to_actor_)) {
-    // Link the data arrows of gather actor.
-    auto func_graph = GetFuncgraphByBackendNode(from_kernel);
-    if (func_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot find funcgraph of node:" << AnfAlgo::GetNodeDebugString(from_kernel);
-    }
-    auto actor_name = func_graph->ToString();
-    const auto &from_actor = dynamic_cast<GatherActor *>(FetchActor(actor_name));
-    if (HasAbstractRef(from_kernel)) {
-      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node);
-      return;
-    }
-    LinkDataArrowForGatherActor(from_actor, to_actor, {front_node, 0}, to_kernel_with_input_idx);
+  if (graph_compiler_info.control_node_parser_ != nullptr &&
+      graph_compiler_info.control_node_parser_->IsControlFlowDataArrow(graph, from_kernel)) {
     return;
   }
 
@@ -914,10 +871,6 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   auto front_output_node = front_output_with_index.first;
   MS_EXCEPTION_IF_NULL(front_output_node);
   if (IsSwitchActor(front_output_node)) {
-    auto switch_actor = dynamic_cast<SwitchActor *>(FetchActor(front_output_node->DebugString()));
-    MS_EXCEPTION_IF_NULL(switch_actor);
-    LinkDataArrowForSwitchActor(switch_actor, 0, to_actor, to_kernel_with_input_idx.second);
-    to_actor->input_datas_num_++;
     return;
   }
 
@@ -1493,16 +1446,6 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
   }
 }
 
-void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *const actor_set) {}
-
-void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *const from_actor, KernelActor *const to_actor,
-                                                 const KernelWithIndex &front_node_with_index,
-                                                 const KernelWithIndex &to_node_with_index) {}
-
-void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, const size_t from_index,
-                                                 OpActor<DeviceTensor> *to_actor, const size_t to_index,
-                                                 const size_t branch_index) {}
-
 void GraphScheduler::AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   DeviceTensorStore::GetInstance().Insert(const_cast<AnfNode *>(anf_node), device_tensor);
@@ -1565,6 +1508,10 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
   auto actors = CollectActors(actor_set);
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
+    if (actor->type_ >= KernelTransformType::kSwitchActor) {
+      continue;
+    }
+
     if ((actor->input_datas_num_ != actor->input_data_arrow_aids_.size()) ||
         (actor->input_controls_num_ != actor->input_control_arrow_aids_.size())) {
       MS_LOG(EXCEPTION) << "The input num of " << actor->GetAID().Name()
@@ -1724,22 +1671,6 @@ void GraphScheduler::FetchKernelTransformTypeAndName(const AnfNodePtr &node, con
   }
 }
 
-void GraphScheduler::InsertActor(OpActor<DeviceTensor> *actor) {
-  MS_EXCEPTION_IF_NULL(actor);
-  if (actor_name_to_actor_.count(actor->GetAID().Name()) > 0) {
-    MS_LOG(EXCEPTION) << "The actor already exists: " << actor->GetAID().Name();
-  }
-  actor_name_to_actor_[actor->GetAID().Name()] = actor;
-}
-
-OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string &actor_name) const {
-  const auto &iter = actor_name_to_actor_.find(actor_name);
-  if (iter == actor_name_to_actor_.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
 void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &context_ptr = MsContext::GetInstance();
@@ -1763,8 +1694,6 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
   DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
   DumpCopyActors(actor_set->copy_actors_, ofs);
-  DumpGatherActors(actor_set->gather_actors_, ofs);
-  DumpSwitchActors(actor_set->switch_actors_, ofs);
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);
 }

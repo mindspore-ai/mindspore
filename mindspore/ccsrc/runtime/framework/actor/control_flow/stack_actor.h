@@ -23,43 +23,34 @@
 #include <unordered_map>
 #include <stack>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/abstract_actor.h"
+#include "runtime/framework/actor/control_flow/control_actor.h"
 
 namespace mindspore {
 namespace runtime {
 // Stack actor is used to record those device actors that need additional storage in recursive scenes.
-class StackActor : public MemoryAwareActor {
+// The execution steps of the stack actor:
+// 1. Accept a copy of all direct parameters and push them to the stack
+// 2. Notify gather actor can be executed
+// 3. Receive the output of exit actor
+// 4. send output.
+class StackActor : public ControlActor {
  public:
-  StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters)
-      : AbstractActor(name, KernelTransformType::kStackActor, nullptr), formal_parameters_(parameters) {
-    device_contexts_.resize(parameters.size());
-  }
+  StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters);
   ~StackActor() override = default;
 
-  void Init() override;
-
-  // The stack actor run when receive the real parameter nodes.
-  void CollectRealParameter(const AnfNodePtr &node, size_t index, size_t position,
-                            OpContext<DeviceTensor> *const context);
+ protected:
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context);
+  void FetchInput(OpContext<DeviceTensor> *const context);
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
+  void EraseInput(const OpContext<DeviceTensor> *const context);
 
  private:
-  friend class GraphScheduler;
-
-  // Formal parameters record the input front-end node, these nodes may be parameter, kernel, call node.
-  std::vector<KernelWithIndex> formal_parameters_;
+  friend class ControlNodeScheduler;
 
   // The backend parameter is used to save the backend node corresponding to the device tensor in the stack.
   // When these device tensors are used as output, they need to be placed in the node of the result arrow,
   // so these nodes need to be saved.
   std::vector<KernelWithIndex> backend_parameters_;
-
-  // Input data.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, KernelWithIndex>> input_nodes_;
-
-  // The input data records that the stack actor is copied from the input nodes and needs to be stored in the
-  // device tensor in the stack. This part of the device tensor does not belong to any node, and it will be
-  // cleaned up directly after the stack is popped.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
 };
 
 using StackActorPtr = std::shared_ptr<StackActor>;

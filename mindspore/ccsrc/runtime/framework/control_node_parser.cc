@@ -763,6 +763,21 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   FetchAutoMonadNode(control_nodes);
 }
 
+bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!IsInited()) {
+    return false;
+  }
+
+  if (IsCallInputKernelGraph(graph)) {
+    return true;
+  }
+
+  const AnfNodePtr &front_node = graph->GetFrontAnfByBackendAnf(node);
+  return (front_node != nullptr && front_node->isa<Parameter>() &&
+          (!AnfAlgo::IsParameterWeight(front_node->cast<ParameterPtr>())));
+}
+
 std::vector<KernelWithIndex> ControlNodeParser::GetBackendInputByParameter(const AnfNodePtr &parameter) {
   return formal_to_real_parameters_[parameter];
 }

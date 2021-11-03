@@ -20,44 +20,33 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <stack>
 #include <utility>
 #include <algorithm>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/abstract_actor.h"
+#include "runtime/framework/actor/control_flow/control_actor.h"
 
 namespace mindspore {
 namespace runtime {
 
 // Gather actor will be used in the control flow. When the subgraph is called, the real parameters need to be put
 // together and sent to the subgraph.
-class GatherActor : public AbstractActor {
+class GatherActor : public ControlActor {
  public:
-  GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters)
-      : AbstractActor(name, KernelTransformType::kGatherActor, nullptr), formal_parameters_(parameters) {}
+  GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
   ~GatherActor() override = default;
 
-  // The gather actor collects single node when receive the result of kernel actor.
-  void CollectRealParameter(const AnfNodePtr &node, size_t index, size_t position,
-                            OpContext<DeviceTensor> *const context);
-  // The gather actor collects all real parameters when receive the output of switch actor.
-  void CollectRealParameters(const std::vector<KernelWithIndex> &real_parameters, size_t position,
-                             OpContext<DeviceTensor> *const context);
+ protected:
+  void FetchInput(OpContext<DeviceTensor> *const context);
+  void SendOutput(OpContext<DeviceTensor> *const context);
 
  private:
-  friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
-  // Formal parameters of actor, which is the front node.
-  std::vector<KernelWithIndex> formal_parameters_;
-
-  // Input data.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::vector<KernelWithIndex>>> input_nodes_;
-  // The store node records the value node input of the gather actor.
-  std::vector<std::pair<size_t, KernelWithIndex>> store_nodes_;
-
-  // Output arrow.
-  std::unordered_map<AnfNodePtr, std::pair<AID, size_t>> output_branch_arrows_;
+  // When the output data arrow needs to have a branch id, there will be multiple output branches.
+  std::unordered_map<int, std::vector<AID>> output_data_with_branch_id_arrows_;
 };
 
 using GatherActorPtr = std::shared_ptr<GatherActor>;
