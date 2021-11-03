@@ -260,8 +260,8 @@ class MSELoss(LossBase):
     .. math::
         \ell(x, y) =
         \begin{cases}
-            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     Args:

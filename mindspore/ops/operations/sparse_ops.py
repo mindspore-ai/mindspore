@@ -40,7 +40,7 @@ class SparseToDense(PrimitiveWithInfer):
 
     Raises:
         TypeError: If the dtype of `indices` is neither int32 nor int64.
-        ValueError: If `sparse_shape`, shape of `indices and shape of `values` don't meet the parameter description.
+        ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
 
     Supported Platforms:
         ``CPU``
@@ -119,7 +119,7 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
     Raises:
         TypeError: If the type of `adjoint_st` or `adjoint_dt` is not bool, or the dtype of `indices`,
             dtype of `values` and dtype of `dense` don't meet the parameter description.
-        ValueError: If `sparse_shape`, shape of `indices, shape of `values`,
+        ValueError: If `sparse_shape`, shape of `indices`, shape of `values`,
             and shape of `dense` don't meet the parameter description.
 
     Supported Platforms:

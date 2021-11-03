@@ -7668,9 +7668,9 @@ class DynamicRNN(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
           The data type must be float16.
-        - **w** (Tensor) - Weight. Tensor of shape :math:`(input\_size + hidden\_size, 4 x hidden\_size)`.
+        - **w** (Tensor) - Weight. Tensor of shape :math:`(input\_size + hidden\_size, 4 * hidden\_size)`.
           The data type must be float16.
-        - **b** (Tensor) - Bias. Tensor of shape :math`(4 x hidden\_size)`.
+        - **b** (Tensor) - Bias. Tensor of shape :math:`(4 * hidden\_size)`.
           The data type must be float16 or float32.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch\_size, )`.
           Only `None` is currently supported.
@@ -8042,7 +8042,7 @@ class LRN(PrimitiveWithInfer):
 
     where the :math:`a_{c}` indicates the represents the specific value of the pixel corresponding to c in feature map;
     where the :math:`n/2` indicate the `depth_radius`; where the :math:`k` indicate the `bias`;
-    where the :math:`\alpha` indicate the`alpha`; where the :math:`\beta` indicate the `beta`.
+    where the :math:`\alpha` indicate the `alpha`; where the :math:`\beta` indicate the `beta`.
 
     Args:
         depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.

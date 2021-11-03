@@ -339,7 +339,7 @@ class LSTMCell(Cell):
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
         - **c** - data type mindspore.float32 or
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
-          The data type of `h' and 'c' must be the same of `x`.
+          The data type of `h` and `c` must be the same of `x`.
         - **w** - data type mindspore.float32 or
           mindspore.float16 and shape (`weight_size`, 1, 1).
           The value of `weight_size` depends on `input_size`, `hidden_size` and `bidirectional`
