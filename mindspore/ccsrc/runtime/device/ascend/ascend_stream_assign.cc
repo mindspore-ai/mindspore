@@ -204,6 +204,7 @@ StreamActiveKind GetStreamKind(uint32_t cur_stream_id, uint32_t pre_stream_id, u
 
   return kInvalid;
 }
+
 void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
   auto exec_orders = graph_ptr->execution_order();
   for (auto node : exec_orders) {
@@ -212,8 +213,51 @@ void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
 }
 }  // namespace
 
+void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels) {
+  if (kernels.empty()) {
+    return;
+  }
+  if (stream_groups_.empty()) {
+    stream_groups_.emplace_back(std::vector<uint32_t>{kDefaultStreamIndex});
+    stream_groups_.emplace_back(std::vector<uint32_t>{kIndependentStreamIndex});
+    stream_groups_.emplace_back(std::vector<uint32_t>{kWorldGroupStreamIndex});
+  }
+  group_stream_id_map_[kHcclWorldGroup] = kWorldGroupStreamIndex;
+  for (size_t i = 0; i < kernels.size(); ++i) {
+    auto &node = kernels[i];
+    if (AnfAlgo::IsCommunicationOp(node)) {
+      auto group = AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
+      auto iter = group_stream_id_map_.find(group);
+      if (iter == group_stream_id_map_.end()) {
+        auto id = SizeToUint(group_stream_id_map_.size()) + kWorldGroupStreamIndex;
+        group_stream_id_map_[group] = id;
+        AnfAlgo::SetStreamId(id, node.get());
+        stream_groups_.emplace_back(std::vector<uint32_t>{id});
+      } else {
+        auto id = iter->second;
+        AnfAlgo::SetStreamId(id, node.get());
+      }
+    } else if (AnfAlgo::IsIndependentNode(node)) {
+      AnfAlgo::SetStreamId(kIndependentStreamIndex, node.get());
+    } else {
+      AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
+    }
+  }
+  for (size_t i = 1; i < kernels.size(); ++i) {
+    if (AnfAlgo::GetCNodeName(kernels[i - 1]) == kAtomicAddrCleanOpName) {
+      auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
+      AnfAlgo::SetStreamId(stream_id, kernels[i - 1].get());
+    }
+  }
+}
+
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
-  if (IsTaskSink() && !graph_ptr->is_dynamic_shape()) {
+  if (!IsTaskSink()) {
+    auto kernels = graph_ptr->execution_order();
+    AssignStreamForNonTaskSink(kernels);
+    return;
+  }
+  if (!graph_ptr->is_dynamic_shape()) {
     MS_LOG(INFO) << "Communication parallel mode: " << parallel::ParallelContext::GetInstance()->communi_parallel_mode()
                  << ".";
 
@@ -1008,6 +1052,7 @@ void AscendStreamAssign::ActiveRootGraphIndependent(const NotNull<KernelGraphPtr
   independent_stream_activated_ = true;
   graph_ptr->set_execution_order(update_cnode_list);
 }
+
 void AscendStreamAssign::InsertStreamActiveForCommon(const NotNull<KernelGraphPtr> &graph_ptr) {
   MS_LOG(INFO) << "Start";
   GetProcessedStream(graph_ptr);

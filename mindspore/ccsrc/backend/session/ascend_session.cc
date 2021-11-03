@@ -1494,6 +1494,8 @@ void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &in
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  auto kernels = graph->execution_order();
+  device::ascend::AscendStreamAssign::GetInstance().AssignStreamForNonTaskSink(kernels);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->GenKernelEvents(*graph);
