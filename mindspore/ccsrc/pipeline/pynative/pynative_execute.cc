@@ -1271,10 +1271,10 @@ void ForwardExecutor::DoSignatrueCast(const PrimitivePyPtr &prim,
     }
 
     if (!py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj)) {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i
-                              << "th input is a not support implicit conversion type: "
-                              << py::cast<std::string>(obj.attr("__class__").attr("__name__")) << ", and the value is "
-                              << py::cast<py::str>(obj) << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i << "th input " << signature[i].name
+                              << " is a not support implicit conversion. "
+                              << "Its type is " << py::cast<std::string>(obj.attr("__class__").attr("__name__"))
+                              << ", and the value is " << py::cast<py::str>(obj) << ". Only support Tensor or Scalar.";
     }
     py::object cast_output = DoAutoCast(input_args[i], it->second, op_exec_info->op_name, i);
     input_args[i] = cast_output;
