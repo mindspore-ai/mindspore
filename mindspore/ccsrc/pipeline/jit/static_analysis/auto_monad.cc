@@ -29,6 +29,7 @@
 #include "utils/flags.h"
 #include "utils/utils.h"
 #include "utils/ordered_map.h"
+#include "utils/ordered_set.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 
@@ -302,6 +303,15 @@ struct SwitchLayerCall {
   CNodePtr caller;
   EffectInfo effect_info;
   std::vector<FuncGraphPtr> branches;
+};
+
+class NodeStackGuard {
+ public:
+  NodeStackGuard(OrderedSet<AnfNodePtr> *stack, const AnfNodePtr &node) : stack_(stack) { stack_->push_front(node); }
+  ~NodeStackGuard() { (void)stack_->pop(); }
+
+ private:
+  OrderedSet<AnfNodePtr> *stack_;
 };
 
 // -------------------------------------------------------------------------------
@@ -791,6 +801,8 @@ class SideEffectFinder {
     if (users.empty()) {
       MS_LOG(WARNING) << "Unused graph for parameter " << para->DebugString();
     }
+    // Push the parameter to a stack so that we can check cycle binding.
+    NodeStackGuard param_stack_guard(&formal_param_stack_, para);
     for (auto &user : users) {
       auto use_index = user.first->second;
       if (use_index != 0) {
@@ -801,12 +813,12 @@ class SideEffectFinder {
       auto cnode = dyn_cast<CNode>(user.first->first);
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode && input_index < cnode->size()) {
-        auto &real_arg = cnode->input(input_index);
-        if (real_arg == para) {
-          // Skip if the real argument is the given parameter.
+        auto &input = cnode->input(input_index);
+        if (formal_param_stack_.contains(input)) {
+          // Skip if the input is a parameter that we are finding its real argument.
           continue;
         }
-        handler(real_arg);
+        handler(input);
       }
     }
   }
@@ -1061,6 +1073,9 @@ class SideEffectFinder {
   // switch_layer_calls save all switch_layer calls, so that
   // we can check whether monad argument should be added for them.
   std::vector<SwitchLayerCall> switch_layer_calls_;
+
+  // Save traced formal parameters so that we can check cycle parameter binding.
+  OrderedSet<AnfNodePtr> formal_param_stack_;
 };  // class SideEffectFinder
 
 // --------------------------------------------------------------------

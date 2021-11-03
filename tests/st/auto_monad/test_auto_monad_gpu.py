@@ -19,6 +19,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
+import mindspore.numpy as msnp
 from mindspore.nn import Cell
 from mindspore.nn import ReLU, BatchNorm2d, Conv2d, ParameterUpdate
 from mindspore.nn import Momentum
@@ -551,3 +552,39 @@ def test_updatestate_between_assign_maketuple():
         content = read_file()
         updatestate_num = re.findall('UpdateState', content)
         assert len(updatestate_num) == 1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cycle_parameter_binding():
+    """
+    Feature: Auto-monad side-effect finder.
+    Description: Auto-monad should work properly when cycle parameter binding existed.
+    Expectation: Normal output, no core dump.
+    """
+    class MyActor(Cell):
+        def construct(self, inputs):
+            return inputs
+
+    class MyCell(Cell):
+        def __init__(self, actor_list):
+            super().__init__()
+            self.zero = Tensor(0, ms.int32)
+            self.actor_list = actor_list
+
+        def construct(self, state):
+            duration = self.zero
+            while duration < 2:
+                for n in msnp.arange(3):
+                    samples = (state[n])
+                    x = self.actor_list[n](samples)
+                    print(x)
+                duration += 1
+            return duration
+
+    actor_list = [MyActor(), MyActor(), MyActor()]
+    net = MyCell(actor_list)
+    state = Tensor(np.ones((3, 3)), ms.float32)
+    out = net(state)
+    np.testing.assert_allclose(out.asnumpy(), 2)
