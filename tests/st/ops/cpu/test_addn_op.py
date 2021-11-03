@@ -37,10 +37,15 @@ class Net2Inputs(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_two_tensors_add():
+    """
+    Feature: ALL To ALL
+    Description: test cases for AddN of two tensors
+    Expectation: the result match to numpy
+    """
     x = np.arange(2 * 3 * 2).reshape((2, 3, 2))
     y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2))
     addn_net = Net2Inputs()
-    dtypes = (np.int32, np.float32)
+    dtypes = (np.int32, np.float32, np.float64)
     for dtype in dtypes:
         output = addn_net(Tensor(x.astype(dtype)), Tensor(y.astype(dtype)))
         expect_result = (x + y).astype(dtype)
@@ -61,12 +66,17 @@ class Net4Inputs(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_four_tensors_add():
+    """
+    Feature: ALL To ALL
+    Description: test cases for AddN of four tensors
+    Expectation: the result match to numpy
+    """
     x = np.arange(2 * 3).reshape((2, 3))
     y = np.arange(1, 2 * 3 + 1).reshape((2, 3))
     m = np.arange(2, 2 * 3 + 2).reshape((2, 3))
     n = np.arange(3, 2 * 3 + 3).reshape((2, 3))
     addn_net = Net4Inputs()
-    dtypes = (np.int32, np.float32)
+    dtypes = (np.int32, np.float32, np.float64)
     for dtype in dtypes:
         output = addn_net(Tensor(x.astype(dtype)), Tensor(y.astype(dtype)),
                           Tensor(m.astype(dtype)), Tensor(n.astype(dtype)))

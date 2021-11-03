@@ -45,6 +45,9 @@ MS_REG_CPU_KERNEL(AddN,
 MS_REG_CPU_KERNEL(AddN,
                   KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                   AddNCPUKernel);
+MS_REG_CPU_KERNEL(AddN,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                  AddNCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -47,13 +47,19 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
-    x = np.random.randn(2, 3, 3, 4).astype(np.float32)
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_abs(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Abs
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(dtype)
     y_expect = np.abs(x)
     net = Net()
     out = net(Tensor(x))
     assert (out.asnumpy() == y_expect).all()
-    sens = np.random.randn(2, 3, 3, 4).astype(np.float32)
+    sens = np.random.randn(2, 3, 3, 4).astype(dtype)
     backword_net = Grad(Net())
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))

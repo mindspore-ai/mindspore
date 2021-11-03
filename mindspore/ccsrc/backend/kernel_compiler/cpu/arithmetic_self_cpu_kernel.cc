@@ -263,6 +263,26 @@ void Atanh(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
+void Abs(const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = abs(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+}
+
+template <typename T>
+void Sqrt(const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = sqrt(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+}
+
+template <typename T>
 void Identity(const T *in, T *out, size_t size) {
   (void)std::copy(in, in + size, out);
 }
@@ -330,7 +350,9 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     {prim::kPrimOnesLike->name(), OnesLike<T>},
     {prim::kPrimReciprocal->name(), Reciprocal<T>},
     {prim::kPrimRint->name(), Rint<T>},
-    {prim::kPrimRound->name(), Round<T>}};
+    {prim::kPrimRound->name(), Round<T>},
+    {prim::kPrimAbs->name(), Abs<T>},
+    {prim::kPrimSqrt->name(), Sqrt<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
