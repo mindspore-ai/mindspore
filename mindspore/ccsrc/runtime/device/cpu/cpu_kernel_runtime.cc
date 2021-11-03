@@ -229,12 +229,12 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
       address->size_ = tensor_size;
+      tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
     } else {
       address->ptr_ = nullptr;
     }
     (void)bound_addresses_.insert(address);
-  }
-  if (address->ptr_ != nullptr) {
+  } else {
     tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
   }
   session::KernelWithIndex node_index(node, index);
