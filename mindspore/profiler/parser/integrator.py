@@ -1363,8 +1363,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
             metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
                                       recieve_alone_time, collective_comm_alone_time]
-            for metric in metrices_per_step_list:
-                metric.append(sum(metric) / step_num)
+            if step_num > 1:
+                for metric in metrices_per_step_list:
+                    metric.append(sum(metric[1:]) / (step_num - 1))
             self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel)
         except IndexError as e:
             logger.error(e)
