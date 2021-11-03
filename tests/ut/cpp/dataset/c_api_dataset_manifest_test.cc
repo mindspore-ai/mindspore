@@ -23,6 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: ManifestBasic.
+/// Description: test basic usage of ManifestDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestManifestBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasic.";
 
@@ -54,6 +57,9 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
   iter->Stop();
 }
 
+/// Feature: ManifestBasicWithPipeline.
+/// Description: test usage of ManifestDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasicWithPipeline.";
 
@@ -106,6 +112,65 @@ TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: ManifestIteratorOneColumn.
+/// Description: test iterator of ManifestDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestManifestIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorOneColumn.";
+std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+// Create a Manifest Dataset
+std::shared_ptr<Dataset> ds = Manifest(file_path);
+EXPECT_NE(ds, nullptr);
+
+// Create a Batch operation on ds
+int32_t batch_size = 1;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 2);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: ManifestIteratorWrongColumn.
+/// Description: test iterator of ManifestDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestManifestIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorWrongColumn.";
+std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+// Create a Manifest Dataset
+std::shared_ptr<Dataset> ds = Manifest(file_path);
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: ManifestGetters.
+/// Description: test usage of getters ManifestDataset.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestManifestGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestGetters.";
 
@@ -142,6 +207,9 @@ TEST_F(MindDataTestPipeline, TestManifestGetters) {
   EXPECT_EQ(class_index2[2].second[0], 2);
 }
 
+/// Feature: ManifestDecode.
+/// Description: test usage of ManifestDecode.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestManifestDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestDecode.";
 
@@ -176,6 +244,9 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
   iter->Stop();
 }
 
+/// Feature: ManifestEval.
+/// Description: test usage of ManifestEval.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestManifestEval) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestEval.";
 
@@ -207,6 +278,9 @@ TEST_F(MindDataTestPipeline, TestManifestEval) {
   iter->Stop();
 }
 
+/// Feature: ManifestClassIndex.
+/// Description: test usage of ManifestClassIndex.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestClassIndex.";
 
@@ -261,6 +335,9 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   iter->Stop();
 }
 
+/// Feature: ManifestNumSamplers.
+/// Description: test usage of ManifestDataset with num sampler.
+/// Expectation: get correct piece of data.
 TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestNumSamplers.";
 
@@ -292,6 +369,9 @@ TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
   iter->Stop();
 }
 
+/// Feature: ManifestError.
+/// Description: test failure of Manifest Dataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestManifestError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestError.";
 
@@ -324,6 +404,9 @@ TEST_F(MindDataTestPipeline, TestManifestError) {
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: ManifestWithNullSamplerError.
+/// Description: test failure of ManifestDataset with null sampler.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestManifestWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestWithNullSamplerError.";
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";

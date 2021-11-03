@@ -23,6 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: FlickrBasic.
+/// Description: test basic usage of FlickrDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestFlickrBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrBasic.";
 
@@ -56,6 +59,9 @@ TEST_F(MindDataTestPipeline, TestFlickrBasic) {
   iter->Stop();
 }
 
+/// Feature: FlickrBasicWithPipeline.
+/// Description: test usage of FlickrDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestFlickrBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrBasicWithPipeline.";
 
@@ -110,6 +116,66 @@ TEST_F(MindDataTestPipeline, TestFlickrBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: FlickrIteratorOneColumn.
+/// Description: test iterator of FlickrDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestFlickrIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrIteratorOneColumn.";
+std::string dataset_path = datasets_root_path_ + "/testFlickrData/flickr30k/flickr30k-images";
+std::string file_path = datasets_root_path_ + "/testFlickrData/flickr30k/test1.token";
+
+// Create a Flickr30k Dataset
+std::shared_ptr<Dataset> ds = Flickr(dataset_path, file_path);
+EXPECT_NE(ds, nullptr);
+
+// Create a Batch operation on ds
+int32_t batch_size = 1;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 2);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: FlickrIteratorWrongColumn.
+/// Description: test iterator of FlickrDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestFlickrIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrIteratorWrongColumn.";
+std::string dataset_path = datasets_root_path_ + "/testFlickrData/flickr30k/flickr30k-images";
+std::string file_path = datasets_root_path_ + "/testFlickrData/flickr30k/test1.token";
+
+// Create a Flickr30k Dataset
+std::shared_ptr<Dataset> ds = Flickr(dataset_path, file_path);
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestFlickrGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrGetters.";
 
@@ -131,6 +197,9 @@ TEST_F(MindDataTestPipeline, TestFlickrGetters) {
   EXPECT_EQ(ds2->GetColumnNames(), column_names);
 }
 
+/// Feature: FlickrAnnotations.
+/// Description: test usage of FlickrAnnotations.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestFlickrAnnotations) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrGetters.";
 
@@ -177,6 +246,9 @@ TEST_F(MindDataTestPipeline, TestFlickrAnnotations) {
   iter->Stop();
 }
 
+/// Feature: FlickrDecode.
+/// Description: test usage of FlickrDecode.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestFlickrDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrDecode.";
 
@@ -212,6 +284,9 @@ TEST_F(MindDataTestPipeline, TestFlickrDecode) {
   iter->Stop();
 }
 
+/// Feature: FlickrNumSamplers.
+/// Description: test usage of FlickrDataset with num sampler.
+/// Expectation: get correct piece of data.
 TEST_F(MindDataTestPipeline, TestFlickrNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrNumSamplers.";
 
@@ -250,6 +325,9 @@ TEST_F(MindDataTestPipeline, TestFlickrNumSamplers) {
   iter->Stop();
 }
 
+/// Feature: FlickrError.
+/// Description: test failure of Flickr Dataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestFlickrError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrError.";
 
@@ -292,6 +370,9 @@ TEST_F(MindDataTestPipeline, TestFlickrError) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: FlickrWithNullSamplerError.
+/// Description: test failure of FlickrDataset with null sampler.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestFlickrWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlickrWithNullSamplerError.";
 

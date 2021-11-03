@@ -23,6 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: DIV2KDataset.
+/// Description: test basic usage of DIV2KDataset.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestDIV2KBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KBasic.";
 
@@ -60,6 +63,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KBasic) {
   iter->Stop();
 }
 
+/// Feature: DIV2KDatasetWithPipeline.
+/// Description: test usage of DIV2KDataset with pipeline.
+/// Expectation: get correct number of data.
 TEST_F(MindDataTestPipeline, TestDIV2KBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KBasicWithPipeline.";
 
@@ -118,6 +124,71 @@ TEST_F(MindDataTestPipeline, TestDIV2KBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: DIV2KIteratorOneColumn.
+/// Description: test iterator of DIV2KDataset with only the "hr_image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestDIV2KIteratorOneColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KIteratorOneColumn.";
+// Create a DIV2K Dataset
+std::string dataset_path = datasets_root_path_ + "/testDIV2KData/div2k";
+std::string usage = "train";     // train valid, all
+std::string downgrade = "bicubic";  // bicubic, unknown, mild, difficult, wild
+int32_t scale = 2;               // 2, 3, 4, 8
+std::shared_ptr<Dataset> ds = DIV2K(dataset_path, usage, downgrade, scale);
+EXPECT_NE(ds, nullptr);
+
+// Create a Batch operation on ds
+int32_t batch_size = 1;
+ds = ds->Batch(batch_size);
+EXPECT_NE(ds, nullptr);
+
+// Create an iterator over the result of the above dataset
+// Only select "image" column and drop others
+std::vector<std::string> columns = {"hr_image"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+EXPECT_NE(iter, nullptr);
+
+// Iterate the dataset and get each row
+std::vector<mindspore::MSTensor> row;
+ASSERT_OK(iter->GetNextRow(&row));
+
+uint64_t i = 0;
+while (row.size() != 0) {
+for (auto &v : row) {
+MS_LOG(INFO) << "image shape:" << v.Shape();
+}
+ASSERT_OK(iter->GetNextRow(&row));
+i++;
+}
+
+EXPECT_EQ(i, 5);
+
+// Manually terminate the pipeline
+iter->Stop();
+}
+
+/// Feature: DIV2KIteratorWrongColumn.
+/// Description: test iterator of DIV2KDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestDIV2KIteratorWrongColumn) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KIteratorWrongColumn.";
+// Create a DIV2K Dataset
+std::string dataset_path = datasets_root_path_ + "/testDIV2KData/div2k";
+std::string usage = "train";     // train valid, all
+std::string downgrade = "bicubic";  // bicubic, unknown, mild, difficult, wild
+int32_t scale = 2;               // 2, 3, 4, 8
+std::shared_ptr<Dataset> ds = DIV2K(dataset_path, usage, downgrade, scale);
+EXPECT_NE(ds, nullptr);
+
+// Pass wrong column name
+std::vector<std::string> columns = {"digital"};
+std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: DIV2KDatasetGetters.
+/// Description: test usage of getters DIV2KDataset.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestDIV2KGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KGetters.";
 
@@ -142,6 +213,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KGetters) {
   EXPECT_EQ(ds2->GetColumnNames(), column_names);
 }
 
+/// Feature: DIV2KDecode.
+/// Description: test usage of DIV2KDecode.
+/// Expectation: get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestDIV2KDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KDecode.";
 
@@ -183,6 +257,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KDecode) {
   iter->Stop();
 }
 
+/// Feature: DIV2KNumSampler.
+/// Description: test usage of DIV2KDataset with num sampler.
+/// Expectation: get correct piece of data.
 TEST_F(MindDataTestPipeline, TestDIV2KNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KNumSamplers.";
 
@@ -223,6 +300,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KNumSamplers) {
   iter->Stop();
 }
 
+/// Feature: DIV2KError.
+/// Description: test failure of DIV2K Dataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestDIV2KError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KError.";
 
@@ -286,6 +366,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KError) {
   EXPECT_EQ(iter5, nullptr);
 }
 
+/// Feature: DIV2KWithNullSamplerError.
+/// Description: test failure of DIV2K Dataset.
+/// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestDIV2KWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KWithNullSamplerError.";
 
