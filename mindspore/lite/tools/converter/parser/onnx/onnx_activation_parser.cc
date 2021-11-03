@@ -51,6 +51,7 @@ ops::PrimitiveC *OnnxLeakyReluParser::Parse(const onnx::GraphProto &onnx_graph, 
 ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PReLUFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
   std::vector<onnx::TensorProto> params;
   const auto &input_name = onnx_node.input(1);
   auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),

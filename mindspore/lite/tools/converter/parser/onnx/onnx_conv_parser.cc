@@ -27,6 +27,7 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
                       int64_t *channel_out, int64_t *channel_in) {
   MS_ASSERT(channel_out != nullptr);
   MS_ASSERT(channel_in != nullptr);
+  MS_CHECK_GE(onnx_node.input_size(), kInputSize1, RET_ERROR);
   const auto &onnx_conv_weight = onnx_node.input(kWeightIndex);
   if (onnx_node.op_type() == "Conv") {
     auto node_iter =

@@ -27,9 +27,6 @@ namespace lite {
 ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   MS_CHECK_GE(tflite_op->inputs.size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::Resize>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -39,7 +36,9 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   prim->set_cubic_coeff(-0.75f);
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
-  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
+  auto &opcode = tflite_model->operator_codes[tflite_op->opcode_index];
+  MS_CHECK_TRUE_RET(opcode != nullptr, nullptr);
+  auto tflite_op_type = opcode->builtin_code;
   if (tflite_op_type == tflite::BuiltinOperator_RESIZE_BILINEAR) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
     const auto &tfliteAttr = tflite_op->builtin_options.AsResizeBilinearOptions();

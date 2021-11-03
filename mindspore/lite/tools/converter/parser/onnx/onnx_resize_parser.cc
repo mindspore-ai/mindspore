@@ -57,7 +57,12 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
         {"linear", mindspore::ResizeMethod::LINEAR},
         {"cubic", mindspore::ResizeMethod::CUBIC},
       };
-      prim->set_method(resize_mode[onnx_node_attr.s()]);
+      if (resize_mode.find(onnx_node_attr.s()) != resize_mode.end()) {
+        prim->set_method(resize_mode[onnx_node_attr.s()]);
+      } else {
+        MS_LOG(ERROR) << "Unsupported resize mode: " << attribute_name;
+        return nullptr;
+      }
     } else if (attribute_name == "nearest_mode") {
       std::map<std::string, mindspore::NearestMode> nearest_mode = {
         {"round_prefer_floor", mindspore::NearestMode::ROUND_HALF_DOWN},
@@ -65,7 +70,12 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
         {"floor", mindspore::NearestMode::FLOOR},
         {"ceil", mindspore::NearestMode::CEIL},
       };
-      prim->set_nearest_mode(nearest_mode[onnx_node_attr.s()]);
+      if (nearest_mode.find(onnx_node_attr.s()) != nearest_mode.end()) {
+        prim->set_nearest_mode(nearest_mode[onnx_node_attr.s()]);
+      } else {
+        MS_LOG(ERROR) << "Unsupported nearest mode: " << attribute_name;
+        return nullptr;
+      }
     }
   }
 

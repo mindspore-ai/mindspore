@@ -25,9 +25,6 @@ namespace lite {
 ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tfliteModel) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tfliteModel != nullptr, nullptr);
   auto prim = std::make_unique<ops::Reshape>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 

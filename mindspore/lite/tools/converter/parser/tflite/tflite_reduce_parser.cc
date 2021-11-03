@@ -25,9 +25,6 @@ namespace lite {
 ops::PrimitiveC *TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::ReduceFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -38,7 +35,9 @@ ops::PrimitiveC *TfliteReduceParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_keep_dims(tflite_attr->keep_dims);
 
-  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
+  auto &opcode = tflite_model->operator_codes[tflite_op->opcode_index];
+  MS_CHECK_TRUE_RET(opcode != nullptr, nullptr);
+  auto tflite_op_type = opcode->builtin_code;
   if (tflite_op_type == tflite::BuiltinOperator_REDUCE_MAX) {
     prim->set_mode(mindspore::ReduceMode::Reduce_Max);
   } else if (tflite_op_type == tflite::BuiltinOperator_REDUCE_MIN) {
