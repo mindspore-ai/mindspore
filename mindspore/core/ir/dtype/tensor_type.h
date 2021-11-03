@@ -35,7 +35,7 @@
 
 namespace mindspore {
 /// \brief UndeterminedType defines interface for tensor undetermined data type.
-class MS_CORE_API UndeterminedType : public Object {
+class MS_CORE_API UndeterminedType final : public Object {
  public:
   /// \brief Default constructor for UndeterminedType.
   UndeterminedType() : Object(kObjectTypeUndeterminedType) {}
@@ -114,7 +114,7 @@ class MS_CORE_API TensorType : public Object {
 using TensorTypePtr = std::shared_ptr<TensorType>;
 
 /// \brief RowTensorType defines interface for row tensor data type.
-class MS_CORE_API RowTensorType : public Object {
+class MS_CORE_API RowTensorType final : public Object {
  public:
   /// \brief Default constructor for RowTensorType.
   RowTensorType() : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType) {}
@@ -153,7 +153,7 @@ class MS_CORE_API RowTensorType : public Object {
 using RowTensorTypePtr = std::shared_ptr<RowTensorType>;
 
 /// \brief SparseTensorType defines interface for sparse tensor data type.
-class MS_CORE_API SparseTensorType : public Object {
+class MS_CORE_API SparseTensorType final : public Object {
  public:
   /// \brief Default constructor for SparseTensorType.
   SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}

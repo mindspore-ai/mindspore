@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace abstract {
-class StandardPrimEvaluator : public TrivialPrimEvaluator {
+class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
@@ -51,7 +51,7 @@ class StandardPrimEvaluator : public TrivialPrimEvaluator {
 
 using StandardPrimEvaluatorPtr = std::shared_ptr<StandardPrimEvaluator>;
 
-class PythonPrimEvaluator : public TrivialPrimEvaluator {
+class PythonPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   explicit PythonPrimEvaluator(const PrimitivePyPtr primitive)
       : TrivialPrimEvaluator("PythonPrimEvaluator"), prim_py_(primitive) {}
@@ -66,10 +66,11 @@ class PythonPrimEvaluator : public TrivialPrimEvaluator {
   PrimitivePyPtr prim_py_;
 };
 
-class DoSignatureEvaluator : public Evaluator {
+class DoSignatureEvaluator final : public Evaluator {
  public:
   explicit DoSignatureEvaluator(const PrimitivePtr primitive) : Evaluator("DoSignatureEvaluator"), prim_(primitive) {}
   ~DoSignatureEvaluator() override = default;
+  MS_DECLARE_PARENT(DoSignatureEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
@@ -81,10 +82,11 @@ class DoSignatureEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
-class UnpackGraphEvaluator : public Evaluator {
+class UnpackGraphEvaluator final : public Evaluator {
  public:
   explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
   ~UnpackGraphEvaluator() override = default;
+  MS_DECLARE_PARENT(UnpackGraphEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
@@ -96,11 +98,12 @@ class UnpackGraphEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
-class MixedPrecisionCastEvaluator : public Evaluator {
+class MixedPrecisionCastEvaluator final : public Evaluator {
  public:
   explicit MixedPrecisionCastEvaluator(const PrimitivePtr primitive)
       : Evaluator("MixedPrecisionCastEvaluator"), prim_(primitive) {}
   ~MixedPrecisionCastEvaluator() override = default;
+  MS_DECLARE_PARENT(MixedPrecisionCastEvaluator, Evaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
@@ -117,7 +120,7 @@ bool IsInWhiteList(const PrimitivePtr &primitive);
 using ValuePtrList = std::vector<ValuePtr>;
 using PrimitiveImpl = ValuePtr (*)(const ValuePtrList &);
 
-class UniformPrimEvaluator : public TrivialPrimEvaluator {
+class UniformPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   UniformPrimEvaluator(const FunctionPtr func_desc, PrimitiveImpl impl, bool eval_value, const TypePtr specify_out_type)
       : TrivialPrimEvaluator("UniformPrimEvaluator"),

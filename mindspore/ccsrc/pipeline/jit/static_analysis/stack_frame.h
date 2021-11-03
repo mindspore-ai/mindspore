@@ -31,7 +31,7 @@ using StackFramePtr = std::shared_ptr<StackFrame>;
 using EvaluatorWeakPtr = std::weak_ptr<Evaluator>;
 using BaseFuncGraphEvaluatorPtr = std::shared_ptr<BaseFuncGraphEvaluator>;
 
-class StackFrame : public Base {
+class StackFrame final : public Base {
  public:
   StackFrame(const EvaluatorPtr &evaluator, const FuncGraphPtr &func_graph, const AnalysisContextPtr &current_context,
              const AnalysisContextPtr &parent_context)
@@ -44,6 +44,8 @@ class StackFrame : public Base {
     Load();
   }
   virtual ~StackFrame() = default;
+
+  MS_DECLARE_PARENT(StackFrame, Base);
 
   void Load() {
     node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {

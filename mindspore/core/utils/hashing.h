@@ -50,5 +50,15 @@ struct PointerHash<std::shared_ptr<T>> {
   }
 };
 
+// Generate hash code for a string literal at compile time.
+// We using Java string hash algorithm here.
+constexpr uint32_t ConstStringHash(const char *str) {
+  uint32_t hash = 0;
+  while (*str) {
+    hash = hash * 31 + static_cast<uint32_t>(*str++);
+  }
+  return hash;
+}
+
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_HASHING_H_

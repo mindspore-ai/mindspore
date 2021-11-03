@@ -376,7 +376,7 @@ class MS_CORE_API ValueDictionary : public Value {
 using ValueDictionaryPtr = std::shared_ptr<ValueDictionary>;
 
 /// \brief StringImm defines a Value class whose type is String.
-class MS_CORE_API StringImm : public Value {
+class MS_CORE_API StringImm final : public Value {
  public:
   /// \brief Constructor of StringImm.
   ///
@@ -505,7 +505,7 @@ class MS_CORE_API Monad : public Value {
 };
 
 /// \brief UMonad defines a Value class which related to memory side effect.
-class MS_CORE_API UMonad : public Monad {
+class MS_CORE_API UMonad final : public Monad {
  public:
   /// \brief Constructor of UMonad.
   UMonad() : Monad(kUMonadType) {}
@@ -534,7 +534,7 @@ using UMonadPtr = std::shared_ptr<UMonad>;
 extern const ValuePtr kUMonad;
 
 /// \brief IOMonad defines a Value class which related to IO side effect.
-class MS_CORE_API IOMonad : public Monad {
+class MS_CORE_API IOMonad final : public Monad {
  public:
   /// \brief Constructor of IOMonad.
   IOMonad() : Monad(kIOMonadType) {}

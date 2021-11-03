@@ -28,7 +28,7 @@
 namespace mindspore {
 // TypeRefKey type
 /// \brief RefKeyType defines an Object class whose type is RefKey.
-class MS_CORE_API RefKeyType : public Object {
+class MS_CORE_API RefKeyType final : public Object {
  public:
   /// \brief Default constructor for RefKeyType.
   RefKeyType() : Object(kObjectTypeRefKey) {}
@@ -45,7 +45,7 @@ class MS_CORE_API RefKeyType : public Object {
 
 // TypeRef type
 /// \brief RefType defines a TensorType class whose type is Ref.
-class MS_CORE_API RefType : public TensorType {
+class MS_CORE_API RefType final : public TensorType {
  public:
   /// \brief Default constructor for RefType.
   RefType() : TensorType() {}

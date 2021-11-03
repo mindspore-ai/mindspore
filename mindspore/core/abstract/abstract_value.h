@@ -195,7 +195,7 @@ class MS_CORE_API AbstractBase : public Base {
 };
 
 /// \brief Class AbstractScalar describes a scalar's type and value.
-class MS_CORE_API AbstractScalar : public AbstractBase {
+class MS_CORE_API AbstractScalar final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScalar.
   AbstractScalar() : AbstractBase(kAnyValue, kAnyType) {}
@@ -265,7 +265,7 @@ class MS_CORE_API AbstractScalar : public AbstractBase {
 using AbstractScalarPtr = std::shared_ptr<AbstractScalar>;
 
 /// \brief Class AbstractType describes the abstract value from a Typeof node.
-class MS_CORE_API AbstractType : public AbstractBase {
+class MS_CORE_API AbstractType final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractType.
   ///
@@ -293,7 +293,7 @@ class MS_CORE_API AbstractType : public AbstractBase {
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
 /// \brief Class AbstractError describes the abstract value from an error.
-class MS_CORE_API AbstractError : public AbstractBase {
+class MS_CORE_API AbstractError final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractError.
   ///
@@ -325,7 +325,7 @@ class MS_CORE_API AbstractError : public AbstractBase {
 };
 
 /// \brief Class AbstractScript describes the script node's type, shape and value.
-class MS_CORE_API AbstractScript : public AbstractBase {
+class MS_CORE_API AbstractScript final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScript.
   AbstractScript() : AbstractBase(kAnyValue, kAnyType) {}
@@ -453,7 +453,7 @@ using AbstractFunctionPtrList = std::vector<AbstractFunctionPtr>;
 /// \brief Class AbstractKeywordArg describes an abstract value from a key-value node.
 ///
 /// Represents a key-value pair used in function's parameters.
-class MS_CORE_API AbstractKeywordArg : public AbstractBase {
+class MS_CORE_API AbstractKeywordArg final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractKeywordArg.
   ///
@@ -770,7 +770,7 @@ class MS_CORE_API AbstractSequeue : public AbstractBase {
 using AbstractSequeuePtr = std::shared_ptr<AbstractSequeue>;
 
 /// \brief Class AbstractTuple describes a tuple.
-class MS_CORE_API AbstractTuple : public AbstractSequeue {
+class MS_CORE_API AbstractTuple final : public AbstractSequeue {
  public:
   /// \brief Constructor of AbstractTuple.
   ///
@@ -810,7 +810,7 @@ class MS_CORE_API AbstractTuple : public AbstractSequeue {
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 
 /// \brief Class AbstractList describes a list.
-class MS_CORE_API AbstractList : public AbstractSequeue {
+class MS_CORE_API AbstractList final : public AbstractSequeue {
  public:
   /// \brief Constructor of AbstractList.
   ///
@@ -850,7 +850,7 @@ class MS_CORE_API AbstractList : public AbstractSequeue {
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
 /// \brief Class AbstractClass describes a class node's abstract value.
-class MS_CORE_API AbstractClass : public AbstractBase {
+class MS_CORE_API AbstractClass final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractClass.
   ///
@@ -922,7 +922,7 @@ class MS_CORE_API AbstractClass : public AbstractBase {
 using AbstractClassPtr = std::shared_ptr<AbstractClass>;
 
 /// \brief Class AbstractDictionary describes a dictionary node's abstract value.
-class MS_CORE_API AbstractDictionary : public AbstractBase {
+class MS_CORE_API AbstractDictionary final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractDictionary.
   ///
@@ -970,7 +970,7 @@ class MS_CORE_API AbstractDictionary : public AbstractBase {
 using AbstractDictionaryPtr = std::shared_ptr<AbstractDictionary>;
 
 /// \brief Class AbstractSlice describes a slice node's abstract value.
-class MS_CORE_API AbstractSlice : public AbstractBase {
+class MS_CORE_API AbstractSlice final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractSlice.
   ///
@@ -1029,7 +1029,7 @@ class MS_CORE_API AbstractSlice : public AbstractBase {
 using AbstractSlicePtr = std::shared_ptr<AbstractSlice>;
 
 /// \brief Class AbstractJTagged describes a J node's abstract value.
-class MS_CORE_API AbstractJTagged : public AbstractBase {
+class MS_CORE_API AbstractJTagged final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractJTagged.
   ///
@@ -1072,7 +1072,7 @@ class MS_CORE_API AbstractJTagged : public AbstractBase {
 using AbstractJTaggedPtr = std::shared_ptr<AbstractJTagged>;
 
 /// \brief Class AbstractNone describes a None node's abstract value.
-class MS_CORE_API AbstractNone : public AbstractBase {
+class MS_CORE_API AbstractNone final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractNone.
   AbstractNone() : AbstractBase() { set_type(std::make_shared<TypeNone>()); }
@@ -1105,7 +1105,7 @@ using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 ///
 /// The unassigned state value for variable,
 /// which means the variable is not assigned.
-class MS_CORE_API AbstractNull : public AbstractBase {
+class MS_CORE_API AbstractNull final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractNull.
   AbstractNull() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
@@ -1135,7 +1135,7 @@ using AbstractNullPtr = std::shared_ptr<AbstractNull>;
 ///
 /// The timeout state value for variable, which means
 /// the variable is not assigned because it is timeout.
-class MS_CORE_API AbstractTimeOut : public AbstractBase {
+class MS_CORE_API AbstractTimeOut final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractTimeOut.
   AbstractTimeOut() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
@@ -1162,7 +1162,7 @@ class MS_CORE_API AbstractTimeOut : public AbstractBase {
 using AbstractTimeOutPtr = std::shared_ptr<AbstractTimeOut>;
 
 /// \brief Class AbstractEllipsis describes a Ellipsis node's abstract value.
-class MS_CORE_API AbstractEllipsis : public AbstractBase {
+class MS_CORE_API AbstractEllipsis final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractEllipsis.
   AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<TypeEllipsis>()); }
@@ -1189,7 +1189,7 @@ class MS_CORE_API AbstractEllipsis : public AbstractBase {
 using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
 /// \brief Class AbstractRefKey describes a RefKey node's abstract value.
-class MS_CORE_API AbstractRefKey : public AbstractBase {
+class MS_CORE_API AbstractRefKey final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractRefKey.
   AbstractRefKey() : AbstractBase(), ref_key_value_(nullptr) { set_type(std::make_shared<RefKeyType>()); }
@@ -1238,7 +1238,7 @@ class MS_CORE_API AbstractRefKey : public AbstractBase {
 using AbstractRefKeyPtr = std::shared_ptr<AbstractRefKey>;
 
 /// \brief Class AbstractRef describes a RefTensor's abstract value.
-class MS_CORE_API AbstractRef : public AbstractTensor {
+class MS_CORE_API AbstractRef final : public AbstractTensor {
  public:
   /// \brief Constructor of AbstractRef.
   ///
@@ -1340,7 +1340,7 @@ MS_CORE_API std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_
 MS_CORE_API bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
 
 /// \brief Class AbstractRowTensor describes a RowTensor's abstract value.
-class MS_CORE_API AbstractRowTensor : public AbstractUndetermined {
+class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
  public:
   /// \brief Constructor of AbstractRowTensor.
   ///
@@ -1410,7 +1410,7 @@ class MS_CORE_API AbstractRowTensor : public AbstractUndetermined {
 };
 
 /// \brief Class AbstractSparseTensor describes a SparseTensor's abstract value.
-class MS_CORE_API AbstractSparseTensor : public AbstractUndetermined {
+class MS_CORE_API AbstractSparseTensor final : public AbstractUndetermined {
  public:
   /// \brief Constructor of AbstractSparseTensor.
   ///
@@ -1499,7 +1499,7 @@ class AbstractMonad : public AbstractBase {
 };
 using AbstractMonadPtr = std::shared_ptr<AbstractMonad>;
 
-class AbstractUMonad : public AbstractMonad {
+class AbstractUMonad final : public AbstractMonad {
  public:
   explicit AbstractUMonad(const ValuePtr &value = kUMonad) : AbstractMonad(value, kUMonadType) {}
   ~AbstractUMonad() override = default;
@@ -1512,7 +1512,7 @@ class AbstractUMonad : public AbstractMonad {
 };
 using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
 
-class AbstractIOMonad : public AbstractMonad {
+class AbstractIOMonad final : public AbstractMonad {
  public:
   explicit AbstractIOMonad(const ValuePtr &value = kIOMonad) : AbstractMonad(value, kIOMonadType) {}
   ~AbstractIOMonad() override = default;

@@ -380,7 +380,7 @@ class MS_CORE_API AnfNode : public Base {
 // stop_gradient_: a flag used to stop gradient.
 // Using stop_gradient() to get this flag, mainly used in ad.
 // Using set_stop_gradient() to set this flag.
-class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
+class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
  public:
   /// \brief Constructor.
   ///
@@ -705,7 +705,7 @@ class MS_CORE_API ANode : public AnfNode {
 // Parameter represents the parameter inputs of a function. They have no value.
 // Attributes:
 // default_param_value_: used to hold the inputting tensor of the model.
-class MS_CORE_API Parameter : public ANode {
+class MS_CORE_API Parameter final : public ANode {
  public:
   /// \brief Constructor.
   ///
@@ -897,7 +897,7 @@ class MS_CORE_API Value : public Base {
 
 // ValueNode is used to hold value. Unlike CNode and Parameter, ValueNode
 // does not belong to any particular function graph.
-class MS_CORE_API ValueNode : public ANode {
+class MS_CORE_API ValueNode final : public ANode {
  public:
   /// \brief Constructor of ValueNode.
   ///

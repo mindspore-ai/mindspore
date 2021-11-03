@@ -33,15 +33,17 @@ namespace mindspore {
 namespace compile {
 
 // Indicate a call to a new frame.
-struct CallWrap : public Base {
+struct CallWrap final : public Base {
   explicit CallWrap(const VMFramePtr &vm_frame) : frame(vm_frame) {}
+  MS_DECLARE_PARENT(CallWrap, Base);
   VMFramePtr frame{nullptr};
 };
 using CallWrapPtr = std::shared_ptr<CallWrap>;
 
 // Indicates a return with its value.
-struct ReturnWrap : public Base {
+struct ReturnWrap final : public Base {
   explicit ReturnWrap(const BaseRef &r_value) : value(r_value) {}
+  MS_DECLARE_PARENT(ReturnWrap, Base);
   BaseRef value{BaseRef()};
 };
 using ReturnWrapPtr = std::shared_ptr<ReturnWrap>;

@@ -63,7 +63,7 @@ class MS_CORE_API Scalar : public Value {
 using ScalarPtr = std::shared_ptr<Scalar>;
 
 /// \beief BoolImm defines interface for bool data.
-class MS_CORE_API BoolImm : public Scalar {
+class MS_CORE_API BoolImm final : public Scalar {
  public:
   /// \brief The constructor of BoolImm.
   ///
@@ -120,7 +120,7 @@ class MS_CORE_API IntergerImm : public Scalar {
 };
 
 /// \beief Int8Imm defines interface for int8 data.
-class MS_CORE_API Int8Imm : public IntergerImm {
+class MS_CORE_API Int8Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for Int8Imm.
   Int8Imm() : IntergerImm(kInt8), v_(0) {}
@@ -158,7 +158,7 @@ class MS_CORE_API Int8Imm : public IntergerImm {
 using Int8ImmPtr = std::shared_ptr<Int8Imm>;
 IMM_TRAITS(Int8ImmPtr, int8_t)
 /// \beief Int16Imm defines interface for int16 data.
-class MS_CORE_API Int16Imm : public IntergerImm {
+class MS_CORE_API Int16Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for Int16Imm.
   Int16Imm() : IntergerImm(kInt16), v_(0) {}
@@ -197,7 +197,7 @@ using Int16ImmPtr = std::shared_ptr<Int16Imm>;
 IMM_TRAITS(Int16ImmPtr, int16_t)
 
 /// \beief Int32Imm defines interface for int32 data.
-class MS_CORE_API Int32Imm : public IntergerImm {
+class MS_CORE_API Int32Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for Int32Imm.
   Int32Imm() : IntergerImm(kInt32), v_(0) {}
@@ -236,7 +236,7 @@ using Int32ImmPtr = std::shared_ptr<Int32Imm>;
 IMM_TRAITS(Int32ImmPtr, int32_t)
 
 /// \beief Int64Imm defines interface for int64 data.
-class MS_CORE_API Int64Imm : public IntergerImm {
+class MS_CORE_API Int64Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for Int64Imm.
   Int64Imm() : IntergerImm(kInt64), v_(0) {}
@@ -274,7 +274,7 @@ class MS_CORE_API Int64Imm : public IntergerImm {
 using Int64ImmPtr = std::shared_ptr<Int64Imm>;
 IMM_TRAITS(Int64ImmPtr, int64_t)
 /// \beief UInt8Imm defines interface for uint8 data.
-class MS_CORE_API UInt8Imm : public IntergerImm {
+class MS_CORE_API UInt8Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for UInt8Imm.
   UInt8Imm() : IntergerImm(kUInt8), v_(0) {}
@@ -315,7 +315,7 @@ using UInt8ImmPtr = std::shared_ptr<UInt8Imm>;
 IMM_TRAITS(UInt8ImmPtr, uint8_t);
 
 /// \beief UInt16Imm defines interface for uint16 data.
-class MS_CORE_API UInt16Imm : public IntergerImm {
+class MS_CORE_API UInt16Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for UInt16Imm.
   UInt16Imm() : IntergerImm(kUInt16), v_(0) {}
@@ -356,7 +356,7 @@ using UInt16ImmPtr = std::shared_ptr<UInt16Imm>;
 IMM_TRAITS(UInt16ImmPtr, uint16_t);
 
 /// \beief UInt32Imm defines interface for uint32 data.
-class MS_CORE_API UInt32Imm : public IntergerImm {
+class MS_CORE_API UInt32Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for UInt32Imm.
   UInt32Imm() : IntergerImm(kUInt32), v_(0) {}
@@ -396,7 +396,7 @@ class MS_CORE_API UInt32Imm : public IntergerImm {
 using UInt32ImmPtr = std::shared_ptr<UInt32Imm>;
 IMM_TRAITS(UInt32ImmPtr, uint32_t);
 /// \beief UInt64Imm defines interface for uint64 data.
-class MS_CORE_API UInt64Imm : public IntergerImm {
+class MS_CORE_API UInt64Imm final : public IntergerImm {
  public:
   /// \beief The default constructor for UInt64Imm.
   UInt64Imm() : IntergerImm(kUInt64), v_(0) {}
@@ -451,7 +451,7 @@ class MS_CORE_API FloatImm : public Scalar {
 using FloatImmPtr = std::shared_ptr<FloatImm>;
 
 /// \beief FP32Imm defines interface for float32 data.
-class MS_CORE_API FP32Imm : public FloatImm {
+class MS_CORE_API FP32Imm final : public FloatImm {
  public:
   /// \beief The default constructor for FP32Imm.
   FP32Imm() : FloatImm(kFloat32), v_(0.0) {}
@@ -489,7 +489,7 @@ class MS_CORE_API FP32Imm : public FloatImm {
 using FP32ImmPtr = std::shared_ptr<FP32Imm>;
 IMM_TRAITS(FP32ImmPtr, float)
 /// \beief FP64Imm defines interface for float64 data.
-class MS_CORE_API FP64Imm : public FloatImm {
+class MS_CORE_API FP64Imm final : public FloatImm {
  public:
   /// \beief The default constructor for FP64Imm.
   FP64Imm() : FloatImm(kFloat64), v_(0.0) {}

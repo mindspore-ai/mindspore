@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ using ResourceBasePtr = std::shared_ptr<ResourceBase>;
 namespace mindspore {
 namespace parse {
 // NameSpace class for resolving python code.
-class NameSpace : public Named {
+class NameSpace final : public Named {
  public:
   NameSpace(const std::string &module, const py::object &obj, const py::object &module_obj = py::object())
       : Named(module), module_(module), obj_(obj), module_obj_(module_obj) {}
@@ -62,7 +62,7 @@ class NameSpace : public Named {
 using NameSpacePtr = std::shared_ptr<NameSpace>;
 
 // Symbol in NameSpace or Class which shall be resolved.
-class Symbol : public Named {
+class Symbol final : public Named {
  public:
   explicit Symbol(const std::string &symbol) : Named(symbol), symbol_(symbol) {}
   Symbol(const std::string &symbol, const std::string &name) : Named(name), symbol_(symbol) {}
@@ -80,7 +80,7 @@ class Symbol : public Named {
 };
 using SymbolPtr = std::shared_ptr<Symbol>;
 
-class Script : public Named {
+class Script final : public Named {
  public:
   explicit Script(const std::string &script) : Named(script), script_(script) {}
   Script(const std::string &script, const std::string &name) : Named(name), script_(script) {}
@@ -113,7 +113,7 @@ class PyObjectWrapper : public Named {
 };
 
 // InterpretedObject class wrappers interpreted python object.
-class InterpretedObject : public PyObjectWrapper {
+class InterpretedObject final : public PyObjectWrapper {
  public:
   explicit InterpretedObject(const py::object &obj, const std::string &name = "null")
       : PyObjectWrapper(obj, "InterpretedObject: '" + name + "'") {}
@@ -127,7 +127,7 @@ class InterpretedObject : public PyObjectWrapper {
 using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;
 
 // ClassObject class wrappers dataclass
-class ClassObject : public PyObjectWrapper {
+class ClassObject final : public PyObjectWrapper {
  public:
   explicit ClassObject(const py::object &obj, const std::string &name = "Python dataclass")
       : PyObjectWrapper(obj, name) {}
@@ -137,7 +137,7 @@ class ClassObject : public PyObjectWrapper {
 };
 
 // ClassType class wrappers class name in python
-class ClassType : public PyObjectWrapper {
+class ClassType final : public PyObjectWrapper {
  public:
   explicit ClassType(const py::object &obj, const std::string &name = "Python class type")
       : PyObjectWrapper(obj, name) {}

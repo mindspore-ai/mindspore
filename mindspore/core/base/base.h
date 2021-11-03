@@ -26,6 +26,8 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include <algorithm>
+#include "utils/hashing.h"
 #include "utils/visible.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
@@ -40,6 +42,9 @@ struct is_shared_ptr<std::shared_ptr<T>> : public std::true_type {};
 /// \brief Base is a base class of many derived classes, which provides basic interfaces such as hash, and so on.
 class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
  public:
+  /// \brief The type id of this class.
+  static constexpr uint32_t kTypeId = ConstStringHash("Base");
+
   /// \brief The constructor of Base.
   ///
   /// \return The instance of Base.
@@ -92,32 +97,36 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \return The text representation.
   virtual std::string DumpText() const { return ToString(); }
 
-  /// \brief Judge whether a type id is the same as the type id of this object.
+  /// \brief Judge whether this object is an instance of class with the given type id.
   ///
   /// \param[in] tid Define a type id.
   ///
   /// \return The result of the judgment.
-  virtual const bool IsFromTypeId(uint32_t tid) const;
+  virtual bool IsFromTypeId(uint32_t tid) const { return Base::IsDerivedFrom(tid); }
+
+  /// \brief Judge whether the type id of this object is same as the given type id.
+  ///
+  /// \param[in] tid Define a type id.
+  ///
+  /// \return The result of the judgment.
+  virtual bool IsSameTypeId(uint32_t tid) const { return tid == Base::kTypeId; }
 
   /// \brief Get the type name of this object.
   ///
   /// \return The type name.
   virtual std::string type_name() const { return "Base"; }
 
-  /// \brief Get a type id which is a hash value from a type name.
-  ///
-  /// \param[in] type_key Define a string for the type name.
-  ///
-  /// \return The type id.
-  static uint32_t GetTypeId(const char *const type_key);
-
   /// \brief Get the type id of this object.
   ///
   /// \return The type id.
-  virtual uint32_t tid() const {
-    static const uint32_t tid = GetTypeId(typeid(Base).name());
-    return tid;
-  }
+  virtual uint32_t tid() const { return Base::kTypeId; }
+
+  /// \brief Judge whether this class is derived from class with the given type id.
+  ///
+  /// \param[in] tid Define a type id.
+  ///
+  /// \return The result of the judgment.
+  static bool IsDerivedFrom(uint32_t tid) __attribute__((__always_inline__)) { return tid == Base::kTypeId; }
 
   /// \brief Judge whether this object is an instance of a given class which is derived from Base.
   ///
@@ -125,8 +134,11 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   template <typename T,
             typename std::enable_if<!is_shared_ptr<T>::value && std::is_base_of<Base, T>::value, T>::type * = nullptr>
   inline bool isa() const {
-    static const uint32_t tid = GetTypeId(typeid(T).name());
-    return this->IsFromTypeId(tid);
+    if constexpr (std::is_final<T>::value) {
+      return this->IsSameTypeId(T::kTypeId);
+    } else {
+      return this->IsFromTypeId(T::kTypeId);
+    }
   }
 
   /// \brief Cast a shared_ptr of this object to a given class.
@@ -174,18 +186,14 @@ inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
   }
 }
 
-#define MS_DECLARE_PARENT(current_t, parent_t)                             \
-  uint32_t tid() const override {                                          \
-    static const uint32_t tid = GetTypeId(typeid(current_t).name());       \
-    return tid;                                                            \
-  }                                                                        \
-  const bool IsFromTypeId(uint32_t from_tid) const override {              \
-    static const uint32_t tid = Base::GetTypeId(typeid(current_t).name()); \
-    if (tid == from_tid) {                                                 \
-      return true;                                                         \
-    }                                                                      \
-    return parent_t::IsFromTypeId(from_tid);                               \
-  }                                                                        \
+#define MS_DECLARE_PARENT(current_t, parent_t)                                             \
+  static constexpr uint32_t kTypeId = ConstStringHash(#parent_t "_" #current_t);           \
+  static bool IsDerivedFrom(uint32_t tid) __attribute__((__always_inline__)) {             \
+    return (tid == current_t::kTypeId) || parent_t::IsDerivedFrom(tid);                    \
+  }                                                                                        \
+  uint32_t tid() const override { return current_t::kTypeId; }                             \
+  bool IsFromTypeId(uint32_t tid) const override { return current_t::IsDerivedFrom(tid); } \
+  bool IsSameTypeId(uint32_t tid) const override { return tid == current_t::kTypeId; }     \
   std::string type_name() const override { return #current_t; }
 
 class Type;
@@ -208,22 +216,6 @@ using AbstractAttribute = std::pair<std::string, AbstractBasePtr>;
 class AnalysisContext;
 using AnalysisContextPtr = std::shared_ptr<AnalysisContext>;
 }  // namespace abstract
-
-/// \brief TypeIdManager is a manager for saving and reading the type id.
-struct MS_EXPORT TypeIdManager {
-  std::mutex mutex;
-  std::atomic<uint32_t> type_counter{0};
-  std::unordered_map<std::string, uint32_t> map;
-  /// \brief Get the singleton pointer of TypeIdManager.
-  ///
-  /// \return The singleton pointer of TypeIdManager.
-  static TypeIdManager *Get();
-
-  /// \brief The constructor of TypeIdManager.
-  ///
-  /// \return The instance of TypeIdManager.
-  TypeIdManager() : mutex(), type_counter(0), map() {}
-};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_BASE_H_

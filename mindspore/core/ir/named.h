@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ struct MS_CORE_API NamedEqual {
   }
 };
 /// \beief None defines interface for none data.
-class MS_CORE_API None : public Named {
+class MS_CORE_API None final : public Named {
  public:
   /// \beief The default constructor for None.
   None() : Named("None") {}
@@ -124,7 +124,7 @@ class MS_CORE_API None : public Named {
 inline const NamedPtr kNone = std::make_shared<None>();
 
 /// \beief Null defines interface for null data.
-class MS_CORE_API Null : public Named {
+class MS_CORE_API Null final : public Named {
  public:
   /// \beief The default constructor for Null.
   Null() : Named("Null") {}
@@ -136,7 +136,7 @@ class MS_CORE_API Null : public Named {
 inline const NamedPtr kNull = std::make_shared<Null>();
 
 /// \beief Ellipsis defines interface for ... data.
-class MS_CORE_API Ellipsis : public Named {
+class MS_CORE_API Ellipsis final : public Named {
  public:
   /// \beief The default constructor for Ellipsis.
   Ellipsis() : Named("Ellipsis") {}
