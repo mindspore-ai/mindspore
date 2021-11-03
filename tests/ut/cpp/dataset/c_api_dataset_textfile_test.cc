@@ -283,6 +283,21 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
+// Feature: Test Textfile dataset
+// Description: Create TextFile dataset with a file that does not exist and check the size of the dataset
+// Expectation: The dataset should have size 0
+TEST_F(MindDataTestPipeline, TestTextFileFileNotExist) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail8.";
+
+  // Create a TextFile Dataset
+  // with non-existent dataset_files input
+  std::string tf_file1 = datasets_root_path_ + "/does/not/exist/0.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1});
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 0);
+}
+
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFalse1A.";
   // Test TextFile Dataset with two text files and no shuffle, num_parallel_workers=1
