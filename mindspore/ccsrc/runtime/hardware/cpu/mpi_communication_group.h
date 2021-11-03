@@ -20,24 +20,40 @@
 #include <mpi.h>
 #include <string>
 #include <vector>
-#include "runtime/hardware/communication_group.h"
+#include <memory>
+#include "runtime/hardware/collective/communication_group.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
 class MPICommunicationGroup : public CommunicationGroup {
  public:
-  explicit MPICommunicationGroup(uint32_t size, const std::string name, const std::vector<uint32_t> &group_ranks)
-      : CommunicationGroup(size, name, group_ranks) {}
+  explicit MPICommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks)
+      : CommunicationGroup(name, group_ranks) {}
 
-  ~MPICommunicationGroup() = default;
+  ~MPICommunicationGroup() override = default;
 
-  void Initialize() override;
+  void Initialize() override { return; }
   void Finalize() override;
 
+  // The OpenMPI groups should be created from the world group.
+  void Initialize(const MPI_Group &world_group);
+
  private:
-  MPI_Group mpi_group_;
+  MPI_Group group_;
+  MPI_Comm group_communicator_;
 };
+using MPICommunicationGroupPtr = std::shared_ptr<MPICommunicationGroup>;
+
+#define CHECK_MPI_RET(expression, message) \
+  do {                                     \
+    {                                      \
+      auto ret = (expression);             \
+      if (ret != MPI_SUCCESS) {            \
+        MS_LOG(EXCEPTION) << (message);    \
+      }                                    \
+    }                                      \
+  } while (false)
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

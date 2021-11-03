@@ -31,11 +31,14 @@ namespace device {
 // MsCollectiveCommLib which uses the host-side communication library developed by MindSpore.
 class CollectiveCommunicationLib {
  public:
-  CollectiveCommunicationLib() : global_rank_id_(0), local_rank_id_(0), groups_({}) {}
+  CollectiveCommunicationLib() : global_rank_id_(0), local_rank_id_(0), global_rank_size_(0) {}
   virtual ~CollectiveCommunicationLib() { groups_.clear(); }
 
   // Initialize collecitve communication library.
-  virtual void Initialize() { return; }
+  // Input 'global_rank' represents this process's global rank.
+  // Normally, collective communication libraries on host side will generate this rank inside the 'Initialize' method.
+  // But collective communication libraries on device side needs this input passed by the caller.
+  virtual void Initialize(uint32_t global_rank = UINT32_MAX) { return; }
 
   // Finalize collecitve communication library.
   virtual void Finalize() { return; }
@@ -46,7 +49,7 @@ class CollectiveCommunicationLib {
   }
 
   // Destroy the communication group.
-  virtual bool DestroyCommunicationGroup(const std::string &group_name) { return true; }
+  virtual bool DestroyCommunicationGroup(const std::string &group_name);
 
   // Get the rank id of this process in the specified group.
   uint32_t GetRankId(const std::string &group_name);
@@ -63,6 +66,9 @@ class CollectiveCommunicationLib {
 
   // The local rank id of this process within the same node. This is usually used as device id.
   uint32_t local_rank_id_;
+
+  // The global rank size. Normally this is equal to `total process number`.
+  uint32_t global_rank_size_;
 
   // This map stores the groups which will be accessed and used by the caller.
   std::map<std::string, std::shared_ptr<CommunicationGroup>> groups_;

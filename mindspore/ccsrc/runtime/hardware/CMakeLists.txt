@@ -1,5 +1,5 @@
 file(GLOB_RECURSE HARDWARE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "device_context_manager.cc")
+    "device_context_manager.cc" "collective/*.cc")
 
 if(ENABLE_D)
     file(GLOB_RECURSE HARDWARE_D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc")
@@ -11,9 +11,14 @@ endif()
 
 if(ENABLE_CPU)
     file(GLOB_RECURSE HARDWARE_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
+    list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "cpu/mpi_collective_comm_lib.cc" "cpu/mpi_communication_group.cc")
+    if(ENABLE_MPI)
+        list(APPEND HARDWARE_CPU_SRC_LIST "cpu/mpi_collective_comm_lib.cc" "cpu/mpi_communication_group.cc")
+    endif()
 endif()
 
+
 set_property(SOURCE ${HARDWARE_SRC_LIST} ${HARDWARE_D_SRC_LIST} ${HARDWARE_GPU_SRC_LIST} ${HARDWARE_CPU_SRC_LIST}
-    PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+                    PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 add_library(_mindspore_runtime_hardware_obj OBJECT ${HARDWARE_SRC_LIST} ${HARDWARE_D_SRC_LIST}
             ${HARDWARE_GPU_SRC_LIST} ${HARDWARE_CPU_SRC_LIST})

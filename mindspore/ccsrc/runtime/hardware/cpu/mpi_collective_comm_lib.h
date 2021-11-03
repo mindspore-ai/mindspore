@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include "runtime/hardware/collective/collective_communication_lib.h"
+#include "runtime/hardware/cpu/mpi_communication_group.h"
 
 namespace mindspore {
 namespace device {
@@ -32,15 +33,17 @@ class MPICollectiveCommLib : public CollectiveCommunicationLib {
     return instance;
   }
 
-  void Initialize() override;
+  void Initialize(uint32_t global_rank = UINT32_MAX) override;
   void Finalize() override;
 
+  // Override creating method. Reuse destroying method in base class CollectiveCommunicationLib.
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
-  bool DestroyCommunicationGroup(const std::string &group_name) override;
 
  private:
   MPICollectiveCommLib() {}
-  ~MPICollectiveCommLib() override;
+  ~MPICollectiveCommLib() override = default;
+
+  MPI_Group world_group_;
 };
 }  // namespace cpu
 }  // namespace device
