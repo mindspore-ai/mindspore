@@ -157,14 +157,14 @@ class ROC(Metric):
         fpr, tpr, thresholds = [], [], []
         for c in range(class_num):
             preds_c = y_pred[:, c]
-            res = self.roc(preds_c, y, class_num=1, pos_label=c, sample_weights=sample_weights)
+            res = self._roc(preds_c, y, class_num=1, pos_label=c, sample_weights=sample_weights)
             fpr.append(res[0])
             tpr.append(res[1])
             thresholds.append(res[2])
 
         return fpr, tpr, thresholds
 
-    def roc(self, y_pred, y, class_num=None, pos_label=None, sample_weights=None):
+    def _roc(self, y_pred, y, class_num=None, pos_label=None, sample_weights=None):
         """
         Update curve and return the result of the ROC curve.
 
