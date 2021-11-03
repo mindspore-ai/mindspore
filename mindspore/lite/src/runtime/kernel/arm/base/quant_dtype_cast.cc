@@ -86,12 +86,14 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
                                  quant_arg.zeroPoint, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
-    bool from_uint8_src = false;
     if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
-      from_uint8_src = true;
+      ret =
+        DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                                            quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
+    } else {
+      ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                                 quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
     }
-    ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                               quant_arg.zeroPoint, num_unit_thread, from_uint8_src);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
     ret = Int8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
@@ -108,12 +110,14 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
                                  input_quant_arg.zeroPoint, num_unit_thread);
     if (ret) {
       auto output_quant_arg = out_tensors_.front()->quant_params().front();
-      bool from_uint8_src = false;
       if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
-        from_uint8_src = true;
+        ret = DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset,
+                                                  output_quant_arg.scale, output_quant_arg.zeroPoint, num_unit_thread,
+                                                  (int32_t)INT8_MIN, (int32_t)INT8_MAX);
+      } else {
+        ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset, output_quant_arg.scale,
+                                   output_quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
       }
-      ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset, output_quant_arg.scale,
-                                 output_quant_arg.zeroPoint, num_unit_thread, from_uint8_src);
     }
   } else {
     MS_LOG(ERROR) << "param data type not supported:"
