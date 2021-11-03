@@ -20,7 +20,6 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-#include <stdio.h>
 
 #ifdef ENABLE_ARM64
 inline void Int8ToFp32_arm64(const int8_t *quant_values, float *dst, float scale, int32_t zp, int size) {
