@@ -57,12 +57,14 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   CHECK_NULL_RETURN(mean_ptr);
   auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
   CHECK_NULL_RETURN(var_ptr);
+  MS_CHECK_GT(mean->ElementsNum(), 0, RET_ERROR);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(mean->ElementsNum()) * sizeof(float));
   alpha_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(mean->ElementsNum()) * sizeof(float)));
   if (alpha_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+  MS_CHECK_GT(variance->ElementsNum(), 0, RET_ERROR);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(variance->ElementsNum()) * sizeof(float));
   beta_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(variance->ElementsNum()) * sizeof(float)));
   if (beta_addr_ == nullptr) {
@@ -114,12 +116,14 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
   CHECK_NULL_RETURN(var_ptr);
 
+  MS_CHECK_GT(mean->ElementsNum(), 0, RET_ERROR);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(mean->ElementsNum()) * sizeof(float));
   alpha_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(mean->ElementsNum()) * sizeof(float)));
   if (alpha_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+  MS_CHECK_GT(variance->ElementsNum(), 0, RET_ERROR);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(variance->ElementsNum()) * sizeof(float));
   beta_addr_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(variance->ElementsNum()) * sizeof(float)));
   if (beta_addr_ == nullptr) {

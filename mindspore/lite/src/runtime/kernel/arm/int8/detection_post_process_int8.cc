@@ -51,6 +51,7 @@ int DequantizeInt8ToFp32Run(void *cdata, int task_id, float lhs_scale, float rhs
 int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **data) {
   data_int8_ = reinterpret_cast<int8_t *>(tensor->data());
   CHECK_NULL_RETURN(data_int8_);
+  MS_CHECK_GT(tensor->ElementsNum(), 0, RET_ERROR);
   *data = reinterpret_cast<float *>(ms_context_->allocator->Malloc(tensor->ElementsNum() * sizeof(float)));
   if (*data == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed.";

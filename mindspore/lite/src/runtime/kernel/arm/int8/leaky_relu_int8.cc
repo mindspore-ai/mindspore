@@ -80,6 +80,7 @@ int LeakyReluInt8CPUKernel::ReSize() {
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto input_dim = input_tensor->shape().size();
   quant_prelu_parm_.input_dim_ = input_dim;
+  MS_CHECK_GT(in_tensors_.at(0)->Size(), 0, RET_ERROR);
   quant_prelu_parm_.element_num = in_tensors_.at(0)->Size();
   auto input_shape = input_tensor->shape();
   if (quant_prelu_parm_.in_shape_ != nullptr) {

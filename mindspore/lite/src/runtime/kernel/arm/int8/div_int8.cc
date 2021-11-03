@@ -70,6 +70,9 @@ int DivInt8CPUKernel::Prepare() {
 int DivInt8CPUKernel::ReSize() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
+  MS_CHECK_GT(input0->ElementsNum(), 0, RET_ERROR);
+  MS_CHECK_GT(input1->ElementsNum(), 0, RET_ERROR);
+
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
   div_scalar_ = input1->ElementsNum() == 1;
   return RET_OK;
@@ -80,6 +83,7 @@ int DivInt8CPUKernel::DoExecute(int task_id) {
   auto input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
   auto output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
+  MS_CHECK_GT(element_num, 0, RET_ERROR);
 
   MS_ASSERT(op_parameter_->thread_num_ != 0);
   int stride = UP_DIV(element_num, op_parameter_->thread_num_);

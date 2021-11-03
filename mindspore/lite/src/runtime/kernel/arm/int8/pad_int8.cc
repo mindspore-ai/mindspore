@@ -205,6 +205,7 @@ int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   CHECK_NULL_RETURN(output_data);
 
   MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
+  MS_CHECK_GT(output->ElementsNum(), 0, RET_ERROR);
   int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
@@ -260,6 +261,7 @@ int PadInt8CPUKernel::CopyPaddingFromInput() {
   }
   auto input_shape = in_tensors_.at(0)->shape();
   int rank = static_cast<int>(input_shape.size());
+  MS_CHECK_GT(padding_tensor->ElementsNum(), 0, RET_ERROR);
   if (padding_tensor->ElementsNum() != rank * 2) {
     MS_LOG(ERROR) << "Pad second input elements num" << padding_tensor->ElementsNum() << ", should be " << rank * 2;
     return RET_ERROR;
@@ -279,6 +281,7 @@ int PadInt8CPUKernel::Run() {
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(out_data_);
   int error_code;
+  MS_CHECK_GT(out_tensors_[0]->ElementsNum(), 0, RET_ERROR);
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0],
            static_cast<size_t>(out_tensors_[0]->ElementsNum()) * sizeof(int8_t));

@@ -73,6 +73,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
+  MS_CHECK_GT(indices_element_size, 0, RET_ERROR);
   MS_CHECK_LT(axis_, in_rank, RET_ERROR);
   const int limit = in_shape.at(axis_);
   for (int i = 0; i < indices_element_size; ++i) {

@@ -64,6 +64,7 @@ int ArithmeticSelfInt8CPUKernel::Prepare() {
 
 int ArithmeticSelfInt8CPUKernel::ReSize() {
   data_size_ = in_tensors_[0]->ElementsNum();
+  MS_CHECK_GT(data_size_, 0, RET_ERROR);
   thread_sz_count_ = MSMIN(thread_count_, static_cast<int>(data_size_));
   if (thread_sz_count_ == 0) {
     MS_LOG(ERROR) << "div zero";

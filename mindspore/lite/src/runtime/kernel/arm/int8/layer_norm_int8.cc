@@ -70,6 +70,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   }
   double gamma_scale = gamma_tensor->quant_params().front().scale;
   int gamma_zp = gamma_tensor->quant_params().front().zeroPoint;
+  MS_CHECK_GT(gamma_tensor->ElementsNum(), 0, RET_ERROR);
   gamma_ptr_ = reinterpret_cast<float *>(malloc(gamma_tensor->ElementsNum() * sizeof(float)));
   CHECK_NULL_RETURN(gamma_ptr_);
   int8_t *src_gamma = reinterpret_cast<int8_t *>(gamma_tensor->data());
@@ -79,6 +80,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
 
   lite::Tensor *beta_tensor = in_tensors_.at(2);
   CHECK_NULL_RETURN(beta_tensor);
+  MS_CHECK_GT(beta_tensor->ElementsNum(), 0, RET_ERROR);
   beta_ptr_ = reinterpret_cast<float *>(malloc(beta_tensor->ElementsNum() * sizeof(float)));
   if (beta_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc beta_ptr_ failed";
