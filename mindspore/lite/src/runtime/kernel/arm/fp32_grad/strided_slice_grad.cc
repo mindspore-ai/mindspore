@@ -50,8 +50,6 @@ int StridedSliceGradCPUKernel::Prepare() {
       MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
       return RET_ERROR;
   }
-  FillEmptyDims();
-  FillOutputDim();
   return ReSize();
 }
 
@@ -113,7 +111,11 @@ void StridedSliceGradCPUKernel::FillOutputDim() {
   }
 }
 
-int StridedSliceGradCPUKernel::ReSize() { return RET_OK; }
+int StridedSliceGradCPUKernel::ReSize() {
+  FillEmptyDims();
+  FillOutputDim();
+  return RET_OK;
+}
 
 int StridedSliceGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);

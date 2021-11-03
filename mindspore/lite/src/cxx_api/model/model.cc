@@ -102,6 +102,14 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
   return impl_->Resize(inputs, dims);
 }
 
+Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
+  }
+  return impl_->UpdateWeights(new_weights);
+}
+
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                       const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {

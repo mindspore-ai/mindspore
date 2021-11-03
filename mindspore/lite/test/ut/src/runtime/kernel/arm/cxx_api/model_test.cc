@@ -229,4 +229,29 @@ TEST_F(TestCxxApiLiteModel, test_fp16_SUCCESS) {
   train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
   ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
 }
+
+#define NUM_OF_CLASSES 10
+#define FEATURE_SIZE 10
+TEST_F(TestCxxApiLiteModel, set_weights_FAILURE) {
+  Model model;
+  Graph graph;
+  auto context = std::make_shared<Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  cpu_context->SetEnableFP16(true);
+  context->MutableDeviceInfo().push_back(cpu_context);
+  auto train_cfg = std::make_shared<TrainCfg>();
+  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
+
+  ASSERT_TRUE(Serialization::Load("./nets/mix_lenet_tod.ms", ModelType::kMindIR, &graph) == kSuccess);
+  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
+  std::vector<mindspore::MSTensor> changes;
+  ASSERT_TRUE(model.UpdateWeights(changes) != kSuccess);
+  changes.push_back(
+    *MSTensor::CreateTensor("fc4.weight", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0));
+  ASSERT_TRUE(model.UpdateWeights(changes) != kSuccess);
+  changes.clear();
+  changes.push_back(
+    *MSTensor::CreateTensor("fc3.bias", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0));
+  ASSERT_TRUE(model.UpdateWeights(changes) == kSuccess);
+}
 }  // namespace mindspore
