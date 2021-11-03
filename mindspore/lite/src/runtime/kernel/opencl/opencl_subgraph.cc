@@ -88,7 +88,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     auto *in_tensor = in_tensors.at(i);
     auto *new_tensor = new (std::nothrow)
-      lite::Tensor(in_tensor->data_type(), in_tensor->shape(), in_tensor->format(), lite::Tensor::VAR);
+      lite::Tensor(in_tensor->data_type(), in_tensor->shape(), in_tensor->format(), lite::Category::VAR);
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "OpenCLSubGraph new tensor failed!";

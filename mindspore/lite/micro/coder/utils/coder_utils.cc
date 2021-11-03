@@ -25,7 +25,7 @@
 
 namespace mindspore::lite::micro {
 bool CheckConstantTensor(const Tensor *const tensor) {
-  return tensor->category() == Tensor::Category::CONST_TENSOR || tensor->category() == Tensor::Category::CONST_SCALAR;
+  return tensor->category() == lite::Category::CONST_TENSOR || tensor->category() == lite::Category::CONST_SCALAR;
 }
 
 template <typename T>

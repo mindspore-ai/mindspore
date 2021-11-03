@@ -114,6 +114,7 @@ if(MSLITE_ENABLE_CONVERTER)
         ${LITE_DIR}/src/ops/ops_utils.cc
         ${LITE_DIR}/src/ops/ops_def.cc
         ${LITE_DIR}/src/tensor.cc
+        ${LITE_DIR}/src/schema_tensor_wrapper.cc
         )
 endif()
 

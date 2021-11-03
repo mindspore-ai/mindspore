@@ -60,7 +60,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
 
   MS_LOG(INFO) << " init tensors ";
   std::vector<int> shape = {1, 23, 39, 47};
-  auto tensor_type = lite::Tensor::CONST_TENSOR;
+  auto tensor_type = lite::Category::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape, mindspore::NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat16, shape, mindspore::NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -169,7 +169,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
 
   MS_LOG(INFO) << " init tensors ";
   std::vector<int> shape = {1, 23, 39, 47};
-  auto tensor_type = lite::Tensor::CONST_TENSOR;
+  auto tensor_type = lite::Category::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat16, shape, mindspore::NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape, mindspore::NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {

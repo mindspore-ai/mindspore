@@ -103,8 +103,8 @@ int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
     return RET_ERROR;
   }
   if (!filter_tensor->IsConst()) {
-    bool is_const = filter_tensor->category() == lite::Tensor::CONST_TENSOR ||
-                    filter_tensor->category() == lite::Tensor::CONST_SCALAR;
+    bool is_const = filter_tensor->category() == lite::Category::CONST_TENSOR ||
+                    filter_tensor->category() == lite::Category::CONST_SCALAR;
     if (!(is_const && stored_filter_)) {
       MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
       return RET_ERROR;
@@ -113,8 +113,8 @@ int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
 
   auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
   if (bias_tensor != nullptr && !bias_tensor->IsConst()) {
-    bool is_const =
-      bias_tensor->category() == lite::Tensor::CONST_TENSOR || bias_tensor->category() == lite::Tensor::CONST_SCALAR;
+    bool is_const = bias_tensor->category() == lite::Category::CONST_TENSOR ||
+                    bias_tensor->category() == lite::Category::CONST_SCALAR;
     if (!(is_const && stored_bias_)) {
       MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
       return RET_ERROR;

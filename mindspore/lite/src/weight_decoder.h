@@ -28,6 +28,7 @@
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
+#include "src/lite_model.h"
 
 static constexpr int kPerTensor = 1;
 static constexpr int kBitNum1 = 1;
@@ -122,9 +123,9 @@ STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vect
 
 std::vector<bool> StringToBitVector(const std::string &str);
 
-STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
+STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
 
-STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
+STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
 
 // A * stride_a + bucket_index * stride_b + C
 int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index);
@@ -133,16 +134,16 @@ class WeightDecoder {
  public:
   static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
 
-  static int UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
+  static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
   static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims);
 
  private:
   static int DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
-  static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
+  static int UnPackToInt(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
-  static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
+  static int DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
   template <typename ST, typename DT = float>
   static DT *DequantPerLayerData(const lite::Tensor *input_tensor, const ST *quant_datas) {
@@ -237,19 +238,6 @@ class WeightDecoder {
     }
   }
 
-  inline static bool IsChannelFirst(int index, const OpParameter *op_parameter) {
-    MS_ASSERT(op_parameter != nullptr);
-    if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
-      const auto *param = reinterpret_cast<const MatMulParameter *>(op_parameter);
-      if (index == 0) {
-        return !(param->a_transpose_);
-      } else if (index == 1) {
-        return param->b_transpose_;
-      }
-    }
-    return true;
-  }
-
   static int GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
 
   static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
@@ -284,18 +272,20 @@ class WeightDecoder {
   }
 
   template <typename T1, typename T2>
-  static int UnPackUtil(const schema::Tensor *input_tensor, const size_t &unpack_int_up_limit_size, int origin_bit,
+  static int UnPackUtil(const SchemaTensorWrapper &src_tensor, const size_t &unpack_int_up_limit_size, int origin_bit,
                         void *unpack_int_data) {
-    if (input_tensor == nullptr || input_tensor->data() == nullptr) {
+    MS_ASSERT(src_tensor.handler() != nullptr);
+    MS_ASSERT(src_tensor.data() != nullptr);
+    if (src_tensor.data()->data_ == nullptr) {
       MS_LOG(ERROR) << "tensor data is null";
       return RET_NULL_PTR;
     }
-    auto weight_data = input_tensor->data()->data();
-    int pack_size =
-      input_tensor->dataType() == kNumberTypeInt8 ? input_tensor->data()->size() : input_tensor->data()->size() / 2;
+    auto weight_data = src_tensor.data()->data_;
+    size_t pack_size =
+      src_tensor.handler()->dataType() == kNumberTypeInt8 ? src_tensor.data()->length_ : src_tensor.data()->length_ / 2;
     std::queue<bool> unpack_bit_data;
     size_t count = 0;
-    for (int i = 0; i < pack_size; ++i) {
+    for (size_t i = 0; i < pack_size; ++i) {
       T2 pack_data = (static_cast<const T2 *>(static_cast<const void *>(weight_data)))[i];
       bool is_last = i == pack_size - 1;
       if (count >= unpack_int_up_limit_size) {

@@ -21,13 +21,14 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "nnacl/conv_parameter.h"
+#include "src/tensor_category.h"
 
 namespace mindspore::kernel {
 struct TensorInfo {
   std::vector<int> shape_;
   mindspore::Format format_;
   TypeId data_type_;
-  lite::Tensor::Category tensor_type_;
+  lite::Category tensor_type_;
   bool is_in_;
 };
 

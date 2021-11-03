@@ -189,7 +189,7 @@ int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels)
       ref_count[tensor] = tensor->init_ref_count();
     }
     for (auto tensor : kernel->in_tensors()) {
-      if (tensor->category() == lite::Tensor::VAR) {
+      if (tensor->category() == lite::Category::VAR) {
         int count = ref_count[tensor] - 1;
         ref_count[tensor] = count;
         if (count == 0) {

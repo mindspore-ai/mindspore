@@ -75,11 +75,6 @@ size_t GetRefCount(schema::MetaGraphT *graphT, uint32_t tensorIdx);
 
 std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam);
 
-std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
-  const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
-
-enum Category { CONSTANT = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
-
 int GenerateRandomData(mindspore::tensor::MSTensor *tensors);
 
 int GenerateRandomData(size_t size, void *data, int data_type);
@@ -207,63 +202,6 @@ float CompareData(const std::unordered_map<String, mindspore::tensor::MSTensor *
   }
   return total_meam_error / calib_tensors.size();
 }
-
-class TensorCache {
- public:
-  TensorCache() = default;
-
-  ~TensorCache() { tensors.clear(); }
-
-  int AddTensor(const std::string &name, TensorT *tensor, int Category) {
-    index++;
-    if (Category == CONSTANT || Category == TF_CONST || Category == GRAPH_INPUT) {
-      tensor->refCount = 1;
-      tensor->nodeType = NodeType_ValueNode;
-    } else {
-      tensor->nodeType = NodeType_Parameter;
-    }
-    tensor->name = name;
-    tensors.push_back(tensor);
-
-    if (Category == GRAPH_INPUT) {
-      graphInputs.push_back(index);
-    }
-
-    if (Category == GRAPH_INPUT || Category == OP_OUTPUT || Category == TF_CONST) {
-      UpdateTensorIndex(name, index);
-    }
-    return index;
-  }
-
-  // find the name index
-  int FindTensor(const std::string &name) {
-    auto iter = tensorIndex.find(name);
-    if (iter != tensorIndex.end()) {
-      return iter->second;
-    }
-    return -1;
-  }
-
-  void UpdateTensorIndex(const std::string &name, int idx) {
-    auto iter = tensorIndex.find(name);
-    if (iter != tensorIndex.end()) {
-      tensorIndex[name] = idx;
-    } else {
-      tensorIndex.insert(make_pair(name, idx));
-    }
-  }
-
-  // return allTensors
-  const std::vector<TensorT *> &GetCachedTensor() const { return tensors; }
-
-  const std::vector<int> &GetGraphInputs() const { return graphInputs; }
-
- private:
-  std::vector<TensorT *> tensors;
-  std::unordered_map<std::string, int> tensorIndex;
-  std::vector<int> graphInputs;
-  int index = -1;
-};
 }  // namespace lite
 }  // namespace mindspore
 

@@ -51,7 +51,7 @@ int CustomCoder::Prepare(CoderContext *const context) {
   }
   Populate(node_->primitive_);
   for (const auto &tensor : input_tensors_) {
-    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+    if (tensor->category() == lite::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensor)) {
         auto buff = allocator_->Malloc(kNumberTypeUInt8, tensor->Size(), kOfflinePackWeight);
         memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
@@ -70,7 +70,7 @@ int CustomCoder::TransformTensors(Serializer *code, std::string array_name, cons
   }
   (*code) << "\t\tTensorC " << array_name << "[" << tensors.size() << "];\n";
   for (size_t i = 0; i < tensors.size(); ++i) {
-    if (tensors[i]->category() == Tensor::Category::CONST_TENSOR) {
+    if (tensors[i]->category() == lite::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensors[i])) {
         MS_LOG(ERROR) << "can't find the const tensor's runtime address";
         return RET_ERROR;

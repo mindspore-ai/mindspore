@@ -26,17 +26,18 @@
 #include "nnacl/op_base.h"
 #include "ir/dtype/type_id.h"
 #include "src/tensor.h"
+#include "src/tensor_category.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 
 using Tensor = mindspore::lite::Tensor;
-using ArgsTuple = std::tuple<std::vector<int>, void *, Tensor::Category>;
+using ArgsTuple = std::tuple<std::vector<int>, void *, mindspore::lite::Category>;
 using ArgsTupleOut = std::tuple<std::vector<int>, void *>;
 using ArgsTupleOutWithDType = std::tuple<std::vector<int>, void *, mindspore::TypeId>;
-using ArgsTupleWithDtype = std::tuple<std::vector<int>, void *, Tensor::Category, mindspore::TypeId>;
-constexpr Tensor::Category VAR = Tensor::VAR;
-constexpr Tensor::Category CONST_TENSOR = Tensor::Category::CONST_TENSOR;
-constexpr Tensor::Category CONST_SCALAR = Tensor::Category::CONST_SCALAR;
+using ArgsTupleWithDtype = std::tuple<std::vector<int>, void *, mindspore::lite::Category, mindspore::TypeId>;
+constexpr mindspore::lite::Category VAR = mindspore::lite::Category::VAR;
+constexpr mindspore::lite::Category CONST_TENSOR = mindspore::lite::Category::CONST_TENSOR;
+constexpr mindspore::lite::Category CONST_SCALAR = mindspore::lite::Category::CONST_SCALAR;
 
 namespace mindspore::lite::opencl::test {
 

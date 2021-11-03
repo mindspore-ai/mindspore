@@ -26,6 +26,7 @@
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
+#include "src/schema_tensor_wrapper.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
@@ -53,12 +54,16 @@ class LiteModel : public Model {
 
   int GetSchemaVersion() const { return schema_version_; }
 
+  SchemaTensorWrapper *GetSchemaTensor(const size_t &tensor_index) const;
+
  private:
 #ifdef ENABLE_V0
   int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
 
   int ConvertAttrToTensors();
 #endif
+
+  bool PrepareInnerTensors();
 
   template <typename T = schema::MetaGraph, typename U = schema::CNode>
   bool ConvertNodes(const T &meta_graph) {
@@ -277,6 +282,8 @@ class LiteModel : public Model {
   std::vector<char *> attr_tensor_bufs_;
   bool keep_model_buf_ = false;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
+  // tensor_index --- external_data
+  std::vector<SchemaTensorWrapper *> inner_all_tensors_;
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);

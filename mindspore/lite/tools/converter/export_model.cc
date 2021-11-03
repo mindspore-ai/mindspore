@@ -112,7 +112,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   if (!data_info.data_.empty()) {
     auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     if (tensor_info->data().nbytes() < 0) {
-      MS_LOG(ERROR) << "tensor info not malloced.";
+      MS_LOG(ERROR) << "tensor info data size is smaller than zero.";
       return nullptr;
     }
     if (memcpy_s(tensor_data, tensor_info->data().nbytes(), data_info.data_.data(), data_info.data_.size()) != EOK) {
@@ -275,6 +275,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "
                   << meta_graph->outputIndex.size() << ".";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    delete meta_graph;
     return RET_ERROR;
   }
   for (size_t idx = 0; idx < output_names.size(); idx++) {

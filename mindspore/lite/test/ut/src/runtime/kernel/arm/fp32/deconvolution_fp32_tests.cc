@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/deconvolution_fp32.h"
 #include "nnacl/fp32/deconv_fp32.h"
 #include "nnacl/op_base.h"
+#include "src/tensor_category.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {
@@ -323,7 +324,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_8) {
 int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
   std::vector<int> in_dims_nhwc = {1, 5, 7, 2};
-  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, mindspore::NHWC, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   float in_nchw[] = {
     0.39451003, 0.15045597,  0.5367726,   0.62690735, 0.113554195, 0.5402554,  0.5522764,  0.044319753, 0.25721782,
@@ -339,8 +340,7 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   inputs_->push_back(in_t);
 
   std::vector<int> weight_dims_nhwc = {2, 3, 3, 6};
-  auto *weight_t =
-    new lite::Tensor(kNumberTypeFloat, weight_dims_nhwc, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, weight_dims_nhwc, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float weight_nchw[] = {
     0.061163727,  -0.06261389,  0.07708351,  -0.019354159, -0.3859104,  -0.082844816, -0.21268463,  -0.15746808,
@@ -361,15 +361,14 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
                      weight_t->Channel(), 0, 0);
   inputs_->push_back(weight_t);
 
-  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {6}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {6}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   bias_t->MallocData();
   float bias[] = {-0.19064677, -0.0034778118, 0.63741624, -1.0311537, -1.0288948, 0.71384084};
   memcpy(bias_t->MutableData(), bias, sizeof(float) * 6);
   inputs_->push_back(bias_t);
 
   std::vector<int> output_nhwc_dims = {1, 9, 13, 6};
-  auto *out_t =
-    new lite::Tensor(kNumberTypeFloat, output_nhwc_dims, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, output_nhwc_dims, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -498,7 +497,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
 
 int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
-  auto *in_t = new lite::Tensor(kNumberTypeFloat, {1, 4, 2, 3}, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, {1, 4, 2, 3}, mindspore::NHWC, lite::Category::VAR);
   in_t->MallocData();
   float in[] = {7.7566547,   19.250782, 17.923292,   13.584222, 3.3293908,  9.734102,   18.83455,  -1.5142503,
                 -0.29382008, 18.686155, 0.087307654, 4.2010098, -2.2539594, 4.1795673,  13.142356, -3.5939367,
@@ -506,8 +505,7 @@ int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto *weight_t =
-    new lite::Tensor(kNumberTypeFloat, {3, 3, 3, 2}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, {3, 3, 3, 2}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {-0.39557076, 0.15087655,  0.35216075,  -0.20893791, 0.28683448,  0.08006268,  0.9830812,
                     0.27212173,  0.5171944,   -0.0014505,  0.78694165,  0.25425306,  0.16605458,  -0.06127124,
@@ -521,7 +519,7 @@ int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   inputs_->push_back(weight_t);
 
   std::vector<int> out_nhwc_dims = {1, 7, 3, 2};
-  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_nhwc_dims, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_nhwc_dims, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -568,7 +566,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
 int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
   std::vector<int> in_dims_nhwc = {1, 3, 3, 2};
-  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, mindspore::NHWC, lite::Tensor::Category::VAR);
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, mindspore::NHWC, lite::Category::VAR);
   in_t->MallocData();
   float in_nchw[] = {0.10411751, 0.24034509, 0.71456534, 0.75286126, 0.9778457,  0.21043599,
                      0.26498786, 0.6701024,  0.9744634,  0.49075702, 0.03877404, 0.48646277,
@@ -578,8 +576,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   inputs_->push_back(in_t);
 
   std::vector<int> w_dims_nhwc = {2, 2, 2, 2};
-  auto *weight_t =
-    new lite::Tensor(kNumberTypeFloat, w_dims_nhwc, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, w_dims_nhwc, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float w_nchw[] = {-0.108016446, -0.44254777, 0.29249913, 0.18764605, 1.1250675,   0.29441583,
                     -0.34362152,  0.7557833,   0.16503833, 0.2418737,  -0.26612744, 0.5072577,
@@ -589,7 +586,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   inputs_->push_back(weight_t);
 
   std::vector<int> out_dims_nhwc = {1, 9, 9, 2};
-  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_dims_nhwc, mindspore::NC4HW4, lite::Tensor::Category::VAR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_dims_nhwc, mindspore::NC4HW4, lite::Category::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 

@@ -33,7 +33,7 @@ void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocTyp
   size_t type_size = item->second;
   MS_CHECK_TRUE_RET_NULL(type_size > 0, "type size should");
   std::vector<int> shape = {1, static_cast<int>(size / type_size)};
-  auto cate = type == kOfflinePackWeight ? Tensor::Category::CONST_TENSOR : Tensor::Category::VAR;
+  auto cate = type == kOfflinePackWeight ? lite::Category::CONST_TENSOR : lite::Category::VAR;
   Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, mindspore::NHWC, cate);
   MS_CHECK_PTR_RET_NULL(weight);
   std::string runtime_addr = kWeightPrefixName + std::to_string(weight_index_++);
@@ -110,8 +110,7 @@ void MemoryAllocator::RecordOriginWeightsAddr(const std::vector<std::unique_ptr<
   for (const auto &node : nodes) {
     std::vector<Tensor *> inputs = node->input_tensors();
     for (const auto &tensor : inputs) {
-      if (tensor->category() == Tensor::Category::CONST_TENSOR ||
-          tensor->category() == Tensor::Category::CONST_SCALAR) {
+      if (tensor->category() == lite::Category::CONST_TENSOR || tensor->category() == lite::Category::CONST_SCALAR) {
         std::string runtime_addr = kWeightPrefixName + std::to_string(weight_index_);
         origin_weights_addr_.insert(std::make_pair(tensor, runtime_addr));
         weight_index_++;

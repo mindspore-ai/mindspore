@@ -15,7 +15,7 @@
  */
 
 #include "src/sub_graph_split.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <utility>
 #include <algorithm>
 #include <iterator>
@@ -25,6 +25,7 @@
 #include "schema/model_generated.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/scheduler.h"
+#include "src/tensor_category.h"
 #include "nnacl/pooling_parameter.h"
 #include "include/model.h"
 #include "nnacl/base/conv_common_base.h"
@@ -655,9 +656,11 @@ void SearchSubGraph::InitSearchTensor() {
   for (size_t i = 0; i < tensors_.size(); i++) {
     tensors_[i].type_ = NORMAL;
     mindspore::schema::Tensor *src_tensor = model_->all_tensors_[i];
-    auto category = TensorCategory(src_tensor);
-    if (category == mindspore::lite::Tensor::Category::CONST_TENSOR ||
-        category == mindspore::lite::Tensor::Category::CONST_SCALAR) {
+    if (src_tensor == nullptr) {
+      continue;
+    }
+    auto category = TensorCategory(*src_tensor);
+    if (category == mindspore::lite::Category::CONST_TENSOR || category == mindspore::lite::Category::CONST_SCALAR) {
       tensors_[i].type_ = CONST;
     }
   }

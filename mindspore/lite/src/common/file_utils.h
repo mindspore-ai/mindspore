@@ -35,6 +35,8 @@ bool IsCharEndWith(const char *src, const char *end);
 
 std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode = std::ios::in | std::ios::out);
 
+char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len);
+
 char *ReadFile(const char *file, size_t *size);
 
 std::string RealPath(const char *path);

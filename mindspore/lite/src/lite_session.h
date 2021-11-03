@@ -26,7 +26,7 @@
 #include "src/lite_kernel.h"
 #include "include/ms_tensor.h"
 #include "include/lite_session.h"
-#include "include/model.h"
+#include "src/lite_model.h"
 #include "src/inner_context.h"
 #include "src/runtime/runtime_allocator.h"
 #include "schema/model_generated.h"
@@ -90,8 +90,7 @@ class LiteSession : public session::LiteSession {
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
-  int ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
-                         lite::Tensor *dst_tensor);
+  int ConvertTensorsData(const lite::LiteModel *model, size_t tensor_index, lite::Tensor *dst_tensor);
 
   lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
 

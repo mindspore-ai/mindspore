@@ -20,6 +20,7 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/common/file_utils.h"
+#include "src/tensor_category.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/kernel/arm/fp32/fullconnection_fp32.h"
 #include "src/runtime/infer_manager.h"
@@ -34,14 +35,14 @@ class TestFcFp32 : public mindspore::CommonTest {
 
 int FcTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                 MatMulParameter *matmal_param, float **correct) {
-  auto *in_t = new Tensor(kNumberTypeFloat, {2, 2, 2, 2}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *in_t = new Tensor(kNumberTypeFloat, {2, 2, 2, 2}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   float in[] = {-3.2366564, -4.7733846, -7.8329225, 16.146885, 5.060793,  -6.1471,  -1.7680453, -6.5721383,
                 17.87506,   -5.1192183, 10.742863,  1.4536934, 19.693445, 19.45783, 5.063163,   0.5234792};
   memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto *weight_t = new Tensor(kNumberTypeFloat, {3, 8}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeFloat, {3, 8}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {-0.0024438887, 0.0006738146, -0.008169129, 0.0021510671,  -0.012470592,   -0.0053063435,
                     0.006050155,   0.008656233,  0.012911413,  -0.0028635843, -0.00034080597, -0.0010622552,
@@ -50,13 +51,13 @@ int FcTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
   inputs_->push_back(weight_t);
 
-  auto *bias_t = new Tensor(kNumberTypeFloat, {3}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *bias_t = new Tensor(kNumberTypeFloat, {3}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   bias_t->MallocData();
   float bias[] = {1.6103756, -0.9872417, 0.546849};
   memcpy(bias_t->MutableData(), bias, sizeof(float) * bias_t->ElementsNum());
   inputs_->push_back(bias_t);
 
-  auto *out_t = new Tensor(kNumberTypeFloat, {2, 3}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *out_t = new Tensor(kNumberTypeFloat, {2, 3}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -105,28 +106,28 @@ int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
                 MatMulParameter *matmal_param, float **correct) {
   size_t buffer_size;
 
-  auto *in_t = new Tensor(kNumberTypeFloat, {20, 4, 2, 10}, mindspore::NCHW, lite::Tensor::Category::CONST_TENSOR);
+  auto *in_t = new Tensor(kNumberTypeFloat, {20, 4, 2, 10}, mindspore::NCHW, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   std::string in_path = "./matmul/FcFp32_input1.bin";
   auto in_data = mindspore::lite::ReadFile(in_path.c_str(), &buffer_size);
   memcpy(in_t->MutableData(), in_data, buffer_size);
   inputs_->push_back(in_t);
 
-  auto *weight_t = new Tensor(kNumberTypeFloat, {30, 80}, mindspore::NCHW, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeFloat, {30, 80}, mindspore::NCHW, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   std::string weight_path = "./matmul/FcFp32_weight1.bin";
   auto w_data = mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size);
   memcpy(weight_t->MutableData(), w_data, buffer_size);
   inputs_->push_back(weight_t);
 
-  auto *bias_t = new Tensor(kNumberTypeFloat, {30}, mindspore::NCHW, lite::Tensor::Category::CONST_TENSOR);
+  auto *bias_t = new Tensor(kNumberTypeFloat, {30}, mindspore::NCHW, lite::Category::CONST_TENSOR);
   bias_t->MallocData();
   std::string bias_path = "./matmul/FcFp32_bias1.bin";
   auto bias_data = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
   memcpy(bias_t->MutableData(), bias_data, buffer_size);
   inputs_->push_back(bias_t);
 
-  auto *out_t = new Tensor(kNumberTypeFloat, {20, 30}, mindspore::NCHW, lite::Tensor::Category::CONST_TENSOR);
+  auto *out_t = new Tensor(kNumberTypeFloat, {20, 30}, mindspore::NCHW, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -173,13 +174,13 @@ TEST_F(TestFcFp32, FcTest2) {
 
 void FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                  MatMulParameter *matmal_param, float **correct) {
-  auto *in_t = new Tensor(kNumberTypeFloat, {1, 1, 1, 20}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *in_t = new Tensor(kNumberTypeFloat, {1, 1, 1, 20}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   in_t->MallocData();
   float in[] = {1, 0, 3, 0, 4, 5, 2, 5, 2, 5, 1, 5, 0, 1, 2, 0, 2, 1, 0, 5};
   memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto *weight_t = new Tensor(kNumberTypeFloat, {16, 20}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeFloat, {16, 20}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {0, 5, 5, 3, 0, 5, 3, 1, 0, 1, 3, 0, 5, 5, 2, 4, 0, 1, 1, 2, 3, 0, 5, 5, 4, 4, 1, 4, 1, 1, 5, 3,
                     3, 1, 0, 3, 1, 2, 4, 5, 3, 4, 4, 0, 3, 5, 0, 3, 4, 1, 0, 1, 3, 4, 0, 5, 2, 5, 0, 4, 2, 2, 2, 2,
@@ -194,7 +195,7 @@ void FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor 
   memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
   inputs_->push_back(weight_t);
 
-  auto *out_t = new Tensor(kNumberTypeFloat, {1, 16}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *out_t = new Tensor(kNumberTypeFloat, {1, 16}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -242,20 +243,20 @@ int FcTest4_Init(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *
   memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
   inputs->push_back(in_t);
 
-  auto *weight_t = new Tensor(kNumberTypeFloat, {10, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeFloat, {10, 4}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
                     6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 1, 2, 3, 4};
   memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
   inputs->push_back(weight_t);
 
-  auto bias_t = new Tensor(kNumberTypeFloat32, {10}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto bias_t = new Tensor(kNumberTypeFloat32, {10}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   bias_t->MallocData();
   float bias_data[] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2};
   memcpy(bias_t->MutableData(), bias_data, sizeof(float) * bias_t->ElementsNum());
   inputs->push_back(bias_t);
 
-  auto *out_t = new Tensor(kNumberTypeFloat, {1, 10}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *out_t = new Tensor(kNumberTypeFloat, {1, 10}, mindspore::NHWC, lite::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs->push_back(out_t);
 

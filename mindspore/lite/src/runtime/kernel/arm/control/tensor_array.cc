@@ -20,6 +20,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/tensorlist.h"
+#include "src/tensor_category.h"
 #include "src/common/log_util.h"
 
 using mindspore::kernel::KERNEL_ARCH;
@@ -85,7 +86,7 @@ int TensorArrayBaseCPUKernel::Prepare() {
   // check index_tensor
   lite::Tensor *input_y = in_tensors_.at(kIndexInputIdx);
   CHECK_NULL_RETURN(input_y);
-  if (input_y->category() != lite::Tensor::Category::CONST_TENSOR) {
+  if (input_y->category() != lite::Category::CONST_TENSOR) {
     MS_LOG(ERROR) << "invalid category of index input";
     return RET_ERROR;
   }
