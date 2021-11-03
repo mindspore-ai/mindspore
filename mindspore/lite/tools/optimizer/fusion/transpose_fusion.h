@@ -36,9 +36,11 @@ class TransposeFusion : public MultiplePatternProcessPass {
   VectorRef DefineBNPattern() const;
   VectorRef DefineActivationPattern() const;
   VectorRef DefineActivationscalePattern() const;
+  VectorRef DefineScalePattern() const;
   VectorRef DefineTransTransPattern() const;
   VectorRef DefineBiasAddPattern() const;
-  AnfNodePtr TransTransFusion(const mindspore::AnfNodePtr &node) const;
+  AnfNodePtr TransTransFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
+  int AdjustAxisOfScale(const mindspore::AnfNodePtr &node) const;
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
 };
