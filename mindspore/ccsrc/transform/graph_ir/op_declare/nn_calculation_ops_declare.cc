@@ -73,7 +73,7 @@ ATTR_MAP(Conv2DTransposeD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
-  {"format", ATTR_DESC(data_format, AnyTraits<string>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<string>())},
   {"output_paddings", ATTR_DESC(output_padding, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"offset", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Conv2DTransposeD) = {{0, OUTPUT_DESC(y)}};

@@ -36,7 +36,7 @@ class TFConvBaseParser : public TFNodeParser {
                              std::vector<int64_t> *kernel);
   static STATUS ParseExplicitPaddings(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                       std::vector<int64_t> *explicit_paddings);
-  static mindspore::PadMode ParsePadMode(const tensorflow::NodeDef &node_def);
+  static mindspore::PadMode ParsePadMode(const tensorflow::NodeDef &node_def, bool *is_ori_pad_mode);
 };
 }  // namespace lite
 }  // namespace mindspore

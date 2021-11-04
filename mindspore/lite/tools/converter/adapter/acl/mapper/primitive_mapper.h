@@ -34,23 +34,25 @@ class PrimitiveMapper {
   virtual STATUS Mapper(const CNodePtr &cnode);
 
  protected:
-  STATUS AttrAdjust(const PrimitivePtr &prim, const std::string &name);
+  STATUS AttrAdjust(const PrimitivePtr &prim, const std::string &name) const;
 
-  STATUS MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &dst_prim);
+  STATUS MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &dst_prim) const;
 
-  STATUS GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, ValueNodePtr *value_node, PrimitivePtr *prim_ptr);
+  STATUS GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, ValueNodePtr *value_node, PrimitivePtr *prim_ptr) const;
 
-  STATUS AdjustPoolAttr(int fmk_type, const std::string &src_prim_name, const PrimitivePtr &dst_prim);
+  STATUS AdjustPoolAttr(int fmk_type, const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
 
   STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
-                        const std::string &attr_name, size_t flag);
+                        const std::string &attr_name, size_t flag) const;
 
-  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name);
+  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const;
+
+  STATUS AdjustAttrFormat(const PrimitivePtr &prim, const std::string &name) const;
 
  private:
-  void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim);
+  void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
 
-  void AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim);
+  void AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) const;
 
   std::string name_;
 };

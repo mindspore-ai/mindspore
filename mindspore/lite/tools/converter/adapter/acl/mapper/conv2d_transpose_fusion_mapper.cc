@@ -26,6 +26,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameOutputPaddingNum = 2;
+constexpr auto kNameFormat = "data_format";
 }  // namespace
 STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
   ValueNodePtr value_node = nullptr;
@@ -63,10 +64,13 @@ STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
 STATUS Conv2dTransposeMapper::AdjustGeAttr(const CNodePtr &cnode, const PrimitivePtr &dst_prim) {
   std::vector<int64_t> shape = {0, 0, 0, 0};
   dst_prim->AddAttr("input_size", MakeValue(shape));
-  dst_prim->AddAttr("format", MakeValue("NCHW"));
 
   if (AttrAdjust(dst_prim, ops::kStride) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust strides failed.";
+    return RET_ERROR;
+  }
+  if (AdjustAttrFormat(dst_prim, kNameFormat) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Adjust format failed.";
     return RET_ERROR;
   }
   if (AdjustOutputPadding(dst_prim) != lite::RET_OK) {
