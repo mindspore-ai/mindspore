@@ -118,6 +118,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual void *data() const { return data_; }
 
+  // tensor will hold this data, and free this data in destructor
   void set_data(void *data) override {
     this->data_ = data;
     this->own_data_ = true;

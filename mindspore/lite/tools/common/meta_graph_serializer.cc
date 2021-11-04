@@ -151,7 +151,7 @@ schema::ExternalDataT *MetaGraphSerializer::AddExternalData(const char *data, si
     MS_LOG(ERROR) << "Create ExternalDataT failed";
     return nullptr;
   }
-  external_data->location = save_data_path_;
+  external_data->location = model_name_ + ".msw";
   external_data->offset = cur_offset_;
   external_data->length = static_cast<int64_t>(size);
   if (data == nullptr || size == 0) {

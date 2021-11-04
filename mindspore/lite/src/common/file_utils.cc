@@ -138,7 +138,7 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
     return nullptr;
   }
 
-  auto buf = std::make_unique<char[]>(len);
+  auto buf = reinterpret_cast<char *>(malloc(len));
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
     ifs.close();
@@ -146,10 +146,10 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
   }
 
   ifs.seekg(offset, std::ios::beg);
-  ifs.read(buf.get(), len);
+  ifs.read(buf, len);
   ifs.close();
 
-  return buf.release();
+  return buf;
 }
 
 char *ReadFile(const char *file, size_t *size) {
@@ -263,6 +263,18 @@ int CreateOutputDir(std::string *file_path) {
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+std::string GetDirectory(const std::string &path) {
+  auto pos = path.find_last_of('/');
+  if (pos == std::string::npos) {
+    pos = path.find_last_of('\\');
+  }
+  std::string dir;
+  if (pos != std::string::npos) {
+    dir = path.substr(0, pos + 1);
+  }
+  return dir;
 }
 }  // namespace lite
 }  // namespace mindspore

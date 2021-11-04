@@ -115,8 +115,8 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(src_tensor.data()->data_);
-  auto total_size = src_tensor.data()->length_;
+  CHECK_NULL_RETURN(src_tensor.data());
+  auto total_size = src_tensor.length();
   auto *output = static_cast<float *>(dst_tensor->data());
   CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
@@ -125,7 +125,7 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
   BitStream bs;
 
   size_t i = 0;
-  auto data8 = reinterpret_cast<unsigned char *>(src_tensor.data()->data_);
+  auto data8 = reinterpret_cast<unsigned char *>(const_cast<void *>(src_tensor.data()));
 
   int frequency_count = *(reinterpret_cast<uint16_t *>(&data8[i]));
   i += sizeof(uint16_t);

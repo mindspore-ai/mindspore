@@ -77,6 +77,8 @@ inline int WriteToBin(const std::string &file_path, void *data, const size_t siz
   return RET_OK;
 }
 
+std::string GetDirectory(const std::string &path);
+
 std::string GetAndroidPackageName();
 std::string GetAndroidPackagePath();
 }  // namespace lite

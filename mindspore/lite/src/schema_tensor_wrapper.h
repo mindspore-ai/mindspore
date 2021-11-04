@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_SCHEMA_TENSOR_WRAPPER_H_
 #define MINDSPORE_LITE_SRC_SCHEMA_TENSOR_WRAPPER_H_
 
+#include <utility>
+#include <string>
 #include "src/common/version_manager.h"
 #include "schema/model_generated.h"
 
@@ -24,33 +26,34 @@ namespace mindspore {
 namespace lite {
 class SchemaTensorWrapper {
  public:
-  class TensorData {
-   public:
-    explicit TensorData(size_t tensor_id) : tensor_id_(tensor_id) {}
-    virtual ~TensorData() {
-      if (if_own_data_) {
-        free(data_);
-        data_ = nullptr;
-      }
-    }
-    bool Init(const schema::Tensor &tensor, SCHEMA_VERSION schema_version);
-    const size_t tensor_id_;
-    size_t length_ = 0;
-    void *data_ = nullptr;
-    bool if_own_data_ = true;
-  };
-
-  explicit SchemaTensorWrapper(schema::Tensor *handler, TensorData *data = nullptr) : handler_(handler), data_(data) {}
+  SchemaTensorWrapper() = default;
   virtual ~SchemaTensorWrapper() {
-    delete this->data_;
+    if (if_own_data_) {
+      free(data_);
+      data_ = nullptr;
+    }
     this->data_ = nullptr;
   }
+
+  bool Init(const schema::Tensor &tensor, SCHEMA_VERSION schema_version, const std::string &base_path);
+
   const schema::Tensor *handler() const { return this->handler_; }
-  const TensorData *data() const { return this->data_; }
+
+  const void *data() const { return this->data_; }
+
+  size_t length() const { return this->length_; }
+
+  std::pair<bool, void *> ReleaseData() {
+    std::pair<bool, void *> ret = std::make_pair(this->if_own_data_, this->data_);
+    this->if_own_data_ = false;
+    return ret;
+  }
 
  private:
-  schema::Tensor *handler_ = nullptr;
-  TensorData *data_ = nullptr;
+  const schema::Tensor *handler_ = nullptr;
+  size_t length_ = 0;
+  void *data_ = nullptr;
+  bool if_own_data_ = true;
 };
 }  // namespace lite
 }  // namespace mindspore

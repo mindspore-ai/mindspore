@@ -276,13 +276,13 @@ class WeightDecoder {
                         void *unpack_int_data) {
     MS_ASSERT(src_tensor.handler() != nullptr);
     MS_ASSERT(src_tensor.data() != nullptr);
-    if (src_tensor.data()->data_ == nullptr) {
+    if (src_tensor.data() == nullptr) {
       MS_LOG(ERROR) << "tensor data is null";
       return RET_NULL_PTR;
     }
-    auto weight_data = src_tensor.data()->data_;
+    auto weight_data = src_tensor.data();
     size_t pack_size =
-      src_tensor.handler()->dataType() == kNumberTypeInt8 ? src_tensor.data()->length_ : src_tensor.data()->length_ / 2;
+      src_tensor.handler()->dataType() == kNumberTypeInt8 ? src_tensor.length() : src_tensor.length() / 2;
     std::queue<bool> unpack_bit_data;
     size_t count = 0;
     for (size_t i = 0; i < pack_size; ++i) {

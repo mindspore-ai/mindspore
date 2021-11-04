@@ -42,7 +42,7 @@ STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_ten
   MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   auto bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data_), src_tensor.data()->length_);
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse unique_value_cnt
@@ -110,7 +110,7 @@ STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tenso
   MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   size_t bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()->data_), src_tensor.data()->length_);
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse coor_best_bit
@@ -274,14 +274,14 @@ int WeightDecoder::DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite
   if (!dst_tensor->IsConst() || !src_tensor.handler()->enableHuffmanCode()) {
     return RET_NO_CHANGE;
   }
-  if (src_tensor.data()->data_ == nullptr) {
+  if (src_tensor.data() == nullptr) {
     return RET_NO_CHANGE;
   }
-  auto data = reinterpret_cast<const char *>(src_tensor.data()->data_);
+  auto data = reinterpret_cast<const char *>(src_tensor.data());
   if (data == nullptr) {
     return RET_NO_CHANGE;
   }
-  std::string encode_str(data, src_tensor.data()->length_);
+  std::string encode_str(data, src_tensor.length());
   dst_tensor->FreeData();
   dst_tensor->set_data(nullptr);
   auto ret = dst_tensor->MallocData();

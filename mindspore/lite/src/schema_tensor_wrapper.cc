@@ -23,8 +23,10 @@ namespace mindspore {
 namespace lite {
 // don't check data_size and shape_size: bit_pack or huffman_code
 // don't check tensor category: variable-tensor-list may have data
-bool SchemaTensorWrapper::TensorData::Init(const schema::Tensor &tensor, const SCHEMA_VERSION schema_version) {
+bool SchemaTensorWrapper::Init(const schema::Tensor &tensor, const SCHEMA_VERSION schema_version,
+                               const std::string &base_path) {
   // add magic-num-check and checksum-check here
+  this->handler_ = &tensor;
   if (tensor.data() != nullptr && tensor.data()->data() != nullptr) {
     auto data = tensor.data()->data();
     auto data_size = tensor.data()->size();
@@ -45,7 +47,8 @@ bool SchemaTensorWrapper::TensorData::Init(const schema::Tensor &tensor, const S
   }
   auto external_data = tensor.externalData()->Get(0);
   this->length_ = static_cast<size_t>(external_data->length());
-  this->data_ = ReadFileSegment(external_data->location()->str(), external_data->offset(), external_data->length());
+  this->data_ =
+    ReadFileSegment(base_path + external_data->location()->str(), external_data->offset(), external_data->length());
   this->if_own_data_ = true;
   return true;
 }
