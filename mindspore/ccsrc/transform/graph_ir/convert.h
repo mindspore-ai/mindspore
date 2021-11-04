@@ -79,8 +79,7 @@ class DfGraphConvertor {
 #ifndef ENABLE_SECURITY
     std::ofstream fout(name);
     if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!"
-                    << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
       return;
     }
     fout << compute_sout_.str();
@@ -92,8 +91,7 @@ class DfGraphConvertor {
 #ifndef ENABLE_SECURITY
     std::ofstream fout(name);
     if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!"
-                    << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
       return;
     }
     fout << init_sout_.str();
@@ -103,8 +101,7 @@ class DfGraphConvertor {
   void DrawSaveCheckpointGraph(const std::string &name) {
     std::ofstream fout(name);
     if (!fout.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << name << "' failed!"
-                    << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+      MS_LOG(ERROR) << "Open file '" << name << "' failed!";
       return;
     }
     fout << checkpoint_sout_.str();

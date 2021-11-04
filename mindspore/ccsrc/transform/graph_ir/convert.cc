@@ -1871,10 +1871,13 @@ void DfGraphConvertor::SaveParamFormat(const CNodePtr node) {
     auto prim = GetValueNode<PrimitivePtr>(op);
     for (auto attr : prim->attrs()) {
       if (attr.first == "format") {
+        std::string format;
         if (attr.second->isa<Int64Imm>()) {
-          CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &attr.second);
+          bool converted = CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &attr.second);
+          if (converted) {
+            format = attr.second->ToString();
+          }
         }
-        std::string format = attr.second->ToString();
         if (format != "NCDHW" && format != "NHWC") {
           break;
         }

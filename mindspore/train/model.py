@@ -660,6 +660,7 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
             When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
             the epoch_end method is called.
+            If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
             If sink_size > 0, each epoch of the dataset can be traversed unlimited times until you get sink_size
             elements of the dataset. The next epoch continues to traverse from the end position of the previous
             traversal. The interface builds the computational graphs and then executes the computational graphs.
@@ -845,6 +846,7 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
             When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
             the epoch_end method is called.
+            If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
