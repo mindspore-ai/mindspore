@@ -131,8 +131,10 @@ class OrderedSet {
 
   // Clear the elements
   void clear() {
-    map_.clear();
-    ordered_data_.clear();
+    if (!map_.empty()) {
+      map_.clear();
+      ordered_data_.clear();
+    }
   }
 
   // Reserve memory for the number of entries.
@@ -402,8 +404,10 @@ class OrderedSet<std::shared_ptr<T>> {
   bool empty() const { return ordered_data_.empty(); }
 
   void clear() {
-    map_.clear();
-    ordered_data_.clear();
+    if (!map_.empty()) {
+      map_.clear();
+      ordered_data_.clear();
+    }
   }
 
   void reserve(size_t num_entries) { map_.reserve(num_entries); }
