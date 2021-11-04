@@ -229,14 +229,10 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
       address->size_ = tensor_size;
-      tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
-    } else {
-      address->ptr_ = nullptr;
     }
     (void)bound_addresses_.insert(address);
-  } else {
-    tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
   }
+  tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
   session::KernelWithIndex node_index(node, index);
   tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();
@@ -372,9 +368,7 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
         continue;
       }
       auto address_ptr = std::dynamic_pointer_cast<device::DeviceAddress>(address);
-      if (address_ptr->ptr_ == nullptr || tensor->sync_status() == kNoNeedSync) {
-        address_ptr->ptr_ = tensor->data_c();
-      }
+      address_ptr->ptr_ = tensor->data_c();
       address_ptr->ref_count_ = INIT_NODE_REF;
     }
   }
