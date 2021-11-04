@@ -42,6 +42,7 @@ from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
 from .apply_adagrad_d_a import _apply_adagrad_d_a_tbe
 from .apply_add_sign import _apply_add_sign_tbe
+from .apply_add_sign_ds import _apply_add_sign_ds_tbe
 from .apply_power_sign import _apply_power_sign_tbe
 from .apply_gradient_descent import _apply_gradient_descent_tbe
 from .apply_gradient_descent_ds import _apply_gradient_descent_ds_tbe
