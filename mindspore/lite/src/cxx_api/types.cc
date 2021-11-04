@@ -91,7 +91,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
     return nullptr;
   }
   if (data_len > 0 && data == nullptr) {
-    MS_LOG(ERROR) << "Mull data ptr of tensor.";
+    MS_LOG(ERROR) << "Null data ptr of tensor.";
     return nullptr;
   }
   auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, nullptr, data_len);

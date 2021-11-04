@@ -559,6 +559,29 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   return static_cast<StatusCode>(ret);
 }
 
+Status ModelImpl::UpdateWeights(const std::vector<MSTensor> &new_weights) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return kLiteNullptr;
+  }
+  if (new_weights.empty()) {
+    MS_LOG(ERROR) << "New weights are empty.";
+    return kLiteInputParamInvalid;
+  }
+  std::vector<tensor::MSTensor *> inner_weights;
+  inner_weights.resize(new_weights.size());
+  for (size_t i = 0; i < new_weights.size(); i++) {
+    auto weight = new_weights[i];
+    if (weight.impl_ == nullptr || weight.impl_->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Input tensor " << weight.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_weights[i] = weight.impl_->lite_tensor();
+  }
+  auto ret = session_->UpdateWeights(inner_weights);
+  return static_cast<StatusCode>(ret);
+}
+
 session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {

@@ -63,6 +63,7 @@ class ModelImpl {
                const std::shared_ptr<Context> &model_context);
   Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
+  Status UpdateWeights(const std::vector<MSTensor> &new_weights);
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
                  const MSKernelCallBack &after);

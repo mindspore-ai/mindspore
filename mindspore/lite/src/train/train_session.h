@@ -85,6 +85,7 @@ class TrainSession : virtual public lite::LiteSession {
     return lite::LiteSession::GetOutputByTensorName(tensor_name);
   }
   int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int UpdateWeights(std::vector<tensor::MSTensor *> new_weights) override;
 
   std::vector<tensor::MSTensor *> GetPredictions() const override {
     std::vector<tensor::MSTensor *> outputs;
@@ -166,6 +167,7 @@ class TrainSession : virtual public lite::LiteSession {
   SchedCallBack sched_mix_precision_callback_;
   bool train_mode_ = false;
   void *tensors_data_ = nullptr;
+  unsigned int tensors_data_size_ = 0;
   std::shared_ptr<Allocator> allocator_;
 };
 

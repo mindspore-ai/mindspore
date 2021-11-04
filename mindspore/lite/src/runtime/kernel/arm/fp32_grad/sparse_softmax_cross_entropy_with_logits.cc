@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
+int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return Prepare(); }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
                                                                      float *output) const {

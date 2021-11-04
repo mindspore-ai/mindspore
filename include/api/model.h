@@ -64,6 +64,14 @@ class MS_API Model {
   /// \return Status.
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
+  /// \brief Change the size and or content of weight tensors
+  ///
+  /// \param[in] new_weights a vector of tensors with new shapes and data to use in the model
+  ///            If data pointer is null, the data of the original tensors will be copied to the new ones
+  ///
+  /// \return Status.
+  Status UpdateWeights(const std::vector<MSTensor> &new_weights);
+
   /// \brief Inference model.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.

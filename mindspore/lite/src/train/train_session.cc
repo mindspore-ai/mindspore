@@ -176,6 +176,89 @@ int TrainSession::InitCallBack() {
   return RET_OK;
 }
 
+static int ReshapeWeightTensor(Tensor *orig_tensor, tensor::MSTensor *new_tensor) {
+  if (orig_tensor->data_type() != new_tensor->data_type()) {
+    MS_LOG(ERROR) << "Cannot reshape tensor of different type: " << new_tensor->tensor_name();
+    return RET_PARAM_INVALID;
+  }
+
+  if (orig_tensor->category() != lite::Category::CONST_TENSOR) {
+    MS_LOG(ERROR) << "Cannot reshape non const tensor: " << new_tensor->tensor_name();
+    return RET_ERROR;
+  }
+
+  auto orig_size = orig_tensor->Size();
+  uint8_t *new_data = reinterpret_cast<uint8_t *>(new_tensor->data());
+  if (new_data == nullptr) {
+    // Copy original data into new_tensor
+    new_data = reinterpret_cast<uint8_t *>(new_tensor->MutableData());
+    if (new_data == nullptr) {
+      MS_LOG(ERROR) << "Allocation of Data Failed" << new_tensor->tensor_name();
+      return RET_ERROR;
+    }
+    if (orig_size == 0) {
+      MS_LOG(ERROR) << "Operation failed: Both new tensors and original one have no data";
+      return RET_ERROR;
+    }
+    uint8_t *orig_data = reinterpret_cast<uint8_t *>(orig_tensor->data());
+    for (unsigned int loc = 0; loc < new_tensor->Size(); loc++) {
+      new_data[loc] = orig_data[loc % orig_size];
+    }
+  }
+
+  orig_tensor->FreeData();
+  orig_tensor->set_data(nullptr);
+  orig_tensor->set_shape(new_tensor->shape());
+
+  uint8_t *dst_data = reinterpret_cast<uint8_t *>(orig_tensor->MutableData());
+  if (dst_data == nullptr) {
+    MS_LOG(ERROR) << "Allocation of Data Failed";
+    return RET_ERROR;
+  }
+  std::copy(new_data, new_data + orig_tensor->Size(), dst_data);
+  return RET_OK;
+}
+
+int TrainSession::UpdateWeights(std::vector<tensor::MSTensor *> modify_tensors) {
+  unsigned int num_of_found_tensors = 0;
+  for (auto tensor : tensors_) {
+    for (auto modify : modify_tensors) {
+      if (modify == nullptr) {
+        MS_LOG(ERROR) << "Tensor is nullptr";
+        return RET_PARAM_INVALID;
+      }
+      if (modify->tensor_name() == tensor->tensor_name()) {
+        auto ret = ReshapeWeightTensor(tensor, modify);
+        num_of_found_tensors++;
+        if (ret != RET_OK) {
+          return ret;
+        }
+        break;
+      }
+    }
+  }
+  if (num_of_found_tensors != modify_tensors.size()) {
+    MS_LOG(ERROR) << "Did not find all the given tensors in the model";
+    return RET_ERROR;
+  }
+  auto ret = ReSizeKernels(kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Resize kernels fail!";
+    return ret;
+  }
+
+  bool is_eval = IsEval();
+  ret = Train();  // This will trigger proper Allocation of static data;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "General failure occurred during Update of Weights";
+    return ret;
+  }
+  if (is_eval) {
+    ret = Eval();
+  }
+  return ret;
+}
+
 int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels) {
   if (!IS_STATIC_ALLOCATOR(allocator_)) return RET_OK;
   OptAllocator allocator;
@@ -199,8 +282,12 @@ int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels)
     }
   }
   // Set Tensor data
+  auto size = allocator.total_size();
+  if (size > tensors_data_size_) {
+    free(tensors_data_);
+    tensors_data_ = nullptr;
+  }
   if (tensors_data_ == nullptr) {
-    auto size = allocator.total_size();
     auto buf = malloc(size);
     if (buf == nullptr) {
       MS_LOG(ERROR) << "cannot allocate buffer size" << size;
@@ -209,6 +296,7 @@ int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels)
     StaticAllocator *alloc = reinterpret_cast<StaticAllocator *>(allocator_.get());
     alloc->SetContex(buf, size);
     tensors_data_ = buf;
+    tensors_data_size_ = size;
   }
   for (auto kernel : train_kernels_) {
     for (auto tensor : kernel->out_tensors()) {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INCLUDE_LITE_SESSION_H
-#define MINDSPORE_LITE_INCLUDE_LITE_SESSION_H
+#ifndef MINDSPORE_LITE_INCLUDE_LITE_SESSION_H_
+#define MINDSPORE_LITE_INCLUDE_LITE_SESSION_H_
 
 #ifndef NOT_USE_STL
 #include <unordered_map>
@@ -190,6 +190,14 @@ class MS_API LiteSession {
     return mindspore::lite::RET_ERROR;
   }
 
+  /// \brief Change the size and or content of weight tensors
+  ///
+  /// \param[in] new_weights a vector of tensors with new shapes and data to use in the model
+  ///            If data pointer is null, the data of the original tensors will be copied to the new ones
+  ///
+  /// \return STATUS as an error code of operation, STATUS is defined in errorcode.h.
+  virtual int UpdateWeights(std::vector<tensor::MSTensor *> new_weights) { return mindspore::lite::RET_ERROR; }
+
   /// \brief Get model featuremap MindSpore Lite MSTensors of Training model prediction
   ///
   /// \return a vector of output tensors (MindSpore Lite MSTensor).
@@ -233,4 +241,4 @@ class MS_API LiteSession {
 };
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_INCLUDE_LITE_SESSION_H
+#endif  // MINDSPORE_LITE_INCLUDE_LITE_SESSION_H_
