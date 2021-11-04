@@ -208,23 +208,6 @@ Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<s
 Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
   Strategys strategies;
 
-  auto axis_input = GetValue<int64_t>(ops[iter_ops]->input_value().at(2));
-  if (axis_input < 0) {
-    axis_input += SizeToLong(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
-  }
-  int64_t axis = axis_input;
-  if (axis >= SizeToLong(s.size())) {
-    MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
-  }
-  s[LongToSize(axis)] = 1;
-  strategies.push_back(s);
-
-  return strategies;
-}
-
-Strategys PrepareGatherV2P(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
-  Strategys strategies;
-
   auto output_shape = ops[iter_ops]->outputs_tensor_info()[0].shape();
   Dimensions index(output_shape.size() - 1, 0);
   for (size_t i = 0; i < index.size(); i++) {
@@ -288,8 +271,8 @@ Strategys PrepareGatherV2P(const std::vector<std::shared_ptr<OperatorInfo>> &ops
   return strategies;
 }
 
-Dimensions PrepareGatherV2POutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                          const size_t incoming_op_index) {
+Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                         const size_t incoming_op_index) {
   auto output_shape = ops[incoming_op_index]->outputs_tensor_info()[0].shape();
   Dimensions index(output_shape.size() - 1, 0);
   for (size_t i = 0; i < index.size(); i++) {
@@ -729,9 +712,7 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
     }
     auto name = ops[incoming_op_index]->name().substr(0, pos);
     if (name == "Gather") {
-      return s;
-    } else if (name == "GatherP") {
-      return PrepareGatherV2POutputStrategy(ops, incoming_op_index);
+      return PrepareGatherV2OutputStrategy(ops, incoming_op_index);
     } else {
       MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
     }
@@ -966,8 +947,6 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
     auto name = ops[iter_ops]->name().substr(0, pos);
     if (name == "Gather") {
       return PrepareGatherV2(ops, iter_ops, basic_stra);
-    } else if (name == "GatherP") {
-      return PrepareGatherV2P(ops, iter_ops, basic_stra);
     } else {
       MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
     }
