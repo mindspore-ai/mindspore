@@ -27,6 +27,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef void (*TiledMatmulFp32)(float *dst, const float *src, const float *weight, size_t ic_tiled, size_t cal_num,
+                                size_t oc_tiled);
 
 int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param);
@@ -35,6 +37,7 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
 int DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
                  const DeConvParam *deconv_param, int calculate_count, int tile_index);
 void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t ic4, size_t cal_num, size_t oc4);
+void TiledC8MatmulFp32(float *dst, const float *src, const float *weight, size_t ic8, size_t cal_num, size_t oc8);
 
 #ifdef __cplusplus
 }

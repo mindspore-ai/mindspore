@@ -17,40 +17,13 @@
 #include "nnacl/fp32/deconv_winograd_fp32.h"
 #include "nnacl/errorcode.h"
 
-static void TransposeWeight(float *dst, size_t number) {
-#ifdef ENABLE_AVX
-  for (int i = 0; i < number; ++i) {
-    float *addr = dst + 16 * i;
-    __m128 s0 = _mm_loadu_ps(addr + 4 * 0);
-    __m128 s1 = _mm_loadu_ps(addr + 4 * 1);
-    __m128 s2 = _mm_loadu_ps(addr + 4 * 2);
-    __m128 s3 = _mm_loadu_ps(addr + 4 * 3);
-#ifndef _MM_TRANSPOSE4_PS
-#define _MM_TRANSPOSE4_PS(row0, row1, row2, row3) \
-  do {                                            \
-    __m128 tmp3, tmp2, tmp1, tmp0;                \
-    tmp0 = _mm_unpacklo_ps((row0), (row1));       \
-    tmp2 = _mm_unpacklo_ps((row2), (row3));       \
-    tmp1 = _mm_unpackhi_ps((row0), (row1));       \
-    tmp3 = _mm_unpackhi_ps((row2), (row3));       \
-    (row0) = _mm_movelh_ps(tmp0, tmp2);           \
-    (row1) = _mm_movehl_ps(tmp2, tmp0);           \
-    (row2) = _mm_movelh_ps(tmp1, tmp3);           \
-    (row3) = _mm_movehl_ps(tmp3, tmp1);           \
-  } while (0)
-#endif
-    _MM_TRANSPOSE4_PS(s0, s1, s2, s3);
-#undef _MM_TRANSPOSE4_PS
-    _mm_storeu_ps(addr + 4 * 0, s0);
-    _mm_storeu_ps(addr + 4 * 1, s1);
-    _mm_storeu_ps(addr + 4 * 2, s2);
-    _mm_storeu_ps(addr + 4 * 3, s3);
-  }
-#endif
-}
-
 int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param) {
+#ifdef ENABLE_AVX
+  int tile_num = C8NUM;
+#else
+  int tile_num = C4NUM;
+#endif
   unsigned int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
   unsigned int size = conv_param->input_channel_ * conv_param->output_channel_ * tmp_kernel_plane;
   float *current_unit_weight = (float *)malloc(size * sizeof(float));
@@ -128,8 +101,9 @@ int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, cons
       }
       return NNACL_NULL_PTR;
     }
-    WinogradWeightTransform(current_unit_weight, winograd_unit_weight, matrix_g, matrix_gt, C4NUM, unit->winograd_.kh_,
-                            unit->h_size_, conv_param->output_channel_, conv_param->input_channel_, false);
+    WinogradWeightTransform(current_unit_weight, winograd_unit_weight, matrix_g, matrix_gt, tile_num,
+                            unit->winograd_.kh_, unit->h_size_, conv_param->output_channel_, conv_param->input_channel_,
+                            false);
 
     /* reset weight data & info */
     tmp_kernel_plane = unit->winograd_.kh_ * unit->winograd_.kw_;
@@ -141,20 +115,19 @@ int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, cons
 
   /* trans mhwc -> hw1:k1-knc0-c4:k1-knc5-c8:hw2:k1-knc0-c4:k1 */
   float *dst_weight = (float *)unit->weight_;
-  size = deconv_param->ic_up4_ * deconv_param->oc_up4_ * tmp_kernel_plane;
+  size = deconv_param->ic_up_ * deconv_param->oc_up_ * tmp_kernel_plane;
   memset(dst_weight, 0, size * sizeof(float));
   for (int ic = 0; ic < conv_param->input_channel_; ic++) {
     for (int oc = 0; oc < conv_param->output_channel_; oc++) {
-      int oc4div = oc / C4NUM, oc4mod = oc % C4NUM;
+      int oc4div = oc / tile_num, oc4mod = oc % tile_num;
       for (int upi = 0; upi < tmp_kernel_plane; upi++) {
         int src_index = ic * conv_param->output_channel_ * tmp_kernel_plane + upi * conv_param->output_channel_ + oc;
-        int dst_index = upi * deconv_param->oc_up4_ * deconv_param->ic_up4_ + oc4div * C4NUM * deconv_param->ic_up4_ +
-                        ic * C4NUM + oc4mod;
+        int dst_index = upi * deconv_param->oc_up_ * deconv_param->ic_up_ + oc4div * tile_num * deconv_param->ic_up_ +
+                        ic * tile_num + oc4mod;
         dst_weight[dst_index] = current_unit_weight[src_index];
       }
     }
   }
-  TransposeWeight(dst_weight, size / 16);
 
   if (current_unit_weight != NULL) {
     free(current_unit_weight);
@@ -164,19 +137,26 @@ int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, cons
 }
 
 void DeConvWgInputPack(const float *src_ptr, float *dst_ptr, int channel, int stride) {
-  int ic4div = channel / C4NUM;
-  int ic4mod = channel % C4NUM;
+#ifdef ENABLE_AVX
+  int ic_tile = C8NUM;
+#else
+  int ic_tile = C4NUM;
+#endif
+  int ic4div = channel / ic_tile;
+  int ic4mod = channel % ic_tile;
   const float *src = src_ptr;
   float *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+#ifdef ENABLE_AVX
+    MS_ST256_F32(dst, MS_LD256_F32(src));
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
     MS_STQ_F32(dst, MS_LDQ_F32(src));
 #else
     memcpy(dst, src, C4NUM * sizeof(float));
 #endif
     dst += stride;
-    src += C4NUM;
+    src += ic_tile;
   }
 
   if (ic4mod != 0) {
@@ -184,33 +164,32 @@ void DeConvWgInputPack(const float *src_ptr, float *dst_ptr, int channel, int st
     for (; ic_res < ic4mod; ic_res++) {
       dst[ic_res] = src[ic_res];
     }
-    for (; ic_res < C4NUM; ic_res++) {
+    for (; ic_res < ic_tile; ic_res++) {
       dst[ic_res] = 0;
     }
   }
-  return;
 }
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t cal_num, size_t ic4, size_t oc4) {
   int dx, sz, dz;
-  const int src_depth_step = 4 * DECONV_WINOGRAD_DEFAULT_TILE;
+  const int src_depth_step = C4NUM * DECONV_WINOGRAD_DEFAULT_TILE;
   for (dz = 0; dz < oc4; ++dz) {
     float *dst_z = dst + dz * cal_num;
-    const float *weight_dz = weight + dz * ic4 * 16;
+    const float *weight_dz = weight + dz * ic4 * C16NUM;
     for (dx = 0; dx < DECONV_WINOGRAD_DEFAULT_TILE; ++dx) {
-      float *dst_x = dst_z + dx * 4;
+      float *dst_x = dst_z + dx * C4NUM;
       dst_x[0] = 0.0f;
       dst_x[1] = 0.0f;
       dst_x[2] = 0.0f;
       dst_x[3] = 0.0f;
-      const float *src_dx = src + 4 * dx;
+      const float *src_dx = src + C4NUM * dx;
       for (sz = 0; sz < ic4; ++sz) {
         const float *src_z = src_dx + sz * src_depth_step;
-        const float *weight_z = weight_dz + sz * 16;
-        for (int i = 0; i < 4; ++i) {
-          for (int j = 0; j < 4; ++j) {
-            dst_x[j] += src_z[i] * weight_z[4 * i + j];
+        const float *weight_z = weight_dz + sz * C16NUM;
+        for (int i = 0; i < C4NUM; ++i) {
+          for (int j = 0; j < C4NUM; ++j) {
+            dst_x[j] += src_z[i] * weight_z[C4NUM * i + j];
           }
         }
       }
@@ -341,12 +320,86 @@ void DeConvWgMergeArm32(const float *src_ptr, float *dst_ptr, size_t src_step, s
 #endif
 #endif
 
+#ifdef ENABLE_AVX
 void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_stride, size_t count) {
   const float *src_ptr = src;
   float *dst_ptr = dst;
-  size_t cuont8 = count / C8NUM * C8NUM;
+  size_t count8 = count / C8NUM * C8NUM;
+  size_t count4 = count / C4NUM * C4NUM;
   int i = 0;
-  for (; i < cuont8; i += 8) {
+  for (; i < count8; i += C8NUM) {
+    MS_FLOAT32X8 src1 = MS_LD256_F32(src_ptr + 0 * src_stride);
+    MS_FLOAT32X8 src2 = MS_LD256_F32(src_ptr + 1 * src_stride);
+    MS_FLOAT32X8 src3 = MS_LD256_F32(src_ptr + 2 * src_stride);
+    MS_FLOAT32X8 src4 = MS_LD256_F32(src_ptr + 3 * src_stride);
+    MS_FLOAT32X8 src5 = MS_LD256_F32(src_ptr + 4 * src_stride);
+    MS_FLOAT32X8 src6 = MS_LD256_F32(src_ptr + 5 * src_stride);
+    MS_FLOAT32X8 src7 = MS_LD256_F32(src_ptr + 6 * src_stride);
+    MS_FLOAT32X8 src8 = MS_LD256_F32(src_ptr + 7 * src_stride);
+    MS_FLOAT32X8 dst1 = MS_LD256_F32(dst_ptr + 0 * dst_stride);
+    MS_FLOAT32X8 dst2 = MS_LD256_F32(dst_ptr + 1 * dst_stride);
+    MS_FLOAT32X8 dst3 = MS_LD256_F32(dst_ptr + 2 * dst_stride);
+    MS_FLOAT32X8 dst4 = MS_LD256_F32(dst_ptr + 3 * dst_stride);
+    MS_FLOAT32X8 dst5 = MS_LD256_F32(dst_ptr + 4 * dst_stride);
+    MS_FLOAT32X8 dst6 = MS_LD256_F32(dst_ptr + 5 * dst_stride);
+    MS_FLOAT32X8 dst7 = MS_LD256_F32(dst_ptr + 6 * dst_stride);
+    MS_FLOAT32X8 dst8 = MS_LD256_F32(dst_ptr + 7 * dst_stride);
+    dst1 = MS_ADD256_F32(dst1, src1);
+    dst2 = MS_ADD256_F32(dst2, src2);
+    dst3 = MS_ADD256_F32(dst3, src3);
+    dst4 = MS_ADD256_F32(dst4, src4);
+    dst5 = MS_ADD256_F32(dst5, src5);
+    dst6 = MS_ADD256_F32(dst6, src6);
+    dst7 = MS_ADD256_F32(dst7, src7);
+    dst8 = MS_ADD256_F32(dst8, src8);
+    MS_ST256_F32(dst_ptr + 0 * dst_stride, dst1);
+    MS_ST256_F32(dst_ptr + 1 * dst_stride, dst2);
+    MS_ST256_F32(dst_ptr + 2 * dst_stride, dst3);
+    MS_ST256_F32(dst_ptr + 3 * dst_stride, dst4);
+    MS_ST256_F32(dst_ptr + 4 * dst_stride, dst5);
+    MS_ST256_F32(dst_ptr + 5 * dst_stride, dst6);
+    MS_ST256_F32(dst_ptr + 6 * dst_stride, dst7);
+    MS_ST256_F32(dst_ptr + 7 * dst_stride, dst8);
+    src_ptr += C8NUM * src_stride;
+    dst_ptr += C8NUM * dst_stride;
+  }
+  for (; i < count4; i += C4NUM) {
+    MS_FLOAT32X8 src1 = MS_LD256_F32(src_ptr + 0 * src_stride);
+    MS_FLOAT32X8 src2 = MS_LD256_F32(src_ptr + 1 * src_stride);
+    MS_FLOAT32X8 src3 = MS_LD256_F32(src_ptr + 2 * src_stride);
+    MS_FLOAT32X8 src4 = MS_LD256_F32(src_ptr + 3 * src_stride);
+    MS_FLOAT32X8 dst1 = MS_LD256_F32(dst_ptr + 0 * dst_stride);
+    MS_FLOAT32X8 dst2 = MS_LD256_F32(dst_ptr + 1 * dst_stride);
+    MS_FLOAT32X8 dst3 = MS_LD256_F32(dst_ptr + 2 * dst_stride);
+    MS_FLOAT32X8 dst4 = MS_LD256_F32(dst_ptr + 3 * dst_stride);
+    dst1 = MS_ADD256_F32(dst1, src1);
+    dst2 = MS_ADD256_F32(dst2, src2);
+    dst3 = MS_ADD256_F32(dst3, src3);
+    dst4 = MS_ADD256_F32(dst4, src4);
+    MS_ST256_F32(dst_ptr + 0 * dst_stride, dst1);
+    MS_ST256_F32(dst_ptr + 1 * dst_stride, dst2);
+    MS_ST256_F32(dst_ptr + 2 * dst_stride, dst3);
+    MS_ST256_F32(dst_ptr + 3 * dst_stride, dst4);
+    src_ptr += C4NUM * src_stride;
+    dst_ptr += C4NUM * dst_stride;
+  }
+  for (; i < count; i++) {
+    MS_FLOAT32X8 src_data = MS_LD256_F32(src_ptr);
+    MS_FLOAT32X8 dst_data = MS_LD256_F32(dst_ptr);
+    dst_data = MS_ADD256_F32(src_data, dst_data);
+    MS_ST256_F32(dst_ptr, dst_data);
+    src_ptr += src_stride;
+    dst_ptr += dst_stride;
+  }
+}
+#else
+void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_stride, size_t count) {
+  const float *src_ptr = src;
+  float *dst_ptr = dst;
+  size_t count8 = count / C8NUM * C8NUM;
+  size_t count4 = count / C4NUM * C4NUM;
+  int i = 0;
+  for (; i < count8; i += C8NUM) {
 #ifdef ENABLE_ARM64
     size_t src_step = src_stride * sizeof(float);
     size_t dst_step = dst_stride * sizeof(float);
@@ -419,8 +472,8 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
                MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 2 * dst_stride), MS_LDQ_F32(src_ptr + 2 * src_stride)));
     MS_STQ_F32(dst_ptr + 3 * dst_stride,
                MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 3 * dst_stride), MS_LDQ_F32(src_ptr + 3 * src_stride)));
-    MS_STQ_F32(dst_ptr + 4 * dst_stride,
-               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 4 * dst_stride), MS_LDQ_F32(src_ptr + 4 * src_stride)));
+    MS_STQ_F32(dst_ptr + C4NUM * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + C4NUM * dst_stride), MS_LDQ_F32(src_ptr + C4NUM * src_stride)));
     MS_STQ_F32(dst_ptr + 5 * dst_stride,
                MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 5 * dst_stride), MS_LDQ_F32(src_ptr + 5 * src_stride)));
     MS_STQ_F32(dst_ptr + 6 * dst_stride,
@@ -428,16 +481,38 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
     MS_STQ_F32(dst_ptr + 7 * dst_stride,
                MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 7 * dst_stride), MS_LDQ_F32(src_ptr + 7 * src_stride)));
 #else
-    for (int j = 0; j < 8; j++) {
+    for (int j = 0; j < C8NUM; j++) {
       const float *s = src_ptr + j * src_stride;
       float *d = dst_ptr + j * dst_stride;
-      for (int k = 0; k < 4; k++) {
+      for (int k = 0; k < C4NUM; k++) {
         d[k] += s[k];
       }
     }
 #endif
-    src_ptr += 8 * src_stride;
-    dst_ptr += 8 * dst_stride;
+    src_ptr += C8NUM * src_stride;
+    dst_ptr += C8NUM * dst_stride;
+  }
+  for (; i < count4; i += C4NUM) {
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+    MS_STQ_F32(dst_ptr + 0 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 0 * dst_stride), MS_LDQ_F32(src_ptr + 0 * src_stride)));
+    MS_STQ_F32(dst_ptr + 1 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 1 * dst_stride), MS_LDQ_F32(src_ptr + 1 * src_stride)));
+    MS_STQ_F32(dst_ptr + 2 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 2 * dst_stride), MS_LDQ_F32(src_ptr + 2 * src_stride)));
+    MS_STQ_F32(dst_ptr + 3 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 3 * dst_stride), MS_LDQ_F32(src_ptr + 3 * src_stride)));
+#else
+    for (int j = 0; j < C4NUM; j++) {
+      const float *s = src_ptr + j * src_stride;
+      float *d = dst_ptr + j * dst_stride;
+      for (int k = 0; k < C4NUM; k++) {
+        d[k] += s[k];
+      }
+    }
+#endif
+    src_ptr += C4NUM * src_stride;
+    dst_ptr += C4NUM * dst_stride;
   }
   for (; i < count; i++) {
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
@@ -446,41 +521,47 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
     dst_data = MS_ADDQ_F32(src_data, dst_data);
     MS_STQ_F32(dst_ptr, dst_data);
 #else
-    for (int j = 0; j < 4; j++) {
+    for (int j = 0; j < C4NUM; j++) {
       dst_ptr[j] += src_ptr[j];
     }
 #endif
     src_ptr += src_stride;
     dst_ptr += dst_stride;
   }
-  return;
 }
+#endif
 
 void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, const float *weight_buf, float *tmp_buf,
                        const float *at_buf, float *a_mid_buf, float *trans_a_buf, bool *transferred,
                        const float *bt_buf, float *b_tmp_buf, int unit_size, int w_start, int h_start,
                        const ConvParameter *conv_param, const DeConvParam *deconv_param) {
+#ifdef ENABLE_AVX
+  int tile_num = C8NUM;
+  TiledMatmulFp32 matmul_func = TiledC8MatmulFp32;
+#else
+  TiledMatmulFp32 matmul_func = TiledC4MatmulFp32;
+  int tile_num = C4NUM;
+#endif
   int winograd_plane = unit_size * unit_size;
   if (!transferred[unit_size]) {
     WinogradTransLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
-                      deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+                      deconv_param->ic_div_ * DECONV_WINOGRAD_DEFAULT_TILE);
     WinogradTransRight(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
-                       deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+                       deconv_param->ic_div_ * DECONV_WINOGRAD_DEFAULT_TILE);
     transferred[unit_size] = true;
   }
 
   for (int index = 0; index < winograd_plane; index++) {
-    float *src = trans_a_buf + index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
-    float *dst = tmp_buf + index * deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
-    const float *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
-    TiledC4MatmulFp32(dst, src, weight, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, deconv_param->ic_div4_,
-                      deconv_param->oc_div4_);
+    float *src = trans_a_buf + index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up_;
+    float *dst = tmp_buf + index * deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
+    const float *weight = weight_buf + index * deconv_param->ic_up_ * deconv_param->oc_up_;
+    matmul_func(dst, src, weight, DECONV_WINOGRAD_DEFAULT_TILE * tile_num, deconv_param->ic_div_,
+                deconv_param->oc_div_);
   }
-
   WinogradTransLeft(tmp_buf, bt_buf, b_tmp_buf, unit_size, unit_size, unit_size,
-                    deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+                    deconv_param->oc_div_ * DECONV_WINOGRAD_DEFAULT_TILE);
   WinogradTransRight(b_tmp_buf, bt_buf, tmp_buf, unit_size, unit_size, unit_size,
-                     deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+                     deconv_param->oc_div_ * DECONV_WINOGRAD_DEFAULT_TILE);
 
   // Add to dest
   for (int uhi = 0; uhi < unit_size; uhi++) {
@@ -488,26 +569,32 @@ void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, const float *weigh
     for (int uwi = 0; uwi < unit_size; uwi++) {
       int w_index = uwi * conv_param->stride_w_ + w_start;
 
-      float *dst = tile_out + w_index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_ +
-                   h_index * deconv_param->out_tile_w_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
-      float *src = tmp_buf + (uwi + uhi * unit_size) * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
-      DeConvWgMerge(src, dst, 4, 4, DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_div4_);
+      float *dst = tile_out + w_index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up_ +
+                   h_index * deconv_param->out_tile_w_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up_;
+      float *src = tmp_buf + (uwi + uhi * unit_size) * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up_;
+      DeConvWgMerge(src, dst, tile_num, tile_num, DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_div_);
     }
   }
-  return;
 }
 
 void DeConvWgCalCommFp32(const float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start,
                          int w_start, int h_size, int w_size, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param) {
-  int count = deconv_param->oc_div4_ * w_size * h_size;
-  int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
-  int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
+#ifdef ENABLE_AVX
+  int tile_num = C8NUM;
+  TiledMatmulFp32 matmul_func = TiledC8MatmulFp32;
+#else
+  TiledMatmulFp32 matmul_func = TiledC4MatmulFp32;
+  int tile_num = C4NUM;
+#endif
+  int count = deconv_param->oc_div_ * w_size * h_size;
+  int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up_;
+  int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up_;
 
   for (int hi = 0; hi < DECONV_WINOGRAD_DEFAULT_UNIT; hi++) {
     for (int wi = 0; wi < DECONV_WINOGRAD_DEFAULT_UNIT; wi++) {
       const float *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
-      TiledC4MatmulFp32(tmp_buf, src_in, weight, DECONV_WINOGRAD_DEFAULT_TILE * 4, deconv_param->ic_div4_, count);
+      matmul_func(tmp_buf, src_in, weight, DECONV_WINOGRAD_DEFAULT_TILE * tile_num, deconv_param->ic_div_, count);
 
       for (int uhi = 0; uhi < h_size; uhi++) {
         for (int uwi = 0; uwi < w_size; uwi++) {
@@ -515,13 +602,11 @@ void DeConvWgCalCommFp32(const float *tile_in, float *tile_out, const float *wei
           int h_index = (hi + uhi) * conv_param->stride_h_ + h_start;
           float *dst = tile_out + h_index * out_stride * deconv_param->out_tile_w_ + w_index * out_stride;
           float *src = tmp_buf + (uwi + uhi * w_size) * out_stride;
-          DeConvWgMerge(src, dst, 4, 4, DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_div4_);
+          DeConvWgMerge(src, dst, tile_num, tile_num, DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_div_);
         }
       }
     }
   }
-
-  return;
 }
 
 int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
@@ -530,9 +615,15 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
     return NNACL_ERR;
   }
   /* pack tile input */
-  int tile_in_unit_stride = deconv_param->ic_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
+  int tile_in_unit_stride = deconv_param->ic_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
+#ifdef ENABLE_AVX
+  int tile_num = C8NUM;
+  MS_FLOAT32X8 zero = MS_MOV256_F32(0.0f);
+#else
+  int tile_num = C4NUM;
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   MS_FLOAT32X4 zero = MS_MOVQ_F32(0.0f);
+#endif
 #endif
   for (int unit_index = 0; unit_index < calculate_count; unit_index++) {
     int plane_index = start_index + unit_index;
@@ -541,19 +632,21 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
     int w_start = w_unit_index * DECONV_WINOGRAD_DEFAULT_UNIT;
     int h_start = h_unit_index * DECONV_WINOGRAD_DEFAULT_UNIT;
 
-    float *dst_unit = tile_in + unit_index * C4NUM;
+    float *dst_unit = tile_in + unit_index * tile_num;
     for (int hi = 0; hi < DECONV_WINOGRAD_DEFAULT_UNIT; hi++) {
       for (int wi = 0; wi < DECONV_WINOGRAD_DEFAULT_UNIT; wi++) {
         float *dst = dst_unit + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * tile_in_unit_stride;
         int w_index = w_start + wi;
         int h_index = h_start + hi;
         if (w_index >= conv_param->input_w_ || h_index >= conv_param->input_h_) {
-          for (int ic4_index = 0; ic4_index < deconv_param->ic_div4_; ic4_index++) {
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-            MS_STQ_F32(dst + ic4_index * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, zero);
+          for (int ic4_index = 0; ic4_index < deconv_param->ic_div_; ic4_index++) {
+#ifdef ENABLE_AVX
+            MS_ST256_F32(dst + ic4_index * DECONV_WINOGRAD_DEFAULT_TILE * tile_num, zero);
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
+            MS_STQ_F32(dst + ic4_index * DECONV_WINOGRAD_DEFAULT_TILE * tile_num, zero);
 #else
-            for (int i = 0; i < 4; i++) {
-              dst[C4NUM * DECONV_WINOGRAD_DEFAULT_TILE * ic4_index + i] = 0;
+            for (int i = 0; i < tile_num; i++) {
+              dst[tile_num * DECONV_WINOGRAD_DEFAULT_TILE * ic4_index + i] = 0;
             }
 #endif
           }
@@ -561,7 +654,7 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
         }
 
         const float *src = nhwc_input_ + (w_index + h_index * conv_param->input_w_) * conv_param->input_channel_;
-        DeConvWgInputPack(src, dst, conv_param->input_channel_, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM);
+        DeConvWgInputPack(src, dst, conv_param->input_channel_, DECONV_WINOGRAD_DEFAULT_TILE * tile_num);
       }
     }
   }
@@ -572,7 +665,7 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
     DeConvComputeUnit *unit = &deconv_param->compute_units_[i];
     if (unit->use_winograd_) {
       float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
-                                                      deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
+                                                      deconv_param->oc_div_ * DECONV_WINOGRAD_DEFAULT_TILE * tile_num;
 
       /* winograd a buffer */
       if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
@@ -580,17 +673,17 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
       }
       DeConvWgABuffer *wg_buf = &deconv_param->a_buffer_[unit->winograd_.kh_];
       float *wg_mid_a_buf = (float *)wg_buf->middle_buffer_ + task_id * unit->winograd_.kw_ * unit->winograd_.kh_ *
-                                                                DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
+                                                                DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up_;
       float *wg_dst_a_buf = (float *)wg_buf->dest_buffer_ + task_id * unit->winograd_.kw_ * unit->winograd_.kh_ *
-                                                              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
+                                                              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up_;
       float *tmp_b_buf = (float *)unit->winograd_.b_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
-                                                                deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
+                                                                deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
       DeConvWgCalWgFp32(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->winograd_.AT_, wg_mid_a_buf,
                         wg_dst_a_buf, transferred, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
                         unit->h_start_, conv_param, deconv_param);
     } else {
-      float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ * unit->h_size_ *
-                                                      DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
+      float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * deconv_param->oc_div_ * unit->w_size_ * unit->h_size_ *
+                                                      DECONV_WINOGRAD_DEFAULT_TILE * tile_num;
       DeConvWgCalCommFp32(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->h_start_, unit->w_start_,
                           unit->h_size_, unit->w_size_, conv_param, deconv_param);
     }
@@ -600,24 +693,29 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
 
 int DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
                  const DeConvParam *deconv_param, int calculate_count, int tile_index) {
+#ifdef ENABLE_AVX
+  int tile_num = C8NUM;
+#else
+  int tile_num = C4NUM;
+#endif
   if (deconv_param->in_tile_w_count_ == 0) {
     return NNACL_ERR;
   }
   /* merge */
-  int src_unit_stride = deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
+  int src_unit_stride = deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
 
-  int src_stride = DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
-  int dst_stride = conv_param->output_w_ * conv_param->output_h_ * C4NUM;
+  int src_stride = DECONV_WINOGRAD_DEFAULT_TILE * tile_num;
+  int dst_stride = conv_param->output_w_ * conv_param->output_h_ * tile_num;
 
   for (int index = 0; index < calculate_count; ++index) {
-    const float *src_start = tile_out + index * C4NUM;
+    const float *src_start = tile_out + index * tile_num;
 
     int plane_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE + index;
     int w_unit_index = plane_index % deconv_param->in_tile_w_count_;
     int h_unit_index = plane_index / deconv_param->in_tile_w_count_;
     int w_start = w_unit_index * DECONV_WINOGRAD_DEFAULT_UNIT * conv_param->stride_w_ - conv_param->pad_l_;
     int h_start = h_unit_index * DECONV_WINOGRAD_DEFAULT_UNIT * conv_param->stride_h_ - conv_param->pad_u_;
-    float *dst_start = nc4hw4_output + h_start * conv_param->output_w_ * C4NUM + w_start * C4NUM;
+    float *dst_start = nc4hw4_output + h_start * conv_param->output_w_ * tile_num + w_start * tile_num;
 
     int merge_w_start = MSMAX(-w_start, 0);
     int merge_h_start = MSMAX(-h_start, 0);
@@ -627,8 +725,8 @@ int DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParamete
     for (int hi = merge_h_start; hi < merge_h_end; hi++) {
       for (int wi = merge_w_start; wi < merge_w_end; wi++) {
         const float *src = src_start + (hi * deconv_param->out_tile_w_ + wi) * src_unit_stride;
-        float *dst = dst_start + (hi * conv_param->output_w_ + wi) * C4NUM;
-        DeConvWgMerge(src, dst, src_stride, dst_stride, deconv_param->oc_div4_);
+        float *dst = dst_start + (hi * conv_param->output_w_ + wi) * tile_num;
+        DeConvWgMerge(src, dst, src_stride, dst_stride, deconv_param->oc_div_);
       }
     }
   }

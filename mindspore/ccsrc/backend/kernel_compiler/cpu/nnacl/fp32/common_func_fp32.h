@@ -41,11 +41,22 @@ extern "C" {
 
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, size_t relu_type);
-void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                        size_t plane_size, size_t plane_stride, size_t relu_type);
+
+void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
+                        size_t plane_size, size_t stride, size_t relu_type);
 
 void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
+
 void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
+
+void WinogradPostConvFuncFp32CX(const float *cx_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                                size_t plane_size, size_t plane_stride, size_t relu_type);
+
+void WinogradPostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
+                                size_t plane_size, size_t plane_stride, size_t relu_type);
+
+void WinogradPostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
+                                size_t plane_size, size_t plane_stride, size_t relu_type);
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
@@ -60,12 +71,8 @@ void ConvDwFp32Border(float *dst, const float *src, const float *weight, const f
 void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width, size_t kernel_h,
                         size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
                         size_t in_kh_step, size_t in_kw_step);
-void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
-                        size_t plane_size, size_t stride, size_t relu_type);
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
                    size_t output_channel, size_t input_step);
-void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
-                        size_t plane_size, size_t plane_stride, size_t relu_type);
 #endif
 
 #ifdef ENABLE_ARM64

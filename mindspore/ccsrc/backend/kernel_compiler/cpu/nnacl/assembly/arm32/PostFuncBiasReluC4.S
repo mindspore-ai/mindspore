@@ -4,7 +4,7 @@
 .text
 .align 5
 
-asm_function PostFuncBiasReluC4
+asm_function WinogradPostFuncBiasReluC4
   push {r4-r8, r10, r11, lr}
   add sp, sp, #32
 

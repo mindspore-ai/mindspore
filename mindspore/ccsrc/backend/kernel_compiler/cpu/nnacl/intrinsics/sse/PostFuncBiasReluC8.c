@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifdef ENABLE_SSE
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/intrinsics/sse/sse_common.h"
@@ -22,7 +21,7 @@
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
                         size_t plane_size, size_t stride, size_t relu_type) {
   stride /= sizeof(float);
-  for (int loop_c8 = 0; !(loop_c8 == oc8div); loop_c8 += C8NUM) {
+  for (int loop_c8 = 0; loop_c8 != oc8div; loop_c8 += C8NUM) {
     size_t plane_size_tmp = plane_size;
     float *dst_c8 = dst + loop_c8;
     __m128 bias1 = _mm_setzero_ps(), bias2 = _mm_setzero_ps();
@@ -77,7 +76,7 @@ void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t 
     }
   }
 
-  if ((oc8mod == 0)) return;
+  if (oc8mod == 0) return;
 
   __m128 bias1 = _mm_setzero_ps();
   __m128 bias2 = _mm_setzero_ps();
@@ -123,6 +122,8 @@ void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t 
         _mm_storel_pi((__m64 *)(dst_c1 + 4), src2);
         src2 = _mm_unpackhi_ps(src2, src2);
         _mm_store_ss(dst_c1 + 6, src2);
+        break;
+      default:
         break;
     }
   }
