@@ -24,6 +24,9 @@
 #include "utils/check_convert_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/anf_exporter/anf_exporter.h"
+#include "src/ops/ops_utils.h"
+#include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
@@ -278,11 +281,11 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "GetValueNode failed");
-  if (prim->GetAttr(ops::kFormat) == nullptr && !param_node->has_default()) {
+  if (prim->GetAttr(mindspore::ops::kFormat) == nullptr && !param_node->has_default()) {
     data_info->format_ = mindspore::NHWC;
   }
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    auto value = prim->GetAttr(ops::kFormat);
+  if (prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
+    auto value = prim->GetAttr(mindspore::ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
       data_info->format_ = GetValue<int64_t>(value);
     }
@@ -309,8 +312,8 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "prim is nullptr");
   if (value->isa<tensor::Tensor>()) {
     ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info);
-    if (index == kNumWeightIndex && prim->GetAttr(ops::kFormat) != nullptr) {
-      data_info->format_ = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    if (index == kNumWeightIndex && prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
+      data_info->format_ = GetValue<int64_t>(prim->GetAttr(mindspore::ops::kFormat));
     }
   } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
     ret = FetchFromInt32OrInt64ImmValue(value_node, prim, data_info);
@@ -340,8 +343,8 @@ int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fm
   MS_CHECK_TRUE_MSG(cnode->input(index) != nullptr, RET_ERROR, "input is nullptr");
   auto input_node_prim = GetValueNode<PrimitivePtr>((cnode->input(index)->cast<CNodePtr>()->input(0)));
   MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "GetValueNode failed");
-  if (input_node_prim->GetAttr(ops::kFormat) != nullptr) {
-    auto value = input_node_prim->GetAttr(ops::kFormat);
+  if (input_node_prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
+    auto value = input_node_prim->GetAttr(mindspore::ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
       data_info->format_ = GetValue<int64_t>(value);
     }
@@ -487,6 +490,37 @@ int RemoveIfMakeTuple(const CNodePtr &cnode) {
   }
   if (has_make_tuple) {
     cnode->set_inputs(inputs);
+  }
+  return RET_OK;
+}
+
+int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter) {
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "op_parameter is nullptr.";
+    return RET_NULL_PTR;
+  }
+  CHECK_NULL_RETURN(GetValueNode<PrimitivePtr>(node));
+  auto prim_t = lite::GetPrimitiveT(node);
+  CHECK_NULL_RETURN(prim_t);
+  size_t init_size = 1024;
+  flatbuffers::FlatBufferBuilder fbb(init_size);
+  auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
+  if (prim == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "get primitive failed.";
+    return RET_ERROR;
+  }
+  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+  if (parameter_gen == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
+    return RET_ERROR;
+  }
+  *op_parameter = parameter_gen(prim);
+  fbb.Clear();
+  if (*op_parameter == nullptr) {
+    MS_LOG(ERROR) << "parameter is nullptr.";
+    return RET_ERROR;
   }
   return RET_OK;
 }

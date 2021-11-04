@@ -141,9 +141,9 @@ STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const s
 STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
                            WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index);
 
-int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first);
+int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 
-int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const ShapeVector &dims);
+int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims);
 
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
@@ -172,7 +172,7 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   std::vector<T> quant_data(elem_count);
   int ret = RET_OK;
   if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-    int preferred_dim = GetPreferredDim(primitive, index, dims);
+    int preferred_dim = GetPreferredDim(primitive, index, ConvertShapeVectorToInt32(dims));
     ret =
       DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                            static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max, quant_min,
@@ -220,8 +220,6 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   }
   return ret;
 }
-
-// utils
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 

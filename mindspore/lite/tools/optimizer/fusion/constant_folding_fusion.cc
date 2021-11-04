@@ -31,7 +31,6 @@
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"
-#include "src/ops/ops_utils.h"
 #include "src/runtime/infer_manager.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 
@@ -74,34 +73,20 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
                                   lite::InnerContext *context, mindspore::Context *ms_context) {
   MS_ASSERT(outputs != nullptr && cnode != nullptr && context != nullptr && ms_context != nullptr);
-  auto prim_t = lite::GetPrimitiveT(cnode->input(0));
-  if (prim_t == nullptr) {
-    return nullptr;
-  }
-  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-  auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
-  if (prim == nullptr) {
-    fbb.Clear();
-    MS_LOG(ERROR) << "get primitive failed.";
-    return nullptr;
-  }
-  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
-  if (parameter_gen == nullptr) {
-    fbb.Clear();
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
-    return nullptr;
-  }
-  auto parameter = parameter_gen(prim);
-  fbb.Clear();
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr.";
+  OpParameter *parameter;
+  auto ret = lite::FetchOpParameterFromNode(cnode->input(0), &parameter);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";
     return nullptr;
   }
   parameter->thread_num_ = 1;
-  auto ret = KernelInferShape(inputs, *outputs, parameter);
+  ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK) {
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
-    MS_LOG(ERROR) << "infershape failed!type: " << schema::EnumNamePrimitiveType(prim->value_type());
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " infershape failed!type: ";
     return nullptr;
   }
   auto data_type = inputs.front()->data_type();
@@ -110,13 +95,17 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, ms_context, desc, parameter,
                                                        &lite_kernel);
   if (ret != lite::RET_OK) {
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     return nullptr;
   }
   ret = lite_kernel->Prepare();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init failed.";
-    free(parameter);
+    // op_parameter is free by lite_kernel destructor
+    delete lite_kernel;
     return nullptr;
   }
   return lite_kernel;
