@@ -840,7 +840,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
         os.makedirs(data_path, exist_ok=True)
         os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         # Reserves 4096 bytes as spare information such as check data
-        offset = 4096
+        offset = 64
         data_file_name = os.path.join(data_path, "veriables.data")
         if os.path.exists(data_file_name):
             os.chmod(data_file_name, stat.S_IWUSR)
@@ -849,7 +849,8 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
             for name, param in net_dict.items():
                 for param_proto in model.graph.parameter:
                     if name == param_proto.name[param_proto.name.find(":") + 1:]:
-                        param_proto.external_data.location = data_file_name
+                        data_file = os.path.join(file_prefix + "_variables", "veriables.data")
+                        param_proto.external_data.location = data_file
                         raw_data = param.data.asnumpy().tobytes()
                         data_length = len(raw_data)
                         param_proto.external_data.length = data_length

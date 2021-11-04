@@ -343,7 +343,7 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       data = plain_data.get();
     } else {
       // Read file
-      std::basic_ifstream<Byte> fid(file, std::ios::in | std::ios::binary);
+      std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
       if (!fid) {
         MS_LOG(EXCEPTION) << "Open file '" << file << "' failed, please check the correct of the file.";
       }
@@ -351,18 +351,19 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       size_t file_size = static_cast<size_t>(fid.tellg());
       fid.clear();
       fid.seekg(0);
-      auto plain_data = std::make_unique<Byte[]>(file_size);
+      auto plain_data = std::make_unique<char[]>(file_size);
       constexpr Byte is_little_endian = 1;
       constexpr int byte_order_index = 0;
+      fid.read(plain_data.get(), file_size);
+      fid.close();
       // if byte order is not same return false
       if ((plain_data[byte_order_index] == is_little_endian) != little_endian()) {
         MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
         return false;
       }
-      fid.read(plain_data.get(), file_size);
-      fid.close();
-      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
-      data = plain_data.get();
+      data = reinterpret_cast<const unsigned char *>(plain_data.get());
+      tenor_data_.emplace(tensor_proto.external_data().location(),
+                          std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())));
     }
   }
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
