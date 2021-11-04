@@ -180,6 +180,10 @@ class _Context:
         if mode == PYNATIVE_MODE:
             if self.enable_debug_runtime:
                 self.set_backend_policy("vm")
+            parallel_mode = _get_auto_parallel_context("parallel_mode")
+            if parallel_mode not in (ParallelMode.DATA_PARALLEL, ParallelMode.STAND_ALONE):
+                raise ValueError(f"Pynative Only support STAND_ALONE and DATA_PARALLEL for ParallelMode,"
+                                 f"but got {parallel_mode.upper()}.")
             self._context_switches.push(True, None)
         elif mode == GRAPH_MODE:
             if self.enable_debug_runtime:
@@ -383,7 +387,8 @@ def set_auto_parallel_context(**kwargs):
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
-                     "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
+                     "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Note the pynative mode only supports
+                     the "stand_alone" and "data_parallel" mode. Default: "stand_alone".
 
                      - stand_alone: Only one processor is working.
 
