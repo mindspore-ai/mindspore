@@ -30,6 +30,7 @@
 #include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/db_to_amplitude_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
@@ -169,6 +170,17 @@ PYBIND_REGISTER(ContrastOperation, 1, ([](const py::module *m) {
                         return contrast;
                       }));
                 }));
+
+PYBIND_REGISTER(
+  DBToAmplitudeOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::DBToAmplitudeOperation, TensorOperation, std::shared_ptr<audio::DBToAmplitudeOperation>>(
+      *m, "DBToAmplitudeOperation")
+      .def(py::init([](float ref, float power) {
+        auto db_to_amplitude = std::make_shared<audio::DBToAmplitudeOperation>(ref, power);
+        THROW_IF_ERROR(db_to_amplitude->ValidateParams());
+        return db_to_amplitude;
+      }));
+  }));
 
 PYBIND_REGISTER(DCShiftOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::DCShiftOperation, TensorOperation, std::shared_ptr<audio::DCShiftOperation>>(

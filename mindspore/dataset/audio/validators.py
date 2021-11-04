@@ -195,6 +195,21 @@ def check_contrast(method):
     return new_method
 
 
+def check_db_to_amplitude(method):
+    """Wrapper method to check the parameters of db_to_amplitude."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [ref, power], _ = parse_user_args(method, *args, **kwargs)
+        type_check(ref, (float, int), "ref")
+        check_float32(ref, "ref")
+        type_check(power, (float, int), "power")
+        check_float32(power, "power")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_dc_shift(method):
     """Wrapper method to check the parameters of DCShift."""
 

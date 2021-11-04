@@ -1916,3 +1916,44 @@ TEST_F(MindDataTestPipeline, TestCreateDctWrongArg) {
   Status s04 = audio::CreateDct(&output, 200, -400, NormMode::kOrtho);
   EXPECT_FALSE(s04.IsOk());
 }
+
+/// Feature: DBToAmplitude
+/// Description: test DBToAmplitude in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestDBToAmplitudePipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBToAmplitudePipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+ ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto db_to_amplitude_op = audio::DBToAmplitude(2, 2);
+
+  ds = ds->Map({db_to_amplitude_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}

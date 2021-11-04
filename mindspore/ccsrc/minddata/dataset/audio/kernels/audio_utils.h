@@ -152,6 +152,24 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   return Status::OK();
 }
 
+/// \brief Apply DBToAmplitude effect.
+/// \param input/output: Tensor of shape <...,time>
+/// \param ref: Reference which the output will be scaled by.
+/// \param power: If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
+/// \return Status code
+template <typename T>
+Status DBToAmplitude(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T ref, T power) {
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), &out));
+  auto itr_out = out->begin<T>();
+  for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
+    *itr_out = ref * pow(pow(10, (*itr_in) * 0.1), power);
+    itr_out++;
+  }
+  *output = out;
+  return Status::OK();
+}
+
 /// \brief Apply a DC shift to the audio.
 /// \param input/output: Tensor of shape <...,time>.
 /// \param shift: the amount to shift the audio.

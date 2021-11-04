@@ -25,10 +25,11 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
-    check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_flanger, \
-    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, \
-    check_overdrive, check_phaser, check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
+    check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, \
+    check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, \
+    check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, \
+    check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, check_time_stretch, \
+    check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -328,6 +329,32 @@ class Contrast(AudioTensorOperation):
 
     def parse(self):
         return cde.ContrastOperation(self.enhancement_amount)
+
+
+class DBToAmplitude(AudioTensorOperation):
+    """
+    Turn a waveform from the decibel scale to the power/amplitude scale.
+
+    Args:
+        ref (float): Reference which the output will be scaled by.
+        power (float): If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.DBToAmplitude(0.5, 0.5)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_db_to_amplitude
+    def __init__(self, ref, power):
+        self.ref = ref
+        self.power = power
+
+    def parse(self):
+        return cde.DBToAmplitudeOperation(self.ref, self.power)
 
 
 class DCShift(AudioTensorOperation):
