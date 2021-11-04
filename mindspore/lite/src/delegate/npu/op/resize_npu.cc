@@ -17,6 +17,7 @@
 #include "src/delegate/npu/op/resize_npu.h"
 #include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
+#include "src/delegate/npu/pass/npu_pass_manager.h"
 
 namespace mindspore {
 constexpr int RESIZE_INPUT_SIZE = 2;
@@ -40,6 +41,7 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     MS_LOG(WARNING) << "Npu resize does not support reduction.";
     return RET_NOT_SUPPORT;
   }
+  is_support_v2_ = NPUManager::CheckDDKVersion("100.500.010.010");
   return RET_OK;
 }
 
@@ -77,27 +79,46 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   }
   out_size_->set_attr_value(sizeTensor);
 
+  auto ret = SelectResizeOp(resize_prim);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Select Resize op failed!";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ResizeNPUOp::SelectResizeOp(const mindspore::schema::Resize *prim) {
   if (resize_method_ == schema::ResizeMethod_LINEAR) {
     auto resize_bilinear = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
     if (resize_bilinear == nullptr) {
       MS_LOG(ERROR) << " resize_ is nullptr.";
       return RET_ERROR;
     }
-    resize_bilinear->set_attr_align_corners(resize_prim->coordinate_transform_mode() ==
+    resize_bilinear->set_attr_align_corners(prim->coordinate_transform_mode() ==
                                             schema::CoordinateTransformMode_ALIGN_CORNERS);
     resize_bilinear->set_input_size(*out_size_);
-    resize_bilinear->set_attr_half_pixel_centers(resize_prim->preserve_aspect_ratio());
+    resize_bilinear->set_attr_half_pixel_centers(prim->preserve_aspect_ratio());
     resize_ = resize_bilinear;
   } else if (resize_method_ == schema::ResizeMethod_NEAREST) {
-    auto resize_nearest = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
-    if (resize_nearest == nullptr) {
-      MS_LOG(ERROR) << " resize_ is nullptr.";
-      return RET_ERROR;
+    if (is_support_v2_) {
+      auto resize_nearest_v2 = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
+      if (resize_nearest_v2 == nullptr) {
+        MS_LOG(ERROR) << " resize_ is nullptr.";
+        return RET_ERROR;
+      }
+      resize_nearest_v2->set_attr_align_corners(prim->coordinate_transform_mode() ==
+                                                schema::CoordinateTransformMode_ALIGN_CORNERS);
+      resize_nearest_v2->set_input_size(*out_size_);
+      resize_ = resize_nearest_v2;
+    } else {
+      auto resize_nearest = new (std::nothrow) hiai::op::ResizeNearestNeighbor(name_);
+      if (resize_nearest == nullptr) {
+        MS_LOG(ERROR) << " resize_ is nullptr.";
+        return RET_ERROR;
+      }
+      resize_nearest->set_input_size(*out_size_);
+      resize_ = resize_nearest;
     }
-    resize_nearest->set_attr_align_corners(resize_prim->coordinate_transform_mode() ==
-                                           schema::CoordinateTransformMode_ALIGN_CORNERS);
-    resize_nearest->set_input_size(*out_size_);
-    resize_ = resize_nearest;
   } else {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_method_;
     return RET_ERROR;
@@ -112,8 +133,13 @@ int ResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
     auto resize_bilinear = reinterpret_cast<hiai::op::ResizeBilinearV2 *>(resize_);
     resize_bilinear->set_input_x(*npu_inputs[0]);
   } else if (resize_method_ == schema::ResizeMethod_NEAREST) {
-    auto resize_nearest = reinterpret_cast<hiai::op::ResizeNearestNeighborV2 *>(resize_);
-    resize_nearest->set_input_x(*npu_inputs[0]);
+    if (is_support_v2_) {
+      auto resize_nearest_v2 = reinterpret_cast<hiai::op::ResizeNearestNeighborV2 *>(resize_);
+      resize_nearest_v2->set_input_x(*npu_inputs[0]);
+    } else {
+      auto resize_nearest = reinterpret_cast<hiai::op::ResizeNearestNeighbor *>(resize_);
+      resize_nearest->set_input_x(*npu_inputs[0]);
+    }
   } else {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_method_;
     return RET_ERROR;
