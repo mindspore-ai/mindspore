@@ -12,6 +12,7 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_DIR}/../runtime/inner_allocator.cc
         ${KERNEL_REG_DIR}/../common/string_util.cc
         ${KERNEL_REG_DIR}/../common/lite_utils.cc
+        ${KERNEL_REG_DIR}/../common/utils.cc
         ${CORE_DIR}/utils/log_adapter.cc
         ${CORE_DIR}/utils/status.cc
         ${CORE_DIR}/gvar/log_adapter_common.cc

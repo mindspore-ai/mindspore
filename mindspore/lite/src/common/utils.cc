@@ -19,9 +19,13 @@
 #include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(_WIN32)
 #include <windows.h>
 #undef ERROR
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #endif
 
 namespace mindspore {
@@ -149,6 +153,18 @@ bool IsSupportSDot() {
 #endif
 #endif
   return status;
+}
+size_t GetMaxMallocSize() {
+  size_t max_malloc_size = 0;
+#if defined(_MSC_VER) || defined(_WIN32)
+  MEMORYSTATUSEX status;
+  status.dwLength = sizeof(status);
+  GlobalMemoryStatusEx(&status);
+  max_malloc_size = static_cast<size_t>(status.ullTotalPhys);
+#else
+  max_malloc_size = static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+#endif
+  return max_malloc_size;
 }
 }  // namespace lite
 }  // namespace mindspore

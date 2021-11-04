@@ -89,9 +89,20 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
-  activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(activation_layer->getOutput(0), Format::NCHW);
+  nvinfer1::ITensor *out_trt_tensor = activation_layer->getOutput(0);
+  if (out_trt_tensor->getDimensions().nbDims == DIMENSION_4D) {
+    // transpose output from nchw to nhwc
+    nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(network, *out_trt_tensor);
+    if (transpose_layer_out == nullptr) {
+      MS_LOG(ERROR) << "op action convert failed";
+      return RET_ERROR;
+    }
+    transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
+    out_trt_tensor = transpose_layer_out->getOutput(0);
+  }
+  out_trt_tensor->setName((op_name_ + "_output").c_str());
+  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NHWC});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_trt_tensor, Format::NHWC);
   return RET_OK;
 }
 

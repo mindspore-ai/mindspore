@@ -17,6 +17,7 @@
 #include "src/runtime/inner_allocator.h"
 #include <utility>
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 std::shared_ptr<Allocator> Allocator::Create() { return std::make_shared<DefaultAllocator>(); }
@@ -48,11 +49,11 @@ bool DefaultAllocator::ReuseMemory(size_t free_size, size_t size) {
 }
 
 void *DefaultAllocator::Malloc(size_t size) {
-  if (size > MAX_MALLOC_SIZE) {
+  if (size > lite::GetMaxMallocSize()) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
   }
-  if (this->total_size_ >= MAX_THREAD_POOL_SIZE) {
+  if (this->total_size_ >= lite::GetMaxMallocSize()) {
     MS_LOG(ERROR) << "Memory pool is exhausted";
     return nullptr;
   }
