@@ -59,10 +59,6 @@ class E2eDump {
 
   static bool DumpDirExists(const std::string &dump_path);
 
-  static bool MoveDumpFiles(const std::string &first_dir, const std::string &second_dir);
-
-  static bool DeleteDirContents(const std::string &dir_path);
-
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
