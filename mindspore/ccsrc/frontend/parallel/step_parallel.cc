@@ -2929,15 +2929,15 @@ CommInfo GetCommInfo() {
     device_num = UintToInt(world_rank_size);
     MS_LOG(INFO) << "Get device num from communication model, the device num is  " << device_num;
   }
-#if defined(ENABLE_GPU)
-  if (ParallelContext::GetInstance()->device_num_is_set() && backend == kGPUDevice) {
-    if (world_rank_size != device_num) {
-      MS_LOG(EXCEPTION) << "The device_num " << device_num
-                        << " set in the context is not consist with the word group size " << world_rank_size;
-    }
+#if ENABLE_D || ENABLE_GPU
+  if (ParallelContext::GetInstance()->device_num_is_set() && world_rank_size != device_num &&
+      !ParallelContext::GetInstance()->hccl_test_available()) {
+    // hccl_test_available is used when we compile graphs in real ascend card environment, but with hccl_test.
+    MS_LOG(EXCEPTION) << "The device_num " << device_num << " set in the context is not consist with "
+                      << world_rank_size << " devices you have "
+                      << ". Please check your rank_table file(for Ascend) or host file(for GPU).";
   }
 #endif
-
   uint32_t rank_id = 0;
   if (!ParallelContext::GetInstance()->global_rank_is_set()) {
     if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
