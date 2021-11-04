@@ -3071,7 +3071,7 @@ class Select(Primitive):
 def _compute_slicing_length(begin, end, stride, x_shape, i):
     """Computes the length of the slicing."""
     if i >= len(x_shape):
-        raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
+        raise ValueError(f"For 'StridedSlice', the index must be less than "
                          f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
                          f"and the index: {i}.")
     x_dim = x_shape[i]

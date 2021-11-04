@@ -610,7 +610,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
                  reduction='none'):
         """Initialize SoftmaxCrossEntropyWithLogits."""
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
-        self.sparse = validator.check_bool(sparse, "sparse")
+        self.sparse = validator.check_bool(sparse, "sparse", self.cls_name)
         self.reduction = reduction
         self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
@@ -706,9 +706,9 @@ def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
     """Internal function, used to check whether the dimension of logits and label meets the requirements."""
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if logits_dim < 2:
-        raise ValueError(f"{msg_prefix} Logits dimension should be greater than 1, but got {logits_dim}.")
+        raise ValueError(f"{msg_prefix} 'logits' dimension should be greater than 1, but got {logits_dim}.")
     if label_dim < 2:
-        raise ValueError(f"{msg_prefix} Label dimension should be greater than 1, but got {label_dim}.")
+        raise ValueError(f"{msg_prefix} 'labels' dimension should be greater than 1, but got {label_dim}.")
 
 @constexpr
 def _check_weights(weight_shape, label_shape, prim_name=None):
@@ -1387,8 +1387,8 @@ class FocalLoss(LossBase):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         labelss = labels
-        _check_ndim(logits.ndim, labelss.ndim)
-        _check_channel_and_shape(logits.shape[1], labelss.shape[1])
+        _check_ndim(logits.ndim, labelss.ndim, self.cls_name)
+        _check_channel_and_shape(logits.shape[1], labelss.shape[1], self.cls_name)
         _check_input_dtype(self.dtype(labelss), self.cls_name)
 
         if logits.ndim > 2:
