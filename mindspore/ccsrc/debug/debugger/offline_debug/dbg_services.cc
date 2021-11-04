@@ -62,6 +62,7 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
   const uint64_t ratio_inversion = 2;
   const uint64_t memlimit = max_mem_usage * kMegabytesToBytes / ratio_inversion;
   debug_services_->SetMemLimit(memlimit);
+  debug_services_->SetGraphsHistory();
   return 0;
 }
 

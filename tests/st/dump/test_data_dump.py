@@ -283,7 +283,7 @@ def run_e2e_dump_execution_graph():
         add = Net()
         add(Tensor(x), Tensor(y))
         exe_graph_path = os.path.join(dump_path, 'rank_0', 'execution_order')
-        assert len(os.listdir(exe_graph_path)) == 1
+        assert len(os.listdir(exe_graph_path)) == 2
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 

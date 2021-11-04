@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ class TensorLoader {
     key_name += (":" + std::to_string(tensor->GetDeviceId()) + ":" + std::to_string(tensor->GetRootGraphId()) + ":" +
                  std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot()));
     if (tensor_list_map_.find(key_name) != tensor_list_map_.end() &&
-        tensor->GetIteration() == tensor_list_map_[key_name]->GetIteration() - 1) {
+        tensor->GetIteration() == tensor_list_map_[key_name]->GetPrevIteration()) {
       key_name += ":prev";
     }
     auto iter = tensor_list_map_.find(key_name);

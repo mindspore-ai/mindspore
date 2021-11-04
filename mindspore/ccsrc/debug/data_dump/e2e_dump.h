@@ -39,6 +39,8 @@ class E2eDump {
 
   static void UpdateIterGPUDump();
 
+  static void DumpRunIter(const KernelGraphPtr &graph_ptr, uint32_t rank_id = 0);
+
   static void DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
 
   static bool DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);

@@ -33,6 +33,9 @@
 #include "runtime/base.h"
 #include "runtime/device/ascend/ascend_stream_manager.h"
 #include "utils/shape_utils.h"
+#ifndef ENABLE_SECURITY
+#include "debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace {
 constexpr auto kGradients = "Gradients";
@@ -1062,7 +1065,12 @@ void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::K
   MS_LOG(INFO) << "Load device loop control data";
   SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurLoopCountName, 0);
   SetDeviceLoopCtrlTensor(kernel_graph_ptr, kNextLoopCountName, 0);
-  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurEpochCountName, SizeToInt(kernel_graph_ptr->current_epoch()));
+#ifndef ENABLE_SECURITY
+  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurEpochCountName,
+                          SizeToInt(DumpJsonParser::GetInstance().cur_dump_iter()));
+#else
+  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurEpochCountName, 0);
+#endif
 
   kernel_graph_ptr->set_current_epoch(kernel_graph_ptr->current_epoch() + 1);
 }

@@ -35,6 +35,8 @@ class CPUE2eDump {
 
   static void DumpCNodeData(const CNodePtr &node, uint32_t graph_id);
 
+  static void DumpRunIter(const KernelGraphPtr &graph_ptr, uint32_t rank_id = 0);
+
  private:
   static void DumpCNodeInputs(const CNodePtr &node, const std::string &dump_path);
 

@@ -25,6 +25,7 @@
 #include <numeric>
 #include <unordered_set>
 #include <utility>
+#include <regex>
 #include "pybind11/embed.h"
 #include "pybind11/stl.h"
 #ifdef ONLINE_DBG_MODE
@@ -33,8 +34,10 @@
 #include "debug/anf_ir_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
+#include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
+#include "linux/limits.h"
 #ifdef ONLINE_DBG_MODE
 namespace mindspore {
 #endif
@@ -172,23 +175,28 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
 }
 #ifdef OFFLINE_DBG_MODE
 const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
-                                         uint32_t *prev_num_elements) {
+                                         uint32_t *prev_num_elements, bool *history_not_found) {
   MS_EXCEPTION_IF_NULL(tensor);
   const void *previous_tensor_ptr = nullptr;
   std::shared_ptr<TensorData> tensor_prev;
-  if (previous_iter_tensor_needed && tensor->GetIteration() >= 1) {
+  std::tuple<uint32_t, uint32_t> rank_and_graph = std::make_tuple(tensor->GetDeviceId(), tensor->GetRootGraphId());
+  if (graphs_run_history_.find(rank_and_graph) == graphs_run_history_.end()) {
+    *history_not_found = 1;
+    MS_LOG(DEBUG) << "Graph run history is not available for graph: " << tensor->GetRootGraphId();
+  } else if (previous_iter_tensor_needed && GetPrevIteration(tensor) != UINT32_MAX) {
+    // when prev_tensor is not available, the prev iteration is set to UINT32_MAX
     // read data in offline mode
     std::vector<std::string> file_paths;
     if (!is_sync_mode_) {
       ConvertReadTensors(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                          std::vector<unsigned int>{tensor->GetDeviceId()},
-                         std::vector<unsigned int>{tensor->GetIteration() - 1},
+                         std::vector<unsigned int>{tensor->GetPrevIteration()},
                          std::vector<unsigned int>{tensor->GetRootGraphId()}, &file_paths);
     }
     std::vector<std::shared_ptr<TensorData>> result_list_prev;
     ReadDumpedTensor(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                      std::vector<unsigned int>{tensor->GetDeviceId()},
-                     std::vector<unsigned int>{tensor->GetIteration() - 1},
+                     std::vector<unsigned int>{tensor->GetPrevIteration()},
                      std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
                      file_paths, &result_list_prev);
     tensor_prev = result_list_prev[0];
@@ -303,7 +311,7 @@ void DebugServices::ProcessCheckpointsOutofMemory(
   const std::vector<parameter_t> &parameter_list) {
   if (no_mem_to_read) {
     // bit 3 denotes failed to load tensor because tensor is oversized and no enough memory to fit in
-    int32_t oversize_error_code = 8;
+    int32_t oversize_error_code = ITensorSummary::OUT_OF_MEMORY;
     for (auto &wp : watchpoints_to_check) {
       SetCheckWatchpointsResult(chunk_id, chunk_names, chunk_slots, chunk_conditions, chunk_watchpoint_id,
                                 chunk_parameters, chunk_error_codes, chunk_exec_orders, chunk_time_stamp,
@@ -311,6 +319,18 @@ void DebugServices::ProcessCheckpointsOutofMemory(
                                 qualified_tensor_name, tensor_slot, wp, device_id_val, root_graph_id_val,
                                 parameter_list, oversize_error_code);
     }
+  }
+}
+
+void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tensor, const void *previous_tensor_ptr) {
+  // set the tensor into not-in-use status in tensor_loader.
+  auto tensor_name = tensor->GetName();
+  std::string key_name_in_cache = tensor_name + ":" + std::to_string(tensor->GetDeviceId()) + ":" +
+                                  std::to_string(tensor->GetRootGraphId()) + ":" +
+                                  std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot());
+  AppendToCacheEvictQueue(key_name_in_cache);
+  if (previous_tensor_ptr != nullptr) {
+    AppendToCacheEvictQueue(key_name_in_cache + ":prev");
   }
 }
 #endif
@@ -373,7 +393,8 @@ void DebugServices::CheckWatchpointsForTensor(
     uint32_t prev_num_elements = 0;
     const void *previous_tensor_ptr = nullptr;
 #ifdef OFFLINE_DBG_MODE
-    previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed, &prev_num_elements);
+    bool history_not_found = 0;
+    previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed, &prev_num_elements, &history_not_found);
 #else
     std::shared_ptr<TensorData> prev_tensor_data = tensor_loader_->GetPrevTensor(tensor_name);
     if (prev_tensor_data) {
@@ -400,6 +421,11 @@ void DebugServices::CheckWatchpointsForTensor(
         auto item = base_summary_ptr->IsWatchpointHit(wp);
         is_hit = std::get<ITensorSummary::eHitPos>(item);
         error_code = std::get<ITensorSummary::eErrorCodePos>(item);
+#ifdef OFFLINE_DBG_MODE
+        if (history_not_found) {
+          error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
+        }
+#endif
         parameter_list = std::get<ITensorSummary::eParamListPos>(item);
       }
       AddAnalyzedTensorToCache(recheck, wp.id, tensor_name);
@@ -413,14 +439,7 @@ void DebugServices::CheckWatchpointsForTensor(
     }
 
 #ifdef OFFLINE_DBG_MODE
-    // set the tensor into not-in-use status in tensor_loader.
-    std::string key_name_in_cache = tensor_name + ":" + std::to_string(tensor->GetDeviceId()) + ":" +
-                                    std::to_string(tensor->GetRootGraphId()) + ":" +
-                                    std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot());
-    AppendToCacheEvictQueue(key_name_in_cache);
-    if (previous_tensor_ptr != nullptr) {
-      AppendToCacheEvictQueue(key_name_in_cache + ":prev");
-    }
+    SetTensorToNotInUse(tensor, previous_tensor_ptr);
     // in offline mode remove the need for the data
     tensor.reset();
 #endif
@@ -685,7 +704,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
-    MS_LOG(ERROR) << "Directory does not exit in ConvertToHostFormat.";
+    MS_LOG(ERROR) << "Directory does not exist in ConvertToHostFormat.";
     return;
   }
   struct dirent *dir = nullptr;
@@ -865,10 +884,151 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
       tensor_data->SetType("");
       tensor_data->SetShape(shape);
       tensor_data->SetIsOutput(output_flag);
+      tensor_data->SetPrevIteration(GetPrevIteration(tensor_data));
 
       tensor_list->push_back(tensor_data);
     }
   }
+}
+
+uint32_t GetRankOrGraphId(const std::string &mode, const std::string &name) {
+  std::regex re;
+  if (mode == "rank") {
+    re = "^rank_([0-9]+)$";
+  } else if (mode == "graph") {
+    re = "^([0-9]+)$";
+  }
+  std::smatch tokens;
+  if (regex_match(name, tokens, re)) {
+    return std::stoi(tokens[1]);
+  } else {
+    return UINT32_MAX;
+  }
+}
+
+std::vector<uint32_t> DebugServices::GetDumpRankIdList() {
+  std::vector<uint32_t> rank_id_list;
+  std::string dump_dir = GetDumpDir();
+  DIR *d_handle = opendir(dump_dir.c_str());
+  if (d_handle == nullptr) {
+    MS_LOG(ERROR) << "Dump directory does not exist.";
+    return rank_id_list;
+  }
+  struct dirent *dir = nullptr;
+  while ((dir = readdir(d_handle)) != nullptr) {
+    if (dir->d_type == DT_DIR) {
+      std::string rank_dir_name = dir->d_name;
+      if (GetRankOrGraphId("rank", rank_dir_name) != UINT32_MAX) {
+        rank_id_list.push_back(GetRankOrGraphId("rank", rank_dir_name));
+      }
+    }
+  }
+  (void)closedir(d_handle);
+  return rank_id_list;
+}
+
+void DebugServices::CheckDumpGraphIdList(std::vector<uint32_t> rank_id_list) {
+  std::string net_name = GetNetName();
+  std::string dump_dir = GetDumpDir();
+  for (uint32_t rank_id : rank_id_list) {
+    std::string path = dump_dir + "/rank_" + std::to_string(rank_id) + "/" + net_name;
+    std::string abspath = RealPath(path);
+    DIR *d_handle_rank = opendir(abspath.c_str());
+    if (d_handle_rank == nullptr) {
+      MS_LOG(ERROR) << "Directory for rank_id: " << rank_id << " does not exist.";
+      continue;
+    }
+    struct dirent *direc = nullptr;
+    while ((direc = readdir(d_handle_rank)) != nullptr) {
+      if (direc->d_type == DT_DIR) {
+        std::string graph_dir = direc->d_name;
+        if (graph_dir == "." || graph_dir == "..") {
+          continue;
+        }
+        if (GetRankOrGraphId("graph", graph_dir) != UINT32_MAX) {
+          uint32_t graph_id = GetRankOrGraphId("graph", graph_dir);
+          ReadGraphsHistory(rank_id, graph_id);
+        }
+      }
+    }
+    (void)closedir(d_handle_rank);
+  }
+}
+
+void DebugServices::SetGraphsHistory() {
+  // extract rank_id_list
+  std::vector<uint32_t> rank_id_list = GetDumpRankIdList();
+  // for each rank_id extract the graph_id list and set the dump version
+  // and for each graph read the graph history file
+  CheckDumpGraphIdList(rank_id_list);
+}
+
+void DebugServices::ReadGraphsHistory(uint32_t rank_id, uint32_t root_graph_id) {
+  std::tuple<uint32_t, uint32_t> rank_and_graph(rank_id, root_graph_id);
+  if (graphs_run_history_.find(rank_and_graph) != graphs_run_history_.end()) {
+    // graph history was already stored for this rank_id and graph_id
+    return;
+  }
+  std::string exec_order_path = GetDumpDir() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
+  std::string file_to_check = "ms_global_execution_order_graph_" + std::to_string(root_graph_id) + ".csv";
+  DIR *d_handle = opendir(exec_order_path.c_str());
+  if (d_handle == nullptr) {
+    MS_LOG(ERROR) << "Directory does not exist.";
+    return;
+  }
+  // read file and store the info
+  std::string full_path = exec_order_path + "/" + file_to_check;
+  std::string checked_path = RealPath(full_path);
+  if (!checked_path.empty()) {
+    ReadGraphRunIter(checked_path, rank_and_graph);
+  }
+  (void)closedir(d_handle);
+}
+
+std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> DebugServices::GetAllWpNodes() {
+  std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> rank_and_graph_to_nodes;
+  for (auto w_table_item : watchpoint_table_) {
+    auto wp = std::get<1>(w_table_item);
+    unsigned int index = 0;
+    for (auto check_node : wp.check_node_list) {
+      std::vector<uint32_t> ranks = std::get<1>(wp.check_node_device_list[index]);
+      std::vector<uint32_t> graphs = std::get<1>(wp.check_node_graph_list[index]);
+      // graph represents root_graph for Ascend and kernel_graph for GPU
+      for (auto rank : ranks) {
+        for (auto graph : graphs) {
+          std::tuple<uint32_t, uint32_t> key(rank, graph);
+          (rank_and_graph_to_nodes)[key].push_back(check_node);
+        }
+      }
+      index++;
+    }
+  }
+  return rank_and_graph_to_nodes;
+}
+
+void DebugServices::ReadGraphRunIter(std::string file_path, std::tuple<uint32_t, uint32_t> rank_and_graph) {
+  std::ifstream infile;
+  std::string line;
+  infile.open(file_path.c_str());
+  if (!infile.is_open()) {
+    MS_LOG(ERROR) << "Failed to open file (In ReadGraphRunIter) " << file_path << " Errno:" << errno;
+    const int kMaxFilenameLength = NAME_MAX;
+    char err_info[kMaxFilenameLength];
+    if (strerror_r(errno, err_info, sizeof(err_info)) != nullptr) {
+      MS_LOG(ERROR) << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
+    }
+
+    return;
+  }
+  std::vector<uint32_t> run_iters_vec;
+  while (std::getline(infile, line)) {
+    uint32_t iter;
+    std::stringstream ss(line);
+    ss >> iter;
+    run_iters_vec.push_back(iter);
+  }
+  (void)graphs_run_history_.emplace(
+    std::pair<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>>(rank_and_graph, run_iters_vec));
 }
 
 void DebugServices::AddToTensorData(const std::string &backend_name, const std::string &time_stamp,
@@ -895,6 +1055,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   tensor_data->SetType(type_name);
   tensor_data->SetShape(shape);
   tensor_data->SetTimeStamp(time_stamp);
+  tensor_data->SetPrevIteration(GetPrevIteration(tensor_data));
   if (data_size) {
     (void)tensor_loader_->LoadNewTensor(tensor_data, false);
   }
@@ -1089,34 +1250,19 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
   unsigned int iteration, std::vector<std::string> *const async_file_pool) {
   // get a list of nodes and the devices they are on to monitor
   std::vector<std::shared_ptr<TensorData>> tensor_list;
-  std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> device_and_graph_to_nodes;
-  for (auto w_table_item : watchpoint_table_) {
-    auto wp = std::get<1>(w_table_item);
-    unsigned int index = 0;
-    for (auto check_node : wp.check_node_list) {
-      std::vector<uint32_t> devices = std::get<1>(wp.check_node_device_list[index]);
-      std::vector<uint32_t> graphs = std::get<1>(wp.check_node_graph_list[index]);
-      for (auto device : devices) {
-        for (auto graph : graphs) {
-          std::tuple<uint32_t, uint32_t> key(device, graph);
-          device_and_graph_to_nodes[key].push_back(check_node);
-        }
-      }
-
-      index++;
-    }
-  }
+  std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> rank_and_graph_to_nodes =
+    GetAllWpNodes();
 
   // scan each device/iteration dir for the watched nodes for each device, and add to tensor_list
   // as they are found
-  for (auto const &device_and_graph_item : device_and_graph_to_nodes) {
-    std::tuple<uint32_t, uint32_t> device_and_graph = device_and_graph_item.first;
-    uint32_t device_id = std::get<0>(device_and_graph);
-    uint32_t root_graph_id = std::get<1>(device_and_graph);
-    std::vector<std::tuple<std::string, bool>> wp_nodes = device_and_graph_item.second;
+  for (auto const &rank_and_graph_item : rank_and_graph_to_nodes) {
+    std::tuple<uint32_t, uint32_t> rank_and_graph = rank_and_graph_item.first;
+    uint32_t rank_id = std::get<0>(rank_and_graph);
+    uint32_t root_graph_id = std::get<1>(rank_and_graph);
+    std::vector<std::tuple<std::string, bool>> wp_nodes = rank_and_graph_item.second;
     std::vector<std::tuple<std::string, std::string>> proto_to_dump;
 
-    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
+    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(rank_id) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id) + "/" + IterationString(iteration);
 
     // convert node names to dump style
@@ -1140,12 +1286,11 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     if (is_sync_mode_) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
       std::string abspath = RealPath(specific_dump_dir);
-      ProcessTensorDataSync(proto_to_dump, abspath, specific_dump_dir, iteration, device_id, root_graph_id,
-                            &tensor_list);
+      ProcessTensorDataSync(proto_to_dump, abspath, specific_dump_dir, iteration, rank_id, root_graph_id, &tensor_list);
     } else {
       // convert all files in proto_to_dump to npy and add to pool of async file names
       ConvertWatchPointNodes(proto_to_dump, specific_dump_dir, async_file_pool);
-      GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, device_id, root_graph_id, *async_file_pool,
+      GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, rank_id, root_graph_id, *async_file_pool,
                              &tensor_list);
     }
   }
@@ -1283,6 +1428,32 @@ bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_
 
 bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
   return tensor_loader_->LoadNewTensor(tensor, keep_prev);
+}
+
+uint32_t DebugServices::GetPrevIteration(const std::shared_ptr<TensorData> &tensor) {
+  uint32_t prev_iter;
+  uint32_t rank_id = tensor->GetDeviceId();
+  uint32_t root_graph_id = tensor->GetRootGraphId();
+  std::tuple<uint32_t, uint32_t> rank_and_graph = std::make_tuple(rank_id, root_graph_id);
+  if (graphs_run_history_.find(rank_and_graph) == graphs_run_history_.end()) {
+    return UINT32_MAX;
+  }
+  auto it = std::find(graphs_run_history_[rank_and_graph].begin(), graphs_run_history_[rank_and_graph].end(),
+                      tensor->GetIteration());
+  if (it == graphs_run_history_[rank_and_graph].end()) {
+    // The graph is not executed in that iteration
+    return UINT32_MAX;
+  } else if (it == graphs_run_history_[rank_and_graph].begin()) {
+    // current iteration is the first iteration that the graph was run
+    // no prev iter is available
+    MS_LOG(DEBUG) << "Iteration: " << tensor->GetIteration()
+                  << " is the first run iteration for tensor: " << tensor->GetName();
+    return UINT32_MAX;
+  }
+  it--;
+  prev_iter = *it;
+  tensor->SetPrevIteration(prev_iter);
+  return prev_iter;
 }
 
 void DebugServices::ResetLoadedTensors() {

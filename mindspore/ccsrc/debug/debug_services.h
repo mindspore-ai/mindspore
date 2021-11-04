@@ -292,6 +292,9 @@ class DebugServices {
                            std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_id *chunk_device_id,
                            partitioned_id *chunk_root_graph_id, std::vector<unsigned int> *device_id,
                            std::vector<unsigned int> *root_graph_id);
+#ifdef OFFLINE_DBG_MODE
+  void SetTensorToNotInUse(const std::shared_ptr<TensorData> &tensor, const void *previous_tensor_ptr);
+#endif
 
   void AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
                              const std::shared_ptr<TensorData> &tensor, bool *previous_iter_tensor_needed,
@@ -350,7 +353,7 @@ class DebugServices {
                                                                    std::vector<std::string> *const async_file_pool);
 
   const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
-                            uint32_t *prev_num_elements);
+                            uint32_t *prev_num_elements, bool *history_not_found);
 
   void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
                          std::size_t *const size, std::vector<int64_t> *const shape,
@@ -379,6 +382,18 @@ class DebugServices {
                               const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
                               uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
                               std::vector<std::shared_ptr<TensorData>> *const tensor_list);
+
+  void SetGraphsHistory();
+
+  std::vector<uint32_t> GetDumpRankIdList();
+
+  void CheckDumpGraphIdList(std::vector<uint32_t> rank_id_list);
+
+  void ReadGraphsHistory(uint32_t rank_id, uint32_t root_graph_id);
+
+  std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> GetAllWpNodes();
+
+  void ReadGraphRunIter(std::string file_path, std::tuple<uint32_t, uint32_t> rank_and_graph);
 
   std::string GetStrippedFilename(const std::string &file_name);
 
@@ -409,6 +424,8 @@ class DebugServices {
 #endif
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
+
+  uint32_t GetPrevIteration(const std::shared_ptr<TensorData> &tensor);
 
   void ResetLoadedTensors();
 #ifdef ONLINE_DBG_MODE
@@ -458,6 +475,8 @@ class DebugServices {
   std::unordered_map<std::string, std::vector<std::string>> overflow_ops_;
   std::string net_name_;
   std::string dump_dir_;
+  // store history of graphs that have been run (rank_id, graph_id)
+  std::map<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>> graphs_run_history_;
   bool is_sync_mode_{false};
 
   std::shared_ptr<TensorLoader> tensor_loader_;
