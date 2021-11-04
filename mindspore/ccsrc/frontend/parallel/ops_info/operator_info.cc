@@ -710,6 +710,26 @@ Status OperatorInfo::InferSliceShape(const Strategys &inputs_strategy, const Str
   return SUCCESS;
 }
 
+Status OperatorInfo::Init(const StrategyPtr &strategy) {
+  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Init failed.";
+    return FAILED;
+  }
+
+  MS_LOG(INFO) << name_ << " : Init success.";
+  return SUCCESS;
+}
+
+Status OperatorInfo::InitForCostModel(const StrategyPtr &strategy) {
+  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
+    return FAILED;
+  }
+
+  MS_LOG(INFO) << name_ << " : Init for cost model success.";
+  return SUCCESS;
+}
+
 // method0: auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strategy) {
   if (strategy == nullptr) {
@@ -770,54 +790,6 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
   return SUCCESS;
 }
 
-// method1: manually insert repeated_calculation_num for dev_matrix_shape in InferDevMatrixShape
-Status OperatorInfo::InitForCostModelWithManualRepeatCalc(const StrategyPtr &strategy) {
-  if (strategy == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null.";
-    return FAILED;
-  }
-
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferAttrs failed.";
-    return FAILED;
-  }
-
-  // must be after InferAttrs()
-  if (CheckStrategy(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": CheckStrategy failed.";
-    return FAILED;
-  }
-
-  // need to clear queues before Init(),
-  // because Init() may be called multiple times by cost model
-  ResetQueueMember();
-
-  strategy_ = strategy;
-
-  if (InferDevMatrixShape() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
-    return FAILED;
-  }
-
-  // must be after InferDevMatrixShape
-  if (InferRepeatedCalcInfo() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferRepeatedCalcInfo failed.";
-    return FAILED;
-  }
-
-  if (InferTensorMap() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferTensorMap failed.";
-    return FAILED;
-  }
-
-  if (InferTensorInfo() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferTensorInfo failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
 Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &strategy) {
   if (strategy == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null.";
@@ -843,34 +815,7 @@ Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  return SUCCESS;
-}
-
-Status OperatorInfo::InitWithManualRepeatCalc(const StrategyPtr &strategy) {
-  if (strategy == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null.";
-    return FAILED;
-  }
-
-  if (InitForCostModelWithManualRepeatCalc(strategy) != SUCCESS) {
-    return FAILED;
-  }
-
-  if (InferForwardCommunication() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferForwardCommunication failed.";
-    return FAILED;
-  }
-
-  if (InferMirrorOps() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferMirrorOps failed.";
-    return FAILED;
-  }
-
-  if (InferVirtualDivOps() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferVirtualDivOps failed.";
-    return FAILED;
-  }
-
+  InferReplaceOps();
   return SUCCESS;
 }
 

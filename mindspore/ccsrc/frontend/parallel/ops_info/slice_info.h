@@ -38,8 +38,6 @@ class SliceInfo : public OperatorInfo {
         slice_axis_(-1) {}
   ~SliceInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;

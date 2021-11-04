@@ -390,25 +390,6 @@ std::vector<StrategyPtr> ReduceMethod::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-Status ReduceMethod::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
-Status ReduceMethod::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success";
-  return SUCCESS;
-}
-
 std::vector<int64_t> ArgMaxWithValueInfo::reduce_dim() {
   std::vector<int64_t> dim_list;
   auto iter = attrs_.find(AXIS);

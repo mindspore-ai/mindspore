@@ -29,8 +29,8 @@ grad_all = C.GradOperation(get_all=True)
 class AddRelu(nn.Cell):
     def __init__(self, strategy0=None, strategy1=None):
         super(AddRelu, self).__init__()
-        self.add = P.Add().shard(strategy=strategy0)
-        self.relu = P.ReLU().shard(strategy=strategy1)
+        self.add = P.Add().shard(strategy0)
+        self.relu = P.ReLU().shard(strategy1)
 
     def construct(self, x, z):
         out = self.add(x, z)

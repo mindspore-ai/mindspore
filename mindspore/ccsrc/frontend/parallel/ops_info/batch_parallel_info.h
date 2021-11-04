@@ -37,8 +37,6 @@ class BatchParallelInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()), dev_num_(1) {}
 
   ~BatchParallelInfo() override = default;
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReplaceNodeInputOrAttrs() override;

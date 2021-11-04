@@ -35,9 +35,7 @@ class GetNextInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GetNextCost>()) {}
   ~GetNextInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
 
  protected:
@@ -49,7 +47,7 @@ class GetNextInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
-  void InferReplaceOps(const StrategyPtr &strategy);
+  void InferReplaceOps() override;
   Status GetAttrTypes();
   Status GetAttrShapes();
   Status GetAttrOutPutNum();

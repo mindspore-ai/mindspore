@@ -44,8 +44,6 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
                         const PrimitiveAttrs &attrs, OperatorCostPtr cost)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~UnsortedSegmentOpInfo() override = default;
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;

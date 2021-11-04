@@ -103,21 +103,6 @@ Status GetNextInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status GetNextInfo::Init(const StrategyPtr &strategy) {
-  repeated_num_in_dev_matrix_right_ = false;
-  if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
-    repeated_num_in_dev_matrix_right_ = true;
-  }
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed";
-    return FAILED;
-  }
-  InferReplaceOps(strategy);
-
-  MS_LOG(INFO) << name_ << " : Init success";
-  return SUCCESS;
-}
-
 Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategys stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
@@ -200,6 +185,11 @@ Status GetNextInfo::GetAttrOutPutNum() {
 }
 
 Status GetNextInfo::GetAttrs() {
+  repeated_num_in_dev_matrix_right_ = false;
+  if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
+    repeated_num_in_dev_matrix_right_ = true;
+  }
+
   if (GetAttrTypes() == FAILED || GetAttrShapes() == FAILED || GetAttrOutPutNum() == FAILED) {
     return FAILED;
   }
@@ -210,7 +200,7 @@ Status GetNextInfo::GetAttrs() {
   return SUCCESS;
 }
 
-void GetNextInfo::InferReplaceOps(const StrategyPtr &) {
+void GetNextInfo::InferReplaceOps() {
   Shapes out_shapes;
   (void)std::transform(outputs_tensor_info_.begin(), outputs_tensor_info_.end(), std::back_inserter(out_shapes),
                        [](auto tensor_info) { return tensor_info.slice_shape(); });
@@ -223,19 +213,6 @@ void GetNextInfo::InferReplaceOps(const StrategyPtr &) {
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(GET_NEXT, args)};
-}
-
-Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
-  repeated_num_in_dev_matrix_right_ = false;
-  if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
-    repeated_num_in_dev_matrix_right_ = true;
-  }
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
-  return SUCCESS;
 }
 
 Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }

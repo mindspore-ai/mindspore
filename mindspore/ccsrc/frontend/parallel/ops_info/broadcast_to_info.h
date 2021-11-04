@@ -39,8 +39,6 @@ class BroadcastToInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BroadcastToCost>()) {}
   ~BroadcastToInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;

@@ -101,24 +101,5 @@ std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {
   }
   return sp_vector;
 }
-
-Status BiasAddInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << " : Init success.";
-  return SUCCESS;
-}
-
-Status BiasAddInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
-  return SUCCESS;
-}
 }  // namespace parallel
 }  // namespace mindspore

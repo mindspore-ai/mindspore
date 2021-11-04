@@ -36,8 +36,6 @@ class BatchNormInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
   ~BatchNormInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
 
@@ -47,7 +45,7 @@ class BatchNormInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferReplaceOps();
+  void InferReplaceOps() override;
   Status InferAsLossDivisor() override;
 
  private:

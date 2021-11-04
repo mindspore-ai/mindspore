@@ -118,25 +118,6 @@ std::vector<StrategyPtr> ResizeBilinearInfo::GenerateOpStrategies(int64_t stage_
   return sp_vector;
 }
 
-Status ResizeBilinearInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status ResizeBilinearInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
   auto prim = GetValueNode<PrimitivePtr>(cnode_->input(0));
   prim->set_attr(SIZE, MakeValue(slice_size_));

@@ -484,7 +484,7 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
 }
 
 bool StrategyFound(const std::unordered_map<std::string, ValuePtr> &attrs) {
-  auto iter = attrs.find(STRATEGY);
+  auto iter = attrs.find(IN_STRATEGY);
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
@@ -1760,7 +1760,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       (void)std::transform(dataset_strategy.begin(), dataset_strategy.end(), std::back_inserter(elements),
                            [](auto input_stra) { return MakeValue(input_stra); });
       ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
-      attrs_temp[STRATEGY] = strategy;
+      attrs_temp[IN_STRATEGY] = strategy;
       (void)prim->SetAttrs(attrs_temp);
       if (prim->HasAttr(REPEAT_DIM_DIRECT) && GetValue<std::string>(prim->GetAttr(REPEAT_DIM_DIRECT)) == RIGHT) {
         ParallelContext::GetInstance()->set_dataset_repeat_dim_right(true);
@@ -1798,7 +1798,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       elements.push_back(MakeValue(input_strategy));
     }
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
-    attrs_temp[STRATEGY] = strategy;
+    attrs_temp[IN_STRATEGY] = strategy;
     (void)prim->SetAttrs(attrs_temp);
   }
 }
@@ -1954,14 +1954,14 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
     }
     bool load_strategy_from_ckpt =
       StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(STRATEGY)) {
+    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) {
       MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                    << " is empty, using batch parallel";
       strategyPtr = GenerateBatchParallelStrategy(operator_, prim);
-    } else if (cnode->HasPrimalAttr(STRATEGY)) {
-      strategyPtr = ExtractStrategy(cnode->GetPrimalAttr(STRATEGY));
+    } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
+      strategyPtr = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
     } else if (StrategyFound(attrs)) {
-      strategyPtr = ExtractStrategy(attrs[STRATEGY]);
+      strategyPtr = ExtractStrategy(attrs[IN_STRATEGY]);
     } else {
       strategyPtr = stra_map[strategy_key_name];
     }

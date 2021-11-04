@@ -42,8 +42,8 @@ class Net(nn.Cell):
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
-        self.sum = P.ReduceSum(keep_dims=False).shard(strategy=((4, 1, 1, 1),))
-        self.mean = P.ReduceMean(keep_dims=False).shard(strategy=((8, 1, 1, 1),))
+        self.sum = P.ReduceSum(keep_dims=False).shard(((4, 1, 1, 1),))
+        self.mean = P.ReduceMean(keep_dims=False).shard(((8, 1, 1, 1),))
         self.net = network
 
     def construct(self, x):

@@ -42,7 +42,7 @@ def test_sum_as_loss():
             super().__init__()
             self.fc_nobias = P.MatMul(transpose_b=True).shard(strategy0)
             self.reduce_sum = P.ReduceSum(keep_dims=False).shard(strategy1)
-            self.mul = P.Mul().shard(strategy=((), ()))
+            self.mul = P.Mul().shard(((), ()))
 
         def construct(self, x, y):
             out = self.fc_nobias(x, y)

@@ -253,7 +253,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
   // In this case, the configured strategy should be extracted to help setting cost
   StrategyPtr strategyPtr;
   if (StrategyFound(attrs)) {
-    strategyPtr = parallel::ExtractStrategy(attrs[STRATEGY]);
+    strategyPtr = parallel::ExtractStrategy(attrs[IN_STRATEGY]);
   } else {
     strategyPtr = (*stra_map)[strategy_key_name];
   }

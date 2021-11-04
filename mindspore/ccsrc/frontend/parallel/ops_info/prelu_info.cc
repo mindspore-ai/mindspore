@@ -92,25 +92,6 @@ Status PReLUInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status PReLUInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 std::vector<StrategyPtr> PReLUInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split;
   input0_split.emplace_back(1);

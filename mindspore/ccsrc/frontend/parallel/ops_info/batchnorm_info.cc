@@ -196,17 +196,17 @@ Status BatchNormInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
-Status BatchNormInfo::InferReplaceOps() {
+void BatchNormInfo::InferReplaceOps() {
   replace_op_.clear();
 
   if (!is_training_) {
     MS_LOG(INFO) << name_ << ": It is not training, no need to replace op";
-    return SUCCESS;
+    return;
   }
 
   if (forward_allreduce_group_.empty()) {
     MS_LOG(INFO) << name_ << ": The forward allreduce group is empty, no need to replace op";
-    return SUCCESS;
+    return;
   }
 
   auto ms_context = MsContext::GetInstance();
@@ -215,7 +215,7 @@ Status BatchNormInfo::InferReplaceOps() {
 
   if (backend != kAscendDevice && backend != kDavinciDevice) {
     MS_LOG(INFO) << name_ << ": The backend is " << backend << ", it does not support SyncBatchNorm operator";
-    return SUCCESS;
+    return;
   }
 
   ValuePtr epsilon = MakeValue(epsilon_);
@@ -232,7 +232,6 @@ Status BatchNormInfo::InferReplaceOps() {
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(SYNC_BATCH_NORM, args)};
-  return SUCCESS;
 }
 
 Status BatchNormInfo::InferAsLossDivisor() {
@@ -260,27 +259,6 @@ std::vector<StrategyPtr> BatchNormInfo::GenerateOpStrategies(int64_t stage_id) {
   std::vector<StrategyPtr> sp_vector;
   sp_vector.push_back(sp);
   return sp_vector;
-}
-
-Status BatchNormInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-
-  (void)InferReplaceOps();
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status BatchNormInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
 }
 }  // namespace parallel
 }  // namespace mindspore

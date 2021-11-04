@@ -174,25 +174,6 @@ std::vector<StrategyPtr> SliceInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-Status SliceInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status SliceInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 ReplaceGraphPtr SliceInfo::replace_graph(const CNodePtr &cnode) {
   auto input_strategy = strategy_->GetInputDim().at(0);
   if (std::any_of(input_strategy.begin(), input_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {

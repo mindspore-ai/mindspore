@@ -36,10 +36,8 @@ class DropoutDoMaskInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutDoMaskCost>()) {}
   ~DropoutDoMaskInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   std::vector<Operator> GetDropoutGenMaskReplaceOp();
   void ReplaceNodeInputOrAttrs() override;
