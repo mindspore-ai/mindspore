@@ -350,7 +350,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         this function again to make modification, and sens needs to be of type Tensor.
 
         Args:
-            - **sens** (Tensor) - The new sense whose shape and type are the same with original `scale_sense`.
+            sens(Tensor): The new sense whose shape and type are the same with original `scale_sense`.
         """
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)
@@ -368,14 +368,14 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         based on this class can also call this interface to process the overflow.
 
         Args:
-            - **pre_cond** (Tensor) - A precondition for starting overflow detection. It determines the executing order
+            pre_cond(Tensor): A precondition for starting overflow detection. It determines the executing order
               of overflow state clearing and prior processions. It makes sure that the function 'start_overflow'
               clears status after finishing the process of precondition.
-            - **compute_input** (object) - The input of subsequent process. Overflow detection should be performed on a
+            compute_input(object): The input of subsequent process. Overflow detection should be performed on a
               certain computation. Set `compute_input` as the input of the computation, to ensure overflow status is
               cleared before executing the computation.
 
-        Outputs:
+        Returns:
             Tuple[object, object], the first value is False for GPU backend, while it is an instance of
             NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
             The second value is the same as the input of `compute_input`, but contains some information about the
@@ -399,12 +399,12 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         based on this class can also call this interface to process the overflow.
 
         Args:
-            - **status** (object) - A status instance used to detect the overflow.
-            - **compute_output** - Overflow detection should be performed on a certain computation. Set `compute_output`
+            status (object): A status instance used to detect the overflow.
+            compute_output: Overflow detection should be performed on a certain computation. Set `compute_output`
               as the output of the computation, to ensure overflow status is acquired before executing the
               computation.
 
-        Outputs:
+        Returns:
             bool, whether the overflow occurs or not.
         """
         if not self.gpu_target:
@@ -434,9 +434,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         User-defined training network based on this class can also call this interface to process the overflow.
 
         Args:
-            - **overflow** (bool) - Whether the overflow occurs or not.
+            overflow(bool): Whether the overflow occurs or not.
 
-        Outputs:
+        Returns:
             bool, overflow value.
         """
         if self.loss_scaling_manager is not None:
