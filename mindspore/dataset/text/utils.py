@@ -27,7 +27,7 @@ from .validators import check_from_file, check_from_list, check_from_dict, check
     check_from_file_vectors
 
 __all__ = [
-    "Vocab", "SentencePieceVocab", "to_str", "to_bytes", "Vectors", "FastText", "GloVe"
+    "Vocab", "SentencePieceVocab", "to_str", "to_bytes", "Vectors", "FastText", "GloVe", "CharNGram"
 ]
 
 
@@ -461,6 +461,32 @@ class GloVe(cde.GloVe):
 
         Examples:
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
+        """
+
+        max_vectors = max_vectors if max_vectors is not None else 0
+        return super().from_file(file_path, max_vectors)
+
+
+class CharNGram(cde.CharNGram):
+    """
+    CharNGram object that is used to map tokens into pre-trained vectors.
+    """
+
+    @classmethod
+    @check_from_file_vectors
+    def from_file(cls, file_path, max_vectors=None):
+        """
+        Build a CharNGram vector from a file.
+
+        Args:
+            file_path (str): Path of the file that contains the CharNGram vectors.
+            max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
+                Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
+                situations where the entire set doesn’t fit in memory, or is not needed for another reason,
+                passing max_vectors can limit the size of the loaded set (default=None, no limit).
+
+        Examples:
+            >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
         """
 
         max_vectors = max_vectors if max_vectors is not None else 0

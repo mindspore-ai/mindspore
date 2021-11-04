@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace dataset {
-GloVe::GloVe(const std::unordered_map<std::string, std::vector<float>> &map, int dim) : Vectors(map, dim) {}
+GloVe::GloVe(const std::unordered_map<std::string, std::vector<float>> &map, int32_t dim) : Vectors(map, dim) {}
 
 Status CheckGloVe(const std::string &file_path) {
   Path path = Path(file_path);

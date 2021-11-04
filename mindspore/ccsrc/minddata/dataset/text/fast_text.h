@@ -39,7 +39,7 @@ class FastText : public Vectors {
   /// Constructor.
   /// \param[in] map A map between string and vector.
   /// \param[in] dim Dimension of the vectors.
-  FastText(const std::unordered_map<std::string, std::vector<float>> &map, int dim);
+  FastText(const std::unordered_map<std::string, std::vector<float>> &map, int32_t dim);
 
   /// Destructor.
   ~FastText() = default;

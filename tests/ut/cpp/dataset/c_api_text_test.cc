@@ -23,6 +23,7 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/text/char_n_gram.h"
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/vectors.h"
@@ -30,6 +31,7 @@
 
 using namespace mindspore::dataset;
 using mindspore::Status;
+using mindspore::dataset::CharNGram;
 using mindspore::dataset::FastText;
 using mindspore::dataset::GloVe;
 using mindspore::dataset::ShuffleMode;
@@ -1658,7 +1660,8 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt8);
+  std::shared_ptr<TensorTransform> to_number =
+    std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt8);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -3740,7 +3743,7 @@ TEST_F(MindDataTestPipeline, TestVectorsUnknownInit) {
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
 /// Expectation: return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsAllParams) {
-  //  Test with all parameters.
+  // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsAllParams.";
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
@@ -3801,7 +3804,7 @@ TEST_F(MindDataTestPipeline, TestVectorsAllParams) {
 /// Description: test with pre-vectors set that have the different dimension
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsDifferentDimension) {
-  //  Tokens don't have the same number of vectors.
+  // Tokens don't have the same number of vectors.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsDifferentDimension.";
 
   // Create a TextFile dataset
@@ -3819,7 +3822,7 @@ TEST_F(MindDataTestPipeline, TestVectorsDifferentDimension) {
 /// Description: test with pre-vectors set that has the head-info
 /// Expectation: return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsWithHeadInfo) {
-  //  Test with words that has head info.
+  // Test with words that has head info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithHeadInfo.";
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
@@ -3880,7 +3883,7 @@ TEST_F(MindDataTestPipeline, TestVectorsWithHeadInfo) {
 /// Description: test with the parameter max_vectors that is <= 0
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsMaxVectorsLessThanZero) {
-  //  Test with max_vectors <= 0.
+  // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsMaxVectorsLessThanZero.";
 
   // Create a TextFile dataset
@@ -3898,7 +3901,7 @@ TEST_F(MindDataTestPipeline, TestVectorsMaxVectorsLessThanZero) {
 /// Description: test with the pre-vectors file that is empty
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithEmptyFile) {
-  //  Read empty file.
+  // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithEmptyFile.";
 
   // Create a TextFile dataset
@@ -3916,7 +3919,7 @@ TEST_F(MindDataTestPipeline, TestVectorsWithEmptyFile) {
 /// Description: test with the pre-vectors file that is not exist
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithNotExistFile) {
-  //  Test with not exist file.
+  // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithNotExistFile.";
 
   // Create a TextFile dataset
@@ -3934,7 +3937,7 @@ TEST_F(MindDataTestPipeline, TestVectorsWithNotExistFile) {
 /// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithWrongInfoFile) {
-  //  wrong info.
+  // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithWrongInfoFile.";
 
   // Create a TextFile dataset
@@ -4137,7 +4140,7 @@ TEST_F(MindDataTestPipeline, TestFastTextUnknownInit) {
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
 /// Expectation: return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestFastTextAllParams) {
-  //  Test with all parameters.
+  // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextAllParams.";
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
@@ -4198,7 +4201,7 @@ TEST_F(MindDataTestPipeline, TestFastTextAllParams) {
 /// Description: test with pre-vectors set that have the different dimension
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextDifferentDimension) {
-  //  Tokens don't have the same number of vectors.
+  // Tokens don't have the same number of vectors.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextDifferentDimension.";
 
   // Create a TextFile dataset
@@ -4216,7 +4219,7 @@ TEST_F(MindDataTestPipeline, TestFastTextDifferentDimension) {
 /// Description: test with the parameter max_vectors that is <= 0
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextMaxVectorsLessThanZero) {
-  //  Test with max_vectors <= 0.
+  // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextMaxVectorsLessThanZero.";
 
   // Create a TextFile dataset
@@ -4234,7 +4237,7 @@ TEST_F(MindDataTestPipeline, TestFastTextMaxVectorsLessThanZero) {
 /// Description: test with the pre-vectors file that is empty
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithEmptyFile) {
-  //  Read empty file.
+  // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithEmptyFile.";
 
   // Create a TextFile dataset
@@ -4252,7 +4255,7 @@ TEST_F(MindDataTestPipeline, TestFastTextWithEmptyFile) {
 /// Description: test with the pre-vectors file that is not exist
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithNotExistFile) {
-  //  Test with not exist file.
+  // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithNotExistFile.";
 
   // Create a TextFile dataset
@@ -4270,7 +4273,7 @@ TEST_F(MindDataTestPipeline, TestFastTextWithNotExistFile) {
 /// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithWrongInfoFile) {
-  //  wrong info.
+  // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongInfoFile.";
 
   // Create a TextFile dataset
@@ -4288,7 +4291,7 @@ TEST_F(MindDataTestPipeline, TestFastTextWithWrongInfoFile) {
 /// Description: test with the pre-vectors set that has a wrong suffix
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithWrongSuffix) {
-  //  wrong info.
+  // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongSuffix.";
 
   // Create a TextFile dataset
@@ -4497,7 +4500,7 @@ TEST_F(MindDataTestPipeline, TestGloVeUnknownInit) {
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
 /// Expectation: return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
-  //  Test with all parameters.
+  // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeAllParams.";
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testGloVe/words.txt";
@@ -4560,7 +4563,7 @@ TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
 /// Description: test with pre-vectors set that have the different dimension
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeDifferentDimension) {
-  //  Tokens don't have the same number of glove.
+  // Tokens don't have the same number of glove.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeDifferentDimension.";
 
   // Create a TextFile dataset
@@ -4578,7 +4581,7 @@ TEST_F(MindDataTestPipeline, TestGloVeDifferentDimension) {
 /// Description: test with the parameter max_vectors that is <= 0
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeMaxVectorsLessThanZero) {
-  //  Test with max_vectors <= 0.
+  // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeMaxVectorsLessThanZero.";
 
   // Create a TextFile dataset
@@ -4596,7 +4599,7 @@ TEST_F(MindDataTestPipeline, TestGloVeMaxVectorsLessThanZero) {
 /// Description: test with the pre-vectors file that is empty
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithEmptyFile) {
-  //  Read empty file.
+  // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithEmptyFile.";
 
   // Create a TextFile dataset
@@ -4614,7 +4617,7 @@ TEST_F(MindDataTestPipeline, TestGloVeWithEmptyFile) {
 /// Description: test with the pre-vectors file that is not exist
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithNotExistFile) {
-  //  Test with not exist file.
+  // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithNotExistFile.";
 
   // Create a TextFile dataset
@@ -4632,7 +4635,7 @@ TEST_F(MindDataTestPipeline, TestGloVeWithNotExistFile) {
 /// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithWrongInfoFile) {
-  //  wrong info.
+  // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithWrongInfoFile.";
 
   // Create a TextFile dataset
@@ -4650,7 +4653,7 @@ TEST_F(MindDataTestPipeline, TestGloVeWithWrongInfoFile) {
 /// Description: test with the pre-vectors set that has a wrong format
 /// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithWrongFormat) {
-  //  wrong info.
+  // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithWrongFormat.";
 
   // Create a TextFile dataset
@@ -4661,5 +4664,326 @@ TEST_F(MindDataTestPipeline, TestGloVeWithWrongFormat) {
   std::string vectors_dir = datasets_root_path_ + "/testGloVe/glove.6B.tests.vec";
   std::shared_ptr<GloVe> glove;
   Status s = GloVe::BuildFromFile(&glove, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: CharNGram
+/// Description: test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: return correct MSTensor which is equal to the excepted
+TEST_F(MindDataTestPipeline, TestCharNGramDefaultParam) {
+  // Test with default parameter.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramDefaultParam.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(char_n_gram);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0,0,0,0,0},
+                                              {0,0,0,0,0},
+                                              {0.117336,0.362446,-0.983326,0.939264,-0.05648},
+                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
+                                              {0,0,0,0,0},
+                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
+                                              {0,0,0,0,0}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    std::vector<int64_t> ind_shape = ind.Shape();
+    std::vector<int64_t> ms_expected_shape = ms_expected_item.Shape();
+    EXPECT_EQ(ind_shape, ms_expected_shape);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CharNGram.
+/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: return correct MSTensor which is equal to the excepted
+TEST_F(MindDataTestPipeline, TestCharNGramAllBuildfromfileParams) {
+  // Test with two parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramAllBuildfromfileParams.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir, 18);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(char_n_gram);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0,0,0,0,0},
+                                              {0,0,0,0,0},
+                                              {-0.155665,0.664073,-0.538499,1.22657,-0.2162},
+                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
+                                              {0,0,0,0,0},
+                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
+                                              {0,0,0,0,0}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    std::vector<int64_t> ind_shape = ind.Shape();
+    std::vector<int64_t> ms_expected_shape = ms_expected_item.Shape();
+    EXPECT_EQ(ind_shape, ms_expected_shape);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CharNGram
+/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: return correct MSTensor which is equal to the excepted
+TEST_F(MindDataTestPipeline, TestCharNGramUnknownInit) {
+  // Test with two parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramUnknownInit.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir, 18);
+  EXPECT_EQ(s, Status::OK());
+
+  std::vector<float> unknown_init(5, -1);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(char_n_gram, unknown_init);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{-1,-1,-1,-1,-1},
+                                              {-1,-1,-1,-1,-1},
+                                              {-0.155665,0.664073,-0.538499,1.22657,-0.2162},
+                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
+                                              {-1,-1,-1,-1,-1},
+                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
+                                              {-1,-1,-1,-1,-1}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    std::vector<int64_t> ind_shape = ind.Shape();
+    std::vector<int64_t> ms_expected_shape = ms_expected_item.Shape();
+    EXPECT_EQ(ind_shape, ms_expected_shape);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CharNGram
+/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
+/// Expectation: return correct MSTensor which is equal to the excepted
+TEST_F(MindDataTestPipeline, TestCharNGramAllParams) {
+  // Test with all parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramAllParams.";
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words_with_big_letter.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+
+  std::vector<float> unknown_init(5, -1);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(char_n_gram, unknown_init, true);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{-1,-1,-1,-1,-1},
+                                              {-1,-1,-1,-1,-1},
+                                              {0.117336,0.362446,-0.983326,0.939264,-0.05648},
+                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
+                                              {-1,-1,-1,-1,-1},
+                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
+                                              {-1,-1,-1,-1,-1}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    std::vector<int64_t> ind_shape = ind.Shape();
+    std::vector<int64_t> ms_expected_shape = ms_expected_item.Shape();
+    EXPECT_EQ(ind_shape, ms_expected_shape);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CharNGram
+/// Description: test with pre-vectors set that have the different dimension
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestCharNGramDifferentDimension) {
+  // Tokens don't have the same number of vectors.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramDifferentDimension.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20_dim_different.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: CharNGram
+/// Description: test with the parameter max_vectors that is <= 0
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestCharNGramMaxVectorsLessThanZero) {
+  // Test with max_vectors <= 0.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramMaxVectorsLessThanZero.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/char_n_gram_20.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir, -1);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: CharNGram
+/// Description: test with the pre-vectors file that is empty
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestCharNGramWithEmptyFile) {
+  // Read empty file.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramWithEmptyFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/vectors_empty.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: CharNGram
+/// Description: test with the pre-vectors file that is not exist
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestCharNGramsWithNotExistFile) {
+  // Test with not exist file.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramsWithNotExistFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVectors/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/testVectors/no_vectors.txt";
+  std::shared_ptr<CharNGram> char_n_gram;
+  Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
   EXPECT_NE(s, Status::OK());
 }
