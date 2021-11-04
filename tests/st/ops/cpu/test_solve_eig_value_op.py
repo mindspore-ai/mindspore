@@ -26,20 +26,20 @@ from mindspore._checkparam import Validator as validator
 np.random.seed(0)
 
 
-class Eigh(PrimitiveWithInfer):
+class Eig(PrimitiveWithInfer):
     """
-    Eigh decomposition(Symmetric matrix)
+    Eig decomposition,(generic matrix)
     Ax = lambda * x
     """
 
     @prim_attr_register
     def __init__(self, compute_eigenvectors):
-        super().__init__(name="Eigh")
-        self.init_prim_io_names(inputs=['A', 's'], outputs=['output', 'output_v'])
+        super().__init__(name="Eig")
+        self.init_prim_io_names(inputs=['A'], outputs=['output', 'output_v'])
         self.compute_eigenvectors = validator.check_value_type(
             "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
 
-    def __infer__(self, A, s):
+    def __infer__(self, A):
         shape = {}
         if A['dtype'] == msp.tensor_type(msp.dtype.float32):
             shape = {
@@ -68,14 +68,14 @@ class Eigh(PrimitiveWithInfer):
         return shape
 
 
-class EighNet(nn.Cell):
+class EigNet(nn.Cell):
     def __init__(self, b):
-        super(EighNet, self).__init__()
+        super(EigNet, self).__init__()
         self.b = b
-        self.eigh = Eigh(b)
+        self.eig = Eig(b)
 
-    def construct(self, A, s=True):
-        r = self.eigh(A, s)
+    def construct(self, A):
+        r = self.eig(A)
         if self.b:
             return (r[0], r[1])
         return (r[0],)
@@ -96,7 +96,7 @@ def create_sym_pos_matrix(m, n, dtype):
 @pytest.mark.parametrize('n', [4, 6, 9, 10])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.platform_x86_cpu
-def test_eigh_net(n: int, mode):
+def test_eig_net(n: int, mode):
     """
     Feature: ALL To ALL
     Description: test cases for eigen decomposition test cases for Ax= lambda * x /( A- lambda * E)X=0
@@ -105,34 +105,22 @@ def test_eigh_net(n: int, mode):
     # test for real scalar float 32
     rtol = 1e-4
     atol = 1e-5
-    msp_eigh = EighNet(True)
+    msp_eig = EigNet(True)
     A = create_sym_pos_matrix(n, n, np.float32)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float32)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float32)), False)
-    sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).T)
-    sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).T)
-    assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
-    assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
+    tensor_a = Tensor(np.array(A).astype(np.float32))
+    msp_w, msp_v = msp_eig(tensor_a)
+    assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
 
     # test case for real scalar double 64
     A = np.random.rand(n, n)
     rtol = 1e-5
     atol = 1e-8
-    msp_eigh = EighNet(True)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float64)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float64)), False)
+    msp_eig = EigNet(True)
+    msp_w, msp_v = msp_eig(Tensor(np.array(A).astype(np.float64)))
 
     # Compare with scipy
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.float64), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.float64), lower=False, eigvals_only=False)
-    sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).T)
-    sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).T)
-    assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
-    assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
+    # sp_w, sp_v = sp.linalg.eig(A.astype(np.float64))
+    assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
 
     # test case for complex64
     rtol = 1e-4
@@ -144,22 +132,14 @@ def test_eigh_net(n: int, mode):
                 A[i][j] = complex(np.random.rand(1, 1), 0)
             else:
                 A[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eigh = EighNet(True)
-    sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).conj().T)
-    sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).conj().T)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex64)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex64)), False)
+    msp_eig = EigNet(True)
+    msp_w, msp_v = msp_eig(Tensor(np.array(A).astype(np.complex64)))
     # Compare with scipy, scipy passed
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.complex128), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.complex128), lower=False, eigvals_only=False)
-    # assert np.allclose(sym_Al @ sp_vl - sp_vl @ np.diag(sp_wl), np.zeros((n, n)), rtol, atol)
-    # assert np.allclose(sym_Au @ sp_vu - sp_vu @ np.diag(sp_wu), np.zeros((n, n)), rtol, atol)
+    # sp_w, sp_v = sp.linalg.eig(A.astype(np.complex128))
+    # assert np.allclose(A @ sp_v - sp_v @ np.diag(sp_w), np.zeros((n, n)), rtol, atol)
 
     # print(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()))
-    assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
-    assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
+    assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
 
     # test for complex128
     rtol = 1e-5
@@ -171,19 +151,11 @@ def test_eigh_net(n: int, mode):
                 A[i][j] = complex(np.random.rand(1, 1), 0)
             else:
                 A[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eigh = EighNet(True)
-    sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).conj().T)
-    sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).conj().T)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex128)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex128)), False)
+    msp_eig = EigNet(True)
+    msp_w, msp_v = msp_eig(Tensor(np.array(A).astype(np.complex128)))
     # Compare with scipy, scipy passed
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.complex128), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.complex128), lower=False, eigvals_only=False)
-    # assert np.allclose(sym_Al @ sp_vl - sp_vl @ np.diag(sp_wl), np.zeros((n, n)), rtol, atol)
-    # assert np.allclose(sym_Au @ sp_vu - sp_vu @ np.diag(sp_wu), np.zeros((n, n)), rtol, atol)
+    # sp_w, sp_v = sp.linalg.eig(A.astype(np.complex128))
+    # assert np.allclose(A @ sp_v - sp_v @ np.diag(sp_w), np.zeros((n, n)), rtol, atol)
 
     # print(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()))
-    assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
-    assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
-                       atol)
+    assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
