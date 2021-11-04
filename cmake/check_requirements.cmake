@@ -17,6 +17,10 @@ endfunction()
 
 
 ## find python, quit if the found python is static
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(Python3_FIND_REGISTRY LAST)
+  set(Python3_FIND_STRATEGY LOCATION)
+endif()
 set(Python3_USE_STATIC_LIBS FALSE)
 set(Python3_FIND_VIRTUALENV ONLY)
 find_package(Python3 COMPONENTS Interpreter Development)
