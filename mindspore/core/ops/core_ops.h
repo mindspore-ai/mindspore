@@ -68,6 +68,7 @@ constexpr auto kMulNoNan = "MulNoNan";
 constexpr auto kACos = "ACos";
 constexpr auto kACosGrad = "ACosGrad";
 constexpr auto kRealDiv = "RealDiv";
+constexpr auto kDivNoNan = "DivNoNan";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kInv = "Inv";
 constexpr auto kReduceStd = "ReduceStd";

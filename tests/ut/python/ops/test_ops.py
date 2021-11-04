@@ -54,6 +54,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Lcm
+from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
@@ -1755,6 +1756,10 @@ test_case_math_ops = [
     ('Div', {
         'block': P.Div(),
         'desc_inputs': [[4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('DivNoNan', {
+        'block': DivNoNan(),
+        'desc_inputs': [[2, 3, 4, 5], [2, 3, 4, 5]],
         'desc_bprop': [[2, 3, 4, 5]]}),
     ('Equal', {
         'block': P.Equal(),
