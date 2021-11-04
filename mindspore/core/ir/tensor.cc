@@ -563,6 +563,12 @@ bool Tensor::operator==(const Tensor &tensor) const {
 }
 
 bool Tensor::ValueEqual(const Tensor &tensor) const {
+  if (is_parameter_ != tensor.is_parameter_) {
+    return false;
+  }
+  if (is_parameter_ && param_info_->name() != tensor.param_info_->name()) {
+    return false;
+  }
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_->equals(*tensor.data_)));
 }
 

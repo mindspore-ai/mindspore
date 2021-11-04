@@ -462,6 +462,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
         grad_out = grad_net(params, grad_ys)
         return grad_out
 
+
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -695,3 +696,92 @@ def test_side_effect_grad_control_flow_assign_depend_while_net():
         allclose_nparray(out1[1][0].asnumpy(), expect2, 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)
+
+
+class AssignInZipLoop(Cell):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = ms.nn.Conv2d(3, 2, 1, weight_init="zero")
+        self.conv2 = ms.nn.Conv2d(3, 2, 1, weight_init="zero")
+        self.params1 = self.conv1.trainable_params()
+        self.params2 = self.conv2.trainable_params()
+
+    def construct(self, x):
+        for p1, p2 in zip(self.params1, self.params2):
+            P.Assign()(p2, p1 + x)
+
+        out = 0
+        for p1, p2 in zip(self.params1, self.params2):
+            out = p1 + p2
+            print(p1)
+            print(p2)
+
+        return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter():
+    """
+    Feature: Check the names of parameters.
+    Description: If parameter in list or tuple is not given a name, will give it a unique name.
+    Expectation: No exception.
+    """
+    class ParamNet(Cell):
+        def __init__(self):
+            super(ParamNet, self).__init__()
+            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+            self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
+            self.param_c = Parameter(Tensor([3], ms.float32))
+            self.param_d = Parameter(Tensor([4], ms.float32))
+            self.param_tuple = (Parameter(Tensor([5], ms.float32)),
+                                Parameter(Tensor([6], ms.float32)))
+            self.param_list = [Parameter(Tensor([5], ms.float32)),
+                               Parameter(Tensor([6], ms.float32))]
+
+        def construct(self, x):
+            res1 = self.param_a + self.param_b + self.param_c + self.param_d
+            res1 = res1 - self.param_list[0] + self.param_list[1] + x
+            res2 = self.param_list[0] + self.param_list[1]
+            return res1, res2
+
+    net = ParamNet()
+    x = Tensor([10], ms.float32)
+    output1, output2 = net(x)
+    output1_expect = Tensor(21, ms.float32)
+    output2_expect = Tensor(11, ms.float32)
+    assert output1 == output1_expect
+    assert output2 == output2_expect
+
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_same_name():
+    """
+    Feature: Check the names of parameters.
+    Description: If the same name exists between different parameters, an exception will be thrown.
+    Expectation: Get the expected exception report.
+    """
+    class ParamNet(Cell):
+        def __init__(self):
+            super(ParamNet, self).__init__()
+            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
+            self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
+            self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
+                                Parameter(Tensor([6], ms.float32)))
+
+        def construct(self, x):
+            res1 = self.param_a + self.param_b - self.param_tuple[0] + self.param_tuple[1] + x
+            return res1
+
+    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
+        net = ParamNet()
+        x = Tensor([10], ms.float32)
+        output = net(x)
+        output_expect = Tensor(14, ms.float32)
+        assert output == output_expect
