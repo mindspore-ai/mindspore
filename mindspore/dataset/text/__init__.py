@@ -26,15 +26,15 @@ Common imported modules in corresponding API examples are as follows:
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \
-    TruncateSequencePair, ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer
+    TruncateSequencePair, ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer, ToVectors
 from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
-    SPieceTokenizerOutType, SPieceTokenizerLoadType
+    SPieceTokenizerOutType, SPieceTokenizerLoadType, Vectors
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
     "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
     "PythonTokenizer", "SlidingWindow", "SentencePieceVocab", "SentencePieceTokenizer", "SPieceTokenizerOutType",
-    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm",
+    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm", "Vectors", "ToVectors"
 ]
 
 if platform.system().lower() != 'windows':

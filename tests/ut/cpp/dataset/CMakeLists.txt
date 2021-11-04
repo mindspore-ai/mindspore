@@ -51,6 +51,7 @@ SET(DE_UT_SRCS
         c_api_samplers_test.cc
         c_api_text_sentence_piece_vocab_test.cc
         c_api_text_vocab_test.cc
+        c_api_text_test.cc
         c_api_transforms_test.cc
         c_api_vision_a_to_q_test.cc
         c_api_vision_affine_test.cc

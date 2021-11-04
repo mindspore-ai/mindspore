@@ -358,6 +358,22 @@ ToNumber::ToNumber(mindspore::DataType data_type) : data_(std::make_shared<Data>
 
 std::shared_ptr<TensorOperation> ToNumber::Parse() { return std::make_shared<ToNumberOperation>(data_->data_type_); }
 
+// ToVectors
+struct ToVectors::Data {
+  Data(const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init, bool lower_case_backup)
+      : vectors_(vectors), unk_init_(unk_init), lower_case_backup_(lower_case_backup) {}
+  std::shared_ptr<Vectors> vectors_;
+  std::vector<float> unk_init_;
+  bool lower_case_backup_;
+};
+
+ToVectors::ToVectors(const std::shared_ptr<Vectors> &vectors, const std::vector<float> unk_init, bool lower_case_backup)
+    : data_(std::make_shared<Data>(vectors, unk_init, lower_case_backup)) {}
+
+std::shared_ptr<TensorOperation> ToVectors::Parse() {
+  return std::make_shared<ToVectorsOperation>(data_->vectors_, data_->unk_init_, data_->lower_case_backup_);
+}
+
 // TruncateSequencePair
 struct TruncateSequencePair::Data {
   explicit Data(int32_t max_length) : max_length_(max_length) {}

@@ -15,15 +15,14 @@
 """
 validators for text ops
 """
-
 from functools import wraps
-import mindspore.common.dtype as mstype
 
 import mindspore._c_dataengine as cde
+import mindspore.common.dtype as mstype
 from mindspore._c_expression import typing
 
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
-    INT32_MAX, check_value, check_positive, check_pos_int32
+    INT32_MAX, check_value, check_positive, check_pos_int32, check_filename, check_non_negative_int32
 
 
 def check_unique_list_of_words(words, arg_name):
@@ -529,6 +528,42 @@ def check_sentence_piece_tokenizer(method):
         type_check(mode, (str, cde.SentencePieceVocab), "mode is not an instance of str or cde.SentencePieceVocab.")
         type_check(out_type, (SPieceTokenizerOutType,), "out_type is not an instance of SPieceTokenizerOutType")
 
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_from_file_vectors(method):
+    """A wrapper that wraps a parameter checker to from_file of class Vectors."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [file_path, max_vectors], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(file_path, (str,), "file_path")
+        check_filename(file_path)
+        if max_vectors is not None:
+            type_check(max_vectors, (int,), "max_vectors")
+            check_non_negative_int32(max_vectors, "max_vectors")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_to_vectors(method):
+    """A wrapper that wraps a parameter checker to ToVectors."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vectors, unk_init, lower_case_backup], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(vectors, (cde.Vectors,), "vectors")
+        if unk_init is not None:
+            type_check(unk_init, (list, tuple), "unk_init")
+            for i, value in enumerate(unk_init):
+                type_check(value, (int, float), "unk_init[{0}]".format(i))
+        type_check(lower_case_backup, (bool,), "lower_case_backup")
         return method(self, *args, **kwargs)
 
     return new_method

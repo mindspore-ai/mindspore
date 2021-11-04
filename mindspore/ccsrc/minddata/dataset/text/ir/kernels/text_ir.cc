@@ -33,6 +33,7 @@
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/sliding_window_op.h"
 #include "minddata/dataset/text/kernels/to_number_op.h"
+#include "minddata/dataset/text/kernels/to_vectors_op.h"
 #include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
@@ -418,6 +419,27 @@ Status ToNumberOperation::from_json(nlohmann::json op_params, std::shared_ptr<Te
   std::string data_type = op_params["data_type"];
   *operation = std::make_shared<text::ToNumberOperation>(data_type);
   return Status::OK();
+}
+
+// ToVectorsOperation
+ToVectorsOperation::ToVectorsOperation(const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init,
+                                       bool lower_case_backup)
+    : vectors_(vectors), unk_init_(unk_init), lower_case_backup_(lower_case_backup) {}
+
+ToVectorsOperation::~ToVectorsOperation() = default;
+
+Status ToVectorsOperation::ValidateParams() {
+  if (vectors_ == nullptr) {
+    std::string err_msg = "ToVectors: vectors can't be nullptr.";
+    MS_LOG(ERROR) << err_msg;
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> ToVectorsOperation::Build() {
+  std::shared_ptr<ToVectorsOp> tensor_op = std::make_shared<ToVectorsOp>(vectors_, unk_init_, lower_case_backup_);
+  return tensor_op;
 }
 
 // TruncateSequencePairOperation

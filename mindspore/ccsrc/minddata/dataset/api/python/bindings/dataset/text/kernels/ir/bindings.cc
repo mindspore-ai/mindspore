@@ -19,6 +19,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
+#include "minddata/dataset/text/vectors.h"
 #include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
@@ -207,6 +208,18 @@ PYBIND_REGISTER(ToNumberOperation, 1, ([](const py::module *m) {
                       return to_number;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  ToVectorsOperation, 1, ([](const py::module *m) {
+    (void)py::class_<text::ToVectorsOperation, TensorOperation, std::shared_ptr<text::ToVectorsOperation>>(
+      *m, "ToVectorsOperation")
+      .def(py::init(
+        [](const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init, bool lower_case_backup) {
+          auto to_vectors = std::make_shared<text::ToVectorsOperation>(vectors, unk_init, lower_case_backup);
+          THROW_IF_ERROR(to_vectors->ValidateParams());
+          return to_vectors;
+        }));
+  }));
 
 PYBIND_REGISTER(TruncateSequencePairOperation, 1, ([](const py::module *m) {
                   (void)py::class_<text::TruncateSequencePairOperation, TensorOperation,
