@@ -338,8 +338,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         If the user has set the sens in the training process and wants to reassign the value, he can call
         this function again to make modification, and sens needs to be of type Tensor.
 
-        Inputs:
-            - **sens** (Tensor) - The new sense whose shape and type are the same with original `scale_sense`.
+        Args:
+            sens(Tensor): The new sense whose shape and type are the same with original `scale_sense`.
         """
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)
@@ -355,16 +355,16 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         overflow in the process of gradient calculation. In this case, pre_cond should be the output of the loss
         function, and compute_input should be the input of gradients-computing function.
 
-        Inputs:
-            - **pre_cond** (Tensor) - A precondition for starting overflow detection. It determines the executing order
+        Args:
+            pre_cond(Tensor): A precondition for starting overflow detection. It determines the executing order
               of overflow state clearing and prior processions. It makes sure that the function 'start_overflow'
               clears status after finishing the process of precondition.
-            - **compute_input** (object) - The input of subsequent process. Overflow detection should be performed on a
+            compute_input(object): The input of subsequent process. Overflow detection should be performed on a
               certain computation. Set `compute_input` as the input of the computation, to ensure overflow status is
               cleared before executing the computation.
 
-        Outputs:
-            Tuple[object, object], the first value is False for GPU backend, while it is a instance of
+        Returns:
+            Tuple[object, object], the first value is False for GPU backend, while it is an instance of
             NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
             The second value is the same as the input of `compute_input`, but contains some information about the
             execution order.
@@ -385,13 +385,13 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
         Get overflow results after executing the target process for overflow detection.
 
-        Inputs:
-            - **status** (object) - A status instance used to detect the overflow.
-            - **compute_output** - Overflow detection should be performed on a certain computation. Set `compute_output`
+        Args:
+            status (object): A status instance used to detect the overflow.
+            compute_output: Overflow detection should be performed on a certain computation. Set `compute_output`
               as the output of the computation, to ensure overflow status is acquired before executing the
               computation.
 
-        Outputs:
+        Returns:
             bool, whether the overflow occurs or not.
         """
         if not self.gpu_target:
@@ -418,10 +418,12 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         Calculate loss scale according to the overflow.
 
-        Inputs:
-            - **overflow** (bool) - Whether the overflow occurs or not.
+        User-defined training network based on this class can also call this interface to process the overflow.
 
-        Outputs:
+        Args:
+            overflow(bool): Whether the overflow occurs or not.
+
+        Returns:
             bool, overflow value.
         """
         if self.loss_scaling_manager is not None:
