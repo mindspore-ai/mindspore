@@ -60,7 +60,6 @@ def use_tensor_with_mstype():
     return me_x
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_tensor_with_mstype():
     """
     Feature: JIT Fallback
@@ -68,6 +67,22 @@ def test_tensor_with_mstype():
     Expectation: No exception.
     """
     print(use_tensor_with_mstype())
+
+
+@ms_function
+def use_tuple_of_tensor():
+    me_x = (Tensor(1), Tensor(1))
+    return me_x
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_tuple_of_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test tuple of tensor in graph mode.
+    Expectation: No exception.
+    """
+    print(use_tuple_of_tensor())
 
 
 class Net(nn.Cell):
@@ -213,63 +228,6 @@ def test_np_fallback_func_tensor_index():
     output = np_fallback_func_tensor_index(x)
     output_expect = Tensor(6, mstype.float32)
     assert output == output_expect
-
-
-class ControlNet(nn.Cell):
-    def __init__(self):
-        super(ControlNet, self).__init__()
-
-    def inner_function_1(self, a, b):
-        return a + b
-
-    def inner_function_2(self, a, b):
-        return a - b
-
-    def construct(self, x):
-        a = Tensor(np.array(4), mstype.int32)
-        b = Tensor(np.array(5), mstype.int32)
-        if a + b > x:
-            return self.inner_function_1(a, b)
-        return self.inner_function_2(a, b)
-
-
-# NameError: name 'mstype' is not defined.
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_fallback_control_sink_tensor():
-    """
-    Feature: Fallback feature: support define Tensor in Class construct.
-    Description: Fallback feature: support define Tensor in Class construct.
-    Expectation: Fallback feature: support define Tensor in Class construct.
-    """
-    x = Tensor(np.array(1), mstype.int32)
-    net = ControlNet()
-    output = net(x)
-    output_expect = Tensor(9, mstype.int32)
-    assert output == output_expect
-
-
-# NameError: name 'mytype' is not defined
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_tensor_list():
-    """
-    Feature: Fallback feature
-    Description: support Basic method of Tensor list.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_tensor_list():
-        a = Tensor(np.array(4), mstype.int32)
-        b = Tensor(np.array(5), mstype.int32)
-        c = Tensor(np.array(6), mstype.int32)
-        tensor_list = [a, b]
-        for tensor in tensor_list:
-            print(tensor)
-        tensor_list.append(tensor_list[-1] + c)
-        return tensor_list
-
-    tensor_list = np_tensor_list()
-    print("tensor_list:", tensor_list)
-    assert len(tensor_list) == 3
 
 
 # EvalCNode: This may be not defined, or it can't be a operator.

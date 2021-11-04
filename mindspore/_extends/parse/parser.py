@@ -605,11 +605,11 @@ class Parser:
             value = self.global_namespace[var]
             if self.is_unsupported_namespace(value):
                 error_info = f"The builtin function '{var}' of python is not supported in graph mode."
-                return None, var, error_info
+                return None, error_info
             return self.global_namespace, var
 
         error_info = f"The name '{var}' is not defined in function '{self.function_name}'."
-        return None, var, error_info
+        return None, error_info
 
     def is_unsupported_builtin_type(self, value_type):
         """To check if not supported builtin type"""
@@ -675,13 +675,13 @@ class Parser:
             return True
         # Support nn.layer. To check if exclude other module.
         if rightmost_name in self.ms_nn_ns:
-            logger.info(f"Found '{name}'({rightmost_name}) in nn namespace: {str(self.ms_nn_ns)}.")
+            logger.debug(f"Found '{name}'({rightmost_name}) in nn namespace: {str(self.ms_nn_ns)}.")
             return True
         if rightmost_name in trope_ns:
             logger.debug(f"Found '{name}'({rightmost_name}) in trope namespace: {str(trope_ns)}.")
             return True
 
-        logger.error(f"Not found '{name}' in mindspore supported namespace.")
+        logger.info(f"Not found '{name}' in mindspore supported namespace.")
         return False
 
     def get_builtin_namespace_symbol(self, var: str):
@@ -701,11 +701,12 @@ class Parser:
                 return self.global_namespace, var, value
             if not self.is_supported_namespace_module(value):  # Check if support including instance of types.ModuleType
                 return self.global_namespace, var, value
-            return self.global_namespace, var
+            supported = True
+            return self.global_namespace, var, value, supported
 
         error_info = f"The name '{var}' is not defined, or not supported in graph mode."
         logger.debug(f"error_info: {error_info}")
-        return None, var, error_info
+        return None, error_info
 
     def analyze_super(self, class_type_node, subclass_instance):
         """Analyze super and return a class instance."""
