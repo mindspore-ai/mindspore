@@ -4346,12 +4346,17 @@ def _convert_row(row):
     Convert Op return value to numpy
     """
     value = []
+    if isinstance(row, dict):
+        raise ValueError("Return value in user defined python function should be numpy array, but got dict.")
+
     # convert each column in row into numpy array
     for x in row:
         if isinstance(x, bytes):         # got image bytes from a file
             value.append(np.frombuffer(x, np.uint8))
         elif isinstance(x, Tensor):      # got mindspore.Tensor
             value.append(x.asnumpy())
+        elif isinstance(x, dict):
+            raise ValueError("Return value in user defined python function should be numpy array, but got dict.")
         else:
             value.append(np.array(x, copy=False))
     return tuple(value)
