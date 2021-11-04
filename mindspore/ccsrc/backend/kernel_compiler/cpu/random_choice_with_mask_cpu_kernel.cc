@@ -20,60 +20,61 @@
 
 namespace mindspore {
 namespace kernel {
-void ParseOutputCoordinate(std::vector<int32_t> dims, int32_t output_length, int32_t input_dim_size,
-                           int32_t input_total_count, const int *tmp_output, int *output) {
+void ParseOutputCoordinate(std::vector<int32_t> dims_, int32_t output_length_, int32_t input_dim_size_,
+                           int32_t input_total_count_, const int *tmp_output, int *output) {
   int it = 0;
-  int column = input_total_count / dims[0];
-  for (int i = 0; i < output_length; i++) {
+  int column = input_total_count_ / dims_[0];
+  for (int i = 0; i < output_length_; i++) {
     int32_t tmp_output_number = tmp_output[i];
     int tmp_column = column;
-    for (int j = 0; j < input_dim_size; j++) {
-      if (j == input_dim_size - 1) {
+    for (int j = 0; j < input_dim_size_; j++) {
+      if (j == input_dim_size_ - 1) {
         output[it++] = tmp_output_number;
         continue;
       }
       output[it++] = tmp_output_number / column;
       tmp_output_number = tmp_output_number % column;
-      tmp_column = tmp_column / dims[IntToSize(j + 1)];
+      tmp_column = tmp_column / dims_[IntToSize(j + 1)];
     }
   }
 }
 
-void GetOutputLength(bool *padding_flag, int32_t *output_length, int32_t *output_non_zero_length, int32_t count,
-                     int32_t non_zero_num) {
-  if (count == 0) {
-    *padding_flag = false;
-    *output_length = non_zero_num;
-    *output_non_zero_length = non_zero_num;
-  } else if (count > 0 && count <= non_zero_num) {
-    *padding_flag = false;
-    *output_length = count;
-    *output_non_zero_length = count;
-  } else if (count > non_zero_num) {
-    *padding_flag = true;
-    *output_length = count;
-    *output_non_zero_length = non_zero_num;
+void GetOutputLength(bool *padding_flag_, int32_t *output_length_, int32_t *output_non_zero_length_, int32_t count_,
+                     int32_t non_zero_num_) {
+  if (count_ == 0) {
+    *padding_flag_ = false;
+    *output_length_ = non_zero_num_;
+    *output_non_zero_length_ = non_zero_num_;
+  } else if (count_ > 0 && count_ <= non_zero_num_) {
+    *padding_flag_ = false;
+    *output_length_ = count_;
+    *output_non_zero_length_ = count_;
+  } else if (count_ > non_zero_num_) {
+    *padding_flag_ = true;
+    *output_length_ = count_;
+    *output_non_zero_length_ = non_zero_num_;
   } else {
-    MS_LOG(EXCEPTION) << "Input count must be greater than or equal to 0, but is " << count;
+    MS_LOG(EXCEPTION) << "Input count must be greater than or equal to 0, but is " << count_;
   }
 }
 
-void GetInputTotalCount(const std::vector<int32_t> &dims_, int32_t *input_total_count, const int32_t &input_dim_size) {
-  for (size_t i = 0; i < IntToSize(input_dim_size); i++) {
-    *input_total_count *= dims_[i];
+void GetInputTotalCount(const std::vector<int32_t> &dims_, int32_t *input_total_count_,
+                        const int32_t &input_dim_size_) {
+  for (size_t i = 0; i < IntToSize(input_dim_size_); i++) {
+    *input_total_count_ *= dims_[i];
   }
 }
 
-void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num, const int32_t &count_,
-                  const int32_t &output_length, const int *mask_dim, int32_t *output_coordinate, bool *mask) {
-  for (int32_t i = non_zero_num * SizeToInt(dims_.size()); i < count_ * SizeToInt(dims_.size()); i++) {
-    output_coordinate[i] = 0;
+void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num_, const int32_t &count_,
+                  const int32_t &output_length_, const int *mask_dim_, int32_t *output_coordinate_, bool *mask_) {
+  for (int32_t i = non_zero_num_ * SizeToInt(dims_.size()); i < count_ * SizeToInt(dims_.size()); i++) {
+    output_coordinate_[i] = 0;
   }
-  for (int32_t i = 0; i < output_length; i++) {
-    mask[i] = static_cast<bool>(mask_dim[i]);
+  for (int32_t i = 0; i < output_length_; i++) {
+    mask_[i] = static_cast<bool>(mask_dim_[i]);
   }
-  for (int32_t i = non_zero_num; i < count_; i++) {
-    mask[i] = false;
+  for (int32_t i = non_zero_num_; i < count_; i++) {
+    mask_[i] = false;
   }
 }
 
@@ -90,25 +91,24 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_shape_size_ = input_shape.size();
-  if (input_shape_size_ < 1 || input_shape_size_ > MAX_DIMENSION) {
-    MS_LOG(ERROR) << "Input is " << input_shape_size_
-                  << "-D, but RandomChoiceWithMask supports only 1-D to 5-D inputs.";
+  input_shape_size = input_shape.size();
+  if (input_shape_size < 1 || input_shape_size > MAX_DIMENSION) {
+    MS_LOG(ERROR) << "Input is " << input_shape_size << "-D, but RandomChoiceWithMask supports only 1-D to 5-D inputs.";
   }
 
-  seed_ = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2_ = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-  count_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "count"));
+  seed = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
+  seed2 = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
+  count = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "count"));
 
-  MS_LOG(INFO) << "This op attr count is " << count_;
+  MS_LOG(INFO) << "This op attr count is " << count;
 
   for (size_t i = 0; i < input_num; i++) {
     auto input_i_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
     for (size_t j = 0; j < input_i_shape.size(); j++) {
-      (void)dims_.emplace_back(input_i_shape[j]);
+      (void)dims.emplace_back(input_i_shape[j]);
     }
   }
-  input_dim_size = SizeToInt(dims_.size());
+  input_dim_size = SizeToInt(dims.size());
   if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
     MS_LOG(EXCEPTION) << "Input dim size is " << input_dim_size << ", which is not supported.";
   }
@@ -117,8 +117,8 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 void RandomChoiceWithMaskCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
 
-  GetInputTotalCount(dims_, &input_total_count, input_dim_size);
-  int temp_output_length = count_ > 0 ? count_ : input_total_count;
+  GetInputTotalCount(dims, &input_total_count, input_dim_size);
+  int temp_output_length = count > 0 ? count : input_total_count;
 
   workspace_size_list_.push_back(IntToSize(input_total_count) * sizeof(int));
   workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
@@ -137,7 +137,8 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr);
   auto *mask = reinterpret_cast<bool *>(outputs[1]->addr);
 
-  size_t seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
+  size_t seedc = seed2 != 0 ? seed2 : (seed != 0 ? seed : generator_());
+  int32_t non_zero_num = 0;
   for (int32_t i = 0; i < input_total_count; i++) {
     if (input[i] != 0) {
       input_dim[non_zero_num] = i;
@@ -145,7 +146,10 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
     }
   }
 
-  GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
+  bool padding_flag = false;
+  int32_t output_length = 0;
+  int32_t output_non_zero_length = 0;
+  GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count, non_zero_num);
   (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
   (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
 
@@ -174,9 +178,9 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
 
   copy_output_length = output_length * input_dim_size;
   (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
-  ParseOutputCoordinate(dims_, output_length, input_dim_size, input_total_count, tmp_output, output);
+  ParseOutputCoordinate(dims, output_length, input_dim_size, input_total_count, tmp_output, output);
 
-  int32_t actual_output_length = count_ * SizeToInt(dims_.size());
+  int32_t actual_output_length = count * SizeToInt(dims.size());
   copy_output_length = std::min(actual_output_length, copy_output_length);
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
     MS_LOG(EXCEPTION) << "The output length is out of range!";
@@ -187,7 +191,7 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s failed, ret = " << ret;
   }
-  UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
+  UpdateOutput(dims, non_zero_num, count, output_length, mask_dim, output_coordinate, mask);
   return true;
 }
 }  // namespace kernel
