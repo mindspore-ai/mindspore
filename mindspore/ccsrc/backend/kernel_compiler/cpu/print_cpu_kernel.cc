@@ -85,6 +85,8 @@ TypeId PrintCPUKernel<T>::CheckType() {
     return kNumberTypeFloat16;
   } else if constexpr (std::is_same_v<T, float>) {
     return kNumberTypeFloat32;
+  } else if constexpr (std::is_same_v<T, double>) {
+    return kNumberTypeFloat64;
   }
   return kTypeUnknown;
 }
