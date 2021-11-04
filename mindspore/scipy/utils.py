@@ -14,7 +14,9 @@
 # ============================================================================
 """internal utility functions"""
 import numpy as onp
-
+from .. import nn, ops
+from ..numpy import where, isnan, zeros_like
+from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
 from .utils_const import _type_convert, _raise_type_error
@@ -57,6 +59,30 @@ def _to_scalar(arr):
         return arr.item()
     raise ValueError("{} are not supported.".format(type(arr)))
 
+
+class _SafeNormalize(nn.Cell):
+    """Normalize method that cast very small results to zero."""
+
+    def __init__(self):
+        """Initialize LineSearch."""
+        super(_SafeNormalize, self).__init__()
+        self.eps = ops.Eps()
+
+    def construct(self, x, threshold=None):
+        x_sum2 = F.reduce_sum(F.pows(x, 2.0))
+        norm = F.pows(x_sum2, 1./2.0)
+        if threshold is None:
+            if x.dtype in mstype.float_type:
+                # pick the first element of x to get the eps
+                threshold = self.eps(x[(0,) * x.ndim])
+            else:
+                threshold = 0
+        normalized_x = where(norm > threshold, x / norm, zeros_like(x))
+        normalized_x = where(isnan(normalized_x), 0, normalized_x)
+        return normalized_x, norm
+
+
+_safe_normalize = _SafeNormalize()
 
 _FLOAT_ONE = _to_tensor(1.0)
 _FLOAT_ZERO = _to_tensor(0.0)
