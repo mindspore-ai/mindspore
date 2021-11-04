@@ -117,9 +117,13 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::
 }
 #endif
 
-bool IsVMGraphTaskSink() {
+// Enable device_to_device copy.
+bool EnableDeviceCopy() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  if (common::GetEnv("EnableDeviceCopy") != "1") {
+    return false;
+  }
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
     return false;
   }
@@ -231,8 +235,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
   }
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (tensor_address != device_address) {
-    if (!kernel_graph->is_dynamic_shape() && IsVMGraphTaskSink() &&
-        NeedMemcpyInDevice(tensor_address, device_address)) {
+    if (!kernel_graph->is_dynamic_shape() && EnableDeviceCopy() && NeedMemcpyInDevice(tensor_address, device_address)) {
       auto status = device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
                                                        tensor_address->GetSize(), tensor_address->type_id(),
                                                        tensor_address->GetPtr(), tensor_address->format());
@@ -1825,7 +1828,7 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
         }
         const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         tensor->set_device_address(address);
-        if (IsVMGraphTaskSink() && tensor->NeedSyncDeviceToHostImmediately()) {
+        if (EnableDeviceCopy() && tensor->NeedSyncDeviceToHostImmediately()) {
           auto dst_device_address = AssignExtraMemForGraphOutput(tensor, node, output_index);
           MS_EXCEPTION_IF_NULL(dst_device_address);
           if (!dst_device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(node, output_index),
