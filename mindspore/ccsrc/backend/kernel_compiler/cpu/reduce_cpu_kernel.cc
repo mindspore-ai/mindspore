@@ -176,7 +176,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
         }
       }
     };
-    CPUKernelUtils::ParallelFor(task, output_size);
+    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   }
   return true;
 }
@@ -204,7 +204,7 @@ void ReduceCPUKernel<T>::AccelerateLongVector(T *input_addr, T *output_addr, siz
       reduce_func_(&block_output, 0, output_addr);
     }
   };
-  CPUKernelUtils::ParallelFor(task, input_size);
+  ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   if (reduce_type_ == kReduceMean) {
     *output_addr /= input_size;
   }

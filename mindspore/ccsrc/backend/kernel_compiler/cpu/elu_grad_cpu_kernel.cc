@@ -51,8 +51,7 @@ bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename T>
-void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &outputs) const {
+void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   const auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input1 = reinterpret_cast<T *>(inputs[1]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
@@ -64,7 +63,7 @@ void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       output[i] = (input1[i] < static_cast<T>(0)) ? input0[i] * (input1[i] + alpha) : input0[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, lens);
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 }  // namespace kernel
 }  // namespace mindspore

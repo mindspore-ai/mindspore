@@ -32,7 +32,7 @@ constexpr size_t kOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   if (output_size_ > kMaxLessSerialSize) {
     auto task = [&](size_t start, size_t end) {
@@ -45,7 +45,7 @@ void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *o
         iter.GenNextPos();
       }
     };
-    CPUKernelUtils::ParallelFor(task, output_size_);
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
     base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {
@@ -58,7 +58,7 @@ void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *o
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -70,11 +70,11 @@ void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -86,11 +86,11 @@ void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, boo
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -100,11 +100,11 @@ void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, b
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -114,11 +114,11 @@ void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bo
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -130,11 +130,11 @@ void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -146,11 +146,11 @@ void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2,
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) const {
+void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -162,7 +162,7 @@ void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bo
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>

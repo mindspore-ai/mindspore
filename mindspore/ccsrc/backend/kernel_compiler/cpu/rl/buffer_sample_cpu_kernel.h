@@ -104,7 +104,7 @@ class BufferCPUSampleKernel : public CPUKernel {
         }
       }
     };
-    CPUKernelUtils::ParallelFor(task, batch_size_);
+    ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
     return true;
   }
 

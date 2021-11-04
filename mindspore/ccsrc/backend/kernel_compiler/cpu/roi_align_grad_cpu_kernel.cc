@@ -117,7 +117,7 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       dx[thread_idx] = ZERO;
     }
   };
-  CPUKernelUtils::ParallelFor(task1, IntToSize(size_init));
+  ParallelLaunchAutoSearch(task1, IntToSize(size_init), this, &parallel_search_info_);
 
   int elem_num = roi_rows_ * channels_ * pooled_height_ * pooled_width_;
   auto task2 = [this, &dy, &rois, &dx](size_t start, size_t end) {
@@ -176,7 +176,7 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task2, IntToSize(elem_num));
+  ParallelLaunchAutoSearch(task2, IntToSize(elem_num), this, &parallel_search_info_);
   return true;
 }
 

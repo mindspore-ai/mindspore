@@ -62,18 +62,18 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
 }  // namespace
 
 template <typename T>
-void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
   auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] + input2[i];
       input1[i] = out[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -83,7 +83,7 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) const
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -118,7 +118,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_, kMaxSubSerialSize);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -152,7 +152,7 @@ void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -203,11 +203,11 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
       out[i] = dividend / divisor;
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -232,11 +232,11 @@ void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) const
       out[i] = dividend / divisor;
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -261,11 +261,11 @@ void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) 
       out[i] = static_cast<T>(floor(static_cast<double>(dividend) / static_cast<double>(divisor)));
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -283,11 +283,11 @@ void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) const
       out[i] = static_cast<T>(x - data_div_res * y);
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -300,11 +300,11 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
       out[i] = static_cast<T>((std::abs(res) > 1e-9) && ((res < 0.0) != (y < 0.0)) ? res + y : res);
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     auto is_power_single = [this]() {
       bool is_power_single = false;
@@ -324,14 +324,14 @@ void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) const
       auto task = [&](size_t start, size_t end) {
         (void)Power(input1 + start, input2, out + start, end - start, 1, 0, true);
       };
-      CPUKernelUtils::ParallelFor(task, output_size_);
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
     if (is_power_single()) {
       auto task = [&](size_t start, size_t end) {
         (void)Power(input1 + start, input2 + start, out + start, end - start, 1, 0, false);
       };
-      CPUKernelUtils::ParallelFor(task, output_size_);
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
   }
@@ -348,7 +348,7 @@ void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) const
         iter.GenNextPos();
       }
     };
-    CPUKernelUtils::ParallelFor(task, output_size_);
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
     base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {
@@ -376,7 +376,7 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
 }
 
 template <typename T>
-void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) const {
+void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -387,7 +387,7 @@ void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) con
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>

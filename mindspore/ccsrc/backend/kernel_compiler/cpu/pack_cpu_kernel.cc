@@ -61,28 +61,8 @@ bool PackCpuFwdKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const st
 
   // multi-threading
   size_t input_size = output_size_;
-  size_t max_thread_num = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(1));
-  size_t use_thread_num =
-    input_size < 128 * max_thread_num ? std::ceil(static_cast<float>(input_size / 128.0)) : max_thread_num;
-  std::vector<std::thread> threads;
-
-  if (use_thread_num < 1) {
-    use_thread_num = 1;
-  }
-
-  threads.reserve(use_thread_num);
-  size_t start = 0;
-  size_t batch_size = (input_size + use_thread_num - 1) / use_thread_num;
-
-  while (start < input_size) {
-    size_t end = (start + batch_size) > input_size ? input_size : (start + batch_size);
-    (void)threads.emplace_back(std::thread(&PackCpuFwdKernel::PackTensor, this, output, start, end));
-    start += batch_size;
-  }
-
-  for (auto &it : threads) {
-    it.join();
-  }
+  auto task = [this, &output](size_t start, size_t end) { PackTensor(output, start, end); };
+  ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   return true;
 }
 

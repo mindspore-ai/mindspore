@@ -72,7 +72,7 @@ bool SGDCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::v
       output_param[i] = param[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

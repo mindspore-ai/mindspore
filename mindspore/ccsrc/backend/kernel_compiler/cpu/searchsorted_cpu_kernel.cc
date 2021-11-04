@@ -70,7 +70,7 @@ bool SearchSortedCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &
       output[i] = static_cast<T>(result);
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 
@@ -96,7 +96,7 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, IntToSize(list_count));
+  ParallelLaunchAutoSearch(task, IntToSize(list_count), this, &parallel_search_info_);
 }
 }  // namespace kernel
 }  // namespace mindspore

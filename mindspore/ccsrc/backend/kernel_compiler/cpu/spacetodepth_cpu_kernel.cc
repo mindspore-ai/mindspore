@@ -84,7 +84,7 @@ bool SpaceToDepthCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
     }
   };
 
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

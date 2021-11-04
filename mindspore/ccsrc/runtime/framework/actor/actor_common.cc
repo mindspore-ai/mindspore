@@ -23,23 +23,22 @@ namespace runtime {
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(actor_and_kernel_thread_num);
-  size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
-
-  // Compute the actor thread num.
-  const size_t kActorThreadMaxNum = 5;
+  const size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
   // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
   const size_t kActorThreadMinNum = 2;
+  // Compute the actor thread num.
+  const size_t kActorThreadMaxNum = 5;
+  // a machine may run multiple process, a process should not use all CPUs. default run 5 process in the same time.
+  const size_t kParallelNum = 5;
+  const size_t kThreadMaxNum = cpu_core_num / kParallelNum;
+
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
   *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
 
-  // Compute the actor and kernel thread num.
-  const size_t kActorAndKernelThreadMaxNum = 23;
-  *actor_and_kernel_thread_num = cpu_core_num > *actor_thread_num ? cpu_core_num : (*actor_thread_num + 1);
-  *actor_and_kernel_thread_num = *actor_and_kernel_thread_num > kActorAndKernelThreadMaxNum
-                                   ? kActorAndKernelThreadMaxNum
-                                   : *actor_and_kernel_thread_num;
+  // Compute the actor and kernel thread num. 1 thread is useless for kernel, so kernel thread num should at least 2.
+  *actor_and_kernel_thread_num = kThreadMaxNum > (*actor_thread_num + 2) ? kThreadMaxNum : (*actor_thread_num + 2);
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {

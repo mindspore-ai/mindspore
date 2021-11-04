@@ -113,7 +113,7 @@ bool BoundingBoxEncodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
       deltas[right_y] = (dh - static_cast<T>(means_[H_INDEX])) / static_cast<T>(stds_[H_INDEX]);
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
 
   return true;
 }

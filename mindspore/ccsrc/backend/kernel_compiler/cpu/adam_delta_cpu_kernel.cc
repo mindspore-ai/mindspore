@@ -54,7 +54,7 @@ void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float b
       }
     };
   }
-  CPUKernelUtils::ParallelFor(task, size);
+  ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
 void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {

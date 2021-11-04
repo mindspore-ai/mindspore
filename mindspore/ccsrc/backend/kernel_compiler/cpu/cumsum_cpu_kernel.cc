@@ -225,35 +225,16 @@ void CumSumCPUKernel::LaunchCumSum(const T *input, T *output, T *workspace, size
 template <typename T>
 void CumSumCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs) const {
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *ws = reinterpret_cast<T *>(workspace[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  threads.reserve(thread_num);
-  size_t start = 0;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    (void)threads.emplace_back(std::thread(&CumSumCPUKernel::LaunchCumSum<T>, this, input, output, ws, start, end));
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
+  auto task = [this, &input, &output, &ws](size_t start, size_t end) {
+    LaunchCumSum<T>(input, output, ws, start, end);
+  };
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -39,16 +39,16 @@ class ArithmeticCPUKernel : public CPUKernel {
  private:
   void InitComputeFunc();
   void Sub(const T *input1, const T *input2, T *out);
-  void Add(const T *input1, const T *input2, T *out) const;
+  void Add(const T *input1, const T *input2, T *out);
   void Mul(const T *input1, const T *input2, T *out);
   void RealDiv(const T *input1, const T *input2, T *out);
-  void Div(const T *input1, const T *input2, T *out) const;
-  void FloorDiv(const T *input1, const T *input2, T *out) const;
-  void Mod(const T *input1, const T *input2, T *out) const;
-  void FloorMod(const T *input1, const T *input2, T *out) const;
-  void Pow(const T *input1, const T *input2, T *out) const;
-  void AssignAdd(T *input1, const T *input2, T *out) const;
-  void Atan2(const T *input1, const T *input2, T *out) const;
+  void Div(const T *input1, const T *input2, T *out);
+  void FloorDiv(const T *input1, const T *input2, T *out);
+  void Mod(const T *input1, const T *input2, T *out);
+  void FloorMod(const T *input1, const T *input2, T *out);
+  void Pow(const T *input1, const T *input2, T *out);
+  void AssignAdd(T *input1, const T *input2, T *out);
+  void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
 
   using TypeComputeFunc = std::function<void(ArithmeticCPUKernel *, const T *in_x, const T *in_y, T *out)>;

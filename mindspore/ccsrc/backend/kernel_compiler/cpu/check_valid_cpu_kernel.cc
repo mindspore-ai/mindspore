@@ -64,8 +64,7 @@ bool CheckValidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &input
       output[i] = !valid_flag;
     }
   };
-  CPUKernelUtils::ParallelFor(task, elem_num);
-
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 

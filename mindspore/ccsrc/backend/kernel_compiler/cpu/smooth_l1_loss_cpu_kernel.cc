@@ -63,7 +63,7 @@ bool SmoothL1LossCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, tensor_size_);
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

@@ -88,7 +88,7 @@ class BufferCPUAppendKernel : public CPUKernel {
         }
       }
     };
-    CPUKernelUtils::ParallelFor(task, element_nums_);
+    ParallelLaunchAutoSearch(task, element_nums_, this, &parallel_search_info_);
     return true;
   }
 

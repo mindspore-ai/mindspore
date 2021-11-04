@@ -141,12 +141,13 @@ class CPUKernel : public kernel::KernelMod {
   void InitDynamicKernel(const CNodePtr &cnode_ptr) { dynamic_kernel_ = std::make_shared<CpuDynamicKernel>(cnode_ptr); }
   device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
 
+  ParallelSearchInfo parallel_search_info_;
+
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  ParallelSearchInfo parallel_search_info_;
   CNodeWeakPtr cnode_ptr_;
   device::DynamicKernelPtr dynamic_kernel_;
 
