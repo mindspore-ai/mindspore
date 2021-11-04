@@ -1431,14 +1431,24 @@ AnfNodePtr GradExecutor::GetInput(const py::object &obj, bool op_mask) {
 }
 
 AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &obj_id) {
+  MS_EXCEPTION_IF_NULL(curr_g_);
   auto graph_info = top_cell()->graph_info_map().at(curr_g_);
   MS_EXCEPTION_IF_NULL(graph_info);
+  if (graph_info->node_map.find(obj_id) == graph_info->node_map.end()) {
+    // A tuple returns in this case: x = op1, y = op2, return (x, y)
+    // or a constant returns in this case
+    auto make_tuple = CreateMakeTupleNode(obj, obj_id);
+    if (make_tuple == nullptr) {
+      MS_LOG(DEBUG) << "Create value node for obj id: " << obj_id;
+      return MakeValueNode(obj, obj_id);
+    }
+    return make_tuple;
+  }
+  // single output CNode
   const auto &out = graph_info->node_map.at(obj_id);
   if (out.second.size() == 1 && out.second[0] == -1) {
     return out.first;
   }
-  MS_LOG(DEBUG) << "Output size " << out.second.size();
-
   // Params node
   if (graph_info->params.find(obj_id) != graph_info->params.end()) {
     auto para_node = out.first;
@@ -1449,31 +1459,78 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
     }
     return para_node;
   }
+  // Create tuple get item node for multiple output CNode
+  return CreateTupleGetItemNode(obj, obj_id);
+}
 
-  // Normal node
-  auto node = out.first->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(node);
-  auto abs = node->abstract();
-  ValuePtr out_obj = nullptr;
-  if (node->forward().first != nullptr) {
-    out_obj = node->forward().first->value();
-  } else {
-    out_obj = PyObjToValue(obj);
+AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string &obj_id) {
+  ValuePtr converted_ret = nullptr;
+  if (!parse::ConvertData(obj, &converted_ret)) {
+    MS_LOG(EXCEPTION) << "Failed to convert obj to value node.";
   }
-  for (const auto idx : out.second) {
-    std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(idx)};
-    node = curr_g_->NewCNode(tuple_get_item_inputs);
-    if (out_obj->isa<ValueTuple>()) {
-      node->add_input_value(out_obj, "");
-      node->add_input_value(MakeValue(idx), "");
-      auto out_tuple = out_obj->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(out_tuple);
-      if (static_cast<size_t>(idx) >= out_tuple->size()) {
-        MS_LOG(EXCEPTION) << "Index exceeds the size of tuple, index " << idx << ", tuple size " << out_tuple->size();
-      }
-      out_obj = (*out_tuple)[static_cast<size_t>(idx)];
-      node->set_forward(NewValueNode(out_obj), "");
+  auto node = NewValueNode(converted_ret);
+  SetNodeMapInGraphInfoMap(curr_g_, obj_id, node);
+  return node;
+}
+
+AnfNodePtr GradExecutor::CreateMakeTupleNode(const py::object &obj, const std::string &obj_id) {
+  if (!py::isinstance<py::tuple>(obj) && !py::isinstance<py::list>(obj)) {
+    MS_LOG(DEBUG) << "The input obj is not a tuple or list.";
+    return nullptr;
+  }
+  // get input node and value
+  const auto &obj_tuple = obj.cast<py::tuple>();
+  ValuePtrList input_args;
+  std::vector<size_t> value_index;
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < obj_tuple.size(); ++i) {
+    const auto &v = PyObjToValue(obj_tuple[i]);
+    // Graph have no define for grad
+    if (v->isa<FuncGraph>()) {
+      continue;
     }
+    value_index.emplace_back(i);
+    input_args.emplace_back(v);
+    (void)CreateMakeTupleNode(obj_tuple[i], GetId(obj_tuple[i]));
+    inputs.emplace_back(GetInput(obj_tuple[i], false));
+  }
+  py::tuple value_outs(value_index.size());
+  for (size_t i = 0; i < value_index.size(); ++i) {
+    value_outs[i] = obj_tuple[value_index[i]];
+  }
+  // create make tuple node and record in graph info map
+  auto cnode = curr_g_->NewCNode(inputs);
+  MS_LOG(DEBUG) << "Create make tuple node: " << cnode->DebugString();
+  SetTupleArgsToGraphInfoMap(curr_g_, obj, cnode);
+  SetNodeMapInGraphInfoMap(curr_g_, obj_id, cnode);
+  // run ad for make tuple node
+  if (grad_flag_) {
+    if (grad_is_running_ && !bprop_grad_stack_.empty() && !bprop_grad_stack_.top().second) {
+      MS_LOG(DEBUG) << "Running custom bprop, no need to do GradPynativeOp.";
+    } else {
+      ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, PyObjToValue(value_outs));
+    }
+  }
+  return cnode;
+}
+
+AnfNodePtr GradExecutor::CreateTupleGetItemNode(const py::object &obj, const std::string &obj_id) {
+  MS_EXCEPTION_IF_NULL(curr_g_);
+  auto graph_info = top_cell()->graph_info_map().at(curr_g_);
+  MS_EXCEPTION_IF_NULL(graph_info);
+  if (graph_info->node_map.find(obj_id) == graph_info->node_map.end()) {
+    MS_LOG(DEBUG) << "Can not find CNode for obj id: " << obj_id;
+    return nullptr;
+  }
+  const auto &out = graph_info->node_map.at(obj_id);
+  MS_LOG(DEBUG) << "Output size: " << out.second.size();
+  auto c_node = out.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(c_node);
+  auto abs = c_node->abstract();
+  // Create tuple get item node
+  for (const auto &idx : out.second) {
+    std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), c_node, NewValueNode(idx)};
+    c_node = curr_g_->NewCNode(tuple_get_item_inputs);
     if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
       auto abs_tuple = dyn_cast<abstract::AbstractTuple>(abs);
       MS_EXCEPTION_IF_NULL(abs_tuple);
@@ -1485,22 +1542,14 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
       auto prim_abs = elements[static_cast<size_t>(idx)];
       MS_EXCEPTION_IF_NULL(prim_abs);
       MS_LOG(DEBUG) << "Set tuple getitem abs " << prim_abs->ToString();
-      node->set_abstract(prim_abs);
+      c_node->set_abstract(prim_abs);
     }
   }
-  if (node->abstract() != nullptr) {
-    forward()->node_abs_map()[obj_id] = node->abstract();
+  if (c_node->abstract() != nullptr) {
+    forward()->node_abs_map()[obj_id] = c_node->abstract();
   }
-  MS_LOG(DEBUG) << "GetObjNode output " << node->DebugString();
-  return node;
-}
-
-AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string &obj_id) {
-  ValuePtr converted_ret = nullptr;
-  parse::ConvertData(obj, &converted_ret);
-  auto node = NewValueNode(converted_ret);
-  SetNodeMapInGraphInfoMap(curr_g_, obj_id, node);
-  return node;
+  MS_LOG(DEBUG) << "Create tuple get item node: " << c_node->DebugString();
+  return c_node;
 }
 
 TopCellInfoPtr GradExecutor::GetTopCell(const std::string &already_run_cell_id) {
@@ -2354,48 +2403,11 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
   }
 }
 
-void GradExecutor::CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out,
-                                                  const std::string &out_id) {
-  MS_EXCEPTION_IF_NULL(curr_g);
-  const auto &out_tuple = out.cast<py::tuple>();
-  // get input node and value
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
-  ValuePtrList input_args;
-  std::vector<size_t> value_index;
-  for (size_t i = 0; i < out_tuple.size(); i++) {
-    const auto &v = PyObjToValue(out_tuple[i]);
-    // Graph have no define for grad
-    if (v->isa<FuncGraph>()) {
-      continue;
-    }
-    value_index.emplace_back(i);
-    input_args.emplace_back(v);
-    inputs.emplace_back(GetInput(out_tuple[i], false));
-  }
-  py::tuple value_outs(value_index.size());
-  for (size_t i = 0; i < value_index.size(); ++i) {
-    value_outs[i] = out_tuple[value_index[i]];
-  }
-  auto cnode = curr_g_->NewCNode(inputs);
-  MS_LOG(DEBUG) << "Tuple output node info " << cnode->DebugString();
-  // record node info in graph map
-  SetTupleArgsToGraphInfoMap(curr_g_, out, cnode);
-  SetNodeMapInGraphInfoMap(curr_g_, out_id, cnode);
-  if (grad_is_running_ && !bprop_grad_stack_.top().second) {
-    MS_LOG(DEBUG) << "Custom bprop, no need GradPynativeOp";
-    return;
-  }
-  // run ad for maketuple node
-  const auto &out_value = PyObjToValue(value_outs);
-  ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, out_value);
-}
-
 void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args) {
   MS_EXCEPTION_IF_NULL(ret);
   const auto &cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "EndGraphInner start " << args.size() << " " << cell_id;
   if (cell_stack_.empty()) {
-    MS_LOG(DEBUG) << "Current cell " << cell_id << " no need to run EndGraphInner again";
     if (cell_id == top_cell()->cell_id()) {
       if (top_cell()->is_topest()) {
         set_grad_flag(false);
@@ -2407,57 +2419,39 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
         }
       }
     }
+    MS_LOG(DEBUG) << "Current cell " << cell_id << " no need to run EndGraphInner again";
     return;
   }
-  // Make output node in this case: x = op1, y = op2, return (x, y)
-  const auto &out_id = GetId(out);
-  const auto &graph_info = top_cell()->graph_info_map().at(curr_g_);
-  MS_EXCEPTION_IF_NULL(graph_info);
-  if (graph_info->node_map.find(out_id) == graph_info->node_map.end()) {
-    if (py::isinstance<py::tuple>(out) || py::isinstance<py::list>(out)) {
-      CreateMakeTupleNodeForMultiOut(curr_g_, out, out_id);
-    } else {
-      MS_LOG(DEBUG) << "Set ValueNode as output for graph, out id: " << out_id;
-      MakeValueNode(out, out_id);
-    }
-  }
   DoGradForCustomBprop(cell, out, args);
-  // Set output node for forward graph when need.
   PopCellStack();
   if (grad_is_running_ && !bprop_grad_stack_.empty()) {
     if (!bprop_grad_stack_.top().second) {
-      bprop_grad_stack_.pop();
       MS_EXCEPTION_IF_NULL(curr_g_);
-      curr_g_->set_output(GetObjNode(out, out_id));
+      curr_g_->set_output(GetObjNode(out, GetId(out)));
+      bprop_grad_stack_.pop();
       return;
     } else if (bprop_grad_stack_.top().first == cell_id) {
       bprop_grad_stack_.pop();
     }
   }
-
-  bool is_top_cell_end = cell_id == top_cell()->cell_id();
   // Just only dump the last forward graph
+  bool is_top_cell_end = cell_id == top_cell()->cell_id();
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && is_top_cell_end) {
-    curr_g_->set_output(GetObjNode(out, out_id));
+    curr_g_->set_output(GetObjNode(out, GetId(out)));
 #ifdef ENABLE_DUMP_IR
     DumpIR("fg.ir", curr_g_);
 #endif
   }
-
-  // Reset grad flag and update output node of top cell
+  // Reset grad flag and update output node of the outermost cell
   if (cell_stack_.empty() && is_top_cell_end) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
-    set_grad_flag(false);
     PopHighOrderGraphStack();
-    // Update real output node of top cell for generating bprop graph
-    AnfNodePtr output_node = GetObjNode(out, out_id);
-    MS_EXCEPTION_IF_NULL(output_node);
     auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
     MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-    k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node);
+    k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(GetObjNode(out, GetId(out)));
+    set_grad_flag(false);
   }
-
-  // Checkout whether need to compile graph when top cell has ran finished
+  // Checkout whether need to compile graph when each top cell has ran finished
   if (is_top_cell_end) {
     CheckNeedCompileGraph();
   }
@@ -2633,16 +2627,13 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
-abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph) {
+void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph) {
   MS_EXCEPTION_IF_NULL(bprop_graph);
-  std::size_t size = args.size();
-  abstract::AbstractBasePtrList args_spec;
   const auto &bprop_params = bprop_graph->parameters();
   // bprop_params include inputs, parameters, more than size(inputs)
-  if (bprop_params.size() < size) {
-    MS_LOG(EXCEPTION) << "Df parameters size " << bprop_params.size() << " less than " << size;
+  if (bprop_params.size() < args.size()) {
+    MS_LOG(EXCEPTION) << "Df parameters size " << bprop_params.size() << " less than " << args.size();
   }
-  // Update abstract info for parameters in bprop graph
   size_t index = 0;
   for (const auto &param : bprop_params) {
     auto param_node = param->cast<ParameterPtr>();
@@ -2650,14 +2641,13 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::list &args, co
     if (param_node->has_default()) {
       // update abstract info for weights
       ValuePtr value = param_node->default_param();
+      MS_EXCEPTION_IF_NULL(value);
       auto ptr = value->ToAbstract();
       MS_EXCEPTION_IF_NULL(ptr);
-      args_spec.emplace_back(ptr);
       param_node->set_abstract(ptr->Broaden());
     } else {
       // update abstract info for input params
-      const auto &input_value = PyObjToValue(args[index]);
-      auto input_abs = abstract::FromValue(input_value, true);
+      auto input_abs = abstract::FromValue(PyObjToValue(args[index]), true);
       if (param_node->abstract() != nullptr) {
         auto input_shape = input_abs->BuildShape()->ToString();
         auto param_tensor_abs = param_node->abstract();
@@ -2678,14 +2668,14 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::list &args, co
                                     << param->DebugString();
           }
         }
+        if (param_node->debug_info()->name() == "sens" && ir_shape != input_shape) {
+          need_renormalize_ = true;
+        }
       }
-      args_spec.emplace_back(input_abs);
       param_node->set_abstract(input_abs->Broaden());
       index++;
     }
   }
-  MS_LOG(DEBUG) << "Args_spec size " << args_spec.size();
-  return args_spec;
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
@@ -2713,7 +2703,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
   // Get the parameters items and add the value to args_spec
-  (void)GetArgsSpec(FilterTensorArgs(args, grad->sens_param_), bprop_graph);
+  UpdateParamAbsByArgs(FilterTensorArgs(args, grad->sens_param_), bprop_graph);
 
   // Do opt for final bprop graph
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();

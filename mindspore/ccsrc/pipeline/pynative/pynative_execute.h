@@ -246,11 +246,13 @@ class GradExecutor {
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
-  abstract::AbstractBasePtrList GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph);
+  void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
+  AnfNodePtr CreateMakeTupleNode(const py::object &obj, const std::string &obj_id);
+  AnfNodePtr CreateTupleGetItemNode(const py::object &obj, const std::string &obj_id);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
                                       const std::vector<int64_t> &index_sequence, bool is_param = false);
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
@@ -272,7 +274,6 @@ class GradExecutor {
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, index);
   }
-  void CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out, const std::string &out_id);
 
  private:
   bool grad_flag_{false};
