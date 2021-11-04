@@ -114,7 +114,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, bool conv_with_bias) {
 
   // input 0: data
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = lite::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_Parameter;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 5, 5, 3};
@@ -133,7 +133,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, bool conv_with_bias) {
   if (conv_with_bias) {
     // input 00: bias
     auto input00 = std::make_unique<schema::TensorT>();
-    input00->nodeType = lite::NodeType_ValueNode;
+    input00->nodeType = lite::NodeType_Parameter;
     input00->format = schema::Format_NHWC;
     input00->dataType = TypeId::kNumberTypeFloat32;
     input00->dims = {1, 5, 5, 3};

@@ -129,7 +129,7 @@ void ConstructModel(schema::MetaGraphT *meta_graph) {
 
   /* tensors */
   auto tensor0 = std::make_unique<mindspore::schema::TensorT>();
-  tensor0->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor0->nodeType = mindspore::lite::NodeType_Parameter;
   tensor0->format = mindspore::schema::Format_NHWC;
   tensor0->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor0->dims = {1, 2, 2, 1};
@@ -137,7 +137,7 @@ void ConstructModel(schema::MetaGraphT *meta_graph) {
   tensor0->name = "tensor0";
 
   auto tensor1 = std::make_unique<mindspore::schema::TensorT>();
-  tensor1->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor1->nodeType = mindspore::lite::NodeType_Parameter;
   tensor1->format = mindspore::schema::Format_NHWC;
   tensor1->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor1->dims = {1, 2, 2, 1};
@@ -145,7 +145,7 @@ void ConstructModel(schema::MetaGraphT *meta_graph) {
   tensor1->name = "tensor1";
 
   auto tensor2 = std::make_unique<mindspore::schema::TensorT>();
-  tensor2->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor2->nodeType = mindspore::lite::NodeType_Parameter;
   tensor2->format = mindspore::schema::Format_NHWC;
   tensor2->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor2->dims = {1, 2, 2, 1};
@@ -153,7 +153,7 @@ void ConstructModel(schema::MetaGraphT *meta_graph) {
   tensor2->name = "tensor2";
 
   auto tensor3 = std::make_unique<mindspore::schema::TensorT>();
-  tensor3->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor3->nodeType = mindspore::lite::NodeType_Parameter;
   tensor3->format = mindspore::schema::Format_NHWC;
   tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor3->dims = {1, 2, 2, 1};
@@ -161,7 +161,7 @@ void ConstructModel(schema::MetaGraphT *meta_graph) {
   tensor3->name = "tensor3";
 
   auto tensor4 = std::make_unique<mindspore::schema::TensorT>();
-  tensor4->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor4->nodeType = mindspore::lite::NodeType_Parameter;
   tensor4->format = mindspore::schema::Format_NHWC;
   tensor4->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor4->dims = {1, 2, 2, 1};
