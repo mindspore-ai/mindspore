@@ -4110,7 +4110,7 @@ class FloatStatus(PrimitiveWithInfer):
         Tensor, has the shape of `(1,)`, and the dtype is `mindspore.dtype.float32`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
 
     Supported Platforms:
         ``GPU``
@@ -4132,7 +4132,7 @@ class FloatStatus(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.float16], self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.float16, mstype.float64], self.name)
         return mstype.float32
 
 

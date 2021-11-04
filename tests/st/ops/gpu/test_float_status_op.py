@@ -67,17 +67,23 @@ x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_status():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_status(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for FloatStatus
+    Expectation: the result match to expectation
+    """
     ms_status = Net()
-    output1 = ms_status(Tensor(x1))
+    output1 = ms_status(Tensor(x1.astype(dtype)))
     expect1 = 1
     assert output1.asnumpy()[0] == expect1
 
-    output2 = ms_status(Tensor(x2))
+    output2 = ms_status(Tensor(x2.astype(dtype)))
     expect2 = 1
     assert output2.asnumpy()[0] == expect2
 
-    output3 = ms_status(Tensor(x3))
+    output3 = ms_status(Tensor(x3.astype(dtype)))
     expect3 = 0
     assert output3.asnumpy()[0] == expect3
 
@@ -85,17 +91,23 @@ def test_status():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_nan():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_nan(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for IsNan
+    Expectation: the result match to expectation
+    """
     ms_isnan = Netnan()
-    output1 = ms_isnan(Tensor(x1))
+    output1 = ms_isnan(Tensor(x1.astype(dtype)))
     expect1 = [[False, False, True, False]]
     assert (output1.asnumpy() == expect1).all()
 
-    output2 = ms_isnan(Tensor(x2))
+    output2 = ms_isnan(Tensor(x2.astype(dtype)))
     expect2 = [[False, False, False, False]]
     assert (output2.asnumpy() == expect2).all()
 
-    output3 = ms_isnan(Tensor(x3))
+    output3 = ms_isnan(Tensor(x3.astype(dtype)))
     expect3 = [[False, False], [False, False], [False, False]]
     assert (output3.asnumpy() == expect3).all()
 
@@ -103,17 +115,23 @@ def test_nan():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_inf():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_inf(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for IsInf
+    Expectation: the result match to expectation
+    """
     ms_isinf = Netinf()
-    output1 = ms_isinf(Tensor(x1))
+    output1 = ms_isinf(Tensor(x1.astype(dtype)))
     expect1 = [[False, False, False, False]]
     assert (output1.asnumpy() == expect1).all()
 
-    output2 = ms_isinf(Tensor(x2))
+    output2 = ms_isinf(Tensor(x2.astype(dtype)))
     expect2 = [[True, False, False, False]]
     assert (output2.asnumpy() == expect2).all()
 
-    output3 = ms_isinf(Tensor(x3))
+    output3 = ms_isinf(Tensor(x3.astype(dtype)))
     expect3 = [[False, False], [False, False], [False, False]]
     assert (output3.asnumpy() == expect3).all()
 
@@ -121,16 +139,22 @@ def test_inf():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_finite():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_finite(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Netfinite
+    Expectation: the result match to expectation
+    """
     ms_isfinite = Netfinite()
-    output1 = ms_isfinite(Tensor(x1))
+    output1 = ms_isfinite(Tensor(x1.astype(dtype)))
     expect1 = [[True, True, False, True]]
     assert (output1.asnumpy() == expect1).all()
 
-    output2 = ms_isfinite(Tensor(x2))
+    output2 = ms_isfinite(Tensor(x2.astype(dtype)))
     expect2 = [[False, True, True, True]]
     assert (output2.asnumpy() == expect2).all()
 
-    output3 = ms_isfinite(Tensor(x3))
+    output3 = ms_isfinite(Tensor(x3.astype(dtype)))
     expect3 = [[True, True], [True, True], [True, True]]
     assert (output3.asnumpy() == expect3).all()

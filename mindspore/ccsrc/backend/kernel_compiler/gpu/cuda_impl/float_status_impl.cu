@@ -128,9 +128,13 @@ void CalIsFinite(const size_t size, const T* input, bool* output, cudaStream_t c
 
 template void CalFloatStatus<float>(const size_t size, const float* input, float* output, cudaStream_t cuda_stream);
 template void CalFloatStatus<half>(const size_t size, const half* input, float* output, cudaStream_t cuda_stream);
+template void CalFloatStatus<double>(const size_t size, const double* input, float* output, cudaStream_t cuda_stream);
 template void CalIsInf<float>(const size_t size, const float* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsInf<half>(const size_t size, const half* input, bool* output, cudaStream_t cuda_stream);
+template void CalIsInf<double>(const size_t size, const double* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsNan<float>(const size_t size, const float* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsNan<half>(const size_t size, const half* input, bool* output, cudaStream_t cuda_stream);
+template void CalIsNan<double>(const size_t size, const double* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsFinite<float>(const size_t size, const float* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsFinite<half>(const size_t size, const half* input, bool* output, cudaStream_t cuda_stream);
+template void CalIsFinite<double>(const size_t size, const double* input, bool* output, cudaStream_t cuda_stream);
