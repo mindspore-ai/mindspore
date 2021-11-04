@@ -139,7 +139,7 @@ def _check_infer_attr_reduce(axis, keep_dims, prim_name):
 
 class ExpandDims(PrimitiveWithInfer):
     """
-    Adds an additional dimension to 'input_x` at the given axis.
+    Adds an additional dimension to `input_x` at the given axis.
 
     Note:
         If the specified axis is a negative number, the index is counted
@@ -783,7 +783,7 @@ class Unique(Primitive):
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
+        Tuple, containing Tensor objects (`y`, `idx`), `y` is a tensor with the
         same type as `input_x`, and contains the unique elements in `x`, sorted in
         ascending order. `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor.
@@ -999,7 +999,7 @@ class UniqueWithPad(PrimitiveWithInfer):
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
     The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
-    The returned tuple(`y`,`idx`) after the input Tensor `x` is processed by the unique operator,
+    The returned tuple(`y`, `idx`) after the input Tensor `x` is processed by the unique operator,
     in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
     the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
     to make it have the same shape as the Tensor `idx`.

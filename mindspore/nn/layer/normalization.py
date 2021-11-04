@@ -393,9 +393,11 @@ class BatchNorm2d(_BatchNorm):
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
         changed after net was initialized.
         Note that the formula for updating the moving_mean and moving_var is
+
         .. math::
             \text{moving_mean}=\text{moving_mean∗momentum}+μ_β\text{∗(1−momentum)}\\
             \text{moving_var}=\text{moving_var∗momentum}+σ^2_β\text{∗(1−momentum)}
+
         where :math:`moving_mean, moving_var` are the updated mean and variance,
         :math:`μ_β, σ^2_β` are the observed value (mean and variance) of each batch of data.
 
