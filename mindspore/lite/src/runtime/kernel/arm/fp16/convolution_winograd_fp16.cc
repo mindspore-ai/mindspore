@@ -147,6 +147,10 @@ int ConvolutionWinogradFP16CPUKernel::Prepare() {
 #else
   row_tile_ = C12NUM;
 #endif
+  kernel_unit_ = conv_param_->kernel_h_;
+  input_unit_ = output_unit_ + kernel_unit_ - 1;
+  conv_param_->input_unit_ = input_unit_;
+  conv_param_->output_unit_ = output_unit_;
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
@@ -156,10 +160,6 @@ int ConvolutionWinogradFP16CPUKernel::Prepare() {
     auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * col_tile_ * sizeof(float16_t);
     set_workspace_size(trans_matrix_data_size);
   }
-  kernel_unit_ = conv_param_->kernel_h_;
-  input_unit_ = output_unit_ + kernel_unit_ - 1;
-  conv_param_->input_unit_ = input_unit_;
-  conv_param_->output_unit_ = output_unit_;
 
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {

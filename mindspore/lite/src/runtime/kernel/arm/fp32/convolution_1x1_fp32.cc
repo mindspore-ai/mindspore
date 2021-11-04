@@ -111,10 +111,12 @@ int Convolution1x1CPUKernel::Prepare() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
-  matmul_param_ = new (std::nothrow) MatMulParameter;
   if (matmul_param_ == nullptr) {
-    MS_LOG(ERROR) << "Memory allocation failed";
-    return RET_ERROR;
+    matmul_param_ = new (std::nothrow) MatMulParameter;
+    if (matmul_param_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
   }
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);

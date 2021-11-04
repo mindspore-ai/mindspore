@@ -63,7 +63,6 @@ class NetRunner {
   int batch_size_ = 32;
   int h_ = 32;
   int w_ = 32;
-  bool is_raw_mix_precision_ = false;
 };
 
 #endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_NET_RUNNER_H_

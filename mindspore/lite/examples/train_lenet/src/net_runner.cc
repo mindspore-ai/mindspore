@@ -151,7 +151,6 @@ void NetRunner::InitAndFigureInputs() {
   context.thread_num_ = 2;
 
   mindspore::lite::TrainCfg train_cfg;
-  train_cfg.mix_precision_cfg_.is_raw_mix_precision_ = is_raw_mix_precision_;
   session_ = mindspore::session::TrainSession::CreateTrainSession(ms_file_, &context, true, &train_cfg);
   MS_ASSERT(session_ != nullptr);
 
@@ -257,7 +256,7 @@ void NetRunner::Usage() {
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {
   int opt;
-  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:vmob:")) != -1) {
+  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:vob:")) != -1) {
     switch (opt) {
       case 'f':
         ms_file_ = std::string(optarg);
@@ -279,9 +278,6 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 'b':
         virtual_batch_ = atoi(optarg);
-        break;
-      case 'm':
-        is_raw_mix_precision_ = true;
         break;
       case 'h':
       default:

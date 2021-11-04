@@ -136,17 +136,20 @@ void MindrtExecutor::TransferGraphOutput() {
     auto src_tensor = tensor_map.first;
     dst_tensor->set_shape(src_tensor->shape());
     /* dst tensor free in FreeOutputTensor */
-
+#ifdef ENABLE_FP16
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       dst_tensor->MallocData();
-      Fp16ToFloat32(reinterpret_cast<uint16_t *>(src_tensor->MutableData()),
+      Fp16ToFloat32(reinterpret_cast<float16_t *>(src_tensor->MutableData()),
                     reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
     } else {
+#endif
       dst_tensor->set_data(src_tensor->data());
       if (IS_RUNTIME_ALLOCATOR(src_tensor->allocator()) == false) {
         src_tensor->set_data(nullptr);
       }
+#ifdef ENABLE_FP16
     }
+#endif
     src_tensor->DecRefCount();
   }
   return;

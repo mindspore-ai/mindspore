@@ -75,9 +75,14 @@ int CastCPUKernel::CastToFp32(const lite::Tensor *input, lite::Tensor *output, i
                      reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     case kNumberTypeFloat16:
+#ifdef ENABLE_FP16
+      Fp16ToFloat32(reinterpret_cast<const float16_t *>(input->data()) + offset,
+                    reinterpret_cast<float *>(output_data) + offset, data_num);
+#else
       Fp16ToFloat32(reinterpret_cast<const uint16_t *>(input->data()) + offset,
                     reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
+#endif
     case kNumberTypeInt64:
       Int64ToFloat32(reinterpret_cast<const int64_t *>(input->data()) + offset,
                      reinterpret_cast<float *>(output_data) + offset, data_num);
@@ -93,11 +98,11 @@ int CastCPUKernel::CastToFp16(const lite::Tensor *input, lite::Tensor *output, i
   auto input_data_type = input->data_type();
   auto output_data = output->data();
   switch (input_data_type) {
+#ifdef ENABLE_FP16
     case kNumberTypeFloat32:
       Float32ToFp16(reinterpret_cast<const float *>(input->data()) + offset,
-                    reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
+                    reinterpret_cast<float16_t *>(output_data) + offset, data_num);
       break;
-#ifdef ENABLE_FP16
     case kNumberTypeInt64:
       Int64ToFp16(reinterpret_cast<const int64_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
@@ -112,6 +117,11 @@ int CastCPUKernel::CastToFp16(const lite::Tensor *input, lite::Tensor *output, i
     case kNumberTypeUInt8:
       Uint8ToFp16(reinterpret_cast<const uint8_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+      break;
+#else
+    case kNumberTypeFloat32:
+      Float32ToFp16(reinterpret_cast<const float *>(input->data()) + offset,
+                    reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
       break;
 #endif
     default:
