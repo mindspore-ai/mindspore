@@ -23,6 +23,7 @@ from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
 from ...common import dtype as mstype
 from ... import context
+from ...communication.management import GlobalComm
 
 
 class AbsGrad(PrimitiveWithInfer):
@@ -722,6 +723,42 @@ class BNTrainingUpdateGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, grads, x, batch_mean, batch_variance):
         return (batch_mean, batch_variance)
+
+class NeighborExchangeV2Grad(PrimitiveWithInfer):
+    """"Gradients of NeighborExchangeV2 operation."""
+
+    @prim_attr_register
+    def __init__(self, send_rank_ids, send_lens, recv_rank_ids, recv_lens, data_format,
+                 group=GlobalComm.WORLD_COMM_GROUP):
+        self.init_prim_io_names(inputs=['dy'], outputs=['dx'])
+        self.send_rank_ids = send_rank_ids
+        self.recv_rank_ids = recv_rank_ids
+        self.send_lens = send_lens
+        self.recv_lens = recv_lens
+        self.format = validator.check_string(data_format, ['NCHW'], 'format', self.name)
+        self.add_prim_attr('no_elimilate', True)
+
+    def __infer__(self, dy):
+        dy_shape = dy['shape']
+        validator.check(f'dy_shape.size()', len(dy_shape), f'4', 4, Rel.EQ, self.name)
+        if self.send_rank_ids[5] != -1 or self.send_rank_ids[6] != -1 or self.send_rank_ids[7] != -1:
+            dy_shape[3] -= self.send_lens[2]
+
+        if self.send_rank_ids[1] != -1 or self.send_rank_ids[2] != -1 or self.send_rank_ids[3] != -1:
+            dy_shape[3] -= self.send_lens[3]
+
+        if self.send_rank_ids[0] != -1 or self.send_rank_ids[1] != -1 or self.send_rank_ids[7] != -1:
+            dy_shape[2] -= self.send_lens[0]
+
+        if self.send_rank_ids[3] != -1 or self.send_rank_ids[4] != -1 or self.send_rank_ids[5] != -1:
+            dy_shape[2] -= self.send_lens[1]
+
+        return {'shape': dy_shape,
+                'dtype': dy['dtype'],
+                'value': None}
+
+    def __call__(self, tensor):
+        raise NotImplementedError
 
 
 class GeLUGrad(PrimitiveWithInfer):
