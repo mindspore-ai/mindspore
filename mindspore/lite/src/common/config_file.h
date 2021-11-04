@@ -35,10 +35,8 @@
 namespace mindspore {
 namespace lite {
 constexpr int MAX_CONFIG_FILE_LENGTH = 1024;
-#define CONFIG_FILE_EXECUTION_PLAN "execution_plan"
-
-int GetSectionInfoFromConfigFile(const std::string &file, const std::string &section_name,
-                                 std::map<std::string, std::string> *section_info);
+int GetAllSectionInfoFromConfigFile(const std::string &file,
+                                    std::map<std::string, std::map<std::string, std::string>> *config);
 
 void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
                          std::map<std::string, TypeId> *data_type_plan);

@@ -25,15 +25,14 @@ using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;
 namespace mindspore::registry {
 namespace {
-static const auto kKernelMaxNum =
-  (static_cast<int>(DataType::kNumberTypeEnd) - static_cast<int>(DataType::kNumberTypeBegin) - 1) *
-  (PrimitiveType_MAX - PrimitiveType_MIN);
+static const auto kOpTypeLen = PrimitiveType_MAX - PrimitiveType_MIN + 1;
 static const auto kDataTypeLen =
   static_cast<int>(DataType::kNumberTypeEnd) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-static const auto kOpTypeLen = PrimitiveType_MAX - PrimitiveType_MIN;
-}  // namespace
-
-int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
+static const auto kKernelMaxNum = kOpTypeLen * kDataTypeLen;
+static constexpr auto kMaxProviderNum = 10;
+static constexpr auto kMaxArchPerProviderNum = 10;
+static constexpr auto kMaxCustomTypeNum = 200;
+int GetFuncIndex(const KernelDesc &desc) {
   if (desc.data_type >= DataType::kNumberTypeEnd) {
     return -1;
   }
@@ -47,14 +46,36 @@ int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
   }
   return index;
 }
+}  // namespace
 
 Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                                           const std::string &type, CreateKernel creator) {
-  if (data_type >= DataType::kNumberTypeEnd) {
+                                           const std::string &type, const CreateKernel creator) {
+  int data_type_index = static_cast<int>(data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
+  if (data_type_index < 0 || data_type_index >= kDataTypeLen) {
     MS_LOG(ERROR) << "invalid data_type: " << static_cast<int>(data_type) << "!provider: " << provider;
     return kLiteError;
   }
   std::unique_lock<std::mutex> lock(lock_);
+  auto provider_iter = custom_kernel_creators_.find(provider);
+  if (provider_iter == custom_kernel_creators_.end() && custom_kernel_creators_.size() >= kMaxProviderNum) {
+    MS_LOG(ERROR) << "register too many provider!";
+    return kLiteError;
+  }
+  if (provider_iter != custom_kernel_creators_.end()) {
+    auto arch_iter = provider_iter->second.find(arch);
+    if (arch_iter == provider_iter->second.end()) {
+      if (provider_iter->second.size() >= kMaxArchPerProviderNum) {
+        MS_LOG(ERROR) << "register too many arch!";
+        return kLiteError;
+      }
+    } else {
+      auto type_iter = arch_iter->second.find(type);
+      if (type_iter == arch_iter->second.end() && arch_iter->second.size() >= kMaxCustomTypeNum) {
+        MS_LOG(ERROR) << "register too many type!";
+        return kLiteError;
+      }
+    }
+  }
   if (custom_kernel_creators_[provider][arch][type] == nullptr) {
     custom_kernel_creators_[provider][arch][type] =
       reinterpret_cast<CreateKernel *>(calloc(kDataTypeLen, sizeof(CreateKernel)));
@@ -64,20 +85,30 @@ Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::s
     }
   }
 
-  int data_type_index = static_cast<int>(data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-  if (data_type_index < 0 || data_type_index >= kDataTypeLen) {
-    MS_LOG(ERROR) << "invalid data_type: " << static_cast<int>(data_type) << "!provider: " << provider;
-    return kLiteError;
-  }
   custom_kernel_creators_[provider][arch][type][data_type_index] = creator;
   return kSuccess;
 }
 
 Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                                     registry::CreateKernel creator) {
+                                     const registry::CreateKernel creator) {
+  if (type <= static_cast<int>(PrimitiveType_MIN) || type > static_cast<int>(PrimitiveType_MAX)) {
+    MS_LOG(ERROR) << "Invalid op type : " << type;
+    return kLiteParamInvalid;
+  }
+  KernelDesc desc = {data_type, type, arch, provider};
+  int index = GetFuncIndex(desc);
+  if (index < 0) {
+    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << static_cast<int>(data_type) << ",op type "
+                  << type;
+    return kLiteError;
+  }
   std::unique_lock<std::mutex> lock(lock_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
+    if (kernel_creators_.size() >= kMaxProviderNum) {
+      MS_LOG(ERROR) << "register too many provider!";
+      return kLiteError;
+    }
     kernel_creators_[provider][arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
     if (kernel_creators_[provider][arch] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
@@ -86,20 +117,16 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
   } else {
     auto iter_arch = iter->second.find(arch);
     if (iter_arch == iter->second.end()) {
+      if (iter->second.size() >= kMaxArchPerProviderNum) {
+        MS_LOG(ERROR) << "register too many arch!";
+        return kLiteError;
+      }
       iter->second[arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
       if (iter->second[arch] == nullptr) {
         MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
         return kLiteError;
       }
     }
-  }
-
-  KernelDesc desc = {data_type, type, arch, provider};
-  int index = GetFuncIndex(desc);
-  if (index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << static_cast<int>(data_type) << ",op type "
-                  << type;
-    return kLiteError;
   }
 
   kernel_creators_[provider][arch][index] = creator;
@@ -109,11 +136,11 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
 registry::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
                                                                   KernelDesc *desc) {
   int data_type_index = static_cast<int>(desc->data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-  if (data_type_index < 0 || data_type_index >= kDataTypeLen) {
+  if (data_type_index < 0 || desc->data_type >= DataType::kNumberTypeEnd) {
     return nullptr;
   }
   auto param = primitive->value_as_Custom();
-  if (param == nullptr) {
+  if (param == nullptr || param->type() == nullptr) {
     return nullptr;
   }
   auto custom_type = param->type()->str();

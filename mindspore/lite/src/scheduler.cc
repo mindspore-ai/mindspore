@@ -1373,6 +1373,9 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
 
   SetKernelTensorDataType(kernel);
   kernel->set_name(src_node->name_);
+  if (kernel->kernel() != nullptr) {
+    kernel->kernel()->SetConfig(config_info_);
+  }
   return kernel;
 }
 

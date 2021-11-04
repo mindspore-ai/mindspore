@@ -35,9 +35,11 @@ class KernelInterfaceRegistry {
   }
 
   std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
-                                                              const schema::Primitive *primitive);
-  Status CustomReg(const std::string &provider, const std::string &op_type, registry::KernelInterfaceCreator creator);
-  Status Reg(const std::string &provider, int op_type, registry::KernelInterfaceCreator creator);
+                                                              const schema::Primitive *primitive,
+                                                              const kernel::Kernel *kernel);
+  Status CustomReg(const std::string &provider, const std::string &op_type,
+                   const registry::KernelInterfaceCreator creator);
+  Status Reg(const std::string &provider, int op_type, const registry::KernelInterfaceCreator creator);
   virtual ~KernelInterfaceRegistry();
 
  private:
@@ -45,7 +47,8 @@ class KernelInterfaceRegistry {
   std::shared_ptr<kernel::KernelInterface> GetCacheInterface(const std::string &provider, int op_type);
   std::shared_ptr<kernel::KernelInterface> GetCustomCacheInterface(const std::string &provider,
                                                                    const std::string &type);
-  std::shared_ptr<kernel::KernelInterface> GetCustomKernelInterface(const schema::Primitive *primitive);
+  std::shared_ptr<kernel::KernelInterface> GetCustomKernelInterface(const schema::Primitive *primitive,
+                                                                    const kernel::Kernel *kernel);
 
   std::mutex mutex_;
   // key: provider

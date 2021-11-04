@@ -209,6 +209,19 @@ Status Model::LoadConfig(const std::vector<char> &config_path) {
   return kSuccess;
 }
 
+Status Model::UpdateConfig(const std::vector<char> &section,
+                           const std::pair<std::vector<char>, std::vector<char>> &config) {
+  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+  if (impl_ == nullptr) {
+    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  }
+  if (impl_ != nullptr) {
+    return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
+  }
+  MS_LOG(ERROR) << "Model implement is null!";
+  return kLiteFileError;
+}
+
 Status Model::SetTrainMode(bool train) {
   if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
     MS_LOG(ERROR) << "Model is null.";

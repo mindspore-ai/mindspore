@@ -51,10 +51,10 @@ TEST_F(MixDataTypeTest, Config1) {
 
   std::string filename = "MixDataTypeTestConfig";
   std::string sectionname = "execution_plan";
-  std::map<std::string, std::string> config_info;
-  ret = lite::GetSectionInfoFromConfigFile(filename, sectionname, &config_info);
+  std::map<std::string, std::map<std::string, std::string>> configs;
+  ret = lite::GetAllSectionInfoFromConfigFile(filename, &configs);
   ASSERT_EQ(ret, 0);
-
+  std::map<std::string, std::string> config_info = configs[sectionname];
   ASSERT_EQ(config_info.size(), 2);
 
   auto info0 = config_info.at("op1");

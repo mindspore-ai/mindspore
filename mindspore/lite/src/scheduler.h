@@ -59,6 +59,9 @@ class Scheduler {
   ~Scheduler() = default;
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
   void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
+  void SetConfig(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+    config_info_ = config_info;
+  }
 
  private:
   int SchedulePreProcess();
@@ -165,6 +168,7 @@ class Scheduler {
 #endif
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
+  const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
 };
 }  // namespace mindspore::lite
 

@@ -106,6 +106,14 @@ class MS_API Model {
   /// \return Status.
   inline Status LoadConfig(const std::string &config_path);
 
+  /// \brief Update config.
+  ///
+  /// \param[in] section define the config section.
+  /// \param[in] config define the config will be updated.
+  ///
+  /// \return Status.
+  inline Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
+
   /// \brief Obtains all input tensors of the model.
   ///
   /// \return The vector that includes all input tensors.
@@ -215,6 +223,7 @@ class MS_API Model {
   MSTensor GetOutputByTensorName(const std::vector<char> &tensor_name);
   std::vector<MSTensor> GetOutputsByNodeName(const std::vector<char> &node_name);
   Status LoadConfig(const std::vector<char> &config_path);
+  Status UpdateConfig(const std::vector<char> &section, const std::pair<std::vector<char>, std::vector<char>> &config);
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::vector<char> &dec_mode);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
@@ -239,6 +248,12 @@ std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &node_name) 
 
 Status Model::LoadConfig(const std::string &config_path) {
   return LoadConfig(StringToChar(config_path));
+}
+
+Status Model::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  std::pair<std::vector<char>, std::vector<char>> config_pair = {StringToChar(config.first),
+                                                                 StringToChar(config.second)};
+  return UpdateConfig(StringToChar(section), config_pair);
 }
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,

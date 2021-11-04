@@ -87,6 +87,10 @@ class LiteSession : public session::LiteSession {
 
   const Delegate *get_delegate() const { return this->delegate_.get(); }
 
+  void SetConfigInfo(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+    config_info_ = config_info;
+  }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
@@ -182,6 +186,7 @@ class LiteSession : public session::LiteSession {
   std::shared_ptr<Delegate> delegate_ = nullptr;
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
+  const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore
