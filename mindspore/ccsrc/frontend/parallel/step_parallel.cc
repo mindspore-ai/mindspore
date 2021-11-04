@@ -1733,12 +1733,12 @@ void LableBatchSizeSplit(const CNodePtr &node) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager->node_users()[node_user.first];
       auto node_first = data_users.front().first;
-      if (!IsPrimitiveCNode(node_first, prim::kPrimStridedSlice)) {
-        data_users.clear();
-        data_users = node_user_map[node_first];
-      }
       for (auto &data_user : data_users) {
-        SetStridedSliceStrategy(data_user.first);
+        PrimitivePtr prim = GetCNodePrimitive(data_user.first);
+        MS_EXCEPTION_IF_NULL(prim);
+        if (prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
+          SetStridedSliceStrategy(data_user.first);
+        }
       }
     }
   }
