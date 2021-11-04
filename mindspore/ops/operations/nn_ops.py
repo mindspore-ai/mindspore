@@ -4368,7 +4368,7 @@ class ROIAlign(PrimitiveWithInfer):
         return inputs_type
 
 
-class Adam(PrimitiveWithInfer):
+class Adam(Primitive):
     r"""
     Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
 
@@ -4463,23 +4463,6 @@ class Adam(PrimitiveWithInfer):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
-                    beta1_shape, beta2_shape, epsilon_shape, grad_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
-        return var_shape, m_shape, v_shape
-
-    def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
-                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        args = {"beta1_power": beta1_power_dtype, "beta2_power": beta2_power_dtype, 'lr': lr_dtype,
-                "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
-        validator.check_scalar_or_tensor_types_same(args, [mstype.float16, mstype.float32], self.name, True)
-        return var_dtype, m_dtype, v_dtype
 
 
 class AdamWeightDecay(PrimitiveWithInfer):
