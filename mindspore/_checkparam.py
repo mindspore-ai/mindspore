@@ -396,13 +396,9 @@ class Validator:
         - has_bias = check_bool(has_bias, "has_bias")
         """
         if not isinstance(arg_value, bool):
-            if prim_name and arg_name:
-                msg_prefix = f"For '{prim_name}', the '{arg_name}'"
-            elif prim_name and arg_name is None:
-                msg_prefix = f"For '{prim_name}', Parameter"
-            else:
-                msg_prefix = "Parameter"
-            raise TypeError(f"{msg_prefix} should be a bool, but got {type(arg_value).__name__}.")
+            prim_name = f"For '{prim_name}', the" if prim_name else 'The'
+            arg_name = f"'{arg_name}'" if arg_name else 'input value'
+            raise TypeError(f"{prim_name} {arg_name} should be a bool, but got {type(arg_value).__name__}.")
         return arg_value
 
     @staticmethod
@@ -630,8 +626,8 @@ class Validator:
         axis = axis if isinstance(axis, Iterable) else (axis,)
         exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
         if list(shape) != exp_shape:
-            raise ValueError(f"For '{prim_name}', the origin shape {ori_shape} reduce on {axis} should be "
-                             f"{tuple(exp_shape)}, but got {shape}.")
+            raise ValueError(f"For '{prim_name}', the 'ori_shape' {ori_shape} reduce on 'axis' {axis} should be "
+                             f"{tuple(exp_shape)}, but got 'shape': {shape}.")
 
     @staticmethod
     def check_astype_dtype(dtype):

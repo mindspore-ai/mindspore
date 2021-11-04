@@ -59,11 +59,11 @@ class _Conv(Cell):
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} and "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         if context.get_context("device_target") == "CPU" and self.format == "NCDHW":
             raise ValueError(f"For '{self.cls_name}', the \"NCDHW\" format only support in Ascend and GPU target, "
-                             f"but got the format is {self.format} and "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
