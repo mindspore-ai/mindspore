@@ -132,7 +132,7 @@ build_lite() {
     cd ${BASEPATH}/mindspore/lite/build
     write_commit_file
 
-    LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp"
+    LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp"
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
       LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DCMAKE_BUILD_TYPE=Debug/-DCMAKE_BUILD_TYPE=Release/g'`
