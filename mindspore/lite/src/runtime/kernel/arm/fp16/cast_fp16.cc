@@ -125,15 +125,11 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
         return RET_ERROR;
     }
   } else if (input_data_type == kNumberTypeInt32) {
-    switch (output_data_type) {
-      case kNumberTypeFloat32:
-        Int32ToFloat32(static_cast<int32_t *>(input_data) + offset, static_cast<float *>(output_data) + offset,
-                       data_num);
-        break;
-      default:
-        MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
-        return RET_ERROR;
+    if (output_data_type != kNumberTypeFloat32) {
+      MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
+      return RET_ERROR;
     }
+    Int32ToFloat32(static_cast<int32_t *>(input_data) + offset, static_cast<float *>(output_data) + offset, data_num);
   } else {
     MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
     return RET_ERROR;
