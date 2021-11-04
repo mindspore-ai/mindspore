@@ -1,5 +1,5 @@
 
-0.1.0	MindSpore*1.5.0.20211027:¸
+0.1.0	MindSpore*1.5.0:¸
 ê
 bprop.32:dout
 
@@ -21,4 +21,4 @@ bprop.32:y*
 bprop.32:keep_prob*
 bprop.32:out*
 bprop.32:dout2
-bprop.32:[CNode]:4:@5f6486474eab638624ee1777f9652b2edd3f5f2873c570e2992de1d8b0e87873
+bprop.32:[CNode]:4:@ff3ca86129a77e54496a41a353e9f6355edfba79f3c040cf990522596d638b7fP
