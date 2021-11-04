@@ -13,6 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Sparse linear algebra submodule"""
-from .linalg import cg
+from .linalg import cg, gmres
 
-__all__ = ["cg"]
+__all__ = ["cg", "gmres"]
