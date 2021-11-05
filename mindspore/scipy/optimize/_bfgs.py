@@ -18,10 +18,9 @@ from typing import NamedTuple
 from ... import nn
 from ... import numpy as mnp
 from ...common import Tensor
-from ...ops import functional as F
 
 from .line_search import LineSearch
-from ..utils import _to_scalar
+from ..utils import _to_scalar, grad
 from ..utils import _INT_ZERO, _INT_ONE, _BOOL_FALSE
 
 
@@ -86,9 +85,9 @@ class MinimizeBfgs(nn.Cell):
             maxiter = mnp.size(x0) * 200
 
         d = x0.shape[0]
-        initial_H = mnp.eye(d, dtype=x0.dtype)
+        I = mnp.eye(d, dtype=x0.dtype)
         f_0 = self.func(x0)
-        g_0 = F.grad(self.func)(x0)
+        g_0 = grad(self.func)(x0)
 
         state = {
             "converged": _my_norm(g_0, ord_=mnp.inf) < gtol,
@@ -100,7 +99,7 @@ class MinimizeBfgs(nn.Cell):
             "x_k": x0,
             "f_k": f_0,
             "g_k": g_0,
-            "H_k": initial_H,
+            "H_k": I,
             "old_old_fval": f_0 + _my_norm(g_0) / 2,
             "status": _INT_ZERO,
             "line_search_status": _INT_ZERO
@@ -142,7 +141,6 @@ class MinimizeBfgs(nn.Cell):
             term1 = rho_k * sy_k
             sy_k_2 = mnp.expand_dims(y_k, axis=1) * mnp.expand_dims(s_k, axis=0)
             term2 = rho_k * sy_k_2
-            I = mnp.eye(d)
             term3 = mnp.matmul(I - term1, state["H_k"])
             term4 = mnp.matmul(term3, I - term2)
             term5 = rho_k * (mnp.expand_dims(s_k, axis=1) * mnp.expand_dims(s_k, axis=0))

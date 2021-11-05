@@ -18,7 +18,7 @@ from .. import ops
 from .ops import SolveTriangular
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular']
+__all__ = ['block_diag', 'solve_triangular', 'inv']
 
 
 def block_diag(*arrs):

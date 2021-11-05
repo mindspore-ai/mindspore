@@ -121,9 +121,41 @@ def _line_func_2(np, *args):
 def test_line_search(maxiter, func, x, p):
     """
     Feature: ALL TO ALL
-    Description: test cases for n-d function
+    Description: test cases for n-d function in PYNATIVE mode
     Expectation: the result match scipy
     """
+    A = [[1.76405235, 0.40015721, 0.97873798, 2.2408932, 1.86755799],
+         [-0.97727788, 0.95008842, -0.15135721, -0.10321885, 0.4105985],
+         [0.14404357, 1.45427351, 0.76103773, 0.12167502, 0.44386323],
+         [0.33367433, 1.49407907, -0.20515826, 0.3130677, -0.85409574],
+         [-2.55298982, 0.6536186, 0.8644362, -0.74216502, 2.26975462]]
+
+    osp_x, osp_p, osp_A = onp.array(x), onp.array(p), onp.array(A)
+    osp_f, osp_fp = func(onp, osp_A)
+    osp_res = osp_line_search(osp_f, osp_fp, osp_x, osp_p, maxiter=maxiter)
+
+    msp_x, msp_p, msp_A = mnp.array(x), mnp.array(p), mnp.array(A)
+    msp_f, _ = func(mnp, msp_A)
+    msp_res = msp_line_search(msp_f, msp_x, msp_p, maxiter=maxiter)
+
+    match_array(msp_res.a_k, osp_res[0], error=5)
+    match_array(msp_res.f_k, osp_res[3], error=5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('maxiter, func, x, p',
+                         [(10, _line_func_1, [1.13689136, 0.09772497, 0.58295368, -0.39944903, 0.37005589],
+                           [-1.30652685, 1.65813068, -0.11816405, -0.6801782, 0.66638308])])
+def test_line_search_graph(maxiter, func, x, p):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for n-d function in GRAPH mode
+    Expectation: the result match scipy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     A = [[1.76405235, 0.40015721, 0.97873798, 2.2408932, 1.86755799],
          [-0.97727788, 0.95008842, -0.15135721, -0.10321885, 0.4105985],
          [0.14404357, 1.45427351, 0.76103773, 0.12167502, 0.44386323],

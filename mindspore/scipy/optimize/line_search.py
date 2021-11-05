@@ -19,10 +19,9 @@ from ... import nn
 from ... import numpy as mnp
 from ...common import dtype as mstype
 from ...common import Tensor
-from ...ops import functional as F
 
-from ..utils import _to_scalar
-from ..utils import _to_tensor, _FLOAT_ZERO, _FLOAT_ONE, _INT_ZERO, _INT_ONE, _BOOL_FALSE
+from ..utils import _to_scalar, grad
+from ..utils import _to_tensor, _INT_ZERO, _INT_ONE, _BOOL_FALSE
 
 
 class _LineSearchResults(NamedTuple):
@@ -93,6 +92,7 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
     Algorithm 3.6 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61.
     Tries cubic, quadratic, and bisection methods of zooming.
     """
+    _FLOAT_ONE = _to_tensor(1., dtype=a_low.dtype)
     state = {
         "done": _BOOL_FALSE,
         "failed": _BOOL_FALSE,
@@ -197,8 +197,11 @@ class LineSearch(nn.Cell):
         def fval_and_grad(alpha):
             xkk = xk + alpha * pk
             fkk = self.func(xkk)
-            gkk = F.grad(self.func)(xkk)
+            gkk = grad(self.func)(xkk)
             return fkk, gkk, mnp.dot(gkk, pk)
+
+        _FLOAT_ZERO = _to_tensor(0., dtype=xk.dtype)
+        _FLOAT_ONE = _to_tensor(1., dtype=xk.dtype)
 
         if old_fval is None or gfk is None:
             nfev, ngev = _INT_ONE, _INT_ONE
