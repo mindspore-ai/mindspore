@@ -361,6 +361,9 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
     if (suffix != kJsonSuffix) {
       continue;
     }
+    if (cce_json.find("loc") != std::string::npos) {
+      continue;
+    }
     auto sp = cce_json.rfind('/');
     if (sp != std::string::npos) {
       continue;
