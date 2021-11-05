@@ -30,7 +30,6 @@
 #include "mindrt/include/mindrt.hpp"
 
 namespace mindspore {
-
 template <typename T>
 class Future;
 
@@ -112,7 +111,6 @@ Future<std::tuple<Ts...>> Collect(const Future<Ts> &... futures) {
 
   return Collect(wrappers).Then(std::bind(f, futures...));
 }
-
 };  // namespace mindspore
 
 #endif

@@ -23,7 +23,6 @@
 #include "async/status.h"
 
 namespace mindspore {
-
 template <typename... Types>
 class Result {
  public:
@@ -66,7 +65,6 @@ class Result {
   std::tuple<Option<Types>...> tuple;
   Status status;
 };
-
 }  // namespace mindspore
 
 #endif

@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace uuids {
-
 const std::size_t UUID_SIZE = 16;
 
 struct uuid {
@@ -98,7 +97,6 @@ std::basic_ostream<T, F> &operator<<(std::basic_ostream<T, F> &s, const struct u
   s << std::setfill(static_cast<T>(' ')) << std::dec;
   return s;
 }
-
 }  // namespace uuids
 }  // namespace mindspore
 

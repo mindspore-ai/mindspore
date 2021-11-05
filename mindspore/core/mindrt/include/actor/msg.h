@@ -80,7 +80,6 @@ class MessageBase {
   std::string body;
   Type type;
 };
-
 }  // namespace mindspore
 
 #endif

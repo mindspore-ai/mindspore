@@ -152,7 +152,6 @@ int MindrtRun(const std::vector<OpDataPtr<T>> &input_data, std::vector<OpDataPtr
 
   return 0;
 }
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_OP_ACTOR_H

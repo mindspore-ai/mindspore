@@ -212,7 +212,6 @@ class ActorBase {
 
   ActorThreadPool *pool_{nullptr};
 };
-
 using ActorReference = std::shared_ptr<ActorBase>;
 };  // namespace mindspore
 #endif

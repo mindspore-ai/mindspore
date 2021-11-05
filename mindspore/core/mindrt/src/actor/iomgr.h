@@ -23,7 +23,6 @@
 #include "actor/msg.h"
 
 namespace mindspore {
-
 class AID;
 class MessageBase;
 
@@ -85,7 +84,6 @@ class IOMgr {
   IOMgr() {}
   virtual ~IOMgr() {}
 };
-
 };  // namespace mindspore
 
 #endif

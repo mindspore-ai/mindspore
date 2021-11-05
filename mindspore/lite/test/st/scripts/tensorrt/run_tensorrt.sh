@@ -40,7 +40,6 @@ function Run_Tensorrt() {
   # copy related files to benchmark_test
   cp -a ./tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
   cp -a ./runtime/lib/lib*.so* ${benchmark_test_path}/ || exit 1
-  cp -a ./runtime/third_party/glog/lib*.so* ${benchmark_test_path}/ || exit 1
 
   echo "start push files to nvidia device ${device_ip} : ${cuda_device_id}"
   ssh tensorrt@${device_ip} "cd ${device_benchmark_test_path}; rm -rf ./*"

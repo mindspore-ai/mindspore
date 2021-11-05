@@ -31,7 +31,6 @@
 #include "mindrt/include/mindrt.hpp"
 
 namespace mindspore {
-
 template <typename T>
 class Promise;
 
@@ -447,7 +446,6 @@ class Promise<void>;
 
 template <typename T>
 class Promise<T &>;
-
 };  // namespace mindspore
 
 #endif

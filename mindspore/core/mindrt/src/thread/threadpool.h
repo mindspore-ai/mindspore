@@ -156,6 +156,5 @@ class ThreadPool {
   int max_spin_count_{kDefaultSpinCount};
   int min_spin_count_{kMinSpinCount};
 };
-
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_

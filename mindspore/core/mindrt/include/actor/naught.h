@@ -21,7 +21,6 @@
 #include <string>
 
 namespace mindspore {
-
 class Naught;
 class ActorBase;
 
@@ -34,7 +33,6 @@ class Naught {
  public:
   virtual ~Naught() {}
 };
-
 };  // namespace mindspore
 
 #endif

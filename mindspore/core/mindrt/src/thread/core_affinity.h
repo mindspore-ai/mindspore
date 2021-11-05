@@ -68,7 +68,6 @@ class CoreAffinity {
   size_t core_num_{0};
   size_t higher_num_{0};
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_CORE_AFFINITY_H_

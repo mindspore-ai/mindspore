@@ -291,6 +291,7 @@ Worker *ThreadPool::CurrentWorker() const {
 }
 
 int ThreadPool::InitAffinityInfo() {
+#ifdef BIND_CORE
   affinity_ = new (std::nothrow) CoreAffinity();
   THREAD_ERROR_IF_NULL(affinity_);
   int ret = affinity_->InitHardwareCoreInfo();
@@ -299,6 +300,7 @@ int ThreadPool::InitAffinityInfo() {
     affinity_ = nullptr;
     return THREAD_ERROR;
   }
+#endif
   return THREAD_OK;
 }
 
@@ -375,13 +377,11 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
     delete pool;
     return nullptr;
   }
-#ifdef BIND_CORE
   ret = pool->InitAffinityInfo();
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
   }
-#endif  // BIND_CORE
   return pool;
 }
 }  // namespace mindspore

@@ -20,7 +20,6 @@
 #include <atomic>
 
 namespace mindspore {
-
 class SpinLock {
  public:
   void Lock() {
@@ -33,7 +32,6 @@ class SpinLock {
  private:
   std::atomic_flag locked = ATOMIC_FLAG_INIT;
 };
-
 }  // namespace mindspore
 
 #endif

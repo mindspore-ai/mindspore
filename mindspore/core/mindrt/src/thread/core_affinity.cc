@@ -27,7 +27,6 @@
 #include "thread/threadpool.h"
 
 namespace mindspore {
-
 enum Arch {
   UnKnown_Arch = 0,
   Cortex_A5,
@@ -249,6 +248,7 @@ int CoreAffinity::InitHardwareCoreInfo() {
 
 std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) {
   std::vector<int> bind_id;
+#ifdef BIND_CORE
   if (core_num_ != sorted_id_.size()) {
     THREAD_ERROR("init sorted core id failed");
     return bind_id;
@@ -264,6 +264,7 @@ std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) 
   } else {
     return bind_id;
   }
+#endif
   return bind_id;
 }
 void CoreAffinity::SetCoreId(const std::vector<int> &core_list) { bind_id_ = core_list; }

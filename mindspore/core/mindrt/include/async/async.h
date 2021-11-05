@@ -28,7 +28,6 @@
 #include "async/future.h"
 
 namespace mindspore {
-
 using MessageHandler = std::function<void(ActorBase *)>;
 
 class MessageAsync : public MessageBase {
@@ -275,7 +274,6 @@ template <typename F, typename R = typename std::result_of<F()>::type>
 auto Async(const AID &aid, F &&f) -> decltype(internal::AsyncHelper<R>()(aid, std::forward<F>(f))) {
   return internal::AsyncHelper<R>()(aid, std::forward<F>(f));
 }
-
 }  // namespace mindspore
 
 #endif
