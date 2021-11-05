@@ -27,10 +27,10 @@ namespace device {
 namespace gpu {
 class NvidiaCommunicationGroup : public CommunicationGroup {
  public:
-  explicit NvidiaCommunicationGroup(uint32_t size, const std::string name, const std::vector<uint32_t> &group_ranks)
-      : CommunicationGroup(size, name, group_ranks) {}
+  explicit NvidiaCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks)
+      : CommunicationGroup(name, group_ranks) {}
 
-  ~NvidiaCommunicationGroup() = default;
+  ~NvidiaCommunicationGroup() override = default;
 
   void Initialize() override;
   void Finalize() override;

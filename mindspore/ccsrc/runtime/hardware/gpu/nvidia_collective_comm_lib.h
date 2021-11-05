@@ -33,7 +33,7 @@ class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
     return instance;
   }
 
-  void Initialize() override {}
+  void Initialize(uint32_t global_rank = UINT32_MAX) override {}
   void Finalize() override {}
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override {
@@ -43,7 +43,7 @@ class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
 
  private:
   NvidiaCollectiveCommLib() {}
-  ~NvidiaCollectiveCommLib() override {}
+  ~NvidiaCollectiveCommLib() override = default;
 };
 }  // namespace gpu
 }  // namespace device

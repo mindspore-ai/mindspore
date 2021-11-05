@@ -41,7 +41,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
  private:
   MsCollectiveCommLib() {}
-  ~MsCollectiveCommLib() override;
+  ~MsCollectiveCommLib() override = default;
 };
 }  // namespace cpu
 }  // namespace device

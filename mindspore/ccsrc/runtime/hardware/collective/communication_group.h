@@ -20,7 +20,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include "mindspore/core/utils/log_adapter.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -28,9 +30,7 @@ namespace device {
 // communication group. MindSpore uses 'hccl_world_group' or 'nccl_world_group' as the default group.
 class CommunicationGroup {
  public:
-  explicit CommunicationGroup(uint32_t size, const std::string name, const std::vector<uint32_t> &group_ranks)
-      : size_(size), name_(name), group_ranks_(group_ranks), global_to_group_ranks_({}), group_to_global_ranks_({}) {}
-
+  explicit CommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks);
   virtual ~CommunicationGroup() {
     group_ranks_.clear();
     global_to_group_ranks_.clear();
@@ -64,6 +64,7 @@ class CommunicationGroup {
   std::map<uint32_t, uint32_t> global_to_group_ranks_;
   std::map<uint32_t, uint32_t> group_to_global_ranks_;
 };
+using CommunicationGroupPtr = std::shared_ptr<CommunicationGroup>;
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COMMUNICATION_GROUP_H_

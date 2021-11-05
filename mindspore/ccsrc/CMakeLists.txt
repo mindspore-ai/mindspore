@@ -110,8 +110,7 @@ if(ENABLE_GPU)
                                   "runtime/device/gpu/distribution/collective_wrapper.cc"
                                   "runtime/device/gpu/distribution/mpi_wrapper.cc"
                                   "runtime/device/gpu/distribution/nccl_wrapper.cc"
-                                  "runtime/device/gpu/trt_loader.cc"
-                                  )
+                                  "runtime/device/gpu/trt_loader.cc")
 
     if(NOT ${TENSORRT_HOME} STREQUAL "")
         find_path(TENSORRT_HOME_INCLUDE NvInfer.h HINTS ${TENSORRT_HOME}/include)
@@ -416,6 +415,10 @@ if(ENABLE_D)
     if(ENABLE_MPI)
         set_target_properties(_ascend_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
     endif()
+endif()
+
+if(ENABLE_MPI)
+    target_link_libraries(mindspore mindspore::ompi)
 endif()
 
 add_subdirectory(cxx_api)
