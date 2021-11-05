@@ -373,7 +373,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
-                 parallel_optimizer_config=dict)
+                 parallel_optimizer_config=dict, comm_fusion=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, which is valid only for Ascend and GPU target.
@@ -402,6 +402,7 @@ def set_auto_parallel_context(**kwargs):
     parallel_optimizer_config    pipeline_stages
                \                 grad_accumulation_step
                \                 auto_parallel_search_mode
+               \                 comm_fusion
     ===========================  ===========================
 
     Args:
@@ -476,6 +477,16 @@ def set_auto_parallel_context(**kwargs):
                           with larger batch size. This configure is effective only
                           when the model runs on pipeline training or gradient
                           accumulation with data parallel.
+        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
+                        communication fusion config has two keys: "mode" and "config".
+                        It supports following communication fusion types and configurations:
+
+                        - allreduce: if communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
+                          and `index`. In `auto` mode, allreduce fusion is configured by gradients size, and the default
+                          fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
+                          manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
+                          `all_reduce_fusion_config`.
+
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -498,6 +509,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(pipeline_stages=2)
         >>> parallel_config = {"gradient_accumulation_shard": True}
         >>> context.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
+        >>> comm_fusion_config = {"allreduce": {"mode": "size", "config": 32}}
+        >>> context.set_auto_parallel_context(comm_fusion=comm_fusion_config)
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -540,6 +553,7 @@ def reset_auto_parallel_context():
     - full_batch: False.
     - enable_parallel_optimizer: False.
     - pipeline_stages: 1.
+    - fusion_threshold: 64.
     """
     _reset_auto_parallel_context()
 

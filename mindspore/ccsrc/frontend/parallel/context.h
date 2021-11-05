@@ -52,6 +52,11 @@ constexpr char SAME_SERVER_GROUP_PARALLEL[] = "same_server_group_parallel";
 constexpr char NO_GROUP_PARALLEL[] = "no_group_parallel";
 
 constexpr char IS_FIRST_ITERATION[] = "is_first_iteration";
+
+constexpr char FUSION_AUTO[] = "auto";
+constexpr char FUSION_SIZE[] = "size";
+constexpr char FUSION_INDEX[] = "index";
+constexpr int64_t FUSUION_THRESHOLD = 64;
 class ParallelContext {
  public:
   ~ParallelContext() = default;
@@ -77,6 +82,11 @@ class ParallelContext {
 
   void set_device_num(int64_t device_num);
   int64_t device_num() const { return device_num_; }
+
+  void set_fusion_threshold_mb(int64_t fusion_threshold);
+  int64_t fusion_threshold_mb() const { return fusion_threshold_mb_; }
+  bool set_fusion_mode(const std::string &fusion_mode);
+  std::string get_fusion_mode() const { return fusion_mode_; }
 
   void set_pipeline_stage_split_num(const int64_t stages);
   int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
@@ -159,6 +169,7 @@ class ParallelContext {
   bool gradient_fp32_sync_;
   bool loss_repeated_mean_;
   int64_t device_num_;
+  int64_t fusion_threshold_mb_;
   int64_t global_rank_;
   int64_t grad_accumulation_step_;
   std::string parallel_mode_;
@@ -166,6 +177,7 @@ class ParallelContext {
   int64_t pipeline_stage_split_num_;
   bool parameter_broadcast_;
   bool device_num_is_set_;
+  bool fusion_threshold_is_set_;
   bool global_rank_is_set_;
   bool parameter_broadcast_is_set_;
   bool enable_all_reduce_fusion_;
@@ -186,6 +198,7 @@ class ParallelContext {
   bool dataset_repeat_dim_right_ = false;
   bool hccl_test_available_ = false;
   bool sharding_propagation_;
+  std::string fusion_mode_;
 };
 
 }  // namespace parallel
