@@ -71,8 +71,8 @@ class OptimizerProcess:
         r"""
         Build the parameter's dict of the network.
 
-        Inputs:
-            - **network** (Cell) - The training network.
+        Args:
+            network (Cell) - The training network.
         """
         cells = network.cells_and_names()
         params_dict = {}
@@ -85,9 +85,9 @@ class OptimizerProcess:
         r"""
         Build the parameter's group with grad centralization.
 
-        Inputs:
-            - **params_dict** (dict) - The network's parameter dict.
-            - **parameters** (list) - The network's parameter list.
+        Args:
+            params_dict (dict) - The network's parameter dict.
+            parameters (list) - The network's parameter list.
         """
         group_params = []
         for group_param in parameters:
@@ -121,8 +121,8 @@ class OptimizerProcess:
         r"""
         Add gradient centralization.
 
-        Inputs:
-            - **network** (Cell) - The training network.
+        Args:
+            network (Cell) - The training network.
         """
         params_dict = self.build_params_dict(network)
 
@@ -190,9 +190,9 @@ class ParameterProcess:
         r"""
         Assign parameter group.
 
-        Inputs:
-            - **parameters** (list) - The network's parameter list.
-            - **split_point** (list) - The gradient split point of this network. default: None.
+        Args:
+            parameters (list) - The network's parameter list.
+            split_point (list) - The gradient split point of this network. default: None.
         """
         if not isinstance(parameters, (list, tuple)) or not parameters:
             return parameters
@@ -212,9 +212,9 @@ class ParameterProcess:
         r"""
         Generate group parameters.
 
-        Inputs:
-            - **parameters** (list) - The network's parameter list.
-            - **origin_params** (list) - The network's origin parameter list.
+        Args:
+            parameters (list) - The network's parameter list.
+            origin_params (list) - The network's origin parameter list.
         """
         origin_params_copy = origin_params
         if origin_params_copy is not None:
