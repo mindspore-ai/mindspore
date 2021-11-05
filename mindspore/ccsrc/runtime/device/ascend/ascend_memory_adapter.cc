@@ -43,11 +43,24 @@ bool AscendMemAdapter::Initialize() {
   max_available_ms_hbm_size_ = device_hbm_size_ - reserved_mem_size_for_others;
 
   auto user_define_ms_size_ = GetDeviceMemSizeFromContext();
-  ms_used_hbm_size_ = user_define_ms_size_ == 0 ? max_available_ms_hbm_size_ : user_define_ms_size_;
+  size_t default_hbm_size;
+  if (max_available_ms_hbm_size_ >= (static_cast<size_t>(31) << kMemSizeGB)) {
+    // Some HCCL case on 32GB Ascend device will Out Of Memory when reserved only 1GB memory for HCCL, so resize
+    // default HBM size for MindSpore to 30GB User can use context variable_memory_max_size="31GB" to Allocate 31GB
+    // HBM for MindSpore in some extreme case.
+    default_hbm_size = static_cast<size_t>(30) << kMemSizeGB;
+    MS_LOG(INFO) << "Default HBM size is resize to 30GB from Max available HBM Size for MindSpore "
+                 << max_available_ms_hbm_size_;
+  } else {
+    default_hbm_size = max_available_ms_hbm_size_;
+  }
+  ms_used_hbm_size_ = user_define_ms_size_ == 0 ? default_hbm_size : user_define_ms_size_;
+
   MS_LOG(INFO) << "Device HBM Size:" << device_hbm_size_
                << ", Reserved HBM size for Other Components(HCCL/rts/etc.):" << reserved_mem_size_for_others
                << ", Max available HBM Size for MindSpore:" << max_available_ms_hbm_size_
                << ", User define MindSpore HBM Size:" << user_define_ms_size_
+               << ", Default MindSpore HBM Size:" << default_hbm_size
                << ", MindSpore Used HBM Size:" << ms_used_hbm_size_;
   device_mem_base_addr_ = MallocFromRts(ms_used_hbm_size_);
   static_mem_offset_ = ms_used_hbm_size_;
