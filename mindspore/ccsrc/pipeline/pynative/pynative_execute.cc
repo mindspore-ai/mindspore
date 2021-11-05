@@ -736,7 +736,6 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
   if (pre_tensors.empty()) {
     MS_LOG(EXCEPTION) << "The size of pre tensors is empty.";
   }
-
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &pre_tensor : pre_tensors) {
     MS_EXCEPTION_IF_NULL(pre_tensor);
@@ -761,9 +760,13 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
       MS_EXCEPTION_IF_NULL(old_ptr);
       auto new_ptr = new_device_address->GetPtr();
       MS_EXCEPTION_IF_NULL(new_ptr);
-      auto ret = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
-      if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "Memory copy failed. ret: " << ret;
+      MS_EXCEPTION_IF_CHECK_FAIL(old_device_address->GetSize() == new_device_address->GetSize(), "Size not equal");
+      if (old_device_address->GetSize() < SECUREC_MEM_MAX_LEN) {
+        auto ret_code = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
+        MS_EXCEPTION_IF_CHECK_FAIL(ret_code == EOK, "Memory copy failed, ret code: " + std::to_string(ret_code));
+      } else {
+        auto ret_code = std::memcpy(old_ptr, new_ptr, old_device_address->GetSize());
+        MS_EXCEPTION_IF_CHECK_FAIL(ret_code == old_ptr, "Memory copy failed");
       }
     }
   }

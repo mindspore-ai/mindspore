@@ -253,6 +253,13 @@ class LogWriter {
     }                                                                \
   } while (0)
 
+#define MS_EXCEPTION_IF_CHECK_FAIL(condition, error_info)              \
+  do {                                                                 \
+    if (!(condition)) {                                                \
+      MS_LOG(EXCEPTION) << ": Failure info [" << (error_info) << "]."; \
+    }                                                                  \
+  } while (0)
+
 #define MS_EXCEPTION_IF_ZERO(name, value)                   \
   do {                                                      \
     if (value == 0) {                                       \
