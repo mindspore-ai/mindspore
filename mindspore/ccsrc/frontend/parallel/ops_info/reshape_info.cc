@@ -365,16 +365,6 @@ Status ReshapeInfo::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status ReshapeInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }

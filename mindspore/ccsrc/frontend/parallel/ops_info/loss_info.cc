@@ -105,26 +105,6 @@ Status SoftmaxCrossEntropyWithLogitsInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init success.";
-  return SUCCESS;
-}
-
-Status SoftmaxCrossEntropyWithLogitsInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
-  return SUCCESS;
-}
-
 void SoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); ++i) {
     split_flag_list_[i] = true;

@@ -154,7 +154,7 @@ FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
   prim1->AddAttr("transpose_a", transpose_a);
   prim1->AddAttr("transpose_b", transpose_b);
   prim1->AddAttr("instance_name", MakeValue("matmul1"));
-  prim1->AddAttr("strategy", var);
+  prim1->AddAttr("in_strategy", var);
   inputs.clear();
   Dimensions v3 = {2, 2};
   Dimensions v4 = {2, 4};
@@ -176,16 +176,16 @@ FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
   prim2->AddAttr("transpose_a", transpose_a);
   prim2->AddAttr("transpose_b", transpose_b);
   prim2->AddAttr("instance_name", MakeValue("matmul2"));
-  prim2->AddAttr("strategy", var2);
+  prim2->AddAttr("in_strategy", var2);
   switch (condition) {
     case 1: {
-      prim1->set_attr("strategy", MakeValue(static_cast<int64_t>(0)));
+      prim1->set_attr("in_strategy", MakeValue(static_cast<int64_t>(0)));
       break;
     }
     case 2: {
       std::vector<ValuePtr> elements_t = {MakeValue(static_cast<int64_t>(0))};
       ValueTuplePtr var_t = std::make_shared<ValueTuple>(elements_t);
-      prim1->set_attr("strategy", var_t);
+      prim1->set_attr("in_strategy", var_t);
       break;
     }
     case 3: {
@@ -193,7 +193,7 @@ FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
       Dimensions vt2 = {2, 4};
       std::vector<ValuePtr> elements_t2 = {MakeValue(vt1), MakeValue(vt2)};
       ValueTuplePtr var_t2 = std::make_shared<ValueTuple>(elements_t2);
-      prim1->set_attr("strategy", var_t2);
+      prim1->set_attr("in_strategy", var_t2);
       break;
     }
   }
@@ -226,9 +226,9 @@ TEST_F(TestStepParallel, ExtractStrategy) {
   ValuePtr val2 = MakeValue(v2);
   std::vector<ValuePtr> elements = {val1, val2};
   ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(elements);
-  attrs["strategy"] = strategy_tuple;
+  attrs["in_strategy"] = strategy_tuple;
   Strategys strategy_expect = {v1, v2};
-  StrategyPtr strategy = ExtractStrategy(attrs["strategy"]);
+  StrategyPtr strategy = ExtractStrategy(attrs["in_strategy"]);
   Strategys strategy_test = strategy->GetInputDim();
 
   ASSERT_EQ(strategy_expect, strategy_test);

@@ -36,9 +36,6 @@ class ActivationBase : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ActivationBase() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
-
  protected:
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
@@ -222,7 +219,6 @@ class ExpandDimsInfo : public ActivationOther {
   Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
-  Status InferTensorStrategy();
 
  private:
   int64_t positive_axis_ = -1;
@@ -240,9 +236,8 @@ class SqueezeInfo : public ActivationOther {
  protected:
   Status InferAxis(const ValueTuplePtr &value_tuple);
   Status GetAttrs() override;
-  Status InferReplaceOps();
+  void InferReplaceOps() override;
   Status InferTensorMap() override;
-  Status Init(const StrategyPtr &strategy) override;
 
  private:
   ValueTuplePtr axis_;
@@ -271,12 +266,11 @@ class DropoutInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>()) {}
   ~DropoutInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status Init(const StrategyPtr &strategy) override;
 
  protected:
   Status GetAttrs() override;
   Status InferTensorMap() override;
-  Status InferReplaceOps();
+  void InferReplaceOps() override;
   Status InferAsLossDivisor() override;
 
  private:

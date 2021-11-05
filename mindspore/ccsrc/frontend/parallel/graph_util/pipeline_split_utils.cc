@@ -105,7 +105,7 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     elements.push_back(MakeValue(input_strategy));
   }
   ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
-  cnode->AddPrimalAttr(STRATEGY, strategy);
+  cnode->AddPrimalAttr(IN_STRATEGY, strategy);
 }
 
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,

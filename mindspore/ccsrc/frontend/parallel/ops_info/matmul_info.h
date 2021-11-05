@@ -38,7 +38,6 @@ class MatMulBase : public OperatorInfo {
   ~MatMulBase() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   // Generate all strategies and the corresponding cost for this MatMul operator
   Status GenerateStrategies(int64_t stage_id) override;

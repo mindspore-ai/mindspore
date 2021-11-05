@@ -30,6 +30,11 @@ namespace parallel {
 // if the begin-norm-axis is 3, the shape of second output is: [A, B, C, 1]
 // the shape of third output is the same as the shape of second output
 Status LayerNormInfo::GetAttrs() {
+  if (InitShapes() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Init Shape failed";
+    return FAILED;
+  }
+
   auto iter = attrs_.find(BEGIN_NORM_AXIS);
   if (iter == attrs_.end()) {
     MS_LOG(ERROR) << name_ << ": Can not find the attr of begin norm axis";
@@ -237,25 +242,6 @@ Status LayerNormInfo::InitShapes() {
   input_shape_ = inputs_shape_[LAYER_NORM_INPUT_INDEX];
   gamma_shape_ = inputs_shape_[LAYER_NORM_GAMMA_INDEX];
   beta_shape_ = inputs_shape_[LAYER_NORM_BETA_INDEX];
-  return SUCCESS;
-}
-
-Status LayerNormInfo::Init(const StrategyPtr &strategy) {
-  if ((InitShapes() != SUCCESS) || (InitWithAutoRepeatCalc(strategy)) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init success";
-  return SUCCESS;
-}
-
-Status LayerNormInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if ((InitShapes() != SUCCESS) || (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS)) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success";
   return SUCCESS;
 }
 }  // namespace parallel

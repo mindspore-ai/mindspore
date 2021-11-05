@@ -375,16 +375,6 @@ Status MatMulBase::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status MatMulBase::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
-  return SUCCESS;
-}
-
 Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape *const input) {
   if (input->size() < 2) {
     MS_LOG(ERROR) << name_ << " : The size of inputs small than 2.";

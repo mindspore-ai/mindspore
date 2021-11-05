@@ -117,26 +117,6 @@ std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategys>(strategy_v);
 }
 
-Status DropoutDoMaskInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success";
-  return SUCCESS;
-}
-
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   size_t cnode_non_monad_size = cnode->size();
   for (auto &input : cnode->inputs()) {

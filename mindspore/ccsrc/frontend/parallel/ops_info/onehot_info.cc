@@ -207,29 +207,6 @@ ReplaceGraphPtr OneHotInfo::replace_graph(const CNodePtr &cnode) {
   return replace_graph_;
 }
 
-Status OneHotInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  Status status = ComputeReplaceGraph(cnode_);
-  if (status != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
-    return status;
-  }
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status OneHotInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 std::vector<StrategyPtr> OneHotInfo::GenerateOpStrategies(int64_t stage_id) {
   Shapes splittable_inputs = {{1, 1}, {}, {}};
   std::vector<StrategyPtr> sp_vector;

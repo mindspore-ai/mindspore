@@ -29,8 +29,8 @@ class Net1(nn.Cell):
     """Net definition"""
     def __init__(self, strategy1, strategy2):
         super(Net1, self).__init__()
-        self.fc1 = P.MatMul().shard(strategy=strategy1)
-        self.fc2 = P.MatMul().shard(strategy=strategy2)
+        self.fc1 = P.MatMul().shard(strategy1)
+        self.fc2 = P.MatMul().shard(strategy2)
         self.p1 = Parameter(Tensor(np.ones([48, 64]).astype(np.float32)), name="weight1")
         self.p2 = Parameter(Tensor(np.ones([64, 48]).astype(np.float32)), name="weight2")
 
@@ -45,8 +45,8 @@ class Net2(nn.Cell):
     """Net definition"""
     def __init__(self, strategy1, strategy2):
         super(Net2, self).__init__()
-        self.fc1 = P.MatMul().shard(strategy=strategy1)
-        self.fc2 = P.MatMul().shard(strategy=strategy2)
+        self.fc1 = P.MatMul().shard(strategy1)
+        self.fc2 = P.MatMul().shard(strategy2)
         self.p1 = Parameter(Tensor(np.ones([48, 64]).astype(np.float32)), name="weight1")
         self.p2 = Parameter(Tensor(np.ones([64, 48]).astype(np.float32)), name="weight2")
 

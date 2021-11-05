@@ -83,26 +83,6 @@ Status RangeInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status RangeInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init success";
-  return SUCCESS;
-}
-
-Status RangeInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success";
-  return SUCCESS;
-}
-
 std::vector<StrategyPtr> RangeInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};

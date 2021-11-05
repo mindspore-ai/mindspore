@@ -81,8 +81,8 @@ class OperatorInfo {
   // If output is tuple, outputs_type.size() is greater than 1.
   Status set_outputs_type(const std::vector<TypePtr> &outputs_type);
   const std::vector<TypePtr> &outputs_type() const { return outputs_type_; }
-  virtual Status Init(const StrategyPtr &strategy) = 0;
-  virtual Status InitForCostModel(const StrategyPtr &strategy) = 0;  // only init the necessary parts
+  virtual Status Init(const StrategyPtr &strategy);
+  virtual Status InitForCostModel(const StrategyPtr &strategy);  // only init the necessary parts
 
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
@@ -198,6 +198,7 @@ class OperatorInfo {
   virtual Status InferDevMatrixShape() = 0;
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
+  virtual void InferReplaceOps() {}
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
@@ -205,9 +206,7 @@ class OperatorInfo {
   Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &strategy);
-  Status InitWithManualRepeatCalc(const StrategyPtr &strategy);
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strategy);
-  Status InitForCostModelWithManualRepeatCalc(const StrategyPtr &strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();
 

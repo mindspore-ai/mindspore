@@ -92,7 +92,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape3) {
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info2->Init(strategy);
-  ASSERT_EQ(status, FAILED);
+  ASSERT_EQ(status, SUCCESS);
   Shape dev_matrix_shape = onehot_info2->dev_matrix_shape();
 
   Shape expect = {4, 2};
@@ -148,7 +148,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape2) {
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy);
-  ASSERT_EQ(status, FAILED);
+  ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info2->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info2->outputs_tensor_info();
 
@@ -170,7 +170,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape3) {
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy);
-  ASSERT_EQ(status, FAILED);
+  ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info2->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info2->outputs_tensor_info();
 

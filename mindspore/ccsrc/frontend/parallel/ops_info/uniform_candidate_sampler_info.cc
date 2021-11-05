@@ -181,25 +181,6 @@ std::shared_ptr<Strategys> UniformCandidateSamplerInfo::GenerateBatchStrategies(
   return std::make_shared<Strategys>(strategy_v);
 }
 
-Status UniformCandidateSamplerInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": Init success.";
-  return SUCCESS;
-}
-
-Status UniformCandidateSamplerInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
-  return SUCCESS;
-}
-
 ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode) {
   auto input_strategy = strategy_->GetInputDim().at(0);
   // Only when the axis-1 is sharded, we need to modify the attribute

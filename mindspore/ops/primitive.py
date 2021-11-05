@@ -151,7 +151,7 @@ class Primitive(Primitive_):
         self.add_prim_attr("stage", stage)
         return self
 
-    def shard(self, strategy):
+    def shard(self, in_strategy=None, out_strategy=None):
         """
         Add strategies to primitive attribute.
 
@@ -160,24 +160,37 @@ class Primitive(Primitive_):
             In other parallel modes, strategies set here will be ignored.
 
         Args:
-            strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
+            in_strategy (tuple): Describe the split strategy of operator input.
+            out_strategy (tuple): Describe the split strategy of operator output,
+                                  it is only for certain operators, such as MatMul.
         Examples:
             >>> from mindspore import ops
             >>> add = ops.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
-            Prim[Add]<strategy=((1, 1), (1, 1))>
+            Prim[Add]<in_strategy=((1, 1), (1, 1)), out_strategy=None>
         """
         mode = context.get_auto_parallel_context("parallel_mode")
-        if strategy is not None:
-            if not isinstance(strategy, tuple):
-                raise TypeError(f'strategy must be tuple type, but got:{type(strategy)}')
-            for ele in strategy:
-                if not isinstance(ele, tuple):
-                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(ele)}')
-        if not _is_in_auto_parallel_mode() and strategy:
-            logger.warning(f"The shard strategy {strategy} of {self.name} is not valid in {mode}. "
-                           f"Please use semi auto or auto parallel mode.")
-        self.add_prim_attr("strategy", strategy)
+        if in_strategy is not None:
+            if not isinstance(in_strategy, tuple):
+                raise TypeError(f'in_strategy must be tuple type, but got:{type(in_strategy)}')
+            for in_ele in in_strategy:
+                if not isinstance(in_ele, tuple):
+                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(in_ele)}')
+        if out_strategy is not None:
+            if not isinstance(out_strategy, tuple):
+                raise TypeError(f'out strategy must be tuple type, but got:{type(out_strategy)}')
+            for out_ele in out_strategy:
+                if not isinstance(out_ele, tuple):
+                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(out_ele)}')
+        if not _is_in_auto_parallel_mode():
+            if in_strategy is not None:
+                logger.warning(f"The in_strategy: {in_strategy} of {self.name} is not valid in {mode}. "
+                               f"Please use semi auto or auto parallel mode.")
+            if out_strategy is not None:
+                logger.warning(f"The out_strategy: {out_strategy} of {self.name} is not valid in {mode}. "
+                               f"Please use semi auto or auto parallel mode.")
+        self.add_prim_attr("in_strategy", in_strategy)
+        self.add_prim_attr("out_strategy", out_strategy)
         return self
 
     def set_prim_instance_name(self, instance_name):

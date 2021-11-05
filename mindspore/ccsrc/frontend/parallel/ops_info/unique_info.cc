@@ -58,15 +58,6 @@ Status UniqueInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status UniqueInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << " : Init success";
-  return SUCCESS;
-}
-
 Status UniqueInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategys stras = strategy->GetInputDim();
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
@@ -93,15 +84,6 @@ Status UniqueInfo::GetAttrs() {
                   << outputs_shape_.size() << " is wrong.";
     return FAILED;
   }
-  return SUCCESS;
-}
-
-Status UniqueInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
   return SUCCESS;
 }
 

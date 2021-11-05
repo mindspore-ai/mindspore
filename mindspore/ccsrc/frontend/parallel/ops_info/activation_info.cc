@@ -305,9 +305,9 @@ Status DropoutInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status DropoutInfo::InferReplaceOps() {
+void DropoutInfo::InferReplaceOps() {
   if ((seed0_ != 0) || (seed1_ != 0) || (repeated_calc_num_ == 1)) {
-    return SUCCESS;
+    return;
   }
   int64_t seed = get_seed();
   ValuePtr new_seed0 = MakeValue(seed);
@@ -319,38 +319,6 @@ Status DropoutInfo::InferReplaceOps() {
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(DROPOUT, args)};
-  return SUCCESS;
-}
-
-Status DropoutInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed";
-    return FAILED;
-  }
-  (void)InferReplaceOps();
-
-  MS_LOG(INFO) << name_ << " : Init success";
-  return SUCCESS;
-}
-
-Status ActivationBase::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init success.";
-  return SUCCESS;
-}
-
-Status ActivationBase::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    return FAILED;
-  }
-
-  MS_LOG(INFO) << name_ << " : Init for cost model success.";
-  return SUCCESS;
 }
 
 Status CastInfo::InferMirrorOps() {
@@ -441,28 +409,6 @@ Status ExpandDimsInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status ExpandDimsInfo::InferTensorStrategy() {
-  if (strategy_ == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null";
-    return FAILED;
-  }
-
-  inputs_strategy_ = strategy_->GetInputDim();
-  if (inputs_strategy_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The strategy is empty";
-    return FAILED;
-  }
-
-  Shape output_strategy = inputs_strategy_[0];
-  if ((positive_axis_ < 0) || (positive_axis_ > SizeToLong(output_strategy.size()))) {
-    MS_LOG(ERROR) << name_ << ": Invalid positive axis " << positive_axis_;
-    return FAILED;
-  }
-  (void)output_strategy.insert(output_strategy.begin() + positive_axis_, NO_SPLIT_STRATEGY);
-  outputs_strategy_ = {output_strategy};
-  return SUCCESS;
-}
-
 Status ExpandDimsInfo::InferMirrorOps() {
   mirror_ops_.clear();
 
@@ -538,13 +484,12 @@ Status SqueezeInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status SqueezeInfo::InferReplaceOps() {
+void SqueezeInfo::InferReplaceOps() {
   Attr attr = std::make_pair(AXIS, axis_);
   OperatorAttrs attrs = {attr};
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(SQUEEZE, args)};
-  return SUCCESS;
 }
 
 Status SqueezeInfo::InferTensorMap() {
@@ -570,17 +515,6 @@ Status SqueezeInfo::InferTensorMap() {
   MS_LOG(INFO) << name_ << ": The tensor map of input is " << ShapeToString(input_tensor_map)
                << ", and the tensor map of output is " << ShapeToString(output_tensor_map);
 
-  return SUCCESS;
-}
-
-Status SqueezeInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed.";
-  }
-
-  (void)InferReplaceOps();
-
-  MS_LOG(INFO) << name_ << " : Init success.";
   return SUCCESS;
 }
 }  // namespace parallel

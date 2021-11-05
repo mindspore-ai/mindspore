@@ -43,8 +43,6 @@ class UniformCandidateSamplerInfo : public OperatorInfo {
         remove_accidental_hits_(false) {}
   ~UniformCandidateSamplerInfo() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
