@@ -1332,8 +1332,8 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} and "
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
@@ -1486,8 +1486,8 @@ class Conv2D(Primitive):
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' and 'pad_mode' is {pad_mode}.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not 'pad', "
+                             f"but got 'pad': {pad} and 'pad_mode': {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1495,8 +1495,8 @@ class Conv2D(Primitive):
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} "
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'format' is {self.format} "
                              f"and platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
@@ -1598,13 +1598,13 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
         if self.stride[0] != self.stride[1]:
-            raise ValueError("The height and width of stride should be equal,"
+            raise ValueError("The height and width of 'stride' should be equal,"
                              f"but got height:{self.stride[0]},  width:{self.stride[1]}")
         self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
 
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name)
         if self.dilation[0] != self.dilation[1]:
-            raise ValueError("The height and width of dilation should be equal,"
+            raise ValueError("The height and width of 'dilation' should be equal,"
                              f"but got height:{self.dilation[0]},  width:{self.dilation[1]}")
         self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
         validator.check_value_type('pad', pad, (int, tuple), self.name)
@@ -1616,8 +1616,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not 'pad', "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1704,8 +1704,8 @@ class _Pool(PrimitiveWithInfer):
         self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} and "
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         if not self.is_maxpoolwithargmax:
             self.add_prim_attr('data_format', self.format)
@@ -1996,7 +1996,7 @@ class MaxPool3D(PrimitiveWithInfer):
         else:
             self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, [bool], self.name)
             if self.pad_mode != "CALCULATED":
-                raise ValueError("When pad_mode is same or valid, ceil_mode only support 'None'.")
+                raise ValueError("When the 'pad_mode' is 'same' or 'valid', the 'ceil_mode' only supports 'None'.")
         self.add_prim_attr("ceil_mode", int(self.ceil_mode))
 
         validator.check_value_type('pad_list', pad_list, (int, tuple), self.name)
@@ -2229,8 +2229,8 @@ class Conv2DBackpropInput(Primitive):
         self.add_prim_attr('kernel_size', self.kernel_size)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} and "
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
@@ -2371,8 +2371,8 @@ class BiasAdd(Primitive):
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the format is {self.format} and "
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format is only supported in GPU target, "
+                             f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
 

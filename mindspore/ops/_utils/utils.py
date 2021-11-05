@@ -64,11 +64,11 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type=""):
             elif shape_type == "max_shape":
                 broadcast_shape_back.append(min(x_shape[i], y_shape[i]))
             else:
-                raise ValueError(f"For '{prim_name}', x_shape and y_shape are supposed to broadcast, "
+                raise ValueError(f"For '{prim_name}', 'x_shape' and 'y_shape' are supposed to broadcast, "
                                  f"where broadcast means that "
-                                 f"x_shape[i] = 1 or -1 or y_shape[i] = 1 or -1 or x_shape[i] = y_shape[i], "
-                                 f"but now x_shape and y_shape can not broadcast, "
-                                 f"got i: {i}, x_shape: {x_shape}, y_shape: {y_shape}.")
+                                 f"'x_shape[i] = 1 or -1 or y_shape[i] = 1 or -1 or x_shape[i] = y_shape[i]', "
+                                 f"but now 'x_shape' and 'y_shape' can not broadcast, "
+                                 f"got 'i': {i}, 'x_shape': {x_shape}, 'y_shape': {y_shape}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
