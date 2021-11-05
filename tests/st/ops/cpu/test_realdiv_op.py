@@ -34,7 +34,7 @@ class NetRealDiv(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.float16])
 def test_real_div(dtype):
     """
     Feature: ALL To ALL

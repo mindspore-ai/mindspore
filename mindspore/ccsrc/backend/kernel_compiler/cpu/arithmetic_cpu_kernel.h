@@ -129,6 +129,10 @@ MS_REG_CPU_KERNEL_T(
   ArithmeticCPUKernel, int32_t);
 MS_REG_CPU_KERNEL_T(
   RealDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  ArithmeticCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(
+  RealDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   ArithmeticCPUKernel, float);
 MS_REG_CPU_KERNEL_T(
