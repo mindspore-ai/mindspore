@@ -324,7 +324,7 @@ void DataDumper::OpDebugRegister() {
     return;
   }
 
-  rtError_t rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, RT_MEMORY_DDR);
+  rtError_t rt_ret = rtMalloc(&op_debug_buffer_addr_, kOpDebugHostMemSize, RT_MEMORY_TS);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
   }
