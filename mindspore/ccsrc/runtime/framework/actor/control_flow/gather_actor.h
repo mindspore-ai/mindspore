@@ -37,16 +37,19 @@ class GatherActor : public ControlActor {
  public:
   GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
   ~GatherActor() override = default;
+  const std::unordered_map<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
+    return output_data_with_branch_id_arrows_;
+  }
 
  protected:
-  void FetchInput(OpContext<DeviceTensor> *const context);
-  void SendOutput(OpContext<DeviceTensor> *const context);
+  void FetchInput(OpContext<DeviceTensor> *const context) override;
+  void SendOutput(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
 
-  // When the output data arrow needs to have a branch id, there will be multiple output branches.
-  std::unordered_map<int, std::vector<AID>> output_data_with_branch_id_arrows_;
+  // There will be multiple output branches for gather actor according the funcgraph in partial.
+  std::unordered_map<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;
 };
 
 using GatherActorPtr = std::shared_ptr<GatherActor>;

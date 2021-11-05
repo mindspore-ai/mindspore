@@ -40,7 +40,7 @@ class SwitchActor : public ControlActor {
   void Init() override;
 
  protected:
-  void FetchInput(OpContext<DeviceTensor> *const context);
+  void FetchInput(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

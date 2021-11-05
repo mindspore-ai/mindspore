@@ -35,7 +35,7 @@ namespace runtime {
 // parameters and the id of the caller.
 using OpDataWithBranchID = std::pair<std::vector<DeviceTensor *>, int>;
 // Op partial represents the partial structure, including a funcgraph and its real parameters.
-using OpPartial = std::pair<FuncGraphPtr, std::vector<DeviceTensor *>>;
+using OpPartial = std::pair<FuncGraph *, std::vector<DeviceTensor *>>;
 // The control actor is the base class of control flow actor.
 class ControlActor : public AbstractActor {
  public:
@@ -43,9 +43,7 @@ class ControlActor : public AbstractActor {
                const AnfNodePtr &node);
   ~ControlActor() override = default;
 
-  void Init() override {}
-
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override {}
+  void Init() override;
 
   // Receive partial.
   virtual void RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
@@ -54,16 +52,19 @@ class ControlActor : public AbstractActor {
   // Receive branch id.
   virtual void RunBranchID(int branch_id, OpContext<DeviceTensor> *const context);
 
+  const std::vector<DataArrowPtr> &output_partial_arrows() const { return output_partial_arrows_; }
+  const std::vector<AID> &output_branch_id_arrows() const { return output_branch_id_arrows_; }
+
  protected:
   // Get the position of node in the input.
   size_t FetchNodePosition(const KernelWithIndex &node) const;
 
   // Get all input, including data, partial, branchid.
   virtual void FetchInput(OpContext<DeviceTensor> *const context);
-  void Run(OpContext<DeviceTensor> *const context);
-  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
-  void SendOutput(OpContext<DeviceTensor> *const context);
-  void EraseInput(const OpContext<DeviceTensor> *context);
+  void Run(OpContext<DeviceTensor> *const context) override;
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
+  void SendOutput(OpContext<DeviceTensor> *const context) override;
+  void EraseInput(const OpContext<DeviceTensor> *context) override;
 
   // Input data.
   // 1.Input partial.
@@ -81,17 +82,19 @@ class ControlActor : public AbstractActor {
   // Fetch data. After fetch input, all the input collected is saved here.
   std::vector<OpPartial> input_partials_;
   std::vector<DeviceTensor *> input_device_tensors_;
-  // The branch id is the unique identifier of the control actor. In the control flow, there are multiple control
-  // actors calling the same subgraph at the same time. At this time, the output of the subgraph needs to be returned
-  // to the calling place according to the branch id.
-  int branch_id_;
 
   // Input num.
-  size_t input_partials_num_;
+  size_t input_partials_num_{0};
 
   // Output Arrows.
   std::vector<DataArrowPtr> output_partial_arrows_;
-  std::vector<DataArrowPtr> output_branch_id_arrows_;
+  OpPartial output_partial_;
+
+  std::vector<AID> output_branch_id_arrows_;
+  // The branch id is the unique identifier of the control actor. In the control flow, there are multiple control
+  // actors calling the same subgraph at the same time. At this time, the output of the subgraph needs to be returned
+  // to the calling place according to the branch id.
+  int output_branch_id_;
 
   // Partial data in local. When partial is only funcgraph without real parameter, it is stored inside the actor.
   std::unordered_map<size_t, OpPartial> local_partials_;

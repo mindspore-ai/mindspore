@@ -81,6 +81,7 @@ class KernelActor : public DebugAwareActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);

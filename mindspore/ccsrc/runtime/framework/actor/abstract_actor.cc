@@ -96,8 +96,9 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
   // 1.Send output data.
-  if ((output_data_arrows_.size() != output_data_.size()) ||
-      (output_data_arrows_.size() != output_data_nodes_.size())) {
+  if (((output_data_arrows_.size() != output_data_.size()) ||
+       (output_data_arrows_.size() != output_data_nodes_.size())) &&
+      (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
   size_t output_data_arrow_index = 0;
@@ -121,7 +122,8 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   SendRecorderInfo(context);
 
   // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
+      (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }

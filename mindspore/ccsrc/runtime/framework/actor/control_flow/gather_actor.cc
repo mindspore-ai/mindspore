@@ -15,7 +15,40 @@
  */
 
 #include "runtime/framework/actor/control_flow/gather_actor.h"
+#include "runtime/framework/actor/control_flow/entrance_actor.h"
 
 namespace mindspore {
-namespace runtime {}  // namespace runtime
+namespace runtime {
+GatherActor::GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
+                         const AnfNodePtr &node)
+    : ControlActor(name, KernelTransformType::kGatherActor, parameters, node) {}
+
+void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+
+  ControlActor::FetchInput(context);
+  output_partial_ = input_partials_[0];
+
+  // Put other real parameter in partial.
+  for (const auto &device_tensor : input_device_tensors_) {
+    if (device_tensor != nullptr) {
+      output_partial_.second.emplace_back(device_tensor);
+    }
+  }
+}
+
+void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
+  // Send data with branch id.
+  const auto &iter = output_data_with_branch_id_arrows_.find(output_partial_.first);
+  if (iter != output_data_with_branch_id_arrows_.end()) {
+    for (const auto &data_with_branch_id_arrow : iter->second) {
+      Async(data_with_branch_id_arrow, &EntranceActor::RunOpDataWithBranchID, output_partial_.second, output_branch_id_,
+            context);
+    }
+  }
+
+  // Control arrow needs to be sent after the real parameter data and branch id.
+  ControlActor::SendOutput(context);
+}
+}  // namespace runtime
 }  // namespace mindspore

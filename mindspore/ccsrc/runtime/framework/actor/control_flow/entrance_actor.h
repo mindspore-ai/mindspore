@@ -40,17 +40,22 @@ class EntranceActor : public ControlActor {
     input_device_tensors_.resize(parameters.size());
   }
   ~EntranceActor() override = default;
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context);
+
   void RunOpDataWithBranchID(std::vector<DeviceTensor *> input_data, int branch_id,
                              OpContext<DeviceTensor> *const context);
 
  protected:
-  void FetchInput(OpContext<DeviceTensor> *const context);
-  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
-  void EraseInput(const OpContext<DeviceTensor> *const context);
+  void Run(OpContext<DeviceTensor> *const context) override;
+  void FetchInput(OpContext<DeviceTensor> *const context) override;
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
+  void EraseInput(const OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
+
+  // Check if actor is enable. During operation, entrance actor can be enabled only when receives all control arrows.
+  bool CheckActorStatus(const OpContext<DeviceTensor> *const context) const;
+
   // Is actor ready indicates whether the entrance actor can be executed. In the control flow, the subgraph is an
   // atomic operation, and execution can only continue after the output of the corresponding exit actor is completed.
   // At this time, the exit actor will notify the entrance actor to change the ready to true.

@@ -39,10 +39,21 @@ class ExitActor : public ControlActor {
   }
   ~ExitActor() override = default;
 
-  void Init();
+  void Init() override;
+
+  const std::unordered_map<int, std::vector<AID>> &output_branch_control_arrows() const {
+    return output_branch_control_arrows_;
+  }
+  const std::unordered_map<int, std::vector<DataArrowPtr>> &output_branch_data_arrows() const {
+    return output_branch_data_arrows_;
+  }
+  const std::unordered_map<int, std::vector<DataArrowPtr>> &output_branch_partial_arrows() const {
+    return output_branch_partial_arrows_;
+  }
 
  protected:
-  void FetchInput(OpContext<DeviceTensor> *const context);
+  void FetchInput(OpContext<DeviceTensor> *const context) override;
+  void SendOutput(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

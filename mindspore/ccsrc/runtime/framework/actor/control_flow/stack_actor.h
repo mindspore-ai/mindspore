@@ -39,10 +39,9 @@ class StackActor : public ControlActor {
   ~StackActor() override = default;
 
  protected:
-  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context);
-  void FetchInput(OpContext<DeviceTensor> *const context);
-  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
-  void EraseInput(const OpContext<DeviceTensor> *const context);
+  void FetchInput(OpContext<DeviceTensor> *const context) override;
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
+  void EraseInput(const OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
