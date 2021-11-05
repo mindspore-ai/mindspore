@@ -112,6 +112,7 @@ class AscendStreamAssign {
   void AssignStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetHcomStreams(std::vector<uint32_t> *streams);
   void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
+  void AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels);
   const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
 
@@ -217,6 +218,7 @@ class AscendStreamAssign {
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
   std::set<CNodeKey> independent_targets_;
+  std::map<std::string, uint32_t> group_stream_id_map_;
 
   // key:group name, value:key1:graph id, value1:stream id
   std::map<std::string, std::map<uint32_t, std::set<uint32_t>>> group_hcom_graph_map_;

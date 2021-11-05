@@ -119,7 +119,6 @@ class AscendKernelRuntime : public KernelRuntime {
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtExceptionInfo> task_fail_infoes_;
   std::map<uint32_t, void *> stream_id_map_;
-  std::map<std::string, uint32_t> group_stream_id_map_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
