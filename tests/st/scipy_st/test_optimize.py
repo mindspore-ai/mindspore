@@ -51,15 +51,6 @@ def matyas(np):
     return func
 
 
-def eggholder(np):
-    def func(p):
-        x, y = p
-        return - (y + 47) * np.sin(np.sqrt(np.abs(x / 2. + y + 47.))) - x * np.sin(
-            np.sqrt(np.abs(x - (y + 47.))))
-
-    return func
-
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
@@ -68,8 +59,7 @@ def eggholder(np):
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)),
                                      (himmelblau, onp.zeros(2)),
                                      (himmelblau, onp.array([92, 0.001])),
-                                     (matyas, onp.ones(2)),
-                                     (eggholder, onp.ones(2) * 100.)])
+                                     (matyas, onp.ones(2))])
 def test_bfgs(dtype, func_x0):
     """
     Feature: ALL TO ALL
