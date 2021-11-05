@@ -23,44 +23,45 @@
 #include <unordered_map>
 #include <stack>
 #include <queue>
+#include <set>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/abstract_actor.h"
+#include "runtime/framework/actor/control_flow/control_actor.h"
 
 namespace mindspore {
 namespace runtime {
 // Entrance actor is used in the control flow to receive a set of result arrow and a branch id and then send
 // the data to the corresponding actor. It is the entry point for subgraph execution.
-class EntranceActor : public AbstractActor {
+class EntranceActor : public ControlActor {
  public:
-  EntranceActor(const std::string &name, const std::vector<AnfNodePtr> &parameters)
-      : AbstractActor(name, KernelTransformType::kEntranceActor, nullptr), formal_parameters_(parameters) {
+  EntranceActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
+                const std::set<KernelWithIndex> &call_nodes, const AnfNodePtr &node)
+      : ControlActor(name, KernelTransformType::kEntranceActor, parameters, node), call_nodes_(call_nodes) {
     device_contexts_.resize(parameters.size());
+    input_device_tensors_.resize(parameters.size());
   }
   ~EntranceActor() override = default;
-
-  void Init() override;
-
-  // The entrance actor run when receive the real parameter nodes and branch id.
-  void CollectRealParametersAndBranchId(const std::vector<KernelWithIndex> &real_parameters, int branch_id,
-                                        OpContext<DeviceTensor> *const context);
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context);
+  void RunOpDataWithBranchID(std::vector<DeviceTensor *> input_data, int branch_id,
+                             OpContext<DeviceTensor> *const context);
 
  protected:
-  void Run(OpContext<DeviceTensor> *const context) override;
+  void FetchInput(OpContext<DeviceTensor> *const context);
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
+  void EraseInput(const OpContext<DeviceTensor> *const context);
 
  private:
-  friend class GraphScheduler;
-
-  // Formal parameters of actor, which is the front node.
-  std::vector<KernelWithIndex> formal_parameters_;
-
-  // Input data.
-  std::unordered_map<uuids::uuid *, std::queue<std::vector<KernelWithIndex>>> input_nodes_;
-  std::unordered_map<uuids::uuid *, std::queue<int>> input_branch_ids_;
-
-  std::vector<AID> output_branch_id_arrows_;
-  // The output_data_ corresponds to the output_data_arrows_ one by one.
-  std::vector<OpData<DeviceTensor> *> output_data_;
+  friend class ControlNodeScheduler;
+  // Is actor ready indicates whether the entrance actor can be executed. In the control flow, the subgraph is an
+  // atomic operation, and execution can only continue after the output of the corresponding exit actor is completed.
+  // At this time, the exit actor will notify the entrance actor to change the ready to true.
   bool is_actor_ready_{true};
+
+  // Input data with branch id.
+  std::unordered_map<int, std::queue<OpDataWithBranchID>> input_op_data_with_branch_id_;
+
+  // Call nodes are used to record the caller of the subgraph, and are used to connect the data arrow
+  // and branch id arrow in the link process.
+  std::set<KernelWithIndex> call_nodes_;
 };
 
 using EntranceActorPtr = std::shared_ptr<EntranceActor>;

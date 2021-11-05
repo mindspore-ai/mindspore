@@ -67,14 +67,15 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
  protected:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   // Check whether satisfy the actor running condition.
-  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
+  virtual bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
   // The actor run really when satisfy the actor running condition.
   virtual void Run(OpContext<DeviceTensor> *const context) {}
 
   // Erase input data and input controls when finish actor running.
-  void EraseInput(const OpContext<DeviceTensor> *context);
+  virtual void EraseInput(const OpContext<DeviceTensor> *context);
 
   // Update the output data before send output data.
   virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,

@@ -22,44 +22,45 @@
 #include <memory>
 #include <unordered_map>
 #include <stack>
+#include <utility>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/abstract_actor.h"
+#include "runtime/framework/actor/control_flow/control_actor.h"
 
 namespace mindspore {
 namespace runtime {
-// The exit actor is used to receive a set of result arrow and a branch id in the control flow, and then send the
-// node in the result to the corresponding actor. It is the exit of the end of subgraph execution.
-class ExitActor : public AbstractActor {
+// The exit actor is used to receive a set of data arrow and a branch id in the control flow, and then send the
+// device tensors in the data to the corresponding actor. It is the exit of the end of kernel graph execution.
+class ExitActor : public ControlActor {
  public:
-  ExitActor(const std::string &name, const std::vector<AnfNodePtr> &parameters)
-      : AbstractActor(name, KernelTransformType::kExitActor, nullptr), formal_parameters_(parameters) {}
+  ExitActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
+      : ControlActor(name, KernelTransformType::kExitActor, parameters, node) {
+    device_contexts_.resize(parameters.size());
+    input_device_tensors_.resize(parameters.size());
+  }
   ~ExitActor() override = default;
 
-  // The exit actor run when receive the anfnode.
-  void CollectRealParameter(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
-                            OpContext<DeviceTensor> *const context);
-  // The exit actor run when receive the input branch id.
-  void CollectBranchId(int branch_id, OpContext<DeviceTensor> *const context);
+  void Init();
+
+ protected:
+  void FetchInput(OpContext<DeviceTensor> *const context);
 
  private:
-  friend class GraphScheduler;
+  friend class ControlNodeScheduler;
+  void CopyDeviceAddress();
 
-  // Formal parameters of actor, which is the front node.
-  std::vector<KernelWithIndex> formal_parameters_;
+  // Exit actor will send to different actors according to different callers, so the output data, control,
+  // and partial arrows will have branch.
+  std::unordered_map<int, std::vector<DataArrowPtr>> output_branch_data_arrows_;
+  std::unordered_map<int, std::vector<AID>> output_branch_control_arrows_;
+  std::unordered_map<int, std::vector<DataArrowPtr>> output_branch_partial_arrows_;
 
-  // Input data.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, KernelWithIndex>> input_nodes_;
-  // Branch ids is used to record the id corresponding to the output branch.
-  // In control flow, sub funcgraph may be called in multiple places, and the output must be return to different
-  // places. Therefore, the output of each subgraph will be connected to a exit actor, and the caller will send
-  // its branch id to the entrance actor of the subgraph. Then branch id will be sent by the entrance actor to
-  // the exit actor connected to the output.
-  // In a recursive scenario, the exit will sequentially receive the branch ids sent by the caller, and the exit
-  // actor needs to store the branch ids in the stack, and pop up in turn when returning.
-  std::unordered_map<uuids::uuid *, std::stack<int>> input_branch_ids_;
+  // The exit actor needs to create a new device address and take out the ptr from the device tensor come from
+  // the kernel actor. These new created device tensors are stored in the created device tensors.
+  std::vector<DeviceTensorPtr> created_device_tensors_;
 
-  // Output arrow.
-  std::unordered_map<int, std::vector<DataArrowPtr>> output_branch_result_arrows_;
+  // Output data.
+  //  The output branch data corresponds to the output_data_arrows_ one by one.
+  std::unordered_map<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;
 };
 
 using ExitActorPtr = std::shared_ptr<ExitActor>;
