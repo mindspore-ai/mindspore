@@ -31,10 +31,20 @@
 #include <utility>
 #include <algorithm>
 
+#ifdef ENABLE_FP16
+#include <arm_neon.h>
+#endif
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "include/lite_session.h"
+
+#ifdef ENABLE_FP16
+static __attribute__((always_inline)) inline bool MS_ISNAN_FP16(float16_t var) {
+  volatile float16_t d = var;
+  return d != d;
+}
+#endif
 
 namespace mindspore::lite {
 enum MS_API DataType { kImage = 0, kBinary = 1 };
@@ -75,8 +85,6 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::virtual_batch_, "virtualBatch", "use virtual batch", false);
     AddFlag(&NetTrainFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
-    AddFlag(&NetTrainFlags::is_raw_mix_precision_, "isRawMixPrecision",
-            "If model is mix precision export from MindSpore,please set true", false);
   }
 
   ~NetTrainFlags() override = default;
@@ -109,7 +117,6 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::vector<std::vector<int>> resize_dims_;
   std::string loss_name_ = "";
   std::string inference_file_ = "";
-  bool is_raw_mix_precision_ = false;
 };
 
 class MS_API NetTrain {
@@ -219,11 +226,21 @@ class MS_API NetTrain {
   void TensorNan(float *data, int size) {
     for (int i = 0; i < size; i++) {
       if (std::isnan(data[i])) {
-        std::cout << "nan value of index=" << i << std::endl;
+        std::cout << "nan value of index=" << i << ", " << data[i] << std::endl;
         break;
       }
     }
   }
+#ifdef ENABLE_FP16
+  void TensorNan(float16_t *data, int size) {
+    for (int i = 0; i < size; i++) {
+      if (MS_ISNAN_FP16(data[i]) || std::isinf(data[i])) {
+        std::cout << "nan or inf value of index=" << i << ", " << data[i] << std::endl;
+        break;
+      }
+    }
+  }
+#endif
   NetTrainFlags *flags_;
 
   // callback parameters

@@ -192,18 +192,8 @@ TEST_F(TestCxxApiLiteModel, test_fp32_SUCCESS) {
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);
   auto train_cfg = std::make_shared<TrainCfg>();
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
 
   ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = false;
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  cpu_context->SetEnableFP16(false);
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
   ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
 }
 
@@ -215,18 +205,8 @@ TEST_F(TestCxxApiLiteModel, test_fp16_SUCCESS) {
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);
   auto train_cfg = std::make_shared<TrainCfg>();
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
 
   ASSERT_TRUE(Serialization::Load("./nets/mix_lenet_tod.ms", ModelType::kMindIR, &graph) == kSuccess);
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = false;
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  cpu_context->SetEnableFP16(false);
-  ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-
-  train_cfg->mix_precision_cfg_.is_raw_mix_precision_ = true;
   ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
 }
 

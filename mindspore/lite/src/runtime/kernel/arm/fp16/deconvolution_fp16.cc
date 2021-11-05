@@ -199,10 +199,12 @@ int DeConvolutionFp16CPUKernel::Prepare() {
     size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
     set_workspace_size(weight_pack_size);
   }
-  matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
-    MS_LOG(ERROR) << "Memory allocation failed";
-    return RET_ERROR;
+    matmul_param_ = new (std::nothrow) MatMulParameter();
+    if (matmul_param_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
   }
   int ret = InitConvWeightBias();
   if (ret != RET_OK) {

@@ -157,10 +157,12 @@ int Convolution1x1FP16CPUKernel::Prepare() {
     size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
     set_workspace_size(size);
   }
-  matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
-    MS_LOG(ERROR) << "Init matmul_param_ failed.";
-    return RET_ERROR;
+    matmul_param_ = new (std::nothrow) MatMulParameter();
+    if (matmul_param_ == nullptr) {
+      MS_LOG(ERROR) << "Init matmul_param_ failed.";
+      return RET_ERROR;
+    }
   }
   int ret = InitConvWeightBias();
   if (ret != RET_OK) {

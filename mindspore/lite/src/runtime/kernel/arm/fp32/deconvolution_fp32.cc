@@ -183,10 +183,12 @@ int DeConvolutionCPUKernel::Prepare() {
     size_t pack_weight_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
     set_workspace_size(pack_weight_size);
   }
-  matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
-    MS_LOG(ERROR) << "Memory allocation failed";
-    return RET_ERROR;
+    matmul_param_ = new (std::nothrow) MatMulParameter();
+    if (matmul_param_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
   }
   if (in_tensors_.at(kWeightIndex)->data() != nullptr) {
     int error_code = InitConvWeightBias();

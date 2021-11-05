@@ -344,13 +344,10 @@ std::unique_ptr<session::LiteSession> NetTrain::CreateAndRunNetworkForTrain(cons
       session::TrainSession::CreateTransferSession(bb_filename, filename, &context, true, &train_cfg));
     if (session == nullptr) {
       MS_LOG(ERROR) << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str();
-      std::cout << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str() << std::endl;
       return nullptr;
     }
   } else {
     MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
-    std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
-    std::cout << "Is raw mix precision model: " << train_cfg.mix_precision_cfg_.is_raw_mix_precision_ << std::endl;
     session = std::unique_ptr<session::LiteSession>(
       session::TrainSession::CreateTrainSession(filename, &context, true, &train_cfg));
     if (session == nullptr) {
@@ -382,6 +379,7 @@ std::unique_ptr<session::LiteSession> NetTrain::CreateAndRunNetworkForInference(
   auto *model = mindspore::lite::Model::Import(filenamems.c_str());
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for train session failed";
+    std::cout << "create model for train session failed " << filenamems.c_str() << std::endl;
     return nullptr;
   }
   session = std::unique_ptr<session::LiteSession>(session::LiteSession::CreateSession(&context));
@@ -422,7 +420,6 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
     }
     if (!(flags_->loss_name_.empty())) train_cfg.loss_name_.emplace_back(flags_->loss_name_);
   }
-  train_cfg.mix_precision_cfg_.is_raw_mix_precision_ = flags_->is_raw_mix_precision_;
   std::unique_ptr<session::LiteSession> session;
   if (train_session) {
     session = CreateAndRunNetworkForTrain(filename, bb_filename, context, train_cfg, epochs);
@@ -593,6 +590,7 @@ void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_ty
 #ifdef ENABLE_FP16
     case kNumberTypeFloat16:
       std::cout << TensorSum<float16_t>(data, tensor_size) << std::endl;
+      TensorNan(reinterpret_cast<float16_t *>(data), tensor_size);
       break;
 #endif
     default:

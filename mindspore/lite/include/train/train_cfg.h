@@ -29,28 +29,24 @@ class MixPrecisionCfg {
     this->loss_scale_ = 128.0f;
     this->keep_batchnorm_fp32_ = true;
     this->num_of_not_nan_iter_th_ = 1000;
-    this->is_raw_mix_precision_ = false;
   }
   MixPrecisionCfg(const MixPrecisionCfg &rhs) {
     this->dynamic_loss_scale_ = rhs.dynamic_loss_scale_;
     this->loss_scale_ = rhs.loss_scale_;
     this->keep_batchnorm_fp32_ = rhs.keep_batchnorm_fp32_;
     this->num_of_not_nan_iter_th_ = rhs.num_of_not_nan_iter_th_;
-    this->is_raw_mix_precision_ = rhs.is_raw_mix_precision_;
   }
   MixPrecisionCfg &operator=(MixPrecisionCfg const &rhs) {
     this->dynamic_loss_scale_ = rhs.dynamic_loss_scale_;
     this->loss_scale_ = rhs.loss_scale_;
     this->keep_batchnorm_fp32_ = rhs.keep_batchnorm_fp32_;
     this->num_of_not_nan_iter_th_ = rhs.num_of_not_nan_iter_th_;
-    this->is_raw_mix_precision_ = rhs.is_raw_mix_precision_;
     return *this;
   }
-  bool dynamic_loss_scale_ = false;   /**< Enable\disable dynamic loss scale during mix precision training */
-  float loss_scale_;                  /**< Initial loss scale factor  */
-  bool keep_batchnorm_fp32_ = true;   /**< Keep batch norm in FP32 while training */
-  uint32_t num_of_not_nan_iter_th_;   /**< a threshold for modifying loss scale when dynamic loss scale is enabled */
-  bool is_raw_mix_precision_ = false; /**< Is mix precision model export from mindspore  */
+  bool dynamic_loss_scale_ = false; /**< Enable\disable dynamic loss scale during mix precision training */
+  float loss_scale_;                /**< Initial loss scale factor  */
+  bool keep_batchnorm_fp32_ = true; /**< Keep batch norm in FP32 while training */
+  uint32_t num_of_not_nan_iter_th_; /**< a threshold for modifying loss scale when dynamic loss scale is enabled */
 };
 
 /// \brief TrainCfg defined for holding train configuration.

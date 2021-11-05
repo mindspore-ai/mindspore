@@ -125,29 +125,26 @@ int TrainSession::InitCallBack() {
     if (!context_->IsCpuFloat16Enabled()) {
       return false;
     }
-    if (cfg_.mix_precision_cfg_.is_raw_mix_precision_) {
-      auto out_tensor_indexs = node->output_indices_;
-      if (out_tensor_indexs.empty()) {
-        MS_LOG(DEBUG) << "Debug: " << node->name_ << " fp32";
-        return false;
-      }
-      auto is_fp16 = model_->all_tensors_.at(out_tensor_indexs[0])->dataType() == kNumberTypeFloat16;
-      MS_LOG(DEBUG) << "Debug: " << node->name_ << ((is_fp16) ? " fp16" : " fp32");
-      return is_fp16;
-    }
+    bool force_fp16 = false;
     auto node_type = GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR);
     if (node_type == schema::PrimitiveType_Cast) {
-      return false;
-    }
-    auto in_size = node->input_indices_.size();
-    bool force_fp16 = false;
-    for (std::size_t k = 0; k < in_size; k++) {
-      schema::Tensor *tensor = model_->all_tensors_.at(node->input_indices_[k]);
-      if ((tensor->dataType() == kNumberTypeFloat16) && (tensor->nodeType() == NodeType_ValueNode)) {
+      schema::Tensor *tensor = model_.get()->all_tensors_.at(node->input_indices_[0]);
+      if (tensor->dataType() == kNumberTypeFloat16) {
         force_fp16 = true;
-        break;
+      } else if (tensor->dataType() == kNumberTypeFloat32) {
+        return false;
+      }
+    } else {
+      auto in_size = node->input_indices_.size();
+      for (std::size_t k = 0; k < in_size; k++) {
+        schema::Tensor *tensor = model_->all_tensors_.at(node->input_indices_[k]);
+        if ((tensor->dataType() == kNumberTypeFloat16) && (tensor->nodeType() == NodeType_ValueNode)) {
+          force_fp16 = true;
+          break;
+        }
       }
     }
+
     const auto &node_name = node->name_;
     bool is_fp16 = true;
     if (!force_fp16) {
@@ -551,7 +548,7 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     return lite::RET_NULL_PTR;
   }
   auto &run_kernels = (train_mode_) ? train_kernels_ : inference_kernels_;
-  if (context_->IsCpuFloat16Enabled() && !cfg_.mix_precision_cfg_.is_raw_mix_precision_) {
+  if (context_->IsCpuFloat16Enabled()) {
     ret = MixPrecisionExecKernels(before, after, run_kernels);
   } else {
     ret = ExecKernels(before, after, run_kernels);

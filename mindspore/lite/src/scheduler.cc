@@ -1637,7 +1637,7 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
       }
     }
     for (auto tensor : kernel->out_tensors()) {
-      if (tensor->data_type() == kNumberTypeFloat16) {
+      if (tensor->data_type() == kNumberTypeFloat16 && kernel->type() != schema::PrimitiveType_Cast) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }

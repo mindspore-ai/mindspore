@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_CAST_BASE_H_
-#define MINDSPORE_NNACL_CAST_BASE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
@@ -71,8 +71,19 @@ inline void Uint8ToFp16(const uint8_t *input, float16_t *output, int number) {
     output[i] = (float16_t)input[i];
   }
 }
-#endif
 
+inline void Float32ToFp16(const float *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)(input[i]);
+  }
+}
+
+inline void Fp16ToFloat32(const float16_t *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float)(input[i]);
+  }
+}
+#else
 inline void Fp16ToFloat32(const uint16_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = ShortToFloat32(input[i]);
@@ -84,6 +95,7 @@ inline void Float32ToFp16(const float *input, uint16_t *output, int number) {
     output[i] = Float32ToShort(input[i]);
   }
 }
+#endif
 
 inline void Float32ToInt32(const float *input, int32_t *output, int number) {
   for (int i = 0; i < number; ++i) {
@@ -125,4 +137,4 @@ inline void Float32ToBool(const float *input, bool *output, int number) {
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_CAST_BASE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
