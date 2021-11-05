@@ -21,8 +21,8 @@ class Accuracy(EvaluationBase):
     r"""
     Calculates the accuracy for classification and multilabel data.
 
-    The accuracy class creates two local variables, the correct number and the total number that are used to compute the
-    frequency with which `y_pred` matches `y`. This frequency is ultimately returned as the accuracy: an
+    The accuracy class has two local variables, the correct number and the total number of samples, that are used to
+    compute the frequency with which `y_pred` matches `y`. This frequency is ultimately returned as the accuracy: an
     idempotent operation that simply divides the correct number by the total number.
 
     .. math::
@@ -30,9 +30,9 @@ class Accuracy(EvaluationBase):
         {\text{true_positive} + \text{true_negative} + \text{false_positive} + \text{false_negative}}
 
     Args:
-        eval_type (str): The metric to calculate the accuracy over a dataset, for
-            classification (single-label), and multilabel (multilabel classification).
-            Default: 'classification'.
+        eval_type (str): The metric to calculate the accuracy over a dataset. Supports 'classification' and
+          'multilabel'. 'classification' means the dataset label is single. 'multilabel' means the dataset has multiple
+          labels. Default: 'classification'.
 
     Examples:
         >>> import numpy as np
@@ -60,18 +60,19 @@ class Accuracy(EvaluationBase):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.
+        Updates the local variables. For 'classification', if the index of the maximum of the predict value
+        matches the label, the predict result is correct. For 'multilabel', the predict value match the label,
+        the predict result is correct.
 
         Args:
-            inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, a list or an array.
-                For the 'classification' evaluation type, `y_pred` is in most cases (not strictly) a list
-                of floating numbers in range :math:`[0, 1]`
-                and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
-                is the number of categories. Shape of `y` can be :math:`(N, C)` with values 0 and 1 if one-hot
-                encoding is used or the shape is :math:`(N,)` with integer values if index of category is used.
-                For 'multilabel' evaluation type, `y_pred` and `y` can only be one-hot encoding with
-                values 0 or 1. Indices with 1 indicate the positive category. The shape of `y_pred` and `y`
-                are both :math:`(N, C)`.
+            inputs: Logits and labels. `y_pred` stands for logits, `y` stands for labels. `y_pred` and `y` must be a
+              `Tensor`, a list or an array.
+              For the 'classification' evaluation type, `y_pred` is a list of floating numbers in range :math:`[0, 1]`
+              and the shape is :math:`(N, C)` in most cases (not strictly), where :math:`N` is the number of cases and
+              :math:`C` is the number of categories. `y` must be in one-hot format that shape is :math:`(N, C)`, or can
+              be transformed to one-hot format that shape is :math:`(N,)`.
+              For 'multilabel' evaluation type, the value of `y_pred` and `y` can only be 0 or 1, indices with 1
+              indicate the positive category. The shape of `y_pred` and `y` are both :math:`(N, C)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.
