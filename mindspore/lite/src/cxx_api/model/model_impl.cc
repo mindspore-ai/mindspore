@@ -17,6 +17,10 @@
 #include "src/cxx_api/model/model_impl.h"
 #include <memory>
 #include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/lite_session.h"
@@ -32,6 +36,11 @@
 #include "src/common/config_file.h"
 
 namespace mindspore {
+namespace {
+static const char *kExecutionPlan = "execution_plan";
+static constexpr size_t kMaxSectionNum = 100;
+static constexpr size_t kMaxConfigNumPerSection = 1000;
+}  // namespace
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
@@ -195,19 +204,38 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
 bool ModelImpl::IsTrainModel() { return (graph_ && graph_->graph_data_ && graph_->graph_data_->IsTrainModel()); }
 
 Status ModelImpl::LoadConfig(const std::string &config_path) {
-  std::map<std::string, std::string> config_info;
-  int ret = lite::GetSectionInfoFromConfigFile(config_path, CONFIG_FILE_EXECUTION_PLAN, &config_info);
+  std::map<std::string, std::map<std::string, std::string>> all_config_info;
+  int ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GetSectionInfoFromConfigFile failed.";
+    MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret: " << ret;
     return kLiteFileError;
   }
-
+  config_info_ = all_config_info;
+  std::map<std::string, std::string> config_info = all_config_info[kExecutionPlan];
   if (config_info.empty()) {
-    MS_LOG(WARNING) << "No valid info in config file.";
+    MS_LOG(WARNING) << "No valid execution plan info in config file.";
     return kSuccess;
   }
 
   lite::ParserExecutionPlan(&config_info, &execution_plan_);
+  return kSuccess;
+}
+
+Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  auto iter = config_info_.find(section);
+  if (iter == config_info_.end()) {
+    if (config_info_.size() >= kMaxSectionNum) {
+      MS_LOG(ERROR) << "config too many sections!";
+      return kLiteError;
+    }
+    config_info_[section][config.first] = config.second;
+    return kSuccess;
+  }
+  if (iter->second.size() >= kMaxConfigNumPerSection) {
+    MS_LOG(ERROR) << "config too many items!";
+    return kLiteError;
+  }
+  iter->second[config.first] = config.second;
   return kSuccess;
 }
 
@@ -590,6 +618,7 @@ session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) 
   }
 
   session->InitExecutionConfig(&execution_plan_);
+  session->SetConfigInfo(&config_info_);
 
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {

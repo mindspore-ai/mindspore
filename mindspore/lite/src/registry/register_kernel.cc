@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace registry {
 Status RegisterKernel::RegCustomKernel(const std::vector<char> &arch, const std::vector<char> &provider,
-                                       DataType data_type, const std::vector<char> &type, CreateKernel creator) {
+                                       DataType data_type, const std::vector<char> &type, const CreateKernel creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return RegistryKernelImpl::GetInstance()->RegCustomKernel(CharToString(arch), CharToString(provider), data_type,
                                                             CharToString(type), creator);
@@ -34,7 +34,7 @@ Status RegisterKernel::RegCustomKernel(const std::vector<char> &arch, const std:
 }
 
 Status RegisterKernel::RegKernel(const std::vector<char> &arch, const std::vector<char> &provider, DataType data_type,
-                                 int op_type, CreateKernel creator) {
+                                 int op_type, const CreateKernel creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return RegistryKernelImpl::GetInstance()->RegKernel(CharToString(arch), CharToString(provider), data_type, op_type,
                                                       creator);

@@ -43,8 +43,8 @@ OpParameter *PopulateTensorArrayParameter(const void *prim) {
   bool identical_element_shapes = value->identical_element_shapes();
   param->identical_element_shapes_ = identical_element_shapes;
   std::vector<int> primitive_element_shape(value->element_shape()->begin(), value->element_shape()->end());
-  param->element_shape_size_ = primitive_element_shape.size();
-  int size = sizeof(int) * param->element_shape_size_;
+  param->element_shape_size_ = static_cast<int>(primitive_element_shape.size());
+  auto size = sizeof(int) * param->element_shape_size_;
   param->element_shape_ = static_cast<int *>(malloc(size));
   if (param->element_shape_ == nullptr) {
     MS_LOG(ERROR) << "malloc element_shape failed!";

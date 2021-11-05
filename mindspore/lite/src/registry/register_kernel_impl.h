@@ -37,10 +37,10 @@ class RegistryKernelImpl {
   }
 
   Status RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                         const std::string &type, registry::CreateKernel creator);
+                         const std::string &type, const registry::CreateKernel creator);
 
   Status RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                   registry::CreateKernel creator);
+                   const registry::CreateKernel creator);
 
   virtual registry::CreateKernel GetProviderCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
 
@@ -60,7 +60,6 @@ class RegistryKernelImpl {
   std::mutex lock_;
 
   registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
-  int GetFuncIndex(const registry::KernelDesc &desc);
 };
 }  // namespace mindspore::registry
 
