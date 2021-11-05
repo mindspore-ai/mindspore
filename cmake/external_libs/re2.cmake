@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/re2/repository/archive/2019-12-01.tar.gz")
-    set(MD5 "f581b6356d8e8e3debfc230197f91b54")
+    set(MD5 "527eab0c75d6a1a0044c6eefd816b2fb")
 else()
     set(REQ_URL "https://github.com/google/re2/archive/2019-12-01.tar.gz")
     set(MD5 "527eab0c75d6a1a0044c6eefd816b2fb")
@@ -19,3 +19,4 @@ mindspore_add_pkg(re2
 
 include_directories(${re2_INC})
 add_library(mindspore::re2 ALIAS re2::re2)
+
