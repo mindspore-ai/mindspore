@@ -242,12 +242,12 @@ def set_algo_parameters(**kwargs):
             strategies, so that the solution space is shrunken.
         algo_approxi_epsilon (float): The epsilon value used in the approximation algorithm. Default: 0.1. This value
             describes the extent of approximation. For example, the number of candidate strategies of an operator is S,
-            if `enable_algo_approxi' is true, then the remaining strategies is of size: min{S, 1/epsilon}.
+            if 'enable_algo_approxi' is true, then the remaining strategies is of size: min{S, 1/epsilon}.
         tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False. Due to
             properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag is true,
             then the slice shape of MatMul is checked to prevent irregular shapes.
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
-            Default: 16. If `tensor_slice_align_enable' is set true, then the slice size of last dimension of MatMul
+            Default: 16. If 'tensor_slice_align_enable' is set true, then the slice size of last dimension of MatMul
             tensors should be multiple of this value.
 
     Raises:
