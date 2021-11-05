@@ -115,6 +115,7 @@ class _MindsporeFunctionExecutor:
     Args:
         fn (Function): The root function to compile.
         input_signature (Function): User defines signature to verify input.
+        ms_create_time(TimeStamp): The time ms_function created
         obj (Object): If function is a method, obj is the owner of function,
              else, obj is none.
 
@@ -122,14 +123,14 @@ class _MindsporeFunctionExecutor:
         The result of pipeline running in graph mode.
     """
 
-    def __init__(self, fn, input_signature=None, obj=None):
+    def __init__(self, fn, ms_create_time, input_signature=None, obj=None):
         self.fn = fn
         self.input_signature = input_signature
         self.obj = None
         if hasattr(obj, fn.__name__):
             self.obj = obj
         self._graph_executor = GraphExecutor_.get_instance()
-        self._create_time = int(time.time() * 1e9)
+        self._create_time = ms_create_time
 
     def build_data_init_graph(self, graph_name):
         """Build GE data graph and init graph for the given graph name."""
@@ -279,6 +280,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
     """
 
     def wrap_mindspore(func):
+        ms_create_time = int(time.time() * 1e9)
         @wraps(func)
         def staging_specialize(*args):
             if obj is not None:
@@ -287,7 +289,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
             process_obj = None
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
-            out = _MindsporeFunctionExecutor(func, input_signature, process_obj)(*args)
+            out = _MindsporeFunctionExecutor(func, ms_create_time, input_signature, process_obj)(*args)
             return out
 
         return staging_specialize
