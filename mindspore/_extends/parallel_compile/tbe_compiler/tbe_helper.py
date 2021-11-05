@@ -47,6 +47,24 @@ def check_job_json(job_info):
         raise ValueError("Json string Errors, key:job_content not found.")
 
 
+def update_op_debug_level(level):
+    """
+    :param level: op_debug_level, if level is 3 or 4, replace it with 0
+    :return: op_debug_level
+    """
+    if level in ("3", "4"):
+        level = "0"
+    return level
+
+
+def get_real_op_debug_level(initialize_job_info):
+    """
+    :param initialize_job_info: initialize_job_info
+    :return: origin op_debug_level for init_multi_process_env
+    """
+    return initialize_job_info["SocInfo"]["op_debug_level"]
+
+
 def get_soc_info(initialize_job_info):
     """
     Get soc info from initialize job info
@@ -55,7 +73,7 @@ def get_soc_info(initialize_job_info):
     """
     soc_param = dict()
     soc_param["op_impl_mode"] = initialize_job_info["SocInfo"]["op_impl_mode"]
-    soc_param["op_debug_level"] = initialize_job_info["SocInfo"]["op_debug_level"]
+    soc_param["op_debug_level"] = update_op_debug_level(initialize_job_info["SocInfo"]["op_debug_level"])
     soc_param["op_impl_mode_list"] = initialize_job_info["SocInfo"]["op_impl_mode_list"]
     soc_param["op_debug_dir"] = initialize_job_info["SocInfo"]["op_debug_dir"]
     soc_param["vector_fp_ceiling"] = initialize_job_info["SocInfo"]["vector_fp_ceiling"]
@@ -184,10 +202,10 @@ def get_options_info(job_content):
     options["l1Fusion"] = job_content["SocInfo"]["l1Fusion"]
     options["l2Fusion"] = job_content["SocInfo"]["l2Fusion"]
     options["l2Mode"] = job_content["SocInfo"]["l2Mode"]
-    options["op_debug_level"] = job_content["SocInfo"]["op_debug_level"]
+    options["op_debug_level"] = update_op_debug_level(job_content["SocInfo"]["op_debug_level"])
     options["op_impl_mode"] = job_content["SocInfo"]["op_impl_mode"]
     options["op_debug_dir"] = job_content["SocInfo"]["op_debug_dir"]
-    options["mdl_bank_path"] = job_content["SocInfo"]["op_debug_level"]
+    options["mdl_bank_path"] = job_content["SocInfo"]["mdl_bank_path"]
     options["op_bank_path"] = job_content["SocInfo"]["op_bank_path"]
     options["deviceId"] = job_content["SocInfo"]["deviceId"]
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
