@@ -221,13 +221,6 @@ Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
       device_id_ = "0";
     }
     // Register all profiling node.
-    // device_queue node is used for graph mode
-    std::shared_ptr<Tracing> device_queue_tracing = std::make_shared<DeviceQueueTracing>();
-    RETURN_IF_NOT_OK(RegisterTracingNode(device_queue_tracing));
-
-    // dataset_iterator node is used for graph mode
-    std::shared_ptr<Tracing> dataset_iterator_tracing = std::make_shared<DatasetIteratorTracing>();
-    RETURN_IF_NOT_OK(RegisterTracingNode(dataset_iterator_tracing));
 
     std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
     RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));

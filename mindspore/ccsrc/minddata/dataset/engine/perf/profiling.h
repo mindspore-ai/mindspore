@@ -410,6 +410,11 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status GetEmptyQueueFrequencyByTime(uint64_t start_ts, uint64_t end_ts, float_t *result);
 
+  // Register profile node to tree
+  // @param node - Profiling node
+  // @return Status The status code returned
+  Status RegisterTracingNode(std::shared_ptr<Tracing> node);
+
  protected:
   std::unique_ptr<Monitor> perf_monitor_;
   bool enabled_;
@@ -420,11 +425,6 @@ class ProfilingManager {
   std::string device_id_;                 // used when create profiling file,filename_device_id.suffix
   std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp
   std::vector<uint32_t> epoch_end_step_;  // End of epoch step number
-
-  // Register profile node to tree
-  // @param node - Profiling node
-  // @return Status The status code returned
-  Status RegisterTracingNode(std::shared_ptr<Tracing> node);
 
   // Register profile node to tree
   // @param node - Profiling node

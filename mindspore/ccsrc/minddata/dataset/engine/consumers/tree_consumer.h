@@ -51,7 +51,7 @@ class TreeConsumer {
   virtual Status Terminate();
 
 #ifndef ENABLE_SECURITY
-  Status RegisterProfilingManager();
+  virtual Status RegisterProfilingManager();
 
   /// \brief Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
@@ -99,6 +99,8 @@ class IteratorConsumer : public TreeConsumer {
   /// \param[out] out std::vector of pairs of string to Tensor
   /// \return Status error code
   Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec);
+
+  Status RegisterProfilingManager() override;
 
  protected:
   /// Method to return the name of the consumer
@@ -177,6 +179,8 @@ class ToDevice : public TreeConsumer {
   ~ToDevice() = default;
 
   Status Init(std::shared_ptr<DatasetNode> d) override;
+
+  Status RegisterProfilingManager() override;
 
   Status Terminate() override;
 
