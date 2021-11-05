@@ -72,6 +72,8 @@ class _AutoParallelContext:
         self.check_context_handle()
         if device_num < 1 or device_num > 4096:
             raise ValueError("Device num must be in [1, 4096], but got {}".format(device_num))
+        from mindspore.communication._comm_helper import _HCCL_TEST_AVAILABLE
+        self._context_handle.set_hccl_test_avaible(_HCCL_TEST_AVAILABLE)
         self._context_handle.set_device_num(device_num)
 
     def get_device_num(self):
@@ -188,6 +190,11 @@ class _AutoParallelContext:
             ValueError: If parallel mode is not supported.
         """
         self.check_context_handle()
+        run_mode = context.get_context("mode")
+        if run_mode == context.PYNATIVE_MODE and parallel_mode not in (
+                context.ParallelMode.DATA_PARALLEL, context.ParallelMode.STAND_ALONE):
+            raise ValueError(f"Pynative Only support STAND_ALONE and DATA_PARALLEL for ParallelMode, "
+                             f"but got {parallel_mode.upper()}.")
         ret = self._context_handle.set_parallel_mode(parallel_mode)
         if ret is False:
             raise ValueError("Parallel mode does not support {}".format(parallel_mode))

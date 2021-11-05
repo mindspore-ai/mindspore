@@ -338,7 +338,8 @@ class Parameter(Tensor_):
     @comm_fusion.setter
     def comm_fusion(self, comm_fusion_):
         if context.get_context("mode") == context.PYNATIVE_MODE and "auto_parallel" in _get_parallel_mode():
-            raise RuntimeError("`comm_fusion` does not support PYNATIVE_MODE")
+            raise RuntimeError(
+                "`comm_fusion` does not support PYNATIVE_MODE in AUTO_PARALLEL and SEMI_AUTO_PARALLEL mode.")
         Validator.check_non_negative_int(comm_fusion_)
         self.param_info.comm_fusion = comm_fusion_
 
