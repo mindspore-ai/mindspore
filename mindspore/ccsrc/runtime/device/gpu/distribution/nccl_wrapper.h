@@ -34,6 +34,9 @@ class NCCLWrapper {
   NCCLWrapper &operator=(const NCCLWrapper &) = delete;
   static NCCLWrapper &instance();
   ncclUniqueId nccl_unique_id() const;
+  ncclResult_t NCCLCommInitRank(ncclComm_t *newcomm, int nranks, ncclUniqueId commId, int myrank);
+  ncclResult_t NCCLCommAbort(ncclComm_t comm);
+  ncclResult_t NCCLCommDestroy(ncclComm_t comm);
   void InitNCCLComm();
   ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                          ncclRedOp_t op, cudaStream_t stream, const std::string &group_name);

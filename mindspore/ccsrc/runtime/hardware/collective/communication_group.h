@@ -30,7 +30,7 @@ namespace device {
 // communication group. MindSpore uses 'hccl_world_group' or 'nccl_world_group' as the default group.
 class CommunicationGroup {
  public:
-  explicit CommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks);
+  explicit CommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank);
   virtual ~CommunicationGroup() {
     group_ranks_.clear();
     global_to_group_ranks_.clear();
@@ -38,10 +38,15 @@ class CommunicationGroup {
   }
 
   // Initialize the communication group. For example, assign some hardware resources, etc.
-  virtual void Initialize() = 0;
+  virtual bool Initialize(void *root_info) = 0;
 
   // Finalize the communication group. For example, destroy the group, etc.
-  virtual void Finalize() = 0;
+  virtual bool Finalize() = 0;
+
+  // Return the root rank's information. Only root rank of one group could call this method.Normally this is used for
+  // collective libraries on the device side. For NCCL group, it returns 'ncclUniqueId'. For HCCL group, it returns
+  // 'HcclRootInfo'.
+  virtual void *GenerateRootInfo() { return nullptr; }
 
   // Get group or global rank for the given rank.
   uint32_t GetGroupRank(uint32_t global_rank);
@@ -51,6 +56,15 @@ class CommunicationGroup {
   uint32_t group_size() const;
 
  protected:
+  // The third party collective communication libraries. They are dynamically loaded by MindSpore.
+  const void *collective_comm_lib_ptr_;
+
+  // Whether this communication group is initialized.
+  bool initialized_;
+
+  // This process's global rank.
+  uint32_t global_rank_;
+
   // The number of processes in this communication group.
   uint32_t size_;
 

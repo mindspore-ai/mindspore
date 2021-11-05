@@ -20,20 +20,29 @@
 #include <nccl.h>
 #include <string>
 #include <vector>
-#include "runtime/hardware/communication_group.h"
+#include <memory>
+#include "runtime/hardware/collective/communication_group.h"
+#include "runtime/device/gpu/distribution/collective_init.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
+using NcclUniqueId = ncclUniqueId (*)();
+using NCCLCommInitRank = ncclResult_t (*)(ncclComm_t *, int, ncclUniqueId, int);
+using NCCLCommAbort = ncclResult_t (*)(ncclComm_t);
+using NCCLCommDestroy = ncclResult_t (*)(ncclComm_t);
+
 class NvidiaCommunicationGroup : public CommunicationGroup {
  public:
-  explicit NvidiaCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks)
-      : CommunicationGroup(name, group_ranks) {}
+  explicit NvidiaCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks,
+                                    uint32_t global_rank);
 
   ~NvidiaCommunicationGroup() override = default;
 
-  void Initialize() override;
-  void Finalize() override;
+  bool Initialize(void *root_info) override;
+  bool Finalize() override;
+
+  void *GenerateRootInfo() override;
 
  private:
   // The NCCL unique id for this group. Used to initialize this group's communicator.
@@ -42,6 +51,18 @@ class NvidiaCommunicationGroup : public CommunicationGroup {
   // NCCL communicator of this group.
   ncclComm_t comm_;
 };
+using NvidiaCommunicationGroupPtr = std::shared_ptr<NvidiaCommunicationGroup>;
+using CollectiveInitializer = device::gpu::CollectiveInitializer;
+
+#define CHECK_NCCL_RET(expression, message) \
+  do {                                      \
+    {                                       \
+      auto ret = (expression);              \
+      if (ret != ncclSuccess) {             \
+        MS_LOG(EXCEPTION) << (message);     \
+      }                                     \
+    }                                       \
+  } while (false)
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

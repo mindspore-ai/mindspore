@@ -19,7 +19,12 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-void MPICollectiveCommLib::Initialize(uint32_t) {
+bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
+  if (initialized_) {
+    return false;
+  }
+
+  // Initialize MPI interface.
   int initialized = 0;
   CHECK_MPI_RET(MPI_Initialized(&initialized), "Failed to check MPI initialization status.");
   if (initialized == 0) {
@@ -38,15 +43,8 @@ void MPICollectiveCommLib::Initialize(uint32_t) {
 
   // Create the world group of MPI because every other group is generated from MPI world group.
   CHECK_MPI_RET(MPI_Comm_group(MPI_COMM_WORLD, &world_group_), "Failed to get group of MPI_COMM_WORLD.");
-}
-
-void MPICollectiveCommLib::Finalize() {
-  // The world group is also stored in groups_. So we don't need to finalize world group separately.
-  for (const auto &group : groups_) {
-    MS_EXCEPTION_IF_NULL(group.second);
-    group.second->Finalize();
-  }
-  groups_.clear();
+  initialized_ = true;
+  return true;
 }
 
 bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
@@ -56,9 +54,13 @@ bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_nam
     return false;
   }
 
-  MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks);
+  MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks, global_rank_id_);
   MS_EXCEPTION_IF_NULL(group);
-  group->Initialize(world_group_);
+  if (!group->Initialize(world_group_)) {
+    MS_LOG(EXCEPTION) << "Initializing group failed.";
+    return false;
+  }
+
   groups_[group_name] = group;
   MS_LOG(INFO) << "MPI group of " << group_name << " is created.";
   return true;

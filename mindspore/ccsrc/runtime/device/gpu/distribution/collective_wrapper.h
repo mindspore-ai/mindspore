@@ -55,3 +55,8 @@ extern "C" EXPORT_WRAPPER ncclResult_t Recv(void *recv_addr, size_t count, ncclD
 extern "C" EXPORT_WRAPPER ncclResult_t GroupStart();
 extern "C" EXPORT_WRAPPER ncclResult_t GroupEnd();
 extern "C" EXPORT_WRAPPER std::vector<int> GetGroupRanks(const std::string &group_name);
+extern "C" EXPORT_WRAPPER ncclUniqueId nccl_unique_id();
+extern "C" EXPORT_WRAPPER ncclResult_t NCCLCommInitRank(ncclComm_t *newcomm, int nranks, ncclUniqueId commId,
+                                                        int myrank);
+extern "C" EXPORT_WRAPPER ncclResult_t NCCLCommAbort(ncclComm_t comm);
+extern "C" EXPORT_WRAPPER ncclResult_t NCCLCommDestroy(ncclComm_t comm);

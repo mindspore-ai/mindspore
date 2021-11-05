@@ -33,14 +33,13 @@ class MPICollectiveCommLib : public CollectiveCommunicationLib {
     return instance;
   }
 
-  void Initialize(uint32_t global_rank = UINT32_MAX) override;
-  void Finalize() override;
+  bool Initialize(uint32_t global_rank = UINT32_MAX, uint32_t global_rank_size = UINT32_MAX) override;
 
   // Override creating method. Reuse destroying method in base class CollectiveCommunicationLib.
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
  private:
-  MPICollectiveCommLib() {}
+  MPICollectiveCommLib() = default;
   ~MPICollectiveCommLib() override = default;
 
   MPI_Group world_group_;
