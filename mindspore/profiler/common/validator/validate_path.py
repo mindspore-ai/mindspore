@@ -14,6 +14,30 @@
 # ============================================================================
 """Validate the input path."""
 import os
+import re
+
+
+def check_valid_character_of_path(file_path):
+    """
+    Validates path.
+
+    The output path of profiler only supports alphabets(a-zA-Z), digit(0-9) or {'-', '_', '.', '/'}.
+
+    Note:
+        Chinese and other paths are not supported at present.
+
+    Args:
+        path (str):  Normalized Path.
+
+    Returns:
+        bool, whether valid.
+    """
+    re_path = r'^[/\\_a-zA-Z0-9-_.]+$'
+    path_valid = re.fullmatch(re_path, file_path)
+    if not path_valid:
+        msg = "The output path of profiler only supports alphabets(a-zA-Z), " \
+              "digit(0-9) or {'-', '_', '.', '/'}, but got the absolute path= " + file_path
+        raise RuntimeError(msg)
 
 
 def validate_and_normalize_path(
@@ -56,5 +80,5 @@ def validate_and_normalize_path(
         normalized_path = os.path.realpath(path)
     except ValueError:
         raise RuntimeError("The path is invalid!")
-
+    check_valid_character_of_path(normalized_path)
     return normalized_path
