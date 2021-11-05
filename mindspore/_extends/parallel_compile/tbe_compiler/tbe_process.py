@@ -25,7 +25,6 @@ import tbe.common.context.op_context as op_context
 from tbe.common.buildcfg import build_config
 import te.platform.vector_random_buff as vector_random_buff
 import te.platform.cube_random_buff as cube_random_buff
-from mindspore import log
 from .tbe_common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
 
@@ -148,7 +147,6 @@ class TbeProcess:
         self.auto_tune_op_list = None
         self.tune_ops_name = os.getenv("TUNE_OPS_NAME")
         self.selected_tune_ops = self.tune_ops_name.split(",") if self.tune_ops_name is not None else None
-        log.info("Selected to tune ops list:{}".format(self.selected_tune_ops))
 
     def __del__(self):
         if self.__pool is not None:
@@ -189,9 +187,7 @@ class TbeProcess:
         self.tune_mode = tune_mode
         if os.getenv("ENABLE_TUNE_DUMP", "").lower() == "true":
             self.offline_tune = True
-            log.info("Tune offline mode is on...")
         if self.tune_mode == NO_TUNE and not self.offline_tune:
-            log.info("[NO_TUNE] There is no need to initialize auto_tune related variables.")
             return "Success"
 
         try:
@@ -199,7 +195,6 @@ class TbeProcess:
             import auto_tune_main
             import schedule_search  # pylint: disable=unused-import
             self.auto_tune_op_list = auto_tune_main.enable_auto_tune_support()
-            log.info("auto tune GA support ops list:{}".format(self.auto_tune_op_list))
         except ImportError:
             res = "TBEException", \
                   "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
@@ -241,17 +236,14 @@ class TbeProcess:
         """
         exit tbe process
         """
-        log.info("start to exit tbe process...")
         if self.__pool is not None:
             stop_thread = threading.Thread(target=self.close_pool)
             stop_thread.daemon = True
             stop_thread.start()
-            log.info("tbe process poll exited.")
         if self.__tuner is not None:
             stop_tuner = threading.Thread(target=self.close_tuner)
             stop_tuner.daemon = True
             stop_tuner.start()
-            log.info("tbe process tuner exited.")
 
     def _if_tune_ops(self, op_json):
         """
@@ -346,14 +338,11 @@ class TbeProcess:
             task_future = self.__pool.apply_async(func=run_compiler, args=(op_json,))
             self.__running_tasks.append((task_id, task_future))
         else:
-            log.info("start_compile_op: task id: {} op json:\n {}".format(task_id, op_json))
             if self.__tuner is None:
-                log.error("Please confirm that the mode isn't NO_TUNE and auto_tune already initialized.")
                 return error_id
             if not self.__tuner.tune_init:
                 status = self.__tuner.init_tune_interface(op_json, self.tune_process_num)
                 if not status:
-                    log.error("Auto tune init failed, place check your hardware config or go back to normal compile!")
                     self.tune_init = False
                     return error_id
                 self.__reset_op_info = self.get_reset_op_info()
@@ -381,7 +370,6 @@ class TbeProcess:
             elif tune_mode == GA_TUNE:
                 self.__tuner.ga_tune(task_id, op_json)
             else:
-                log.error("Unsupported Tune Mode!")
                 return error_id
 
         return task_id
@@ -416,11 +404,7 @@ class TbeProcess:
                 if not ret:
                     query_count = query_count + 1
                     time.sleep(30)
-                    log.info("{} of {} Task is Tuning({} Tasks tune fail),wait more 30 seconds...".format(
-                        len(self.__running_tune_tasks),
-                        len(self.__all_tune_tasks), len(self.__failed_tune_task)))
                 else:
-                    log.info("get finish tasks:[{}]".format(ret))
                     for item in ret:
                         task_id = item['task_id']
                         status_code = item['status_code']
@@ -430,21 +414,12 @@ class TbeProcess:
                             res = task_id, "Success", compile_info
                         else:
                             self.__failed_tune_task.append(task_id)
-                            log.info("task_id:{}, json:{}".format(task_id, self.__task_info[task_id]))
                             res = task_id, "Failed", compile_info
                         self.__finish_tune_task.append(res)
                         self.__running_tune_tasks.remove(task_id)
                     ret = self.__finish_tune_task.pop()
                     return ret
-            log.error("Tune Task Timeout!!!")
-            log.error("AllTaskNum:{}, RunningTaskNum:{}, FailedTaskNum:{}".format(len(self.__all_tune_tasks),
-                                                                                  len(self.__running_tune_tasks),
-                                                                                  len(self.__failed_tune_task)))
             return 0, "Failed", "Failed"
-        log.error("All Task Is Done!!!")
-        log.error("AllTaskNum:{}, RunningTaskNum:{}, FailedTaskNum:{}".format(len(self.__all_tune_tasks),
-                                                                              len(self.__running_tune_tasks),
-                                                                              len(self.__failed_tune_task)))
         return -1, "Failed", "Failed"
 
     def reset_task_info(self):
