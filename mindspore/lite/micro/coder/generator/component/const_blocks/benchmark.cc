@@ -85,7 +85,7 @@ void PrintData(void *data, size_t data_number) {
 void TensorToString(tensor::MSTensor *tensor) {
   printf("name: %s, ", tensor->tensor_name().c_str());
   printf("DataType: %d, ", tensor->data_type());
-  printf("Elements: %d, ", tensor->ElementsNum());
+  printf("Elements: %d, ", static_cast<int>(tensor->ElementsNum()));
   printf("Shape: [");
   for (auto &dim : tensor->shape()) {
     printf("%d ", dim);

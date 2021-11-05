@@ -88,7 +88,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   int DimensionSize(size_t index) const;
 
-  int ElementsNum() const override;
+  int64_t ElementsNum() const override;
 
   int32_t Batch() const;
 
@@ -98,7 +98,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   int32_t Width() const;
 
-  int32_t ElementsC4Num() const;
+  int64_t ElementsC4Num() const;
 
   size_t Size() const override;
 

@@ -107,7 +107,7 @@ class MSTensor::Impl {
       MS_LOG(ERROR) << "Invalid tensor.";
       return -1;
     }
-    return static_cast<int64_t>(lite_tensor_->ElementsNum());
+    return lite_tensor_->ElementsNum();
   }
 
   virtual const std::vector<int64_t> &Shape() const {

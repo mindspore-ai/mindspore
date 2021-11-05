@@ -69,7 +69,7 @@ class MTensor : public mindspore::tensor::MSTensor {
   mindspore::Format format() const override { return mindspore::NHWC; }
   Vector<int> shape() const override { return shape_; }
   void set_shape(const Vector<int> &shape) override { shape_ = shape; }
-  int ElementsNum() const override;
+  int64_t ElementsNum() const override;
   size_t Size() const override;
   String tensor_name() const override { return tensor_name_; }
   void set_tensor_name(const String &name) override { tensor_name_ = name; }
@@ -156,8 +156,8 @@ MTensor::~MTensor() {
   }
 }
 
-int MTensor::ElementsNum() const {
-  int elements = 1;
+int64_t MTensor::ElementsNum() const {
+  int64_t elements = 1;
   for (int i : shape_) {
     elements *= i;
   }
