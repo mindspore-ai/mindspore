@@ -16,10 +16,7 @@
 import os
 import datetime
 import json
-import sys
-import traceback
 from tbe.common.rl_bank.bank_manager import set_current_op_name
-from te.platform.cce_conf import te_set_version
 from te_fusion.fusion_util import fusion_op, dump_fusion_json
 from te_fusion.parallel_compilation import init_multi_process_env, get_finished_compilation_task, \
     deinit_multi_process_env, start_ga_multi_process
@@ -27,7 +24,6 @@ from te_fusion.compile_task_manager import dispatch_autotune_task, import_py_mod
 import auto_tune
 from schedule_search.rl_online_tune import rl_tune_init, dispatch_fusion_tune_task, dispatch_single_tune_task, \
     rl_tune_deinit
-from mindspore import log
 from .compiler import build_op
 from .re_construct_json import single_to_fusion, fusion_to_fusion
 
@@ -64,13 +60,9 @@ class TbeTuner:
         """
         json_info = json.loads(json_str)
         soc_info = self.get_soc_info(json_info)
-        cur_cce_product_params = te_set_version(*soc_info)
-        if cur_cce_product_params is None:
-            log.warning("Set Soc Info failed.")
         tune_mode = self.get_tune_mode(json_info)
         ret = self.parallel_compilation_init(soc_info, tune_mode, process_num)
         if not ret:
-            log.error("Init parallel compilation env failed")
             return False
 
         return True
@@ -136,10 +128,8 @@ class TbeTuner:
             tune_bank_flag = False
 
         if not os.path.isdir(base_custom_path):
-            log.error("Check whether the tuning path [{}] exists.".format(base_custom_path))
             return
         if not os.access(base_custom_path, os.R_OK | os.W_OK | os.X_OK):
-            log.error("Check whether the permission on the tuning path [{}] is correct.".format(base_custom_path))
             return
 
         if not tune_bank_flag:
@@ -182,10 +172,8 @@ class TbeTuner:
         env_count = process_num
         if "TE_PARALLEL_COMPILER" in os.environ:
             env_count = os.getenv("TE_PARALLEL_COMPILER")
-            log.info("TE_PARALLEL_COMPILER is set to {}".format(env_count))
             if int(env_count) > process_num:
                 env_count = process_num
-                log.info("change process count to {}".format(process_num))
         os.environ["TE_PARALLEL_COMPILER"] = str(int(env_count))
         pid_str = os.getpid()
         time_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
@@ -204,34 +192,24 @@ class TbeTuner:
         else:
             # pylint: disable=no-else-return
             if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
-                log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
-                          f"{te_log_level}")
                 return False
             elif te_log_level.upper() not in TE_LOG_LEVEL:
-                log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
-                          f"if it is a string, but got :{te_log_level}")
                 return False
             global_loglevel = int(te_log_level) if te_log_level.isdigit() else TE_LOG_LEVEL.index(te_log_level.upper())
         ret = init_multi_process_env(embedding, soc_info, tune_mode, global_loglevel, enable_event, pid_ts)
         if ret is None:
-            log.error("Init multiprocess env failed")
             return False
         self.multi_init = True
-        process_count = ret[0]
-        log.info("Init multiprocess env success with {} process".format(process_count))
         if "RL" in tune_mode:
             res_queue = ret[1]
             live_checker = ret[2]
             termin_event = ret[3]
             ret = rl_tune_init(soc_info, res_queue, live_checker, termin_event, global_loglevel, pid_ts)
             if not ret:
-                log.error("RL env init failed!")
                 return False
             self.rl_init = True
-            log.info("RL Tune init success.")
         if "GA" in tune_mode:
             start_ga_multi_process(tune_mode)
-            log.info("GA Tune init success.")
         return True
 
     def sync_fusion_env(self):
@@ -302,9 +280,6 @@ class TbeTuner:
             compile_info, op_args, op_module_name = build_op(OP_BUILD, json.dumps(json_info), tune_mode)
         # pylint: disable=broad-except
         except Exception:
-            exc_type, exc_value, _ = sys.exc_info()
-            log.error(
-                "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
             return False, job_type, compile_info
         finally:
             pass
@@ -344,9 +319,6 @@ class TbeTuner:
             fusion_op(converted_json, reset_op_info=reset_op_info)
         # pylint: disable=broad-except
         except Exception:
-            exc_type, exc_value, _ = sys.exc_info()
-            log.error(
-                "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
             return False, job_type, compile_info
         if self.offline_tune:
             job_type = RL_OFFLINE
