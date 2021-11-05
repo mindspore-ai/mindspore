@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/zlib/repository/archive/v1.2.11.tar.gz")
-    set(MD5 "be6d144068d8835e86a81b3f36b66a42")
+    set(MD5 "b0ecd8eda7c5d6ed9b4a4187363482fe")
 else()
     set(REQ_URL "https://github.com/madler/zlib/archive/v1.2.11.tar.gz")
     set(MD5 "0095d2d2d1f3442ce1318336637b695f")

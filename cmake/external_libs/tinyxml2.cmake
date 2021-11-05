@@ -3,7 +3,7 @@ set(tinyxml2_CFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/tinyxml2/repository/archive/8.0.0.tar.gz")
-    set(MD5 "6a70cea637d0b17179e8bfd77860f811")
+    set(MD5 "5dc535c8b34ee621fe2128f072d275b5")
 else()
     set(REQ_URL "https://github.com/leethomason/tinyxml2/archive/8.0.0.tar.gz")
     set(MD5 "5dc535c8b34ee621fe2128f072d275b5")

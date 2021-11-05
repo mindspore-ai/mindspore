@@ -1,7 +1,7 @@
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libjpeg-turbo/repository/archive/2.0.4.tar.gz")
-    set(MD5 "51aac2382ad1a68b2e4beb391dc1cf60")
+    set(MD5 "44c43e4a9fb352f47090804529317c88")
 else()
     set(REQ_URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/2.0.4.tar.gz")
     set(MD5 "44c43e4a9fb352f47090804529317c88")

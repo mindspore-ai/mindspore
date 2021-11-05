@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/sqlite/repository/archive/version-3.32.2.tar.gz")
-    set(MD5 "7312cad1739d8a73b14abddc850c0afa")
+    set(MD5 "ea6d3b3289b4ac216fb06081a01ef101")
 else()
     set(REQ_URL "https://github.com/sqlite/sqlite/archive/version-3.32.2.tar.gz")
     set(MD5 "ea6d3b3289b4ac216fb06081a01ef101")
