@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_ANF_UTILS_H_
-#define MINDSPORE_CORE_IR_ANF_UTILS_H_
+#ifndef MINDSPORE_CORE_UTILS_ANF_UTILS_H_
+#define MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #include <vector>
 #include "ir/anf.h"
 #include "ir/dtype.h"
@@ -33,4 +33,4 @@ class AnfUtils {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_IR_ANF_UTILS_H_
+#endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_

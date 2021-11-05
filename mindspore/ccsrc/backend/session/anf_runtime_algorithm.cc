@@ -34,7 +34,7 @@
 #include "abstract/param_validator.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/trace_base.h"
-#include "ir/anf_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace session {

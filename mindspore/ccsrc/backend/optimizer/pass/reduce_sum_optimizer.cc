@@ -24,7 +24,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/scalar.h"
-#include "ir/anf_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
