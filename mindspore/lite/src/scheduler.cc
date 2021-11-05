@@ -655,15 +655,10 @@ int Scheduler::CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node)
   for (size_t i = 0; i < partial_node->input_indices_.size(); ++i) {
     auto &subgraph_input = src_tensors_->at(subgraph->input_indices_[i]);
     auto &partial_input = src_tensors_->at(partial_node->input_indices_[i]);
-    switch (partial_input->data_type()) {
-      case kObjectTypeTensorType: {
-        return RET_INFER_INVALID;
-      }
-      default: {
-        CopyCommonTensor(subgraph_input, partial_input);
-        break;
-      }
+    if (partial_input->data_type() == kObjectTypeTensorType) {
+      return RET_INFER_INVALID;
     }
+    CopyCommonTensor(subgraph_input, partial_input);
   }
 
   return RET_OK;

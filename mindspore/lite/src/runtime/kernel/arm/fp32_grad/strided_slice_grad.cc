@@ -42,14 +42,11 @@ int StridedSliceGradCPUKernel::Prepare() {
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto input = in_tensors_.at(0);
   CHECK_NULL_RETURN(input);
-  switch (input->data_type()) {
-    case kNumberTypeFloat32:
-      param_->data_type = kDataTypeFloat;
-      break;
-    default:
-      MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
-      return RET_ERROR;
+  if (input->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
+    return RET_ERROR;
   }
+  param_->data_type = kDataTypeFloat;
   return ReSize();
 }
 
