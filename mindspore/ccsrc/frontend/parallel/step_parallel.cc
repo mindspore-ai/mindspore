@@ -1125,22 +1125,12 @@ std::string MirrorOpName() {
   return mirror_op_name;
 }
 
-void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  size_t node_size = node->inputs().size();
+static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node,
+                              size_t node_size) {
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  for (auto input : node->inputs()) {
-    if (HasAbstractMonad(input)) {
-      node_size--;
-    }
-  }
-
-  if (!CheckInsertMirrorOps(mirror_ops, node, node_size)) {
-    return;
-  }
 
   for (size_t index = 1; index < node_size; ++index) {
     OperatorVector backward_op = mirror_ops[index - 1];
@@ -1226,6 +1216,22 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
   }
 }
 
+void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t node_size = node->inputs().size();
+  for (auto input : node->inputs()) {
+    if (HasAbstractMonad(input)) {
+      node_size--;
+    }
+  }
+
+  if (!CheckInsertMirrorOps(mirror_ops, node, node_size)) {
+    return;
+  }
+
+  DoInsertMirrorOps(root, mirror_ops, node, node_size);
+}
+
 void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &distribute_operator, const CNodePtr &node,
                            const std::vector<std::pair<CNodePtr, LossNodeInfo>> &sens_loss_pairs) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
@@ -1308,21 +1314,26 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
 }
 
 StrategyPtr ExtractStrategy(const ValuePtr &stra) {
-  ValueTuplePtr var = stra->cast<ValueTuplePtr>();
+  if (stra == nullptr) {
+    return nullptr;
+  }
+
+  auto var = stra->cast<ValueTuplePtr>();
+  if (var == nullptr) {
+    return nullptr;
+  }
+
   StrategyPtr strategyPtr;
   int64_t stage_id = g_device_manager->stage_id();
 
   MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
-  if (var == nullptr) {
-    MS_LOG(EXCEPTION) << "Strategy value is nullptr";
-  }
   if (var->size() > 0) {
     std::vector<ValuePtr> elements = var->value();
     Strategys strategy;
     for (uint64_t index = 0; index < elements.size(); ++index) {
       Dimensions dim;
       if (elements[index]->isa<ValueSequeue>()) {
-        ValueTuplePtr value_tuple = elements[index]->cast<ValueTuplePtr>();
+        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
         std::vector<ValuePtr> value_vector = value_tuple->value();
         (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
                              [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
@@ -1920,7 +1931,10 @@ void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
+static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
+  StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
+  auto attrs = prim->attrs();
+
   // load strategy map from checkpoint
   StrategyMap stra_map;
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
@@ -1928,6 +1942,35 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
     MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
   }
 
+  std::string strategy_key_name = "";
+  auto param_names = NodeParameterName(cnode, -1, 0);
+  if (!param_names.empty()) {
+    strategy_key_name = prim->name() + "_" + param_names[0].first;
+  }
+  bool load_strategy_from_ckpt =
+    StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
+  if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) {
+    MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
+                 << " is empty, using batch parallel";
+    in_strategy = GenerateBatchParallelStrategy(op_info, prim);
+  } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
+    in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
+    out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
+  } else if (StrategyFound(attrs)) {
+    in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+    out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+  } else {
+    in_strategy = stra_map[strategy_key_name];
+  }
+
+  MS_EXCEPTION_IF_NULL(in_strategy);
+  if (op_info->Init(in_strategy, out_strategy) == FAILED) {
+    MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed"
+                      << " trace: " << trace::DumpSourceLines(cnode);
+  }
+}
+
+void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
   SetStridedSliceSplitStrategy(all_nodes);
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
@@ -1958,7 +2001,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       }
       input_value.emplace_back(nullptr);
     }
-    StrategyPtr strategyPtr = nullptr;
+
     (*operator_).set_input_value(input_value);
     (*operator_).set_outputs_dtype(cnode->Type());
     (*operator_).set_cnode(cnode);
@@ -1966,32 +2009,8 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       cnode->set_user_data<OperatorInfo>(operator_);
       continue;
     }
-    // load strategy checkpoint
-    // key of strategy map
-    std::string strategy_key_name = "";
-    auto param_names = NodeParameterName(cnode, -1, 0);
-    if (!param_names.empty()) {
-      strategy_key_name = prim->name() + "_" + param_names[0].first;
-    }
-    bool load_strategy_from_ckpt =
-      StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) {
-      MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
-                   << " is empty, using batch parallel";
-      strategyPtr = GenerateBatchParallelStrategy(operator_, prim);
-    } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
-      strategyPtr = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
-    } else if (StrategyFound(attrs)) {
-      strategyPtr = ExtractStrategy(attrs[IN_STRATEGY]);
-    } else {
-      strategyPtr = stra_map[strategy_key_name];
-    }
 
-    MS_EXCEPTION_IF_NULL(strategyPtr);
-    if (operator_->Init(strategyPtr) == FAILED) {
-      MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed"
-                        << " trace: " << trace::DumpSourceLines(cnode);
-    }
+    ExtractStrategyAndInit(cnode, prim, operator_);
     cnode->set_user_data<OperatorInfo>(operator_);
   }
 }
@@ -2268,7 +2287,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetOutputLayout(*prev_layout_ptr);
     }
-    if (operator_info->Init(nullptr) == FAILED) {
+    if (operator_info->Init(nullptr, nullptr) == FAILED) {
       MS_LOG(EXCEPTION) << "Failure:operator " << prim->ToString() << " init failed";
     }
   }
@@ -3102,6 +3121,22 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
           current_stage == split_stage_num - 1);
 }
 
+static void HandleGroupInfo() {
+  auto group_info = g_device_manager->group_info();
+  if (StrategyCheckpoint::GetInstance().group_info_save_on() &&
+      StrategyCheckpoint::GetInstance().SaveGroupInfo(group_info) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Save group info failed";
+  }
+}
+
+static void PipelinePostProcess(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (pipeline_stages > 1) {
+    AddVirtualAssignAdd(root);
+    HandleReceiveParam(root, all_nodes);
+  }
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3202,16 +3237,9 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
 
-  if (pipeline_stages > 1) {
-    AddVirtualAssignAdd(root);
-    HandleReceiveParam(root, all_nodes);
-  }
+  PipelinePostProcess(root, all_nodes);
 
-  auto group_info = g_device_manager->group_info();
-  if (StrategyCheckpoint::GetInstance().group_info_save_on() &&
-      StrategyCheckpoint::GetInstance().SaveGroupInfo(group_info) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Save group info failed";
-  }
+  HandleGroupInfo();
 
   // handle full split parammeters in grad accumulation, do not contain optimizer-sharding's parameter
   HandleFullySplitParameters(root);

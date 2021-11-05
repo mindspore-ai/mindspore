@@ -71,7 +71,7 @@ TEST_F(TestReduceSumInfo, InferDevMatrixShape1) {
   Strategys inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   Shape dev_matrix_shape = reduce_sum->dev_matrix_shape();
 
   Shape expect = {4, 8, 1};
@@ -82,7 +82,7 @@ TEST_F(TestReduceSumInfo, InferSliceShape1) {
   Strategys str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = reduce_sum->inputs_tensor_info();
   std::vector<TensorInfo> outputs = reduce_sum->outputs_tensor_info();
 
@@ -103,7 +103,7 @@ TEST_F(TestReduceSumInfo, GetTensorLayout1) {
   Strategys str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = reduce_sum->inputs_tensor_info();
   std::vector<TensorInfo> outputs = reduce_sum->outputs_tensor_info();
 
@@ -124,7 +124,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp1) {
   Strategys inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   OperatorVector forward_op = reduce_sum->forward_op();
   size_t size = forward_op.size();
 
@@ -135,7 +135,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp2) {
   Strategys inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   OperatorVector forward_op = reduce_sum->forward_op();
   OperatorArgs operator_args = forward_op.at(0).second;
   OperatorAttrs operator_attrs = operator_args.first;
@@ -159,7 +159,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs1) {
   Strategys inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   MirrorOps mirror_ops = reduce_sum->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -171,7 +171,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs2) {
   Strategys inputs = {{4, 4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  reduce_sum->Init(strategy);
+  reduce_sum->Init(strategy, nullptr);
   MirrorOps mirror_ops = reduce_sum->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(0);
   OperatorArgs operator_args = mirror_op.at(0).second;
@@ -190,7 +190,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = reduce_sum->Init(strategy);
+  Status ret = reduce_sum->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -198,7 +198,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = reduce_sum->Init(strategy);
+  Status ret = reduce_sum->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -206,7 +206,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy3) {
   Strategys inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = reduce_sum->Init(strategy);
+  Status ret = reduce_sum->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
 }
 
@@ -214,7 +214,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy4) {
   Strategys inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = reduce_sum->Init(strategy);
+  Status ret = reduce_sum->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
 }
 }  // namespace parallel

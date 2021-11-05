@@ -67,7 +67,7 @@ TEST_F(TestActivationInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   Shape dev_matrix_shape = activation->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 16};
@@ -78,7 +78,7 @@ TEST_F(TestActivationInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = activation->inputs_tensor_info();
   std::vector<TensorInfo> outputs = activation->outputs_tensor_info();
 
@@ -99,7 +99,7 @@ TEST_F(TestActivationInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = activation->inputs_tensor_info();
   std::vector<TensorInfo> outputs = activation->outputs_tensor_info();
 
@@ -120,7 +120,7 @@ TEST_F(TestActivationInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   OperatorVector forward_op = activation->forward_op();
   size_t size = forward_op.size();
 
@@ -131,7 +131,7 @@ TEST_F(TestActivationInfo, GetMirrorOPs1) {
   Strategys inputs = {{1, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   MirrorOps mirror_ops = activation->mirror_ops();
 
   OperatorVector mirror_op = mirror_ops.at(0);
@@ -151,7 +151,7 @@ TEST_F(TestActivationInfo, GetMirrorOPs2) {
   Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  activation->Init(strategy);
+  activation->Init(strategy, nullptr);
   MirrorOps mirror_ops = activation->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -164,7 +164,7 @@ TEST_F(TestActivationInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = activation->Init(strategy);
+  Status ret = activation->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -173,7 +173,7 @@ TEST_F(TestActivationInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = activation->Init(strategy);
+  Status ret = activation->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 

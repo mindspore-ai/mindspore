@@ -81,8 +81,9 @@ class OperatorInfo {
   // If output is tuple, outputs_type.size() is greater than 1.
   Status set_outputs_type(const std::vector<TypePtr> &outputs_type);
   const std::vector<TypePtr> &outputs_type() const { return outputs_type_; }
-  virtual Status Init(const StrategyPtr &strategy);
-  virtual Status InitForCostModel(const StrategyPtr &strategy);  // only init the necessary parts
+  virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  // only init the necessary parts
+  virtual Status InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy);
 
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
@@ -152,7 +153,7 @@ class OperatorInfo {
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &);
-  Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy); }
+  Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy, nullptr); }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
@@ -161,6 +162,7 @@ class OperatorInfo {
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
   StrategyPtr strategy() const { return strategy_; }
+  StrategyPtr out_strategy() const { return out_strategy_; }
   void set_strategy(const StrategyPtr &strategy) { strategy_ = strategy; }
   void set_refkey_parameter_name(std::string p_name) { refkey_parameter_name_ = std::move(p_name); }
   const std::string &refkey_parameter_name() const { return refkey_parameter_name_; }
@@ -199,14 +201,15 @@ class OperatorInfo {
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
   virtual void InferReplaceOps() {}
+  virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy) { return SUCCESS; }
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
   Status InferAttrs();
   void ResetQueueMember();
-  Status InitWithAutoRepeatCalc(const StrategyPtr &strategy);
-  Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strategy);
+  Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();
 
@@ -232,6 +235,7 @@ class OperatorInfo {
 
   int32_t stage_id_ = 0;
   StrategyPtr strategy_;
+  StrategyPtr out_strategy_;
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
   Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num_

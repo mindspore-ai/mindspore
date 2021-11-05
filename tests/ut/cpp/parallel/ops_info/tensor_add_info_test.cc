@@ -69,7 +69,7 @@ TEST_F(TestTensorAddInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tensor_add->Init(strategy);
+  tensor_add->Init(strategy, nullptr);
   Shape dev_matrix_shape = tensor_add->dev_matrix_shape();
 
   Shape expect = {2, 4, 4};
@@ -80,7 +80,7 @@ TEST_F(TestTensorAddInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  tensor_add->Init(strategy);
+  tensor_add->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = tensor_add->inputs_tensor_info();
   std::vector<TensorInfo> outputs = tensor_add->outputs_tensor_info();
 
@@ -104,7 +104,7 @@ TEST_F(TestTensorAddInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  tensor_add->Init(strategy);
+  tensor_add->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = tensor_add->inputs_tensor_info();
   std::vector<TensorInfo> outputs = tensor_add->outputs_tensor_info();
 
@@ -128,7 +128,7 @@ TEST_F(TestTensorAddInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tensor_add->Init(strategy);
+  tensor_add->Init(strategy, nullptr);
   OperatorVector forward_op = tensor_add->forward_op();
   size_t size = forward_op.size();
 
@@ -139,7 +139,7 @@ TEST_F(TestTensorAddInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tensor_add->Init(strategy);
+  tensor_add->Init(strategy, nullptr);
   MirrorOps mirror_ops = tensor_add->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -151,7 +151,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy1) {
   Strategys inputs = {{2, 4, 4}, {2, 6, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tensor_add->Init(strategy);
+  Status ret = tensor_add->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -159,7 +159,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tensor_add->Init(strategy);
+  Status ret = tensor_add->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -167,7 +167,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy3) {
   Strategys inputs = {{2, 4, 6}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tensor_add->Init(strategy);
+  Status ret = tensor_add->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -175,7 +175,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy4) {
   Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tensor_add->Init(strategy);
+  Status ret = tensor_add->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
 }
 
@@ -185,7 +185,7 @@ TEST_F(TestTensorAddInfo, GenerateStrategies) {
   for (auto& swc : sc) {
     StrategyPtr sp = swc->strategy_ptr;
     Cost cost = *(swc->cost_list[0]);
-    tensor_add->InitForCostModel(sp);
+    tensor_add->InitForCostModel(sp, nullptr);
     std::vector<TensorInfo> inputs_info = tensor_add->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = tensor_add->outputs_tensor_info();
     double memory_cost0 = tensor_add->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
@@ -207,7 +207,7 @@ TEST_F(TestTensorAddInfo, GenerateStrategies1) {
   for (auto& swc : sc) {
     StrategyPtr sp = swc->strategy_ptr;
     Cost cost = *(swc->cost_list[0]);
-    tensor_add1->InitForCostModel(sp);
+    tensor_add1->InitForCostModel(sp, nullptr);
     std::vector<TensorInfo> inputs_info = tensor_add1->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = tensor_add1->outputs_tensor_info();
     double memory_cost0 = tensor_add1->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
@@ -227,7 +227,7 @@ TEST_F(TestTensorAddInfo, mirror_ops) {
   Strategys inputs = {{1, 8}, {4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tensor_add1->Init(strategy);
+  tensor_add1->Init(strategy, nullptr);
   MirrorOps mirror_ops = tensor_add1->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(1);
 

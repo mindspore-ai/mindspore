@@ -64,7 +64,7 @@ void TestConstructOperator::SetUp() {
 
   Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
-  matmul->Init(strategy);
+  matmul->Init(strategy, nullptr);
   Shape tensor_shape = {512, 1024};
   Shape dev_matrix_shape = {2, 4, 8, 16, 1};
   RankList used_dev_list = g_device_manager->GetDeviceListByStageId(0);

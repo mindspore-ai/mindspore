@@ -90,18 +90,7 @@ Status MatMulBase::GetAttrs() {
     if (transpose_b_iter->second->isa<BoolImm>()) {
       transpose_b_ = transpose_b_iter->second->cast<BoolImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of transpose_a is not bool.";
-      return FAILED;
-    }
-  }
-
-  auto forward_reduce_scatter_iter = attrs_.find(FORWARD_REDUCE_SCATTER);
-  if (forward_reduce_scatter_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(forward_reduce_scatter_iter->second);
-    if (forward_reduce_scatter_iter->second->isa<BoolImm>()) {
-      forward_reduce_scatter_ = forward_reduce_scatter_iter->second->cast<BoolImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of forward reduce scatter is not bool.";
+      MS_LOG(ERROR) << name_ << " : The value of transpose_b is not bool.";
       return FAILED;
     }
   }
@@ -193,11 +182,58 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
-  if ((mat_a_dimension_ != 2 || mat_b_dimension_ != 2) && forward_reduce_scatter_) {
-    MS_LOG(WARNING) << name_
-                    << ": The dimension of mat a and mat b must be 2 in forward reduce scatter mode, "
-                       "setting the forward reduce scatter mode to false here";
+  return SUCCESS;
+}
+
+Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
+  if (out_strategy == nullptr) {
+    MS_LOG(INFO) << name_ << ": The output strategy is null";
+    return SUCCESS;
+  }
+
+  if (mat_a_dimension_ != 2 || mat_b_dimension_ != 2) {
+    MS_LOG(ERROR) << name_ << ": The dimension of mat a and mat b must be 2 if set output strategy";
+    return FAILED;
+  }
+
+  if (CheckStrategyValue(out_strategy, outputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Invalid output strategy.";
+    return FAILED;
+  }
+
+  Strategys in_stra = strategy_->GetInputDim();
+  Dimensions x_strategy = in_stra.at(0);
+  Dimensions w_strategy = in_stra.at(1);
+
+  int64_t in_shard_a = x_strategy[0];
+  int64_t in_shard_b = x_strategy[1];
+  int64_t in_shard_c = 1;
+  if (transpose_b_) {
+    in_shard_c = w_strategy[0];
+  } else {
+    in_shard_c = w_strategy[1];
+  }
+
+  Strategys out_stra = out_strategy->GetInputDim();
+  Dimensions output_strategy = out_stra[0];
+
+  int64_t out_shard_a_or_ab = output_strategy[0];
+  int64_t out_shard_c = output_strategy[1];
+  if (out_shard_c != in_shard_c) {
+    MS_LOG(ERROR) << name_ << ": The input strategy is (" << x_strategy << ", " << w_strategy << ")"
+                  << ", the second dimension of output strategy must be " << in_shard_c << ", but got " << out_shard_c;
+    return FAILED;
+  }
+
+  if (out_shard_a_or_ab == in_shard_a) {
     forward_reduce_scatter_ = false;
+  } else if (out_shard_a_or_ab == in_shard_a * in_shard_b) {
+    forward_reduce_scatter_ = true;
+  } else {
+    MS_LOG(ERROR) << name_ << ": The input strategy is (" << x_strategy << ", " << w_strategy << ")"
+                  << ", the first dimension of output strategy must be " << in_shard_a << " or "
+                  << in_shard_a * in_shard_b << ", but got " << out_shard_a_or_ab;
+    return FAILED;
   }
 
   return SUCCESS;
@@ -289,20 +325,8 @@ Status MatMulBase::InferTensorMap() {
   }
 
   if (forward_reduce_scatter_) {
-    if (dev_matrix_shape_.size() != 3) {
-      MS_LOG(WARNING) << name_
-                      << ": The dimension of dev matrix shape must be 3 in forward reduce scatter mode, "
-                         "setting the forward reduce scatter mode to false here";
-      forward_reduce_scatter_ = false;
-    } else if (outputs_shape_[0][0] % (dev_matrix_shape_[0] * dev_matrix_shape_[1]) != 0) {
-      MS_LOG(WARNING) << name_
-                      << ": The first dimension of output should be split by dev_matrix[0]*dev_matrix[1] in "
-                         "forward reduce scatter mode, setting the forward reduce scatter mode to false here";
-      forward_reduce_scatter_ = false;
-    } else {
-      // the forward reduce scatter only support that the dimension of output is 2
-      output_tensor_map = {1, 0};
-    }
+    // the forward reduce scatter only support that the dimension of output is 2
+    output_tensor_map = {1, 0};
   }
 
   inputs_tensor_map_.push_back(mat_a_tensor_map);
@@ -312,21 +336,28 @@ Status MatMulBase::InferTensorMap() {
 }
 
 Status MatMulBase::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
-  Shape output_dev_matrix_shape;
+  out_dev_matrix_shape_ = dev_matrix_shape_;
   if (forward_reduce_scatter_) {
-    if (dev_matrix_shape_.size() != 3) {
-      MS_LOG(ERROR) << "The size of origin dev matrix shape must be 3 in forward reduce scatter mode";
-      return FAILED;
+    // the reduce scatter mode only use for MatMul
+    out_dev_matrix_shape_ = dev_matrix_shape_;
+    if (repeated_num_in_dev_matrix_right_ || repeated_calc_num_ == 1) {
+      // dev_matrix_shape_ is: [a, b, c, repeat_num] or [a, b, c]
+      // out_dev_matrix_shape_ is: [a*b, c, repeat_num] or [a*b, c]
+      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.begin(), out_dev_matrix_shape_.begin() + 2);
+      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.begin(), dev_matrix_shape_[0] * dev_matrix_shape_[1]);
+    } else {
+      // dev_matrix_shape_ is: [repeat_num, a, b, c]
+      // out_dev_matrix_shape_ is: [repeat_num, a*b, c]
+      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.begin() + 1, out_dev_matrix_shape_.begin() + 3);
+      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.begin() + 1,
+                                         dev_matrix_shape_[1] * dev_matrix_shape_[2]);
     }
-    output_dev_matrix_shape = {dev_matrix_shape_[0] * dev_matrix_shape_[1], dev_matrix_shape_[2]};
-  } else {
-    output_dev_matrix_shape = dev_matrix_shape_;
   }
 
   TensorLayout mat_a_layout, mat_b_layout, output_layout;
   if ((mat_a_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) ||
       (mat_b_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[1], inputs_shape_[1]) != SUCCESS) ||
-      (output_layout.InitFromVector(output_dev_matrix_shape, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS)) {
+      (output_layout.InitFromVector(out_dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS)) {
     return FAILED;
   }
 
@@ -357,21 +388,6 @@ Status MatMulBase::InferTensorInfo() {
   inputs_tensor_info_.push_back(mat_a_tensor_info);
   inputs_tensor_info_.push_back(mat_b_tensor_info);
   outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
-Status MatMulBase::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init failed.";
-    return FAILED;
-  }
-
-  if (forward_reduce_scatter_) {
-    virtual_div_op_.clear();
-    MS_LOG(INFO) << "The forward reduce scatter mode does not involve repeated calculation, clear the virtual div op";
-  }
-
-  MS_LOG(INFO) << name_ << " : Init success.";
   return SUCCESS;
 }
 
@@ -584,7 +600,7 @@ std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
 }
 
 Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
-  if (InitForCostModel(strategy) == FAILED) {
+  if (InitForCostModel(strategy, nullptr) == FAILED) {
     MS_LOG(ERROR) << name_ << " : Initialization under the strategy failed.";
     return FAILED;
   }

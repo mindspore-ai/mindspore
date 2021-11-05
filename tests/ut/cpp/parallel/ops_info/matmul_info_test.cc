@@ -97,7 +97,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul1->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 16, 1};
@@ -108,7 +108,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
   Strategys inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul1->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 8, 2};
@@ -120,7 +120,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
   Strategys inputs = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul2->Init(strategy);
+  matmul2->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul2->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 16, 1};
@@ -132,7 +132,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
   Strategys inputs = {{2, 4, 8, 8}, {2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul2->Init(strategy);
+  matmul2->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul2->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 8, 2};
@@ -144,7 +144,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
   Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul3->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 16, 1};
@@ -156,7 +156,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
   Strategys inputs = {{8, 8}, {2, 4, 2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   Shape dev_matrix_shape = matmul3->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 8, 2};
@@ -167,7 +167,7 @@ TEST_F(TestMatmulInfo, InferTensorMap1) {
   Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul1->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul1->outputs_tensor_info();
 
@@ -193,7 +193,7 @@ TEST_F(TestMatmulInfo, InferTensorMap2) {
   Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul2->Init(strategy);
+  matmul2->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul2->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul2->outputs_tensor_info();
 
@@ -219,7 +219,7 @@ TEST_F(TestMatmulInfo, InferTensorMap3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul3->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul3->outputs_tensor_info();
 
@@ -244,7 +244,7 @@ TEST_F(TestMatmulInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul1->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul1->outputs_tensor_info();
 
@@ -270,7 +270,7 @@ TEST_F(TestMatmulInfo, InferSliceShape2) {
   Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul2->Init(strategy);
+  matmul2->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul2->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul2->outputs_tensor_info();
 
@@ -296,7 +296,7 @@ TEST_F(TestMatmulInfo, InferSliceShape3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul3->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul3->outputs_tensor_info();
 
@@ -322,7 +322,7 @@ TEST_F(TestMatmulInfo, GetTensorLayout3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = matmul3->inputs_tensor_info();
   std::vector<TensorInfo> outputs = matmul3->outputs_tensor_info();
 
@@ -347,7 +347,7 @@ TEST_F(TestMatmulInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   OperatorVector forward_op = matmul1->forward_op();
 
   OperatorArgs operator_args = forward_op.at(0).second;
@@ -373,7 +373,7 @@ TEST_F(TestMatmulInfo, GetForwardOp2) {
   Strategys inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   OperatorVector forward_op = matmul1->forward_op();
 
   ASSERT_EQ(forward_op.size(), 0);
@@ -383,7 +383,7 @@ TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   OperatorVector virtual_div_op = matmul1->virtual_div_op();
 
   OperatorArgs operator_args = virtual_div_op.at(0).second;
@@ -402,7 +402,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   MirrorOps mirror_ops = matmul1->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(1);
 
@@ -422,7 +422,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs2) {
   Strategys inputs = {{2, 4, 1, 16}, {8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul2->Init(strategy);
+  matmul2->Init(strategy, nullptr);
   MirrorOps mirror_ops = matmul2->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(1);
 
@@ -442,7 +442,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs3) {
   Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul3->Init(strategy);
+  matmul3->Init(strategy, nullptr);
   MirrorOps mirror_ops = matmul3->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(1);
 
@@ -460,7 +460,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs4) {
   Strategys inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
   MirrorOps mirror_ops = matmul1->mirror_ops();
 
   ASSERT_EQ(mirror_ops.size(), 2);
@@ -471,8 +471,8 @@ TEST_F(TestMatmulInfo, InitTwice) {
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   // init twice
-  matmul1->Init(strategy);
-  matmul1->Init(strategy);
+  matmul1->Init(strategy, nullptr);
+  matmul1->Init(strategy, nullptr);
 
   MirrorOps mirror_ops = matmul1->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(1);
@@ -492,7 +492,7 @@ TEST_F(TestMatmulInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -501,7 +501,7 @@ TEST_F(TestMatmulInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8, 16}, {4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -510,7 +510,7 @@ TEST_F(TestMatmulInfo, CheckStrategy3) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -519,7 +519,7 @@ TEST_F(TestMatmulInfo, CheckStrategy4) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -528,7 +528,7 @@ TEST_F(TestMatmulInfo, CheckStrategy5) {
   Strategys inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -537,7 +537,7 @@ TEST_F(TestMatmulInfo, CheckStrategy6) {
   Strategys inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -546,7 +546,7 @@ TEST_F(TestMatmulInfo, CheckStrategy7) {
   Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul1->Init(strategy);
+  Status ret = matmul1->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -555,7 +555,7 @@ TEST_F(TestMatmulInfo, InitFailed) {
   Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = matmul4->Init(strategy);
+  Status ret = matmul4->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -566,7 +566,7 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies1) {
   for (const auto& swc : sc) {
     StrategyPtr sp = swc->strategy_ptr;
     Cost cost = *(swc->cost_list[0]);
-    matmul1->InitForCostModel(sp);
+    matmul1->InitForCostModel(sp, nullptr);
     std::vector<TensorInfo> inputs_info = matmul1->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = matmul1->outputs_tensor_info();
     ASSERT_DOUBLE_EQ(matmul1->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
@@ -582,7 +582,7 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies2) {
   for (const auto& swc : sc) {
     StrategyPtr sp = swc->strategy_ptr;
     Cost cost = *(swc->cost_list[0]);
-    matmul3->InitForCostModel(sp);
+    matmul3->InitForCostModel(sp, nullptr);
 
     std::vector<TensorInfo> inputs_info = matmul3->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = matmul3->outputs_tensor_info();

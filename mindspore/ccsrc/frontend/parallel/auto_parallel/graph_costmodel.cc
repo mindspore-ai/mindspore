@@ -1615,7 +1615,7 @@ Status CostGraph::InitReshapeStrategy() {
         reshape_info->SetOutputLayout(
           (*next_iter)->next_operator()->inputs_tensor_info()[LongToSize(next_index)].tensor_layout());
       }
-      if (reshape_info->Init(nullptr) != SUCCESS) {
+      if (reshape_info->Init(nullptr, nullptr) != SUCCESS) {
         return FAILED;
       }
     }

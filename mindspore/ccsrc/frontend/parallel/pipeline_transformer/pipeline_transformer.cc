@@ -331,14 +331,15 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode, int tup
   op_info->set_input_value(input_value);
   op_info->set_outputs_dtype(temp_node->Type());
   op_info->set_cnode(temp_node);
-  StrategyPtr strategy = nullptr;
+  StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
   if (!StrategyFound(attrs)) {
-    strategy = GenerateBatchParallelStrategy(op_info, prim);
+    in_strategy = GenerateBatchParallelStrategy(op_info, prim);
   } else {
-    strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+    in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+    out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
   }
-  MS_EXCEPTION_IF_NULL(strategy);
-  if (op_info->Init(strategy) == FAILED) {
+  MS_EXCEPTION_IF_NULL(in_strategy);
+  if (op_info->Init(in_strategy, out_strategy) == FAILED) {
     MS_LOG(EXCEPTION) << "operator: " << prim->name() << " init failed.";
   }
   return op_info;
