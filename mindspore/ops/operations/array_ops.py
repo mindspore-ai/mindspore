@@ -1595,11 +1595,11 @@ class InvertPermutation(PrimitiveWithInfer):
     def __infer__(self, x):
         x_shp = x['shape']
         x_value = x['value']
+        if mstype.issubclass_(x['dtype'], mstype.tensor):
+            raise ValueError(f"For \'{self.name}\', the value of 'input_x' must be non-Tensor, but got {x['dtype']}")
         if x_value is None:
             raise ValueError(f"For '{self.name}', the value of 'input_x' can not be None, but got {x_value}.")
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
-        if mstype.issubclass_(x['dtype'], mstype.tensor):
-            raise ValueError(f"For \'{self.name}\', the value of 'input_x' must be non-Tensor, but got {x['dtype']}")
         for shp in x_shp:
             if shp:
                 x_rank = len(np.array(x_value, np.int64).shape)
@@ -3303,11 +3303,11 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
-                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' cannot be negative number and "
+                                         f"'begin[{i}]' should be in [-{x_shape[i]}, {x_shape[i]}) "
                                          f"when 'shrink_axis_mask' is greater than 0, "
-                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, 'strides': {stride}, "
-                                         f"'begin': {begin}.")
+                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
+                                         f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3339,11 +3339,11 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
-                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' cannot be negative number and "
+                                         f"'begin[{i}]' should be in [-{x_shape[i]}, {x_shape[i]}) "
                                          f"when 'shrink_axis_mask' is greater than 0, "
-                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, 'strides': {stride}, "
-                                         f"'begin': {begin}.")
+                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
+                                         f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3457,8 +3457,8 @@ class DiagPart(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         if len(x_shape) % 2 != 0 or \
                 not x_shape:
-            raise ValueError(f"For \'{self.name}\', the rank of 'input_x' must be non-zero and even, "
-                             f"but got rank {len(x_shape)}, with shapes {x_shape}.")
+            raise ValueError(f"For \'{self.name}\', the dimension of 'input_x' must be non-zero and even, "
+                             f"but got dimension {len(x_shape)}, with shapes {x_shape}.")
         length = len(x_shape) // 2
         for i in range(length):
             validator.check('input_shape[i + len(input_shape)/2]', x_shape[i + length],
@@ -3830,7 +3830,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
                              f"the dimension of 'input_x', but got the "
                              f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
-                             f"{len(indices_shape)}.")
+                             f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
@@ -3915,7 +3915,7 @@ class TensorScatterAdd(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
                              f"the dimension of 'input_x', but got the "
                              f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
-                             f"{len(indices_shape)}.")
+                             f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
@@ -5879,7 +5879,8 @@ class EmbeddingLookup(PrimitiveWithCheck):
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         indices_shp = indices['shape']
         if not indices_shp:
-            raise ValueError(f"For '{self.name}', the 'input_indices' should not be a scalar, but got {indices_shp}.")
+            raise ValueError(f"For '{self.name}', the dimension of 'input_indices' should not "
+                             f"be zero, but got {len(indices_shp)}.")
         params_shp = params['shape']
         if len(params_shp) > 2:
             raise ValueError(f"For '{self.name}', the dimension of 'input_params' must <= 2, "
@@ -6112,7 +6113,7 @@ class MaskedSelect(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x', 'mask'], outputs=['output'])
 
     def check_shape(self, x_shape, mask_shape):
-        get_broadcast_shape(x_shape, mask_shape, self.name)
+        get_broadcast_shape(x_shape, mask_shape, self.name, arg_name1="x", arg_name2="mask")
         validator.check("rank of x", len(x_shape), "expected", 1, Rel.GE, self.name)
 
     def check_dtype(self, x_dtype, mask_dtype):
@@ -6242,7 +6243,7 @@ class TensorScatterMax(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
                              f"the dimension of 'input_x', but got the "
                              f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
-                             f"{len(indices_shape)}.")
+                             f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
@@ -6326,7 +6327,7 @@ class TensorScatterMin(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
                              f"the dimension of 'input_x', but got the "
                              f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
-                             f"{len(indices_shape)}.")
+                             f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
@@ -6411,7 +6412,7 @@ class TensorScatterSub(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
                              f"the dimension of 'input_x', but got the "
                              f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
-                             f"{len(indices_shape)}.")
+                             f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:

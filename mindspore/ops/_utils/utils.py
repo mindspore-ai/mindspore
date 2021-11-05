@@ -22,7 +22,7 @@ from ...common import dtype as mstype
 from ..primitive import constexpr
 
 
-def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type=""):
+def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x", arg_name2="y"):
     """
     Doing broadcast between tensor x and tensor y.
 
@@ -30,6 +30,9 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type=""):
         x_shape (list): The shape of tensor x.
         y_shape (list): The shape of tensor y.
         prim_name (str): Primitive name.
+        shape_type (str): The type of shape, optional values are "", "min_shape" and "max_shape".
+        arg_name1 (str): The arg name of x_shape.
+        arg_name2 (str): The arg name of y_shape.
 
     Returns:
         List, the shape that broadcast between tensor x and tensor y.
@@ -64,11 +67,12 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type=""):
             elif shape_type == "max_shape":
                 broadcast_shape_back.append(min(x_shape[i], y_shape[i]))
             else:
-                raise ValueError(f"For '{prim_name}', 'x_shape' and 'y_shape' are supposed to broadcast, "
-                                 f"where broadcast means that "
-                                 f"'x_shape[i] = 1 or -1 or y_shape[i] = 1 or -1 or x_shape[i] = y_shape[i]', "
-                                 f"but now 'x_shape' and 'y_shape' can not broadcast, "
-                                 f"got 'i': {i}, 'x_shape': {x_shape}, 'y_shape': {y_shape}.")
+                raise ValueError(f"For '{prim_name}', '{arg_name1}'.shape and '{arg_name2}'.shape are supposed "
+                                 f"to broadcast, where broadcast means that '{arg_name1}'.shape[i] = 1 or -1 "
+                                 f"or '{arg_name2}'.shape[i] = 1 or -1 "
+                                 f"or '{arg_name1}'.shape[i] = '{arg_name2}'.shape[i]', "
+                                 f"but now '{arg_name1}'.shape and '{arg_name2}'.shape can not broadcast, "
+                                 f"got 'i': {i}, '{arg_name1}'.shape: {x_shape}, '{arg_name2}'.shape: {y_shape}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back

@@ -1265,7 +1265,7 @@ class BatchNorm(PrimitiveWithInfer):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'format' is {self.format} and "
+                             f"but got the 'data_format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
@@ -1413,13 +1413,13 @@ class Conv2D(Primitive):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
-        self.add_prim_attr("pad", pad)
-        self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not 'pad', "
-                             f"but got 'pad': {pad} and 'pad_mode': {pad_mode}.")
+                             f"but got 'pad': {self.pad} and 'pad_mode': {pad_mode}.")
+        self.add_prim_attr("pad", pad)
+        self.padding = pad
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1428,7 +1428,7 @@ class Conv2D(Primitive):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'format' is {self.format} "
+                             f"but got the 'data_format' is {self.format} "
                              f"and platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
@@ -1544,12 +1544,13 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+
+        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero or (0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"pad\", but got 'pad' is {self.pad} and 'pad_mode' is {pad_mode}.")
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
-        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not 'pad', "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1637,7 +1638,7 @@ class _Pool(PrimitiveWithInfer):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'format' is {self.format} and "
+                             f"but got the 'data_format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         if not self.is_maxpoolwithargmax:
             self.add_prim_attr('data_format', self.format)
@@ -1939,8 +1940,8 @@ class MaxPool3D(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', attr 'pad_list' should be an positive int number or a tuple of "
                              f"three or six positive int numbers, but got {len(self.pad_list)} numbers.")
         if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad_list' must be zero when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad_list' is {self.pad_list} and 'pad_mode' is {pad_mode}.")
+            raise ValueError(f"For '{self.name}', the 'pad_list' must be zero or (0, 0, 0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"pad\", but got 'pad_list' is {pad_list} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'CALCULATED':
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad_list item', self.name)
@@ -2106,7 +2107,7 @@ class Conv2DBackpropInput(Primitive):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'format' is {self.format} and "
+                             f"but got the 'data_format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
@@ -2120,12 +2121,13 @@ class Conv2DBackpropInput(Primitive):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+
+        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero or (0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"pad\", but got 'pad' is {self.pad} and 'pad_mode' is {pad_mode}.")
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
-        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -2247,7 +2249,7 @@ class BiasAdd(Primitive):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'format' is {self.format} and "
+                             f"but got the 'data_format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
 
@@ -7629,7 +7631,7 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check_int(len(h_shape), 3, Rel.EQ, "h_shape", self.name)
         validator.check_int(len(c_shape), 3, Rel.EQ, "c_shape", self.name)
         if seq_shape is not None:
-            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' should be None, but got {seq_shape}.")
+            raise ValueError(f"For '{self.name}', the 'seq_length' should be None.")
 
         num_step, batch_size, input_size = x_shape
         hidden_size = w_shape[-1] // 4
@@ -8065,7 +8067,7 @@ class AvgPool3D(Primitive):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{pad}`.")
+                             f"six positive int numbers, but got {self.pad}.")
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -8073,8 +8075,8 @@ class AvgPool3D(Primitive):
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'PAD' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero or (0, 0, 0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"PAD\", but got 'pad' is {self.pad} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'PAD':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad or item of pad', self.name)
@@ -8210,16 +8212,16 @@ class Conv3D(PrimitiveWithInfer):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{pad}`.")
-        self.add_prim_attr("pad", pad)
-        self.padding = pad
+                             f"six positive int numbers, but got {self.pad}.")
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'pad' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero or (0, 0, 0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"pad\", but got 'pad' is {self.pad} and 'pad_mode' is {pad_mode}.")
+        self.add_prim_attr("pad", pad)
+        self.padding = pad
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -8237,7 +8239,7 @@ class Conv3D(PrimitiveWithInfer):
         validator.check_equal_int(len(w_shape), 5, "weight rank", self.name)
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
         if b_shape is not None:
-            raise ValueError(f"For '{self.name}', the 'bias' currently only support None, but got {b_shape}.")
+            raise ValueError(f"For '{self.name}', the 'bias' currently only support None.")
         validator.check(f"x_shape[1] // group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[1:4]', tuple(w_shape[2:]), Rel.EQ, self.name)
@@ -8700,15 +8702,15 @@ class Conv3DTranspose(PrimitiveWithInfer):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{pad}`.")
+                             f"six positive int numbers, but got {self.pad}.")
         self.pad_list = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'pad' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
-                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero or (0, 0, 0, 0, 0, 0) when 'pad_mode' "
+                             f"is not \"pad\", but got 'pad' is {self.pad} and 'pad_mode' is {pad_mode}.")
 
         if self.pad_mode == 'pad':
             for item in self.pad_list:
@@ -8722,11 +8724,11 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
         self.output_padding = _check_3d_int_or_tuple('output_padding', output_padding, self.name,
                                                      allow_five=False, ret_five=True, greater_zero=False)
-        output_padding = (self.output_padding[2], self.output_padding[3], self.output_padding[4])
-        if self.pad_mode != 'pad' and output_padding != (0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'output_padding' must be (0, 0, 0) "
-                             f"when 'pad_mode' is not \"pad\", "
-                             f"but got 'output_padding' is {output_padding} and 'pad_mode' is {self.pad_mode}.")
+        output_padding_ = (self.output_padding[2], self.output_padding[3], self.output_padding[4])
+        if self.pad_mode != 'pad' and output_padding_ != (0, 0, 0):
+            raise ValueError(f"For '{self.name}', the 'output_padding' must be zero or (0, 0, 0) "
+                             f"when 'pad_mode' is not \"pad\", but got 'output_padding' is "
+                             f"{output_padding} and 'pad_mode' is {pad_mode}.")
         validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
         validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, Rel.INC_BOTH,
