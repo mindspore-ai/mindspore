@@ -24,6 +24,7 @@
 #include <thread>
 #include "nlohmann/json.hpp"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
@@ -126,14 +127,15 @@ std::string GetCompilerCachePath() {
   if (config_path != "") {
     return config_path;
   }
-  if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
-    MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_COMPILER_CACHE_PATH', the path is "
-                      << common::GetEnv(kCOMPILER_CACHE_PATH)
-                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
-                         "permission, (3) whether the path is too long. ";
-  }
-  if (config_path[config_path.length() - 1] != '/') {
-    config_path += "/";
+  const char *value = ::getenv(kCOMPILER_CACHE_PATH);
+  if (value == nullptr) {
+    config_path = "./";
+  } else {
+    config_path = std::string(value);
+    FileUtils::CreateNotExistDirs(config_path);
+    if (config_path[config_path.length() - 1] != '/') {
+      config_path += "/";
+    }
   }
   return config_path;
 }
@@ -141,18 +143,7 @@ std::string GetCompilerCachePath() {
 void KernelMeta::Initialize() {
   auto config_path = GetCompilerCachePath();
   kernel_meta_path_ = config_path + std::string(kAkgKernelMeta);
-  if (access(kernel_meta_path_.c_str(), R_OK | W_OK | X_OK) == -1) {
-#if defined(_WIN32) || defined(_WIN64)
-    auto ret = mkdir(kernel_meta_path_.c_str());
-#else
-    auto ret = mkdir(kernel_meta_path_.c_str(), S_IRWXG | S_IRWXU);
-#endif
-    if (ret != 0) {
-      MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
-    }
-  } else {
-    MS_LOG(DEBUG) << "kernel dir [" << kernel_meta_path_ << "] found";
-  }
+  FileUtils::CreateNotExistDirs(kernel_meta_path_);
   initialized_ = true;
 }
 
