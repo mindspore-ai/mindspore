@@ -102,7 +102,7 @@ def test_serdes_imagefolder_dataset(remove_json_files=True):
 
     # Remove the generated json file
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("imagenet_dataset_pipeline")
 
 
 def test_serdes_mnist_dataset(remove_json_files=True):
@@ -143,7 +143,7 @@ def test_serdes_mnist_dataset(remove_json_files=True):
     assert num == 10
 
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("mnist_dataset_pipeline")
 
 
 def test_serdes_cifar10_dataset(remove_json_files=True):
@@ -185,7 +185,7 @@ def test_serdes_cifar10_dataset(remove_json_files=True):
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("cifar10_dataset_pipeline")
 
 
 def test_serdes_celeba_dataset(remove_json_files=True):
@@ -211,7 +211,7 @@ def test_serdes_celeba_dataset(remove_json_files=True):
 
     assert num_samples == 8
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("celeba_dataset_pipeline")
 
 
 def test_serdes_csv_dataset(remove_json_files=True):
@@ -240,7 +240,7 @@ def test_serdes_csv_dataset(remove_json_files=True):
 
     assert num_samples == 3
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("csv_dataset_pipeline")
 
 
 def test_serdes_voc_dataset(remove_json_files=True):
@@ -276,7 +276,7 @@ def test_serdes_voc_dataset(remove_json_files=True):
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("voc_dataset_pipeline")
 
 
 def test_serdes_zip_dataset(remove_json_files=True):
@@ -321,7 +321,7 @@ def test_serdes_zip_dataset(remove_json_files=True):
     assert rows == 12
 
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("zip_dataset_pipeline")
 
 
 def test_serdes_random_crop():
@@ -406,7 +406,7 @@ def test_serdes_pyvision(remove_json_files=True):
     assert validate_jsonfile("pyvision_dataset_pipeline.json") is True
 
     if remove_json_files:
-        delete_json_files()
+        delete_json_files("pyvision_dataset_pipeline")
 
 
 def test_serdes_uniform_augment(remove_json_files=True):
@@ -461,7 +461,7 @@ def test_serdes_exception():
         data2 = ds.deserialize(input_dict=data1_json)
         ds.serialize(data2, "filter_dataset_fail.json")
     assert "Invalid data, unsupported operation type: Filter" in str(msg)
-    delete_json_files()
+    delete_json_files("filter_dataset_fail")
 
 
 def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files):
@@ -486,7 +486,7 @@ def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files
 
     # Remove the generated json file
     if remove_json_files:
-        delete_json_files()
+        delete_json_files(filename)
     return data_changed
 
 
@@ -500,8 +500,8 @@ def validate_jsonfile(filepath):
     return file_exist and isinstance(loaded_json, dict)
 
 
-def delete_json_files():
-    file_list = glob.glob('*.json')
+def delete_json_files(filename):
+    file_list = glob.glob(filename + '.json') + glob.glob(filename + '_1.json')
     for f in file_list:
         try:
             os.remove(f)
