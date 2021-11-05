@@ -82,6 +82,13 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
   }
   scheduleList_.clear();
 }
+void AnalysisSchedule::Stop() {
+  AsyncInferTaskPtr stopTask = AsyncInferTask::MakeShared(std::make_shared<AsyncAbstract>(), "Stop");
+  Add2Schedule(stopTask);
+  MS_LOG(DEBUG) << " Set AnalysisSchedule::Exit . The active thread count: " << activate_threads_.size()
+                << " The infer_thread_count: " << infer_thread_count_
+                << " schedule list size: " << scheduleList_.size();
+}
 
 void AnalysisSchedule::Wait() {
   EnterWaiting();
@@ -112,6 +119,12 @@ void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_pt
 }
 void AnalysisSchedule::SetNextReady() {
   if (scheduleList_.empty()) {
+    return;
+  }
+  // Exit Flag
+  if (scheduleList_.front()->ThreadID() == "Stop") {
+    notExit_ = false;
+    scheduleList_.pop_front();
     return;
   }
   // Check if enter endless loop
