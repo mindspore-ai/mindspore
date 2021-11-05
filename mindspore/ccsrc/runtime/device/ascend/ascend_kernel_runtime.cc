@@ -34,6 +34,7 @@
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_build_client.h"
+#include "backend/kernel_compiler/aicpu/aicpu_kernel_load.h"
 #ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
@@ -286,6 +287,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
   }
+  mindspore::kernel::AicpuOpKernelLoad::GetInstance().FreeDeviceMemory();
 
   auto rt_ret = rtRegTaskFailCallbackByModule(kModuleName, nullptr);
   if (rt_ret != RT_ERROR_NONE) {
@@ -436,6 +438,9 @@ bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_s
     return false;
   }
   if (!LoadTask(graph)) {
+    return false;
+  }
+  if (!mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo()) {
     return false;
   }
   return true;

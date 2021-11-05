@@ -73,13 +73,14 @@ void AicpuTask::Distribute() {
   // for data dump
   input_output_addr_ = reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + io_addr_offset);
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
+  auto cpu_flag = task_info_->cust_aicpu() ? RT_KERNEL_CUSTOM_AICPU : dump_flag;
 
   MS_LOG(INFO) << "Distribute AicpuTask start, args_size = " << args_size << ", io_addrs_num =" << io_addrs_num
                << ", so_name = " << task_info_->so_name() << ", kernel_name = " << task_info_->kernel_name()
                << ", dump_flag = " << dump_flag;
   rt_ret = rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(task_info_->so_name().data()),
                                      reinterpret_cast<const void *>(task_info_->kernel_name().data()), 1, args_,
-                                     args_size, nullptr, stream_, dump_flag);
+                                     args_size, nullptr, stream_, cpu_flag);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlag failed, ret: " << rt_ret;
   }

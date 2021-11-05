@@ -31,6 +31,7 @@
 #include "proto/node_def.pb.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
+#include "backend/kernel_compiler/aicpu/aicpu_kernel_load.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
@@ -423,6 +424,11 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Set input output size list failed.";
   }
+
+  if (!AicpuOpKernelLoad::GetInstance().LoadAicpuKernelSo(anf_node, kernel_mod_ptr)) {
+    MS_LOG(EXCEPTION) << "Aicpu kernel so load failed. task is " << anf_node->fullname_with_scope();
+  }
+
   return kernel_mod_ptr;
 }
 }  // namespace kernel
