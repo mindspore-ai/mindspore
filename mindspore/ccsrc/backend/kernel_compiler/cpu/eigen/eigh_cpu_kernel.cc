@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/eigen/eig_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/eigen/eigh_cpu_kernel.h"
 #include <Eigen/Eigenvalues>
 #include <type_traits>
 #include "utils/ms_utils.h"
@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 
 namespace {
-constexpr size_t kInputsNum = 1;
+constexpr size_t kInputsNum = 2;
 constexpr size_t kOutputsNum = 2;
 constexpr size_t kDefaultShape = 1;
 constexpr auto kAMatrixDimNum = 2;
@@ -43,8 +43,8 @@ template <typename T>
 using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
 
 template <typename T, typename C>
-void EigCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
-  MS_LOG(INFO) << "init eig cpu kernel";
+void EighCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
+  MS_LOG(INFO) << "init eigh cpu kernel";
   MS_EXCEPTION_IF_NULL(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
@@ -54,22 +54,22 @@ void EigCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
   CHECK_KERNEL_INPUTS_NUM(A_shape.size(), kAMatrixDimNum, AnfAlgo::GetCNodeName(kernel_node));
 
   if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "wrong array shape, A should be a  matrix, but got [" << A_shape[kDim0] << " X "
+    MS_LOG(EXCEPTION) << "wrong array shape, A should be a matrix, but got [" << A_shape[kDim0] << " X "
                       << A_shape[kDim1] << "]";
   }
   m_ = A_shape[kDim0];
 }
 
 template <typename T, typename C>
-void EigCPUKernel<T, C>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void EighCPUKernel<T, C>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.template emplace_back(m_ * m_ * sizeof(T));
 }
 
 template <typename T, typename C>
-bool SolveGenericRealScalaMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output,
-                                 Map<MatrixSquare<C>> *outputv, bool compute_eigen_vectors) {
-  Eigen::EigenSolver<MatrixSquare<T>> solver(A);
+bool SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output, Map<MatrixSquare<C>> *outputv,
+                            bool compute_eigen_vectors) {
+  Eigen::SelfAdjointEigenSolver<MatrixSquare<T>> solver(A);
   output->noalias() = solver.eigenvalues();
   if (compute_eigen_vectors) {
     outputv->noalias() = solver.eigenvectors();
@@ -89,26 +89,34 @@ bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *out
 }
 
 template <typename T, typename C>
-bool EigCPUKernel<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs) {
+bool EighCPUKernel<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
   // is the Matrix a symmetric matrix(0, all, general matxi, -1 lower triangle, 1 upper triangle)
+  auto symmetric_type = reinterpret_cast<bool *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<C *>(outputs[0]->addr);
   auto output_v_addr = reinterpret_cast<C *>(outputs[1]->addr);
   Map<MatrixSquare<T>> A(A_addr, m_, m_);
+  Map<MatrixSquare<T>> A_(A_addr, m_, m_);
   Map<MatrixSquare<C>> output(output_addr, m_, 1);
   Map<MatrixSquare<C>> outputv(output_v_addr, m_, m_);
+  // selfadjoint matrix
+  if (*symmetric_type) {
+    A_ = A.template selfadjointView<Lower>();
+  } else {
+    A_ = A.template selfadjointView<Upper>();
+  }
   // Real scalar eigen solver
   if constexpr (std::is_same_v<T, float>) {
-    SolveGenericRealScalaMatrix(A, &output, &outputv, compute_eigen_vectors);
+    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors);
   } else if constexpr (std::is_same_v<T, double>) {
-    SolveGenericRealScalaMatrix(A, &output, &outputv, compute_eigen_vectors);
+    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors);
   } else {
     // complex eigen solver
-    SolveComplexMatrix(A, &output, &outputv, compute_eigen_vectors);
+    SolveComplexMatrix(A_, &output, &outputv, compute_eigen_vectors);
   }
   return true;
 }

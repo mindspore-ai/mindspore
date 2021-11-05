@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIG_CPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIG_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGH_CPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGH_CPU_KERNEL_H
 
 #include <vector>
 #include <complex>
@@ -29,15 +29,15 @@ using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
 
 /**
- * this is for Generic matrix eigenvalues and eigenvectors
+ * this is for Symmetric matrix eigenvalues & eigenvectors, can decompress the lower/upper triangle matrix
  * @tparam T , input Type
  * @tparam C , output Type, complex
  */
 template <typename T, typename C>
-class EigCPUKernel : public CPUKernel {
+class EighCPUKernel : public CPUKernel {
  public:
-  EigCPUKernel() = default;
-  ~EigCPUKernel() override = default;
+  EighCPUKernel() = default;
+  ~EighCPUKernel() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -51,30 +51,36 @@ class EigCPUKernel : public CPUKernel {
   TypeId dtype_{kNumberTypeFloat32};
 };
 
-MS_REG_CPU_KERNEL_T_S(
-  Eig,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-  EigCPUKernel, float, float_complex);
-MS_REG_CPU_KERNEL_T_S(Eig,
+MS_REG_CPU_KERNEL_T_S(Eigh,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeComplex128)
-                        .AddOutputAttr(kNumberTypeComplex128),
-                      EigCPUKernel, double, double_complex);
-
-MS_REG_CPU_KERNEL_T_S(Eig,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeComplex64)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeComplex64)
                         .AddOutputAttr(kNumberTypeComplex64),
-                      EigCPUKernel, float_complex, float_complex);
-MS_REG_CPU_KERNEL_T_S(Eig,
+                      EighCPUKernel, float, float_complex);
+MS_REG_CPU_KERNEL_T_S(Eigh,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeComplex128)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
-                      EigCPUKernel, double_complex, double_complex);
+                      EighCPUKernel, double, double_complex);
+
+MS_REG_CPU_KERNEL_T_S(Eigh,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeComplex64)
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeComplex64)
+                        .AddOutputAttr(kNumberTypeComplex64),
+                      EighCPUKernel, float_complex, float_complex);
+MS_REG_CPU_KERNEL_T_S(Eigh,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeComplex128)
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeComplex128)
+                        .AddOutputAttr(kNumberTypeComplex128),
+                      EighCPUKernel, double_complex, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIG_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGH_CPU_KERNEL_H
