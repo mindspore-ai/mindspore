@@ -378,19 +378,20 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     return ret;
   }
 
-  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimMakeTuple};
   size_t outputs_num = 1;
   if (IsRealCNodeKernel(node)) {
     outputs_num = AnfAlgo::GetOutputTensorNum(node);
   }
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
-    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
+    // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
+    // The output may be updataState node for connecting dependencies between subgraphs.
+    auto output_with_index =
+      AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
-    // The depend and makeTuple node need recurse.
-    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimDepend) ||
-        AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
+    // The makeTuple node need recurse.
+    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
       auto output_vector = GetAllOutputWithIndex(output_with_index.first);
       (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
       continue;
