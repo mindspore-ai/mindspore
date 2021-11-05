@@ -77,6 +77,9 @@ MS_REG_CPU_KERNEL_T(Print,
 MS_REG_CPU_KERNEL_T(Print,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
                     PrintCPUKernel, float)
+MS_REG_CPU_KERNEL_T(Print,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+                    PrintCPUKernel, double)
 }  // namespace kernel
 }  // namespace mindspore
 
