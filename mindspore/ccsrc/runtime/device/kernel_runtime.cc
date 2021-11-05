@@ -1035,30 +1035,37 @@ void KernelRuntime::AssignStaticMemoryValueNode(const session::KernelGraph &grap
     if (node_value->isa<Tensor>() || node_value->isa<ValueTuple>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
     } else if (node_value->isa<StringImm>()) {
-      auto value = GetValue<std::string>(node_value);
-      size_t tensor_size = value.size();
-      DeviceAddressPtr address = nullptr;
-      address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
+      const bool use_mem_from_memory_pool = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) ||
+                                            ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+      auto address = CreateDeviceAddressForStringValue(node_value, use_mem_from_memory_pool, graph.graph_id());
       MS_EXCEPTION_IF_NULL(address);
-      if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
-          !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
-        MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
-      } else {
-        MS_LOG(INFO) << "Assign Static Memory for Value node, size:" << tensor_size
-                     << " node:" << value_node->fullname_with_scope();
-        if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph.graph_id()) == nullptr) {
-          MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem
-                            << ", tensor size is: " << tensor_size;
-        }
-      }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
-      ShapeVector shape = {1, SizeToLong(tensor_size)};
-      if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {
-        MS_LOG(EXCEPTION) << "kValueNode SyncHostToDevice fail!";
-      }
     }
   }
   MS_LOG(DEBUG) << "AssignStaticMemoryValueNode end";
+}
+
+DeviceAddressPtr KernelRuntime::CreateDeviceAddressForStringValue(const ValuePtr &value, bool use_mem_pool,
+                                                                  uint32_t graph_id) {
+  auto value_string = GetValue<std::string>(value);
+  size_t tensor_size = value_string.size();
+  DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
+  MS_EXCEPTION_IF_NULL(address);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (use_mem_pool && !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
+    MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
+  } else {
+    MS_LOG(INFO) << "Assign Static Memory for string Value node, size:" << tensor_size;
+    if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph_id) == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+    }
+  }
+  ShapeVector shape = {1, SizeToLong(tensor_size)};
+  if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value_string.data())) {
+    MS_LOG(EXCEPTION) << "kValueNode SyncHostToDevice fail!";
+  }
+  return address;
 }
 
 void KernelRuntime::AssignDynamicMemory(const session::KernelGraph &graph) {

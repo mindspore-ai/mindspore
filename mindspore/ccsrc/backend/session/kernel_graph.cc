@@ -605,7 +605,15 @@ ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const Va
 
 ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_node = std::make_shared<ValueNode>(input_tensor);
+  ValueNodePtr value_node = nullptr;
+  if (input_tensor->data_type() == kObjectTypeString) {
+    std::string value_string;
+    value_string.assign(reinterpret_cast<char *>(input_tensor->data_c()), input_tensor->data().size());
+    StringImmPtr string_imm_value = std::make_shared<StringImm>(value_string);
+    value_node = std::make_shared<ValueNode>(string_imm_value);
+  } else {
+    value_node = std::make_shared<ValueNode>(input_tensor);
+  }
   MS_EXCEPTION_IF_NULL(value_node);
   // construct abstract of value node
   auto type_of_tensor = input_tensor->Dtype();
