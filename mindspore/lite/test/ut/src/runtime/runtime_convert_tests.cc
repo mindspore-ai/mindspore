@@ -48,4 +48,42 @@ TEST_F(RuntimeConvert, relu1) {
   ASSERT_LE(fp32_data[2], 3.0);
   ASSERT_LE(fp32_data[3], 4.0);
 }
+
+TEST_F(RuntimeConvert, relu2) {
+  Model model;
+  auto context = std::make_shared<mindspore::Context>();
+  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
+  Status build_ret = model.Build("./relu.mindir", mindspore::kMindIR_Opt, context);
+  ASSERT_NE(build_ret, Status::OK());
+}
+
+TEST_F(RuntimeConvert, relu3) {
+  size_t size;
+  char *mindir_buf = lite::ReadFile("./relu.mindir", &size);
+  ASSERT_NE(mindir_buf, nullptr);
+
+  Model model;
+  auto context = std::make_shared<mindspore::Context>();
+  context->MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
+  Status build_ret = model.Build(mindir_buf, size, mindspore::kMindIR, context);
+  ASSERT_EQ(build_ret, Status::OK());
+
+  auto inputs = model.GetInputs();
+  auto in = inputs[0];
+  std::vector<float> in_float = {1.0, 2.0, -3.0, -4.0};
+  memcpy(inputs[0].MutableData(), in_float.data(), in.DataSize());
+  auto outputs = model.GetOutputs();
+
+  auto predict_ret = model.Predict(inputs, &outputs);
+  ASSERT_EQ(predict_ret, Status::OK());
+
+  /* checkout output */
+  auto out = outputs[0];
+  void *out_data = out.MutableData();
+  float *fp32_data = reinterpret_cast<float *>(out_data);
+  ASSERT_LE(fp32_data[0], 1.0);
+  ASSERT_LE(fp32_data[1], 2.0);
+  ASSERT_LE(fp32_data[2], 3.0);
+  ASSERT_LE(fp32_data[3], 4.0);
+}
 }  // namespace mindspore

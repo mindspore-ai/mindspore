@@ -445,6 +445,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
+  mindspore::ModelType model_type = ModelTypeMap.at(flags_->model_type_);
 
   MS_LOG(INFO) << "start unified benchmark run";
   std::cout << "start unified benchmark run" << std::endl;
@@ -466,7 +467,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     }
   }
 
-  auto ret = ms_model_.Build(flags_->model_file_, kMindIR, context);
+  auto ret = ms_model_.Build(flags_->model_file_, model_type, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();

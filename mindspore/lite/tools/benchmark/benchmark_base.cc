@@ -222,6 +222,33 @@ void BenchmarkFlags::InitResizeDimsList() {
   }
 }
 
+int BenchmarkBase::CheckModelValid() {
+  this->flags_->in_data_type_ = this->flags_->in_data_type_in_ == "img" ? kImage : kBinary;
+
+  if (!flags_->benchmark_data_type_.empty()) {
+    if (data_type_map_.find(flags_->benchmark_data_type_) == data_type_map_.end()) {
+      MS_LOG(ERROR) << "CalibDataType not supported: " << flags_->benchmark_data_type_.c_str();
+      return RET_ERROR;
+    }
+    msCalibDataType = data_type_map_.at(flags_->benchmark_data_type_);
+    MS_LOG(INFO) << "CalibDataType = " << flags_->benchmark_data_type_.c_str();
+    std::cout << "CalibDataType = " << flags_->benchmark_data_type_.c_str() << std::endl;
+  }
+
+  if (flags_->model_file_.empty()) {
+    MS_LOG(ERROR) << "modelPath is required";
+    std::cerr << "modelPath is required" << std::endl;
+    return RET_ERROR;
+  }
+
+  if (ModelTypeMap.find(flags_->model_type_) == ModelTypeMap.end()) {
+    MS_LOG(ERROR) << "Invalid model type: " << flags_->model_type_;
+    std::cerr << "Invalid model type: " << flags_->model_type_ << std::endl;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int BenchmarkBase::CheckThreadNumValid() {
   if (this->flags_->num_threads_ < kThreadNumMin) {
     MS_LOG(ERROR) << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0";
@@ -333,6 +360,7 @@ int BenchmarkBase::Init() {
     return 1;
   }
   MS_LOG(INFO) << "ModelPath = " << this->flags_->model_file_;
+  MS_LOG(INFO) << "ModelType = " << this->flags_->model_type_;
   MS_LOG(INFO) << "InDataPath = " << this->flags_->in_data_file_;
   MS_LOG(INFO) << "ConfigFilePath = " << this->flags_->config_file_;
   MS_LOG(INFO) << "InDataType = " << this->flags_->in_data_type_in_;
@@ -345,6 +373,7 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "EnableParallel = " << this->flags_->enable_parallel_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
   std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
+  std::cout << "ModelType = " << this->flags_->model_type_ << std::endl;
   std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
   std::cout << "ConfigFilePath = " << this->flags_->config_file_ << std::endl;
   std::cout << "InDataType = " << this->flags_->in_data_type_in_ << std::endl;
@@ -368,6 +397,7 @@ int BenchmarkBase::Init() {
     std::cerr << "Invalid numThreads." << std::endl;
     return RET_ERROR;
   }
+
   static std::vector<std::string> CPU_BIND_MODE_MAP = {"NO_BIND", "HIGHER_CPU", "MID_CPU"};
   if (this->flags_->cpu_bind_mode_ >= 1) {
     MS_LOG(INFO) << "cpuBindMode = " << CPU_BIND_MODE_MAP[this->flags_->cpu_bind_mode_];
@@ -377,23 +407,13 @@ int BenchmarkBase::Init() {
     std::cout << "cpuBindMode = NO_BIND" << std::endl;
   }
 
-  this->flags_->in_data_type_ = this->flags_->in_data_type_in_ == "img" ? kImage : kBinary;
-
-  if (!flags_->benchmark_data_type_.empty()) {
-    if (data_type_map_.find(flags_->benchmark_data_type_) == data_type_map_.end()) {
-      MS_LOG(ERROR) << "CalibDataType not supported: " << flags_->benchmark_data_type_.c_str();
-      return RET_ERROR;
-    }
-    msCalibDataType = data_type_map_.at(flags_->benchmark_data_type_);
-    MS_LOG(INFO) << "CalibDataType = " << flags_->benchmark_data_type_.c_str();
-    std::cout << "CalibDataType = " << flags_->benchmark_data_type_.c_str() << std::endl;
+  auto model_ret = CheckModelValid();
+  if (model_ret != RET_OK) {
+    MS_LOG(ERROR) << "Invalid Model File.";
+    std::cerr << "Invalid Model File." << std::endl;
+    return RET_ERROR;
   }
 
-  if (flags_->model_file_.empty()) {
-    MS_LOG(ERROR) << "modelPath is required";
-    std::cerr << "modelPath is required" << std::endl;
-    return 1;
-  }
   flags_->InitInputDataList();
   flags_->InitResizeDimsList();
   if (!flags_->resize_dims_.empty() && !flags_->input_data_list_.empty() &&

@@ -39,7 +39,6 @@
 #include "include/api/model.h"
 
 namespace mindspore::lite {
-
 class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
  public:
   explicit BenchmarkUnifiedApi(BenchmarkFlags *flags) : BenchmarkBase(flags) {}
