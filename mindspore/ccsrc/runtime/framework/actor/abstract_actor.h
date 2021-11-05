@@ -57,8 +57,6 @@ class AbstractActor : public OpActor<DeviceTensor> {
   KernelTransformType type() const { return type_; }
   const std::vector<const DeviceContext *> &device_contexts() const { return device_contexts_; }
   const std::vector<AnfNodePtr> &output_data_nodes() const { return output_data_nodes_; }
-  const std::vector<AnfNodePtr> &output_result_nodes() const { return output_result_nodes_; }
-  const std::vector<DataArrowPtr> &output_result_arrows() const { return output_result_arrows_; }
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
     return device_tensor_store_keys_;
   }
@@ -96,10 +94,6 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;
   std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
-
-  // The output result nodes and output result arrows of graph output.
-  std::vector<AnfNodePtr> output_result_nodes_;
-  std::vector<DataArrowPtr> output_result_arrows_;
 
   // The dependent device tensor stores,  the dependent expression is pair<index, AnfNode>.
   // Index is the input position, AnfNode is the key of the device tensor store.

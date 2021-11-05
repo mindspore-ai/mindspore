@@ -1317,13 +1317,12 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
     AddControlArrow(no_output_actor, loop_count_actor);
   }
 
+  // Loop count actor --> output actor.
+  AddControlArrow(loop_count_actor, actor_set->output_actor_.get());
+
   // Loop count actor --> data prepare actor.
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   loop_count_actor->data_prepare_aid_ = actor_set->data_prepare_actor_->GetAID();
-
-  // Loop count actor --> output actor.
-  MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
-  loop_count_actor->output_aid_ = actor_set->output_actor_->GetAID();
 }
 
 void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
@@ -1368,6 +1367,10 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         // The graph output is from device tensor store.
         if (IsPersistentDeviceTensor(output_with_index.first)) {
           (void)to_actor->device_tensor_store_keys_.emplace_back(output_position, output_with_index.first);
+          auto device_tensor = AnfAlgo::GetMutableOutputAddr(output_with_index.first, output_with_index.second, false);
+          MS_EXCEPTION_IF_NULL(device_tensor);
+          // The output actor need use the relevant information of node to create output tensor.
+          device_tensor->SetNodeIndex(output_with_index.first, output_with_index.second);
           continue;
         }
 
@@ -1483,16 +1486,22 @@ void GraphScheduler::AddResultArrow(AbstractActor *const from_actor, OutputActor
   MS_EXCEPTION_IF_NULL(from_kernel);
 
   auto result_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), output_position);
-  (void)from_actor->output_result_arrows_.emplace_back(result_arrow);
-  (void)from_actor->output_result_nodes_.emplace_back(from_kernel);
-  (void)to_actor->input_result_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)from_actor->output_data_arrows_.insert(from_actor->output_data_arrows_.begin(), result_arrow);
+  (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
+  to_actor->input_datas_num_++;
+  (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
+
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  // The output actor need use the relevant information of node to create output tensor.
+  device_tensor->SetNodeIndex(from_kernel, from_output_index);
 
   if (from_actor->type_ == KernelTransformType::kSuperKernelActor) {
     (void)to_actor->output_address_persisted_nodes_.insert(from_kernel);
   }
 
   // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
-  UpdateRefCount(from_kernel, from_output_index, true);
+  UpdateRefCount(device_tensor.get(), true);
 }
 
 void GraphScheduler::AddControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor) {
@@ -1521,13 +1530,11 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
                         << ", actual control num: " << actor->input_control_arrow_aids_.size();
     }
 
-    if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->type_ != KernelTransformType::kLoopCountActor) &&
-        (actor->output_data_arrows_.size() == 0) && (actor->output_control_arrows_.size() == 0) &&
-        (actor->output_result_arrows_.size() == 0)) {
+    if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->output_data_arrows_.size() == 0) &&
+        (actor->output_control_arrows_.size() == 0)) {
       MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no user.";
     }
-    if ((actor->type_ != KernelTransformType::kOutputActor) &&
-        (actor->type_ != KernelTransformType::kDataPrepareActor) && (actor->input_datas_num_ == 0) &&
+    if ((actor->type_ != KernelTransformType::kDataPrepareActor) && (actor->input_datas_num_ == 0) &&
         (actor->input_controls_num_ == 0)) {
       MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no source.";
     }
@@ -1554,11 +1561,9 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
   // Check the output actor.
   auto output_actor = actor_set->output_actor_;
   MS_EXCEPTION_IF_NULL(output_actor);
-  if (output_actor->input_result_arrow_aids_.size() + output_actor->device_tensor_store_keys_.size() !=
-      output_actor->outputs_num_) {
+  if (output_actor->input_datas_num_ + output_actor->device_tensor_store_keys_.size() != output_actor->outputs_num_) {
     MS_LOG(EXCEPTION) << "The outputs num of output actor is wrong, the total outputs num: "
-                      << output_actor->outputs_num_
-                      << ", the input result arrows num: " << output_actor->input_result_arrow_aids_.size()
+                      << output_actor->outputs_num_ << ", the input data arrows num: " << output_actor->input_datas_num_
                       << ", the device tensor store num: " << output_actor->device_tensor_store_keys_.size();
   }
 }

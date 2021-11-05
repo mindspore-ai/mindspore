@@ -94,19 +94,8 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
-  // 1.Send graph output result.
-  if (output_result_arrows_.size() != output_result_nodes_.size()) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output result arrows is not equal to the output nodes.");
-  }
-  size_t output_node_index = 0;
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, output_result_nodes_[output_node_index++],
-          result_arrow->from_output_index_, result_arrow->to_input_index_, context);
-  }
-
-  // 2.Send output data.
+  // Must be the execution order: send data --> send control, avoid the illegal timing problem.
+  // 1.Send output data.
   if ((output_data_arrows_.size() != output_data_.size()) ||
       (output_data_arrows_.size() != output_data_nodes_.size())) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
@@ -120,7 +109,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     ++output_data_arrow_index;
   }
 
-  // 3.Send output control.
+  // 2.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
@@ -128,12 +117,11 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     }
   }
 
-  // 4.Send recorder info.
+  // 3.Send recorder info.
   SendRecorderInfo(context);
 
   // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (output_result_arrows_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }

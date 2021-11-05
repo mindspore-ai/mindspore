@@ -866,6 +866,13 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     }
   }
 
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  graph_compiler_->Summary(graph_compiler_info.graphs_);
+
+  // Update device address for output node of graph.
+  // Summary processing will use the output device address, so must be after the summary processing.
+  actor_set->output_actor_->UpdateOutputDeviceAddress();
+
   // Fetch outputs.
   MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
   auto &output_tensors = actor_set->output_actor_->outputs();
@@ -873,13 +880,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     size_t output_position = 0;
     ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
-
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
-  graph_compiler_->Summary(graph_compiler_info.graphs_);
-
-  // Update device address for output node of graph.
-  // Summary processing will use the output device address, so must be after the summary processing.
-  actor_set->output_actor_->UpdateOutputDeviceAddress();
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
