@@ -710,6 +710,39 @@ class AlltoAll(PrimitiveWithInfer):
     def __call__(self, tensor):
         raise NotImplementedError
 
+class NeighborExchangeV2(Primitive):
+    """
+    NeighborExchange is a collective operation.
+
+    NeighborExchange sends data from the local rank to ranks in the send_rank_ids,
+    as while receive data from recv_rank_ids.
+
+    Args:
+        send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
+                                   direction is not send to , set it -1.
+        recv_rank_ids (list(int)): Ranks which the data is received from. 8 rank_ids represents 8 directions,
+                                   if one direction is not recv from , set it -1.
+        send_lens (list(int)): Data lens which send to the send_rank_ids, 4 numbers represent the lens of
+                               [top, bottom, left, right].
+        recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
+                               [top, bottom, left, right].
+        data_format (str): Data format, only support NCHW now.
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+    """
+
+    @prim_attr_register
+    def __init__(self, send_rank_ids, send_lens, recv_rank_ids, recv_lens, data_format,
+                 group=GlobalComm.WORLD_COMM_GROUP):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        self.send_rank_ids = send_rank_ids
+        self.recv_rank_ids = recv_rank_ids
+        self.send_lens = send_lens
+        self.recv_lens = recv_lens
+        self.format = data_format
+        self.add_prim_attr('no_elimilate', True)
+
+    def __call__(self, tensor):
+        raise NotImplementedError
 
 class _MirrorOperator(PrimitiveWithInfer):
     """

@@ -235,6 +235,7 @@ constexpr char GET_TENSOR_SLICE[] = "_GetTensorSlice";
 constexpr char SPLIT[] = "Split";
 constexpr char ALL_TO_ALL[] = "AlltoAll";
 constexpr char NEIGHBOREXCHANGE[] = "NeighborExchange";
+constexpr char NEIGHBOREXCHANGEV2[] = "NeighborExchangeV2";
 constexpr char PERMUTE_BY_AXIS[] = "PermuteByAxis";
 constexpr char CONCAT_BY_AXIS[] = "ConcatByAxis";
 constexpr char SPLIT_BY_AXIS[] = "SplitByAxis";

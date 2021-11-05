@@ -22,12 +22,13 @@ from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, NeighborExchange, AlltoAll,
+from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, NeighborExchange, AlltoAll, NeighborExchangeV2,
                                    Broadcast, _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, AllSwap,
                                    _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator, _MicroStepAllGather)
 from .grad_base import bprop_getters
 from ..operations._inner_ops import Send, Receive
+from ..operations import _grad_ops as G
 
 
 @bprop_getters.register(AllReduce)
@@ -386,6 +387,24 @@ def get_bprop_all_to_all(self):
     def bprop(x, out, dout):
         dx = all_to_all_grad(dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(NeighborExchangeV2)
+def get_bprop_neighborexchangev2(self):
+    """Generate bprop for NeighborExchangeV2."""
+    group = self.group
+    send_rank_ids = self.recv_rank_ids
+    recv_rank_ids = self.send_rank_ids
+    send_lens = self.recv_lens
+    recv_lens = self.send_lens
+    data_format = self.data_format
+    neighborexchangev2_grad = G.NeighborExchangeV2Grad(send_rank_ids, send_lens, recv_rank_ids,
+                                                       recv_lens, data_format, group)
+
+    def bprop(x, out, dout):
+        return (neighborexchangev2_grad(dout),)
 
     return bprop
 
