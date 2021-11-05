@@ -15,8 +15,9 @@
 """Linear algebra submodule"""
 from .. import numpy as mnp
 from .. import ops
+from .ops import SolveTriangular
 
-__all__ = ['block_diag']
+__all__ = ['block_diag', 'solve_triangular']
 
 
 def block_diag(*arrs):
@@ -82,3 +83,69 @@ def block_diag(*arrs):
         accum = ops.Pad(((0, 0), (0, c)))(accum)
         accum = mnp.concatenate([accum, arr], axis=0)
     return accum
+
+
+def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
+                     overwrite_b=False, debug=None, check_finite=True):
+    """
+    Solve the equation `a x = b` for `x`, assuming a is a triangular matrix.
+
+    Args:
+        A (Tensor): A triangular matrix of shape :math:`(N, N)`.
+        b (Tensor): A tensor of shape :math:`(M,)` or :math:`(M, N)`.
+            Right-hand side matrix in :math:`A x = b`.
+        lower (bool, optional): Use only data contained in the lower triangle of `a`.
+            Default is to use upper triangle.
+        trans (0, 1, 2, 'N', 'T', 'C', optional):
+            Type of system to solve:
+
+            ========  =========
+            trans     system
+            ========  =========
+            0 or 'N'  a x  = b
+            1 or 'T'  a^T x = b
+            2 or 'C'  a^H x = b
+            ========  =========
+        unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
+            will not be referenced.
+        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance)
+        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        x (Tensor): A tensor of shape :math:`(M,)` or :math:`(M, N)`,
+            which is the solution to the system :math:`A x = b`.
+            Shape of :math:`x` matches :math:`b`.
+
+    Raises:
+        LinAlgError: If :math:`A` is singular
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        Solve the lower triangular system :math:`A x = b`, where:
+
+                 [3  0  0  0]       [4]
+            A =  [2  1  0  0]   b = [2]
+                 [1  0  1  0]       [4]
+                 [1  1  1  1]       [2]
+
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> import mindspore.numpy as mnp
+        >>> from mindspore.scipy.linalg import solve_triangular
+        >>> A = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
+        >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
+        >>> x = solve_triangular(A, b, lower=True, unit_diagonal=False, trans='N')
+        >>> x
+        Tensor(shape=[4], dtype=Float32, value= [ 1.33333337e+00, -6.66666746e-01,  2.66666651e+00, -1.33333313e+00])
+        >>> mnp.dot(A, x)  # Check the result
+        Tensor(shape=[4], dtype=Float32, value= [ 4.00000000e+00,  2.00000000e+00,  4.00000000e+00,  2.00000000e+00])
+    """
+    if isinstance(trans, int):
+        trans_table = ['N', 'T', 'C']
+        trans = trans_table[trans]
+    solve = SolveTriangular(lower, unit_diagonal, trans)
+    return solve(A, b)

@@ -20,50 +20,10 @@ import numpy as np
 from scipy.linalg import solve_triangular
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import PrimitiveWithInfer, prim_attr_register
-from mindspore._checkparam import Validator as validator
-from mindspore.common import dtype as mstype
+from mindspore.scipy.linalg import solve_triangular as mind_solve
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 np.random.seed(0)
-
-
-class SolveTriangular(PrimitiveWithInfer):
-    """
-        SolveTriangular op frontend implementation
-    """
-
-    @prim_attr_register
-    def __init__(self, lower: bool, unit_diagonal: bool, trans: str):
-        """Initialize SolveTriangular"""
-        self.lower = validator.check_value_type(
-            "lower", lower, [bool], self.name)
-        self.unit_diagonal = validator.check_value_type(
-            "unit_diagonal", unit_diagonal, [bool], self.name)
-        self.trans = validator.check_value_type(
-            "trans", trans, [str], self.name)
-
-        self.init_prim_io_names(inputs=['A', 'b'], outputs=['output'])
-
-    def __infer__(self, A, b):
-        out_shapes = b['shape']
-        return {
-            'shape': tuple(out_shapes),
-            'dtype': A['dtype'],
-            'value': None
-        }
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid(x_dtype, [mstype.float32, mstype.float64],
-                                           self.name, True)
-        return x_dtype
-
-
-def mind_solve(a, b, trans="N", lower=False, unit_diagonal=False,
-               overwrite_b=False, debug=None, check_finite=True):
-    solve = SolveTriangular(
-        lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    return solve(a, b)
 
 
 def match(a, b, lower, unit_diagonal, trans):
@@ -86,7 +46,7 @@ def match(a, b, lower, unit_diagonal, trans):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [False])
-def test_2D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
+def test_2d(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
     """
     Feature: ALL TO ALL
     Description:  test cases for [N x N] X [N X 1]
@@ -106,7 +66,7 @@ def test_2D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [False, True])
-def test_1D(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
+def test_1d(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
     """
     Feature: ALL TO ALL
     Description: test cases for [N x N] X [N]
