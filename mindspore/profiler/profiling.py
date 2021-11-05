@@ -68,7 +68,7 @@ class Profiler:
 
     This API enables MindSpore users to profile the performance of neural network.
     Profiler supports Ascend and GPU, both of them are used in the same way,
-    but only output_path in args works on GPU.
+    but only output_path in args works on GPU. And it can only be initialized once.
 
     Args:
         output_path (str): Output data path.
@@ -128,8 +128,13 @@ class Profiler:
     _opcompute_output_filename_target = "output_op_compute_time_"
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
     _has_analysed = False
+    _has_initialized = False
 
     def __init__(self, **kwargs):
+        if Profiler._has_initialized:
+            msg = "Do not init twice in the profiler."
+            raise RuntimeError(msg)
+        Profiler._has_initialized = True
         _environment_check()
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -250,6 +255,7 @@ class Profiler:
 
         elif self._device_target and self._device_target == "Ascend":
             self._ascend_analyse()
+        logger.info("Profiling: all the data have been analyzed.")
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data"""
@@ -272,10 +278,12 @@ class Profiler:
         source_path = validate_and_normalize_path(source_path)
         hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
         hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename)
+        logger.info("Profiling: analyzing hwts data.")
         hwtslog_parser.execute()
 
         # parse Framework file, and get the relation of op and tasks
         framework_parser = FrameworkParser(job_id, self._dev_id, self._rank_id, self._output_path)
+        logger.info("Profiling: analyzing framework data.")
         framework_parser.parse()
         op_task_dict = framework_parser.to_task_id_full_op_name_dict()
         if not op_task_dict:
@@ -290,6 +298,7 @@ class Profiler:
             hwts_output_filename, opcompute_output_filename,
             op_task_dict, self._output_path, self._rank_id
         )
+        logger.info("Profiling: analyzing the operation compute time.")
         optime_parser.execute()
 
         # parse DATA_PREPROCESS.dev.AICPU file, write output_data_preprocess_aicpu_x.txt
@@ -297,14 +306,17 @@ class Profiler:
         output_data_preprocess_aicpu = os.path.join(self._output_path, output_data_preprocess_aicpu)
         output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
         aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
+        logger.info("Profiling: analyzing the data preprocess data.")
         aicpu_data_parser.execute()
 
         # Parsing minddata AICPU profiling
+        logger.info("Profiling: analyzing the minddata AICPU data.")
         MinddataParser.execute(source_path, self._output_path, self._rank_id)
 
         # parse minddata pipeline operator and queue
         try:
             pipeline_parser = MinddataPipelineParser(self._output_path, self._rank_id, self._output_path)
+            logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
             pipeline_parser.parse()
         except ProfilerException as err:
             logger.warning(err.message)
@@ -312,12 +324,14 @@ class Profiler:
         # Analyze minddata information
         try:
             md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._rank_id, self._output_path)
+            logger.info("Profiling: analyzing the minddata information.")
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
 
         # analyse op compute time info
         try:
+            logger.info("Profiling: analyzing the operation compute time.")
             self._analyser_op_info()
         except ProfilerException as err:
             logger.warning(err.message)
@@ -327,12 +341,14 @@ class Profiler:
         is_training_mode_flag = False
 
         try:
+            logger.info("Profiling: analyzing the step trace data.")
             points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
             logger.warning(err.message)
 
         # analyse timeline info
         try:
+            logger.info("Profiling: analyzing the timeline data.")
             self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
@@ -340,6 +356,7 @@ class Profiler:
         # analyse memory usage info
         if self._profile_memory:
             try:
+                logger.info("Profiling: analyzing the memory usage info.")
                 self._analyse_memory_usage(points)
             except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
                 logger.warning(err.message)
@@ -347,6 +364,7 @@ class Profiler:
         # analyse hccl profiler info
         if self._profile_communication:
             try:
+                logger.info("Profiling: analyzing the hccl profiler info.")
                 self._analyse_hccl_info()
             except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
                 logger.warning(err.message)
@@ -354,8 +372,8 @@ class Profiler:
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
                                    self._dev_id, self._rank_id, is_training_mode_flag)
+        logger.info("Profiling: analyzing the operation FLOPs.")
         flops_parser.execute()
-
         os.environ['PROFILING_MODE'] = str("false")
         self._ascend_profiler.stop()
 
@@ -370,6 +388,7 @@ class Profiler:
         # parse minddata pipeline operator and queue for GPU
         try:
             pipeline_parser = MinddataPipelineParser(self._output_path, self._dev_id, self._output_path)
+            logger.info("Profiling: analyzing the minddata pipeline operator and queue for GPU.")
             pipeline_parser.parse()
         except ProfilerException as err:
             logger.warning(err.message)
@@ -377,12 +396,14 @@ class Profiler:
         # Analyze minddata information
         try:
             md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._dev_id, self._output_path)
+            logger.info("Profiling: analyzing the minddata information.")
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
 
         # analyse step trace info
         try:
+            logger.info("Profiling: analyzing the step trace info.")
             self._analyse_step_trace(
                 is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
                 is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
