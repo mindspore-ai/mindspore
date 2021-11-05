@@ -311,6 +311,12 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
   }
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || graph->IsDatasetGraph());
+  auto iter_num = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
+  if (graph->IsDatasetGraph()) {
+    MS_LOG(INFO) << "graph: " << graph->graph_id() << " is dataset graph, not creating graph history file.";
+    return;
+  }
   std::string execution_order_path = json_parser.path() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
   std::string file_name_to_check =
     execution_order_path + "/ms_global_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv";
@@ -326,7 +332,15 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     MS_LOG(WARNING) << "Open file for saving graph global execution order failed.";
     return;
   }
-  fout << std::to_string(json_parser.cur_dump_iter()) + "\n";
+  if (sink_mode && json_parser.async_dump_enabled()) {
+    // for async dump when sink_mode = true, cur_dump_iter() = current_epoch
+    // dump history for all iterations in the epoch
+    for (int i = 0; i < iter_num; i++) {
+      fout << std::to_string(json_parser.cur_dump_iter() * iter_num + i) + "\n";
+    }
+  } else {
+    fout << std::to_string(json_parser.cur_dump_iter()) + "\n";
+  }
   fout.close();
   ChangeFileMode(file_name, S_IRUSR);
 }
