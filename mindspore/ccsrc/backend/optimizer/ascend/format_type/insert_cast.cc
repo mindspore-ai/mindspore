@@ -40,6 +40,9 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   for (auto &update_state : update_states) {
     manager->SetEdge(update_state.first, update_state.second, cnode);
   }
+  if (manager->node_users()[orig_cnode].empty()) {
+    return cnode;
+  }
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
