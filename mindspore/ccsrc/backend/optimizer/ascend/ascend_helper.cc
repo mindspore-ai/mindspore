@@ -163,6 +163,9 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   for (auto &update_state : update_states) {
     manager->SetEdge(update_state.first, update_state.second, node);
   }
+  if (manager->node_users()[orig_node].empty()) {
+    return node;
+  }
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   size_t out_num = AnfAlgo::GetOutputTensorNum(node);
