@@ -21,11 +21,13 @@
 #include <memory>
 #include "ops/gather_nd.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
@@ -33,37 +35,63 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
   auto input_rank = input_shape.size();
   auto indices_rank = indices_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("Input of indices data", SizeToLong(input_rank), kGreaterEqual,
                                            indices_shape[indices_rank - 1], prim_name);
   std::vector<int64_t> output_shape;
+  std::vector<int64_t> min_output_shape;
+  std::vector<int64_t> max_output_shape;
   for (size_t i = 0; i < indices_rank - 1; i++) {
     output_shape.push_back(indices_shape[i]);
   }
   for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
     output_shape.push_back(input_shape[i]);
   }
-  return std::make_shared<abstract::Shape>(output_shape);
+  if (min_shape.empty() || max_shape.empty()) {
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+  for (size_t i = 0; i < indices_rank - 1; i++) {
+    min_output_shape.push_back(indices_shape[i]);
+  }
+  for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
+    min_output_shape.push_back(min_shape[i]);
+  }
+  for (size_t i = 0; i < indices_rank - 1; i++) {
+    max_output_shape.push_back(indices_shape[i]);
+  }
+  for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
+    max_output_shape.push_back(max_shape[i]);
+  }
+  return std::make_shared<abstract::Shape>(output_shape, min_output_shape, max_output_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64};
+TypePtr GatherNdInferType(const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_x", input_args[0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  (void)types.emplace("x1", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x2", input_args[kInputIndex0]->BuildType());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, all_types, "GatherNd");
 }
 }  // namespace
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kInputNum = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
+                                           prim_name);
+  auto infer_type = GatherNdInferType(input_args);
+  auto infer_shape = GatherNdInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameGatherNd, GatherNd);
+REGISTER_PRIMITIVE_EVAL_IMPL(GatherNd, prim::kPrimGatherNd, GatherNdInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

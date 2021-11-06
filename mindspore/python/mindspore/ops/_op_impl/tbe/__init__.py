@@ -147,6 +147,7 @@ from .atomic_addr_clean import _atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
 from .gather_v2_ds import _gather_v2_ds_tbe
 from .gather_nd import _gather_nd_tbe
+from .gather_nd_ds import _gather_nd_ds_tbe
 from .bn_training_reduce import _bn_training_reduce_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
 from .bn_training_update import _bn_training_update_tbe
