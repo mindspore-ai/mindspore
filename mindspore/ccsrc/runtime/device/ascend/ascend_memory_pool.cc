@@ -31,8 +31,8 @@ static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
-    MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
-                    << "] is smaller than required size[" << size << "]";
+    MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size
+                    << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics();
     return 0;
   }
   auto alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE;

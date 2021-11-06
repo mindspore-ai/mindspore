@@ -188,6 +188,9 @@ class AnfRuntimeAlgorithm {
   static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = true);
   // get mutable output device addr of anf_node
   static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = true);
+  static DeviceAddressPtr GetMutableOutputAddr(const KernelWithIndex &node_output_index, bool skip_nop_node) {
+    return GetMutableOutputAddr(node_output_index.first, node_output_index.second, skip_nop_node);
+  }
   // check whether output addr is exist or not
   static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = false);
   // check whether workspace addr is exist or not

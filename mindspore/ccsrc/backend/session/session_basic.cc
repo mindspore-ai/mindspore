@@ -1443,8 +1443,10 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-      input_tensor_info->input_tensors_mask.emplace_back(
-        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeTensorMask : kParameterDataTensorMask);
+      const auto &value_ptr = GetValueNode(real_input);
+      MS_EXCEPTION_IF_NULL(value_ptr);
+      input_tensor_info->input_tensors_mask.emplace_back(value_ptr->isa<StringImm>() ? kValueNodeTensorMask
+                                                                                     : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask

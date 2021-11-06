@@ -156,6 +156,8 @@ class KernelRuntime {
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
   void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
                              const AnfNodePtr &kernel, bool mock);
+  void SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &mem_scheduler, const KernelWithIndex &output,
+                            const session::KernelGraph &graph, bool mock);
 
   void AssignCommunicationMem(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
