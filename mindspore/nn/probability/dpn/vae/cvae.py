@@ -88,9 +88,6 @@ class ConditionalVAE(Cell):
         return recon_x
 
     def construct(self, x, y):
-        """
-        The input are x and y, so the WithLossCell method needs to be rewritten when using cvae interface.
-        """
         mu, log_var = self._encode(x, y)
         std = self.exp(0.5 * log_var)
         z = self.normal(self.shape(mu), mu, std, seed=0)

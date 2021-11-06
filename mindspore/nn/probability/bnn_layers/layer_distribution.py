@@ -107,13 +107,13 @@ class NormalPosterior(Cell):
 
         self.normal = Normal()
 
-    def std_trans(self, std_pre):
+    def _std_trans(self, std_pre):
         """Transform std_pre to prevent its value being zero."""
         std = 1e-6 + P.Log()(P.Exp()(std_pre) + 1)
         return std
 
     def construct(self, *inputs):
-        std = self.std_trans(self.untransformed_std)
+        std = self._std_trans(self.untransformed_std)
         return self.normal(*inputs, mean=self.mean, sd=std)
 
 

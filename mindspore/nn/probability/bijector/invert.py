@@ -74,23 +74,35 @@ class Invert(Bijector):
     def inverse(self, y):
         """
         Forward transformation: transform the input value to another distribution.
+
+        Args:
+            y (Tensor): Tensor of any shape.
         """
         return self.bijector("forward", y)
 
     def forward(self, x):
         """
         Inverse transformation: transform the input value back to the original distribution.
+
+        Args:
+            x (Tensor): Tensor of any shape.
         """
         return self.bijector("inverse", x)
 
     def inverse_log_jacobian(self, y):
         """
         Logarithm of the derivative of the forward transformation.
+
+        Args:
+            y (Tensor): Tensor of any shape.
         """
         return self.bijector("forward_log_jacobian", y)
 
     def forward_log_jacobian(self, x):
         """
         Logarithm of the derivative of the inverse transformation.
+
+        Args:
+            x (Tensor): Tensor of any shape.
         """
         return self.bijector("inverse_log_jacobian", x)
