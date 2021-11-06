@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_MINIMUM_GRAD_H_
 #define MINDSPORE_CORE_OPS_MINIMUM_GRAD_H_
+#include <vector>
+#include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
@@ -23,9 +25,9 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMinimumGrad = "MinimumGrad";
-class MS_CORE_API MinimumGrad : public PrimitiveC {
+class MinimumGrad : public PrimitiveC {
  public:
-  MinimumGrad() : PrimitiveC(kNameMinimumGrad) {}
+  MinimumGrad() : PrimitiveC(kNameMinimumGrad) { InitIOName({"x1", "x2", "grads"}, {"y1", "y2"}); }
   ~MinimumGrad() = default;
   MS_DECLARE_PARENT(MinimumGrad, PrimitiveC);
   void Init(const bool grad_x = true, const bool grad_y = true);
@@ -34,6 +36,9 @@ class MS_CORE_API MinimumGrad : public PrimitiveC {
   bool get_grad_x() const;
   bool get_grad_y() const;
 };
+AbstractBasePtr MinimumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args);
+using PrimMinimumGradPtr = std::shared_ptr<MinimumGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
