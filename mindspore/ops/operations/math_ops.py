@@ -1414,12 +1414,14 @@ class AccumulateNV2(PrimitiveWithInfer):
     Inputs:
         - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
           is made up of multiple tensors whose dtype is number to be added together.
+          Each element of tuple or list should have the same shape.
 
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `x`.
 
     Raises:
         TypeError: If `x` is neither tuple nor list.
+        ValueError: If there is an input element with a different shape.
 
     Supported Platforms:
         ``Ascend``
