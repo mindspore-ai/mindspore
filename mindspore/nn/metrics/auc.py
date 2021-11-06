@@ -30,7 +30,7 @@ def auc(x, y, reorder=False):
                            If the curve is non-ascending, the result will be wrong. Default: False.
 
     Returns:
-        area (float): Compute result.
+        Scalar (float): Compute result.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -45,7 +45,7 @@ def auc(x, y, reorder=False):
         >>> metric.clear()
         >>> metric.update(y_pred, y)
         >>> fpr, tpr, thre = metric.eval()
-        >>> output = auc(fpr, tpr)
+        >>> output = nn.auc(fpr, tpr)
         >>> print(output)
         0.5357142857142857
     """
