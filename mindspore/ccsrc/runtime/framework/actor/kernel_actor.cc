@@ -85,7 +85,13 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
 
   // Infer kernel shape and update abstract info for dynamic shape kernel.
   if (is_dynamic_shape_) {
-    device_contexts_[0]->UpdateDynamicShape(kernel_);
+    try {
+      device_contexts_[0]->UpdateDynamicShape(kernel_);
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
+      std::string error_info = "Update Dynamic shape exception: " + kernel_->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    }
   }
 
   FetchInputDeviceTensor(context);

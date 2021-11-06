@@ -94,7 +94,7 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
   // Inputs: a tuple of tensor.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
-  auto arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  auto arg = CheckArg<AbstractSequeue>(op_name, args_spec_list, 0);
   if (arg->elements().empty()) {
     MS_LOG(EXCEPTION) << "Arg elements is empty.";
   }
@@ -838,7 +838,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   if (it_first != shape.end()) {
     auto it_second = find(it_first + 1, shape.end(), -1);
     if (it_second != shape.end()) {
-      MS_LOG(EXCEPTION) << "At most one component of input shape can be -1";
+      MS_LOG(EXCEPTION) << "At most one component of input shape can be -1, but got " << shape;
     }
     auto index = LongToSize(std::distance(shape.begin(), it_first));
     int64_t infer_value = x_num;

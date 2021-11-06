@@ -98,7 +98,12 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto iter = dynamic_shape_depends.find(primitive->ToString());
   if (iter != dynamic_shape_depends.end()) {
-    return iter->second;
+    int64_t cnode_input_size = SizeToLong(cnode->inputs().size());
+    std::vector<int64_t> res;
+    auto ori = iter->second;
+    (void)std::copy_if(ori.begin(), ori.end(), std::back_inserter(res),
+                       [&](auto idx) { return idx < cnode_input_size - 1; });
+    return res;
   }
   return {};
 }
@@ -123,6 +128,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimReal, {InferImplReal, nullptr, true}},
     // Array
     {prim::kPrimRange, {InferImplRange, nullptr, true}},
+    {prim::kPrimStack, {InferImplStack, nullptr, true}},
     {prim::kPrimScalarToArray, {InferImplScalarToArray, nullptr, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, nullptr, true}},
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, nullptr, true}},
@@ -255,7 +261,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimLinSpace, {InferImplLinSpace, nullptr, true}},
 
     {prim::kPrimLess, {InferImplLess, nullptr, true}},
-    {prim::kPrimStack, {InferImplStack, nullptr, true}},
     {prim::kPrimPad, {InferImplPad, nullptr, true}},
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, {InferImplDiv, nullptr, true}},
