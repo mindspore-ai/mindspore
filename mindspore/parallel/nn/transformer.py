@@ -48,7 +48,8 @@ __all__ = [
     "TransformerDecoderLayer",
     "Transformer",
     "TransformerOpParallelConfig",
-    "EmbeddingOpParallelConfig"]
+    "EmbeddingOpParallelConfig",
+    "TransformerRecomputeConfig"]
 
 
 class EmbeddingOpParallelConfig(_Config):
@@ -112,6 +113,76 @@ class EmbeddingOpParallelConfig(_Config):
         return self._dp_mp_config
 
 
+class TransformerRecomputeConfig(_Config):
+    r"""
+        TransformerRecomputeConfig for the setting recompute attributes for encoder/decoder layers.
+
+        Args:
+            recompute (bool): Enable recomputation of the transformer block or not. Default: False.
+                parallel_optimizer_comm_recompute (bool): The model parallel way. Default: 1
+            parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
+                introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
+                Default: False.
+            mp_comm_recompute (bool): Specifies whether the model parallel communication operators
+                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
+            recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: False.
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
+            >>> mp_comm_recompute=True, recompute_slice_activation=True)
+    """
+
+    def __init__(self, recompute=False, parallel_optimizer_comm_recompute=False,
+                 mp_comm_recompute=True, recompute_slice_activation=False):
+        Validator.check_bool(recompute, "recompute")
+        Validator.check_bool(parallel_optimizer_comm_recompute, "parallel_optimizer_comm_recompute")
+        Validator.check_bool(mp_comm_recompute, "mp_comm_recompute")
+        Validator.check_bool(recompute_slice_activation, "recompute_slice_activation")
+        self._recompute = recompute
+        self._parallel_optimizer_comm_recompute = parallel_optimizer_comm_recompute
+        self._mp_comm_recompute = mp_comm_recompute
+        self._recompute_slice_activation = recompute_slice_activation
+
+    @property
+    def recompute(self):
+        return self._recompute
+
+    @recompute.setter
+    def recompute(self, value):
+        Validator.check_bool(value, "recompute")
+        self._recompute = value
+
+    @property
+    def parallel_optimizer_comm_recompute(self):
+        return self._parallel_optimizer_comm_recompute
+
+    @parallel_optimizer_comm_recompute.setter
+    def parallel_optimizer_comm_recompute(self, value):
+        Validator.check_bool(value, "parallel_optimizer_comm_recompute")
+        self._parallel_optimizer_comm_recompute = value
+
+    @property
+    def mp_comm_recompute(self):
+        return self._mp_comm_recompute
+
+    @mp_comm_recompute.setter
+    def mp_comm_recompute(self, value):
+        Validator.check_bool(value, "mp_comm_recompute")
+        self._mp_comm_recompute = value
+
+    @property
+    def recompute_slice_activation(self):
+        return self._recompute_slice_activation
+
+    @recompute_slice_activation.setter
+    def recompute_slice_activation(self, value):
+        Validator.check_bool(value, "recompute_slice_activation")
+        self._recompute_slice_activation = value
+
+_DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG = TransformerRecomputeConfig()
+
 class TransformerOpParallelConfig(_Config):
     r"""
         TransformerOpParallelConfig for the setting global data parallel, model parallel and fusion group.
@@ -131,17 +202,21 @@ class TransformerOpParallelConfig(_Config):
             micro_batch_num (int): The microe size of the batches for the pipeline training. Default: 1.
             optimizer_shard (bool): Whether to enable optimizer shard. Default False.
             gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
-            recompute (bool): Enable recomputation of the transformer block or not. Default: False.
+            recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
+                the transformer block. Default: The default configuration of TransformerRecomputeConfig.
             vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
 
         Examples:
-            >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1)
+            >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
+            >>> mp_comm_recompute=True, recompute_slice_activation=True)
+            >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
     """
 
-    def __init__(self, data_parallel=1, model_parallel=1, pipeline_stage=1, micro_batch_num=1, recompute=False,
+    def __init__(self, data_parallel=1, model_parallel=1, pipeline_stage=1, micro_batch_num=1,
+                 recompute=_DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG,
                  optimizer_shard=False, gradient_aggregation_group=4, vocab_emb_dp=True):
         self.recompute = recompute
         self.optimizer_shard = optimizer_shard
@@ -156,7 +231,10 @@ class TransformerOpParallelConfig(_Config):
 
     @recompute.setter
     def recompute(self, value):
-        Validator.check_bool(value, "recompute")
+        if not isinstance(value, TransformerRecomputeConfig) and not isinstance(value, bool):
+            raise TypeError(f"recompute should be a TransformerRecomputeConfig/bool, but got {type(value).__name__}.")
+        if isinstance(value, bool):
+            logger.warning(f"TransformerRecomputeConfig is recommended as the recompute configuration type.")
         self._recompute = value
 
     @property
@@ -1726,8 +1804,15 @@ def _get_lambda_func(total_layer=None):
         dis = max(int(layers / parallel_config.gradient_aggregation_group), 1)
         network.set_comm_fusion(int((layer_id + offset) / dis) + 1)
         # Used for enabling recomputation of the block
-        if parallel_config.recompute:
-            network.recompute()
+        if isinstance(parallel_config.recompute, bool):
+            if parallel_config.recompute:
+                network.recompute()
+        else:
+            if parallel_config.recompute.recompute:
+                network.recompute(parallel_optimizer_comm_recompute=
+                                  parallel_config.recompute.parallel_optimizer_comm_recompute,
+                                  mp_comm_recompute=parallel_config.recompute.mp_comm_recompute,
+                                  recompute_slice_activation=parallel_config.recompute.recompute_slice_activation)
 
     return _set_parallel_configure_for_layer
 

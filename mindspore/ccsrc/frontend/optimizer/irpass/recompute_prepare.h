@@ -21,6 +21,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
+#include "frontend/parallel/context.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
@@ -47,6 +48,13 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
         real_output->AddAttr(kAttrRecompute, MakeValue(false));
+        if (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::SEMI_AUTO_PARALLEL ||
+            parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::AUTO_PARALLEL) {
+          auto prim = GetCNodePrimitive(real_output);
+          if (prim->HasAttr(kAttrSliceActivation) && GetValue<bool>(prim->GetAttr(kAttrSliceActivation))) {
+            real_output->AddAttr(kAttrSliceActivation, MakeValue(true));
+          }
+        }
       }
     }
     fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);

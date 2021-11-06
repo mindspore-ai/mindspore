@@ -652,9 +652,9 @@ def test_transformer_parallel_config():
     with pytest.raises(TypeError):
         parallel_test_config.recompute = 1
 
-    parallel_test_config.recompute = False
+    parallel_test_config.recompute.recompute = False
 
-    assert not parallel_test_config.recompute
+    assert not parallel_test_config.recompute.recompute
 
 
 def test_parallel_config():

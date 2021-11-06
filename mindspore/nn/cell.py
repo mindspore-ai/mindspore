@@ -1499,6 +1499,16 @@ class Cell(Cell_):
         for param in self.trainable_params():
             param.parallel_optimizer_comm_recompute = parallel_optimizer_comm_recompute
 
+    def _recompute_slice_activation(self, slice_activation=False):
+        """
+        Slice the cell output which would remains in memory.
+        """
+        for _, value in self._primitives.items():
+            if value:
+                value.add_prim_attr("slice_activation", slice_activation)
+        for cell in self.cells():
+            cell._recompute_slice_activation(slice_activation)
+
     def _recompute(self, mode=True, output_recompute=False):
         """
         Set the cell recomputed.
@@ -1554,9 +1564,11 @@ class Cell(Cell_):
                 raise ValueError("Currently, the communication operator allgathers introduced by optimizer shard "
                                  "are not support recomputation in pipeline parallel.")
             self._parallel_optimizer_comm_recompute(kwargs['parallel_optimizer_comm_recompute'])
+        if 'recompute_slice_activation' in kwargs.keys():
+            self._recompute_slice_activation(kwargs['recompute_slice_activation'])
 
         for key, _ in kwargs.items():
-            if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute'):
+            if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute', 'recompute_slice_activation'):
                 raise ValueError("Recompute keyword %s is not recognized!" % key)
 
     def infer_param_pipeline_stage(self):

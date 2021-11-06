@@ -471,6 +471,7 @@ constexpr auto kAttrPadding = "padding";
 constexpr auto kAttrNonTask = "non_task";
 constexpr auto kAttrIsGrad = "is_grad";
 constexpr auto kAttrRecompute = "recompute";
+constexpr auto kAttrSliceActivation = "slice_activation";
 constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
 constexpr auto kAttrParallelDimInfo = "parallel_dim_info";
 constexpr auto kAttrParallelFusionType = "parallel_fusion_type";
