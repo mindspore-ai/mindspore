@@ -147,46 +147,34 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
     if (io_block->wait()) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
-      continue;
-    }
-    if (io_block->eoe()) {
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
+    } else if (io_block->eoe()) {
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
-      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
-      continue;
-    }
-    if (io_block->eof()) {
+    } else if (io_block->eof()) {
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
-      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
-      continue;
-    }
-
-    // load TensorRow
-    std::vector<int64_t> keys;
-    RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-    if (keys.empty() == true) {
-      {
-        std::unique_lock<std::mutex> lock(ended_worker_mutex_);
-        ended_worker_++;
-        if (ended_worker_ == num_workers_) shard_reader_->Close();
+    } else {
+      // load TensorRow
+      std::vector<int64_t> keys;
+      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
+      if (keys.empty() == true) {
+        {
+          std::unique_lock<std::mutex> lock(ended_worker_mutex_);
+          ended_worker_++;
+          if (ended_worker_ == num_workers_) shard_reader_->Close();
+        }
+        return Status::OK();  // empty key is a quit signal for workers
       }
-      return Status::OK();  // empty key is a quit signal for workers
-    }
 
-    const uint64_t row_id = keys[0];
-    TensorRow fetched_row;
+      const uint64_t row_id = keys[0];
+      TensorRow fetched_row;
 
-    // Get the next row. Push it up to the output connector.
-    if (row_id % LOG_INTERVAL == 0) {
-      MS_LOG(DEBUG) << "MindRecord operator consumed row " << row_id << " by worker " << worker_id << ".";
+      // Get the next row. Push it up to the output connector.
+      if (row_id % LOG_INTERVAL == 0) {
+        MS_LOG(DEBUG) << "MindRecord operator consumed row " << row_id << " by worker " << worker_id << ".";
+      }
+      RETURN_IF_NOT_OK(GetRowFromReader(&fetched_row, row_id, worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(fetched_row)));
     }
-    RETURN_IF_NOT_OK(GetRowFromReader(&fetched_row, row_id, worker_id));
-    RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(fetched_row)));
     RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
@@ -295,6 +283,7 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
 // again.
 Status MindRecordOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
+  RETURN_IF_NOT_OK(WaitForWorkers());
   RETURN_IF_NOT_OK(MappableLeafOp::Reset());  // Call our super class reset first.
   return Status::OK();
 }

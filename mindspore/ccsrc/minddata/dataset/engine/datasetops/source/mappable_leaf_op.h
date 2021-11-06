@@ -97,6 +97,7 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// \return Status The status code returned
   Status Reset() override;
   Status WaitForWorkers() override;
+  Status SendQuitFlagToWorker(int32_t worker_id) override;
 };
 }  // namespace dataset
 }  // namespace mindspore
