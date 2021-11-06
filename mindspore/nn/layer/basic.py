@@ -148,11 +148,11 @@ class Dropout(Cell):
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
         """Initialize Dropout."""
         super(Dropout, self).__init__()
+        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError(f"For '{self.cls_name}', the 'keep_prob' should be a number in range (0, 1], "
                              f"but got {keep_prob}.")
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
-        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         self.keep_prob = keep_prob
         seed0, seed1 = _get_graph_seed(0, "dropout")
         self.seed0 = seed0

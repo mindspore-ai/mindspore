@@ -2143,66 +2143,11 @@ class AvgPool(_Pool):
 
 class Conv2DBackpropInput(Primitive):
     r"""
-    Computes the gradients of convolution with respect to the input.
-
-    Args:
-        out_channel (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value is for both the height and the width of
-            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
-            width of the kernel.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-        pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
-                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
-        pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
-        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
-                       2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (Union[int. tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
-            Default: 1.
-        group (int): Splits input into groups. Default: 1.
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
-
-    Inputs:
-        - **dout** (Tensor) - The gradients write respect to the output of the convolution. The shape conforms
-          to the default data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(\text{ks_w}, \text{ks_h})`, where :math:`\text{ks_w}`
-          and :math:`\text{ks_h}` are the height and width of the convolution kernel, then the shape is
-          :math:`(C_{out}, C_{in}, \text{ks_w}, \text{ks_h})`.
-        - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
-          :math:`(N, C_{in}, H_{in}, W_{in})`.
-
-    Outputs:
-        Tensor, the gradients with respect to the input of convolution. It has the same shape as the input.
-
-    Raises:
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
-        TypeError: If `out_channel` or `group` is not an int.
-        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
-        ValueError: If `padding` is a tuple whose length is not equal to 4.
-        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+    The Conv2DBackpropInput interface is deprecated, please refer to :class:`mindspore.ops.Conv2dTranspose` if you
+    want to do unsampling.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
-        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
-        >>> input_x = Tensor(np.ones([10, 32, 32, 32]))
-        >>> conv2d_backprop_input = ops.Conv2DBackpropInput(out_channel=32, kernel_size=3)
-        >>> output = conv2d_backprop_input(dout, weight, ops.shape(input_x))
-        >>> print(output.shape)
-        (10, 32, 32, 32)
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('out_backprop', dtype=sig.sig_dtype.T),
@@ -2210,6 +2155,7 @@ class Conv2DBackpropInput(Primitive):
         sig.make_sig('input_sizes', dtype=sig.sig_dtype.T2)
     )
 
+    @deprecated("1.5", "ops.Conv2dTranspose", True)
     @prim_attr_register
     def __init__(self,
                  out_channel,
@@ -3489,11 +3435,13 @@ class L2Normalize(PrimitiveWithInfer):
 
 class DropoutGenMask(Primitive):
     """
-    .. warning::
-        The DropoutGenMask interface is deprecated, please use the Dropout interface.
+    The DropoutGenMask interface is deprecated, please use the :class:`mindspore.ops.Dropout` instead.
+
+    Supported Platforms:
+        Deprecated
     """
 
-    @deprecated("1.5", "Dropout", True)
+    @deprecated("1.5", "ops.Dropout", True)
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
         """Initialize DropoutGenMask."""
@@ -3505,11 +3453,13 @@ class DropoutGenMask(Primitive):
 
 class DropoutDoMask(Primitive):
     """
-    .. warning::
-        The DropoutDoMask interface is deprecated, please use the Dropout interface.
+    The DropoutDoMask interface is deprecated, please use the :class:`mindspore.ops.Dropout` instead.
+
+    Supported Platforms:
+        Deprecated
     """
 
-    @deprecated("1.5", "Dropout", True)
+    @deprecated("1.5", "ops.Dropout", True)
     @prim_attr_register
     def __init__(self):
         pass
