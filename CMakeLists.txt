@@ -97,6 +97,13 @@ if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     add_subdirectory(tests)
 endif()
 
+# packaging
+file(READ ${CMAKE_SOURCE_DIR}/version.txt VERSION_NUMBER)
+string(REPLACE "\n" "" VERSION_NUMBER ${VERSION_NUMBER})
+if(${VERSION_NUMBER} MATCHES ".*dev.*")
+    message("building dev mode")
+    set(BUILD_DEV_MODE ON)
+endif()
 if(MODE_ASCEND_ACL)
     include(cmake/package_tar.cmake)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
