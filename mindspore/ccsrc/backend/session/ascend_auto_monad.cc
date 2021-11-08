@@ -1753,9 +1753,9 @@ class ExecuteOrderGenerator {
       if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::kPrimTransData)) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
-        auto first_input = cnode->input(kFirstDataInputIndex);
-        MS_EXCEPTION_IF_NULL(first_input);
-        return first_input;
+        auto first_input = AnfAlgo::VisitKernelWithReturnType(cnode->input(kFirstDataInputIndex), 0, true);
+        MS_EXCEPTION_IF_NULL(first_input.first);
+        return first_input.first;
       }
       return node;
     };
