@@ -70,8 +70,9 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 // each cnode in primal funcgraph is replaced by formal cnode
 // else:
 // each cnode in primal funcgraph is replaced by value node
-FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
-                                 bool grad_weights, bool has_sens_arg = false, bool build_formal_param = false);
+FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights,
+                                 const std::vector<size_t> &grad_position, bool grad_inputs, bool grad_weights,
+                                 bool has_sens_arg = false, bool build_formal_param = false);
 
 // Grad for each operation.
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.

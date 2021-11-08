@@ -330,7 +330,7 @@ class GradOperation(GradOperation_):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param)
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False)
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
@@ -380,7 +380,7 @@ class GradOperation(GradOperation_):
                 if _pynative_executor.check_graph(fn, *args, **kwargs):
                     print("Another grad step is running")
                 self._pynative_forward_run(grad_, args, kwargs, fn)
-                _pynative_executor.grad(grad_, fn, weights, *args, **kwargs)
+                _pynative_executor.grad(grad_, fn, weights, (0,), *args, **kwargs)
                 out = _pynative_executor(fn, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
@@ -393,6 +393,117 @@ class GradOperation(GradOperation_):
             else:
                 def after_grad(*args, **kwargs):
                     return grad_(fn)(*args, **kwargs)
+
+        self.grad_fn = after_grad
+        self.fn = fn
+        return self.grad_fn
+
+
+class _Grad(GradOperation_):
+    """
+    A higher-order function which is used to generate the gradient function by position for the input function.
+    """
+
+    def __init__(self, get_by_list=False, sens_param=False, get_by_position=False):
+        """Initialize _Grad."""
+        if not isinstance(get_by_position, bool):
+            raise TypeError(f"For '_Grad', the 'get_by_position' should be bool, "
+                            f"but got {type(get_by_position).__name__}")
+        if not isinstance(get_by_list, bool):
+            raise TypeError(f"For '_Grad', the 'get_by_list' should be bool, "
+                            f"but got {type(get_by_list).__name__}")
+        if not isinstance(sens_param, bool):
+            raise TypeError(f"For '_Grad', the 'sens_param' should be bool, "
+                            f"but got {type(sens_param).__name__}")
+        self.get_by_position = get_by_position
+        self.get_by_list = get_by_list
+        self.sens_param = sens_param
+        GradOperation_.__init__(self, 'grad', False, get_by_list, sens_param, get_by_position)
+        self.grad_fn = None
+        self.fn = None
+        self.pynative_ = False
+
+    def _pynative_forward_run(self, grad, args, kwargs, fn):
+        """ Pynative forward run to build grad graph. """
+        new_kwargs = kwargs
+        if self.sens_param:
+            if not 'sens' in kwargs.keys():
+                args = args[:-1]
+            else:
+                new_kwargs = kwargs.copy()
+                new_kwargs.pop('sens')
+        if isinstance(fn, FunctionType):
+            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
+                _pynative_executor.set_grad_flag(True)
+                _pynative_executor.new_graph(fn, *args, **new_kwargs)
+                output = fn(*args, **new_kwargs)
+                _pynative_executor.end_graph(fn, output, *args, **new_kwargs)
+        else:
+            # Check if fn have run already
+            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
+                fn.set_grad()
+                fn(*args, **new_kwargs)
+                fn.set_grad(False)
+
+    def __call__(self, fn, weights=None, grad_position=0):
+        if isinstance(grad_position, tuple):
+            for gp in grad_position:
+                if not isinstance(gp, int):
+                    raise TypeError(f"For '_Grad', the element in 'grad_position' should be int, "
+                                    f"but got {type(gp).__name__}")
+                if gp < 0:
+                    raise ValueError("The element in grad_position must be >= 0.")
+        elif isinstance(grad_position, int):
+            if grad_position < 0:
+                raise ValueError("grad_position must be >= 0.")
+            grad_position = (grad_position,)
+        else:
+            raise TypeError(f"For '_Grad', the 'grad_position' should be int or tuple, "
+                            f"but got {type(grad_position).__name__}")
+        if self.grad_fn is not None and self.fn == fn:
+            return self.grad_fn
+        grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)
+        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
+        #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
+        #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
+        if context.get_context("mode") == context.GRAPH_MODE:
+            if self.get_by_position:
+                @ms_function
+                def after_grad(*args):
+                    return grad_(fn, weights, grad_position)(*args)
+            else:
+                if self.get_by_list:
+                    @ms_function
+                    def after_grad(*args):
+                        return grad_(fn, weights)(*args)
+                else:
+                    @ms_function
+                    def after_grad(*args):
+                        return grad_(fn)(*args)
+        elif self.pynative_:
+            @_wrap_func
+            def after_grad(*args, **kwargs):
+                if _pynative_executor.check_graph(fn, *args, **kwargs):
+                    print("Another grad step is running")
+                self._pynative_forward_run(grad_, args, kwargs, fn)
+                _pynative_executor.grad(grad_, fn, weights, grad_position, *args, **kwargs)
+                out = _pynative_executor(fn, *args, **kwargs)
+                _pynative_executor.clear_grad(fn, *args, **kwargs)
+                return out
+        else:
+            grad_.pynative_ = True
+            # after_grad of this branch can't use @ms_function, just directly call grad_
+            if self.get_by_position:
+                def after_grad(*args, **kwargs):
+                    return grad_(fn, weights, grad_position)(*args, **kwargs)
+            else:
+                if self.get_by_list:
+                    def after_grad(*args, **kwargs):
+                        return grad_(fn, weights)(*args, **kwargs)
+                else:
+                    def after_grad(*args, **kwargs):
+                        return grad_(fn)(*args, **kwargs)
 
         self.grad_fn = after_grad
         self.fn = fn

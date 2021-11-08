@@ -166,10 +166,11 @@ class GradExecutor {
                     std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4));
     };
   std::function<void(py::object *, const prim::GradOperationPtr &, const py::object &, const py::object &,
-                     const py::args &)>
-    GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5) {
+                     const py::object &, const py::args &)>
+    GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5, auto &&PH6) {
       GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
-                   std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5));
+                   std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5),
+                   std::forward<decltype(PH6)>(PH6));
     };
   std::function<void(py::object *, const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2,
                                                                                              auto &&PH3) {
@@ -242,11 +243,13 @@ class GradExecutor {
   std::string GetAlreadyRunCellId(const std::string &cell_id);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
   void GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
-                    const py::object &weights, const py::args &args);
+                    const py::object &weights, const py::object &grad_position, const py::args &args);
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
-                             const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
+                             const std::vector<AnfNodePtr> &weights, const std::vector<size_t> &grad_position,
+                             size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
+  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position);
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
@@ -386,7 +389,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-               const py::args &args);
+               const py::object &grad_position, const py::args &args);
   py::object GradMsFunction(const py::object &out, const py::args &args);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);

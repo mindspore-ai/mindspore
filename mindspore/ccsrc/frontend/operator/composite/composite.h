@@ -99,7 +99,7 @@ using HyperMapPyPtr = std::shared_ptr<HyperMapPy>;
 
 extern ValuePtr kCompositeHyperMap;
 
-enum TailType { kGradAll, kGradFirst, kNotGrad };
+enum TailType { kGradAll, kGradFirst, kGradByPosition, kNotGrad };
 
 class Tail : public MetaFuncGraph {
  public:
@@ -109,7 +109,8 @@ class Tail : public MetaFuncGraph {
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  FuncGraphPtr GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const;
+  FuncGraphPtr GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue,
+                                        const abstract::AbstractSequeuePtr &pos = nullptr) const;
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
   void set_enable_tuple_grad(bool enable_tuple_grad) { enable_tuple_grad_ = enable_tuple_grad; }
@@ -143,11 +144,11 @@ using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
-                         bool sens_param = false);
+                         bool sens_param = false, bool get_by_position = false);
   ~GradOperation() override = default;
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
-  FuncGraphPtr GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights,
+  FuncGraphPtr GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights, const AnfNodePtr &position,
                        const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                        const std::vector<AnfNodePtr> &weight_args = {});
 
@@ -156,10 +157,11 @@ class GradOperation : public MetaFuncGraph {
   bool get_all_;
   bool get_by_list_;
   bool sens_param_;
+  bool get_by_position_;
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                       const AnfNodePtr &weights, bool enable_tuple_grad);
+                       const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad);
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 

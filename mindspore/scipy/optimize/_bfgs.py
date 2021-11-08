@@ -88,7 +88,7 @@ class MinimizeBfgs(nn.Cell):
         d = x0.shape[0]
         initial_H = mnp.eye(d, dtype=x0.dtype)
         f_0 = self.func(x0)
-        g_0 = F.grad(self.func, grad_first_param=True)(x0)
+        g_0 = F.grad(self.func)(x0)
 
         state = {
             "converged": _my_norm(g_0, ord_=mnp.inf) < gtol,

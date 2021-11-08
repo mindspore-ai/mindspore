@@ -197,7 +197,7 @@ class LineSearch(nn.Cell):
         def fval_and_grad(alpha):
             xkk = xk + alpha * pk
             fkk = self.func(xkk)
-            gkk = F.grad(self.func, grad_first_param=True)(xkk)
+            gkk = F.grad(self.func)(xkk)
             return fkk, gkk, mnp.dot(gkk, pk)
 
         if old_fval is None or gfk is None:

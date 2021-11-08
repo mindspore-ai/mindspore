@@ -22,7 +22,7 @@ from mindspore.ops import _constants
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
-from .composite import GradOperation
+from .composite import _Grad
 from .._c_expression import security
 
 typeof = Primitive('typeof')
@@ -154,22 +154,21 @@ partial = P.Partial()
 depend = P.Depend()
 identity = P.identity()
 
-grad_first_parameter = GradOperation(get_all=False, get_by_list=False, sens_param=False)
-grad_all_parameters = GradOperation(get_all=True, get_by_list=False, sens_param=False)
+grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
 
-
-def grad(fn, grad_first_param=False):
-    """
+def grad(fn, grad_position=0):
+    r"""
     A wrapper function to generate the gradient function for the input function.
 
     Args:
-        fn (Function): Function to do GradOperation.
-        grad_first_param (bool): If True, get the gradient with respect to first input.
-            If False, get all the gradients with respect to inputs. Default: False.
+        fn (Union(Cell, function)): Function to do GradOperation.
+        grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+
+    Returns:
+        Function, returns the gradient function for the input function or cell.
     """
-    if grad_first_param:
-        return grad_first_parameter(fn)
-    return grad_all_parameters(fn)
+    return grad_by_position(fn, None, grad_position)
 
 
 tuple_setitem = Primitive('tuple_setitem')
