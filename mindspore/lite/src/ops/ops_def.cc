@@ -1116,6 +1116,7 @@ OP_ATTR(axis, long)
 OP_SCHEMA_DEF_END(LogSoftmax)
 
 OP_SCHEMA_DEF(Call)
+OP_ATTR_ONLY_WITH_VALUE(is_tail_call, bool, true)
 OP_SCHEMA_DEF_END(Call)
 
 OP_SCHEMA_DEF(CumSum)
