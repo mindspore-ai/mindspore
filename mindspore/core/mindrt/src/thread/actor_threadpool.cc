@@ -145,9 +145,9 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     return THREAD_ERROR;
   }
 #endif
-#ifdef BIND_CORE
-  affinity_->SetCoreId(core_list);
-#endif
+  if (affinity_ != nullptr) {
+    affinity_->SetCoreId(core_list);
+  }
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
@@ -159,14 +159,7 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     std::lock_guard<std::mutex> _l(pool_mutex_);
     auto worker = new (std::nothrow) ActorWorker();
     THREAD_ERROR_IF_NULL(worker);
-#ifdef BIND_CORE
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-    if (core_list.size() > 0) {
-      CPU_SET(core_list[workers_.size() % core_list.size()], &mask);
-    }
-    worker->set_mask(mask);
-#endif
+    worker->InitWorkerMask(core_list, workers_.size());
     worker->CreateThread(this);
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
