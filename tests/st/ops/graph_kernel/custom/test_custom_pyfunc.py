@@ -20,57 +20,27 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops.op_info_register import DataType
-from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
-
-single_output_op_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
-    .get_op_info()
+from mindspore.ops.operations.custom_ops import Custom
 
 
-@custom_op_info_register(single_output_op_info)
 def func_single_output(x1, x2):
     return x1 - x2
 
 
-multi_output_op_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y1") \
-    .output(1, "y2") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .get_op_info()
-
-
-@custom_op_info_register(multi_output_op_info)
 def func_multi_output(x1, x2):
     return (x1 + x2), (x1 - x2)
 
 
-no_output_op_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default)\
-    .get_op_info()
-
 output = 0
 
 
-@custom_op_info_register(no_output_op_info)
 def func_no_output(x1, x2):
     global output
     output = x1 + x2
 
 
 class PyFuncNet(nn.Cell):
-    def __init__(self, fn, out_shapes, out_types,):
+    def __init__(self, fn, out_shapes, out_types):
         super().__init__()
         self.func = Custom(fn, out_shapes, out_types, "pyfunc")
         self.relu = P.ReLU()

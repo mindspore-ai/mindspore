@@ -208,13 +208,18 @@ class Custom(ops.PrimitiveWithInfer):
             If func has multiple outputs, then the value of output shape is a tuple of mindspore.dtype.
         func_type (str): The implementation type of func, should be one of ["akg", "tbe", "aot", "pyfunc"].
         bprop (function): The gradient function of func. Default: None.
-        reg_info (Union[str, dict, list, tuple]): Represents the registration information of func with json format of
-            type str or dict. The registration information specifies supported formats of input and output, attributes
-            and target of func. If reg_info is a list or tuple, then each item should be with json format of type str
-            or dict, which represents the registration information of func in a specific target. You need to invoke
-            `CustomRegOp` or the subclass of `RegOp` to generate the registration info for func. Then you can invoke
-            `custom_op_info_register` to bind the reg info to func or just pass the reg info to `reg_info` parameter.
-            The `reg_info` parameter takes higher priority then `custom_op_info_register`. Default: None.
+        reg_info (Union[str, dict, list, tuple]): Represents the registration information of `func` with json format of
+            type str or dict. The registration information specifies supported data types and formats of inputs and
+            outputs, attributes and target of `func`. Default: None.
+            If reg info is a list or tuple, then each item should be with json format of type str or dict, which
+            represents the registration information of `func` in a specific target. You need to invoke `CustomRegOp`
+            or the subclass of `RegOp` to generate the registration info for `func`. Then you can invoke
+            `custom_op_info_register` to bind the reg info to `func` or just pass the reg info to `reg_info` parameter.
+            The `reg_info` parameter takes higher priority then `custom_op_info_register` and the reg info in a
+            specific target will be registered only once.
+            If reg info is not set, then we will infer the data types and formats from the inputs of `Custom` op.
+            Please note that, if the `func` only supports some specified data types and formats, or it has attribute
+            inputs, then you should set the reg info for `func`.
 
     Inputs:
         - **input** (Union(tuple, list)) - The input tuple or list is made up of multiple tensors, and attributes
@@ -236,6 +241,7 @@ class Custom(ops.PrimitiveWithInfer):
         >>> from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
         >>> from mindspore.ops.op_info_register import DataType
         >>> from mindspore.nn import Cell
+        >>>
         >>> #-----------------------------------------------
         >>> #--------------func_type="tbe"------------------
         >>> square_with_bias_op_info = CustomRegOp() \
@@ -247,6 +253,7 @@ class Custom(ops.PrimitiveWithInfer):
         ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
         ...     .target("Ascend") \
         ...     .get_op_info()
+        >>>
         >>> @custom_op_info_register(square_with_bias_op_info)
         ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
         ...     import te.lang.cce
@@ -270,6 +277,7 @@ class Custom(ops.PrimitiveWithInfer):
         ...               "tensor_list": [data, res]}
         ...
         ...     te.lang.cce.cce_build_code(sch, config)
+        >>>
         >>> class Net(Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -278,38 +286,25 @@ class Custom(ops.PrimitiveWithInfer):
         ...     def construct(self, x):
         ...         res = self.square_with_bias(x, 1.0)
         ...         return res
+        >>>
         >>> #-----------------------------------------------
         >>> #--------func_type="aot", platform=GPU----------
-        >>> reorganize_op_info = CustomRegOp() \
-        ...     .input(0, "x1") \
-        ...     .input(1, "x2") \
-        ...     .output(0, "y") \
-        ...     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
-        ...     .target("GPU") \
-        ...     .get_op_info()
         >>> class AOTSingleOutputNet(Cell):
         ...     def __init__(self, func, out_shapes, out_types, reg=None):
         ...         super(AOTSingleOutputNet, self).__init__()
-        ...         self.program = Custom("./reorganize.so:CustomReorganize", (2,3), mstype.float32, "aot", \
-        ...                                              reorganize_gpu_info)
+        ...         self.program = Custom("./reorganize.so:CustomReorganize", (2, 3), mstype.float32, "aot")
         ...     def construct(self, x, y):
         ...         return self.program(x, y)
+        >>>
         >>> #-----------------------------------------------
         >>> #------------func_type="pyfunc"-----------------
-        >>> multi_output_op_info = CustomRegOp() \
-        ...     .input(0, "x1") \
-        ...     .input(1, "x2") \
-        ...     .output(0, "y1") \
-        ...     .output(1, "y2") \
-        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-        ...     .get_op_info()
-        >>> @custom_op_info_register(multi_output_op_info)
         >>> def func_multi_output(x1, x2):
         ...     return (x1 + x2), (x1 - x2)
-        >>> class PyFuncNet(nn.Cell):
+        >>>
+        >>> class PyFuncNet(Cell):
         ...     def __init__(self, fn, out_shapes, out_types,):
         ...         super().__init__()
-        ...         self.func = Custom(func_multi_output, ((2,3), (2,3)), (ms.float32, ms.float32), "pyfunc")
+        ...         self.func = Custom(func_multi_output, ((2, 3), (2, 3)), (ms.float32, ms.float32), "pyfunc")
         ...     def construct(self, x1, x2):
         ...         return self.func(x1, x2)
     """
@@ -334,7 +329,7 @@ class Custom(ops.PrimitiveWithInfer):
             self.imply_path = os.path.realpath(inspect.getfile(self.func))
             self.func_name = self.func.__name__
             self.fn_id = id(self.func)
-            self.uniq_name = self.name+"_"+self.func_name+"_"+str(self.fn_id)
+            self.uniq_name = self.name + "_" + self.func_name + "_" + str(self.fn_id)
             if func_type == "pyfunc":
                 Custom.registered_py_id.register(self.fn_id, self.func)
         elif isinstance(self.func, str):
@@ -414,7 +409,7 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["outputs"].append(dict({"index": 0, "name": "y", "param_type": "required"}))
                 new_dtype_format = []
                 for i in reg_info["dtype_format"]:
-                    new_dtype_format.append(i+(DataType.I32_Default,))
+                    new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
             target = self.get_target(reg_info)
             # Reg info for func is only registered once for a certain target
@@ -428,24 +423,6 @@ class Custom(ops.PrimitiveWithInfer):
                 raise ValueError('Invalid reg info {}: {}\n'.format(self.imply_path, reg_info_str))
             self.save_attr(reg_info)
             self.save_register_status(target)
-        registered_targets = getattr(self.func, "registered_targets", [])
-        if self.func_type == "pyfunc":
-            self.add_prim_attr("primitive_target", "CPU")
-            if registered_targets != ["CPU"]:
-                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}. We will\
-                run CustomPyfunc on CPU".format(registered_targets))
-        elif self.func_type == "aot":
-            if set(registered_targets) == set(["GPU", "CPU"]):
-                logger.warning(
-                    "Both GPU and CPU target are registered for CustomAOT. Target will be set according to context.")
-            elif registered_targets == ["GPU"]:
-                self.add_prim_attr("primitive_target", "GPU")
-            elif registered_targets == ["CPU"]:
-                self.add_prim_attr("primitive_target", "CPU")
-            else:
-                logger.warning(
-                    "CustomPyfunc only supports CPU/GPU platform, but gets registered target as {}. Target\
-                         will be set according to context.".format(registered_targets))
 
     def get_expanded_list(self, data):
         """Recursive function to parse elements in list or tuple."""
@@ -459,13 +436,21 @@ class Custom(ops.PrimitiveWithInfer):
             data_list.append(data)
         return data_list
 
+    def get_registered_targets(self):
+        """Get the registered targets of func."""
+        targets = []
+        if callable(self.func):
+            targets = getattr(self.func, "registered_targets", [])
+        elif isinstance(self.func, str):
+            targets = Custom.registered_func.get(self.func, [])
+        if not isinstance(targets, list):
+            targets = [targets]
+        return targets
+
     def has_registered(self, target):
         """Check if registration information is registered in target."""
-        if callable(self.func) and target in getattr(self.func, "registered_targets", []):
-            return True
-        if isinstance(self.func, str) and target in Custom.registered_func.get(self.func, []):
-            return True
-        return False
+        registered_targets = self.get_registered_targets()
+        return target in registered_targets
 
     def save_register_status(self, target):
         """Save registration status for target."""
@@ -485,6 +470,8 @@ class Custom(ops.PrimitiveWithInfer):
             raise TypeError("reg_info should be of type dict, but got {}".format(type(reg_info)))
         reg_info["op_name"] = self.uniq_name
         reg_info["imply_type"] = self.get_imply_type(reg_info, target)
+        if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
+            reg_info["fusion_type"] = "OPAQUE"
         # Supplement necessary info for TBE if these information is missing in reg_info
         if reg_info["imply_type"] == "TBE":
             if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
@@ -587,7 +574,8 @@ class Custom(ops.PrimitiveWithInfer):
                              .format(self.func, attr_names, prev_attr_names))
 
     def update_attr(self):
-        """Add input_names and attr_names to primitive's attr."""
+        """Add input_names, attr_names, primitive_target to primitive's attr."""
+        # add input_names, attr_names
         func_attr = {}
         if callable(self.func):
             func_attr = getattr(self.func, "func_attr", None)
@@ -600,3 +588,17 @@ class Custom(ops.PrimitiveWithInfer):
                 self.add_prim_attr("input_names", input_names)
             if attr_names:
                 self.add_prim_attr("attr_names", attr_names)
+        # add primitive_target
+        registered_targets = self.get_registered_targets()
+        if self.func_type == "pyfunc":
+            self.add_prim_attr("primitive_target", "CPU")
+            if registered_targets and registered_targets != ["CPU"]:
+                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}."
+                               "We will run CustomPyfunc on CPU".format(registered_targets))
+        elif self.func_type == "aot":
+            if len(registered_targets) != 1:
+                logger.info("Target of CustomAOT will be set according to context.")
+            elif registered_targets == ["GPU"]:
+                self.add_prim_attr("primitive_target", "GPU")
+            elif registered_targets == ["CPU"]:
+                self.add_prim_attr("primitive_target", "CPU")

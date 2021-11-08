@@ -21,26 +21,7 @@ from mindspore.nn import Cell
 from mindspore.ops.op_info_register import DataType
 from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
 
-outer_product_ascend_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .target("Ascend") \
-    .get_op_info()
 
-outer_product_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .target("GPU") \
-    .get_op_info()
-
-
-@custom_op_info_register(outer_product_ascend_info, outer_product_gpu_info)
 def outer_product(a, b):
     c = output_tensor((a.shape[0], b.shape[1]), 'float32')
 
@@ -134,18 +115,16 @@ def test_hybrid_gpu_pynative_mode():
 
 
 v_add_ascend_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x", "dynamic") \
     .output(0, "y") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.None_None, DataType.None_None) \
     .target("Ascend") \
     .get_op_info()
 
 v_add_gpu_info = CustomRegOp() \
-    .fusion_type("OPAQUE") \
     .input(0, "x", "dynamic") \
     .output(0, "y") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_None, DataType.F16_None) \
     .target("GPU") \
     .get_op_info()
 
@@ -175,7 +154,7 @@ class TestIRbuilder(Cell):
         return self.program([x, y])
 
 
-def irbuider_case():
+def irbuilder_case():
     shape = (4, 5)
     input_x = np.random.normal(0, 1, shape).astype(np.float16)
     input_y = np.random.normal(0, 1, shape).astype(np.float16)
@@ -191,51 +170,51 @@ def irbuider_case():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_irbuider_ascend_graph_mode():
+def test_irbuilder_ascend_graph_mode():
     """
-    Feature: test case for Custom op with func_type="akg"
-    Description: ascend test case, akg dsl using irbuider grammar in GRAPH_MODE.
+    Feature: test case for Custom op with func_type="akg" and reg info
+    Description: ascend test case, akg dsl using irbuilder grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    irbuider_case()
+    irbuilder_case()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_irbuider_ascend_pynative_mode():
+def test_irbuilder_ascend_pynative_mode():
     """
-    Feature: test case for Custom op with func_type="akg"
-    Description: ascend test case, akg dsl using irbuider grammar in PYNATIVE_MODE.
+    Feature: test case for Custom op with func_type="akg" and reg info
+    Description: ascend test case, akg dsl using irbuilder grammar in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    irbuider_case()
+    irbuilder_case()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_irbuider_gpu_graph_mode():
+def test_irbuilder_gpu_graph_mode():
     """
-    Feature: test case for Custom op with func_type="akg"
-    Description: gpu test case, akg dsl using irbuider grammar in GRAPH_MODE.
+    Feature: test case for Custom op with func_type="akg" and reg info
+    Description: gpu test case, akg dsl using irbuilder grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    irbuider_case()
+    irbuilder_case()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_irbuider_gpu_pynative_mode():
+def test_irbuilder_gpu_pynative_mode():
     """
-    Feature: test case for Custom op with func_type="akg"
-    Description: gpu test case, akg dsl using irbuider grammar in PYNATIVE_MODE.
+    Feature: test case for Custom op with func_type="akg" and reg info
+    Description: gpu test case, akg dsl using irbuilder grammar in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    irbuider_case()
+    irbuilder_case()

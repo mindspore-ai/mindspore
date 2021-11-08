@@ -113,12 +113,6 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
     kernel_type = KernelType::AKG_KERNEL;
   }  // use LoadIm2Col only for THOR optimizer
 
-  // Use AKG_KERNEL if func_type of Custom is not tbe
-  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom) &&
-      AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType) != kCustomTypeTbe) {
-    kernel_type = KernelType::AKG_KERNEL;
-  }
-
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:
       AkgMetadataInfo(kernel_node, kernel_info_list);

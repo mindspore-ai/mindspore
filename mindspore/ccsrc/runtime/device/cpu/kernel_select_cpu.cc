@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,106 @@ void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
   kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
   return;
 }
+
+void AddKernelAttr(const CNodePtr &kernel_node, const KernelAttr &kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  std::vector<KernelAttr> kernel_attrs =
+    kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+  if (kernel_attrs.size() == 1 && kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
+    kernel_attrs.clear();
+  }
+  kernel_attrs.emplace_back(kernel_attr);
+  kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(AnfAlgo::GetCNodeName(kernel_node), kernel_attrs);
+}
+
+void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // Custom op's kernel type can only be CPU_KERNEL on CPU
+  builder->SetKernelType(KernelType::CPU_KERNEL);
+  builder->SetProcessor(kernel::Processor::CPU);
+  // Set inputs info
+  std::vector<TypeId> input_types;
+  std::vector<size_t> input_not_cnode_indexes;
+  GetInputDtypes(kernel_node, &input_types, &input_not_cnode_indexes);
+  std::vector<std::string> input_formats;
+  GetInputFormat(kernel_node, &input_formats);
+  builder->SetInputsDeviceType(input_types);
+  builder->SetInputsFormat(input_formats);
+  // Set inputs info
+  std::vector<TypeId> output_types;
+  GetOutputDtypes(kernel_node, &output_types);
+  std::vector<std::string> output_formats;
+  GetOutputFormat(kernel_node, &output_formats);
+  builder->SetOutputsDeviceType(output_types);
+  builder->SetOutputsFormat(output_formats);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+  // Update kernel attrs
+  KernelAttr attr;
+  if (input_types.size() != input_formats.size()) {
+    MS_LOG(EXCEPTION) << "input types size " << input_types.size() << " is not equal to input formats size "
+                      << input_formats.size() << " in op: " << AnfAlgo::GetCNodeName(kernel_node);
+  }
+  for (size_t i = 0; i < input_types.size(); ++i) {
+    attr.AddInputAttr(input_types[i], input_formats[i]);
+  }
+  if (output_types.size() != output_formats.size()) {
+    MS_LOG(EXCEPTION) << "output types size " << output_types.size() << " is not equal to output formats size "
+                      << output_formats.size() << " in op: " << AnfAlgo::GetCNodeName(kernel_node);
+  }
+  for (size_t i = 0; i < output_types.size(); ++i) {
+    attr.AddOutputAttr(output_types[i], output_formats[i]);
+  }
+  AddKernelAttr(kernel_node, attr);
+}
+
+KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::vector<TypeId> &input_types,
+                                const std::vector<TypeId> &output_types, const KernelAttr &kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  // Only process Custom op
+  if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    return kernel_attr;
+  }
+  auto input_num = input_types.size();
+  auto output_num = output_types.size();
+  if (kernel_attr.GetInputSize() != input_types.size() || kernel_attr.GetOutputSize() != output_types.size()) {
+    MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetInputSize() << ", actual input num:" << input_num;
+    MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetOutputSize() << ", actual input num:" << output_num;
+    return kernel_attr;
+  }
+  KernelAttr result;
+  bool has_none = false;
+  // Fill inputs info.
+  for (size_t i = 0; i < input_num; ++i) {
+    auto type_format = kernel_attr.GetInputAttr(i);
+    if (type_format.first == TypeId::kMetaTypeNone) {
+      has_none = true;
+      type_format.first = input_types[i];
+    }
+    if (type_format.second.empty()) {
+      has_none = true;
+      type_format.second = kOpFormat_DEFAULT;
+    }
+    result.AddInputAttr(type_format.first, type_format.second);
+  }
+  // Fill outputs info.
+  for (size_t i = 0; i < output_num; ++i) {
+    auto type_format = kernel_attr.GetOutputAttr(i);
+    if (type_format.first == TypeId::kMetaTypeNone) {
+      has_none = true;
+      type_format.first = output_types[i];
+    }
+    if (type_format.second.empty()) {
+      has_none = true;
+      type_format.second = kOpFormat_DEFAULT;
+    }
+    result.AddOutputAttr(type_format.first, type_format.second);
+  }
+  if (has_none) {
+    AddKernelAttr(kernel_node, result);
+  }
+  return result;
+}
 }  // namespace
 
 bool IsDynamicParamKernel(const std::string &op_name) {
@@ -289,6 +389,10 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
                   const std::vector<KernelAttr> &kernel_attrs, const std::vector<TypeId> &input_types,
                   const std::vector<size_t> &input_not_cnode_indexes, const std::vector<TypeId> &output_types,
                   std::pair<bool, bool> *matched, bool strict) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(selected_kernel_attr);
+  MS_EXCEPTION_IF_NULL(matched);
+  MS_LOG(DEBUG) << "Select kernel for op: " << AnfAlgo::GetCNodeName(kernel_node);
   for (auto kernel_attr : kernel_attrs) {
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
@@ -298,12 +402,13 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
       MS_LOG(DEBUG) << "Output num is not equal!";
       continue;
     }
+    auto new_kernel_attr = FillNoneInKernelAttr(kernel_node, input_types, output_types, kernel_attr);
     int input_dtype_matched_num =
-      GetInputDtypeFormatMatchedNum(kernel_attr, input_types, input_not_cnode_indexes, strict);
-    int output_dtype_matched_num = GetOutputDtypeMatchedNum(kernel_attr, output_types);
+      GetInputDtypeFormatMatchedNum(new_kernel_attr, input_types, input_not_cnode_indexes, strict);
+    int output_dtype_matched_num = GetOutputDtypeMatchedNum(new_kernel_attr, output_types);
     // All formats and data types matched
     if (input_dtype_matched_num == SizeToInt(input_types.size())) {
-      *selected_kernel_attr = kernel_attr;
+      *selected_kernel_attr = new_kernel_attr;
       matched->first = true;
       if (output_dtype_matched_num == SizeToInt(output_types.size())) {
         matched->second = true;
@@ -316,21 +421,29 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
 
 void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  // Select for dynamic kernel(both the number and data type are undetermined).
   const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
-
-  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom) &&
-      !kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
+  bool is_custom_op = IsPrimitiveCNode(kernel_node, prim::kPrimCustom);
+  if (is_custom_op && !kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
     auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
     if (tp == kCustomTypePyfunc) {
       kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::PyFuncCpuKernel>(); });
     } else if (tp == kCustomTypeAOT) {
       kernel::CPUKernelRegistrar(op_name, KernelAttr(),
                                  []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported func type [" << tp << "] for Custom op [" << op_name << "] on CPU";
     }
   }
 
-  if (IsDynamicParamKernel(op_name)) {
+  // If Custom op has not set reg info, then infer info from inputs
+  if (is_custom_op && mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
+    MS_LOG(WARNING) << "Not find operator information for op[" << op_name
+                    << "]. Infer operator information from inputs.";
+    return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
+  }
+
+  // Select for dynamic kernel(both the number and data type are undetermined).
+  if (!is_custom_op && IsDynamicParamKernel(op_name)) {
     return UpdateDynamicKernelBuildInfoAndAttrs(kernel_node);
   }
 
@@ -340,11 +453,11 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> selected_output_formats;
   std::vector<TypeId> output_types;
   std::vector<TypeId> selected_output_types;
-  MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << AnfAlgo::GetCNodeName(kernel_node);
+  MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << op_name;
   auto kernel_attrs =
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty() || (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0)) {
-    MS_LOG(DEBUG) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node) << "] will get ops attr info.";
+    MS_LOG(DEBUG) << "Operator[" << op_name << "] will get ops attr info.";
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
     if (op_info_ptr == nullptr) {
       MS_LOG(EXCEPTION) << "Not find op[" << op_name << "] in cpu";
@@ -359,7 +472,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::pair<bool, bool> matched = std::make_pair(false, false);
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                     output_types, &matched, true)) {
-    if (AnfAlgo::GetCNodeName(kernel_node) == "Cast") {
+    if (op_name == "Cast") {
       KernelNotSupportException(kernel_node, input_types, output_types);
     }
     matched = std::make_pair(false, false);

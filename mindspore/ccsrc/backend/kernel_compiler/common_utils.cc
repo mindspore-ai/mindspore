@@ -244,6 +244,9 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   if (dtypes == "float") {
     return TypeId::kNumberTypeFloat32;
   }
+  if (dtypes.empty()) {
+    return TypeId::kMetaTypeNone;
+  }
   return StringToTypeId(dtypes);
 }
 

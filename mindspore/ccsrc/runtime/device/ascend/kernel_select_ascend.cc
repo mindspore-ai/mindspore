@@ -428,6 +428,165 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
   SetWeightFormat(cast_input_node.first, {format}, cast_node, 0, true);
   return true;
 }
+
+TypeId GetInputDeviceType(const CNodePtr &kernel_node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  TypeId type = kTypeUnknown;
+  auto input_node = AnfAlgo::GetPrevNodeOutput(kernel_node, input_idx).first;
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
+  if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
+    type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_idx);
+  } else {
+    type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
+  }
+  return type;
+}
+
+void GetInputsDeviceType(const CNodePtr &kernel_node, std::vector<TypeId> *input_types) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(input_types);
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto type = GetInputDeviceType(kernel_node, i);
+    input_types->emplace_back(type);
+  }
+}
+
+string InferOutputFormat(const CNodePtr &kernel_node, const std::vector<std::string> &inputs_format) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  // Infer output format from inputs format.
+  std::unordered_map<std::string, int> all_input_formats;
+  for (const auto &format : inputs_format) {
+    all_input_formats[format]++;
+  }
+
+  string output_infer_format;
+  int max_format_counts = 0;
+  for (const auto &it : all_input_formats) {
+    if (it.second > max_format_counts) {
+      max_format_counts = it.second;
+      output_infer_format = it.first;
+    }
+  }
+  if (output_infer_format.empty()) {
+    output_infer_format = GetPriorityMatchFormat(kernel_node);
+  }
+  return output_infer_format;
+}
+
+KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelType *kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_type);
+  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
+  // Custom op's kernel type can be one of [TBE_KERNEL, AKG_KERNEL] on Ascend
+  auto func_type = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+  if (func_type == kCustomTypeTbe) {
+    *kernel_type = KernelType::TBE_KERNEL;
+  } else if (func_type == "ir_builder" || func_type == "tvm_compute" || func_type == "hybrid") {
+    *kernel_type = KernelType::AKG_KERNEL;
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported func type [" << func_type << "] for Custom op [" << op_name << "] on Ascend";
+  }
+  kernel::OpImplyType imply_type =
+    *kernel_type == KernelType::TBE_KERNEL ? kernel::OpImplyType::kTBE : kernel::OpImplyType::kAKG;
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
+  // Only process Custom op that does not has reg info
+  if (op_info_ptr != nullptr) {
+    return kNoMatched;
+  }
+  // If Custom op has not set reg info, then infer info from inputs
+  MS_LOG(WARNING) << "Not find operator information for op[" << op_name << "]. Infer operator information from inputs.";
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  builder->SetKernelType(*kernel_type);
+  builder->SetProcessor(kernel::Processor::AICORE);
+  builder->SetFusionType(kernel::FusionType::OPAQUE);
+  builder->SetOpPattern(kernel::OpPattern::kCommonPattern);
+  // set inputs info
+  std::vector<TypeId> inputs_device_type;
+  std::vector<std::string> inputs_format;
+  GetInputsDeviceType(kernel_node, &inputs_device_type);
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  std::unordered_set<string> all_input_formats;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, i);
+    inputs_format.emplace_back(format);
+    all_input_formats.insert(format);
+  }
+  if (all_input_formats.size() > 1) {
+    MS_LOG(WARNING) << op_name << " has different input formats, the number of input formats is "
+                    << all_input_formats.size();
+  }
+  builder->SetInputsDeviceType(inputs_device_type);
+  builder->SetInputsFormat(inputs_format);
+  // set outputs info
+  std::vector<TypeId> outputs_device_type;
+  std::vector<std::string> outputs_format;
+  auto output_infer_format = InferOutputFormat(kernel_node, inputs_format);
+  MS_LOG(INFO) << "Outputs of " << op_name << " will use same inferred format: " << output_infer_format;
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t i = 0; i < output_num; ++i) {
+    outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, i));
+    outputs_format.push_back(output_infer_format);
+  }
+  builder->SetOutputsDeviceType(outputs_device_type);
+  builder->SetOutputsFormat(outputs_format);
+  // Set kernel build info to node
+  auto build_info = builder->Build();
+  MS_LOG(INFO) << "Current node: " << kernel_node->fullname_with_scope() << " selected: " << build_info;
+  AnfAlgo::SetSelectKernelBuildInfo(build_info, kernel_node.get());
+  SetTensorDeviceInfo(kernel_node);
+  return kStatusAllMatched;
+}
+
+void FillNoneInKernelInfo(const CNodePtr &kernel_node, std::vector<kernel::KernelBuildInfoPtr> *kernel_info_list) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_info_list);
+  // Only process Custom op
+  if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    return;
+  }
+  for (size_t idx = 0; idx < kernel_info_list->size(); ++idx) {
+    auto build_info = (*kernel_info_list)[idx];
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(build_info);
+    // Fill inputs info. If type or format is None, infer it from inputs
+    std::vector<TypeId> inputs_device_type;
+    std::vector<std::string> inputs_format;
+    for (size_t i = 0; i < build_info->GetInputNum(); ++i) {
+      auto type = build_info->GetInputDeviceType(i);
+      if (type == TypeId::kMetaTypeNone) {
+        type = GetInputDeviceType(kernel_node, i);
+      }
+      inputs_device_type.push_back(type);
+      auto format = build_info->GetInputFormat(i);
+      if (format.empty()) {
+        format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, i);
+      }
+      inputs_format.push_back(format);
+    }
+    builder->SetInputsDeviceType(inputs_device_type);
+    builder->SetInputsFormat(inputs_format);
+    // Fill outputs info. If type is None, infer it from abstract, if format is None, infer it from inputs format
+    std::vector<TypeId> outputs_device_type;
+    std::vector<std::string> outputs_format;
+    auto output_infer_format = InferOutputFormat(kernel_node, inputs_format);
+    for (size_t i = 0; i < build_info->GetOutputNum(); ++i) {
+      auto type = build_info->GetOutputDeviceType(i);
+      if (type == TypeId::kMetaTypeNone) {
+        type = AnfAlgo::GetOutputInferDataType(kernel_node, i);
+      }
+      outputs_device_type.push_back(type);
+      auto format = build_info->GetOutputFormat(i);
+      if (format.empty()) {
+        format = output_infer_format;
+      }
+      outputs_format.push_back(output_infer_format);
+    }
+    builder->SetOutputsDeviceType(outputs_device_type);
+    builder->SetOutputsFormat(outputs_format);
+    (*kernel_info_list)[idx] = builder->Build();
+  }
+}
 }  // namespace
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -502,7 +661,16 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
     SelectGraphKernelInfo(kernel_node, func_graph);
     return kStatusAllMatched;
   }
+
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    auto select_status = SelectCustomKernelInfo(kernel_node, &kernel_type);
+    if (select_status == kStatusAllMatched) {
+      return select_status;
+    }
+  }
+
   kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
+  FillNoneInKernelInfo(kernel_node, &kernel_info_list);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   // If it can node find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
