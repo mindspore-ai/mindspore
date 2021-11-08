@@ -15,11 +15,16 @@
  */
 
 #include "utils/anf_utils.h"
+#include <string>
 #include "base/core_ops.h"
 #include "utils/trace_base.h"
 #include "utils/utils.h"
 
 namespace mindspore {
+namespace {
+const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
+}  // namespace
+
 bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < -1; });
@@ -116,5 +121,133 @@ bool AnfUtils::IsRealCNodeKernel(const AnfNodePtr &node) {
     return true;
   }
   return AnfUtils::IsRealKernel(node);
+}
+
+std::string AnfUtils::GetCNodeName(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>()) {
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive != nullptr) {
+      if (primitive->name() == "Custom") {
+        auto uniq_name = primitive->GetAttr("uniq_name");
+        if (uniq_name) {
+          return GetValue<std::string>(uniq_name);
+        }
+      }
+      return primitive->name();
+    }
+    auto func_graph = GetCNodeFuncGraph(node);
+    MS_EXCEPTION_IF_NULL(func_graph);
+    if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      std::string fg_name = "GraphKernel_";
+      fg_name += GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      return fg_name;
+    }
+    return func_graph->ToString();
+  }
+  MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
+}
+
+size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    MS_LOG(EXCEPTION) << "Only cnode has real input, but this anf is " << node->DebugString()
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  ssize_t input_tensor_num = cnode->input_tensor_num();
+  if (input_tensor_num >= 0) {
+    return static_cast<size_t>(input_tensor_num);
+  }
+  size_t input_num = cnode->inputs().size();
+  if (input_num == 0) {
+    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero"
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  // Exclude inputs[0].
+  --input_num;
+
+  // Exclude monad inputs for real cnodes.
+  if (input_num > 0 && AnfUtils::IsRealKernel(cnode)) {
+    auto &inputs = cnode->inputs();
+    // Search monad inputs, backward.
+    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
+      if (!HasAbstractMonad(*iter)) {
+        // Stop count if we encounter a non-monad input.
+        break;
+      }
+      --input_num;
+    }
+  }
+  cnode->set_input_tensor_num(static_cast<ssize_t>(input_num));
+  return input_num;
+}
+
+size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  TypePtr type = node->Type();
+  if (type == nullptr) {
+    return 0;
+  }
+  if (type->isa<Tuple>()) {
+    auto tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    return tuple_type->size();
+  }
+  if (type->isa<TypeNone>()) {
+    return 0;
+  }
+  return 1;
+}
+
+std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (anf_node->isa<ValueNode>()) {
+    return std::make_pair(anf_node, 0);
+  } else if (anf_node->isa<Parameter>()) {
+    return std::make_pair(anf_node, 0);
+  } else if (anf_node->isa<CNode>()) {
+    auto cnode = anf_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto input0 = cnode->input(0);
+    MS_EXCEPTION_IF_NULL(input0);
+    if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+      if (GetInputTensorNum(cnode) == 0) {
+        return std::make_pair(nullptr, 0);
+      }
+      auto node = cnode->input(index + IntToSize(1));
+      MS_EXCEPTION_IF_NULL(node);
+      return VisitKernel(node, 0);
+    } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
+      if (cnode->inputs().size() != kTupleGetItemInputSize) {
+        MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+      }
+      auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
+      MS_EXCEPTION_IF_NULL(input2);
+      auto value_node = input2->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto item_idx = GetValue<int64_t>(value_node->value());
+      return VisitKernel(cnode->input(kRealInputNodeIndexInTupleGetItem), LongToSize(item_idx));
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
+      return VisitKernel(cnode->input(kUpdateStateRealInput), 0);
+    } else if (IsOneOfPrimitive(input0, follow_first_input_prims)) {
+      return VisitKernel(cnode->input(kRealInputIndexInDepend), 0);
+    } else {
+      return std::make_pair(anf_node, index);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "The input is invalid";
+  }
+}
+
+bool AnfUtils::IsGraphKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto func_graph = GetCNodeFuncGraph(node);
+  return func_graph != nullptr && func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+}
+
+bool AnfUtils::IsNodeInGraphKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return node->func_graph() != nullptr && node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
 }  // namespace mindspore

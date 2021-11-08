@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #define MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #include <vector>
+#include <string>
+#include <utility>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "base/base.h"
@@ -34,6 +36,18 @@ class AnfUtils {
   static bool IsRealKernel(const AnfNodePtr &node);
   // check whether the anf node is a real kernel that is a cnode and can run on device
   static bool IsRealCNodeKernel(const AnfNodePtr &node);
+  // get kernel name of anf node
+  static std::string GetCNodeName(const AnfNodePtr &node);
+  // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
+  static size_t GetInputTensorNum(const AnfNodePtr &node);
+  // get the num of output real_kernel(which can be build and run in device)
+  static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  // get the node's real kernel recursively
+  static std::pair<AnfNodePtr, size_t> VisitKernel(const AnfNodePtr &anf_node, size_t index);
+  // check whether the node is a GraphKernel node.
+  static bool IsGraphKernel(const AnfNodePtr &node);
+  // check whether the node is a node in GraphKernel's subgraph.
+  static bool IsNodeInGraphKernel(const AnfNodePtr &node);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_
