@@ -81,6 +81,7 @@ class MSANFModelParser {
     const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr GetAnfNode(const std::string &node_name);
 
+  FuncGraphPtr top_graph_ = nullptr;
   std::string producer_name_;
   std::string model_version_;
   std::string ir_version_;
