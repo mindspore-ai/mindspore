@@ -24,6 +24,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <set>
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_params.h"
@@ -48,13 +49,11 @@ class WeightQuantizer : public Quantizer {
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
   size_t bit_num_{8};
-  std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors_;
+  // delete it in the future.
+  std::set<tensor::TensorPtr> weight_quantized_tensors_;
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
   double mixed_bit_init_scale_ = 0.02;
-
-  STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
-                     const PrimitivePtr &primitive);
   STATUS MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   STATUS DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
 

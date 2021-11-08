@@ -101,45 +101,17 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 
-STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_datas, int new_size, TypeId new_data_type);
+STATUS UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
+                               int new_size, TypeId new_data_type);
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt);
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
-template <typename T>
-STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const std::vector<T> &quant_datas) {
-  if (bit_num != 8 && bit_num != 16) {
-    std::vector<T> data{};
-    for (size_t i = 0; i < quant_datas.size(); ++i) {
-      data.emplace_back((static_cast<T>(quant_datas[i])));
-    }
-    if (bit_num > 0 && bit_num < 8) {
-      std::vector<uint8_t> pack_data{};
-      BitPack::BitPacking<T, uint8_t>(bit_num, data, &pack_data);
-      auto status =
-        UpdateTensorDataAndSize(weight, pack_data.data(), pack_data.size() * sizeof(uint8_t), kNumberTypeUInt8);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-        return RET_ERROR;
-      }
-    } else if (bit_num > 8 && bit_num < 16) {
-      std::vector<uint16_t> pack_data{};
-      BitPack::BitPacking<T, uint16_t>(bit_num, data, &pack_data);
-      auto status =
-        UpdateTensorDataAndSize(weight, pack_data.data(), pack_data.size() * sizeof(uint16_t), kNumberTypeUInt16);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-        return RET_ERROR;
-      }
-    }
-  }
-  return RET_OK;
-}
-
-STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                           WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index);
+STATUS MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight,
+                           const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                           TypeId quant_data_type, double init_scale, int index);
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 
@@ -148,9 +120,10 @@ int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::v
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 template <typename T>
-STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                           int quant_max, int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
-                           TypeId quant_data_type, int index, bool k_means = false) {
+STATUS FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight,
+                           const PrimitivePtr &primitive, QuantType quant_type, int quant_max, int quant_min,
+                           size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
+                           bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -177,7 +150,7 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
       DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                            static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max, quant_min,
                            bit_num, k_means, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim);
-    if (ret == RET_QUANT_CONTINUE) {
+    if (ret == RET_NO_CHANGE) {
       return ret;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per channel quant failed.";
@@ -193,7 +166,8 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   } else {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
   }
-  auto status = UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
+  auto status =
+    UpdateTensorDataAndSize(parameter, weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;
@@ -213,11 +187,8 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
     return RET_ERROR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (quant_type == QuantType_QUANT_ALL) {
-    quant_param_holder->set_input_quant_param(index, quant_params);
-  } else {
-    quant_param_holder->set_input_quant_param(index, quant_params);
-  }
+  quant_param_holder->set_input_quant_param(index, quant_params);
+  quant_param_holder->set_quant_type(quant_type);
   return ret;
 }
 

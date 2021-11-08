@@ -536,28 +536,13 @@ STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNo
   auto quant_max_t = quant_max;
   auto quant_min_t = quant_min;
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_ALL, quant_max_t, quant_min_t,
-                                            bit_num_t, weight_quant_type, kNumberTypeInt8, input_index - 1);
+  auto status =
+    FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_ALL, quant_max_t, quant_min_t,
+                                bit_num_t, weight_quant_type, kNumberTypeInt8, input_index - 1);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
   }
-  // set dtype
-  auto abstractBase = parameter->abstract();
-  if (abstractBase == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << parameter->name();
-    return RET_NULL_PTR;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << parameter->name();
-    return RET_ERROR;
-  }
-  auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-  if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
-    MS_LOG(ERROR) << "abstractTensor is nullptr, " << parameter->name();
-    return RET_NULL_PTR;
-  }
-  abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
   return RET_OK;
 }
 
@@ -675,7 +660,7 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
       MS_LOG(ERROR) << "Set In/Out quant param failed.";
       return ret;
     }
-    return RET_QUANT_CONTINUE;
+    return RET_NO_CHANGE;
   }
   if (CheckNodeInSet(cnode, has_bias_operator)) {
     if (input_index == THIRD_INPUT + 1) {
@@ -759,7 +744,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
       ret = DoParameterNodeQuant(cnode, input_node, i);
-      if (ret == RET_QUANT_CONTINUE) {
+      if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do parameter node quant failed.";

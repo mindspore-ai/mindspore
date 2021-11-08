@@ -45,7 +45,6 @@ typedef struct {
   float max;
 } MinMax;
 
-const int RET_QUANT_CONTINUE = 2;
 static constexpr double SCALE_THREASHOLD = 1e-38;
 
 static constexpr int kPerTensor = 1;
@@ -181,8 +180,8 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   CHECK_LESS_RETURN(dims.size(), static_cast<size_t>(preferred_dim + 1));
   if (quant_type == schema::QuantType_QUANT_WEIGHT) {
     ret = CalPerChannelGain(bit_num, dims, preferred_dim);
-    if (ret == RET_QUANT_CONTINUE) {
-      return RET_QUANT_CONTINUE;
+    if (ret == RET_NO_CHANGE) {
+      return RET_NO_CHANGE;
     }
   }
 
