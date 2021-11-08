@@ -375,12 +375,46 @@ std::list<CNodePtr> AnfExporter::InsertCallNode(const FuncGraphPtr &func_graph) 
   return cnodes;
 }
 
+void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimCall)) {
+    return;
+  }
+  node->primitive->value.AsCall()->is_tail_call = false;
+  call_node_map_[cnode] = node;
+  return;
+}
+
+int AnfExporter::SetTailCall(const CNodePtr &return_cnode) {
+  auto return_cnode_input_size = return_cnode->inputs().size();
+  for (size_t i = 1; i < return_cnode_input_size; ++i) {
+    if (!IsCall(return_cnode->input(i))) {
+      continue;
+    }
+    auto call_cnode = return_cnode->input(i)->cast<CNodePtr>();
+    if (call_node_map_.find(call_cnode) == call_node_map_.end()) {
+      MS_LOG(ERROR) << "Not found call cnode in call_node_map.";
+      return RET_ERROR;
+    }
+    call_node_map_[call_cnode]->primitive->value.AsCall()->is_tail_call = true;
+  }
+  return RET_OK;
+}
+
+bool AnfExporter::CaseToContinue(const string &prim_name) {
+  return prim_name == mindspore::ops::kNameDepend || prim_name == mindspore::lite::kNameTupleGetItem ||
+         prim_name == mindspore::lite::kNameMakeTuple || prim_name == "make_tuple";
+}
+
 int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                         const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive) {
   int ret = RET_OK;
   auto cnodes = InsertCallNode(func_graph);
   for (const auto &cnode : cnodes) {
     auto prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "get prim from value node failed.";
+      return RET_ERROR;
+    }
     std::unique_ptr<schema::PrimitiveT> primT;
 
     ret = RemoveIfDepend(cnode);
@@ -388,11 +422,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       MS_LOG(ERROR) << "RemoveIfDepend failed";
       break;
     }
-    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::lite::kNameTupleGetItem ||
-        prim->name() == mindspore::lite::kNameMakeTuple) {
-      continue;
-    }
-    if (prim->name() == "make_tuple") {
+    if (CaseToContinue(prim->name())) {
       continue;
     }
     ret = RemoveIfMakeTuple(cnode);
@@ -413,6 +443,12 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
         MS_LOG(ERROR) << "SetOpOutputN failed";
         break;
       }
+      ret = SetTailCall(cnode);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "SetTailCall failed";
+        return ret;
+      }
+
       continue;
     }
     primT = GetPrimitiveT(cnode->input(kPrimIndex));
@@ -425,6 +461,8 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       MS_LOG(ERROR) << "SetOpInputNode failed";
       break;
     }
+    // set all call op to non tail call
+    SetNonTailCall(cnode, node.get());
 
     ret = ExportPartialNode(meta_graphT, keep_graph, copy_primitive, cnode, node);
     if (ret != RET_OK) {

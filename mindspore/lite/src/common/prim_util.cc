@@ -85,6 +85,14 @@ bool IsSwitchNode(const void *primitive, int schema_version) {
   return false;
 }
 
+bool IsSwitchLayerNode(const void *primitive, int schema_version) {
+  MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
+  if (schema_version == SCHEMA_CUR) {
+    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_SwitchLayer;
+  }
+  return false;
+}
+
 bool IsCustomNode(const void *primitive, int schema_version) {
   MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primtive cannot be nullptr");
   if (schema_version == SCHEMA_CUR) {
