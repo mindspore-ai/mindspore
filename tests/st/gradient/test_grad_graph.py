@@ -40,12 +40,7 @@ class MultipleInputsMultipleOutputsNet(nn.Cell):
     def construct(self, x, y, z):
         return x**2 + y**2 + z**2, x*y*z
 
-
-def function1(x, y, z):
-    return x**2 + y**2 + z**2, x*y*z
-
-@ms_function
-def function2(x, y, z):
+def function(x, y, z):
     return x**2 + y**2 + z**2, x*y*z
 
 def iteration_grad_function(x, y, z):
@@ -53,7 +48,7 @@ def iteration_grad_function(x, y, z):
 
 @ms_function
 def grad_warp_with_msfunction(x, y, z):
-    output = grad(function1, grad_position=(1, 2))(x, y, z)
+    output = grad(function)(x, y, z)
     return output
 
 
@@ -135,38 +130,19 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_function_graph():
+def test_grad_function_with_sens_graph():
     """
     Features: Function grad.
-    Description: Test F.grad with function in graph mode.
+    Description: Test F.grad with function setting sens_param in graph mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
-    expect_grad1 = Tensor(np.array([[-4, 12], [13, 0]]).astype(np.float32))
-    expect_grad2 = Tensor(np.array([[-2, 12], [7, 6]]).astype(np.float32))
-    real_grad = grad(function1, grad_position=(1, 2))(x, y, z)
-    assert isinstance(real_grad, tuple)
-    assert len(real_grad) == 2
-    assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
-    assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_grad_msfuntion_graph():
-    """
-    Features: Function grad.
-    Description: Test F.grad with ms_function in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
-    expect_grad1 = Tensor(np.array([[-4, 12], [13, 0]]).astype(np.float32))
-    expect_grad2 = Tensor(np.array([[-2, 12], [7, 6]]).astype(np.float32))
-    real_grad = grad(function2, grad_position=(1, 2))(x, y, z)
+    v = Tensor(np.array([[-1, 3], [2, 1]]).astype(np.float32))
+    expect_grad1 = Tensor(np.array([[4, 36], [26, 0]]).astype(np.float32))
+    expect_grad2 = Tensor(np.array([[2, 36], [14, 6]]).astype(np.float32))
+    real_grad = grad(function, grad_position=(1, 2), sens_param=True)(x, y, z, (v, v))
     assert isinstance(real_grad, tuple)
     assert len(real_grad) == 2
     assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
@@ -204,10 +180,6 @@ def test_grad_warp_with_msfunction_graph():
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
-    expect_grad1 = Tensor(np.array([[-4, 12], [13, 0]]).astype(np.float32))
-    expect_grad2 = Tensor(np.array([[-2, 12], [7, 6]]).astype(np.float32))
+    expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
     real_grad = grad_warp_with_msfunction(x, y, z)
-    assert isinstance(real_grad, tuple)
-    assert len(real_grad) == 2
-    assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
-    assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
+    assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
