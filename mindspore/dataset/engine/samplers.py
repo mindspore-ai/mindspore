@@ -399,6 +399,7 @@ class DistributedSampler(BuiltinSampler):
                                                      self.seed, num_samples, self.offset)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(num_samples)
         return c_sampler
 
     def is_shuffled(self):
@@ -502,6 +503,7 @@ class PKSampler(BuiltinSampler):
         c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle, num_samples)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(num_samples)
         return c_sampler
 
 
@@ -557,6 +559,7 @@ class RandomSampler(BuiltinSampler):
         c_sampler = cde.MindrecordRandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(num_samples)
         return c_sampler
 
     def is_shuffled(self):
@@ -621,6 +624,7 @@ class SequentialSampler(BuiltinSampler):
         c_sampler = cde.MindrecordSequentialSampler(num_samples, start_index)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(num_samples)
         return c_sampler
 
     def is_shuffled(self):
@@ -713,6 +717,7 @@ class SubsetSampler(BuiltinSampler):
         c_sampler = cde.MindrecordSubsetSampler(self.indices)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(self.get_num_samples())
         return c_sampler
 
     def get_num_samples(self):
@@ -760,6 +765,7 @@ class SubsetRandomSampler(SubsetSampler):
         c_sampler = cde.MindrecordSubsetSampler(self.indices, ds.config.get_seed())
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
+        c_sampler.set_num_samples(self.get_num_samples())
         return c_sampler
 
 
