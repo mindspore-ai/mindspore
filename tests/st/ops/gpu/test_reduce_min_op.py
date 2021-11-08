@@ -19,196 +19,79 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
 
-x0 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis0 = 3
-keep_dims0 = True
-
-x1 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis1 = 3
-keep_dims1 = False
-
-x2 = np.random.rand(2, 3, 1, 4).astype(np.float32)
-axis2 = 2
-keep_dims2 = True
-
-x3 = np.random.rand(2, 3, 1, 4).astype(np.float32)
-axis3 = 2
-keep_dims3 = False
-
-x4 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis4 = ()
-np_axis4 = None
-keep_dims4 = True
-
-x5 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis5 = ()
-np_axis5 = None
-keep_dims5 = False
-
-x6 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis6 = -2
-keep_dims6 = False
-
-x7 = np.random.rand(2, 3, 4, 4).astype(np.float32)
-axis7 = (-2, -1)
-keep_dims7 = True
-
-x8 = np.random.rand(1, 1, 1, 1).astype(np.float32)
-axis8 = ()
-np_axis8 = None
-keep_dims8 = True
-
-
 class ReduceMin(nn.Cell):
-    def __init__(self):
+    def __init__(self, keep_dims):
         super(ReduceMin, self).__init__()
+        self.reduce_min = P.ReduceMin(keep_dims=keep_dims)
 
-        self.x0 = Tensor(x0)
-        self.axis0 = axis0
-        self.keep_dims0 = keep_dims0
-
-        self.x1 = Tensor(x1)
-        self.axis1 = axis1
-        self.keep_dims1 = keep_dims1
-
-        self.x2 = Tensor(x2)
-        self.axis2 = axis2
-        self.keep_dims2 = keep_dims2
-
-        self.x3 = Tensor(x3)
-        self.axis3 = axis3
-        self.keep_dims3 = keep_dims3
-
-        self.x4 = Tensor(x4)
-        self.axis4 = axis4
-        self.keep_dims4 = keep_dims4
-
-        self.x5 = Tensor(x5)
-        self.axis5 = axis5
-        self.keep_dims5 = keep_dims5
-
-        self.x6 = Tensor(x6)
-        self.axis6 = axis6
-        self.keep_dims6 = keep_dims6
-
-        self.x7 = Tensor(x7)
-        self.axis7 = axis7
-        self.keep_dims7 = keep_dims7
-
-        self.x8 = Tensor(x8)
-        self.axis8 = axis8
-        self.keep_dims8 = keep_dims8
-
-    @ms_function
-    def construct(self):
-        return (P.ReduceMin(self.keep_dims0)(self.x0, self.axis0),
-                P.ReduceMin(self.keep_dims1)(self.x1, self.axis1),
-                P.ReduceMin(self.keep_dims2)(self.x2, self.axis2),
-                P.ReduceMin(self.keep_dims3)(self.x3, self.axis3),
-                P.ReduceMin(self.keep_dims4)(self.x4, self.axis4),
-                P.ReduceMin(self.keep_dims5)(self.x5, self.axis5),
-                P.ReduceMin(self.keep_dims6)(self.x6, self.axis6),
-                P.ReduceMin(self.keep_dims7)(self.x7, self.axis7),
-                P.ReduceMin(self.keep_dims8)(self.x8, self.axis8))
+    def construct(self, x, axis):
+        return self.reduce_min(x, axis)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ReduceMin():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize('shape, axis, keep_dims',
+                         [((2, 3, 4, 4), 3, True), ((2, 3, 4, 4), 3, False), ((2, 3, 1, 4), 2, True),
+                          ((2, 3, 1, 4), 2, False), ((2, 3, 4, 4), None, True), ((2, 3, 4, 4), None, False),
+                          ((2, 3, 4, 4), -2, False), ((2, 3, 4, 4), (-2, -1), False), ((1, 1, 1, 1), None, True)])
+def test_reduce_min(dtype, shape, axis, keep_dims):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ReduceMin
+    Expectation: the result match to numpy
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    reduce_min = ReduceMin()
-    output = reduce_min()
+    x = np.random.rand(*shape).astype(dtype)
+    tensor_x = Tensor(x)
 
-    expect0 = np.min(x0, axis=axis0, keepdims=keep_dims0)
-    diff0 = abs(output[0].asnumpy() - expect0)
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
-    assert np.all(diff0 < error0)
-    assert output[0].shape == expect0.shape
+    reduce_min = ReduceMin(keep_dims)
+    ms_axis = axis if axis is not None else ()
+    output = reduce_min(tensor_x, ms_axis)
 
-    expect1 = np.min(x1, axis=axis1, keepdims=keep_dims1)
-    diff1 = abs(output[1].asnumpy() - expect1)
-    error1 = np.ones(shape=expect1.shape) * 1.0e-5
-    assert np.all(diff1 < error1)
-    assert output[1].shape == expect1.shape
-
-    expect2 = np.min(x2, axis=axis2, keepdims=keep_dims2)
-    diff2 = abs(output[2].asnumpy() - expect2)
-    error2 = np.ones(shape=expect2.shape) * 1.0e-5
-    assert np.all(diff2 < error2)
-    assert output[2].shape == expect2.shape
-
-    expect3 = np.min(x3, axis=axis3, keepdims=keep_dims3)
-    diff3 = abs(output[3].asnumpy() - expect3)
-    error3 = np.ones(shape=expect3.shape) * 1.0e-5
-    assert np.all(diff3 < error3)
-    assert output[3].shape == expect3.shape
-
-    expect4 = np.min(x4, axis=np_axis4, keepdims=keep_dims4)
-    diff4 = abs(output[4].asnumpy() - expect4)
-    error4 = np.ones(shape=expect4.shape) * 1.0e-5
-    assert np.all(diff4 < error4)
-    assert output[4].shape == expect4.shape
-
-    expect5 = np.min(x5, axis=np_axis5, keepdims=keep_dims5)
-    diff5 = abs(output[5].asnumpy() - expect5)
-    error5 = np.ones(shape=expect5.shape) * 1.0e-5
-    assert np.all(diff5 < error5)
-    assert output[5].shape == expect5.shape
-
-    expect6 = np.min(x6, axis=axis6, keepdims=keep_dims6)
-    diff6 = abs(output[6].asnumpy() - expect6)
-    error6 = np.ones(shape=expect6.shape) * 1.0e-5
-    assert np.all(diff6 < error6)
-    assert output[6].shape == expect6.shape
-
-    expect7 = np.min(x7, axis=axis7, keepdims=keep_dims7)
-    diff7 = abs(output[7].asnumpy() - expect7)
-    error7 = np.ones(shape=expect7.shape) * 1.0e-5
-    assert np.all(diff7 < error7)
-
-    expect8 = np.min(x8, axis=np_axis8, keepdims=keep_dims8)
-    diff8 = abs(output[8].asnumpy() - expect8)
-    error8 = np.ones(shape=expect8.shape) * 1.0e-5
-    assert np.all(diff8 < error8)
-
-
-x_1 = x8
-axis_1 = 0
-x_2 = x1
-axis_2 = 0
+    expect = np.min(x, axis=axis, keepdims=keep_dims)
+    diff = abs(output.asnumpy() - expect)
+    error = np.ones(shape=expect.shape) * 1.0e-5
+    assert np.all(diff < error)
+    assert output.shape == expect.shape
 
 
 class ReduceMinDynamic(nn.Cell):
     def __init__(self, x, axis):
         super(ReduceMinDynamic, self).__init__()
-        self.reducemin = P.ReduceMin(False)
+        self.reduce_min = P.ReduceMin(False)
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.x = x
         self.axis = axis
 
     def construct(self):
         dynamic_x = self.test_dynamic(self.x)
-        return self.reducemin(dynamic_x, self.axis)
+        return self.reduce_min(dynamic_x, self.axis)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_reduce_min_dynamic():
+@pytest.mark.parametrize('dtype', [np.float32])
+@pytest.mark.parametrize('shape, axis, keep_dims',
+                         [((1, 1, 1, 1), 0, False), ((2, 3, 4, 4), 0, False)])
+def test_reduce_min_dynamic(dtype, shape, axis, keep_dims):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ReduceMin with dynamic shape
+    Expectation: the result match to numpy
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    net1 = ReduceMinDynamic(Tensor(x_1), axis_1)
-    net2 = ReduceMinDynamic(Tensor(x_2), axis_2)
+    x = np.random.rand(*shape).astype(dtype)
+    ms_axis = axis if axis is not None else ()
+    net = ReduceMinDynamic(Tensor(x), ms_axis)
 
-    expect_1 = np.min(x_1, axis=0, keepdims=False)
-    expect_2 = np.min(x_2, axis=0, keepdims=False)
+    expect = np.min(x, axis=axis, keepdims=keep_dims)
+    output = net()
 
-    output1 = net1()
-    output2 = net2()
-
-    np.testing.assert_almost_equal(output1.asnumpy(), expect_1)
-    np.testing.assert_almost_equal(output2.asnumpy(), expect_2)
+    np.testing.assert_almost_equal(output.asnumpy(), expect)
