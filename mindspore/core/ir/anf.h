@@ -626,19 +626,6 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
     primal_debug_infos_.insert(primal_debug_infos_.end(), debug_infos.begin(), debug_infos.end());
   }
 
-  /// \brief Add primal debug information to this CNode.
-  ///
-  /// \param[in] debug_infos The primal debug information.
-  void AddPrimalDebugInfo(const NodeDebugInfoPtr debug_info) {
-    if (std::find(primal_debug_infos_.begin(), primal_debug_infos_.end(), debug_info) != primal_debug_infos_.end()) {
-      MS_LOG(EXCEPTION) << "Debug_info already in primal_debug_infos_ vector";
-    }
-    primal_debug_infos_.push_back(debug_info);
-  }
-
-  /// \brief Clone node information from a given Cnode.
-  ///
-  /// \param[in] node Another node.
   void CloneCNodeInfo(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     set_abstract(node->abstract());

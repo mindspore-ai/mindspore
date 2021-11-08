@@ -195,19 +195,6 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \return Return true if the primitive is basic, else return false.
   bool is_base() const { return is_base_; }
-  /// \brief Get Primitive's hook function result.
-  ///
-  /// \param args The arguments of hook function.
-  /// \return The result of hookfunction.
-  virtual BaseRef RunHookFunction(const VectorRef &args) const {
-    MS_LOG(EXCEPTION) << "call a empty function!";
-    BaseRef result;
-    return result;
-  }
-  /// \brief Copy a Primitive's hook function to another primitive.
-  ///
-  /// \param[in] primitive Set primitive's hook function to the current object.
-  virtual void CopyHookFunction(const PrimitivePtr &primitive) { MS_LOG(EXCEPTION) << "call a empty function!"; }
   /// \brief Set primitive const flag.
   /// If the is_const_prim_ of primitive is true means the primitive will be eliminated in constant folding.
   ///

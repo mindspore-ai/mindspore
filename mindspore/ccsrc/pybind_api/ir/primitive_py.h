@@ -54,12 +54,12 @@ class PrimitivePy : public Primitive {
 
   const std::vector<Signature> &signatures() const { return signatures_; }
 
-  void CopyHookFunction(const PrimitivePtr &primitive) override;
+  void CopyHookFunction(const PrimitivePtr &primitive);
 
   py::dict GetAttrDict();
   void set_hook(const py::function &hook) { hook_ = hook; }
   py::function hook() const { return hook_; }
-  BaseRef RunHookFunction(const VectorRef &args) const override;
+  BaseRef RunHookFunction(const VectorRef &args) const;
   BaseRef RunCellBpropFunction(const py::tuple &py_args) const;
   BaseRef RunCellHookFunction(const py::tuple &py_args) const;
   BaseRef RunVariableHookFunction(const py::tuple &py_args) const;

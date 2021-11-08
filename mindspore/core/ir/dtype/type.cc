@@ -93,7 +93,8 @@ TypeId IntBitsToTypeId(const int nbits) {
     case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeInt64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
+      MS_LOG(EXCEPTION) << "For Int type only support number of 8bits, 16bits, 32bits and 64bits, but got " << nbits
+                        << "bits";
   }
 }
 
@@ -108,7 +109,8 @@ TypeId UIntBitsToTypeId(const int nbits) {
     case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeUInt64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
+      MS_LOG(EXCEPTION) << "For UInt type only support number of 8bits, 16bits, 32bits and 64bits, but got " << nbits
+                        << "bits";
   }
 }
 
@@ -121,7 +123,8 @@ TypeId FloatBitsToTypeId(const int nbits) {
     case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeFloat64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
+      MS_LOG(EXCEPTION) << "For Float type only support number of 16bits, 32bits and 64bits, but got " << nbits
+                        << "bits";
   }
 }
 
@@ -132,7 +135,7 @@ TypeId ComplexBitsToTypeId(const int nbits) {
     case static_cast<int>(BitsNum::eBits128):
       return kNumberTypeComplex128;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
+      MS_LOG(EXCEPTION) << "For Complex type only support number of 64bits and 128bits, but got " << nbits << "bits";
   }
 }
 

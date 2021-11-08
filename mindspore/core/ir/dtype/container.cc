@@ -70,7 +70,7 @@ TypePtr List::DeepCopy() const {
 
 const TypePtr List::operator[](std::size_t dim) const {
   if (dim >= size()) {
-    MS_LOG(EXCEPTION) << "Out of the size of the List.";
+    MS_LOG(EXCEPTION) << "Index " << dim << " is out range of the List size " << size() << ".";
   }
   return elements_[dim];
 }
@@ -172,7 +172,7 @@ bool Tuple::operator==(const Type &other) const {
 
 const TypePtr Tuple::operator[](std::size_t dim) const {
   if (dim >= size()) {
-    MS_LOG(EXCEPTION) << "Out of the size of the tuple.";
+    MS_LOG(EXCEPTION) << "Index " << dim << " is out range of the Tuple size " << size() << ".";
   }
   return elements_[dim];
 }

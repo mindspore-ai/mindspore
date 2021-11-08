@@ -153,49 +153,6 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
   mutable AnfNodePtr captured_binop_node_{nullptr};
 };
 
-template <typename T>
-class PUnaryOperation : public PBase<PUnaryOperation<T> > {
- public:
-  PUnaryOperation(const PrimitivePtr &prim, const T &x) : prim_(prim), x_(x) {}
-  ~PUnaryOperation() = default;
-
-  AnfNodePtr GetNode(const AnfNodePtr &node) const {
-    AnfNodePtrList list = {NewValueNode(prim_), x_.GetNode(node)};
-    return NewCNode(list, node->func_graph());
-  }
-
-  bool TryCapture_(const AnfNodePtr &node) const {
-    if (IsPrimitiveCNode(node, prim_)) {
-      auto cnode = node->cast<CNodePtr>();
-      auto inputs = cnode->inputs();
-      if (inputs.size() == 2 && x_.TryCapture(inputs[1])) {
-        captured_unaryop_node_ = node;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  AnfNodePtr GetOriginalNode() const {
-    if (captured_unaryop_node_ == nullptr) {
-      MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get it.";
-    }
-    return captured_unaryop_node_;
-  }
-
-  void Reset() const {
-    x_.Reset();
-    captured_unaryop_node_ = nullptr;
-  }
-
-  using Internal = const PUnaryOperation<T> &;
-
- private:
-  const PrimitivePtr prim_;
-  typename T::Internal x_;
-  mutable AnfNodePtr captured_unaryop_node_{nullptr};
-};
-
 ///
 /// Helper functions to apply a pattern function on all elements of a tuple
 ///
@@ -730,85 +687,6 @@ class PConstant : public PBase<PConstant<T> > {
     return new_vnode;
   }
 
-  template <typename TD>
-  TD CalcuConstant(const TD &data, const PrimitivePtr &calcu_type) {
-    TD tmp_data = data;
-    if (calcu_type == prim::kPrimReciprocal) {
-      if (data == 0) {
-        MS_EXCEPTION(ValueError);
-      } else {
-        tmp_data = 1 / data;
-      }
-    }
-    if (calcu_type == prim::kPrimNeg) {
-      tmp_data = -data;
-    }
-    return tmp_data;
-  }
-
-  template <typename TD>
-  bool TensorCopyData(const tensor::TensorPtr &src_tensor_ptr, const tensor::TensorPtr &dst_tensor_ptr,
-                      const PrimitivePtr &calcu_type, size_t mem_size) {
-    auto *data = reinterpret_cast<TD *>(src_tensor_ptr->data_c());
-    auto *data2 = reinterpret_cast<TD *>(dst_tensor_ptr->data_c());
-    if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
-      return false;
-    }
-    for (int i = 0; i < src_tensor_ptr->DataSize(); i++) {
-      if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-        return false;
-      }
-      data2[i] = CalcuConstant(data2[i], calcu_type);
-    }
-    return true;
-  }
-
-  // calculate const with different operations
-  AnfNodePtr CalcuConstantTensor(const AnfNodePtr &node, const ValuePtr &value, const PrimitivePtr &calcu_type) {
-    tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    TypeId tensor_type = tensor_ptr->Dtype()->type_id();
-    auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
-    TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    ShapeVector tensor_shape = tensor_abstract->shape()->shape();
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    if (new_tensor_ptr->DataSize() < tensor_ptr->DataSize()) {
-      MS_EXCEPTION(ValueError) << "DataSize of new_tensor_ptr is smaller than DataSize of tensor_ptr";
-    }
-    if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
-        (tensor_type == TypeId::kNumberTypeFloat64)) {
-      if (!TensorCopyData<float>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
-        return nullptr;
-      }
-    }
-    if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
-      if (!TensorCopyData<int>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
-        return nullptr;
-      }
-    }
-    if (tensor_type == TypeId::kNumberTypeFloat64) {
-      if (!TensorCopyData<double>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
-        return nullptr;
-      }
-    }
-    auto new_vnode = NewValueNode(new_tensor_ptr);
-    new_vnode->set_abstract(tensor_ptr->ToAbstract());
-    return new_vnode;
-  }
-
-  // calculate const with different operations
-  AnfNodePtr ValueNodeWithOprations(const PrimitivePtr &calcu_type) {
-    AnfNodePtr node = this->GetNode(captured_node_);
-    if (!node->isa<ValueNode>()) {
-      MS_EXCEPTION(ValueError) << "CalcuValue is trying to use a not ValueNode.";
-    }
-    auto value = node->cast<ValueNodePtr>()->value();
-    if (value->isa<tensor::Tensor>()) {
-      return CalcuConstantTensor(node, value, calcu_type);
-    }
-    return nullptr;
-  }
-
   enum BinOperator {
     ADD = 0,
     MULTIPLY,
@@ -866,12 +744,6 @@ class PConstant : public PBase<PConstant<T> > {
     }
     *out_data = reinterpret_cast<void *>(data_out);
     return;
-  }
-
-  AnfNodePtr AddByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
-    AnfNodePtr vnode_1 = this->GetNode(captured_node_);
-    AnfNodePtr vnode_2 = vpnode_2.GetNode(captured_node_);
-    return CalcConstantTensors(vnode_1, vnode_2, node_3, ADD);
   }
 
   AnfNodePtr MulByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
@@ -1024,21 +896,6 @@ BIN_OPERATION_PATTERN(operator-, prim::kPrimSub, false);
     }                                                                   \
   }
 
-#define MATCH_REPLACE_IF_ELSE(OrigNode, CaptureNode, ReplaceWith, Condition, ElseNode) \
-  if ((CaptureNode).TryCapture(OrigNode)) {                                            \
-    if ((Condition)) {                                                                 \
-      auto rep = (ReplaceWith).GetNode(OrigNode);                                      \
-      if (rep != nullptr) {                                                            \
-        return (ReplaceWith).GetNode(OrigNode);                                        \
-      }                                                                                \
-    } else {                                                                           \
-      auto rep = (ElseNode).GetNode(OrigNode);                                         \
-      if (rep != nullptr) {                                                            \
-        return (ElseNode).GetNode(OrigNode);                                           \
-      }                                                                                \
-    }                                                                                  \
-  }
-
 #define MATCH_REPLACE_LAMBDA(OrigNode, CaptureNode, Lambda) \
   if ((CaptureNode).TryCapture(OrigNode)) {                 \
     auto rep = (Lambda)();                                  \
@@ -1053,14 +910,6 @@ BIN_OPERATION_PATTERN(operator-, prim::kPrimSub, false);
     if (rep != nullptr) {                                                 \
       return rep;                                                         \
     }                                                                     \
-  }
-
-#define MATCH_REPLACE_LAMBDA_FLAG(OrigNode, CaptureNode, Lambda, Flag) \
-  if ((CaptureNode).TryCapture(OrigNode)) {                            \
-    auto rep = (Lambda)(Flag);                                         \
-    if (rep != nullptr) {                                              \
-      return rep;                                                      \
-    }                                                                  \
   }
 }  // namespace mindspore
 
