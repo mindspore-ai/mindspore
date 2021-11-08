@@ -1973,6 +1973,19 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
   }
   return nullptr;
 }
+
+bool IsUnusedInternlOutput(const AnfNodePtr &user) {
+  if (!CNodeFirstInputIsPrimitive(user)) {
+    return true;
+  }
+  if (IsPrimitiveCNode(user, prim::kPrimSwitch) || IsPrimitiveCNode(user, prim::kPrimSwitchLayer)) {
+    return true;
+  }
+  if (!AnfAlgo::IsRealKernel(user)) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 constexpr auto kMixTarget = "MixTarget";
@@ -2056,11 +2069,7 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
       if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimUpdateState)) {
         continue;
       }
-      if (!CNodeFirstInputIsPrimitive(user)) {
-        internal_output = false;
-        break;
-      }
-      if (!AnfAlgo::IsRealKernel(user)) {
+      if (IsUnusedInternlOutput(user)) {
         internal_output = false;
         break;
       }
