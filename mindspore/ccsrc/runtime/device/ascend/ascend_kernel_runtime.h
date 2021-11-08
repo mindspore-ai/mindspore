@@ -73,7 +73,6 @@ class AscendKernelRuntime : public KernelRuntime {
   void *GetModelStream(uint32_t graph_id) const override;
   // add for MindRT
   void ReleaseDeviceRes() override;
-  void SetCurrentContext();
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -90,6 +89,7 @@ class AscendKernelRuntime : public KernelRuntime {
   static bool HcclInit();
   static bool NeedDestroyHccl();
   static bool DestroyHccl();
+  void SetCurrentContext();
 
   void ClearGraphModelMap();
   bool GraphWithEmptyTaskList(const session::KernelGraph &graph) const;

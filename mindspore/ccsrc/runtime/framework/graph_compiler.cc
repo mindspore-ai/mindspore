@@ -348,6 +348,9 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
 
   auto graph_id = CompileGraphImpl(root_graph, device_context);
 
+  // dump all graphs.
+  device_context->DumpAllGraphs(all_graphs);
+
   // Cache the backend graph output nodes to front nodes with output index.
   auto output = func_graph->output();
   MS_EXCEPTION_IF_NULL(output);

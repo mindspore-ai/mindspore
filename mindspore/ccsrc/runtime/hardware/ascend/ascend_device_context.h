@@ -126,6 +126,9 @@ class AscendDeviceContext : public DeviceContext {
   // set rt_context_ to this thread to control device
   bool BindDeviceToCurrentThread() const;
 
+  // dump all graphs.
+  void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) const override;
+
  private:
   // Graph loader interface
   void AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const;
@@ -150,6 +153,7 @@ class AscendDeviceContext : public DeviceContext {
   mutable std::set<KernelGraphPtr> memo_;
   // Using node to get it's atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
+  void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const;
 };
 }  // namespace ascend
 }  // namespace device

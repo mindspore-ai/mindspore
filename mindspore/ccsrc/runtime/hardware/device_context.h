@@ -152,6 +152,10 @@ class DeviceContext {
   // Return collective communication object for caller to access
   CollectiveCommunicationLibPtr collective_comm_lib() const { return collective_comm_lib_; }
 
+  // TODO(jiaorui): will be delete
+  // Dump all graphs.
+  virtual void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) const {}
+
  protected:
   DeviceContextKey device_context_key_;
   CollectiveCommunicationLibPtr collective_comm_lib_;

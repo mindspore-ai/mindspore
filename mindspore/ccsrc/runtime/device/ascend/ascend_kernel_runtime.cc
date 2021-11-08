@@ -301,6 +301,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
       !context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     HcclCollectiveGroup::instance().FinalizeCollective();
   }
+  initialized_ = false;
   MS_LOG(INFO) << "Ascend finalize end";
 }
 
@@ -407,7 +408,10 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, kAscendDevice, device_id);
+  auto ascend_device_address_ptr =
+    std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, kAscendDevice, device_id);
+  ascend_device_address_ptr->set_is_ptr_persisted(true);
+  return ascend_device_address_ptr;
 }
 
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -415,8 +419,10 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node_index, kAscendDevice,
-                                               device_id);
+  auto ascend_device_address_ptr = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
+                                                                         node_index, kAscendDevice, device_id);
+  ascend_device_address_ptr->set_is_ptr_persisted(true);
+  return ascend_device_address_ptr;
 }
 
 bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) {

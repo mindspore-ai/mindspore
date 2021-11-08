@@ -95,7 +95,7 @@ fi
 
 while read line; do
   if [ -f "${line}" ]; then
-    ${CLANG_FORMAT} -i "${line}"
+    "${CLANG_FORMAT}" -i "${line}"
   fi
 done < "${FMT_FILE_LIST}"
 

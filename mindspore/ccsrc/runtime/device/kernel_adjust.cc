@@ -997,6 +997,7 @@ void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_gr
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     device_address =
       std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, size, format, type_id, kAscendDevice, device_id);
+    device_address->set_is_ptr_persisted(true);
 
     if (runtime_instance->MallocMem(kStaticMem, size, device_address) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc static memory for device loop control parameter " << name

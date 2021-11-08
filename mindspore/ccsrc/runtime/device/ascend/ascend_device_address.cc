@@ -180,6 +180,8 @@ void AscendDeviceAddress::BindDevice() const {
     if (!ascend_device_context->BindDeviceToCurrentThread()) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
+  } else {
+    MS_LOG(WARNING) << "device name is null.";
   }
 }
 
@@ -432,9 +434,32 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
+bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
                                              const std::string &format) const {
-  MS_LOG(INFO) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+    return true;
+  }
+  BindDevice();
+  if (format_ != format || type_id_ != type) {
+    MS_LOG(ERROR) << "format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
+                  << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_);
+    return false;
+  }
+  if (size_ < size) {
+    MS_LOG(ERROR) << "src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
+    return false;
+  }
+  auto ret_rt_memcpy = rtMemcpy(ptr_, size, src_ptr, size, RT_MEMCPY_DEVICE_TO_DEVICE);
+  if (ret_rt_memcpy != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "SyncDeviceToDevice failed, rtMemcpy mem size [" << size << "], ret [" << ret_rt_memcpy << "]";
+    return false;
+  }
+  return true;
+}
+
+bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                                              const std::string &format) const {
+  MS_LOG(INFO) << "AsyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
                << ", size:" << size << ")";
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {

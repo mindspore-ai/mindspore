@@ -1600,6 +1600,7 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
       // for example "def f(x,y,z) {return x + y}", parameter z in unused
       auto new_parameter = CreateNewParameter(parameter, graph);
       graph_inputs->push_back(new_parameter);
+      graph->FrontBackendlMapAdd(parameter, new_parameter);
       MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
       continue;
     }

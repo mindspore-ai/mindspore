@@ -98,6 +98,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
+  bool is_ptr_persisted() const { return is_ptr_persisted_; }
+  void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
@@ -134,6 +136,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   ShapeVector host_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
+  // The device address of the node that owns the device address cannot be updated and replaced.
+  // application scenario: set to true when the hardware execution mode requires that ptr cannot be changed during
+  // execution.
+  bool is_ptr_persisted_{false};
 
   // The key of device context.
   std::string device_name_{""};

@@ -236,9 +236,9 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (tensor_address != device_address) {
     if (!kernel_graph->is_dynamic_shape() && EnableDeviceCopy() && NeedMemcpyInDevice(tensor_address, device_address)) {
-      auto status = device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
-                                                       tensor_address->GetSize(), tensor_address->type_id(),
-                                                       tensor_address->GetPtr(), tensor_address->format());
+      auto status = device_address->AsyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
+                                                        tensor_address->GetSize(), tensor_address->type_id(),
+                                                        tensor_address->GetPtr(), tensor_address->format());
       if (!status) {
         MS_LOG(EXCEPTION) << "SyncDeviceToDevice failed.";
       }
@@ -1830,9 +1830,9 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
         if (EnableDeviceCopy() && tensor->NeedSyncDeviceToHostImmediately()) {
           auto dst_device_address = AssignExtraMemForGraphOutput(tensor, node, output_index);
           MS_EXCEPTION_IF_NULL(dst_device_address);
-          if (!dst_device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(node, output_index),
-                                                      address->GetSize(), address->type_id(), address->GetPtr(),
-                                                      address->format())) {
+          if (!dst_device_address->AsyncDeviceToDevice(trans::GetRuntimePaddingShape(node, output_index),
+                                                       address->GetSize(), address->type_id(), address->GetPtr(),
+                                                       address->format())) {
             MS_LOG(EXCEPTION) << "SyncDeviceToDevice failed!";
           }
           tensor->set_sync_status(kNoNeedSync);
