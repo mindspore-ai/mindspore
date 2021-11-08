@@ -70,7 +70,7 @@ class _DenseVariational(Cell):
         self.sum = P.ReduceSum()
 
     def construct(self, x):
-        outputs = self.apply_variational_weight(x)
+        outputs = self._apply_variational_weight(x)
         if self.has_bias:
             outputs = self.apply_variational_bias(outputs)
         if self.activation_flag:
@@ -197,7 +197,7 @@ class DenseReparam(_DenseVariational):
             bias_posterior_fn=bias_posterior_fn
         )
 
-    def apply_variational_weight(self, inputs):
+    def _apply_variational_weight(self, inputs):
         """Calculate weight."""
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.matmul(inputs, weight_posterior_tensor)
@@ -294,7 +294,7 @@ class DenseLocalReparam(_DenseVariational):
         self.square = P.Square()
         self.normal = Normal()
 
-    def apply_variational_weight(self, inputs):
+    def _apply_variational_weight(self, inputs):
         """Calculate weight."""
         mean = self.matmul(inputs, self.weight_posterior("mean"))
         std = self.sqrt(self.matmul(self.square(inputs), self.square(self.weight_posterior("sd"))))

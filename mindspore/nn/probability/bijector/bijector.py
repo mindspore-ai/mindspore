@@ -147,7 +147,6 @@ class Bijector(Cell):
         return (shape_tensor + dist_shape_tensor).shape
 
     def shape_mapping(self, shape):
-        """Map shape."""
         return self._shape_mapping(shape)
 
     def _add_parameter(self, value, name):
@@ -224,6 +223,10 @@ class Bijector(Cell):
     def cast_param_by_value(self, value, para):
         """
         Cast the parameter(s) of the bijector to be the same type of input_value.
+
+        Args:
+            value (Tensor): input value.
+            para (Tensor): parameter(s) of the bijecto.
         """
         local = self.cast_base(para, self.dtype_base(value))
         return local

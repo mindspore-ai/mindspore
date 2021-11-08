@@ -100,7 +100,7 @@ class _ConvVariational(_Conv):
         self.sum = P.ReduceSum()
 
     def construct(self, inputs):
-        outputs = self.apply_variational_weight(inputs)
+        outputs = self._apply_variational_weight(inputs)
         if self.has_bias:
             outputs = self.apply_variational_bias(outputs)
         return outputs
@@ -260,7 +260,7 @@ class ConvReparam(_ConvVariational):
             bias_posterior_fn=bias_posterior_fn
         )
 
-    def apply_variational_weight(self, inputs):
+    def _apply_variational_weight(self, inputs):
         """Calculate weight."""
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.conv2d(inputs, weight_posterior_tensor)
