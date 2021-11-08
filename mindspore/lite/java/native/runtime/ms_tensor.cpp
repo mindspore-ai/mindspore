@@ -97,7 +97,7 @@ extern "C" JNIEXPORT jlongArray JNICALL Java_com_mindspore_lite_MSTensor_getLong
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
   if (local_element_num <= 0) {
-    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    MS_LOGE("ElementsNum of tensor is negative: %d", static_cast<int>(local_element_num));
     return env->NewLongArray(0);
   }
   auto ret = env->NewLongArray(local_element_num);
@@ -127,7 +127,7 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getIntDa
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
   if (local_element_num <= 0) {
-    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    MS_LOGE("ElementsNum of tensor is negative: %d", static_cast<int>(local_element_num));
     return env->NewIntArray(0);
   }
   auto ret = env->NewIntArray(local_element_num);
@@ -157,7 +157,7 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_lite_MSTensor_getFlo
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
   if (local_element_num <= 0) {
-    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    MS_LOGE("ElementsNum of tensor is negative: %d", static_cast<int>(local_element_num));
     return env->NewFloatArray(0);
   }
   auto ret = env->NewFloatArray(local_element_num);

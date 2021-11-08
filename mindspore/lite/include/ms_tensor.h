@@ -86,7 +86,7 @@ class MS_API MSTensor {
   /// \brief Get number of element in MSTensor.
   ///
   /// \return Number of element in MSTensor.
-  virtual int ElementsNum() const = 0;
+  virtual int64_t ElementsNum() const = 0;
 
   /// \brief Get byte size of data in MSTensor.
   ///

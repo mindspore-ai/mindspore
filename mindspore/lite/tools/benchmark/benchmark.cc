@@ -398,7 +398,7 @@ int Benchmark::PrintInputData() {
       }
       continue;
     }
-    size_t print_num = std::min(input->ElementsNum(), 20);
+    size_t print_num = std::min(static_cast<int>(input->ElementsNum()), 20);
     const void *in_data = input->MutableData();
     if (in_data == nullptr) {
       MS_LOG(ERROR) << "in_data is nullptr.";
