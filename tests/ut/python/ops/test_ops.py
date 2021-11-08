@@ -1284,6 +1284,10 @@ test_case_math_ops = [
         'block': LaplaceNet((3, 2, 4), 0),
         'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
         'skip': ['backward']}),
+    ('LpNorm', {
+        'block': P.LpNorm(axis=[0, 1], p=2, keep_dims=False),
+        'desc_inputs': [Tensor([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], mstype.float32)],
+        'desc_bprop': [Tensor([1, 2], mstype.float32)]}),
     ('Gamma', {
         'block': GammaNet((3, 2, 4), 0),
         'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],

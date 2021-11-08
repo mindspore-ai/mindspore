@@ -81,6 +81,41 @@ def get_bprop_index_lerp(self):
     return bprop
 
 
+@bprop_getters.register(P.LpNorm)
+def get_bprop_lp_norm(self):
+    """Grad definition for `LpNorm` operation."""
+    p = self.p
+    keep_dims = self.keep_dims
+    axis = self.axis
+    if isinstance(axis, int):
+        axis = [axis]
+    sign_op = P.Sign()
+    abs_op = P.Abs()
+    zeros_like_op = P.ZerosLike()
+    expand_dims_op = P.ExpandDims()
+    pow_op = P.Pow()
+
+    def bprop(input_x, out, dout):
+        if not keep_dims and input_x.shape != ():
+            for i in axis:
+                dout = expand_dims_op(dout, i)
+                out = expand_dims_op(out, i)
+
+        if p == 0:
+            return (zeros_like_op(input_x),)
+        if p == 1:
+            return (dout * sign_op(input_x),)
+        if p == 2:
+            input_scaled = input_x
+            scale_v = dout / out
+        else:
+            input_scaled = pow_op(abs_op(input_x), (p-2)) * input_x
+            scale_v = dout / pow_op(out, (p-1))
+        return (input_scaled * scale_v,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Erfinv)
 def get_bprop_erfinv(self):
     """Grad definition for `Erfinv` operation."""
