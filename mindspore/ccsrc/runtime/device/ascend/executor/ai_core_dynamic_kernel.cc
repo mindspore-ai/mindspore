@@ -22,6 +22,8 @@
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/kernel.h"
+#include "runtime/mem.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
 #include "common/trans.h"

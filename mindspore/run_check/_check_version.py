@@ -19,8 +19,8 @@ import time
 import subprocess
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
-import numpy as np
 from packaging import version
+import numpy as np
 from mindspore import log as logger
 from ..version import __version__
 from ..default_config import __package_name__
@@ -207,7 +207,7 @@ class AscendEnvChecker(EnvChecker):
     """ascend environment check"""
 
     def __init__(self):
-        self.version = ["1.79"]
+        self.version = ["1.80"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/fwkacllib/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
         hisi_fwk_version = "/usr/local/Ascend/fwkacllib/version.info"
@@ -304,7 +304,7 @@ class AscendEnvChecker(EnvChecker):
             return
 
         try:
-            import te # pylint: disable=unused-import
+            import te  # pylint: disable=unused-import
         # pylint: disable=broad-except
         except Exception:
             if Path(self.tbe_path).is_dir():
@@ -410,7 +410,7 @@ def check_version_and_env_config():
     try:
         # check version of ascend site or cuda
         env_checker.check_version()
-        from .. import _c_expression # pylint: disable=unused-import
+        from .. import _c_expression  # pylint: disable=unused-import
         env_checker.set_env()
     except ImportError as e:
         env_checker.check_env(e)
