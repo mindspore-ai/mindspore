@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITE_MODEL_H_
 
 #include <string>
+#include <utility>
 #include <vector>
 #include "include/errorcode.h"
 #include "include/model.h"
@@ -38,7 +39,9 @@ namespace mindspore {
 namespace lite {
 class LiteModel : public Model {
  public:
-  int ConstructModel();
+  explicit LiteModel(std::string model_path = "") : model_path_(std::move(model_path)) {}
+
+  int ConstructModel(const char *model_buf, size_t size, bool take_buf);
 
   bool ModelVerify() const;
 
@@ -264,9 +267,7 @@ class LiteModel : public Model {
 
   int VersionVerify(flatbuffers::Verifier *verify) const;
 
-  const void *GetMetaGraphByVerison() const;
-
-  int GenerateModelByVersion(const void *meta_graph);
+  int GenerateModelByVersion();
 
   int ConvertSubGraph(const schema::SubGraph &sub_graph);
 
@@ -284,6 +285,7 @@ class LiteModel : public Model {
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   // tensor_index --- external_data
   std::vector<SchemaTensorWrapper *> inner_all_tensors_;
+  const std::string model_path_;
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);

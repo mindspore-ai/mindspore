@@ -24,11 +24,9 @@
 #include "src/executor.h"
 #include "src/common/context_util.h"
 #include "src/common/utils.h"
-#include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/common/tensor_util.h"
 #include "src/common/file_utils.h"
-#include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/runtime_allocator.h"
@@ -140,7 +138,7 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
   MS_ASSERT(dst_tensor != nullptr);
   auto src_tensor = model->GetSchemaTensor(tensor_index);
   if (src_tensor == nullptr || src_tensor->handler() == nullptr || src_tensor->data() == nullptr ||
-      src_tensor->data()->length_ == 0) {
+      src_tensor->length() == 0) {
     MS_LOG(DEBUG) << "No valid data converted.";
     return RET_OK;
   }
@@ -149,7 +147,7 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
   if (dst_tensor->data_type() == kObjectTypeTensorType) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data_)) != RET_OK) {
+    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data())) != RET_OK) {
       MS_LOG(ERROR) << "Decode tensorlist data failed";
       return RET_ERROR;
     }
@@ -170,12 +168,13 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
 
   auto ret = DecompressTensor(*src_tensor, dst_tensor);
   if (ret == RET_NO_CHANGE) {
-    if (src_tensor->data()->length_ < dst_tensor->Size()) {
+    if (src_tensor->length() < dst_tensor->Size()) {
       MS_LOG(ERROR) << "Tensor data shape invalid";
       return RET_ERROR;
     }
-    dst_tensor->set_data(src_tensor->data()->data_);
-    dst_tensor->set_own_data(false);
+    auto data_pair = src_tensor->ReleaseData();
+    dst_tensor->set_data(data_pair.second);
+    dst_tensor->set_own_data(data_pair.first);
   } else if (ret != RET_OK) {
     MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
     return ret;
@@ -220,6 +219,9 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   } else {
     dst_tensor = new (std::nothrow)
       Tensor(TypeId(data_type), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
+  }
+  if (src_tensor.name() != nullptr) {
+    dst_tensor->set_tensor_name(src_tensor.name()->str());
   }
   return dst_tensor;
 }
@@ -266,9 +268,6 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       if (!dst_tensor->IsGraphInput()) {
         dst_tensor->set_category(Category::GRAPH_OUTPUT);
       }
-    }
-    if (src_tensor->name() != nullptr) {
-      dst_tensor->set_tensor_name(src_tensor->name()->str());
     }
     this->tensors_.emplace_back(dst_tensor);
   }

@@ -33,6 +33,10 @@
 #endif
 
 namespace mindspore::lite {
+namespace {
+constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;
+}
+
 #ifdef ENABLE_V0
 int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor) {
   if (node == nullptr || dst_tensor == nullptr) {
@@ -322,20 +326,20 @@ bool LiteModel::ModelVerify() const {
   return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
 }
 
-const void *LiteModel::GetMetaGraphByVerison() const {
-  MS_ASSERT(this->buf != nullptr);
+int LiteModel::GenerateModelByVersion() {
+  if (this->buf == nullptr) {
+    MS_LOG(ERROR) << "Model buffer not inited";
+    return RET_ERROR;
+  }
+  const void *meta_graph = nullptr;
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
-    return reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
+    meta_graph = reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
   }
 #ifdef ENABLE_V0
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
-    return reinterpret_cast<const void *>(schema::v0::GetMetaGraph(buf));
+    meta_graph = reinterpret_cast<const void *>(schema::v0::GetMetaGraph(buf));
   }
 #endif
-  return nullptr;
-}
-
-int LiteModel::GenerateModelByVersion(const void *meta_graph) {
   MS_ASSERT(meta_graph != nullptr);
   int status = RET_ERROR;
 #ifdef ENABLE_MODEL_OBF
@@ -371,14 +375,44 @@ int LiteModel::GenerateModelByVersion(const void *meta_graph) {
     delete (model_deobf);
   }
 #endif
+  if (this->version_ != Version()) {
+    MS_LOG(WARNING) << "model version is " << this->version_ << ", inference version is " << Version() << " not equal";
+  }
   return status;
 }
 
-int LiteModel::ConstructModel() {
-  if (this->buf == nullptr || this->buf_size_ == 0) {
-    MS_LOG(ERROR) << "cannot construct model.";
-    return RET_NULL_PTR;
+namespace {
+int InitModelBuffer(LiteModel *model, const char *model_buf, size_t size, bool take_buf) {
+  if (model_buf == nullptr || size == 0) {
+    MS_LOG(ERROR) << "Input model buffer is nullptr.";
+    return RET_INPUT_PARAM_INVALID;
   }
+  MS_ASSERT(model != nullptr);
+  if (take_buf) {
+    model->buf = const_cast<char *>(model_buf);
+  } else {
+    if (size > kMaxModelBufferSize) {
+      MS_LOG(ERROR) << "Input model buffer size invalid, require (0, 2GB].";
+      return RET_ERROR;
+    }
+    model->buf = reinterpret_cast<char *>(malloc(size));
+    if (model->buf == nullptr) {
+      MS_LOG(ERROR) << "new inner model buf fail!";
+      return RET_NULL_PTR;
+    }
+    memcpy(model->buf, model_buf, size);
+  }
+  model->buf_size_ = size;
+  return RET_OK;
+}
+}  // namespace
+
+int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf) {
+  auto ret = InitModelBuffer(this, model_buf, size, take_buf);
+  if (ret != RET_OK) {
+    return ret;
+  }
+
   flatbuffers::Verifier verify((const uint8_t *)this->buf, this->buf_size_);
   schema_version_ = VersionVerify(&verify);
   if (schema_version_ == SCHEMA_INVALID) {
@@ -387,34 +421,31 @@ int LiteModel::ConstructModel() {
     MS_LOG(ERROR) << "Maybe this is a model transferred out using the conversion tool before 1.1.0";
     MS_LOG(ERROR) << unsupport_v0_log;
 #endif
+    if (take_buf) {
+      this->buf = nullptr;
+    }
     return RET_ERROR;
   }
-  const void *meta_graph = GetMetaGraphByVerison();
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "meta_graph is nullptr!";
-    return RET_NULL_PTR;
-  }
-
-  int status = GenerateModelByVersion(meta_graph);
+  int status = GenerateModelByVersion();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "fail to generate model";
+    if (take_buf) {
+      this->buf = nullptr;
+    }
     return status;
   }
-
-  if (this->version_ != Version()) {
-    MS_LOG(WARNING) << "model version is " << this->version_ << ", inference version is " << Version() << " not equal";
-  }
-  if (this->sub_graphs_.empty()) {
-    return RET_ERROR;
-  }
-
   if (!ModelVerify()) {
     MS_LOG(ERROR) << "ModelVerify failed.";
+    if (take_buf) {
+      this->buf = nullptr;
+    }
     return RET_ERROR;
   }
-
   if (!PrepareInnerTensors()) {
     MS_LOG(ERROR) << "PrepareInnerTensors failed.";
+    if (take_buf) {
+      this->buf = nullptr;
+    }
     return RET_ERROR;
   }
 
@@ -426,18 +457,19 @@ bool LiteModel::PrepareInnerTensors() {
     MS_LOG(ERROR) << "Already prepared tensors";
     return false;
   }
+  auto dir = GetDirectory(this->model_path_);
   this->inner_all_tensors_.resize(all_tensors_.size());
   for (size_t i = 0; i < all_tensors_.size(); i++) {
-    auto tensor_data = new (std::nothrow) SchemaTensorWrapper::TensorData(i);
-    if (tensor_data == nullptr) {
+    auto tensor_wrapper = new (std::nothrow) SchemaTensorWrapper();
+    if (tensor_wrapper == nullptr) {
       MS_LOG(ERROR) << "Create SchemaTensorWrapper return nullptr";
       return false;
     }
-    if (!tensor_data->Init(*(all_tensors_.at(i)), static_cast<SCHEMA_VERSION>(schema_version_))) {
-      delete tensor_data;
+    if (!tensor_wrapper->Init(*(all_tensors_.at(i)), static_cast<SCHEMA_VERSION>(schema_version_), dir)) {
+      delete tensor_wrapper;
       return false;
     }
-    this->inner_all_tensors_[i] = new SchemaTensorWrapper(all_tensors_.at(i), tensor_data);
+    this->inner_all_tensors_[i] = tensor_wrapper;
   }
   return true;
 }
@@ -449,42 +481,40 @@ SchemaTensorWrapper *LiteModel::GetSchemaTensor(const size_t &tensor_index) cons
   return this->inner_all_tensors_.at(tensor_index);
 }
 
-namespace {
-constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;
+Model *ImportFromPath(const char *model_path) {
+  if (model_path == nullptr) {
+    MS_LOG(ERROR) << "The model path is nullptr";
+    return nullptr;
+  }
+  size_t size = 0;
+  auto buf = ReadFile(model_path, &size);
+  if (buf == nullptr) {
+    return nullptr;
+  }
+  auto *model = new (std::nothrow) LiteModel(model_path);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "new model fail!";
+    return nullptr;
+  }
+
+  auto status = model->ConstructModel(buf, size, true);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "construct model failed.";
+    delete model;
+    return nullptr;
+  }
+  return model;
 }
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
-  if (model_buf == nullptr) {
-    MS_LOG(ERROR) << "The model buf is nullptr";
-    return nullptr;
-  }
   auto *model = new (std::nothrow) LiteModel();
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;
   }
-  if (take_buf) {
-    model->buf = const_cast<char *>(model_buf);
-  } else {
-    if (size == 0 || size > kMaxModelBufferSize) {
-      MS_LOG(ERROR) << "Input model buffer size invalid, require (0, 2GB].";
-      delete (model);
-      return nullptr;
-    }
-    model->buf = reinterpret_cast<char *>(malloc(size));
-    if (model->buf == nullptr) {
-      MS_LOG(ERROR) << "new inner model buf fail!";
-      delete (model);
-      return nullptr;
-    }
-    memcpy(model->buf, model_buf, size);
-  }
-  model->buf_size_ = size;
-  auto status = model->ConstructModel();
+
+  auto status = model->ConstructModel(model_buf, size, take_buf);
   if (status != RET_OK) {
-    if (take_buf) {
-      model->buf = nullptr;
-    }
     MS_LOG(ERROR) << "construct model failed.";
     delete model;
     return nullptr;
@@ -494,14 +524,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
 
 Model *Model::Import(const char *model_buf, size_t size) { return ImportFromBuffer(model_buf, size, false); }
 
-Model *Model::Import(const char *filename) {
-  size_t size = 0;
-  auto buf = ReadFile(filename, &size);
-  if (buf == nullptr) {
-    return nullptr;
-  }
-  return ImportFromBuffer(buf, size, true);
-}
+Model *Model::Import(const char *filename) { return ImportFromPath(filename); }
 
 int Model::Export(Model *model, char *buffer, size_t *len) {
   if (len == nullptr) {

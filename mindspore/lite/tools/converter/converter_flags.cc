@@ -451,10 +451,6 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   parallel_split_config->parallel_devices_.push_back(device1_result);
   // parall_split_type will extend by other user's attr
   parallel_split_config->parallel_split_type_ = SplitByUserRatio;
-  // unsuitable rate
-  if (smaller_rate == 0) {
-    return false;
-  }
   return bigger_rate / smaller_rate <= kMaxSplitRatio;
 }
 

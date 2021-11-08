@@ -118,6 +118,10 @@ class MS_API MSTensor {
   virtual void *data() = 0;
 
   /// \brief Set the data of MSTensor.
+  ///
+  /// \param data The data pointer delivered into MSTensor.
+  ///
+  /// \node MSTensor will hold this data and free this data in destructor.
   virtual void set_data(void *data) = 0;
 
   virtual Vector<lite::LiteQuantParam> quant_params() const = 0;
