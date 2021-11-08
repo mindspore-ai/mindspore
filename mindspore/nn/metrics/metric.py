@@ -23,8 +23,9 @@ _eval_types = {'classification', 'multilabel'}
 
 def rearrange_inputs(func):
     """
-    This decorator is used to rearrange the inputs according to its `_indexes` attributes
-    which is specified by the `set_indexes` method.
+    This decorator is used to rearrange the inputs according to its `indexes` attribute of the class.
+
+    This decorator is currently applied on the `update` of :class:`mindspore.nn.Metric`.
 
     Examples:
         >>> class RearrangeInputsExample:
@@ -64,10 +65,14 @@ def rearrange_inputs(func):
 
 class Metric(metaclass=ABCMeta):
     """
-    Base class of metric.
+    Base class of metric. This class is used to evaluate metrics.
 
-    Note:
-        For examples of subclasses, please refer to the definition of class `MAE`, `Recall` etc.
+    The `clear`, `update`, and `eval` should be called when evaluating metric, and they should be overridden by
+    subclasse. `update` will accumulate intermediate results in the evaluation process, `eval` will evaluate the final
+    result, and `clear` will reinitialize the intermediate results.
+
+    Never use this class directly, but instantiate one of its subclasses instead. For examples,
+    :class:`mindspore.nn.MAE`, :class:`mindspore.nn.Recall` etc.
     """
     def __init__(self):
         self._indexes = None
@@ -139,19 +144,20 @@ class Metric(metaclass=ABCMeta):
 
     @property
     def indexes(self):
-        """The `_indexes` is a private attribute, and you can retrieve it by `self.indexes`.
+        """Get the current indexes value. The default value is None and can be changed by `set_indexes`.
         """
         return getattr(self, '_indexes', None)
 
     def set_indexes(self, indexes):
         """
-        The `_indexes` is a private attribute and you can modify it by this function.
-        This allows you to determine the order of logits and labels to be calculated in the
-        inputs, specially when you call the method `update` within this metrics.
+        This interface is to rearrange the inputs of `update`.
+
+        Given (label0, label1, logits), set the `indexes` to [2, 1] then the (logits, label1) will be the actually
+        inputs of `update`.
 
         Note:
-            It has been applied in subclass of Metric, eg. `Accuracy`, `BleuScore`, `ConfusionMatrix`,
-            `CosineSimilarity`, `MAE`, and `MSE`.
+            When customize a metric, decorate the `update` function with the decorator
+            :func:`mindspore.nn.rearrange_inputs` for the `indexes` to take effect.
 
         Args:
             indexes (List(int)): The order of logits and labels to be rearranged.
@@ -168,6 +174,7 @@ class Metric(metaclass=ABCMeta):
             >>> y2 = Tensor(np.array([0, 0, 1]))
             >>> metric = nn.Accuracy('classification').set_indexes([0, 2])
             >>> metric.clear()
+            # indexes is [0, 2], using x as logits, y2 as label.
             >>> metric.update(x, y, y2)
             >>> accuracy = metric.eval()
             >>> print(accuracy)
@@ -221,7 +228,7 @@ class Metric(metaclass=ABCMeta):
             All subclasses must override this interface.
 
         Args:
-            inputs: A variable-length input argument list.
+            inputs: A variable-length input argument list, usually are the logits and the corresponding labels.
         """
         raise NotImplementedError('Must define update function to use this base class')
 

@@ -57,51 +57,52 @@ def opt_init_args_register(fn):
 
 class Optimizer(Cell):
     """
-    Base class for all optimizers.
+    Base class for updating parameters. Never use this class directly, but instantiate one of its subclasses instead.
+
+    Grouping parameters is supported. If parameters are grouped, different strategy of `learning_rate`, `weight_decay`
+    and `grad_centralization` can be applied to each group.
 
     Note:
-        This class defines the API to add Ops to train a model. Never use
-        this class directly, but instead instantiate one of its subclasses.
-
-        Different parameter groups can set different `learning_rate`, `weight_decay` and `grad_centralization`.
-
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight_decay is positive. For most optimizer, when not separating parameters, the `weight_decay` in the API will
-        be applied on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
-        but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non-convolution layer are set to True, an error will be reported.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
+        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
+        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
 
     Args:
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning
-            rate. When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
-            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
-            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
-            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
-        parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
-            updated, the element in `parameters` must be class `Parameter`. When the `parameters` is a list of `dict`,
-            the "params", "lr", "weight_decay" and "order_params" are the keys can be parsed.
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
 
-            - params: Required. The value must be a list of `Parameter`.
+            - float: The fixed learning rate value. Must be equal to or greater than 0.
+
+            - int: The fixed learning rate value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Tensor: Its value should be a scalar or a 1-D vector. For scalar, fixed learning rate will be applied.
+              For vector, learning rate is dynamic, then the i-th step will take the i-th value as the learning rate.
+
+            - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
+
+            - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
+              LearningRateSchedule with step as the input to get the learning rate of current step.
+
+        parameters (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
+          `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
+          "order_params" are the keys can be parsed.
+
+            - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
-              If not, the `learning_rate` in the API will be used.
+              If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the API will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
-              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' must be in one of group parameters.
+            - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
+              will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
+              convolution layer.
 
-            - grad_centralization: Optional. The data type of "grad_centralization" is Bool. If "grad_centralization"
-              is in the keys, the set value will be used. If not, the `grad_centralization` is False by default.
-              This parameter only works on the convolution layer.
+            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+              parameters that appeared in the network to improve performance. The value should be parameters whose
+              order will be followed in optimizer.
+              If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
+              one group of `params`.
 
         weight_decay (Union[float, int]): An int or a floating point value for the weight decay.
             It must be equal to or greater than 0.
@@ -109,7 +110,7 @@ class Optimizer(Cell):
         loss_scale (float): A floating point value for the loss scale. It must be greater than 0. If the
             type of `loss_scale` input is int, it will be converted to float. In general, use the default value. Only
             when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
-            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager` is set to False, this value needs to be the same as the `loss_scale` in
             `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
             Default: 1.0.
 
@@ -234,7 +235,7 @@ class Optimizer(Cell):
 
     @property
     def unique(self):
-        """The method is to see whether to make unique. The input type is bool. The method is read-only."""
+        """The property is to see whether to make unique. The input type is bool. The method is read-only."""
         return self._unique
 
     @unique.setter
@@ -247,7 +248,7 @@ class Optimizer(Cell):
     @property
     def target(self):
         """
-        The method is used to determine whether the parameter is updated on host or device. The input type is str
+        The property is used to determine whether the parameter is updated on host or device. The input type is str
         and can only be 'CPU', 'Ascend' or 'GPU'.
         """
         return self._target
@@ -317,8 +318,7 @@ class Optimizer(Cell):
         centralize gradients.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
-                `self.parameters`.
+            gradients (tuple[Tensor]): The gradients of `self.parameters` with the same shape as `self.parameters`.
 
         Returns:
             tuple[Tensor], The gradients after gradients centralization.
@@ -330,7 +330,7 @@ class Optimizer(Cell):
 
     def scale_grad(self, gradients):
         """
-        Loss scale for mixed precision.
+        Restore gradients for mixed precision.
 
         An approach of mixed precision training to improve the speed and energy efficiency of training deep neural
         network. User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface to
@@ -570,8 +570,8 @@ class Optimizer(Cell):
 
     def get_lr_parameter(self, param):
         """
-        When parameters is grouped and learning rate is different for each group. Get the learning rate for the
-        specified `param`.
+        When parameters is grouped and learning rate is different for each group. Get the learning rate of the specified
+        `param`.
 
         Args:
             param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
@@ -640,8 +640,8 @@ class Optimizer(Cell):
         Apply Broadcast operations in the sequential order of parameter groups.
 
         Args:
-            optim_result(ParameterTuple): The optimized results.
-
+            optim_result(bool): The results of updating parameters. This input is used to ensure that the parameters are
+              updated before they are broadcast.
         Returns:
              bool, the status flag.
         """

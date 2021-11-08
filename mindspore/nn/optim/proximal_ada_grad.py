@@ -73,50 +73,52 @@ class ProximalAdagrad(Optimizer):
     step respectively.
 
     Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
-        but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non-convolution layer are set to True, an error will be reported.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
-
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
         The sparse feature is under continuous development. If the sparse strategy wants to be executed on the host,
         set the target to the CPU.
 
-    Args:
-        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
-            the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
-            "lr", "weight_decay" and "order_params" are the keys can be parsed.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
+        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
+        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
 
-            - params: Required. The value must be a list of `Parameter`.
+    Args:
+        params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
+          `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
+          "order_params" are the keys can be parsed.
+
+            - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
-              If not, the `learning_rate` in the API will be used.
+              If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the API will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
-              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' must be in one of group parameters.
+            - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
+              will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
+              convolution layer.
 
-            - grad_centralization: Optional. The data type of "grad_centralization" is Bool. If "grad_centralization"
-              is in the keys, the set value will be used. If not, the `grad_centralization` is False by default.
-              This parameter only works on the convolution layer.
+            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+              parameters that appeared in the network to improve performance. The value should be parameters whose
+              order will be followed in optimizer.
+              If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
+              one group of `params`.
 
         accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
-        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
-            When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
-            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
-            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
-            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
-            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
-            Default: 0.001.
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 0.001.
+
+            - float: The fixed learning rate value. Must be equal to or greater than 0.
+
+            - int: The fixed learning rate value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Tensor: Its value should be a scalar or a 1-D vector. For scalar, fixed learning rate will be applied.
+              For vector, learning rate is dynamic, then the i-th step will take the i-th value as the learning rate.
+
+            - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
+
+            - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
+              LearningRateSchedule with step as the input to get the learning rate of current step.
+
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
         use_locking (bool): If true, use locks for updating operation. Default: False.

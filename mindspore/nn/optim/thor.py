@@ -269,17 +269,6 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
     :math:`\lambda` represents 'damping', :math:`g_i` represents gradients of the i-th layer,
     :math:`\otimes` represents Kronecker product, :math:`\alpha` represents 'learning rate'
 
-    Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
-        but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non-convolution layer are set to True, an error will be reported.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
-
     Args:
         net (Cell): The training network.
 
