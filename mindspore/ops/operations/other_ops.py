@@ -22,7 +22,7 @@ from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
-from .._register_for_op import PyFuncRegistry
+from ._pyfunc_registry import add_pyfunc
 
 
 class Assign(Primitive):
@@ -893,13 +893,6 @@ class identity(Primitive):
         return x
 
 
-pyfunc_register = PyFuncRegistry()
-
-
-def get_pyfunc(fn_id):
-    return pyfunc_register.get(fn_id)
-
-
 class PyFunc(PrimitiveWithInfer):
     r"""
     Execute Python function.
@@ -951,7 +944,7 @@ class PyFunc(PrimitiveWithInfer):
 
     def __init__(self, fn, in_types, in_shapes, out_types, out_shapes, stateful=True):
         super(PyFunc, self).__init__(self.__class__.__name__)
-        pyfunc_register.register(id(fn), fn)
+        add_pyfunc(id(fn), fn)
         self.add_prim_attr('fn_id', id(fn))
         self.add_prim_attr('in_types', in_types)
         self.add_prim_attr('in_shapes', in_shapes)

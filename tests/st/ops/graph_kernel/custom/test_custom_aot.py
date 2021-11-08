@@ -105,7 +105,7 @@ add_cpu_info = CustomRegOp() \
 @pytest.mark.env_onecard
 def test_aot_single_output_cpu():
     """
-    Feature: custom aot operator, multiple inputs, single output, CPU
+    Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE
     Description: pre-compile xxx.cc to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
@@ -300,24 +300,15 @@ multioutput_bprop_gpu_info = CustomRegOp() \
     .get_op_info()
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-def test_add_mul_div_bprop():
-    """
-    Feature: custom aot operator with reg info, bprop(Cell), multiple outputs, GPU
-    Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
-    Expectation: nn result matches numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     y = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     expect_dx = np.array([5.0, 17.0, 37.0]).astype(np.float32)
     expect_dy = np.array([-1.0, -16.0, -81.0]).astype(np.float32)
 
-    cmd_bprop, func_path_bprop = get_file_path_gpu("add_mul_div_bprop.cu", "add_mul_div_bprop.so")
-    check_exec_file(cmd_bprop, func_path_bprop, "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
+    cmd_bprop, func_path_bprop = get_file_path_gpu(source_prop, execf_prop)
+    check_exec_file(cmd_bprop, func_path_bprop, source_prop, execf_prop)
     try:
         aot_bprop = Custom(func_path_bprop + ":CustomAddMulDivBprop",
                            ([3], [3]), (mstype.float32, mstype.float32), "aot", reg_info=multioutput_bprop_gpu_info)
@@ -330,8 +321,8 @@ def test_add_mul_div_bprop():
         res = aot_bprop(x, y, dout[0], dout[1], dout[2])
         return res
 
-    cmd, func_path = get_file_path_gpu("add_mul_div.cu", "add_mul_div.so")
-    check_exec_file(cmd, func_path, "add_mul_div.cu", "add_mul_div.so")
+    cmd, func_path = get_file_path_gpu(source, execf)
+    check_exec_file(cmd, func_path, source, execf)
     try:
         net = AOTMultiOutputNet(func_path + ":CustomAddMulDiv", ([3], [3], [3]),
                                 (mstype.float32, mstype.float32, mstype.float32), bprop=bprop, reg=multioutput_gpu_info)
@@ -349,3 +340,30 @@ def test_add_mul_div_bprop():
     dy_np = dy.asnumpy()
     assert np.allclose(expect_dx, dx_np, 0.0001, 0.0001)
     assert np.allclose(expect_dy, dy_np, 0.0001, 0.0001)
+
+
+@ pytest.mark.level0
+@ pytest.mark.env_onecard
+@ pytest.mark.platform_x86_gpu_training
+def test_add_mul_div_bprop_graph():
+    """
+    Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, GRAPH_MODE
+    Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
+    Expectation: nn result matches numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    add_mul_div_bprop("add_mul_div.cu", "add_mul_div.so", "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
+
+
+@ pytest.mark.level0
+@ pytest.mark.env_onecard
+@ pytest.mark.platform_x86_gpu_training
+def test_add_mul_div_bprop_pynative():
+    """
+    Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, PYNATIVE_MODE
+    Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
+    Expectation: nn result matches numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    add_mul_div_bprop("add_mul_div.cu", "add_mul_div_pynative.so",
+                      "add_mul_div_bprop.cu", "add_mul_div_bprop_pynative.so")
