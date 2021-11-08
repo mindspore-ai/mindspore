@@ -173,7 +173,11 @@ bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
 
     if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
       // output_shape, weights, input => input, weight
-      if (RET_OK != ReorderCnodeInputs(cnode.get(), {3, 2})) {
+      std::vector<size_t> perm = {3, 2};
+      for (size_t i = 4; i < cnode->size(); i++) {
+        perm.push_back(i);  // insert bias
+      }
+      if (RET_OK != ReorderCnodeInputs(cnode.get(), perm)) {
         MS_LOG(ERROR) << "Reorder deconv inputs failed";
         return false;
       }

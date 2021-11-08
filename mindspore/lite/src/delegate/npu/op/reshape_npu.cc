@@ -21,7 +21,7 @@ namespace mindspore {
 int ReshapeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2) {
-    MS_LOG(WARNING) << "Npu op should have w2 input tensors.";
+    MS_LOG(WARNING) << "Npu op should have 2 input tensors.";
     return RET_NOT_SUPPORT;
   }
   auto shape_tensor = in_tensors.at(1);

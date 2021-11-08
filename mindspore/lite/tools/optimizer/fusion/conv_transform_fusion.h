@@ -38,7 +38,8 @@ class ConvTransformFusion : public PatternProcessPass {
   int GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   int CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
   int CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
-  bool IsVariableWeightConv(const CNodePtr &conv_node) const;
+  bool CheckCanFused(const FuncGraphPtr &func_graph, const CNodePtr &conv_node) const;
+  bool AdjustActivationType(const CNodePtr &conv_node, const CNodePtr &transform_node) const;
 
  protected:
   FmkType fmk_type_ = converter::kFmkTypeTf;

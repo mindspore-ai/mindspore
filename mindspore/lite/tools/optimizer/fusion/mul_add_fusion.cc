@@ -15,248 +15,241 @@
  */
 
 #include "tools/optimizer/fusion/mul_add_fusion.h"
+#include <algorithm>
 #include <memory>
+#include <vector>
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/scale_fusion.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/anf_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::opt {
-const BaseRef MulAddFusion::DefinePattern() const {
+VectorRef MulAddFusion::DefineMulFirstPattern() const {
   auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   MS_CHECK_TRUE_RET(is_mul != nullptr, {});
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
   MS_CHECK_TRUE_RET(is_add != nullptr, {});
-  return VectorRef({is_add, is_mul});
+  auto is_const = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
+  MS_CHECK_TRUE_RET(is_const != nullptr, {});
+  return VectorRef({is_add, is_mul, is_const});
 }
 
-bool MulAddFusion::ScaleInputShapeValid() const {
-  MS_ASSERT(scale_tensor_ != nullptr && bias_tensor_ != nullptr);
+VectorRef MulAddFusion::DefineMulSecondPattern() const {
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto is_const = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
+  MS_CHECK_TRUE_RET(is_const != nullptr, {});
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  return VectorRef({is_add, is_const, is_mul});
+}
+
+std::unordered_map<std::string, VectorRef> MulAddFusion::DefinePatterns() const {
+  std::unordered_map<std::string, VectorRef> patterns;
+  patterns["MulFirstPatternName"] = DefineMulFirstPattern();
+  patterns["MulSecondPatternName"] = DefineMulSecondPattern();
+  return patterns;
+}
+
+bool MulAddFusion::CheckAddNode(const mindspore::CNodePtr &cnode) const {
+  MS_ASSERT(cnode != nullptr);
+  if (cnode->size() != kInputSizeThree) {
+    MS_LOG(DEBUG) << "Add op is null or has error input size";
+    return false;
+  }
+  if (IsMarkedTrainOp(cnode)) {
+    return false;
+  }
+  auto add_primitive = GetValueNode<std::shared_ptr<ops::AddFusion>>(cnode->input(0));
+  MS_CHECK_TRUE_RET(add_primitive != nullptr, false);
+  auto quant_attr = add_primitive->GetAttr("quant_params");
+  if (quant_attr != nullptr) {
+    auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
+    auto quant_params = quant_param_holder->get_input_quant_params();
+    bool is_quant = std::any_of(quant_params.begin(), quant_params.end(), [](std::vector<schema::QuantParamT> &params) {
+      return !params.empty() && params.front().inited;
+    });
+    if (is_quant) {
+      return false;
+    }
+  }
+
+  ActivationType add_act_type = ActivationType::NO_ACTIVATION;
+  if (add_primitive->GetAttr(ops::kActivationType) != nullptr) {
+    add_act_type = add_primitive->get_activation_type();
+    if (add_act_type != ActivationType::RELU && add_act_type != ActivationType::RELU6 &&
+        add_act_type != ActivationType::NO_ACTIVATION) {
+      MS_LOG(DEBUG) << "Only support add node with relu or relu6 or no activation";
+      return false;
+    }
+  }
+  scale_act_type_ = add_act_type;
+  return true;
+}
+
+bool MulAddFusion::CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (IsMultiOutputTensors(func_graph, cnode)) {
+    MS_LOG(DEBUG) << "Mul op has multi-output";
+    return false;
+  }
+  if (IsMarkedTrainOp(cnode)) {
+    return false;
+  }
+  auto mul_primitive = GetValueNode<std::shared_ptr<ops::MulFusion>>(cnode->input(0));
+  MS_CHECK_TRUE_RET(mul_primitive != nullptr, false);
+  auto quant_attr = mul_primitive->GetAttr("quant_params");
+  if (quant_attr != nullptr) {
+    auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
+    auto quant_params = quant_param_holder->get_input_quant_params();
+    bool is_quant = std::any_of(quant_params.begin(), quant_params.end(), [](std::vector<schema::QuantParamT> &params) {
+      return !params.empty() && params.front().inited;
+    });
+    if (is_quant) {
+      return false;
+    }
+  }
+
+  if (mul_primitive->GetAttr(ops::kActivationType) != nullptr &&
+      mul_primitive->get_activation_type() != ActivationType::NO_ACTIVATION) {
+    MS_LOG(DEBUG) << "Only support mul node with no activation";
+    return false;
+  }
+  if (cnode->size() != kInputSizeThree) {
+    MS_LOG(DEBUG) << "Mul op is null or has error input size";
+    return false;
+  }
+  return true;
+}
+
+tensor::TensorPtr MulAddFusion::GetTensorFromParamOrValueNode(const AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
+  if (utils::isa<ParameterPtr>(node)) {
+    auto param_node = node->cast<ParameterPtr>();
+    MS_ASSERT(param_node != nullptr);
+    if (!param_node->has_default()) {
+      MS_LOG(DEBUG) << "Const input of add op should has data";
+      return nullptr;
+    }
+    return param_node->default_param()->cast<tensor::TensorPtr>();
+  } else if (utils::isa<ValueNodePtr>(node)) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_ASSERT(value != nullptr);
+    if (value_node->value() == nullptr) {
+      MS_LOG(DEBUG) << "Const input of add op should has data";
+      return nullptr;
+    }
+    return value_node->value()->cast<tensor::TensorPtr>();
+  }
+  return nullptr;
+}
+
+bool MulAddFusion::AdjustScaleBiasTensorShape(size_t *axis_offset) const {
+  MS_CHECK_TRUE_RET(axis_offset != nullptr, false);
   auto scale_shape = scale_tensor_->shape_c();
-  auto offset_shape = bias_tensor_->shape_c();
+  if (mul_input_shape_.size() != scale_shape.size() || mul_input_shape_ == scale_shape) {
+    return true;
+  }
+  while (scale_shape.size() > DIMENSION_1D) {
+    bool begin_with_value_one = scale_shape.at(FIRST_INPUT) == DIMENSION_1D ? true : false;
+    bool end_with_value_one = scale_shape.at(scale_shape.size() - DIMENSION_1D) == DIMENSION_1D ? true : false;
+    if (!begin_with_value_one && !end_with_value_one) {
+      break;
+    }
+    if (begin_with_value_one) {
+      scale_shape.erase(scale_shape.begin());
+    }
+    if (end_with_value_one) {
+      scale_shape.erase(scale_shape.end() - DIMENSION_1D);
+      *axis_offset += DIMENSION_1D;
+    }
+  }
+  scale_tensor_->set_shape(scale_shape);
+  bias_tensor_->set_shape(scale_shape);
+
+  // set shape for abstract
+  auto mul_abstract = mul_const_anode_->abstract();
+  MS_CHECK_TRUE_RET(mul_abstract != nullptr, false);
+  mul_abstract->set_shape(std::make_shared<abstract::Shape>(scale_shape));
+
+  auto add_abstract = add_const_anode_->abstract();
+  MS_CHECK_TRUE_RET(add_abstract != nullptr, false);
+  add_abstract->set_shape(std::make_shared<abstract::Shape>(scale_shape));
+  return true;
+}
+
+bool MulAddFusion::ScaleInputShapeValid(size_t *axis_offset) const {
+  MS_ASSERT(scale_tensor_ != nullptr && bias_tensor_ != nullptr && axis_offset != nullptr);
+  if (scale_tensor_->shape_c() != bias_tensor_->shape_c()) {
+    return false;
+  }
+  // remove value 1 which is in the begin or the end of shape vector.
+  if (!AdjustScaleBiasTensorShape(axis_offset)) {
+    MS_LOG(ERROR) << "Adjust scale shape and bias shape failed.";
+    return false;
+  }
+  auto scale_shape = scale_tensor_->shape_c();
   if (mul_input_shape_.size() < scale_shape.size() || scale_shape.size() == 0) {
     return false;
   }
   size_t rank_diff = mul_input_shape_.size() - scale_shape.size();
   for (size_t i = 0; i < scale_shape.size(); ++i) {
-    if (mul_input_shape_[i + rank_diff] != scale_shape[i]) {
+    if (mul_input_shape_[i + rank_diff - *axis_offset] != scale_shape[i]) {
       return false;
     }
-  }
-  if (scale_shape != offset_shape) {
-    return false;
   }
   return true;
 }
 
-bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
-  MS_ASSERT(func_graph != nullptr);
-  if (mul_anode_ == nullptr) {
-    return false;
-  }
-  if (IsMultiOutputTensors(func_graph, mul_anode_)) {
-    MS_LOG(DEBUG) << "Mul op has multi-output";
-    return false;
-  }
-  auto mul_node = mul_anode_->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(mul_node != nullptr, false);
-  if (!CheckPrimitiveType(mul_node, prim::kPrimMulFusion)) {
-    MS_LOG(DEBUG) << "Mul add fusion pass match only mul or add";
-    return false;
-  }
-  auto mul_primitive = GetValueNode<std::shared_ptr<ops::MulFusion>>(mul_node->input(0));
-  MS_ASSERT(mul_primitive != nullptr);
-  MS_CHECK_TRUE_RET(mul_primitive->GetAttr(ops::kActivationType) != nullptr, false);
-  auto mul_act_type = mul_primitive->get_activation_type();
-  if (mul_act_type != ActivationType::NO_ACTIVATION) {
-    MS_LOG(DEBUG) << "Only support mul node with no activation";
-    return false;
-  }
-  if (mul_node->size() != kInputSizeThree) {
-    MS_LOG(DEBUG) << "Mul op is null or has error input size";
-    return false;
-  }
-  // find mul's const input and mul input
-  AnfNodePtr mul_pre_input_node = nullptr;
-  AnfNodePtr mul_pre_const_node = nullptr;
-  auto mul_pre_node_1 = mul_node->input(1);
-  if (mul_pre_node_1 == nullptr) {
-    MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
-    return false;
-  }
-  auto mul_pre_node_2 = mul_node->input(kInputIndexTwo);
-  if (mul_pre_node_2 == nullptr) {
-    MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
-    return false;
-  }
-  if (utils::isa<CNodePtr>(mul_pre_node_1) && !utils::isa<CNodePtr>(mul_pre_node_2)) {
-    mul_pre_input_node = mul_pre_node_1;
-    mul_pre_const_node = mul_pre_node_2;
-  } else if (!utils::isa<CNodePtr>(mul_pre_node_1) && utils::isa<CNodePtr>(mul_pre_node_2)) {
-    mul_pre_input_node = mul_pre_node_1;
-    mul_pre_const_node = mul_pre_node_2;
-  } else {
-    MS_LOG(DEBUG) << "Mul op should has a cnode input and a const input";
-    return false;
-  }
-  // check mul's const input
-  tensor::TensorPtr mul_tensor = nullptr;
-  if (utils::isa<ParameterPtr>(mul_pre_const_node)) {
-    auto mul_bias_node = mul_pre_const_node->cast<ParameterPtr>();
-    MS_ASSERT(mul_bias_node != nullptr);
-    if (!mul_bias_node->has_default()) {
-      MS_LOG(DEBUG) << "Const input of mul op should has data";
-      return false;
-    }
-    mul_tensor = mul_bias_node->default_param()->cast<tensor::TensorPtr>();
-  } else if (utils::isa<ValueNodePtr>(mul_pre_const_node)) {
-    auto mul_bias_node = mul_pre_const_node->cast<ValueNodePtr>();
-    MS_ASSERT(mul_bias_node != nullptr);
-    if (mul_bias_node->value() == nullptr) {
-      MS_LOG(DEBUG) << "Const input of mul op should has data";
-      return false;
-    }
-    mul_tensor = mul_bias_node->value()->cast<tensor::TensorPtr>();
-  } else {
-    MS_LOG(DEBUG) << "mul_pre_const_node is ambiguous.";
-  }
-  if (mul_tensor == nullptr) {
-    MS_LOG(DEBUG) << "Const input of add op should has data";
-    return false;
-  }
-  mul_input_anode_ = mul_pre_input_node;
-  mul_const_anode_ = mul_pre_const_node;
-  scale_tensor_ = mul_tensor;
-  return true;
-}
-
-bool MulAddFusion::CheckAddNode() const {
-  if (add_anode_ == nullptr) {
-    return false;
-  }
-  auto add_cnode = add_anode_->cast<CNodePtr>();
-  if (add_cnode == nullptr || add_cnode->size() != kInputSizeThree) {
-    MS_LOG(DEBUG) << "Add op is null or has error input size";
-    return false;
-  }
-  if (!CheckPrimitiveType(add_cnode, prim::kPrimAddFusion)) {
-    MS_LOG(DEBUG) << "Mul add fusion pass match only mul or add";
-    return false;
-  }
-  auto add_primitive = GetValueNode<std::shared_ptr<ops::AddFusion>>(add_cnode->input(0));
-  MS_ASSERT(add_primitive != nullptr);
-  MS_CHECK_TRUE_RET(add_primitive->GetAttr(ops::kActivationType) != nullptr, false);
-  auto add_act_type = add_primitive->get_activation_type();
-  if (add_act_type != ActivationType::RELU && add_act_type != ActivationType::RELU6 &&
-      add_act_type != ActivationType::NO_ACTIVATION) {
-    MS_LOG(DEBUG) << "Only support add node with relu or relu6 or no activation";
-    return false;
-  }
-  scale_act_type_ = add_act_type;
-  // find add's const input and mul input
-  AnfNodePtr add_pre_input_node = nullptr;
-  AnfNodePtr add_pre_const_node = nullptr;
-  auto add_pre_node_1 = add_cnode->input(1);
-  if (add_pre_node_1 == nullptr) {
-    MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
-    return false;
-  }
-  auto add_pre_node_2 = add_cnode->input(kInputIndexTwo);
-  if (add_pre_node_2 == nullptr) {
-    MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
-    return false;
-  }
-  if (utils::isa<CNodePtr>(add_pre_node_1) && !utils::isa<CNodePtr>(add_pre_node_2)) {
-    add_pre_input_node = add_pre_node_1;
-    add_pre_const_node = add_pre_node_2;
-  } else if (!utils::isa<CNodePtr>(add_pre_node_1) && utils::isa<CNodePtr>(add_pre_node_2)) {
-    add_pre_input_node = add_pre_node_2;
-    add_pre_const_node = add_pre_node_1;
-  } else {
-    MS_LOG(DEBUG) << "Add op should has a cnode input and a const input";
-    return false;
-  }
-  // check add's const input
-  tensor::TensorPtr add_tensor = nullptr;
-  if (utils::isa<ParameterPtr>(add_pre_const_node)) {
-    auto add_bias_node = add_pre_const_node->cast<ParameterPtr>();
-    MS_ASSERT(add_bias_node != nullptr);
-    if (!add_bias_node->has_default()) {
-      MS_LOG(DEBUG) << "Const input of add op should has data";
-      return false;
-    }
-    add_tensor = add_bias_node->default_param()->cast<tensor::TensorPtr>();
-  } else if (utils::isa<ValueNodePtr>(add_pre_const_node)) {
-    auto add_bias_node = add_pre_const_node->cast<ValueNodePtr>();
-    MS_ASSERT(add_bias_node != nullptr);
-    if (add_bias_node->value() == nullptr) {
-      MS_LOG(DEBUG) << "Const input of add op should has data";
-      return false;
-    }
-    add_tensor = add_bias_node->value()->cast<tensor::TensorPtr>();
-  } else {
-    MS_LOG(DEBUG) << "add_pre_const_node is ambiguous.";
-  }
-  if (add_tensor == nullptr) {
-    MS_LOG(DEBUG) << "Const input of add op should has data";
-    return false;
-  }
-  mul_anode_ = add_pre_input_node;
-  add_const_anode_ = add_pre_const_node;
-  bias_tensor_ = add_tensor;
-  return true;
-}
-
-bool MulAddFusion::GetMulInputShape() const {
-  MS_ASSERT(mul_input_anode_ != nullptr);
-  auto mul_input_abstract = mul_input_anode_->abstract();
-  if (mul_input_abstract == nullptr) {
-    MS_LOG(DEBUG) << "Mul input node has no abstract";
-    return false;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(mul_input_abstract)) {
-    MS_LOG(DEBUG) << "Abstract of mul input node should be AbstractTensor";
-    return false;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(mul_input_abstract);
-  MS_ASSERT(abstract_tensor != nullptr);
-  MS_CHECK_TRUE_RET(abstract_tensor->BuildShape() != nullptr, false);
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-    MS_LOG(DEBUG) << "BuildShape of abstract of mul input node should be ShapePtr";
-    return false;
-  }
-  mul_input_shape_ = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  return true;
-}
-
-const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
+AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
+                                 const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   if (func_graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-  add_anode_ = node;
-  if (!CheckAddNode()) {
+  auto add_cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(add_cnode != nullptr, nullptr);
+  if (!CheckAddNode(add_cnode)) {
     MS_LOG(DEBUG) << "Add op is not suit for mul-add-fusion: " << node->fullname_with_scope();
     return nullptr;
   }
-  MS_ASSERT(mul_anode_ != nullptr);
-  MS_ASSERT(bias_tensor_ != nullptr);
-  MS_ASSERT(add_const_anode_ != nullptr);
-  if (!CheckMulNode(func_graph)) {
-    MS_LOG(DEBUG) << "Mul op is not suit for mul-add-fusion: " << mul_anode_->fullname_with_scope();
+
+  auto mul_node = utils::isa<CNodePtr>(add_cnode->input(SECOND_INPUT)) ? add_cnode->input(SECOND_INPUT)
+                                                                       : add_cnode->input(THIRD_INPUT);
+  MS_CHECK_TRUE_RET(mul_node != nullptr, nullptr);
+  auto mul_cnode = mul_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(mul_cnode != nullptr, nullptr);
+  if (!CheckMulNode(func_graph, mul_cnode)) {
+    MS_LOG(DEBUG) << "Mul op is not suit for mul-add-fusion: " << mul_cnode->fullname_with_scope();
     return nullptr;
   }
-  MS_ASSERT(mul_input_anode_ != nullptr);
-  MS_ASSERT(scale_tensor_ != nullptr);
-  MS_ASSERT(mul_const_anode_ != nullptr);
-  if (!GetMulInputShape()) {
-    MS_LOG(DEBUG) << "Get input shape of mul op failed";
+
+  size_t add_const_idx = utils::isa<CNodePtr>(add_cnode->input(SECOND_INPUT)) ? THIRD_INPUT : SECOND_INPUT;
+  add_const_anode_ = add_cnode->input(add_const_idx);
+  MS_CHECK_TRUE_RET(add_const_anode_ != nullptr, nullptr);
+  size_t mul_const_idx = utils::isa<CNodePtr>(mul_cnode->input(SECOND_INPUT)) ? THIRD_INPUT : SECOND_INPUT;
+  mul_const_anode_ = mul_cnode->input(mul_const_idx);
+  MS_CHECK_TRUE_RET(mul_const_anode_ != nullptr && !utils::isa<CNodePtr>(mul_const_anode_), nullptr);
+  bias_tensor_ = GetTensorFromParamOrValueNode(add_const_anode_);
+  scale_tensor_ = GetTensorFromParamOrValueNode(mul_const_anode_);
+  if (bias_tensor_ == nullptr || scale_tensor_ == nullptr) {
+    return nullptr;
+  }
+
+  auto mul_input_anode = utils::isa<CNodePtr>(mul_cnode->input(SECOND_INPUT)) ? mul_cnode->input(SECOND_INPUT)
+                                                                              : mul_cnode->input(THIRD_INPUT);
+  MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
+  if (FetchShapeFromAbstract(mul_input_anode->abstract(), &mul_input_shape_) != lite::RET_OK) {
     return nullptr;
   }
   // scale requires scale shape tail sub of input shape, scale shape same as bias shape
-  if (!ScaleInputShapeValid()) {
+  size_t axis_offset = 0;
+  if (!ScaleInputShapeValid(&axis_offset)) {
     MS_LOG(DEBUG) << "Check input shape, scale shape and bias shape failed";
     return nullptr;
   }
@@ -267,9 +260,10 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   scale_primitive->set_activation_type(scale_act_type_);
-  scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size())));
+  scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size() + axis_offset)));
+
   // create scale op
-  auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode_, mul_const_anode_, add_const_anode_});
+  auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode, mul_const_anode_, add_const_anode_});
   return scale_node;
 }
 }  // namespace mindspore::opt

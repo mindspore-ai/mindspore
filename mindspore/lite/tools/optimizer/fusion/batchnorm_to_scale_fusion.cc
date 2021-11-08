@@ -211,12 +211,12 @@ bool BatchNormToScaleFusion::CheckBNCanFused(const AnfNodePtr &node) {
   if (IsMarkedTrainOp(cnode)) {
     return false;
   }
-  auto input_node = cnode->input(kInputNodeIndex);
-  MS_CHECK_TRUE_RET(input_node != nullptr, false);
-  auto abstract = input_node->abstract();
-  MS_CHECK_TRUE_RET(abstract != nullptr, false);
+  auto abstract = GetCNodeInputAbstract(cnode, kInputNodeIndex);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Get abstract failed.";
+    return false;
+  }
   if (FetchShapeFromAbstract(abstract, &input_shape_) != lite::RET_OK || input_shape_.empty()) {
-    MS_LOG(WARNING) << "Fetch shape from abstract failed.";
     return false;
   }
   return true;
