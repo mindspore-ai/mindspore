@@ -442,7 +442,9 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
-    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false);
+    // The output may be updataState node for connecting dependencies between subgraphs.
+    auto output_with_index =
+      AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
     // The makeTuple node need recurse.

@@ -400,7 +400,6 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                     bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
@@ -415,10 +414,12 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   if (!profiler_inst->GetEnableFlag()) {
 #endif
     std::lock_guard<std::mutex> locker(launch_mutex_);
+    MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
     ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
 #ifndef ENABLE_SECURITY
   } else {
     std::lock_guard<std::mutex> locker(launch_mutex_);
+    MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
     ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
 #endif

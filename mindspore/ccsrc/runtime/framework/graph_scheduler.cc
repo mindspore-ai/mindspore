@@ -410,14 +410,13 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
         MS_LOG(INFO) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                      << " with index:" << output_with_index.second
                      << " is not actor, and the kernel type is:" << kernel_type;
-        continue;
       }
 
       auto output_actor = dynamic_cast<AbstractActor *>(FetchActor(kernel_name));
-      MS_EXCEPTION_IF_NULL(output_actor);
+      auto output_actor_name = (output_actor != nullptr) ? output_actor->GetAID().Name() : "";
       (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(output_actor, output_with_index));
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
-                   << " with index:" << output_with_index.second << " to actor:" << output_actor->GetAID().Name()
+                   << " with index:" << output_with_index.second << " to actor:" << output_actor_name
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
                    << " with index:" << origin_output_with_index.second;
     }
@@ -798,7 +797,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
-      if (AnfAlgo::IsOneOfPrimitiveCNode(input_node, auto_monad_prims)) {
+      if (AnfAlgo::IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph);
       }
       if (HasAbstractMonad(input_node)) {
@@ -1084,31 +1083,37 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
 
   for (const auto &real_depend_input : real_depend_inputs) {
     auto real_depend_input_with_idx = AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
+    MS_EXCEPTION_IF_NULL(real_depend_input_with_idx.first);
     auto real_depend_kernel = real_depend_input_with_idx.first;
+    // Update the real depend kernel in the subgraphs connecting scene.
+    if (IsInternalParameter(real_depend_kernel, graph)) {
+      auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
+      MS_EXCEPTION_IF_NULL(front_output_with_index.first);
+      if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+        MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
+      }
+      real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
+      MS_EXCEPTION_IF_NULL(real_depend_kernel);
+      MS_LOG(INFO) << "The graph " << graph->graph_id() << " link control arrow by auto monad from internal parameter: "
+                   << real_depend_input_with_idx.first->DebugString()
+                   << ", front output node: " << front_output_with_index.first->fullname_with_scope()
+                   << ", backend output node: " << real_depend_kernel->fullname_with_scope();
+    }
+
     // The monad node and make tuple node need recursion.
     if (AnfAlgo::IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
       LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph);
       continue;
     }
 
-    KernelActor *from_actor = nullptr;
-    if (IsKernelActor(real_depend_kernel)) {
-      from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_kernel->fullname_with_scope()));
-    } else if (IsInternalParameter(real_depend_kernel, graph)) {
-      auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
-      MS_EXCEPTION_IF_NULL(front_output_with_index.first);
-      if (IsKernelActor(front_output_with_index.first)) {
-        if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-          MS_LOG(EXCEPTION) << "Can't find actor by front node:" << front_output_with_index.first->DebugString();
-        }
-        from_actor = dynamic_cast<KernelActor *>(graph_output_to_actor_[front_output_with_index].first);
-      }
-    }
+    auto from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_kernel->fullname_with_scope()));
     if (from_actor == nullptr) {
+      MS_LOG(DEBUG) << "Link control arrow by auto monad from depend node:" << real_depend_kernel->fullname_with_scope()
+                    << " is not actor for the graph: " << graph->graph_id();
       continue;
     }
-    MS_LOG(INFO) << "Link control arrow by auto monad, from actor:  " << from_actor->GetAID().Name()
-                 << ", to actor: " << to_actor->GetAID().Name();
+    MS_LOG(INFO) << "Link control arrow by auto monad from actor:  " << from_actor->GetAID().Name()
+                 << ", to actor: " << to_actor->GetAID().Name() << " for the graph: " << graph->graph_id();
     AddControlArrow(from_actor, to_actor);
   }
 }
