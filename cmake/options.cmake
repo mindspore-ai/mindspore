@@ -26,6 +26,7 @@ option(ENABLE_GLIBCXX "enable_glibcxx" OFF)
 option(MODE_ASCEND_ALL "supports all ascend platform" OFF)
 option(MODE_ASCEND_ACL "supports ascend acl mode only" OFF)
 option(ENABLE_SYM_FILE "enable sym file" OFF)
+option(BUILD_DEV_MODE "MindSpore build nightly dev mode" OFF)
 
 if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL AND NOT ENABLE_GE)
     set(ENABLE_GLIBCXX ON)
