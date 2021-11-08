@@ -24,6 +24,8 @@ MS_REG_GPU_KERNEL_ONE(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).A
                       ArrayReduceGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       ArrayReduceGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      ArrayReduceGpuKernel, double)
 MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       ArrayReduceGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
@@ -34,6 +36,8 @@ MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).A
                       ArrayReduceGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       ArrayReduceGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      ArrayReduceGpuKernel, double)
 MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       ArrayReduceGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
