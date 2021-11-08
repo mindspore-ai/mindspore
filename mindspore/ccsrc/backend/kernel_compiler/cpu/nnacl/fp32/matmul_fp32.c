@@ -632,12 +632,13 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col)
 #ifdef ENABLE_AVX
       Transpose8X8Fp32Avx(src_c, dst_c, col, C16NUM);
       Transpose8X8Fp32Avx(src_c + C8NUM * col, dst_c + C8NUM, col, C16NUM);
-#endif
+#else
       for (int tr = 0; tr < C16NUM; tr++) {
         for (int tc = 0; tc < C8NUM; tc++) {
           dst_c[tc * C16NUM + tr] = src_c[tr * col + tc];
         }
       }
+#endif
     }
     for (; ci < col; ci++) {
       const float *src_c = src_r + ci;
@@ -666,20 +667,40 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col)
   }
 }
 
-void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int col, int row) {
+void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
-  int col_block_num = UP_DIV(col, C8NUM);
-  int col_block = C4NUM;
-  for (int i = 0; i < col_block_num; i += col_block) {
-    col_block = MSMIN(C4NUM, col_block_num - i);  // max_tile = 4
-    int index = i * row * C8NUM;
-    int col_remainder = MSMIN(C8NUM * col_block, col - i * C8NUM);
-    for (int ir = 0; ir < row; ++ir) {
-      for (int oc = 0; oc < col_remainder; ++oc) {
-        int oc_index = oc * row + ir + index;
-        dst_ptr[oc] = src_ptr[oc_index];
+#ifdef ENABLE_AVX
+  int col8 = col / C8NUM * C8NUM;
+#endif
+  int all_block_num = UP_DIV(row, C8NUM);
+  int cur_block = C4NUM;
+  for (int i = 0; i < all_block_num; i += cur_block) {
+    cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
+    int dst_stride = cur_block * C8NUM;
+    int row_num = MSMIN(dst_stride, row - i * C8NUM);
+#ifdef ENABLE_AVX
+    int row8_num = row_num / C8NUM * C8NUM;
+#endif
+    const float *src = src_ptr + i * C8NUM * col;
+    float *dst = dst_ptr + i * C8NUM * col;
+    int r = 0;
+#ifdef ENABLE_AVX
+    for (; r < row8_num; r += C8NUM) {
+      int c = 0;
+      for (; c < col8; c += C8NUM) {
+        Transpose8X8Fp32Avx(src + r * col + c, dst + c * dst_stride + r, col, dst_stride);
       }
-      dst_ptr += col_block * C8NUM;
+      for (; c < col; ++c) {
+        for (int k = 0; k < C8NUM; ++k) {
+          dst[c * dst_stride + r + k] = src[r * col + c + k * col];
+        }
+      }
+    }
+#endif
+    for (; r < row_num; r++) {
+      for (int c = 0; c < col; ++c) {
+        dst[c * dst_stride + r] = src[r * col + c];
+      }
     }
   }
 }
