@@ -16,6 +16,7 @@
 from .. import numpy as mnp
 from .. import ops
 from .ops import SolveTriangular
+from ..ops import operations as P
 
 __all__ = ['block_diag', 'solve_triangular']
 
@@ -149,3 +150,44 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         trans = trans_table[trans]
     solve = SolveTriangular(lower, unit_diagonal, trans)
     return solve(A, b)
+
+
+def inv(a, overwrite_a=False, check_finite=True):
+    """
+    Compute the inverse of a matrix.
+
+    Args:
+        a (Tensor): Tensor
+            Square matrix to be inverted.
+        overwrite_a (bool, optional): Discard data in `a` (may improve performance).
+            Default is False.
+        check_finite (bool, optional): Whether to check that the input matrix contains
+            only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        ainv (Tensor): Inverse of the matrix `a`.
+
+    Raises:
+        LinAlgError: If `a` is singular.
+        ValueError: If `a` is not square, or not 2D.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> import mindspore.numpy as mnp
+        >>> from mindspore.scipy.linalg import inv
+        >>> a = Tensor(onp.array([[1., 2.], [3., 4.]]))
+        >>> inv(a)
+        [[-2. ,  1. ],
+         [ 1.5, -0.5]]
+        >>> mnp.dot(a, inv(a))
+        [[ 1.,  0.],
+         [ 0.,  1.]]
+    """
+    matrix_inverse = P.MatrixInverse(adjoint=False)
+    return matrix_inverse(a)
