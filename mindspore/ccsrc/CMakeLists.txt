@@ -417,8 +417,4 @@ if(ENABLE_D)
     endif()
 endif()
 
-if(ENABLE_MPI)
-    target_link_libraries(mindspore mindspore::ompi)
-endif()
-
 add_subdirectory(cxx_api)
