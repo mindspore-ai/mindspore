@@ -16,9 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_TAN_H_
 #define MINDSPORE_CORE_OPS_TAN_H_
-#include <map>
 #include <vector>
-#include <string>
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -40,7 +38,7 @@ class MS_CORE_API Tan : public PrimitiveC {
 };
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
+using kPrimTanPtr = std::shared_ptr<Tan>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_TAN_H_

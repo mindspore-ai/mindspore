@@ -4630,7 +4630,7 @@ class Round(PrimitiveWithInfer):
         return x_dtype
 
 
-class Tan(PrimitiveWithInfer):
+class Tan(Primitive):
     r"""
     Computes tangent of `x` element-wise.
 
@@ -4665,13 +4665,6 @@ class Tan(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Tan"""
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        valid_dtypes = [mstype.float16, mstype.float32, mstype.int32]
-        validator.check_tensor_dtype_valid('x', x_type, valid_dtypes, self.name)
-        return x_type
 
 
 class Atan(PrimitiveWithInfer):

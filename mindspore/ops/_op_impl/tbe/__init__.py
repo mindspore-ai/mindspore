@@ -303,6 +303,7 @@ from .bce_with_logits_loss import _bce_with_logits_loss_op_tbe
 from .sin import _sin_tbe
 from .cos import _cos_tbe
 from .tan import _tan_tbe
+from .tan_ds import _tan_ds_tbe
 from .cum_sum import _cum_sum_tbe
 from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
