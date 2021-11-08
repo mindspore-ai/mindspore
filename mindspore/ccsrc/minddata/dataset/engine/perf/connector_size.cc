@@ -28,6 +28,7 @@ using Qrow = std::vector<int>;
 
 // Sample action
 Status ConnectorSize::Sample() {
+  if (active_ == false) return Status::OK();
   Qrow cur_row;
   (void)std::transform(tree_->begin(), tree_->end(), std::back_inserter(cur_row),
                        [](DatasetOp &op) { return op.ConnectorSize(); });

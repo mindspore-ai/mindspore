@@ -45,7 +45,7 @@ const char kCpuSamplerName[] = "Cpu_Sampler";
 class Profiling : std::enable_shared_from_this<Profiling> {
  public:
   // Constructor
-  Profiling() = default;
+  Profiling() : active_(false) {}
 
   // Destructor
   virtual ~Profiling() = default;
@@ -60,7 +60,14 @@ class Profiling : std::enable_shared_from_this<Profiling> {
 
   virtual Status ChangeFileMode() = 0;
 
+  // Start collecting data
+  Status Start();
+
+  // Stop collecting data
+  Status Stop();
+
  protected:
+  bool active_;  // show current state of ProfilingManager (running, or paused)
   std::string file_path_;
   std::mutex lock_;
 };
@@ -142,8 +149,9 @@ class ProfilingManager {
   Status Reset();
 
   // Save profile data to file
+  // @param final_round The boolean to show if the monitor thread is terminating.
   // @return Status The status code returned
-  Status SaveProfilingData();
+  Status SaveProfilingData(const bool final_round = false);
 
   // Sampling node getter
   // @param name - The name of the requested node
@@ -157,13 +165,8 @@ class ProfilingManager {
   // @return Status The status code returned
   Status GetTracingNode(const std::string &name, std::shared_ptr<Tracing> *node);
 
-  // return true if env variable has profiling enabled and enabled_ is set to true.
+  // return true if enabled_ is set to true, namely if Init() has been called successfully
   bool IsProfilingEnable() const;
-
-  // Calling this would disable Profiling functionality for the entire duration of ExecutionTree. It cannot be
-  // re-enabled. Each execution_tree is associated with a unique profiling_manager which will start when tree is
-  // launched. This is the master off switch, once called, it won't start profiler even if env variable says so.
-  void DisableProfiling() { enabled_ = false; }
 
   // Record end of epoch information
   // @param step_num - The number of steps
@@ -174,10 +177,14 @@ class ProfilingManager {
   // Launch monitoring thread.
   Status LaunchMonitor();
 
-  Status ChangeFileMode();
+  // @param final_round The boolean to show if the monitor thread is terminating.
+  // @return Status The status code returned
+  Status ChangeFileMode(const bool final_round = false);
 
   // Analyze profile data and print warning messages
-  Status Analyze();
+  // @param final_round The boolean to show if the monitor thread is terminating.
+  // @return Status The status code returned
+  Status Analyze(const bool final_round = false);
 
 #ifndef ENABLE_ANDROID
   /// \brief API to get User CPU utilization for the system
@@ -415,8 +422,28 @@ class ProfilingManager {
   // @return Status The status code returned
   Status RegisterTracingNode(std::shared_ptr<Tracing> node);
 
- protected:
+  /// \brief API to initialize profiling manager
+  /// \return Status object with the error code
+  Status Init(const std::string &profile_data_path);
+
+  /// \brief API to signal the profiling nodes to start collecting data
+  /// \return Status object with the error code
+  Status Start();
+
+  /// \brief API to signal profiling nodes to stop collecting data
+  /// \return Status object with the error code
+  Status Stop();
+
+ private:
   std::unique_ptr<Monitor> perf_monitor_;
+
+  // State flags for profiling
+  enum ProfilingState {
+    kProfilingStateUnBegun,
+    kProfilingStateRunning,
+    kProfilingStateFinished,
+  };
+  ProfilingState profiling_state_;  // show current state of ProfilingManager (running, or paused)
   bool enabled_;
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;

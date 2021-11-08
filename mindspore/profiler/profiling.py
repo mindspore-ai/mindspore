@@ -22,6 +22,7 @@ from enum import Enum
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, release, get_rank, get_group_size
 import mindspore._c_expression as c_expression
+import mindspore._c_dataengine as cde
 from mindspore.dataset.core.config import _stop_dataset_profiler
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
@@ -141,8 +142,10 @@ class Profiler:
         self._get_output_path(kwargs)
         self._profile_communication = False
 
-        os.environ['PROFILING_MODE'] = 'true'
-        os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
+        # Setup and start MindData Profiling
+        self._md_profiler = cde.GlobalContext.profiling_manager()
+        self._md_profiler.init(self._output_path)
+        self._md_profiler.start()
 
         if self._device_target:
             cpu_profiler = c_expression.CPUProfiler
@@ -249,6 +252,7 @@ class Profiler:
         Profiler._has_analysed = True
         _environment_check()
         self._cpu_profiler.stop()
+        self._md_profiler.stop()
         _stop_dataset_profiler()
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
@@ -374,7 +378,6 @@ class Profiler:
                                    self._dev_id, self._rank_id, is_training_mode_flag)
         logger.info("Profiling: analyzing the operation FLOPs.")
         flops_parser.execute()
-        os.environ['PROFILING_MODE'] = str("false")
         self._ascend_profiler.stop()
 
     def _gpu_analyse(self):
@@ -410,8 +413,6 @@ class Profiler:
             )
         except ProfilerException as err:
             logger.warning(err.message)
-
-        os.environ['PROFILING_MODE'] = str("false")
 
         logger.warning(
             '\nMemory Usage is not supported on GPU currently.\n'

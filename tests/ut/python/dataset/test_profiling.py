@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,14 +22,11 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vision
+import mindspore._c_dataengine as cde
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
-
-PIPELINE_FILE = "./pipeline_profiling"
-CPU_UTIL_FILE = "./minddata_cpu_utilization"
-DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
 
 # add file name to rank id mapping to avoid file writing crash
 file_name_map_rank_id = {"test_profiling_simple_pipeline": "0",
@@ -44,86 +41,117 @@ file_name_map_rank_id = {"test_profiling_simple_pipeline": "0",
                          "test_profiling_seq_pipelines_repeat": "9"}
 
 
-def set_profiling_env_var(index='0'):
+class TestMinddataProfilingManager:
     """
-    Set the MindData Profiling environment variables
+    Test MinddataProfilingManager
     """
-    os.environ['PROFILING_MODE'] = 'true'
-    os.environ['MINDDATA_PROFILING_DIR'] = '.'
-    os.environ['DEVICE_ID'] = index
-    os.environ['RANK_ID'] = index
 
+    def setup_class(self):
+        """
+        Run once for the class
+        """
+        # Get instance pointer for MindData profiling manager
+        self.md_profiler = cde.GlobalContext.profiling_manager()
 
-def delete_profiling_files(index='0'):
-    """
-    Delete the MindData profiling files generated from the test.
-    Also disable the MindData Profiling environment variables.
-    """
-    # Delete MindData profiling files
-    pipeline_file = PIPELINE_FILE + "_" + index + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + index + ".json"
-    dataset_iterator_file = DATASET_ITERATOR_FILE + "_" + index + ".txt"
+        self._PIPELINE_FILE = "./pipeline_profiling"
+        self._CPU_UTIL_FILE = "./minddata_cpu_utilization"
+        self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
 
-    os.remove(pipeline_file)
-    os.remove(cpu_util_file)
-    os.remove(dataset_iterator_file)
+    def setup_method(self):
+        """
+        Run before each test function.
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    # Disable MindData Profiling environment variables
-    del os.environ['PROFILING_MODE']
-    del os.environ['MINDDATA_PROFILING_DIR']
-    del os.environ['DEVICE_ID']
-    del os.environ['RANK_ID']
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
 
+        # Confirm MindData Profiling files do not yet exist
+        assert os.path.exists(pipeline_file) is False
+        assert os.path.exists(cpu_util_file) is False
+        assert os.path.exists(dataset_iterator_file) is False
 
-def confirm_cpuutil(num_pipeline_ops, cpu_uti_file):
-    """
-    Confirm CPU utilization JSON file with <num_pipeline_ops> in the pipeline
-    """
-    with open(cpu_uti_file) as file1:
-        data = json.load(file1)
-        op_info = data["op_info"]
-        assert len(op_info) == num_pipeline_ops
+        # Set the MindData Profiling related environment variables
+        os.environ['RANK_ID'] = file_id
+        os.environ['DEVICE_ID'] = file_id
 
+        # Initialize MindData profiling manager with current working directory
+        self.md_profiler.init("./")
 
-def confirm_ops_in_pipeline(num_ops, op_list, pipeline_file):
-    """
-    Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops
-    """
-    with open(pipeline_file) as file1:
-        data = json.load(file1)
-        op_info = data["op_info"]
-        # Confirm ops in pipeline file
-        assert len(op_info) == num_ops
-        for i in range(num_ops):
-            assert op_info[i]["op_type"] in op_list
+        # Start MindData Profiling
+        self.md_profiler.start()
 
+    def teardown_method(self):
+        """
+        Run after each test function.
+        """
+        # Stop MindData Profiling
+        self.md_profiler.stop()
 
-def test_profiling_simple_pipeline():
-    """
-    Generator -> Shuffle -> Batch
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
-    dataset_iterator_file = DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    source = [(np.array([x]),) for x in range(1024)]
-    data1 = ds.GeneratorDataset(source, ["data"])
-    data1 = data1.shuffle(64)
-    data1 = data1.batch(32)
-    # try output shape type and dataset size and make sure no profiling file is generated
-    assert data1.output_shapes() == [[32, 1]]
-    assert [str(tp) for tp in data1.output_types()] == ["int64"]
-    assert data1.get_dataset_size() == 32
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
 
-    # Confirm profiling files do not (yet) exist
-    assert os.path.exists(pipeline_file) is False
-    assert os.path.exists(cpu_util_file) is False
-    assert os.path.exists(dataset_iterator_file) is False
+        # Delete MindData profiling files generated from the test.
+        os.remove(pipeline_file)
+        os.remove(cpu_util_file)
+        os.remove(dataset_iterator_file)
 
-    try:
+        # Disable MindData Profiling related environment variables
+        del os.environ['RANK_ID']
+        del os.environ['DEVICE_ID']
+
+    def confirm_cpuutil(self, num_pipeline_ops, cpu_uti_file):
+        """
+        Confirm CPU utilization JSON file with <num_pipeline_ops> in the pipeline
+        """
+        with open(cpu_uti_file) as file1:
+            data = json.load(file1)
+            op_info = data["op_info"]
+            assert len(op_info) == num_pipeline_ops
+
+    def confirm_ops_in_pipeline(self, num_ops, op_list, pipeline_file):
+        """
+        Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops
+        """
+        with open(pipeline_file) as file1:
+            data = json.load(file1)
+            op_info = data["op_info"]
+            # Confirm ops in pipeline file
+            assert len(op_info) == num_ops
+            for i in range(num_ops):
+                assert op_info[i]["op_type"] in op_list
+
+    def test_profiling_simple_pipeline(self):
+        """
+        Generator -> Shuffle -> Batch
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+
+        source = [(np.array([x]),) for x in range(1024)]
+        data1 = ds.GeneratorDataset(source, ["data"])
+        data1 = data1.shuffle(64)
+        data1 = data1.batch(32)
+        # try output shape type and dataset size and make sure no profiling file is generated
+        assert data1.output_shapes() == [[32, 1]]
+        assert [str(tp) for tp in data1.output_types()] == ["int64"]
+        assert data1.get_dataset_size() == 32
+
+        # Confirm profiling files do not (yet) exist
+        assert os.path.exists(pipeline_file) is False
+        assert os.path.exists(cpu_util_file) is False
+        assert os.path.exists(dataset_iterator_file) is False
+
         for _ in data1:
             pass
 
@@ -132,38 +160,29 @@ def test_profiling_simple_pipeline():
         assert os.path.exists(cpu_util_file) is True
         assert os.path.exists(dataset_iterator_file) is True
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_complex_pipeline(self):
+        """
+        Generator -> Map     ->
+                                 -> Zip
+        TFReader  -> Shuffle ->
+        """
 
-    else:
-        delete_profiling_files(file_id)
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
-def test_profiling_complex_pipeline():
-    """
-    Generator -> Map     ->
-                             -> Zip
-    TFReader  -> Shuffle ->
-    """
+        source = [(np.array([x]),) for x in range(1024)]
+        data1 = ds.GeneratorDataset(source, ["gen"])
+        data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["gen"])
 
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+        pattern = DATASET_ROOT + "/test.data"
+        data2 = ds.TFRecordDataset(pattern, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
+        data2 = data2.shuffle(4)
 
-    source = [(np.array([x]),) for x in range(1024)]
-    data1 = ds.GeneratorDataset(source, ["gen"])
-    data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["gen"])
+        data3 = ds.zip((data1, data2))
 
-    pattern = DATASET_ROOT + "/test.data"
-    data2 = ds.TFRecordDataset(pattern, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
-    data2 = data2.shuffle(4)
-
-    data3 = ds.zip((data1, data2))
-
-    try:
         for _ in data3:
             pass
 
@@ -180,44 +199,35 @@ def test_profiling_complex_pipeline():
                     assert op_info[i]["metrics"] is None
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5, cpu_util_file)
+        self.confirm_cpuutil(5, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_inline_ops_pipeline1(self):
+        """
+        Test pipeline with inline ops: Concat and EpochCtrl
+        Generator ->
+                     Concat -> EpochCtrl
+        Generator ->
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
+        def source1():
+            for i in range(3):
+                yield (np.array([i]),)
 
-def test_profiling_inline_ops_pipeline1():
-    """
-    Test pipeline with inline ops: Concat and EpochCtrl
-    Generator ->
-                 Concat -> EpochCtrl
-    Generator ->
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+        # In source2 dataset: Number of rows is 7; its values are 3, 4, 5 ... 9
+        def source2():
+            for i in range(3, 10):
+                yield (np.array([i]),)
 
-    # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
-    def source1():
-        for i in range(3):
-            yield (np.array([i]),)
+        data1 = ds.GeneratorDataset(source1, ["col1"])
+        data2 = ds.GeneratorDataset(source2, ["col1"])
+        data3 = data1.concat(data2)
 
-    # In source2 dataset: Number of rows is 7; its values are 3, 4, 5 ... 9
-    def source2():
-        for i in range(3, 10):
-            yield (np.array([i]),)
-
-    data1 = ds.GeneratorDataset(source1, ["col1"])
-    data2 = ds.GeneratorDataset(source2, ["col1"])
-    data3 = data1.concat(data2)
-
-    try:
         num_iter = 0
         # Note: set num_epochs=2 in create_tuple_iterator(), so that EpochCtrl op is added to the pipeline
         # Here i refers to index, d refers to data element
@@ -243,39 +253,30 @@ def test_profiling_inline_ops_pipeline1():
                     assert "length" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 4 ops are in the pipeline JSON file
-        confirm_cpuutil(4, cpu_util_file)
+        self.confirm_cpuutil(4, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_inline_ops_pipeline2(self):
+        """
+        Test pipeline with many inline ops
+        Generator -> Rename -> Skip -> Repeat -> Take
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
+        def source1():
+            for i in range(10):
+                yield (np.array([i]),)
 
-def test_profiling_inline_ops_pipeline2():
-    """
-    Test pipeline with many inline ops
-    Generator -> Rename -> Skip -> Repeat -> Take
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+        data1 = ds.GeneratorDataset(source1, ["col1"])
+        data1 = data1.rename(input_columns=["col1"], output_columns=["newcol1"])
+        data1 = data1.skip(2)
+        data1 = data1.repeat(2)
+        data1 = data1.take(12)
 
-    # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
-    def source1():
-        for i in range(10):
-            yield (np.array([i]),)
-
-    data1 = ds.GeneratorDataset(source1, ["col1"])
-    data1 = data1.rename(input_columns=["col1"], output_columns=["newcol1"])
-    data1 = data1.skip(2)
-    data1 = data1.repeat(2)
-    data1 = data1.take(12)
-
-    try:
         for _ in data1:
             pass
 
@@ -293,74 +294,52 @@ def test_profiling_inline_ops_pipeline2():
                     assert "length" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5, cpu_util_file)
+        self.confirm_cpuutil(5, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_sampling_interval(self):
+        """
+        Test non-default monitor sampling interval
+        """
+        interval_origin = ds.config.get_monitor_sampling_interval()
 
-    else:
-        delete_profiling_files(file_id)
+        ds.config.set_monitor_sampling_interval(30)
+        interval = ds.config.get_monitor_sampling_interval()
+        assert interval == 30
 
+        source = [(np.array([x]),) for x in range(1024)]
+        data1 = ds.GeneratorDataset(source, ["data"])
+        data1 = data1.shuffle(64)
+        data1 = data1.batch(32)
 
-def test_profiling_sampling_interval():
-    """
-    Test non-default monitor sampling interval
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-
-    interval_origin = ds.config.get_monitor_sampling_interval()
-
-    ds.config.set_monitor_sampling_interval(30)
-    interval = ds.config.get_monitor_sampling_interval()
-    assert interval == 30
-
-    source = [(np.array([x]),) for x in range(1024)]
-    data1 = ds.GeneratorDataset(source, ["data"])
-    data1 = data1.shuffle(64)
-    data1 = data1.batch(32)
-
-    try:
         for _ in data1:
             pass
 
-    except Exception as error:
         ds.config.set_monitor_sampling_interval(interval_origin)
-        delete_profiling_files(file_id)
-        raise error
 
-    else:
-        ds.config.set_monitor_sampling_interval(interval_origin)
-        delete_profiling_files(file_id)
+    def test_profiling_basic_pipeline(self):
+        """
+        Test with this basic pipeline
+        Generator -> Map -> Batch -> Repeat -> EpochCtrl
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
-def test_profiling_basic_pipeline():
-    """
-    Test with this basic pipeline
-    Generator -> Map -> Batch -> Repeat -> EpochCtrl
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+        def source1():
+            for i in range(8000):
+                yield (np.array([i]),)
 
-    def source1():
-        for i in range(8000):
-            yield (np.array([i]),)
+        # Create this basic and common pipeline
+        # Leaf/Source-Op -> Map -> Batch -> Repeat
+        data1 = ds.GeneratorDataset(source1, ["col1"])
 
-    # Create this basic and common pipeline
-    # Leaf/Source-Op -> Map -> Batch -> Repeat
-    data1 = ds.GeneratorDataset(source1, ["col1"])
+        type_cast_op = C.TypeCast(mstype.int32)
+        data1 = data1.map(operations=type_cast_op, input_columns="col1")
+        data1 = data1.batch(16)
+        data1 = data1.repeat(2)
 
-    type_cast_op = C.TypeCast(mstype.int32)
-    data1 = data1.map(operations=type_cast_op, input_columns="col1")
-    data1 = data1.batch(16)
-    data1 = data1.repeat(2)
-
-    try:
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=2):
@@ -382,41 +361,32 @@ def test_profiling_basic_pipeline():
                     assert "length" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5, cpu_util_file)
+        self.confirm_cpuutil(5, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_cifar10_pipeline(self):
+        """
+        Test with this common pipeline with Cifar10
+        Cifar10 -> Map -> Map -> Batch -> Repeat
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        # Create this common pipeline
+        # Cifar10 -> Map -> Map -> Batch -> Repeat
+        DATA_DIR_10 = "../data/dataset/testCifar10Data"
+        data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=8000)
 
-def test_profiling_cifar10_pipeline():
-    """
-    Test with this common pipeline with Cifar10
-    Cifar10 -> Map -> Map -> Batch -> Repeat
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+        type_cast_op = C.TypeCast(mstype.int32)
+        data1 = data1.map(operations=type_cast_op, input_columns="label")
+        random_horizontal_op = vision.RandomHorizontalFlip()
+        data1 = data1.map(operations=random_horizontal_op, input_columns="image")
 
-    # Create this common pipeline
-    # Cifar10 -> Map -> Map -> Batch -> Repeat
-    DATA_DIR_10 = "../data/dataset/testCifar10Data"
-    data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=8000)
+        data1 = data1.batch(32)
+        data1 = data1.repeat(3)
 
-    type_cast_op = C.TypeCast(mstype.int32)
-    data1 = data1.map(operations=type_cast_op, input_columns="label")
-    random_horizontal_op = vision.RandomHorizontalFlip()
-    data1 = data1.map(operations=random_horizontal_op, input_columns="image")
-
-    data1 = data1.batch(32)
-    data1 = data1.repeat(3)
-
-    try:
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=1):
@@ -438,34 +408,25 @@ def test_profiling_cifar10_pipeline():
                     assert "length" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5, cpu_util_file)
+        self.confirm_cpuutil(5, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_seq_pipelines_epochctrl3(self):
+        """
+        Test with these 2 sequential pipelines:
+        1) Generator -> Batch -> EpochCtrl
+        2) Generator -> Batch
+        Note: This is a simplification of the user scenario to use the same pipeline for training and then evaluation.
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        source = [(np.array([x]),) for x in range(64)]
+        data1 = ds.GeneratorDataset(source, ["data"])
+        data1 = data1.batch(32)
 
-def test_profiling_seq_pipelines_epochctrl3():
-    """
-    Test with these 2 sequential pipelines:
-    1) Generator -> Batch -> EpochCtrl
-    2) Generator -> Batch
-    Note: This is a simplification of the user scenario to use the same pipeline for training and then evaluation.
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
-
-    source = [(np.array([x]),) for x in range(64)]
-    data1 = ds.GeneratorDataset(source, ["data"])
-    data1 = data1.batch(32)
-
-    try:
         # Test A - Call create_dict_iterator with num_epochs>1
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
@@ -474,8 +435,8 @@ def test_profiling_seq_pipelines_epochctrl3():
         assert num_iter == 2
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
-        confirm_cpuutil(3, cpu_util_file)
+        self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
+        self.confirm_cpuutil(3, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs=1
         num_iter = 0
@@ -486,34 +447,25 @@ def test_profiling_seq_pipelines_epochctrl3():
         assert num_iter == 2
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
-        confirm_cpuutil(2, cpu_util_file)
+        self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        self.confirm_cpuutil(2, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_seq_pipelines_epochctrl2(self):
+        """
+        Test with these 2 sequential pipelines:
+        1) Generator -> Batch
+        2) Generator -> Batch -> EpochCtrl
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        source = [(np.array([x]),) for x in range(64)]
+        data2 = ds.GeneratorDataset(source, ["data"])
+        data2 = data2.batch(16)
 
-def test_profiling_seq_pipelines_epochctrl2():
-    """
-    Test with these 2 sequential pipelines:
-    1) Generator -> Batch
-    2) Generator -> Batch -> EpochCtrl
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
-
-    source = [(np.array([x]),) for x in range(64)]
-    data2 = ds.GeneratorDataset(source, ["data"])
-    data2 = data2.batch(16)
-
-    try:
         # Test A - Call create_dict_iterator with num_epochs=1
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
@@ -522,8 +474,8 @@ def test_profiling_seq_pipelines_epochctrl2():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
-        confirm_cpuutil(2, cpu_util_file)
+        self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        self.confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs>1
         num_iter = 0
@@ -534,34 +486,25 @@ def test_profiling_seq_pipelines_epochctrl2():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
-        confirm_cpuutil(3, cpu_util_file)
+        self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
+        self.confirm_cpuutil(3, cpu_util_file)
 
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
+    def test_profiling_seq_pipelines_repeat(self):
+        """
+        Test with these 2 sequential pipelines:
+        1) Generator -> Batch
+        2) Generator -> Batch -> Repeat
+        """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
 
-    else:
-        delete_profiling_files(file_id)
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
 
+        source = [(np.array([x]),) for x in range(64)]
+        data2 = ds.GeneratorDataset(source, ["data"])
+        data2 = data2.batch(16)
 
-def test_profiling_seq_pipelines_repeat():
-    """
-    Test with these 2 sequential pipelines:
-    1) Generator -> Batch
-    2) Generator -> Batch -> Repeat
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    file_id = file_name_map_rank_id[file_name]
-    set_profiling_env_var(file_id)
-    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
-    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
-
-    source = [(np.array([x]),) for x in range(64)]
-    data2 = ds.GeneratorDataset(source, ["data"])
-    data2 = data2.batch(16)
-
-    try:
         # Test A - Call create_dict_iterator with 2 ops in pipeline
         num_iter = 0
         for _ in data2.create_dict_iterator(num_epochs=1):
@@ -569,8 +512,8 @@ def test_profiling_seq_pipelines_repeat():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
-        confirm_cpuutil(2, cpu_util_file)
+        self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        self.confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Add repeat op to pipeline.  Call create_dict_iterator with 3 ops in pipeline
         data2 = data2.repeat(5)
@@ -580,25 +523,5 @@ def test_profiling_seq_pipelines_repeat():
         assert num_iter == 20
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"], pipeline_file)
-        confirm_cpuutil(3, cpu_util_file)
-
-    except Exception as error:
-        delete_profiling_files(file_id)
-        raise error
-
-    else:
-        delete_profiling_files(file_id)
-
-
-if __name__ == "__main__":
-    test_profiling_simple_pipeline()
-    test_profiling_complex_pipeline()
-    test_profiling_inline_ops_pipeline1()
-    test_profiling_inline_ops_pipeline2()
-    test_profiling_sampling_interval()
-    test_profiling_basic_pipeline()
-    test_profiling_cifar10_pipeline()
-    test_profiling_seq_pipelines_epochctrl3()
-    test_profiling_seq_pipelines_epochctrl2()
-    test_profiling_seq_pipelines_repeat()
+        self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"], pipeline_file)
+        self.confirm_cpuutil(3, cpu_util_file)

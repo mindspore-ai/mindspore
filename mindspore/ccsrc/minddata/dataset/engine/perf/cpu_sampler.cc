@@ -313,6 +313,7 @@ Status MDOperatorCpuInfo::GetSysCpuUtil(uint64_t start_index, uint64_t end_index
 }
 
 Status CpuSampler::Sample() {
+  if (active_ == false) return Status::OK();
   std::lock_guard<std::mutex> guard(lock_);
   // Function to Update TaskList
   // Loop through all tasks to find any new threads

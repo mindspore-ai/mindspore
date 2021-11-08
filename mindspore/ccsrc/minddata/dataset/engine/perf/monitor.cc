@@ -58,9 +58,9 @@ Status Monitor::operator()() {
   }
 
   // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(profiling_manager_->Analyze());
-  RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
-  RETURN_IF_NOT_OK(profiling_manager_->ChangeFileMode());
+  RETURN_IF_NOT_OK(profiling_manager_->Analyze(true));
+  RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData(true));
+  RETURN_IF_NOT_OK(profiling_manager_->ChangeFileMode(true));
   cfg->set_profiler_file_status(true);
   return Status::OK();
 }
