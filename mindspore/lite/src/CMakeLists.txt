@@ -38,9 +38,13 @@ file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
         )
+file(GLOB C_API_SRCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/c_api/*.cc
+        )
 set(API_SRC
         ${CORE_DIR}/utils/status.cc
         ${CXX_API_SRCS}
+        ${C_API_SRCS}
         )
 
 file(GLOB CXX_API_TRAIN_SRCS

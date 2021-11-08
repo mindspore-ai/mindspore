@@ -246,7 +246,7 @@ class LiteKernel {
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
-      MS_ASSERT(index < kernel_->inputs().size());
+      MS_ASSERT(static_cast<size_t>(index) < kernel_->inputs().size());
       auto impl = std::make_shared<mindspore::MSTensor::Impl>(in_tensor);
       auto tensor_in = mindspore::MSTensor(impl);
       kernel_->set_input(tensor_in, index);
@@ -272,7 +272,7 @@ class LiteKernel {
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
     } else {
-      MS_ASSERT(index < kernel_->outputs().size());
+      MS_ASSERT(static_cast<size_t>(index) < kernel_->outputs().size());
       auto impl = std::make_shared<mindspore::MSTensor::Impl>(out_tensor);
       auto tensor_out = mindspore::MSTensor(impl);
       kernel_->set_output(tensor_out, index);

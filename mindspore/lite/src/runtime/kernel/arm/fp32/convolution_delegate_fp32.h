@@ -41,7 +41,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   int Run() override { return conv_kernel_->Run(); }
 
   void set_in_tensor(lite::Tensor *in_tensor, int index) override {
-    MS_ASSERT(index < in_tensors_.size());
+    MS_ASSERT(static_cast<size_t>(index) < in_tensors_.size());
     this->in_tensors_[index] = in_tensor;
     if (conv_kernel_ != nullptr) {
       conv_kernel_->set_in_tensor(in_tensor, index);
@@ -49,7 +49,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   }
 
   void set_out_tensor(lite::Tensor *out_tensor, int index) override {
-    MS_ASSERT(index < out_tensors_.size());
+    MS_ASSERT(static_cast<size_t>(index) < out_tensors_.size());
     this->out_tensors_[index] = out_tensor;
     if (conv_kernel_ != nullptr) {
       conv_kernel_->set_out_tensor(out_tensor, index);

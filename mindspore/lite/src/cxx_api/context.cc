@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "include/api/context.h"
+#include "src/cxx_api/context.h"
 #include <string>
 #include <memory>
-#ifndef SUPPORT_NNIE
-#include <any>
-#else
-#include <experimental/any>
-#endif
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/runtime/inner_allocator.h"
@@ -33,24 +27,6 @@ constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
-
-struct Context::Data {
-  std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
-  int32_t thread_num = 2;
-  bool enable_parallel_ = false;
-  std::vector<int32_t> affinity_core_list_;
-  int affinity_mode_ = 0;
-  std::shared_ptr<Delegate> delegate = nullptr;
-};
-
-struct DeviceInfoContext::Data {
-#ifndef SUPPORT_NNIE
-  std::map<std::string, std::any> params;
-#else
-  std::map<std::string, std::experimental::any> params;
-#endif
-  std::shared_ptr<Allocator> allocator = nullptr;
-};
 
 Context::Context() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
 

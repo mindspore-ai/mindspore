@@ -89,3 +89,7 @@ echo 'run inference ut tests'
 echo 'run mindrt parallel ut test'
 ./lite-test --gtest_filter="MindrtParallelTest.*"
 ./lite-test --gtest_filter="BenchmarkTest.mindrtParallelOffline*"
+
+echo 'run c api ut test'
+./lite-test --gtest_filter="TensorCTest.*"
+./lite-test --gtest_filter="ContextCTest.*"
