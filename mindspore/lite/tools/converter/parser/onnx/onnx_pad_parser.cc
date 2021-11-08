@@ -22,6 +22,8 @@
 
 namespace mindspore {
 namespace lite {
+constexpr auto kNamePadContiguous = "pad_contiguous";
+
 ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PadFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -55,6 +57,7 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
       prim->set_constant_value(onnx_node_attr.f());
     }
   }
+  prim->AddAttr(kNamePadContiguous, MakeValue(true));
 
   return prim.release();
 }

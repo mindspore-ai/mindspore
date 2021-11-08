@@ -24,6 +24,10 @@
 
 namespace mindspore {
 namespace lite {
+constexpr auto kInputSizeIndex = 0;
+constexpr auto kFilterIndex = 1;
+constexpr auto kOutBackpropIndex = 2;
+
 ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
@@ -63,15 +67,24 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
 
-  bool is_ori_pad_mode = false;
-  prim->set_pad_mode(ParsePadMode(tf_op, &is_ori_pad_mode));
+  bool is_original_pad_mode = false;
+  prim->set_pad_mode(ParsePadMode(tf_op, &is_original_pad_mode));
+  prim->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
+  prim->AddAttr(ops::kOriginOpName, MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
-  if (AddOpInput(tf_op, 2, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+#ifdef ENABLE_LITE_ACL
+  if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
+      AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
-
+#else
+  if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+#endif
   return prim.release();
 }
 TFNodeRegistrar g_tf_deconv_parser("Conv2DBackpropInput", new TFDeconvParser());

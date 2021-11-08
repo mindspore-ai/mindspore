@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include "ops/resize.h"
+#include "ops/op_utils.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -38,6 +39,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
     std::vector<float> scales = {1, scale, scale, 1};
     prim->AddAttr("scale", MakeValue(scales));
   }
+  prim->AddAttr(ops::kOriginOpName, MakeValue("Upsample"));
   return prim.release();
 }
 

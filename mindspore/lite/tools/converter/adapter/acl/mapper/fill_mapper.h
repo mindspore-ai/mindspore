@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_PRIMITIVE_CONV2DFUSION_MAPPER_H
-#define ACL_MAPPER_PRIMITIVE_CONV2DFUSION_MAPPER_H
+#ifndef ACL_MAPPER_PRIMITIVE_FILL_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_FILL_MAPPER_H
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "tools/converter/adapter/acl/mapper/conv_base_mapper.h"
-#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fill.h"
 
 namespace mindspore {
 namespace lite {
-using mindspore::ops::kNameConv2DFusion;
+using mindspore::ops::kNameFill;
 
-class Conv2DFusionMapper : public ConvBaseMapper {
+class FillMapper : public PrimitiveMapper {
  public:
-  Conv2DFusionMapper() : ConvBaseMapper(kNameConv2DFusion) {}
-  ~Conv2DFusionMapper() override = default;
+  FillMapper() : PrimitiveMapper(kNameFill) {}
+
+  ~FillMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  STATUS AdjustInputOrder(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_CONV2DFUSION_MAPPER_H
+#endif  // ACL_MAPPER_PRIMITIVE_CONCAT_MAPPER_H

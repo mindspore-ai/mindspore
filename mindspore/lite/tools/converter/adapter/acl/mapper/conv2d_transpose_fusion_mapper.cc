@@ -88,7 +88,7 @@ STATUS Conv2dTransposeMapper::AdjustOutputPadding(const PrimitivePtr &dst_prim) 
   if (value_ptr != nullptr) {
     std::vector<int64_t> val = GetValue<std::vector<int64_t>>(value_ptr);
     if (val.size() != kNameOutputPaddingNum) {
-      MS_LOG(ERROR) << "Output padding num is not 2";
+      MS_LOG(ERROR) << "Output padding num is not " << kNameOutputPaddingNum;
       return RET_ERROR;
     }
     output_padding[kDim3D] = val[0];

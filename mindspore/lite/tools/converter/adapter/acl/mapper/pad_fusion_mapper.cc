@@ -21,6 +21,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/op_utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,8 +38,13 @@ STATUS PadFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<acl::PadV3>();
-  MS_ASSERT(dst_prim != nullptr);
+  PrimitivePtr dst_prim = nullptr;
+  if (src_prim->GetAttr(kNamePadContiguous) != nullptr) {
+    dst_prim = std::make_shared<acl::PadV3>();
+  } else {
+    dst_prim = std::make_shared<acl::PadV2>();
+  }
+  CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
   AdjustPadAttr(dst_prim);
 
@@ -75,8 +81,6 @@ void PadFusionMapper::AdjustPadAttr(const PrimitivePtr &dst_prim) {
       dst_prim->DelAttr(ops::kPaddingMode);
     }
   }
-
-  dst_prim->AddAttr(kNamePadContiguous, MakeValue(true));
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNamePadFusion, PadFusionMapper)
