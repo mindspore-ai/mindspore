@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """asgd"""
-from mindspore.ops import functional as F, operations as P
+from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
@@ -62,7 +62,11 @@ class ASGD(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -91,7 +95,14 @@ class ASGD(Optimizer):
         lambd (float): The decay term. Default: 1e-4.
         alpha (float): The power for eta update. Default: 0.75.
         t0 (float): The point of starting averaging. Default: 1e6.
-        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -152,7 +163,6 @@ class ASGD(Optimizer):
         self.lens = len(self.parameters)
         self.mu = mindspore.ParameterTuple(mu)
         self.eta = mindspore.ParameterTuple(eta)
-        self.step = Parameter(Tensor(1., dtype=mstype.float32), name='step')
         self.ax = self.parameters.clone(prefix="ax_", init='zeros')
         self.pow = P.Pow()
         self.maximum = P.Maximum()
@@ -173,7 +183,7 @@ class ASGD(Optimizer):
             lr = lrs[index] if self.is_group_lr else lrs
             lr = self.squeeze(lr)
 
-            if self.step == 1.:
+            if self.global_step == 1:
                 self.assign(eta, lr)
 
             param_fp32 = self.cast(param, mstype.float32)
@@ -188,8 +198,7 @@ class ASGD(Optimizer):
             else:
                 self.assign(ax, param)
 
-            self.assign(eta, lr / (self.pow((1. + (self.lambd * lr * self.step)), self.alpha)))
-            self.assign(mu, 1. / self.squeeze(self.maximum(1., self.step - self.t0)))
-
-        success = F.depend(success, self.assignadd(self.step, 1.))
+            self.assign(eta, lr / (self.pow((1. + (self.lambd * lr * self.cast(self.global_step, mstype.float32))),
+                                            self.alpha)))
+            self.assign(mu, 1. / self.squeeze(self.maximum(1., self.cast(self.global_step, mstype.float32) - self.t0)))
         return success

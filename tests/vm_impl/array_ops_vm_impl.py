@@ -30,6 +30,16 @@ def vm_impl_assign(self):
         return x
     return vm_impl
 
+
+@vm_impl_getters.register(P.AssignAdd)
+def vm_impl_assignadd(self):
+    """Generate vm_impl function for Assign"""
+    def vm_impl(x, value, u=None):
+        x.assign_value(value)
+        return x
+    return vm_impl
+
+
 @vm_impl_getters.register(P.ExpandDims)
 def vm_impl_expand_dims(self):
     """Generate vm_impl function for ExpandDims"""
