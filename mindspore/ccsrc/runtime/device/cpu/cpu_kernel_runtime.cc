@@ -229,6 +229,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
       address->size_ = tensor_size;
+      address->type_id_ = device_type_id;
     }
     (void)bound_addresses_.insert(address);
   }
@@ -368,7 +369,9 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
         continue;
       }
       auto address_ptr = std::dynamic_pointer_cast<device::DeviceAddress>(address);
-      address_ptr->ptr_ = tensor->data_c();
+      if (address_ptr->type_id_ == tensor->data_type_c()) {
+        address_ptr->ptr_ = tensor->data_c();
+      }
       address_ptr->ref_count_ = INIT_NODE_REF;
     }
   }
