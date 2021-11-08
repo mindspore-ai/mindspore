@@ -74,6 +74,7 @@ class OutputActor : public AbstractActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position);
 

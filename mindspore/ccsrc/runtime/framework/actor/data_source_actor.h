@@ -50,6 +50,7 @@ class DataSourceActor : public DebugAwareActor {
 
  protected:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   void Run(OpContext<DeviceTensor> *const context) override { FetchData(context); }
 
@@ -96,6 +97,7 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   // Input data kernel(for example GetNext) fetches data from device queue.
   CNodePtr data_kernel_{nullptr};
@@ -130,6 +132,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   // Judge all the data_nodes_ is from the same device.
   bool IsSameDeviceType() const;
