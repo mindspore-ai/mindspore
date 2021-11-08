@@ -20,7 +20,7 @@ import scipy as osp
 
 from mindspore import context, Tensor
 import mindspore.scipy as msp
-from .utils import match_array
+from .utils import match_array, create_full_rank_matrix, create_batch_full_rank_matrix
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -42,3 +42,26 @@ def test_block_diag(args):
 
     scipy_res = osp.linalg.block_diag(*args)
     match_array(ms_res.asnumpy(), scipy_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+@pytest.mark.parametrize('shape', [(4, 4), (50, 50), (2, 5, 5)])
+def test_inv(dtype, shape):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for inv
+    Expectation: the result match numpy
+    """
+    onp.random.seed(0)
+    if len(shape) == 2:
+        x = create_full_rank_matrix(shape[0], shape[1], dtype)
+    else:
+        x = create_batch_full_rank_matrix(shape, dtype)
+
+    ms_res = msp.linalg.inv(Tensor(x))
+    scipy_res = onp.linalg.inv(x)
+    match_array(ms_res.asnumpy(), scipy_res, error=3)
