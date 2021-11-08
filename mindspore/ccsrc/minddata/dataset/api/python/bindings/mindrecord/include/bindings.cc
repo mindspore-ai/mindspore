@@ -33,9 +33,11 @@ namespace dataset {
 PYBIND_REGISTER(ShardOperator, 0, ([](const py::module *m) {
                   (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(
                     *m, "ShardOperator")
-                    .def("add_child",
-                         [](std::shared_ptr<mindrecord::ShardOperator> self,
-                            std::shared_ptr<mindrecord::ShardOperator> child) { self->SetChildOp(child); });
+                    .def("add_child", [](std::shared_ptr<mindrecord::ShardOperator> self,
+                                         std::shared_ptr<mindrecord::ShardOperator> child) { self->SetChildOp(child); })
+                    .def("set_num_samples", [](std::shared_ptr<mindrecord::ShardOperator> self, int64_t num_samples) {
+                      self->SetNumSamples(num_samples);
+                    });
                 }));
 
 PYBIND_REGISTER(ShardDistributedSample, 1, ([](const py::module *m) {

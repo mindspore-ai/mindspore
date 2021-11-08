@@ -340,6 +340,20 @@ def test_mindrecord_exception():
     os.remove(file_name)
     os.remove("{}.db".format(file_name))
 
+def test_shuffle_with_num_samples_exception():
+    """
+    Feature: shuffle files or shuffle samples of each file
+    Description: set Shuffle.FILES or Shuffle.INFILE and num_samples
+    Expectation: exception occurred
+    """
+    MIND_DIR = "../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0"
+    with pytest.raises(ValueError, match="'Shuffle.FILES' or 'Shuffle.INFILE' and 'num_samples' "
+                                         "cannot be specified at the same time."):
+        _ = ds.MindDataset(MIND_DIR, shuffle=ds.Shuffle.FILES, num_samples=5)
+
+    with pytest.raises(ValueError, match="'Shuffle.FILES' or 'Shuffle.INFILE' and 'num_samples' "
+                                         "cannot be specified at the same time."):
+        _ = ds.MindDataset(MIND_DIR, shuffle=ds.Shuffle.INFILE, num_samples=5)
 
 if __name__ == '__main__':
     test_cv_lack_json()

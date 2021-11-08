@@ -85,7 +85,7 @@ Status MindDataNode::ValidateParams() {
 
   if (shuffle_mode_ != ShuffleMode::kFalse && shuffle_mode_ != ShuffleMode::kFiles &&
       shuffle_mode_ != ShuffleMode::kGlobal && shuffle_mode_ != ShuffleMode::kInfile) {
-    std::string err_msg = "TFRecordNode: Invalid ShuffleMode, check input value of enum.";
+    std::string err_msg = "MindDataNode: Invalid ShuffleMode, check input value of enum.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -148,6 +148,13 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
     // update the shuffle mode for sampler op or shuffle op
     if (shuffle_mode != ShuffleMode::kFalse) {
       op->UpdateShuffleMode(shuffle_mode);
+    }
+    if (op->GetNumSamples() != 0 &&
+        (op->GetShuffleMode() == ShuffleMode::kFiles || op->GetShuffleMode() == ShuffleMode::kInfile)) {
+      std::string err_msg =
+        "MindDataNode: Shuffle.FILES or Shuffle.INFILE and num_samples cannot be specified at the same time.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
 
     auto distributed_sampler_op = std::dynamic_pointer_cast<mindrecord::ShardDistributedSample>(op);
