@@ -305,6 +305,12 @@ constexpr auto kDropoutOpName = "Dropout";
 constexpr auto kDropoutGradOpName = "DropoutGrad";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kDropoutDoMaskOpName = "DropoutDoMask";
+constexpr auto kGammaOpName = "Gamma";
+constexpr auto kPossionOpName = "Possion";
+constexpr auto kStandardLaplaceOpName = "StandardLaplace";
+constexpr auto kStandardNormalOpName = "StandardNormal";
+constexpr auto kUniformIntOpName = "UniformInt";
+constexpr auto kUniformRealOpName = "UniformReal";
 constexpr auto kSubAndFilterOpName = "SubAndFilter";
 constexpr auto kPadAndShiftOpName = "PadAndShift";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossEntropyWithLogits";
@@ -676,6 +682,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kCombineMomentumOpName,
                                                kSparseApplyProximalAdagradOpName};
 
+const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPossionOpName,    kStandardLaplaceOpName,
+                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName};
 const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
 const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
