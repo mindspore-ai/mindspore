@@ -1458,6 +1458,7 @@ void ClearResAtexit() {
   }
 #endif
 #ifdef ENABLE_DUMP_IR
+  mindspore::RDR::Snapshot();
   mindspore::RDR::ResetRecorder();
 #endif
   session::ExecutorManager::Instance().Clear();

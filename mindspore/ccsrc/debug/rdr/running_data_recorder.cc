@@ -118,6 +118,8 @@ bool UpdateMemAddress(const SubModuleId module, const std::string &name, const s
 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
+void Snapshot() { mindspore::RecorderManager::Instance().Snapshot(); }
+
 void ResetRecorder() { mindspore::RecorderManager::Instance().ClearAll(); }
 
 void ClearMemAddressInfo() {

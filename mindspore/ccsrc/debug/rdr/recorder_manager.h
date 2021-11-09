@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <utility>
+#include "debug/env_config_parser.h"
 
 namespace mindspore {
 // The number is the reciprocal of the golden ratio.
@@ -68,6 +69,7 @@ class RecorderManager {
   bool RecordObject(const BaseRecorderPtr &recorder);
   BaseRecorderPtr GetRecorder(std::string module, std::string name);
   void TriggerAll();
+  void Snapshot();
   void ClearAll();
 
  private:
@@ -75,6 +77,8 @@ class RecorderManager {
   ~RecorderManager() {}
 
   bool rdr_enable_{false};
+  int rdr_mode_{Exceptional};
+  int rdr_mode_dup_{Exceptional};
   bool rdr_has_record_mem_{false};
 
   mutable std::mutex mtx_;

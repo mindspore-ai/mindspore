@@ -25,10 +25,12 @@
 namespace {
 #ifdef ENABLE_DUMP_IR
 constexpr auto ENV_RDR_ENABLE = "MS_RDR_ENABLE";
+constexpr auto ENV_RDR_MODE = "MS_RDR_MODE";
 constexpr auto ENV_RDR_PATH = "MS_RDR_PATH";
 constexpr auto KEY_RDR_SETTINGS = "rdr";
-constexpr auto KEY_PATH = "path";
 constexpr auto KEY_ENABLE = "enable";
+constexpr auto KEY_MODE = "mode";
+constexpr auto KEY_PATH = "path";
 #endif
 constexpr auto KEY_MEM_REUSE_SETTINGS = "sys";
 constexpr auto KEY_MEM_REUSE = "mem_reuse";
@@ -48,6 +50,22 @@ std::optional<bool> GetRdrEnableFromEnv() {
       return true;
     }
     return false;
+  }
+  return std::nullopt;
+}
+
+std::optional<int> GetRdrModeFromEnv() {
+  // get environment variable to configure RDR
+  std::string env_mode_str = common::GetEnv(ENV_RDR_MODE);
+  if (!env_mode_str.empty()) {
+    (void)std::transform(env_mode_str.begin(), env_mode_str.end(), env_mode_str.begin(), ::tolower);
+    if (env_mode_str != "1" && env_mode_str != "2") {
+      MS_LOG(WARNING) << "The environment variable '" << ENV_RDR_MODE << "' should be 1 or 2.";
+    }
+    if (env_mode_str == "2") {
+      return Normal;
+    }
+    return Exceptional;
   }
   return std::nullopt;
 }
@@ -101,6 +119,11 @@ void EnvConfigParser::ParseFromEnv() {
   if (rdr_enable_env.has_value()) {
     has_rdr_setting_ = true;
     rdr_enabled_ = rdr_enable_env.value();
+  }
+  auto rdr_mode_env = GetRdrModeFromEnv();
+  if (rdr_mode_env.has_value()) {
+    has_rdr_setting_ = true;
+    rdr_mode_ = rdr_mode_env.value();
   }
   auto path_env = GetRdrPathFromEnv();
   if (path_env.has_value()) {
@@ -204,10 +227,33 @@ void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
     ParseRdrEnable(**rdr_enable);
   }
 
+  auto rdr_mode = CheckJsonKeyExist(*rdr_setting, KEY_RDR_SETTINGS, KEY_MODE);
+  if (rdr_mode.has_value()) {
+    ParseRdrMode(**rdr_mode);
+  }
+
   auto rdr_path = CheckJsonKeyExist(*rdr_setting, KEY_RDR_SETTINGS, KEY_PATH);
   if (rdr_path.has_value()) {
     ParseRdrPath(**rdr_path);
   }
+}
+
+void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
+  if (!content.is_boolean()) {
+    MS_LOG(WARNING) << "Json parse failed. 'enable' in " << KEY_RDR_SETTINGS << " should be boolean."
+                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+    return;
+  }
+  rdr_enabled_ = content;
+}
+
+void EnvConfigParser::ParseRdrMode(const nlohmann::json &content) {
+  if (content != Exceptional && content != Normal) {
+    MS_LOG(WARNING) << "Json parse failed. 'mode' in " << KEY_RDR_SETTINGS << " should be 1 or 2."
+                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+    return;
+  }
+  rdr_mode_ = content;
 }
 
 void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
@@ -230,25 +276,19 @@ void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
   }
   rdr_path_ = path;
 }
-
-void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
-  if (!content.is_boolean()) {
-    MS_LOG(WARNING) << "Json parse failed. 'enable' in " << KEY_RDR_SETTINGS << " should be boolean."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
-    return;
-  }
-  rdr_enabled_ = content;
-}
 #endif
 
 void EnvConfigParser::ConfigToString() {
   std::string cur_config;
 #ifdef ENABLE_DUMP_IR
-  cur_config.append("After parsed, rdr path: ");
-  cur_config.append(rdr_path_);
-  cur_config.append(", rdr_enable: ");
+  cur_config.append("After parsed, ");
+  cur_config.append("rdr_enable: ");
   std::string rdr_enable_flag = rdr_enabled_ ? "1" : "0";
   (void)cur_config.append(rdr_enable_flag);
+  cur_config.append(", rdr mode: ");
+  cur_config.append(std::to_string(rdr_mode_));
+  cur_config.append(", rdr path: ");
+  cur_config.append(rdr_path_);
 #endif
   MS_LOG(INFO) << cur_config;
 }
