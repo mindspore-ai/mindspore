@@ -311,17 +311,99 @@ __kernel void GlobalCMean(__read_only image2d_t src_data, __write_only image2d_t
     WRITE_IMAGE(dst_data, (int2)(0, X), result2);                                                           \
   }
 
+// HWC
+__kernel void GlobalHWCMean(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  float4 value = (float4)0.f;
+  for (int h = 0; h < size.x; h++) {
+    for (int w = 0; w < size.y; w++) {
+      for (int c4 = 0; c4 < size.z; c4++) {
+        value += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h)));
+      }
+    }
+  }
+  float4 result = (float4)0.f;
+  result.x = dot((float4)(1.0f), value) / (size.x * size.y * size.w);
+  WRITE_IMAGE(dst_data, (int2)(0, 0), TO_FLT4(result));
+}
+
+#define DoHWCSum(a, B) ((a) = dot((float4)(1.0f), (B)))
+#define DoHWCMax(a, B) ((a) = max((B).x, max((B).y, max((B).z, (B).w))))
+#define DoHWCMin(a, B) ((a) = min((B).x, min((B).y, min((B).z, (B).w))))
+#define DoHWCProd(a, B) ((a) = (B).x * (B).y * (B).z * (B).w)
+
+#define GlobalHWC(Method)                                                                                       \
+  __kernel void GlobalHWC##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
+    float4 value = (float4)0.f;                                                                                 \
+    for (int h = 0; h < size.x; h++) {                                                                          \
+      for (int w = 0; w < size.y; w++) {                                                                        \
+        for (int c4 = 0; c4 < size.z; c4++) {                                                                   \
+          Do##Method(value, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));        \
+        }                                                                                                       \
+      }                                                                                                         \
+    }                                                                                                           \
+    float4 result = (float4)0.f;                                                                                \
+    DoHWC##Method(result.x, value);                                                                             \
+    WRITE_IMAGE(dst_data, (int2)(0, 0), TO_FLT4(result));                                                       \
+  }
+
+// H
+__kernel void GlobalHMean(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int w = get_global_id(0);
+  int c4 = get_global_id(1);
+  float4 result = (float4)0.f;
+  for (int h = 0; h < size.x; h++) {
+    result += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h)));
+  }
+  result /= size.x;
+  WRITE_IMAGE(dst_data, (int2)(w * size.z + c4, 0), TO_FLT4(result));
+}
+
+#define GlobalH(Method)                                                                                       \
+  __kernel void GlobalH##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
+    int w = get_global_id(0);                                                                                 \
+    int c4 = get_global_id(1);                                                                                \
+    float4 result = (float4)0.f;                                                                              \
+    for (int h = 0; h < size.x; h++) {                                                                        \
+      Do##Method(result, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));         \
+    }                                                                                                         \
+    WRITE_IMAGE(dst_data, (int2)(w * size.z + c4, 0), TO_FLT4(result));                                       \
+  }
+
+// W
+__kernel void GlobalWMean(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int h = get_global_id(0);
+  int c4 = get_global_id(1);
+  float4 result = (float4)0.f;
+  for (int w = 0; w < size.y; w++) {
+    result += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h)));
+  }
+  result /= size.y;
+  WRITE_IMAGE(dst_data, (int2)(c4, h), TO_FLT4(result));
+}
+
+#define GlobalW(Method)                                                                                       \
+  __kernel void GlobalW##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
+    int h = get_global_id(0);                                                                                 \
+    int c4 = get_global_id(1);                                                                                \
+    float4 result = (float4)0.f;                                                                              \
+    for (int w = 0; w < size.y; w++) {                                                                        \
+      Do##Method(result, convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c4, h))));         \
+    }                                                                                                         \
+    WRITE_IMAGE(dst_data, (int2)(c4, h), TO_FLT4(result));                                                    \
+  }
+
 #define DoSum(A, B) A += B
 #define InitSum 0.f
-GlobalHW(Sum) GlobalWC(Sum) LocalHW(Sum) LocalWC(Sum)
+GlobalHWC(Sum) GlobalHW(Sum) GlobalWC(Sum) GlobalH(Sum) GlobalW(Sum) LocalHW(Sum) LocalWC(Sum)
+
 #define DoMin(A, B) A = min(A, B)
 #define InitMin 10000.f
-  GlobalHW(Min) GlobalWC(Min) LocalHW(Min) LocalWC(Min)
+  GlobalHWC(Min) GlobalHW(Min) GlobalWC(Min) GlobalH(Min) GlobalW(Min) LocalHW(Min) LocalWC(Min)
 
 #define DoMax(A, B) A = max(A, B)
 #define InitMax -10000.f
-    GlobalHW(Max) GlobalWC(Max) LocalHW(Max) LocalWC(Max)
+    GlobalHWC(Max) GlobalHW(Max) GlobalWC(Max) GlobalH(Max) GlobalW(Max) LocalHW(Max) LocalWC(Max)
 
 #define DoProd(A, B) A *= B
 #define InitProd 1.f
-      GlobalHW(Prod) GlobalWC(Prod) LocalHW(Prod) LocalWC(Prod)
+      GlobalHWC(Prod) GlobalHW(Prod) GlobalWC(Prod) GlobalH(Prod) GlobalW(Prod) LocalHW(Prod) LocalWC(Prod)

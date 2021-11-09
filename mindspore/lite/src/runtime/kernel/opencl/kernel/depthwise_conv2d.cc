@@ -36,6 +36,19 @@ using mindspore::lite::opencl::MemType;
 
 namespace mindspore::kernel {
 int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
+  auto ret = InputOutputCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  ret = FilterBiasCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  return RET_OK;
+}
+
+int DepthwiseConv2dOpenCLKernel::InputOutputCheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
@@ -45,13 +58,25 @@ int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int DepthwiseConv2dOpenCLKernel::FilterBiasCheckSpecs() {
   if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant weight yet.";
-    return RET_ERROR;
+    bool is_const = in_tensors_.at(kWeightIndex)->category() == lite::Tensor::CONST_TENSOR ||
+                    in_tensors_.at(kWeightIndex)->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_weight_)) {
+      MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant weight yet.";
+      return RET_ERROR;
+    }
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(kBiasIndex)->IsConst()) {
-    MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant bias yet.";
-    return RET_ERROR;
+    bool is_const = in_tensors_.at(kBiasIndex)->category() == lite::Tensor::CONST_TENSOR ||
+                    in_tensors_.at(kBiasIndex)->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_bias_)) {
+      MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant bias yet.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -102,6 +127,7 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto allocator = ocl_runtime_->GetAllocator();
@@ -168,7 +194,53 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   FreeStoredData(stored_weight_);
   return RET_OK;
 }
+#else
+int DepthwiseConv2dOpenCLKernel::InitWeights() {
+  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
+  auto allocator = ocl_runtime_->GetAllocator();
 
+  size_t dtype_size = sizeof(float);
+  auto out_info = GpuTensorInfo(out_tensors_[0]);
+  // weight: o, h, w, i; o == group, i == 1
+  void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
+  MS_ASSERT(origin_weight);
+  int CO4 = UP_DIV(out_info.C, C4NUM);
+  int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
+
+  int plane_in = parameter->kernel_h_ * parameter->kernel_w_;
+  int plane_out = plane_in * C4NUM;
+  if (filter_type_ == MemType::IMG) {
+    int alignment = ocl_runtime_->GetImagePitchAlignment();
+    plane_out = UP_ROUND(plane_out, alignment) * C4NUM;
+    pack_weight_size = plane_out * CO4;
+  }
+  pack_weight_size = pack_weight_size * dtype_size;
+  auto ConvertFilter = [](void *src, void *dst, TypeId src_type, TypeId dst_type, size_t plane_in, size_t plane_out,
+                          size_t channel) {
+    std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+    PackNCHWToNC4HW4<float, float>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+  };
+  std::vector<char> temp_filter(pack_weight_size);
+  auto src_type = in_tensors_.at(kWeightIndex)->data_type();
+  auto dst_type = kNumberTypeFloat32;
+  ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
+  if (filter_type_ == MemType::IMG) {
+    size_t img_dtype = CL_FLOAT;
+    ImageSize img_size{(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
+    packed_weight_ = allocator->Malloc(img_size, temp_filter.data());
+
+  } else {
+    packed_weight_ = allocator->Malloc(pack_weight_size, temp_filter.data());
+  }
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  FreeStoredData(stored_weight_);
+  return RET_OK;
+}
+#endif
+#ifdef ENABLE_FP16
 int DepthwiseConv2dOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
@@ -213,6 +285,39 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
+#else
+int DepthwiseConv2dOpenCLKernel::InitBias() {
+  auto allocator = ocl_runtime_->GetAllocator();
+
+  size_t dtype_size = sizeof(float);
+  auto out_info = GpuTensorInfo(out_tensors_[0]);
+  int CO4 = UP_DIV(out_info.C, C4NUM);
+  auto src_type = in_tensors_.at(kWeightIndex)->data_type();
+  auto dst_type = kNumberTypeFloat32;
+
+  auto ConvertBias = [](void *src, void *dst, size_t size, size_t dtype_size, TypeId src_type, TypeId dst_type) {
+    memcpy(dst, src, size * dtype_size);
+  };
+  size_t bias_size = C4NUM * CO4 * dtype_size;
+  std::vector<char> temp_bias(bias_size, 0);
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
+    src_type = in_tensors_.at(kBiasIndex)->data_type();
+    dst_type = kNumberTypeFloat32;
+    auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
+    MS_ASSERT(src_data);
+    ConvertBias(src_data, temp_bias.data(), element_size, dtype_size, src_type, dst_type);
+  }
+  bias_data_ = allocator->Malloc(bias_size, temp_bias.data());
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+
+  FreeStoredData(stored_bias_);
+  return RET_OK;
+}
+#endif
 
 int DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
