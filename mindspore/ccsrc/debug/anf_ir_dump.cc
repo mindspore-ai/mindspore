@@ -107,7 +107,7 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   }
 }
 
-void PrintInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd) {
+void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   buffer << "      : (";
   PrintNodeInputType(buffer, nd);
   buffer << ") -> (";

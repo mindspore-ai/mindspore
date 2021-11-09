@@ -195,7 +195,7 @@ std::string PrintRaiseOrReducePrecisionSelectedInfo(
   } else {
     buffer << " Raise precision, node datatype: \n";
   }
-  PrintInputAndOutputInferType(buffer, cnode);
+  GatherInputAndOutputInferType(buffer, cnode);
   buffer << ", select kernel:" << selected_kernel_build_info->ToString();
   return buffer.str();
 }
@@ -651,6 +651,52 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   return select_status;
 }
 
+std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
+                                    const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu) {
+  std::ostringstream buffer;
+  buffer << "\nAI CORE:\n";
+  if (!ai_core.empty()) {
+    for (size_t i = 0; i < ai_core.size(); i++) {
+      buffer << ai_core[i]->ToString();
+      buffer << "\n";
+    }
+  } else {
+    buffer << "{}\n";
+  }
+  buffer << "AI CPU:\n";
+  if (!ai_cpu.empty()) {
+    for (size_t i = 0; i < ai_cpu.size(); i++) {
+      buffer << ai_cpu[i]->ToString();
+      buffer << "\n";
+    }
+    buffer << "\n";
+  } else {
+    buffer << "{}\n";
+  }
+  return buffer.str();
+}
+
+void PrintNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
+                          const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu,
+                          const std::ostringstream &buffer, const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto full_name = kernel_node->fullname_with_scope();
+  if (ai_core.empty() && ai_cpu.empty()) {
+    MS_LOG(EXCEPTION) << "Can not find any available kernel info for: " << full_name
+                      << ". Maybe the operator can not supported on Ascend platform.\nTrace: "
+                      << trace::DumpSourceLines(kernel_node);
+  } else {
+    auto candidates = KernelInfoCandidateList(ai_core, ai_cpu);
+    MS_EXCEPTION(TypeError) << "Can not select a valid kernel info for [" << full_name
+                            << "] in AI CORE or AI CPU kernel info candidates list: " << candidates
+                            << "Please check the given data type or shape:\n"
+                            << buffer.str()
+                            << "\nFor more details, please refer to 'Kernel Select Failed' at "
+                               "https://www.mindspore.cn\nTrace:"
+                            << trace::DumpSourceLines(kernel_node);
+  }
+}
+
 KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
@@ -672,6 +718,13 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
   FillNoneInKernelInfo(kernel_node, &kernel_info_list);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimLabelSwitch)) {
+    auto selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, kernel_info_list);
+    AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
+    // Set format and data type for input tensor.
+    SetTensorDeviceInfo(kernel_node);
+    select_status = kStatusAllMatched;
+  }
   // If it can node find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
     MS_LOG(DEBUG) << "The node [" << kernel_node->fullname_with_scope()
@@ -683,28 +736,8 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
-    PrintInputAndOutputInferType(buffer, kernel_node);
-    MS_LOG(WARNING) << ">>> The supported kernel info(input and output data type) candidates list:";
-    for (size_t index = 0; index < kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Ai_core kernel info [" << index << "] :" << kernel_info_list[index]->ToString();
-    }
-    for (size_t index = 0; index < aicpu_kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Ai_cpu kernel info [" << (kernel_info_list.size() + index)
-                      << "] :" << aicpu_kernel_info_list[index]->ToString();
-    }
-    if (IsPrimitiveCNode(kernel_node, prim::kPrimLabelSwitch)) {
-      auto selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, kernel_info_list);
-      AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
-      // Set format and data type for input tensor.
-      SetTensorDeviceInfo(kernel_node);
-    } else {
-      MS_LOG(WARNING) << " <<<";
-      MS_LOG(EXCEPTION) << "Can not find any available operator info for operator ["
-                        << kernel_node->fullname_with_scope()
-                        << "]. Maybe don't supported the data type: " << buffer.str()
-                        << ", or maybe the operator can not supported on current platform.\n Node trace: "
-                        << trace::DumpSourceLines(kernel_node);
-    }
+    GatherInputAndOutputInferType(buffer, kernel_node);
+    PrintNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, buffer, kernel_node);
   }
   return select_status;
 }
