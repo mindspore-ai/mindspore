@@ -42,6 +42,33 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 int Conv2DOpenCLKernel::CheckSpecs() {
+  auto ret = InputOutputCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  ret = FilterBiasCheckSpecs();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
+  switch (static_cast<int>(param_->act_type_)) {
+    case ActType_No:
+    case ActType_Relu:
+    case ActType_Relu6:
+    case ActivationType_LEAKY_RELU:
+    case ActivationType_TANH:
+      break;
+    default: {
+      MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int Conv2DOpenCLKernel::InputOutputCheckSpecs() {
   int inputs_num = in_tensors_.size();
   if (inputs_num != INPUT_TENSOR_SIZE_2 && inputs_num != INPUT_TENSOR_SIZE_3) {
     MS_LOG(WARNING) << "Conv2D only supports 2 or 3 input Tensor but get " << inputs_num;
@@ -64,7 +91,10 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
 
+int Conv2DOpenCLKernel::FilterBiasCheckSpecs() {
   auto *filter_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(filter_tensor);
   int filter_ndim = filter_tensor->shape().size();
@@ -73,26 +103,20 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   if (!filter_tensor->IsConst()) {
-    MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
-    return RET_ERROR;
+    bool is_const = filter_tensor->category() == lite::Tensor::CONST_TENSOR ||
+                    filter_tensor->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_filter_)) {
+      MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
+      return RET_ERROR;
+    }
   }
 
   auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
   if (bias_tensor != nullptr && !bias_tensor->IsConst()) {
-    MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
-    return RET_ERROR;
-  }
-
-  // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
-  switch (static_cast<int>(param_->act_type_)) {
-    case ActType_No:
-    case ActType_Relu:
-    case ActType_Relu6:
-    case ActivationType_LEAKY_RELU:
-    case ActivationType_TANH:
-      break;
-    default: {
-      MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;
+    bool is_const =
+      bias_tensor->category() == lite::Tensor::CONST_TENSOR || bias_tensor->category() == lite::Tensor::CONST_SCALAR;
+    if (!(is_const && stored_bias_)) {
+      MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
       return RET_ERROR;
     }
   }
@@ -122,8 +146,12 @@ int Conv2DOpenCLKernel::Prepare() {
 
 int Conv2DOpenCLKernel::InitAttrs() {
   CHECK_NULL_RETURN(ocl_runtime_);
+#ifdef ENABLE_FP16
   use_fp16_ = ocl_runtime_->GetFp16Enable();
   sizeof_FLT_ = use_fp16_ ? sizeof(float16_t) : sizeof(float);
+#else
+  sizeof_FLT_ = sizeof(float);
+#endif
   CHECK_NULL_RETURN(in_tensors_.front());
   CHECK_NULL_RETURN(out_tensors_.front());
   auto input_shape = in_tensors_.front()->shape();
@@ -171,7 +199,7 @@ int Conv2DOpenCLKernel::BuildKernel() {
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
   std::string exceed_max_image_width_option =
-    (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
+    (OW_ * CO_SLICES_ <= static_cast<int>(ocl_runtime_->GetMaxImage2DWidth())) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
   build_options_ext.push_back(exceed_max_image_width_option);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
   if (ret != RET_OK) {
@@ -193,11 +221,15 @@ void Conv2DOpenCLKernel::SetBlockSize() {
     KW_ == 1 && param_->stride_w_ == 1 && param_->dilation_w_ == 1 && param_->pad_l_ == 0 && param_->pad_r_ == 0;
   bool h_kernel_is_1 =
     KH_ == 1 && param_->stride_h_ == 1 && param_->dilation_h_ == 1 && param_->pad_u_ == 0 && param_->pad_d_ == 0;
+#ifdef ENABLE_FP16
   if (use_fp16_) {
     SetMaliFp16BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
   } else {
     SetMaliFp32BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
   }
+#else
+  SetMaliFp32BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
+#endif
 }
 
 void Conv2DOpenCLKernel::SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
@@ -269,6 +301,7 @@ int Conv2DOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, FilterFormat src_format,
                    FilterFormat dst_format, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup) {
   MS_ASSERT(src);
@@ -316,6 +349,45 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
     }
   }
 }
+#else
+void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, FilterFormat src_format,
+                   FilterFormat dst_format, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
+  MS_ASSERT(src_format == OHWI);
+  MS_ASSERT(dst_format == HWII4OO4 || dst_format == OHWIOgroupI4O4);
+  auto src_fp32 = reinterpret_cast<float *>(src);
+  auto dst_fp32 = reinterpret_cast<float *>(dst);
+  auto CI_SLICES = UP_DIV(CI, CI_TILE);
+  auto CO_SLICES = UP_DIV(CO, CO_TILE);
+  for (size_t co = 0, src_idx = 0; co < CO; ++co) {
+    for (size_t kh = 0; kh < KH; ++kh) {
+      for (size_t kw = 0; kw < KW; ++kw) {
+        for (size_t ci = 0; ci < CI; ++ci, ++src_idx) {
+          size_t dst_idx = 0;
+          size_t co_inner = co % CO_TILE;
+          size_t ci_slice = ci / CI_TILE;
+          size_t ci_inner = ci % CI_TILE;
+          if (dst_format == OHWIOgroupI4O4) {
+            size_t co_slice = co / (CO_TILE * OGroup);
+            size_t group_idx = co % (CO_TILE * OGroup) / CO_TILE;
+            dst_idx =
+              (((((co_slice * KH + kh) * KW + kw) * CI_SLICES + ci_slice) * OGroup + group_idx) * CI_TILE + ci_inner) *
+                CO_TILE +
+              co_inner;
+          } else {  // if(dst_format==HWII4OO4)
+            size_t co_slice = co / CO_TILE;
+            dst_idx =
+              ((((kh * KW + kw) * CI_SLICES + ci_slice) * CI_TILE + ci_inner) * CO_SLICES + co_slice) * CO_TILE +
+              co_inner;
+          }
+          dst_fp32[dst_idx] = src_fp32[src_idx];
+        }
+      }
+    }
+  }
+}
+#endif
 
 int Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
@@ -395,6 +467,7 @@ int Conv2DOpenCLKernel::InitBias() {
     void *src_data = stored_bias_ == nullptr ? bias_tensor->data() : stored_bias_;
     MS_ASSERT(src_data);
 
+#ifdef ENABLE_FP16
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
       if (use_fp16_) {
         memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
@@ -418,6 +491,9 @@ int Conv2DOpenCLKernel::InitBias() {
         memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
       }
     }
+#else
+    memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
+#endif
   }
   if (allocator->UnmapBuffer(packed_bias_) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
@@ -646,10 +722,18 @@ kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inpu
   int output_channel = conv_param->output_channel_;
   int group = conv_param->group_;
 
+  kernel::OpenCLKernel *kernel = nullptr;
   // case 1: depthwise conv2d
   if (group == input_channel && group == output_channel) {
-    return OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>(inputs, outputs, opParameter,
-                                                            static_cast<const lite::InnerContext *>(ctx), desc);
+    kernel = new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
+                                                            outputs, static_cast<const lite::InnerContext *>(ctx));
+    auto ret = reinterpret_cast<DepthwiseConv2dOpenCLKernel *>(kernel)->StoreConstData();
+    if (ret != mindspore::lite::RET_OK) {
+      MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
+      delete kernel;
+      return nullptr;
+    }
+    return kernel;
   }
 
   // case 2: group conv2d
@@ -660,7 +744,6 @@ kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inpu
   }
 
   // case 3: common conv2d
-  kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {

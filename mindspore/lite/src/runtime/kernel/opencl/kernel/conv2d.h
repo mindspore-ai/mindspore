@@ -103,6 +103,9 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   int TILE_HW_{};
 
  private:
+  int InputOutputCheckSpecs();
+  int FilterBiasCheckSpecs();
+
   void SetBlockSize();
   void SetMaliFp16BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1);
   void SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1);

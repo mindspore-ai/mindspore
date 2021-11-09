@@ -57,7 +57,14 @@ int MatMulOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   transposeB = param->b_transpose_;
-  act_weight_ = !in_tensors_[1]->IsConst();
+
+  act_weight_ = !in_tensors_.at(1)->IsConst();
+  bool is_const = in_tensors_.at(1)->category() == lite::Tensor::CONST_TENSOR ||
+                  in_tensors_.at(1)->category() == lite::Tensor::CONST_SCALAR;
+  if (is_const && stored_weight_) {
+    act_weight_ = false;
+  }
+
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
       in_tensors_[0]->shape().size() < DIMENSION_2D || in_tensors_[0]->shape().size() > DIMENSION_4D) {
@@ -104,6 +111,7 @@ int MatMulOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int co) {
   auto allocator = ocl_runtime_->GetAllocator();
   int a = weight_shape_4d[0];
@@ -170,6 +178,59 @@ int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int 
   }
   return RET_OK;
 }
+#else
+int MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int co) {
+  auto allocator = ocl_runtime_->GetAllocator();
+  int a = weight_shape_4d[0];
+  int b = weight_shape_4d[1];
+  int ci4 = UP_DIV(ci, C4NUM);
+  int co4 = UP_DIV(co, C4NUM);
+  size_t dtype_size = sizeof(float);
+  padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size, lite::opencl::MemType::BUF);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  auto padWeight = reinterpret_cast<float *>(padWeight_);
+  memset(padWeight_, 0x00, a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
+  auto originWeight = reinterpret_cast<float *>(src_data);
+  // pad weight
+  // ABCICO -> AB(CI4)(CO4)(4 from CO)(4 from CI)
+  // if tranposeB, ABCOCI -> AB(CI4)(CO4)(4 from CO)(4 from CI)
+  int index = 0;
+  for (int aa = 0; aa < a; aa++) {
+    for (int bb = 0; bb < b; bb++) {
+      int baseAB = (aa * b + bb) * ci * CO_;
+      for (int i = 0; i < ci4; ++i) {
+        for (int j = 0; j < co4; ++j) {
+          for (int k = 0; k < C4NUM; ++k) {
+            for (int l = 0; l < C4NUM; ++l) {
+              int src_ci = i * C4NUM + l;
+              int src_co = j * C4NUM + k;
+              if (src_ci < ci && src_co < CO_) {
+                int originId = baseAB + src_ci * CO_ + src_co;
+                if (transposeB) {
+                  originId = baseAB + src_co * ci + src_ci;
+                }
+                padWeight[index++] = originWeight[originId];
+              } else {
+                index++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int MatMulOpenCLKernel::InitWeights() {
   if (!in_tensors_[1]->IsConst()) {
@@ -205,6 +266,7 @@ int MatMulOpenCLKernel::InitWeights() {
   return InitBias();
 }
 
+#ifdef ENABLE_FP16
 int MatMulOpenCLKernel::InitBias() {
   // pad FC Bias
   auto allocator = ocl_runtime_->GetAllocator();
@@ -250,9 +312,43 @@ int MatMulOpenCLKernel::InitBias() {
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
+#else
+int MatMulOpenCLKernel::InitBias() {
+  // pad FC Bias
+  auto allocator = ocl_runtime_->GetAllocator();
+  int co4 = UP_DIV(CO_, C4NUM);
+  size_t dtype_size = sizeof(float);
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = co4;
+  im_dst_y = 1;
+  size_t img_dtype = CL_FLOAT;
+  lite::opencl::ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
+  bias_ = allocator->Malloc(img_size);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  memset(bias_, 0x00, co4 * C4NUM * dtype_size);
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
+    memcpy(bias_, src_data, CO_ * dtype_size);
+  }
+  if (allocator->UnmapBuffer(bias_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  FreeStoredData(stored_bias_);
+  return RET_OK;
+}
+#endif
 
 void MatMulOpenCLKernel::SetGlobalLocal() {
-  // local size should less than MAX_GROUP_SIZE
+  // local size should be less than MAX_GROUP_SIZE
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
   global_size_ = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),
