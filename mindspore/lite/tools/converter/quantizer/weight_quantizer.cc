@@ -54,33 +54,6 @@ WeightQuantizer::~WeightQuantizer() {
   }
 }
 
-STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
-                                    const PrimitivePtr &primitive) {
-  MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info is nullptr.");
-  MS_CHECK_TRUE_MSG(param_node != nullptr, RET_NULL_PTR, "param_node is nullptr.");
-  MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr.");
-
-  // set dtype
-  tensor_info->set_data_type(type_id_);
-  auto abstract_base = param_node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
-    return RET_ERROR;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
-    return RET_ERROR;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  MS_ASSERT(abstract_tensor != nullptr);
-  abstract_tensor->element()->set_type(TypeIdToType(type_id_));
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
-
-  weight_quantized_tensors_.insert({tensor_info, param_node});
-  return RET_OK;
-}
-
 STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -113,10 +86,10 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
       weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
-    ParameterPtr param_node;
+    ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
-    GetLiteParameter(input, &param_node, &tensor_info);
-    if (param_node == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
+    GetLiteParameter(input, &parameter, &tensor_info);
+    if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
@@ -128,26 +101,22 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
 
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      status = MixedBitQuantFilter(tensor_info, primitive, QuantType_QUANT_WEIGHT, WeightQuantType::MIXED_BIT_PER_LAYER,
-                                   type_id_, mixed_bit_init_scale_, idx - 1);
+      status = MixedBitQuantFilter(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT,
+                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
-      status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_, quant_min_,
-                                           bit_num_, weight_quant_type, type_id_, idx - 1);
+      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
+                                           quant_min_, bit_num_, weight_quant_type, type_id_, idx - 1);
     } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_, quant_min_,
-                                            bit_num_, weight_quant_type, type_id_, idx - 1);
+      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
+                                            quant_min_, bit_num_, weight_quant_type, type_id_, idx - 1);
     }
-    if (status == RET_QUANT_CONTINUE) {
+    if (status == RET_NO_CHANGE) {
       continue;
     } else if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    status = SetAbstract(tensor_info, param_node, primitive);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "SetAbstract failed : " << status;
-      return RET_ERROR;
-    }
+    weight_quantized_tensors_.insert(tensor_info);
   }
   return RET_OK;
 }

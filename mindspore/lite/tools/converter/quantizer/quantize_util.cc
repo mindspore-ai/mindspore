@@ -521,7 +521,8 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::
   }
 }
 
-STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_datas, int new_size, TypeId new_data_type) {
+STATUS UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
+                               int new_size, TypeId new_data_type) {
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
   weight->set_data_type(new_data_type);
@@ -533,6 +534,20 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
     MS_LOG(ERROR) << "memcpy data failed.";
     return RET_ERROR;
   }
+  // set dtype
+  auto abstract_base = parameter->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << parameter->name();
+    return RET_NULL_PTR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << parameter->name();
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  CHECK_NULL_RETURN(abstract_tensor);
+  CHECK_NULL_RETURN(abstract_tensor->element());
+  abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
   return RET_OK;
 }
 
@@ -629,8 +644,9 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
-                           WeightQuantType weight_quant_type, TypeId quant_data_type, double init_scale, int index) {
+STATUS MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight,
+                           const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                           TypeId quant_data_type, double init_scale, int index) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();
@@ -650,18 +666,29 @@ STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
 
   std::vector<int16_t> quant_data(elem_count);
   int ret = RET_OK;
-  if (weight_quant_type == MIXED_BIT_PER_LAYER) {
-    MixedBitWeightQuantizer quantizer(init_scale);
-    ret = quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params,
-                                   &quant_data);
-    if (ret != RET_OK) {
-      return ret;
-    }
-  } else {
+  if (weight_quant_type != MIXED_BIT_PER_LAYER) {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
+    return RET_ERROR;
   }
+  MixedBitWeightQuantizer quantizer(init_scale);
+  ret =
+    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
+  if (ret == RET_NO_CHANGE) {
+    int quant_max = 127;
+    int quant_min = -128;
+    int bit_num = 8;
+    MS_LOG(WARNING)
+      << parameter->fullname_with_scope()
+      << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
+    return FixedBitQuantFilter<int8_t>(parameter, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
+                                       bit_num, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
+  }
+  if (ret != RET_OK) {
+    return ret;
+  }
+
   auto status =
-    UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
+    UpdateTensorDataAndSize(parameter, weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;
@@ -673,6 +700,7 @@ STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   quant_param_holder->set_input_quant_param(index, quant_params);
+  quant_param_holder->set_quant_type(quant_type);
   return ret;
 }
 
