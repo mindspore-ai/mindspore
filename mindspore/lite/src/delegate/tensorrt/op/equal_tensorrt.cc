@@ -94,7 +94,6 @@ int EqualPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
                          cudaStream_t stream) noexcept {
   nvinfer1::Dims input_dims = inputDesc[0].dims;
   int element_cnt = std::accumulate(input_dims.d, input_dims.d + input_dims.nbDims, 1, std::multiplies<int64_t>());
-  MS_LOG(INFO) << layer_name_ << " element_cnt: " << element_cnt;
 
   if (inputDesc->type == nvinfer1::DataType::kINT32) {
     const int *input1 = static_cast<const int *>(inputs[0]);

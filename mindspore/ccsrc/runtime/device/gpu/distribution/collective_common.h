@@ -20,7 +20,9 @@
 #include <nccl.h>
 #include <vector>
 #include <sstream>
+#ifndef LITE_CUDA_DISTRIBUTION
 #include "pybind11/pybind11.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -34,6 +36,7 @@ struct NcclGroupInfo {
   ncclComm_t comm;
   std::vector<int> group_ranks;
 };
+#ifndef LITE_CUDA_DISTRIBUTION
 #define CHECK_RET(expression, result, message)                                                                         \
   {                                                                                                                    \
     auto ret = (expression);                                                                                           \
@@ -44,6 +47,17 @@ struct NcclGroupInfo {
       pybind11::pybind11_fail(oss.str());                                                                              \
     }                                                                                                                  \
   }
+#else
+#define CHECK_RET(expression, result, message)                                                                       \
+  {                                                                                                                  \
+    auto ret = (expression);                                                                                         \
+    if (ret != result) {                                                                                             \
+      printf("Error in file %s | Error on line %d | GPU collective Error: %s | Error Number %d", __FILE__, __LINE__, \
+             message, static_cast<int>(ret));                                                                        \
+      exit(EXIT_FAILURE);                                                                                            \
+    }                                                                                                                \
+  }
+#endif
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
