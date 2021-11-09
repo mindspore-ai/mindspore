@@ -18,6 +18,7 @@
 #include <queue>
 #include "include/errorcode.h"
 #include "src/common/prim_util.h"
+#include "src/delegate/npu/pass/npu_pass_utils.h"
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/op/activation_npu.h"
 #include "src/delegate/npu/op/argmax_npu.h"
@@ -55,6 +56,8 @@
 #include "src/delegate/npu/pass/npu_transform_pass.h"
 #include "src/delegate/npu/pass/npu_insert_transform_pass.h"
 #include "src/delegate/npu/pass/npu_fusion_pass.h"
+#include "src/delegate/npu/pass/npu_infer_format_pass.h"
+#include "src/delegate/npu/pass/npu_trans_addition_pass.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -98,6 +101,10 @@ Status NPUDelegate::Init() {
   pass_manager_->AddPass(insert_transform_pass);
   auto fusion_pass = new (std::nothrow) NPUFusionPass();
   pass_manager_->AddPass(fusion_pass);
+  auto infer_format_pass = new (std::nothrow) NPUInferFormatPass();
+  pass_manager_->AddPass(infer_format_pass);
+  auto trans_addition_pass = new (std::nothrow) NPUTransAdditionPass();
+  pass_manager_->AddPass(trans_addition_pass);
 
   op_func_lists_.clear();
   op_func_lists_ = {
@@ -131,6 +138,7 @@ Status NPUDelegate::Init() {
     {schema::PrimitiveType_Sin, GetNPUOp<ArithmeticSelfNPUOp>},
     {schema::PrimitiveType_Sqrt, GetNPUOp<ArithmeticSelfNPUOp>},
     {schema::PrimitiveType_Square, GetNPUOp<ArithmeticSelfNPUOp>},
+    {schema::PrimitiveType_ExpFusion, GetNPUOp<ArithmeticSelfNPUOp>},
     {schema::PrimitiveType_AvgPoolFusion, GetNPUOp<AvgPoolingNPUOp>},
     {schema::PrimitiveType_MaxPoolFusion, GetNPUOp<MaxPoolingNPUOp>},
     {schema::PrimitiveType_FusedBatchNorm, GetNPUOp<BatchnormNPUOp>},
@@ -176,6 +184,17 @@ Status NPUDelegate::Build(DelegateModel *model) {
       npu_ops.push_back(npu_op);
       end = iter;
     } else {
+      if (npu_ops.size() > 0) {
+        // It should be guaranteed that the npu graph output format is NHWC. Thus, if the last NPU op is a Nhwc2Nchw
+        // transpose op, it will be removed and left to CPU.
+        auto last_op = npu_ops.back();
+        if (NPUPassUtils::IsNhwc2Nchw(last_op)) {
+          npu_ops.pop_back();
+          delete last_op;
+          last_op = nullptr;
+          end -= 1;
+        }
+      }
       if (npu_ops.size() > 0) {
         auto npu_graph_kernel = CreateNPUGraph(npu_ops, model, from, end);
         if (npu_graph_kernel == nullptr) {
