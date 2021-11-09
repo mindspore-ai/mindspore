@@ -484,15 +484,19 @@ ValuePtr ObjCast(const py::object &obj) {
 std::vector<DataConverterPtr> GetDataConverters() {
   static std::vector<DataConverterPtr> data_converters = {
     // Convert data by python object type.
-    std::make_shared<ByTypeDataConverter<py::none>>(kNone),
+    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
+    std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
+    std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),
+    std::make_shared<ByTypeDataConverter<py::int_>>(ConvertIntegerWithType),
+    std::make_shared<ByTypeDataConverter<py::float_>>(ConvertFloatWithType),
     std::make_shared<ByTypeDataConverter<py::str>>(PyCast<StringImm, string>),
+    std::make_shared<ByTypeDataConverter<py::none>>(kNone),
     std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
     std::make_shared<ByAttrDataConverter>(PYTHON_DATACLASS_FIELDS, ConvertDataClass),
     std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
-    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
-    std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
     std::make_shared<ByTypeDataConverter<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConverter<IOMonad>>(ObjCast<IOMonadPtr>),
     std::make_shared<ByTypeDataConverter<EnvInstance>>(ObjCast<std::shared_ptr<EnvInstance>>),
@@ -503,14 +507,10 @@ std::vector<DataConverterPtr> GetDataConverters() {
                                             MS_LOG(DEBUG) << "name_space: " << res->ToString();
                                             return res;
                                           }),
-    std::make_shared<ByTypeDataConverter<py::int_>>(ConvertIntegerWithType),
-    std::make_shared<ByTypeDataConverter<py::float_>>(ConvertFloatWithType),
     std::make_shared<ByTypeDataConverter<py::dict>>(ConvertDict),
     std::make_shared<ByTypeDataConverter<py::slice>>(ConvertSlice),
-    std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByAttrDataConverter>(PYTHON_CELL_AS_LIST, ConvertCellList),
     std::make_shared<ByTypeDataConverter<Cell>>(ConvertCellObjToFuncGraph),
-    std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByAttrDataConverter>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
     std::make_shared<ByTypeDataConverter<MetaFuncGraph>>(ConvertMetaFuncGraph),
     std::make_shared<ByTypeDataConverter<FuncGraph>>(ConvertFuncGraph),
