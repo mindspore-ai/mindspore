@@ -232,7 +232,7 @@ def _calc_new_shape(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
-def tensor_dot(x1, x2, axes, prim_name='tensor_dot'):
+def tensor_dot(x1, x2, axes):
     """
     Computation of Tensor contraction on arbitrary axes between tensors `a` and `b`.
 
@@ -284,11 +284,11 @@ def tensor_dot(x1, x2, axes, prim_name='tensor_dot'):
     x2_shape = shape_op(x2)
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
-    axes = _check_axes(axes, prim_name)
-    _typecheck_input(x1_type, x2_type, prim_name)
+    axes = _check_axes(axes, 'tensor_dot')
+    _typecheck_input(x1_type, x2_type, 'tensor_dot')
     # input compatibility check & axes format update
-    axes = _axes_int_check(x1_shape, x2_shape, axes, prim_name)
-    _validate_axes(x1_shape, x2_shape, axes, prim_name)
+    axes = _axes_int_check(x1_shape, x2_shape, axes, 'tensor_dot')
+    _validate_axes(x1_shape, x2_shape, axes, 'tensor_dot')
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
     output_shape = x1_ret + x2_ret  # combine free axes from both inputs
@@ -330,7 +330,7 @@ def _get_transpose_shape(x2_shape):
     return x2_shape_transpose
 
 
-def dot(x1, x2, prim_name=None):
+def dot(x1, x2):
     """
     Computation a dot product between samples in two tensors.
 
@@ -405,8 +405,8 @@ def dot(x1, x2, prim_name=None):
     x2_shape = shape_op(x2)
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
-    _typecheck_input_dot(x1_type, x2_type, prim_name)
-    _check_invalid_input(x1_shape, x2_shape, prim_name)
+    _typecheck_input_dot(x1_type, x2_type, 'dot')
+    _check_invalid_input(x1_shape, x2_shape, 'dot')
 
     if len(x1_shape) > 2 or len(x2_shape) > 2:
         x2_shape_transpose = _get_transpose_shape(x2_shape)
@@ -532,7 +532,7 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
     return output_shape
 
 
-def batch_dot(x1, x2, axes=None, prim_name=None):
+def batch_dot(x1, x2, axes=None):
     """
     Computation of batch dot product between samples in two tensors containing batch dims.
 
@@ -612,11 +612,11 @@ def batch_dot(x1, x2, axes=None, prim_name=None):
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
 
-    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape, prim_name)
+    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape, 'batch_dot')
 
-    _typecheck_input_batch_dot(x1_type, x2_type, prim_name)
-    _check_batch_size(x1_batch_size, x2_batch_size, prim_name)
-    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name)
+    _typecheck_input_batch_dot(x1_type, x2_type, 'batch_dot')
+    _check_batch_size(x1_batch_size, x2_batch_size, 'batch_dot')
+    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes, 'batch_dot')
 
     if x1_dim_num == 2:
         x1 = F.expand_dims(x1, 1)
@@ -733,7 +733,7 @@ def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     return F.tile(x, size)
 
 
-def matmul(x1, x2, dtype=None, prim_name=None):
+def matmul(x1, x2, dtype=None):
     """
     Returns the matrix product of two arrays.
 
@@ -798,7 +798,7 @@ def matmul(x1, x2, dtype=None, prim_name=None):
     ndim1_orig, ndim2_orig = F.rank(x1), F.rank(x2)
     shape1_orig, shape2_orig = F.shape(x1), F.shape(x2)
     transpose_b = ndim2_orig == 1
-    shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, prim_name)
+    shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, 'matmul')
     # infers the shape of the output
     shape_out = shape_backbone + _infer_shape_rem(shape1_orig, shape2_orig,
                                                   ndim1_orig, ndim2_orig, transpose_b)
