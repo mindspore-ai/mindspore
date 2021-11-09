@@ -150,12 +150,19 @@ class FlagRegister {
 }  // namespace
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
+  // Use the environment variable in priority and not in lite
+  auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
+  std::string flags = env_flags ? std::string(env_flags) : "";
+  bool enable_context{false};
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  // Use the environment variable in priority
-  auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
-  std::string flags = env_flags ? std::string(env_flags) : context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
-  return std::make_pair(flags, context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL));
+  if (flags.empty()) {
+    flags = context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
+  }
+  enable_context = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+#endif
+  return std::make_pair(flags, enable_context);
 }
 
 void GraphKernelFlags::Refresh() {
@@ -164,6 +171,7 @@ void GraphKernelFlags::Refresh() {
   for (auto &item : flag_map) {
     MS_LOG(WARNING) << "Unknown GraphKernel flag: " << item.first;
   }
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
@@ -172,15 +180,19 @@ void GraphKernelFlags::Refresh() {
       opt_level = OptLevel_0;
     }
   }
+#endif
   // Dump flags so that people can check the setting.
   MS_LOG(INFO) << "graph_kernel_flags = \"" << flags_cache_ << "\", all flags: " << DumpAllFlags();
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
+  bool is_ascend{false};
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+#endif
 
   // Set opt_level first, some flags' default value depends on it.
   // Default optimization level is level 2 when enable graphkernel
