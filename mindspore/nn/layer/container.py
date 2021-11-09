@@ -36,8 +36,7 @@ def _valid_cell(cell, op_name=None):
     if issubclass(cell.__class__, Cell):
         return True
     msg_prefix = f"For '{op_name}'," if op_name else ""
-    raise TypeError(f'{msg_prefix} each cell should be subclass of Cell. '
-                    f'Please check your code')
+    raise TypeError(f'{msg_prefix} each cell should be subclass of Cell, but got {type(cell).__name__}.')
 
 
 def _get_prefix_and_index(cells):
@@ -369,7 +368,7 @@ class CellList(_CellListBase, Cell):
         cls_name = self.__class__.__name__
         if not isinstance(cells, list):
             raise TypeError(f"For '{cls_name}', the new cells wanted to append "
-                            f"should be instance of list.")
+                            f"should be instance of list, but got {type(cells).__name__}.")
         prefix, _ = _get_prefix_and_index(self._cells)
         for cell in cells:
             if _valid_cell(cell, cls_name):

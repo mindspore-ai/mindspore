@@ -621,13 +621,14 @@ class Validator:
         return arg_type
 
     @staticmethod
-    def check_reduce_shape(ori_shape, shape, axis, prim_name):
+    def check_reduce_shape(ori_shape, shape, axis, prim_name, arg_name1, arg_name2):
         """Checks whether shape is ori_shape reduced on axis"""
+        axis_origin = axis
         axis = axis if isinstance(axis, Iterable) else (axis,)
         exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
         if list(shape) != exp_shape:
-            raise ValueError(f"For '{prim_name}', the 'ori_shape' {ori_shape} reduce on 'axis' {axis} should be "
-                             f"{tuple(exp_shape)}, but got 'shape': {shape}.")
+            raise ValueError(f"For '{prim_name}', the '{arg_name1}'.shape reduce on 'axis': {axis_origin} should "
+                             f"be equal to '{arg_name2}'.shape: {shape}, but got {ori_shape}.")
 
     @staticmethod
     def check_astype_dtype(dtype):

@@ -195,8 +195,10 @@ class Gamma(PrimitiveWithInfer):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
         Validator.check_tensor_dtype_valid("alpha", alpha["dtype"], [mstype.float32], self.name)
         Validator.check_tensor_dtype_valid("beta", beta["dtype"], [mstype.float32], self.name)
-        broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name)
-        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name,
+                                              arg_name1="alpha", arg_name2="beta")
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name,
+                                              arg_name1="broadcast_alpha_beta", arg_name2="shape")
         out = {
             'shape': broadcast_shape,
             'dtype': mstype.float32,
@@ -258,7 +260,7 @@ class Poisson(PrimitiveWithInfer):
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
         Validator.check_tensor_dtype_valid("mean", mean["dtype"], [mstype.float32], self.name)
-        broadcast_shape = get_broadcast_shape(mean['shape'], shape_v, self.name)
+        broadcast_shape = get_broadcast_shape(mean['shape'], shape_v, self.name, arg_name1="mean", arg_name2="shape")
         out = {
             'shape': broadcast_shape,
             'dtype': mstype.int32,
