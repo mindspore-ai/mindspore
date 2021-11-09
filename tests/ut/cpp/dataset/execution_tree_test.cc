@@ -67,17 +67,6 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   my_tree->AssignRoot(root_op);
   root_op->AddChild(parent_op);
   ASSERT_NE(root_op, nullptr);
-  // Testing Iterator
-  MS_LOG(INFO) << "Testing Tree Iterator from root.";
-  for (auto itr = my_tree->begin(); itr != my_tree->end(); ++itr) {
-    itr->Print(std::cout, false);
-  }
-  MS_LOG(INFO) << "Finished testing Tree Iterator from root.";
-  MS_LOG(INFO) << "Testing Tree Iterator from parentOp.";
-  for (auto itr = my_tree->begin(parent_op); itr != my_tree->end(); ++itr) {
-    itr->Print(std::cout, false);
-  }
-  MS_LOG(INFO) << "Finished testing Tree Iterator from parentOp.";
 
   // At this point, since move semantic was used,
   // I don't have any operator access myself now.
@@ -120,22 +109,4 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   MS_LOG(INFO) << "Launching my tree.";
   rc = my_tree->Launch();
   ASSERT_OK(rc);
-
-  // Simulate a parse of data from our pipeline.
-  std::shared_ptr<DatasetOp> root_node = my_tree->root();
-
-  // Start the loop of reading from our pipeline using iterator
-  MS_LOG(INFO) << "Testing DatasetIterator in testTree2.";
-  DatasetIterator di(my_tree);
-  TensorRow buffer;
-  rc = di.FetchNextTensorRow(&buffer);
-  EXPECT_TRUE(rc.IsOk());
-
-  while (!buffer.empty()) {
-    rc = di.FetchNextTensorRow(&buffer);
-    EXPECT_TRUE(rc.IsOk());
-  }
 }
-
-// Construct some tree nodes and play with them
-TEST_F(MindDataTestExecutionTree, TestExecutionTree3) { MS_LOG(INFO) << "Doing MindDataTestExecutionTree3."; }

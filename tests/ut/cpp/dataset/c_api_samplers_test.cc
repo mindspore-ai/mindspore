@@ -88,6 +88,43 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   iter->Stop();
 }
 
+// Feature: Test ImageFolder with WeightedRandomSampler
+// Description: Create ImageFolder dataset with WeightedRandomRampler given num_samples=12,
+// iterate through dataset and count rows
+// Expectation: There should be 12 rows
+TEST_F(MindDataTestPipeline, TestWeightedRandomSamplerImageFolder) {
+    std::vector<double> weights = {0.9, 0.8, 0.68, 0.7, 0.71, 0.6, 0.5, 0.4, 0.3, 0.5, 0.2, 0.1};
+  std::shared_ptr<Sampler> sampl = std::make_shared<WeightedRandomSampler>(weights, 12);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 12);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestNoSamplerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNoSamplerSuccess1.";
   // Test building a dataset with no sampler provided (defaults to random sampler
@@ -231,6 +268,74 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess4) {
   }
 
   EXPECT_EQ(i, 4);
+  iter->Stop();
+}
+
+// Feature: Test ImageFolder with DistributedSampler
+// Description: Create ImageFolder dataset with DistributedSampler given num_shards=11 and shard_id=10, 
+// count rows in dataset
+// Expectation: There should be 4 rows (44 rows in original data/11 = 4)
+TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess5.";
+  // Test basic setting of distributed_sampler
+
+  // num_shards=11, shard_id=10, shuffle=false, num_samplers=0, seed=0, offset=-1, even_dist=true
+  std::shared_ptr<Sampler> sampler = std::make_shared<DistributedSampler>(11, 10, false, 0, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 4);
+  iter->Stop();
+}
+
+// Feature: Test ImageFolder with DistributedSampler
+// Description: Create ImageFolder dataset with DistributedSampler given num_shards=4 and shard_id=3, 
+// count rows in dataset
+// Expectation: There should be 11 rows (44 rows in original data/4 = 11)
+TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess6) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess6.";
+  // Test basic setting of distributed_sampler
+
+  // num_shards=4, shard_id=3, shuffle=false, num_samplers=12, seed=0, offset=-1, even_dist=true
+  std::shared_ptr<Sampler> sampler = std::make_shared<DistributedSampler>(4, 3, false, 12, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 11);
   iter->Stop();
 }
 
@@ -439,5 +544,36 @@ TEST_F(MindDataTestPipeline, TestSubsetSamplerFail) {
   // Expect failure: index 100 is out of dataset bounds
   EXPECT_ERROR(iter->GetNextRow(&row));
 
+  iter->Stop();
+}
+
+// Feature: Test ImageFolder with PKSampler
+// Description: Create ImageFolder dataset with DistributedSampler given num_val=3 and count rows
+// Expectation: There should be 12 rows
+TEST_F(MindDataTestPipeline, TestPKSamplerImageFolder) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPKSamplerImageFolder.";
+
+  
+  std::shared_ptr<Sampler> sampler = std::make_shared<PKSampler>(3, false);
+  EXPECT_NE(sampler, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 12);
   iter->Stop();
 }

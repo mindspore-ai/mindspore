@@ -166,6 +166,32 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
   iter->Stop();
 }
 
+// Feature: Test VOC dataset with detection task
+// Description: Create VOC dataset with task="Detection" and count rows
+// Expectation: There should be 9 rows
+TEST_F(MindDataTestPipeline, TestVOCDetection1) {
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testVOC2012";
+  std::shared_ptr<Dataset> ds =
+    VOC(dataset_path, "Detection", "train", {}, false, std::make_shared<SequentialSampler>(0, 0));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  int row_count = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+    row_count++;
+  }
+  ASSERT_EQ(row_count, 9);
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestVOCInvalidTaskOrModeError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCInvalidTaskOrModeError1.";
 
@@ -232,6 +258,32 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   EXPECT_EQ(i, 6);
 
   // Manually terminate the pipeline
+  iter->Stop();
+}
+
+// Feature: Test VOC dataset with Segmentation task
+// Description: Create VOC dataset with take="Segmentation" and count rows
+// Expectation: There should be 10 rows
+TEST_F(MindDataTestPipeline, TestVOCSegmentation1) {
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testVOC2012";
+  std::shared_ptr<Dataset> ds =
+    VOC(dataset_path, "Segmentation", "train", {}, false, std::make_shared<SequentialSampler>(0, 0));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  int row_count = 0;
+  while (!row.empty()) {
+    auto image = row["image"];
+    auto target = row["target"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor target shape: " << target.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+    row_count++;
+  }
+  ASSERT_EQ(row_count, 10);
   iter->Stop();
 }
 
