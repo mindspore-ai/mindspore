@@ -35,6 +35,12 @@ namespace common {
 enum Status { FAIL = -1, SUCCESS = 0 };
 using Task = std::function<int()>;
 
+struct ThreadContext {
+  std::mutex mutex;
+  std::condition_variable cond_var;
+  const Task *task{nullptr};
+};
+
 class ThreadPool {
  public:
   ~ThreadPool();
@@ -47,17 +53,13 @@ class ThreadPool {
 
  private:
   ThreadPool();
-  void SyncRunLoop();
+  void SyncRunLoop(const std::shared_ptr<ThreadContext> &context);
 
   size_t max_thread_num_{1};
   std::mutex pool_mtx_;
   std::atomic_bool exit_run_ = {false};
-  std::queue<Task> task_queue_;
-  std::mutex task_mutex_;
-  std::condition_variable task_cond_var_;
-  size_t task_finished_count_{0};
-  std::condition_variable finished_cond_var_;
   std::vector<std::thread> sync_run_threads_{};
+  std::vector<std::shared_ptr<ThreadContext>> contexts_;
 };
 }  // namespace common
 }  // namespace mindspore

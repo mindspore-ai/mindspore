@@ -95,9 +95,7 @@ bool MemScheduler::PreCompute(void *stream) {
   for (auto &event : events) {
     MS_EXCEPTION_IF_NULL(event);
     MS_LOG(DEBUG) << "Pre compute " << compute_index_ << ": " << event->key << " v " << event->type;
-    if (event->type == kInit) {
-      auto host_ptr = init_host_ptr_[event->key];
-      MS_EXCEPTION_IF_NULL(host_ptr);
+    if (event->type == kInit || event->type == kMalloc) {
       auto priority = mem_priority_[event->key];
       auto iter = high_priority_device_ptr_.find(event->key);
       if (priority != kMemPriorityLow && iter != high_priority_device_ptr_.end()) {
@@ -112,12 +110,11 @@ bool MemScheduler::PreCompute(void *stream) {
       if (priority != kMemPriorityLow) {
         high_priority_device_ptr_[event->key] = device_ptr;
       }
-      mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
-      mem_result_[event->key] = device_ptr;
-    } else if (event->type == kMalloc) {
-      auto device_ptr = mem_handler_->MallocDevice(event->mem_size);
-      if (device_ptr == nullptr) {
-        return false;
+
+      if (event->type == kInit) {
+        auto host_ptr = init_host_ptr_[event->key];
+        MS_EXCEPTION_IF_NULL(host_ptr);
+        mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
       }
       mem_result_[event->key] = device_ptr;
     } else if (event->type == kSwapIn) {
