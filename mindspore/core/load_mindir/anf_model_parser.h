@@ -45,6 +45,8 @@ class MSANFModelParser {
   bool IsLite() const { return is_lite_; }
   void SetIncLoad() { inc_load_ = true; }
   bool IsIncLoad() const { return inc_load_; }
+  void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
+  bool need_renormalize() const { return need_renormalize_; }
   void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
   void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
   void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
@@ -87,6 +89,7 @@ class MSANFModelParser {
   std::string ir_version_;
   bool is_lite_ = false;
   bool inc_load_ = false;
+  bool need_renormalize_ = true;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
   const unsigned char *mindir_dec_key_{nullptr};

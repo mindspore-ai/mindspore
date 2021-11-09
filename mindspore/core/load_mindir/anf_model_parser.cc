@@ -647,6 +647,12 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         }
         prim->AddAttr(attr_name, res);
         break;
+      } else if (ref_attr_name.find("Tuple[]") != std::string::npos) {
+        prim->AddAttr(attr_name, std::make_shared<ValueTuple>(std::vector<ValuePtr>()));
+        break;
+      } else if (ref_attr_name.find("List[]") != std::string::npos) {
+        prim->AddAttr(attr_name, std::make_shared<ValueList>(std::vector<ValuePtr>()));
+        break;
       }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
       break;
@@ -968,7 +974,7 @@ void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, C
 
   // If the operator is not a primitive, the abstract will been set to null.
   // Because there are not some operators in front end, the abstract of primitive should be reserved.
-  if (prim == nullptr) {
+  if (prim == nullptr && need_renormalize()) {
     cnode_ptr->set_abstract(nullptr);
     return;
   }

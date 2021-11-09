@@ -254,13 +254,15 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     if (key_len == 0) {
       return nullptr;
     }
-    func_graph = LoadMindIR(flag.modelFile, false, key, key_len, flag.dec_mode);
+    MindIRLoader mindir_loader(false, key, key_len, flag.dec_mode, false);
+    func_graph = mindir_loader.LoadMindIR(flag.modelFile);
     auto ret = memset_s(key, sizeof(key), 0, key_len);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memset_s error";
     }
   } else {
-    func_graph = LoadMindIR(flag.modelFile);
+    MindIRLoader mindir_loader;
+    func_graph = mindir_loader.LoadMindIR(flag.modelFile);
   }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
