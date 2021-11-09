@@ -92,6 +92,29 @@ std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set) {
   if (actor_set->output_actor_ != nullptr) {
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(actor_set->output_actor_));
   }
+  if (actor_set->control_actors_ != nullptr) {
+    const auto &control_actor_set = actor_set->control_actors_;
+    for (auto &switch_actor : control_actor_set->switch_actors_) {
+      MS_EXCEPTION_IF_NULL(switch_actor);
+      (void)actors.emplace_back(static_cast<AbstractActorPtr>(switch_actor));
+    }
+    for (auto &gather_actor : control_actor_set->gather_actors_) {
+      MS_EXCEPTION_IF_NULL(gather_actor);
+      (void)actors.emplace_back(static_cast<AbstractActorPtr>(gather_actor));
+    }
+    for (auto &entrance_actor : control_actor_set->entrance_actors_) {
+      MS_EXCEPTION_IF_NULL(entrance_actor);
+      (void)actors.emplace_back(static_cast<AbstractActorPtr>(entrance_actor));
+    }
+    for (auto &exit_actor : control_actor_set->exit_actors_) {
+      MS_EXCEPTION_IF_NULL(exit_actor);
+      (void)actors.emplace_back(static_cast<AbstractActorPtr>(exit_actor));
+    }
+    for (auto &stack_actor : control_actor_set->stack_actors_) {
+      MS_EXCEPTION_IF_NULL(stack_actor);
+      (void)actors.emplace_back(static_cast<AbstractActorPtr>(stack_actor));
+    }
+  }
 
   return actors;
 }
@@ -487,6 +510,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         (void)host_queue_ds_actor->data_nodes_.emplace_back(input_node);
         (void)host_queue_ds_actor->device_contexts_.emplace_back(device_context);
         (void)host_queue_ds_actor->data_node_position_map_.emplace(input_node, data_node_position);
+        // In control flow, need to rely on the front node to find the location of the corresponding real parameter.
+        (void)host_queue_ds_actor->data_node_position_map_.emplace(front_node, data_node_position);
         (void)front_node_position_temp_map.emplace(front_node, data_node_position);
         data_node_position++;
       }
@@ -525,7 +550,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       continue;
     }
     auto backend_iter = front_to_backend_parameter.find(parameter);
-    if (backend_iter == front_to_backend_parameter.end()) {
+    if (backend_iter == front_to_backend_parameter.end() || backend_iter->second.empty()) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
     }
 
@@ -538,15 +563,20 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       (void)data_source_actors.emplace_back(host_queue_ds_actor);
     }
 
-    const auto &backend_node = backend_iter->second.first;
+    if (host_queue_ds_actor->data_node_position_map_.find(parameter) !=
+        host_queue_ds_actor->data_node_position_map_.end()) {
+      continue;
+    }
+
+    const auto &backend_node = backend_iter->second.begin()->first;
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
       (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter,
                                                                  iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
       (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.first);
-      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.second);
+      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.begin()->first);
+      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.begin()->second);
     }
   }
 
@@ -1297,15 +1327,17 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
       (void)no_output_actors.emplace_back(super_actor.get());
     }
   }
-  for (auto &kernel_actor : actor_set->kernel_actors_) {
-    // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
-    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0) &&
-        parser->IsKernelInRootFuncGraph(kernel_actor->kernel_)) {
-      MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
-      MS_LOG(INFO) << kernel_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
-      (void)no_output_actors.emplace_back(kernel_actor.get());
+
+  // In control flow scenario, no output actor needs to be connected to the corresponding exit actor, not loop count.
+  if (!parser->IsInited()) {
+    for (auto &kernel_actor : actor_set->kernel_actors_) {
+      // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
+      if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
+        (void)no_output_actors.emplace_back(kernel_actor.get());
+      }
     }
   }
+
   for (auto &data_actor : actor_set->data_source_actors_) {
     if ((data_actor->output_data_arrows_.size() == 0) && (data_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(data_actor.get());
@@ -1332,7 +1364,9 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
 
 void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
                                                          const GraphCompilerInfo &graph_compiler_info) {
-  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep ||
+      (graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited())) {
+    // In control flow, the exit actor of the root graph sends output data to the output actor.
     return;
   }
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1706,6 +1740,7 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   DumpCopyActors(actor_set->copy_actors_, ofs);
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);
+  DumpControlActors(actor_set->control_actors_, ofs);
 }
 
 void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const {

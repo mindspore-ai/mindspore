@@ -379,6 +379,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
 
   // Compile root graph.
   graph_id_to_device_context_.clear();
+  func_graph_to_kernel_graph_ids_.clear();
   control_nodes_.clear();
   auto subgraph_need_compile = CompileGraph(root_graph);
 
@@ -476,6 +477,10 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     }
 
     graph_id_to_device_context_[graph_id] = device_context;
+
+    const auto &func_graph = segment->nodes_[0]->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    func_graph_to_kernel_graph_ids_[func_graph].emplace_back(graph_id);
   } else {
     // Compile the cut node.
     auto cut_node = segment->nodes_[0];
@@ -971,8 +976,18 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     (void)name.append("_").append(std::to_string(graph_id_to_context.first));
   }
 
+  FuncGraphToKernelGraph func_graph_to_kernel_graphs;
+  for (const auto &func_graph_to_kernel_graph_ids : func_graph_to_kernel_graph_ids_) {
+    const auto &func_graph = func_graph_to_kernel_graph_ids.first;
+    for (const auto &graph_id : func_graph_to_kernel_graph_ids.second) {
+      const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graph);
+    }
+  }
+
   auto parser = std::make_shared<ControlNodeParser>();
-  parser->Parse(control_nodes_, graphs, device_contexts, root_graph);
+  parser->Parse(control_nodes_, graphs, device_contexts, root_graph, func_graph_to_kernel_graphs);
 
   runtime::KernelMapPosition outputs_order;
   size_t outputs_num = 0;

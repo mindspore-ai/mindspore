@@ -30,8 +30,13 @@
 #include "runtime/framework/actor/super_kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/copy_actor.h"
+#include "runtime/framework/actor/control_flow/control_actor.h"
 #include "runtime/framework/actor/control_flow/switch_actor.h"
 #include "runtime/framework/actor/control_flow/gather_actor.h"
+#include "runtime/framework/actor/control_flow/entrance_actor.h"
+#include "runtime/framework/actor/control_flow/exit_actor.h"
+#include "runtime/framework/actor/control_flow/stack_actor.h"
+#include "runtime/framework/control_node_scheduler.h"
 
 namespace mindspore {
 namespace runtime {
@@ -43,8 +48,7 @@ void DumpKernelActors(const std::vector<KernelActorPtr> &actors, std::ofstream &
 void DumpSuperKernelActors(const std::vector<SuperKernelActorPtr> &actors, std::ofstream &ofs);
 void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::ofstream &ofs);
 void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs);
-void DumpGatherActors(const std::vector<GatherActorPtr> &actors, std::ofstream &ofs);
-void DumpSwitchActors(const std::vector<SwitchActorPtr> &actors, std::ofstream &ofs);
+void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);
 }  // namespace runtime
 }  // namespace mindspore
 

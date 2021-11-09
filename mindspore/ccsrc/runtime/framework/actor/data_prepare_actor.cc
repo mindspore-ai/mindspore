@@ -459,10 +459,10 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
 }
 
 // In control flow, all weight nodes associated with the host weight parameter need to use the same device tensor.
-void DataPrepareActor::PrepareDataForControlWeightNode(
-  const AnfNodePtr &node, const AnfNodePtr &front_node, const TensorPtr &tensor, const DeviceContext *device_context,
-  const std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> &host_parameter_to_weights,
-  OpContext<DeviceTensor> *const context) {
+void DataPrepareActor::PrepareDataForControlWeightNode(const AnfNodePtr &node, const AnfNodePtr &front_node,
+                                                       const TensorPtr &tensor, const DeviceContext *device_context,
+                                                       const HostParameterToWeight &host_parameter_to_weights,
+                                                       OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(tensor);
@@ -516,12 +516,12 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     if (IsPersistentDeviceTensor(input_node)) {
       const auto &front_to_backend_parameters = control_node_parser->front_to_backend_parameters();
       const auto &iter = front_to_backend_parameters.find(input_node);
-      if (iter == front_to_backend_parameters.end()) {
+      if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
         MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:"
                           << AnfAlgo::GetNodeDebugString(input_node);
       }
-      const auto &node_with_context = iter->second;
-      PrepareDataForControlWeightNode(node_with_context.first, input_node, input_tensor, node_with_context.second,
+      const auto &node_with_context = iter->second.begin();
+      PrepareDataForControlWeightNode(node_with_context->first, input_node, input_tensor, node_with_context->second,
                                       control_node_parser->host_parameter_to_weights(), context);
     }
   }

@@ -177,14 +177,157 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   ofs << "\n";
 }
 
-void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
-  MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
+  const auto &output_data_arrows = actor->output_data_arrows();
+  if (output_data_arrows.size() > 0) {
+    ofs << "\t\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
+    for (const auto &data_arrow : output_data_arrows) {
+      MS_EXCEPTION_IF_NULL(data_arrow);
+      ofs << "\t\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+          << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+          << "\n";
+    }
+  }
+
+  const auto &output_control_arrows = actor->output_control_arrows();
+  if (output_control_arrows.size() > 0) {
+    ofs << "\t\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
+    for (const auto &aid : output_control_arrows) {
+      ofs << "\t\t\t\tto_actor_name:" << aid.Name() << "\n";
+    }
+  }
+
+  const auto &output_partial_arrows = actor->output_partial_arrows();
+  if (output_partial_arrows.size() > 0) {
+    ofs << "\t\t\toutput_partial_arrows:" << output_partial_arrows.size() << "\n ";
+    for (const auto &partial_arrow : output_partial_arrows) {
+      MS_EXCEPTION_IF_NULL(partial_arrow);
+      ofs << "\t\t\t\tfrom_output_index:" << partial_arrow->from_output_index_
+          << "\tto_actor_name:" << partial_arrow->to_op_id_.Name()
+          << "\tto_input_index:" << partial_arrow->to_input_index_ << "\n";
+    }
+  }
+
+  const auto &output_branch_id_arrows = actor->output_branch_id_arrows();
+  if (output_branch_id_arrows.size() > 0) {
+    ofs << "\t\t\toutput_branch_id_arrows:" << output_branch_id_arrows.size() << "\n ";
+    for (const auto &aid : output_branch_id_arrows) {
+      ofs << "\t\t\t\tto_actor_name:" << aid.Name() << "\n";
+    }
+  }
 }
 
 void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\t\ttactor_name:" << actor->GetAID().Name() << '\n';
+  DumpControlActor(actor, ofs);
+}
+
+void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  DumpControlActor(actor, ofs);
+
+  const auto &output_data_with_branch_id_arrows = actor->output_data_with_branch_id_arrows();
+  if (output_data_with_branch_id_arrows.size() > 0) {
+    ofs << "\t\t\toutput_data_with_branch_id_arrows:" << output_data_with_branch_id_arrows.size() << "\n ";
+    for (const auto &output_data_with_branch_id_arrow : output_data_with_branch_id_arrows) {
+      ofs << "\t\t\t\tbranch funcgraph:" << output_data_with_branch_id_arrow.first->ToString() << "\n";
+      for (const auto &arrow : output_data_with_branch_id_arrow.second) {
+        ofs << "\t\t\t\t\tto actor:" << arrow << "\n";
+      }
+    }
+  }
+}
+
+void DumpEntranceActor(const EntranceActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  DumpControlActor(actor, ofs);
+}
+
+void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  DumpControlActor(actor, ofs);
+
+  const auto &output_branch_data_arrows = actor->output_branch_data_arrows();
+  if (output_branch_data_arrows.size() > 0) {
+    ofs << "\t\t\toutput_branch_data_arrows:" << output_branch_data_arrows.size() << "\n ";
+    for (const auto &output_branch_data_arrow : output_branch_data_arrows) {
+      ofs << "\t\t\t\tbranch id:" << output_branch_data_arrow.first << "\n";
+      for (const auto &arrow : output_branch_data_arrow.second) {
+        MS_EXCEPTION_IF_NULL(arrow);
+        ofs << "\t\t\t\t\tfrom_output_index:" << arrow->from_output_index_
+            << "\tto_actor_name:" << arrow->to_op_id_.Name() << "\tto_input_index:" << arrow->to_input_index_ << "\n";
+      }
+    }
+  }
+
+  const auto &output_branch_partial_arrows = actor->output_branch_partial_arrows();
+  if (output_branch_partial_arrows.size() > 0) {
+    ofs << "\t\t\toutput_branch_partial_arrows:" << output_branch_partial_arrows.size() << "\n ";
+    for (const auto &output_branch_partial_arrow : output_branch_partial_arrows) {
+      ofs << "\t\t\t\tbranch id:" << output_branch_partial_arrow.first << "\n";
+      for (const auto &arrow : output_branch_partial_arrow.second) {
+        MS_EXCEPTION_IF_NULL(arrow);
+        ofs << "\t\t\t\t\tfrom_output_index:" << arrow->from_output_index_
+            << "\tto_actor_name:" << arrow->to_op_id_.Name() << "\tto_input_index:" << arrow->to_input_index_ << "\n";
+      }
+    }
+  }
+
+  const auto &output_branch_control_arrows = actor->output_branch_control_arrows();
+  if (output_branch_control_arrows.size() > 0) {
+    ofs << "\t\t\toutput_branch_control_arrows:" << output_branch_control_arrows.size() << "\n ";
+    for (const auto &output_branch_control_arrow : output_branch_control_arrows) {
+      ofs << "\t\t\t\tbranch id:" << output_branch_control_arrow.first << "\n";
+      for (const auto &arrow : output_branch_control_arrow.second) {
+        ofs << "\t\t\t\t\tto actor:" << arrow << "\n";
+      }
+    }
+  }
+}
+
+void DumpStackActor(const StackActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  DumpControlActor(actor, ofs);
+}
+
+void DumpSwitchActors(const std::vector<SwitchActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n\t[Switch actors:" << actors.size() << "]\n";
+  for (const auto &switch_actor : actors) {
+    DumpSwitchActor(switch_actor.get(), ofs);
+  }
+}
+
+void DumpGatherActors(const std::vector<GatherActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n\t[Gather actors:" << actors.size() << "]\n";
+  for (const auto &gather_actor : actors) {
+    DumpGatherActor(gather_actor.get(), ofs);
+  }
+}
+
+void DumpEntranceActors(const std::vector<EntranceActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n\t[Entrance actors:" << actors.size() << "]\n";
+  for (const auto &entrance_actor : actors) {
+    DumpEntranceActor(entrance_actor.get(), ofs);
+  }
+}
+
+void DumpExitActors(const std::vector<ExitActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n\t[Exit actors:" << actors.size() << "]\n";
+  for (const auto &exit_actor : actors) {
+    DumpExitActor(exit_actor.get(), ofs);
+  }
+}
+
+void DumpStackActors(const std::vector<StackActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n\t[Stack actors:" << actors.size() << "]\n";
+  for (const auto &stack_actor : actors) {
+    DumpStackActor(stack_actor.get(), ofs);
+  }
 }
 }  // namespace
 
@@ -281,18 +424,17 @@ void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs)
   }
 }
 
-void DumpGatherActors(const std::vector<GatherActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n[Gather actors:" << actors.size() << "]\n";
-  for (const auto &gather_actor : actors) {
-    DumpGatherActor(gather_actor.get(), ofs);
+void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs) {
+  ofs << "\n\n[Control actors]\n";
+  if (control_actor_set == nullptr) {
+    return;
   }
-}
 
-void DumpSwitchActors(const std::vector<SwitchActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n[Switch actors:" << actors.size() << "]\n";
-  for (const auto &switch_actor : actors) {
-    DumpSwitchActor(switch_actor.get(), ofs);
-  }
+  DumpSwitchActors(control_actor_set->switch_actors_, ofs);
+  DumpGatherActors(control_actor_set->gather_actors_, ofs);
+  DumpEntranceActors(control_actor_set->entrance_actors_, ofs);
+  DumpExitActors(control_actor_set->exit_actors_, ofs);
+  DumpStackActors(control_actor_set->stack_actors_, ofs);
 }
 }  // namespace runtime
 }  // namespace mindspore
