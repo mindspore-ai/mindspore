@@ -727,8 +727,6 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   root_graph_parameters_ = root_graph->parameters();
 
-  CreateBranchIDForFuncGraph(control_nodes);
-
   RealToFormalNode real_to_formal_front_parameters;
   FetchFrontToFrontParameter(control_nodes, &real_to_formal_front_parameters);
 
@@ -790,13 +788,13 @@ std::set<KernelWithIndex> ControlNodeParser::FetchBackendInputNodeByFrontNode(co
   return results;
 }
 
-int ControlNodeParser::GetBranchIDByFuncGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+int ControlNodeParser::GetBranchIDByCallNode(const AnfNodePtr &call_node) {
+  MS_EXCEPTION_IF_NULL(call_node);
 
-  if (func_graph_to_branch_id_.find(func_graph) == func_graph_to_branch_id_.end()) {
-    MS_LOG(EXCEPTION) << "Invalid branch id for funcgraph:" << func_graph->ToString();
+  if (call_node_to_branch_id_.find(call_node) == call_node_to_branch_id_.end()) {
+    MS_LOG(EXCEPTION) << "Invalid branch id for call_node:" << call_node->DebugString();
   }
-  return func_graph_to_branch_id_[func_graph];
+  return call_node_to_branch_id_[call_node];
 }
 
 bool ControlNodeParser::IsCallInputKernelGraph(const KernelGraphPtr &graph) {
@@ -1138,18 +1136,6 @@ void ControlNodeParser::FetchCallInputKernelGraph(const std::vector<KernelGraphP
   }
 }
 
-void ControlNodeParser::CreateBranchIDForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
-  int branch_id = 0;
-
-  for (const auto &control_node : control_nodes) {
-    // Root funcgraph does not need to create a gather actor.
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
-      auto func_graph = control_node->func_graph();
-      func_graph_to_branch_id_[func_graph] = branch_id++;
-    }
-  }
-}
-
 std::vector<AnfNodePtr> FetchInputParameterbyControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *switch_nodes,
                                                          std::set<AnfNodePtr> *call_nodes) {
   std::vector<AnfNodePtr> parameters;
@@ -1256,18 +1242,6 @@ void ControlNodeParser::FetchFrontToBackendParameter(const std::vector<KernelGra
       }
     }
   }
-
-  for (const auto &front_pair : real_to_formal_front_parameters) {
-    std::set<AnfNodePtr> invalid_node;
-    const auto &backend_node =
-      FetchBackendNodeByFrontNode(front_pair.first, real_to_formal_front_parameters, formal_to_real_front_parameters,
-                                  front_to_backend_parameters_, &invalid_node);
-    if (backend_node.first != nullptr) {
-      if (front_to_backend_parameters_.find(front_pair.first) == front_to_backend_parameters_.end()) {
-        front_to_backend_parameters_[front_pair.first] = backend_node;
-      }
-    }
-  }
 }
 
 void ControlNodeParser::FetchHostParameterToWeight(const RealToFormalNode &front_to_front_parameters) {
@@ -1283,6 +1257,14 @@ void ControlNodeParser::FetchHostParameterToWeight(const RealToFormalNode &front
       }
     }
   }
+}
+
+FuncGraphPtr ControlNodeParser::FetchKernelGraphByFrontNode(const AnfNodePtr &kernel) {
+  const auto &iter = front_node_to_kernel_graph_.find(kernel);
+  if (iter == front_node_to_kernel_graph_.end()) {
+    return nullptr;
+  }
+  return iter->second;
 }
 
 void ControlNodeParser::FetchFuncGraphToParameter(const std::vector<AnfNodePtr> &control_nodes) {
@@ -1408,6 +1390,14 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
   }
 }
 
+KernelWithIndex ControlNodeParser::FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index) {
+  const auto &iter = front_to_backend_kernels_.find(node_with_index);
+  if (iter != front_to_backend_kernels_.end()) {
+    return iter->second.first;
+  }
+  return {};
+}
+
 void ControlNodeParser::FetchBackendInputNodebyFrontNode(
   const AnfNodePtr &real_parameter, const AnfNodePtr &formal_parameter,
   const FrontToBackendNodeWithContext &front_to_backend_parameters) {
@@ -1456,42 +1446,7 @@ void ControlNodeParser::FetchBackendParameterNode(const std::vector<KernelGraphP
                                                   const std::vector<DeviceContext *> &device_contexts,
                                                   const RealToFormalNode &real_to_formal_front_parameters,
                                                   const RealToFormalNode &formal_to_real_front_parameters,
-                                                  FrontToBackendNodeWithContext *front_to_backend_parameters) {
-  for (size_t i = 0; i < graphs.size(); ++i) {
-    const auto &graph = graphs[i];
-    const auto &device_context = device_contexts[i];
-    if (graph->GetFuncGraph() != root_func_graph_) {
-      continue;
-    }
-    for (const auto &parameter : graph->input_nodes()) {
-      auto front_node = graph->GetFrontAnfByBackendAnf(parameter);
-      if (front_node != nullptr && front_node->isa<Parameter>() &&
-          (*front_to_backend_parameters).find(front_node) == (*front_to_backend_parameters).end()) {
-        (*front_to_backend_parameters)[front_node] = {parameter, device_context};
-      }
-    }
-  }
-  for (const auto &control_node_parameter : control_node_parameters_) {
-    const auto &iter = front_to_backend_parameters_.find(control_node_parameter);
-    if (iter == front_to_backend_parameters_.end()) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for control node parameter:"
-                        << AnfAlgo::GetNodeDebugString(control_node_parameter);
-    }
-    (*front_to_backend_parameters)[control_node_parameter] = iter->second;
-  }
-
-  for (const auto &front_pair : formal_to_real_front_parameters) {
-    std::set<AnfNodePtr> invalid_node;
-    const auto &backend_node =
-      FetchBackendNodeByFrontNode(front_pair.first, real_to_formal_front_parameters, formal_to_real_front_parameters,
-                                  (*front_to_backend_parameters), &invalid_node);
-    if (backend_node.first != nullptr) {
-      if ((*front_to_backend_parameters).find(front_pair.first) == (*front_to_backend_parameters).end()) {
-        (*front_to_backend_parameters)[front_pair.first] = backend_node;
-      }
-    }
-  }
-}
+                                                  FrontToBackendNodeWithContext *front_to_backend_parameters) {}
 
 void ControlNodeParser::FetchBackendInputNode(const std::vector<KernelGraphPtr> &graphs,
                                               const std::vector<DeviceContext *> &device_contexts,

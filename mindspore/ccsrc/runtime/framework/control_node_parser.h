@@ -54,12 +54,16 @@ constexpr size_t kReturnInputPos = 1;
 constexpr size_t kSingleControlNode = 1;
 
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
+const char kStackActorNameSuffix[] = "_StackActor";
+
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
+using FuncGraphToKernelGraph = std::unordered_map<FuncGraphPtr, std::vector<KernelGraphPtr>>;
 using FuncGraphToParameter = std::unordered_map<FuncGraphPtr, std::vector<std::vector<AnfNodePtr>>>;
 using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 using NodeWithDeviceContext = std::vector<std::pair<AnfNodePtr, DeviceContext *>>;
 using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
+using FrontNodeToKernelGraph = std::unordered_map<AnfNodePtr, KernelGraphPtr>;
 
 // Check if the call node is the input of another call node.
 bool IsSubCallNode(const AnfNodePtr &node);
@@ -119,8 +123,8 @@ class ControlNodeParser {
   // Get the device context corresponding to the value node.
   DeviceContext *GetFrontValueNodeDeviceContext(const AnfNodePtr &value_node);
 
-  // Get the branch id corresponding to funcgraph.
-  int GetBranchIDByFuncGraph(const FuncGraphPtr &func_graph);
+  // Get the branch id corresponding to call node.
+  int GetBranchIDByCallNode(const AnfNodePtr &call_node);
 
   // Get the number of calls to funcgraph
   size_t GetCallNumByFuncGraph(const FuncGraphPtr &func_graph);
@@ -146,10 +150,12 @@ class ControlNodeParser {
   }
 
   AnfNodePtr FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node);
+  KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
+  FuncGraphPtr FetchKernelGraphByFrontNode(const AnfNodePtr &kernel);
 
  private:
   friend class GraphScheduler;
-
+  friend class ControlNodeScheduler;
   // Collect all front value nodes. In the control flow, when the input of the switch actor is the value node, these
   // value nodes will not enter the kernel graph, so these nodes need to be saved separately, and space is allocated for
   // them separately during initialization.
@@ -231,12 +237,12 @@ class ControlNodeParser {
   // The relationship between the valuenode inputs of the call node and the backend parameter
   std::map<KernelWithIndex, std::pair<AnfNodePtr, DeviceContext *>> call_node_to_backend_parameters_;
 
-  // Branch id of funcgraph.
+  // Branch id of call node.
   // In control flow, funcgraph will be called in multiple places, and the output of funcgraph needs to return to
-  // different places. Therefore, a branch id is created for each funcgraph. When funcgraph is called, the branch
-  // id needs to be sent to the gather actor corresponding to the funcgraph, and the gather will send the branch id
-  // to its output switch actor.
-  std::unordered_map<FuncGraphPtr, int> func_graph_to_branch_id_;
+  // different places. Therefore, a branch id is created for each call node. When funcgraph is called, the branch
+  // id needs to be sent to the entrance actor corresponding to the funcgraph, and then send the branch id to its
+  // output switch actor.
+  std::unordered_map<AnfNodePtr, int> call_node_to_branch_id_;
 
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.
@@ -254,6 +260,13 @@ class ControlNodeParser {
   std::vector<AnfNodePtr> control_node_parameters_;
   // The number of calls to func_graph.
   std::unordered_map<FuncGraphPtr, size_t> func_graph_to_call_num_;
+  // In control flow, funcgraph will be divided into multiple kernel graphs. This map records this correspondence.
+  FuncGraphToKernelGraph func_graph_to_kernel_graphs_;
+  // In control flow, if there is a call node in the funcgraph, it means that when the funcgraph executes to the call,
+  // it needs to jump to another funcgraph. At this time, the funcgraph needs to process other real parameters, so
+  // these nodes need to send control arrows to the entrance actor to tell it to continue processing other parameters,
+  // these nodes are recorded in this map.
+  std::unordered_map<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
   // The kernel graph of call exists in the front input node.
   // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a gather actor
   // is created for kernel graph which has a call input.
@@ -264,6 +277,16 @@ class ControlNodeParser {
 
   // The dependency between kernel and call node in auto monad.
   std::unordered_map<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
+  // Call node will call different funcgraphs according to the input partial node, and this relationship is recorded
+  // in this map.
+  std::unordered_map<AnfNodePtr, std::set<FuncGraphPtr>> call_node_to_func_graphs_;
+  // In heterogeneous scenarios, different formal parameters of funcgraph will have different contexts. In order to
+  // ensure that there is no copy actor between control actors, the device context type corresponding to each formal
+  // parameter needs to be derived in the parser and recorded in this map.
+  std::unordered_map<FuncGraphPtr, std::vector<const DeviceContext *>> func_graph_to_device_contexts_;
+  std::unordered_map<AnfNodePtr, std::vector<const DeviceContext *>> control_node_to_device_contexts_;
+  // Record which kernel graph the front node is in.
+  FrontNodeToKernelGraph front_node_to_kernel_graph_;
   bool is_inited_{false};
 };
 

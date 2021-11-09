@@ -56,6 +56,7 @@ class ControlActor : public AbstractActor {
   const std::vector<AID> &output_branch_id_arrows() const { return output_branch_id_arrows_; }
 
  protected:
+  friend class ControlNodeScheduler;
   // Get the position of node in the input.
   size_t FetchNodePosition(const KernelWithIndex &node) const;
 

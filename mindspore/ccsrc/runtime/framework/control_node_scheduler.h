@@ -36,9 +36,9 @@ class ControlNodeScheduler {
   DISABLE_COPY_AND_ASSIGN(ControlNodeScheduler);
 
   // Transform the control nodes to control actors.
-  ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info) { return nullptr; }
+  ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info);
   // Link control actors.
-  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {}
+  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
 
   bool CheckActorValid(const ControlActorSetPtr &control_actor_set);
 
@@ -57,9 +57,17 @@ class ControlNodeScheduler {
   void LinkArrowForControlActor(ControlActorSet *const control_actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkArrowbyFormalParameter(ControlActor *const to_actor, const KernelWithIndex &from_node_with_index,
                                   const KernelWithIndex &to_node_with_index, const ControlNodeParserPtr &parser);
+  void LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
+                           const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
+                           const ControlNodeParserPtr &parser);
+  void LinkArrowByKernel(const AnfNodePtr &kernel, ControlActor *const to_actor,
+                         const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
+                         const ControlNodeParserPtr &parser);
 
   // Link data arrow between control actor and actor in frame, including kernel actor, output actor, data source actor.
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);
+  void LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, bool is_call_input_graph,
+                                  ControlActor *const entrance_actor);
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowForHostDSActor(const GraphCompilerInfo &graph_compiler_info);
 
@@ -67,17 +75,16 @@ class ControlNodeScheduler {
   void LinkControlArrow(AbstractActor *from_actor, AbstractActor *to_actor);
   // Data arrow with branch id is only exists from gather actor to entrance actor.
   void LinkDataWithBranchIDArrow(GatherActor *const gather_actor, EntranceActor *const entrance_actor,
-                                 int from_branch_id);
+                                 const FuncGraphPtr &func_graph);
   void LinkPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor, size_t from_index,
                         size_t to_index);
-  void LinkDataArrow(AbstractActor *const exit_actor, AbstractActor *const to_actor,
-                     const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index);
+  void LinkDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_index,
+                     size_t to_index);
 
   // Since the output of exit actor has branches, it needs to be based on a dedicated interface.
   void LinkControlArrowForExitActor(ExitActor *from_actor, AbstractActor *to_actor, int branch_id);
-  void LinkDataArrowForExitActor(ExitActor *const exit_actor, AbstractActor *const to_actor,
-                                 const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
-                                 int branch_id);
+  void LinkDataArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
+                                 size_t to_index, int branch_id);
 };
 }  // namespace runtime
 }  // namespace mindspore
