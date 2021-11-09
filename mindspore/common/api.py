@@ -274,6 +274,7 @@ class _MindsporeFunctionExecutor:
         if self.obj is None:
             is_compile = self._graph_executor.compile(self.fn, args_list, phase, True)
         else:
+            self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, args_list, phase, True)
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
@@ -651,7 +652,7 @@ class _CellGraphExecutor:
 
         enable_ge = context.get_context("enable_ge")
         use_vm = self._use_vm_mode()
-
+        self._graph_executor.set_weights_values(obj.parameters_dict())
         result = self._graph_executor.compile(obj, args_list, phase, use_vm)
         obj.compile_cache.add(phase)
         if not result:

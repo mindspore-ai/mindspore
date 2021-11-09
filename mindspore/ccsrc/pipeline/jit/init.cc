@@ -110,7 +110,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_enable_tuple_broaden", &GraphExecutorPy::set_enable_tuple_broaden,
          py::arg("enable_tuple_broaden") = py::bool_(false), "Set tuple broaden enable.")
     .def("set_compile_cache_dep_files", &GraphExecutorPy::set_compile_cache_dep_files,
-         py::arg("compile_cache_dep_files") = py::list(), "Set the compilation cache dependent files.");
+         py::arg("compile_cache_dep_files") = py::list(), "Set the compilation cache dependent files.")
+    .def("set_weights_values", &GraphExecutorPy::set_weights_values, py::arg("weights") = py::dict(),
+         "Set values of weights.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 

@@ -207,7 +207,7 @@ void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_grap
     MS_LOG(ERROR) << "Open cache file '" << bprop_mindir_realpath.value() << "' failed!" << ErrnoToString(errno);
     return;
   }
-  ModelProtoPtr fg_model = GetBinaryProto(func_graph, false);
+  ModelProtoPtr fg_model = GetBinaryProto(func_graph);
   if (fg_model == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << func_graph->ToString() << " failed.";
     fout.close();
