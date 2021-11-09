@@ -25,9 +25,11 @@ int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   }
   if (in_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
+    return RET_ERROR;
   }
   if (out_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -63,26 +65,62 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     keep_dims = mim_prim->keep_dims();
   } else {
     MS_LOG(ERROR) << "invalid op primitive for " << op_name_;
-  }
-  if (keep_dims) {
-    MS_LOG(WARNING) << "keep dims is unsupported for " << op_name_;
+    return RET_ERROR;
   }
 
-  if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
-    axis_value = ConvertAxisFromNHWC2NCHW(axis_value);
+  nvinfer1::ITensor *topk_input = tensorrt_in_tensors_[0].trt_tensor_;
+  Format output_format = tensorrt_in_tensors_[0].format_;
+
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *topk_input);
+    if (transpose_layer == nullptr) {
+      MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+      return RET_ERROR;
+    }
+    transpose_layer->setName((op_name_ + "_transpose_in").c_str());
+    topk_input = transpose_layer->getOutput(0);
+    output_format = Format::NHWC;
   }
   uint32_t reduce_axes = 1 << axis_value;
 
-  nvinfer1::ITopKLayer *topk_layer = network->addTopK(*tensorrt_in_tensors_[0].trt_tensor_, red_op, topk, reduce_axes);
+  nvinfer1::ITopKLayer *topk_layer = network->addTopK(*topk_input, red_op, topk, reduce_axes);
   if (topk_layer == nullptr) {
     MS_LOG(ERROR) << "addTopK failed for: " << op_name_;
     return RET_ERROR;
   }
   topk_layer->setName(op_name_.c_str());
+  nvinfer1::ITensor *op_out_tensor = topk_layer->getOutput(1);
+  // output 0 is data value, output 1 is index
 
-  nvinfer1::ITensor *op_out_tensor = topk_layer->getOutput(0);
+  if (!keep_dims) {
+    MS_LOG(DEBUG) << op_name_ << "add squeeze for not keep dims at index " << axis_value;
+    if (op_out_tensor->getDimensions().d[axis_value] != 1) {
+      MS_LOG(ERROR) << "output dims is invalid for squeeze: " << op_name_;
+      return RET_ERROR;
+    }
+    nvinfer1::IShuffleLayer *squeeze_layer = network->addShuffle(*op_out_tensor);
+    if (squeeze_layer == nullptr) {
+      MS_LOG(ERROR) << "add squeeze layer failed for: " << op_name_;
+      return RET_ERROR;
+    }
+    nvinfer1::Dims squeeze_dims{};
+    squeeze_dims.nbDims = op_out_tensor->getDimensions().nbDims - 1;
+    if (axis_value != squeeze_dims.nbDims) {
+      MS_LOG(ERROR) << op_name_ << " reduce squeeze dims need check for axis: " << axis_value;
+      return RET_ERROR;
+    }
+    for (int i = 0; i < squeeze_dims.nbDims; i++) {
+      squeeze_dims.d[i] = 0;
+      // same with input
+    }
+    squeeze_layer->setReshapeDimensions(squeeze_dims);
+    squeeze_layer->setName((op_name_ + "_squeeze").c_str());
+    op_out_tensor = squeeze_layer->getOutput(0);
+  }
+
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_});
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, output_format});
   return RET_OK;
 }
 }  // namespace mindspore::lite

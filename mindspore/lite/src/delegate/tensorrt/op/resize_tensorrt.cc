@@ -151,6 +151,7 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
         float scales[out_tensors_[0].Shape().size()];
         for (size_t i = 0; i < out_tensors_[0].Shape().size(); i++) {
           scales[i] = static_cast<float>(out_tensors_[0].Shape()[i]) / static_cast<float>(in_tensors_[0].Shape()[i]);
+          MS_LOG(DEBUG) << op_name_ << "scale at " << i << ": " << scales[i];
         }
         resize_layer->setScales(scales, out_tensors_[0].Shape().size());
       }

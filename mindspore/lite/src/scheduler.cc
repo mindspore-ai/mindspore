@@ -598,7 +598,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
 
   if (ret == RET_OK) {
     for (auto &output : outputs) {
-      if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
+      if (static_cast<size_t>(output->ElementsNum()) >= GetMaxMallocSize() / sizeof(int64_t)) {
         MS_LOG(ERROR) << "The size of output tensor is too big";
         FreeOpParameters();
         return RET_ERROR;

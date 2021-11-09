@@ -17,7 +17,8 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include "include/api/delegate.h"
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
@@ -47,11 +48,11 @@ class TensorRTDelegate : public Delegate {
   TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel *model, KernelIter from,
                                         KernelIter end);
 
-  std::map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
+  std::unordered_map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
 
-  std::vector<schema::PrimitiveType> unsupport_hw_op_lists_;
+  std::unordered_set<schema::PrimitiveType> unsupport_hw_op_lists_;
 
-  std::vector<schema::PrimitiveType> unsupport_resize_op_list_;
+  std::unordered_set<schema::PrimitiveType> unsupport_resize_op_list_;
 
   mindspore::Context *context_;
 

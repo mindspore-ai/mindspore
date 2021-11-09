@@ -37,6 +37,8 @@
 #include "src/delegate/tensorrt/op/pool_tensorrt.h"
 #include "src/delegate/tensorrt/op/pad_tensorrt.h"
 #include "src/delegate/tensorrt/op/resize_tensorrt.h"
+#include "src/delegate/tensorrt/op/equal_tensorrt.h"
+#include "src/delegate/tensorrt/op/cast_tensorrt.h"
 #include "src/delegate/tensorrt/op/topk_tensorrt.h"
 
 namespace mindspore::lite {
@@ -78,6 +80,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
     {schema::PrimitiveType_Concat, GetTensorRTOp<ConcateTensorRT>},
     {schema::PrimitiveType_Conv2DFusion, GetTensorRTOp<ConvolutionTensorRT>},
+    {schema::PrimitiveType_Cast, GetTensorRTOp<CastTensorRT>},
     {schema::PrimitiveType_Conv2dTransposeFusion, GetTensorRTOp<DeconvolutionTensorRT>},
     {schema::PrimitiveType_SubFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_DivFusion, GetTensorRTOp<ElementWiseTensorRT>},
@@ -88,6 +91,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Minimum, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Maximum, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_BiasAdd, GetTensorRTOp<ElementWiseTensorRT>},
+    {schema::PrimitiveType_Equal, GetTensorRTOp<EqualTensorRT>},
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_FullConnection, GetTensorRTOp<MatMulTensorRT>},

@@ -94,7 +94,7 @@ int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
   }
 
   for (auto output : outputs) {
-    if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
+    if (static_cast<size_t>(output->ElementsNum()) >= GetMaxMallocSize() / sizeof(int64_t)) {
       MS_LOG(ERROR) << "The size of output tensor is too big, output size: " << output->ElementsNum();
       return RET_INFER_ERR;
     }

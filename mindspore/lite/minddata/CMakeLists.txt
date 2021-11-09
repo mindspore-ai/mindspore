@@ -112,6 +112,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor_utils.cc
         ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor/tensor_impl.cc
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
+        ${TOP_DIR}/mindspore/lite/src/common/utils.cc
         ${TOP_DIR}/mindspore/lite/src/ms_tensor.cc
         ${TOP_DIR}/mindspore/lite/src/common/string_util.cc
         ${TOP_DIR}/mindspore/lite/src/common/lite_utils.cc
@@ -424,6 +425,7 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${CORE_DIR}/utils/status.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/cxx_api/types.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/tensor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/utils.cc
             )
 
     add_library(minddata-lite SHARED

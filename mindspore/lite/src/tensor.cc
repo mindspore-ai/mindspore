@@ -41,9 +41,6 @@ namespace lite {
                          : (((y) >= 0) ? (INT64_MAX / (x)) > (-1 * (y)) : (INT64_MAX / (x)) > (y))))
 #endif
 
-namespace {
-constexpr int kMaxMallocSize = 1024 * 1024 * 300;
-}  // namespace
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const mindspore::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
@@ -308,7 +305,7 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
   }
   auto data_size = this->Size();
 
-  if (data_size > kMaxMallocSize) {
+  if (data_size > GetMaxMallocSize()) {
     MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
     return RET_ERROR;
   }
