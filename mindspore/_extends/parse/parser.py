@@ -514,7 +514,13 @@ def eval_script(exp_str, params):
     logger.debug(f"exp_str: '{exp_str}', params: '{params}'")
     global_params = params[0]
     local_params = params[1]
-    obj = eval(exp_str, global_params, local_params)
+    try:
+        obj = eval(exp_str, global_params, local_params)
+    except Exception as e:
+        error_info = f"When eval '{exp_str}' by using Fallback feature, an error occurred: " + str(e) + \
+            ". You can try to turn off the Fallback feature by 'export ENV_SUPPORT_FALLBACK=0'."
+        logger.error(error_info)
+        raise e
     if obj is None:
         raise ValueError(f"When call 'eval', the result is none. exp_str: '{exp_str}'")
     if isinstance(obj, set):
