@@ -1392,9 +1392,8 @@ bool Scheduler::IsControlFlowPattern(const lite::Model::Node &partial_node) {
     }
   }
 
-  return partial_node_output == nullptr ? false
-                                        : (IsCallNode(partial_node_output->primitive_, schema_version_) ||
-                                           IsSwitchNode(partial_node_output->primitive_, schema_version_));
+  return partial_node_output != nullptr && (IsCallNode(partial_node_output->primitive_, schema_version_) ||
+                                            IsSwitchNode(partial_node_output->primitive_, schema_version_));
 }
 
 int Scheduler::ScheduleGraphToKernels(std::vector<kernel::LiteKernel *> *dst_kernels, TypeId prefer_data_type) {

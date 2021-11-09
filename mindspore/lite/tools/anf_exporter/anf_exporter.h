@@ -84,6 +84,11 @@ class AnfExporter {
   int SetMetaGraphInput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
+  bool CaseToContinue(const string &prim_name);
+
+ private:
+  void SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node);
+  int SetTailCall(const CNodePtr &return_cnode);
 
  private:
   // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.
@@ -93,6 +98,7 @@ class AnfExporter {
   std::vector<AnfNodePtr> graph_inputs_;
   std::set<AnfNodePtr> graph_inputs_has_exported_;
   std::map<AnfNodePtr, int> graph_inputs_map_;
+  std::map<AnfNodePtr, schema::CNodeT *> call_node_map_;
   uint32_t node_idx_ = 0;
   bool train_flag_ = false;
 };
