@@ -50,13 +50,13 @@ from mindspore.parallel._tensor import _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
 
-tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
-                     "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,
+tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
+                     "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
                      "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
                      "Bool": mstype.bool_}
 
-tensor_to_np_type = {"Int8": np.int8, "Uint8": np.uint8, "Int16": np.int16, "Uint16": np.uint16,
-                     "Int32": np.int32, "Uint32": np.uint32, "Int64": np.int64, "Uint64": np.uint64,
+tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UInt16": np.uint16,
+                     "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
 
 _ckpt_mutex = Lock()
