@@ -70,7 +70,7 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   bool is_original_pad_mode = false;
   prim->set_pad_mode(ParsePadMode(tf_op, &is_original_pad_mode));
   prim->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
-  prim->AddAttr(ops::kOriginOpName, MakeValue("Conv2DBackpropInput"));
+  prim->AddAttr(ops::kOriginalOpName, MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
 #ifdef ENABLE_LITE_ACL

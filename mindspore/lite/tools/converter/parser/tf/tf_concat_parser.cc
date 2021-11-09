@@ -48,7 +48,7 @@ ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
       return nullptr;
     }
   }
-  prim->AddAttr(ops::kOriginOpName, MakeValue("ConcatV2"));
+  prim->AddAttr(ops::kOriginalOpName, MakeValue("ConcatV2"));
   return prim.release();
 }
 

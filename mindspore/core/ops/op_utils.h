@@ -258,7 +258,7 @@ constexpr auto kNumOutput = "num_output";
 constexpr auto kUseGlobalStats = "use_global_stats";
 constexpr auto kFmkType = "fmk_type";
 constexpr auto kIsOriginalPadMode = "is_original_pad_mode";
-constexpr auto kOriginOpName = "original_op_name";
+constexpr auto kOriginalOpName = "original_op_name";
 
 enum Index : size_t {
   kInputIndex0 = 0,

@@ -39,7 +39,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
     std::vector<float> scales = {1, scale, scale, 1};
     prim->AddAttr("scale", MakeValue(scales));
   }
-  prim->AddAttr(ops::kOriginOpName, MakeValue("Upsample"));
+  prim->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
   return prim.release();
 }
 

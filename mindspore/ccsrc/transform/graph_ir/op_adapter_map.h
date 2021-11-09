@@ -113,6 +113,7 @@ constexpr const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEnt
 constexpr const char kNameSigmoidCrossEntropyWithLogitsV2[] = "BCEWithLogitsLoss";
 constexpr const char kNameScatterNdD[] = "ScatterNd";
 constexpr const char kNamePadD[] = "Pad";
+constexpr const char kNamePadV1[] = "PadV1";
 constexpr const char kNameMirrorPad[] = "MirrorPad";
 constexpr const char kNameMirrorPadGrad[] = "MirrorPadGrad";
 constexpr const char kNameGatherNd[] = "GatherNd";
