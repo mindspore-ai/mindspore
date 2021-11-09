@@ -144,6 +144,14 @@ class OperatorInfo {
   void SetSelectedStrategy(const StrategyPtr &s_strategy, size_t);
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
+
+  TensorLayout GetInputLayoutFromSWCByStrategy(StrategyPtr stra, size_t input_index);
+  TensorLayout GetOutputLayoutFromSWCByStrategy(StrategyPtr stra, size_t output_index);
+  StrategyPtr GetStrategyFromSWCByInputLayout(TensorLayout input_layout, size_t input_index);
+  StrategyPtr GetStrategyFromSWCByOutputLayout(TensorLayout output_layout, size_t output_index);
+
+  void set_swc_index(int64_t, int64_t);
+  int64_t swc_index() { return swc_index_; }
   // Approximate the list of available strategies
   void ApproximateStrategies();
   // Make the list of available strategies exact and re-init the related edges incident to this operator
@@ -293,6 +301,7 @@ class OperatorInfo {
  private:
   OperatorCostPtr operator_cost_;
   std::vector<TypePtr> outputs_type_;
+  int64_t swc_index_ = -1;
 };
 
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);

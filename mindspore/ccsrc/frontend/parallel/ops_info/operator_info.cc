@@ -1363,6 +1363,50 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(StrategyPtr stra, size_t input_index) {
+  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) { return swc->strategy_ptr->IsEqual(stra); };
+  auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
+  if (it != strategy_cost_.end()) {
+    const auto &input_info = (*it)->inputs_ptr[input_index];
+    return std::move(input_info.tensor_layout());
+  }
+  TensorLayout empty;
+  return empty;
+}
+
+TensorLayout OperatorInfo::GetOutputLayoutFromSWCByStrategy(StrategyPtr stra, size_t output_index) {
+  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) { return swc->strategy_ptr->IsEqual(stra); };
+  auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
+  if (it != strategy_cost_.end()) {
+    const auto &output_info = (*it)->outputs_ptr[output_index];
+    return std::move(output_info.tensor_layout());
+  }
+  TensorLayout empty;
+  return empty;
+}
+
+StrategyPtr OperatorInfo::GetStrategyFromSWCByInputLayout(TensorLayout input_layout, size_t input_index) {
+  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) {
+    return swc->inputs_ptr[input_index].tensor_layout() == input_layout;
+  };
+  auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
+  if (it != strategy_cost_.end()) {
+    return (*it)->strategy_ptr;
+  }
+  return nullptr;
+}
+
+StrategyPtr OperatorInfo::GetStrategyFromSWCByOutputLayout(TensorLayout output_layout, size_t output_index) {
+  auto is_target = [&](std::shared_ptr<StrategyWithCost> swc) {
+    return swc->outputs_ptr[output_index].tensor_layout() == output_layout;
+  };
+  auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
+  if (it != strategy_cost_.end()) {
+    return (*it)->strategy_ptr;
+  }
+  return nullptr;
+}
+
 // Keep at most (1.0 / epsilon) number of available strategies for each operator.
 void OperatorInfo::ApproximateStrategies() {
   auto enable_approxi = CostModelContext::GetInstance()->dp_algo_enable_approxi();
@@ -1681,6 +1725,12 @@ void OperatorInfo::SetSelectedStrategy(const StrategyPtr &s_strategy, size_t cur
   PrintStrategy(s_strategy);
   selected_strategy_ = s_strategy;
   selected_strategy_depth_ = SizeToLong(curr_depth);
+}
+
+void OperatorInfo::set_swc_index(int64_t swc, int64_t depth) {
+  MS_LOG(INFO) << "Set SWC index: " << swc << " for: " << name();
+  selected_strategy_depth_ = depth;
+  swc_index_ = swc;
 }
 
 CNodePtr OperatorInfo::cnode() {

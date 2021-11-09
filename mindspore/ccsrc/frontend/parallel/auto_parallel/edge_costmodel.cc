@@ -23,6 +23,7 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/ops_info/reshape_info.h"
 
 namespace mindspore {
 namespace parallel {
@@ -392,6 +393,122 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPt
               return a.second <= b.second;
             });
   return prev_op_stras[0].first;
+}
+
+int64_t Edge::GetReshapeSWCIndexByNextOpStrategy(const StrategyPtr &next_op_stra, int64_t curr_depth,
+                                                 const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops) {
+  if (prev_op_->name().find(RESHAPEINFO) == std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << "'s prev_op is not a Reshape.";
+  }
+  if (next_op_->name().find(RESHAPEINFO) != std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << " has two Reshapes, which is not supported currently.";
+  }
+  const auto &reshape_output_layout = next_op_->GetInputLayoutFromSWCByStrategy(next_op_stra, next_op_input_index_);
+  MS_LOG(INFO) << prev_op_->name() << "'s output layout: " << reshape_output_layout.ToString();
+  auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(prev_op_);
+  // First, try to find the zero communication strategy.
+  auto swc_index = reshape_ptr->GetSWCIndexByOutputLayoutWithZeroComm(reshape_output_layout);
+  if (swc_index == -1 && curr_depth == 0) {
+    const auto &prev_edges = reshape_ptr->prev_edges();
+    if (!prev_edges.empty()) {
+      auto prev_edge = prev_edges[0];
+      if (configured_ops.find(prev_edge->prev_operator()) != configured_ops.end()) {
+        // Here, it is sure that Reshape's previous and next operators are both configured strategies,
+        // thus, it is OK that communication happens here.
+        swc_index = reshape_ptr->GetSWCIndexByOutputLayout(reshape_output_layout);
+      }
+    }
+  }
+  if (swc_index == -1) {
+    MS_LOG(EXCEPTION) << "No available strategy found at edge: " << edge_name_ << " for: " << prev_op_->name();
+  }
+  return swc_index;
+}
+
+int64_t Edge::GetReshapeSWCIndexByPrevOpStrategy(const StrategyPtr &prev_op_stra, int64_t curr_depth,
+                                                 const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops) {
+  if (next_op_->name().find(RESHAPEINFO) == std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << "'s next_op is not a Reshape.";
+  }
+  if (prev_op_->name().find(RESHAPEINFO) != std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << " has two Reshapes, which is not supported currently.";
+  }
+  const auto &reshape_input_lyt = prev_op_->GetOutputLayoutFromSWCByStrategy(prev_op_stra, prev_op_output_index_);
+  MS_LOG(INFO) << next_op_->name() << "'s input layout: " << reshape_input_lyt.ToString();
+  auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(next_op_);
+  // First, try to find the zero communication strategy.
+  auto swc_index = reshape_ptr->GetSWCIndexByInputLayoutWithZeroComm(reshape_input_lyt);
+  if (swc_index == -1 && curr_depth == 0) {
+    const auto &next_edges = reshape_ptr->succ_edges();
+    if (!next_edges.empty()) {
+      auto next_edge = next_edges[0];
+      if (configured_ops.find(next_edge->next_operator()) != configured_ops.end()) {
+        // Here, it is sure that Reshape's previous and next operators are both configured strategies,
+        // thus, it is OK that communication happens here.
+        swc_index = reshape_ptr->GetSWCIndexByInputLayout(reshape_input_lyt);
+      }
+    }
+  }
+  if (swc_index == -1) {
+    MS_LOG(EXCEPTION) << "No available strategy found at edge: " << edge_name_ << " for: " << next_op_->name();
+  }
+  return swc_index;
+}
+
+StrategyPtr Edge::GetPrevOpStrategyByReshapeSWCIndex(int64_t swc_index) {
+  if (next_op_->name().find(RESHAPEINFO) == std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << "'s next_op is not a Reshape.";
+  }
+  if (prev_op_->name().find(RESHAPEINFO) != std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << " has two Reshapes, which is not supported currently.";
+  }
+  auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(next_op_);
+  const auto &reshape_input_lyt = reshape_ptr->GetInputLayoutBySWCIndex(swc_index);
+  auto stra = prev_op_->GetStrategyFromSWCByOutputLayout(reshape_input_lyt, prev_op_output_index_);
+  if (stra == nullptr) {
+    MS_LOG(EXCEPTION) << "No available strategy found at edge: " << edge_name_ << " for: " << prev_op_->name();
+  }
+  return stra;
+}
+
+StrategyPtr Edge::GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index) {
+  if (prev_op_->name().find(RESHAPEINFO) == std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << "'s next_op is not a Reshape.";
+  }
+  if (next_op_->name().find(RESHAPEINFO) != std::string::npos) {
+    MS_LOG(EXCEPTION) << "The edge: " << edge_name_ << " has two Reshapes, which is not supported currently.";
+  }
+  auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(prev_op_);
+  const auto &reshape_output_lyt = reshape_ptr->GetOutputLayoutBySWCIndex(swc_index);
+  auto stra = next_op_->GetStrategyFromSWCByInputLayout(reshape_output_lyt, next_op_input_index_);
+  if (stra == nullptr) {
+    MS_LOG(EXCEPTION) << "No available strategy found at edge: " << edge_name_ << " for: " << prev_op_->name();
+  }
+  return stra;
+}
+
+bool Edge::CheckStrategyConsistency(const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops) {
+  auto prev_stra = prev_op_->selected_strategy();
+  auto next_stra = next_op_->selected_strategy();
+  if (prev_stra == nullptr) {
+    MS_LOG(EXCEPTION) << prev_op_->name() << "'s selected strategy is null!";
+  }
+  if (next_op_ == nullptr) {
+    MS_LOG(EXCEPTION) << next_op_->name() << "'s selected strategy is null!";
+  }
+  auto cost = GetCostByStrategyPair({prev_stra, next_stra});
+  if ((configured_ops.find(prev_op_) == configured_ops.end() ||
+       configured_ops.find(next_op_) == configured_ops.end()) &&
+      (cost == nullptr || cost->communication_cost_ > 0.0)) {
+    PrintStrategy(prev_op_->selected_strategy());
+    PrintStrategy(next_op_->selected_strategy());
+    MS_LOG(ERROR) << "There are redistribution cost occurs at edge: " << edge_name()
+                  << ", consider configuring sharding strategies for two operators."
+                  << " The full name of these two operators are: " << prev_op_->cnode()->fullname_with_scope()
+                  << " and " << next_op_->cnode()->fullname_with_scope();
+    return false;
+  }
+  return true;
 }
 
 void Edge::SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &cost_map) {
