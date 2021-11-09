@@ -520,26 +520,18 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
 void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                                    std::unordered_map<std::string, ValuePtr> *multi_value_map) {
   string name;
-  auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int i) -> void {
-    auto res = this->ParseAttrInScalarForm(attr_proto, i);
-    name = "value" + std::to_string(i + 1);
-    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+  auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int length) -> void {
+    for (int i = 0; i < length; ++i) {
+      auto res = this->ParseAttrInScalarForm(attr_proto, i);
+      name = "value" + std::to_string(i + 1);
+      multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+    }
   };
-  for (int i = 0; i < attr_proto.ints_size(); i++) {
-    func(attr_proto, i);
-  }
-  for (int i = 0; i < attr_proto.doubles_size(); i++) {
-    func(attr_proto, i);
-  }
-  for (int i = 0; i < attr_proto.floats_size(); i++) {
-    func(attr_proto, i);
-  }
-  for (int i = 0; i < attr_proto.strings_size(); i++) {
-    func(attr_proto, i);
-  }
-  for (int i = 0; i < attr_proto.tensors_size(); i++) {
-    func(attr_proto, i);
-  }
+  func(attr_proto, attr_proto.ints_size());
+  func(attr_proto, attr_proto.doubles_size());
+  func(attr_proto, attr_proto.floats_size());
+  func(attr_proto, attr_proto.strings_size());
+  func(attr_proto, attr_proto.tensors_size());
 }
 
 ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto) {
@@ -718,7 +710,9 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
     }
     tensor_vec.push_back(tensor_info);
   }
-  auto new_value_node = NewValueNode(MakeValue(tensor_vec));
+  auto value = MakeValue(tensor_vec);
+  auto new_value_node = NewValueNode(value);
+  new_value_node->set_abstract(value->ToAbstract());
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
