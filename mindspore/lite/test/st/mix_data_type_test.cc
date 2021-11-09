@@ -207,7 +207,7 @@ TEST_F(MixDataTypeTest, mix1) {
   auto status = impl->LoadConfig("MixDataTypeTestConfig");
   ASSERT_EQ(status, kSuccess);
 
-  status = impl->Build(flat_model, size, kFlatBuffer, context);
+  status = impl->Build(flat_model, size, kMindIR_Opt, context);
   ASSERT_EQ(status, kSuccess);
 
   /* check */

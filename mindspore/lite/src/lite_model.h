@@ -59,6 +59,8 @@ class LiteModel : public Model {
 
   SchemaTensorWrapper *GetSchemaTensor(const size_t &tensor_index) const;
 
+  static int VersionVerify(flatbuffers::Verifier *verify);
+
  private:
 #ifdef ENABLE_V0
   int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
@@ -264,8 +266,6 @@ class LiteModel : public Model {
 #ifdef ENABLE_V0
   void SetNodeDeviceType(Node *node, const schema::v0::CNode &c_node) { node->device_type_ = -1; }
 #endif
-
-  int VersionVerify(flatbuffers::Verifier *verify) const;
 
   int GenerateModelByVersion();
 

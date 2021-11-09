@@ -24,7 +24,16 @@
 #include "tools/converter/import/mindspore_importer.h"
 
 namespace mindspore::lite {
-char *RuntimeConvert(const char *file_path, size_t *size) {
+char *RuntimeConvert(const char *model_buf, size_t) {
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Invalid input model buffer.";
+    return nullptr;
+  }
+  MS_LOG(ERROR) << "Invalid Now. Use model path for model build.";
+  return nullptr;
+}
+
+char *RuntimeConvert(const std::string &file_path, size_t *size) {
   void *model_buf = nullptr;
   converter::Flags flag;
   flag.fmk = converter::kFmkTypeMs;

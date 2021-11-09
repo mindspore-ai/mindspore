@@ -31,6 +31,7 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "include/model.h"
+#include "include/api/types.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -62,7 +63,9 @@ constexpr const char *DELIM_SLASH = "/";
 extern const std::unordered_map<int, std::string> kTypeIdMap;
 extern const std::unordered_map<schema::Format, std::string> kTensorFormatMap;
 
-//
+const std::unordered_map<std::string, mindspore::ModelType> ModelTypeMap{
+  {"MindIR_Opt", mindspore::ModelType::kMindIR_Opt}, {"MindIR", mindspore::ModelType::kMindIR}};
+
 namespace dump {
 constexpr auto kConfigPath = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kSettings = "common_dump_settings";
@@ -103,11 +106,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   BenchmarkFlags() {
     // common
     AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
+    AddFlag(&BenchmarkFlags::model_type_, "modelType", "Input model type. MindIR | MindIR_Opt", "MindIR");
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU | Ascend310", "CPU");
-    AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode",
-            "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, default value: 1", 1);
+    AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode", "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU.", 1);
     // MarkPerformance
     AddFlag(&BenchmarkFlags::loop_count_, "loopCount", "Run loop count", 10);
     AddFlag(&BenchmarkFlags::num_threads_, "numThreads", "Run threads number", 2);
@@ -138,6 +141,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string model_file_;
   std::string in_data_file_;
   std::string config_file_;
+  std::string model_type_;
   std::vector<std::string> input_data_list_;
   InDataType in_data_type_ = kBinary;
   std::string in_data_type_in_ = "bin";
@@ -297,6 +301,8 @@ class MS_API BenchmarkBase {
   }
 
   int CheckThreadNumValid();
+
+  int CheckModelValid();
 
   int CheckDeviceTypeValid();
 

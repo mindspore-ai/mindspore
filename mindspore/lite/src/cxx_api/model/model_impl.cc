@@ -71,7 +71,8 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     return kLiteNullptr;
   }
 
-  auto ret = lite::LiteSession::CreateSessionByBuf(static_cast<const char *>(model_data), data_size, session.get());
+  auto ret =
+    lite::LiteSession::CreateSessionByBuf(static_cast<const char *>(model_data), model_type, data_size, session.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     return kLiteError;
@@ -99,7 +100,7 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
     return kLiteNullptr;
   }
 
-  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session.get());
+  auto ret = lite::LiteSession::CreateSessionByPath(model_path, model_type, session.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     return kLiteError;

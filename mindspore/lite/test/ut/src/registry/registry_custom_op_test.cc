@@ -203,7 +203,7 @@ TEST_F(TestRegistryCustomOp, TestCustomAdd) {
 
   // build a model
   auto model = std::make_shared<mindspore::Model>();
-  auto ret = model->Build(content, size, kFlatBuffer, context);
+  auto ret = model->Build(content, size, kMindIR_Opt, context);
   ASSERT_EQ(kSuccess, ret.StatusCode());
   auto inputs = model->GetInputs();
   ASSERT_EQ(inputs.size(), 2);

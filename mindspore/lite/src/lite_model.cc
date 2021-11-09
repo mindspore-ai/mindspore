@@ -192,7 +192,7 @@ int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   return RET_OK;
 }
 
-int LiteModel::VersionVerify(flatbuffers::Verifier *verify) const {
+int LiteModel::VersionVerify(flatbuffers::Verifier *verify) {
   if (verify == nullptr) {
     MS_LOG(ERROR) << "verify is null.";
     return RET_ERROR;
