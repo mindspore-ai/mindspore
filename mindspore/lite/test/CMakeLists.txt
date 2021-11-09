@@ -83,6 +83,7 @@ add_definitions(-DENABLE_V0)
 
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 file(GLOB CXX_SRC
+        ${LITE_DIR}/src/c_api/*.cc
         ${LITE_DIR}/src/cxx_api/*.cc
         ${LITE_DIR}/src/cxx_api/graph/*.cc
         ${LITE_DIR}/src/cxx_api/model/*.cc
@@ -330,6 +331,8 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
+        ${TEST_DIR}/ut/src/api/context_c_test.cc
+        ${TEST_DIR}/ut/src/api/tensor_c_test.cc
         )
 
 if(MSLITE_ENABLE_CONVERTER)

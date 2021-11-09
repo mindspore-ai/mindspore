@@ -39,8 +39,8 @@ int SliceCPUKernel::ReSize() {
   auto begin_tensor = in_tensors_[1];
   auto size_tensor = in_tensors_[2];
 
-  MS_ASSERT(in_tensor->shape().size() == begin_tensor->ElementsNum());
-  MS_ASSERT(in_tensor->shape().size() == size_tensor->ElementsNum());
+  MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()));
+  MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
 
   auto begin = reinterpret_cast<int32_t *>(begin_tensor->data_c());

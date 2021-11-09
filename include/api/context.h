@@ -40,6 +40,7 @@ class DeviceInfoContext;
 
 class MS_API Context {
  public:
+  struct Data;
   Context();
   ~Context() = default;
 
@@ -63,7 +64,6 @@ class MS_API Context {
   std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
 
  private:
-  struct Data;
   std::shared_ptr<Data> data_;
 };
 
