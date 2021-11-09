@@ -98,7 +98,12 @@ def absolute(x, dtype=None):
         [1. 2. 3. 4. 5.]
     """
     original_dtype = x.dtype
-    if not _check_is_float(original_dtype) and dtype is None:
+    allowed_types = None
+    if _get_device() == "Ascend":
+        allowed_types = (mstype.float16, mstype.float32)
+    else:
+        allowed_types = (mstype.int32, mstype.float16, mstype.float32, mstype.float64)
+    if original_dtype not in allowed_types and dtype is None:
         x = x.astype(mstype.float32)
         return _apply_tensor_op(F.absolute, x, dtype=dtype).astype(original_dtype)
     return _apply_tensor_op(F.absolute, x, dtype=dtype)

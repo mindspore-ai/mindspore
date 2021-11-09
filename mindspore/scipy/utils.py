@@ -20,6 +20,9 @@ from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
 from .utils_const import _type_convert, _raise_type_error
+from ..ops.composite import GradOperation
+
+grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
 
 
 def _convert_64_to_32(tensor):
@@ -31,12 +34,16 @@ def _convert_64_to_32(tensor):
     return tensor
 
 
-def _to_tensor(*args):
+def _to_tensor(*args, dtype=None):
     """Returns each input as Tensor"""
     res = ()
     for arg in args:
         if isinstance(arg, (int, float, bool, list, tuple)):
-            arg = _convert_64_to_32(_type_convert(Tensor, arg))
+            arg = _type_convert(Tensor, arg)
+            if dtype is None:
+                arg = _convert_64_to_32(arg)
+            else:
+                arg = arg.astype(dtype)
         elif not isinstance(arg, Tensor):
             _raise_type_error("Expect input to be array like.")
         res += (arg,)
@@ -70,7 +77,7 @@ class _SafeNormalize(nn.Cell):
 
     def construct(self, x, threshold=None):
         x_sum2 = F.reduce_sum(F.pows(x, 2.0))
-        norm = F.pows(x_sum2, 1./2.0)
+        norm = F.pows(x_sum2, 1. / 2.0)
         if threshold is None:
             if x.dtype in mstype.float_type:
                 # pick the first element of x to get the eps
@@ -84,8 +91,6 @@ class _SafeNormalize(nn.Cell):
 
 _safe_normalize = _SafeNormalize()
 
-_FLOAT_ONE = _to_tensor(1.0)
-_FLOAT_ZERO = _to_tensor(0.0)
 _INT_ZERO = _to_tensor(0)
 _INT_ONE = _to_tensor(1)
 _BOOL_TRUE = _to_tensor(True)

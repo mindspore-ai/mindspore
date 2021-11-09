@@ -55,7 +55,7 @@ def matyas(np):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)),
                                      (himmelblau, onp.zeros(2)),
                                      (himmelblau, onp.array([92, 0.001])),
@@ -63,7 +63,7 @@ def matyas(np):
 def test_bfgs(dtype, func_x0):
     """
     Feature: ALL TO ALL
-    Description: test cases for bfgs
+    Description: test cases for bfgs in PYNATIVE mode
     Expectation: the result match scipy
     """
     func, x0 = func_x0
@@ -79,11 +79,11 @@ def test_bfgs(dtype, func_x0):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_bfgs_fixes4594(dtype):
     """
     Feature: ALL TO ALL
-    Description: test cases for bfgs
+    Description: test cases for bfgs in PYNATIVE mode
     Expectation: the result match scipy
     """
     n = 2
@@ -95,3 +95,26 @@ def test_bfgs_fixes4594(dtype):
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='BFGS',
                                     options=dict(maxiter=None, gtol=1e-6)).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
+def test_bfgs_graph(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for bfgs in GRAPH mode
+    Expectation: the result match scipy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6)).x
+    scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS').x
+    match_array(ms_res.asnumpy(), scipy_res, error=5)
