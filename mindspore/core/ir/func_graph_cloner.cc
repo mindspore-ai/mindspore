@@ -774,7 +774,6 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   MS_EXCEPTION_IF_NULL(func_graph);
   auto debug_info = CloneGraphDebugInfo(func_graph->debug_info(), relation);
   auto new_func_graph = std::make_shared<FuncGraph>(std::move(debug_info));
-  new_func_graph->set_debug_info(std::make_shared<GraphDebugInfo>(*func_graph->debug_info()));
   for (auto &param : func_graph->parameters()) {
     MS_EXCEPTION_IF_NULL(param);
     auto param_debug_info = CloneNodeDebugInfo(param->debug_info());

@@ -177,6 +177,11 @@ class MS_CORE_API DebugInfo {
   /// \brief Destructor of DebugInfo.
   virtual ~DebugInfo() = default;
 
+  /// \brief Get the id.
+  ///
+  /// \return The id of the debug info.
+  int64_t get_id() const;
+
   /// \brief Get the unique id.
   ///
   /// \return The unique id.
@@ -233,6 +238,7 @@ class MS_CORE_API DebugInfo {
     return cur_unique_id++;
   }
 
+  mutable int64_t id_ = 0;
   int64_t unique_id_;
   TraceInfoPtr trace_info_;
   LocationPtr location_;
@@ -314,7 +320,6 @@ class GraphDebugInfo : public DebugInfo {
 
   ~GraphDebugInfo() override = default;
 
-  int64_t get_id();
   std::string debug_name() override;
   LocationPtr location() override;
   LocationPtr deco_location() { return deco_loc_; }
@@ -326,7 +331,6 @@ class GraphDebugInfo : public DebugInfo {
   std::string get_python_func_belonged() override { return py_func_name_; }
 
  private:
-  int64_t id_ = 0;
   FuncGraphWeakPtr func_graph_;
   LocationPtr deco_loc_;
   std::string py_func_name_;
