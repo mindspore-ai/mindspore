@@ -76,13 +76,13 @@ void NPUManager::Reset() {
   models_.clear();
 }
 
-bool NPUManager::CheckDDKVersion() {
+bool NPUManager::CheckDDKVersion(const std::string &spec_version) {
   auto client = std::make_shared<hiai::AiModelMngerClient>();
   if (client->GetVersion() != nullptr) {
     std::string version = client->GetVersion();
-    int ret = CompareVersion(version, "100.320.011.018");
-    if (ret <= 0) {
-      MS_LOG(WARNING) << "DDK Version " << version << " less than 100.320.011.018";
+    int ret = CompareVersion(version, spec_version);
+    if (ret < 0) {
+      MS_LOG(WARNING) << "DDK Version " << version << " less than " << spec_version;
       return false;
     }
   } else {
@@ -96,16 +96,16 @@ bool NPUManager::IsSupportNPU() {
   // Avoid multiple checks
   if (!is_check_version_) {
     is_check_version_ = true;
-    if (IsKirinChip() && CheckDDKVersion()) {
-      is_support_ = true;
+    if (IsKirinChip() && CheckDDKVersion("100.320.011.017")) {
+      is_support_npu_ = true;
       MS_LOG(INFO) << "The current device support NPU.";
     } else {
-      is_support_ = false;
+      is_support_npu_ = false;
       MS_LOG(WARNING) << "The current device NOT SUPPORT NPU.";
     }
-    return is_support_;
+    return is_support_npu_;
   } else {
-    return is_support_;
+    return is_support_npu_;
   }
 }
 

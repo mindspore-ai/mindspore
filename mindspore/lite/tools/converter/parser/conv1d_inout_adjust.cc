@@ -33,7 +33,7 @@ constexpr size_t kConvWeightIndex = 2;
 constexpr int64_t kNumDim2 = 2;
 }  // namespace
 CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                               const std::vector<int64_t> &axis) {
+                                               const std::vector<int64_t> &axis, std::string name) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr");
   MS_CHECK_TRUE_MSG(input_node != nullptr, nullptr, "input_node is nullptr");
   MS_CHECK_TRUE_MSG(!axis.empty(), nullptr, "axis is empty");
@@ -45,7 +45,7 @@ CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, c
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node};
   auto unsqueeze = func_graph->NewCNode(op_inputs);
   MS_CHECK_TRUE_MSG(unsqueeze != nullptr, nullptr, "new CNode failed.");
-  unsqueeze->set_fullname_with_scope(input_node->fullname_with_scope() + "_unsqueeze");
+  unsqueeze->set_fullname_with_scope(name);
   return unsqueeze;
 }
 
@@ -126,9 +126,9 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     }
 
     auto input_node = cnode->input(1);
-    auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis);
+    auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis, cnode->fullname_with_scope() + "_unsqueeze");
     MS_CHECK_TRUE_MSG(unsqueeze != nullptr, false, "New unsqueeze node failed.");
-    (void)manager->Replace(input_node, unsqueeze);
+    (void)manager->SetEdge(cnode, SECOND_INPUT, unsqueeze);
     auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
     (void)manager->Replace(cnode, squeeze);
@@ -143,7 +143,8 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     auto weight_tensor = opt::GetTensorInfo(weight_node);
     if (weight_tensor == nullptr) {
       MS_LOG(DEBUG) << "weight node is not param value, insert not for weight.";
-      auto unsqueeze_weight = NewUnsqueezeOpNode(func_graph, weight_node, axis);
+      auto unsqueeze_weight =
+        NewUnsqueezeOpNode(func_graph, weight_node, axis, cnode->fullname_with_scope() + "_unsqueeze_weight");
       MS_CHECK_TRUE_MSG(unsqueeze_weight != nullptr, false, "New unsqueeze node failed.");
       (void)manager->Replace(input_node, unsqueeze_weight);
       return true;

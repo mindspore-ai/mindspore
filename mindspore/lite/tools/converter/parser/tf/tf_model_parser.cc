@@ -204,6 +204,7 @@ STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     }
   } else {
     const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
+    MS_CHECK_GE(tensor_proto.tensor_content().size(), shape_size * sizeof(int64_t), RET_ERROR);
     for (int i = 0; i < shape_size; ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
         MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";

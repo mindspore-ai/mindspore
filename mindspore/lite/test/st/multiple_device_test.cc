@@ -227,7 +227,7 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
    *          cos     exp   where   sin
    * CPU       *       *      *      *
    * GPU       *       *             *
-   * NPU       *                     *
+   * NPU       *       *             *
    *
    * */
 
@@ -240,12 +240,12 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
 
   } else if (mode == NPU_CPU) {
     ASSERT_EQ(3, kernels.size());
-    /* NPU : cos */
+    /* NPU : cos exp */
     auto subgraph0 = kernels.at(0);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph0->desc().arch);
-    /* CPU : exp where */
+    /* CPU : where */
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
-    ASSERT_EQ(2, subgraph1->nodes().size());
+    ASSERT_EQ(1, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph1->desc().arch);
     /* NPU : sin */
     auto subgraph2 = kernels.at(2);
@@ -269,33 +269,25 @@ void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode)
 
   } else if (mode == NPU_GPU_CPU) {
     /* NPU > GPU >  CPU */
-    ASSERT_EQ(4, kernels.size());
-    /* NPU : cos */
-    auto subgraph0 = kernels.at(0);
-    ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph0->desc().arch);
-    /* GPU : to_format exp to_format */
-    auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
-    ASSERT_EQ(3, subgraph1->nodes().size());
-    ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph1->desc().arch);
+    ASSERT_EQ(3, kernels.size());
+    /* NPU : cos exp */
+    auto subgraph1 = kernels.at(0);
+    ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph1->desc().arch);
     /* CPU : where */
-    auto subgraph2 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(2));
+    auto subgraph2 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
     ASSERT_EQ(1, subgraph2->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kCPU, subgraph2->desc().arch);
     /* NPU : sin */
-    auto subgraph3 = kernels.at(3);
+    auto subgraph3 = kernels.at(2);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph3->desc().arch);
   } else if (mode == NPU2) {
     /* NPU > GPU */
-    ASSERT_EQ(2, kernels.size());
-    /* NPU : cos */
+    ASSERT_EQ(1, kernels.size());
+    /* NPU : cos exp */
     auto subgraph0 = kernels.at(0);
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kDelegate, subgraph0->desc().arch);
-    /* GPU : to_format exp to_format */
-    auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(1));
-    ASSERT_EQ(3, subgraph1->nodes().size());
-    ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph1->desc().arch);
   } else if (mode == GPU_NPU2) {
-    /* NPU > GPU */
+    /* GPU > NPU */
     ASSERT_EQ(1, kernels.size());
     /* GPU : to_format cos exp to_format */
     auto subgraph1 = reinterpret_cast<mindspore::kernel::SubGraphKernel *>(kernels.at(0));

@@ -27,9 +27,6 @@ namespace lite {
 ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
@@ -40,9 +37,6 @@ ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT
 ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
@@ -53,9 +47,6 @@ ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::Operator
 ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
@@ -70,9 +61,6 @@ ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::Oper
 ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::PReLUFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_channel_shared(true);
@@ -83,9 +71,6 @@ ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::Operator
 ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::TANH);
@@ -96,9 +81,6 @@ ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT
 ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::HSWISH);

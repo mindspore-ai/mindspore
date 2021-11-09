@@ -27,10 +27,6 @@ ops::PrimitiveC *TFTensorArrayParser::Parse(const tensorflow::NodeDef &tf_op,
                                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                             std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF TensorArrayParser";
-  if (inputs == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "inputs or output_size is nullptr";
-    return nullptr;
-  }
   auto prim = std::make_unique<TensorArrayV3>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr";
