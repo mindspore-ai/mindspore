@@ -35,7 +35,7 @@ int WhereCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
-  where_param_->op_parameter_.thread_num_ = thread_count_;
+  where_param_->op_parameter_.thread_num_ = ms_context_->thread_num_;
   return RET_OK;
 }
 
@@ -53,13 +53,14 @@ int WhereCPUKernel::DoExcute(int task_id) {
   CHECK_NULL_RETURN(y_);
   CHECK_NULL_RETURN(output_data_);
   CHECK_NULL_RETURN(where_param_);
-  WhereWithTripleInputs(condition_, x_, y_, output_data_, where_param_, task_id);
+  WhereWithTripleInputs(condition_, static_cast<float *>(x_), static_cast<float *>(y_),
+                        static_cast<float *>(output_data_), where_param_, task_id);
   return RET_OK;
 }
 
 int WhereRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto wheredata = reinterpret_cast<WhereCPUKernel *>(cdata);
-  auto ret = wheredata->DoExcute(task_id);
+  auto kernel = reinterpret_cast<WhereCPUKernel *>(cdata);
+  auto ret = kernel->DoExcute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -124,11 +125,11 @@ int WhereCPUKernel::RunWithTripleInputs() {
 
   condition_ = reinterpret_cast<bool *>(condition->data());
   CHECK_NULL_RETURN(condition_);
-  x_ = reinterpret_cast<float *>(x->data());
+  x_ = x->data();
   CHECK_NULL_RETURN(x_);
-  y_ = reinterpret_cast<float *>(y->data());
+  y_ = y->data();
   CHECK_NULL_RETURN(y_);
-  output_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  output_data_ = out_tensors_.at(0)->data();
   int num_max = condition_nums > x_num ? condition_nums : (x_num > y_num ? x_num : y_num);
   where_param_->condition_num_ = condition_nums;
   where_param_->x_num_ = x_num;

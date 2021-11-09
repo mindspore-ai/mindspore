@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "nnacl/fp32/where_fp32.h"
+#include "nnacl/fp16/where_fp16.h"
 #include "nnacl/common_func.h"
 
-void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
-                           const WhereParameter *param, int task_id) {
+void WhereWithTripleInputsFp16(const bool *condition, const float16_t *x, const float16_t *y, float16_t *output,
+                               const WhereParameter *param, int task_id) {
   if (param->op_parameter_.thread_num_ == 0) {
     return;
   }
