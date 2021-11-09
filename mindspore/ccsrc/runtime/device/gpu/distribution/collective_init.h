@@ -38,9 +38,12 @@ class CollectiveInitializer {
   CollectiveInitializer &operator=(const CollectiveInitializer &) = delete;
   static CollectiveInitializer &instance();
   bool collective_inited() const;
-  const void *collective_handle() const;
+  const void *collective_handle();
   static void InitCollective();
   static void FinalizeCollective();
+
+  // Dynamically load shared library of libgpu_collective.so.
+  void DynamicLoadCollectiveLib();
 
  private:
   CollectiveInitializer() : collective_inited_(false) {}

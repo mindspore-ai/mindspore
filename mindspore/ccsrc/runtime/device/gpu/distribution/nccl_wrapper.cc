@@ -31,6 +31,14 @@ ncclUniqueId NCCLWrapper::nccl_unique_id() const {
   return unique_id;
 }
 
+ncclResult_t NCCLWrapper::NCCLCommInitRank(ncclComm_t *newcomm, int nranks, ncclUniqueId commId, int myrank) {
+  return ncclCommInitRank(newcomm, nranks, commId, myrank);
+}
+
+ncclResult_t NCCLWrapper::NCCLCommAbort(ncclComm_t comm) { return ncclCommAbort(comm); }
+
+ncclResult_t NCCLWrapper::NCCLCommDestroy(ncclComm_t comm) { return ncclCommDestroy(comm); }
+
 void NCCLWrapper::InitNCCLComm() {
   if (comm_init_done_) {
     return;

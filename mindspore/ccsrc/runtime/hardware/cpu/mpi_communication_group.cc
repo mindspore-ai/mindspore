@@ -19,12 +19,24 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-void MPICommunicationGroup::Finalize() {
+MPICommunicationGroup::MPICommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks,
+                                             uint32_t global_rank)
+    : CommunicationGroup(name, group_ranks, global_rank) {}
+
+bool MPICommunicationGroup::Finalize() {
+  if (!initialized_) {
+    return false;
+  }
   CHECK_MPI_RET(MPI_Comm_free(&group_communicator_), "Freeing MPI group communicator for " + name_ + " failed.");
   CHECK_MPI_RET(MPI_Group_free(&group_), "Freeing MPI group for " + name_ + " failed.");
+  initialized_ = false;
+  return true;
 }
 
-void MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
+bool MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
+  if (initialized_) {
+    return false;
+  }
   std::vector<int> ranks(group_ranks_.begin(), group_ranks_.end());
   CHECK_MPI_RET(MPI_Group_incl(world_group, ranks.size(), ranks.data(), &group_),
                 "Creating MPI group for " + name_ + " failed.");
@@ -33,8 +45,10 @@ void MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
                 "Creating MPI group communicator for " + name_ + " failed.");
   if (group_communicator_ == MPI_COMM_NULL) {
     MS_LOG(EXCEPTION) << "The MPI communicator for group " << name_ << " failed.";
-    return;
+    return false;
   }
+  initialized_ = true;
+  return true;
 }
 }  // namespace cpu
 }  // namespace device

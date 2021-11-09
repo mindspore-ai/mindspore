@@ -31,17 +31,23 @@ namespace device {
 // MsCollectiveCommLib which uses the host-side communication library developed by MindSpore.
 class CollectiveCommunicationLib {
  public:
-  CollectiveCommunicationLib() : global_rank_id_(0), local_rank_id_(0), global_rank_size_(0) {}
+  CollectiveCommunicationLib()
+      : collective_comm_lib_ptr_(nullptr),
+        initialized_(false),
+        global_rank_id_(0),
+        local_rank_id_(0),
+        global_rank_size_(0) {}
   virtual ~CollectiveCommunicationLib() { groups_.clear(); }
 
   // Initialize collecitve communication library.
-  // Input 'global_rank' represents this process's global rank.
-  // Normally, collective communication libraries on host side will generate this rank inside the 'Initialize' method.
-  // But collective communication libraries on device side needs this input passed by the caller.
-  virtual void Initialize(uint32_t global_rank = UINT32_MAX) { return; }
+  // Inputs 'global_rank' and 'global_rank_size' represents this process's global rank and the group size of the world
+  // group.
+  // Normally, collective communication libraries on host side will generate these two parameters inside 'Initialize'
+  // method. But collective communication libraries on device side needs these inputs passed by the caller.
+  virtual bool Initialize(uint32_t global_rank = UINT32_MAX, uint32_t global_rank_size = UINT32_MAX) = 0;
 
   // Finalize collecitve communication library.
-  virtual void Finalize() { return; }
+  virtual bool Finalize();
 
   // Create communication group. This is the precondition for all collective operations on both host and device side.
   virtual bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
@@ -57,10 +63,19 @@ class CollectiveCommunicationLib {
   // Get the size of the specified group.
   uint32_t GetGroupSize(const std::string &group_name);
 
+  // Assign the local rank id for this process. Normally used by collective communication library on the host side.
+  virtual bool AssignLocalRank() { return true; }
+
   // Returns the local rank id of this process.
   uint32_t local_rank_id() const;
 
  protected:
+  // The third party collective communication library. They are dynamically loaded by MindSpore.
+  const void *collective_comm_lib_ptr_;
+
+  // Whether this collective communication library is initialized.
+  bool initialized_;
+
   // The global rank id of this process. Normally this range is 0 to `total process number - 1`.
   uint32_t global_rank_id_;
 

@@ -18,6 +18,23 @@
 
 namespace mindspore {
 namespace device {
+bool CollectiveCommunicationLib::Finalize() {
+  if (!initialized_) {
+    return false;
+  }
+
+  for (const auto &group : groups_) {
+    MS_EXCEPTION_IF_NULL(group.second);
+    if (!group.second->Finalize()) {
+      MS_LOG(EXCEPTION) << "Finalizing group failed.";
+      return false;
+    }
+  }
+  groups_.clear();
+  initialized_ = false;
+  return true;
+}
+
 bool CollectiveCommunicationLib::DestroyCommunicationGroup(const std::string &group_name) {
   if (groups_.count(group_name) == 0) {
     MS_LOG(EXCEPTION) << "The group " << group_name << " is not created.";

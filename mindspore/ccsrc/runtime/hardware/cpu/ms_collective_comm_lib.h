@@ -33,8 +33,8 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
     return instance;
   }
 
-  void Initialize() override;
-  void Finalize() override;
+  bool Initialize(uint32_t global_rank = UINT32_MAX, uint32_t global_rank_size = UINT32_MAX) override;
+  bool Finalize() override;
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
   bool DestroyCommunicationGroup(const std::string &group_name) override;

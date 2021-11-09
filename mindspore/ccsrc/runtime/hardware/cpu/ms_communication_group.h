@@ -26,13 +26,13 @@ namespace device {
 namespace cpu {
 class MsCommunicationGroup : public CommunicationGroup {
  public:
-  explicit MsCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks)
-      : MsCommunicationGroup(name, group_ranks) {}
+  explicit MsCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
+      : MsCommunicationGroup(name, group_ranks, global_rank) {}
 
   ~MsCommunicationGroup() override = default;
 
-  void Initialize() override;
-  void Finalize() override;
+  bool Initialize(void *root_info) override;
+  bool Finalize() override;
 };
 }  // namespace cpu
 }  // namespace device

@@ -71,3 +71,13 @@ ncclResult_t GroupEnd() { return NCCLWrapper::instance().GroupEnd(); }
 std::vector<int> GetGroupRanks(const std::string &group_name) {
   return NCCLWrapper::instance().GetGroupRanks(group_name);
 }
+
+ncclUniqueId nccl_unique_id() { return NCCLWrapper::instance().nccl_unique_id(); }
+
+ncclResult_t NCCLCommInitRank(ncclComm_t *newcomm, int nranks, ncclUniqueId commId, int myrank) {
+  return NCCLWrapper::instance().NCCLCommInitRank(newcomm, nranks, commId, myrank);
+}
+
+ncclResult_t NCCLCommAbort(ncclComm_t comm) { return NCCLWrapper::instance().NCCLCommAbort(comm); }
+
+ncclResult_t NCCLCommDestroy(ncclComm_t comm) { return NCCLWrapper::instance().NCCLCommDestroy(comm); }
