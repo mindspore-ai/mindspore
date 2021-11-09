@@ -122,6 +122,16 @@ int ConvolutionDelegateFP16CPUKernel::ReSize() {
   return ret;
 }
 
+bool ConvolutionDelegateFP16CPUKernel::CheckInputsValid() const {
+  // the data type of input and weight must be the same, while the bias data type of int8 convolution is int32.
+  MS_CHECK_TRUE_RET(in_tensors_.size() >= kInputSize1, false);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  MS_CHECK_TRUE_RET(input_tensor != nullptr && weight_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(input_tensor->data() != nullptr, false);
+  return input_tensor->data_type() == weight_tensor->data_type();
+}
+
 kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                 const InnerContext *ctx) {

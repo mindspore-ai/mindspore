@@ -311,8 +311,9 @@ bool LiteModel::ModelVerify() const {
       return false;
     }
     // check the input data type
-    auto element_size = DataTypeSize(static_cast<const TypeId>(tensor->dataType()));
-    if (element_size == 0) {
+    if ((static_cast<const TypeId>(tensor->dataType()) <= kNumberTypeBegin ||
+         static_cast<const TypeId>(tensor->dataType()) >= kNumberTypeEnd) &&
+        static_cast<const TypeId>(tensor->dataType()) != kObjectTypeString) {
       MS_LOG(ERROR) << "The data type is not supported to malloc.";
       return false;
     }

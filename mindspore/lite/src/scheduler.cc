@@ -1367,13 +1367,12 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
   ResetByExecutionPlan(src_node->name_, &prefer_data_type);
 
   auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
-  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
                   << ", type: " << GetPrimitiveTypeName(src_node->primitive_, schema_version_);
     return nullptr;
   }
-
+  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   SetKernelTensorDataType(kernel);
   kernel->set_name(src_node->name_);
   if (kernel->kernel() != nullptr) {
