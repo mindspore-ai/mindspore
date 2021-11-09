@@ -21,9 +21,9 @@ import functools
 from mindspore import ops
 from mindspore import log as logger
 from mindspore.ops.op_info_register import RegOp, DataType
-from mindspore.ops._register_for_op import PyFuncRegistry
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Oplib
+from ._pyfunc_registry import add_pyfunc
 
 
 class CustomRegOp(RegOp):
@@ -127,10 +127,6 @@ def custom_op_info_register(*reg_info):
         return wrapper
 
     return decorator
-
-
-def get_pyfunc(fn):
-    return Custom.registered_py_id.get(fn)
 
 
 class Custom(ops.PrimitiveWithInfer):
@@ -311,7 +307,6 @@ class Custom(ops.PrimitiveWithInfer):
 
     registered_func = {}
     attr_dict = {}  # Save input_names and attr_names for func.
-    registered_py_id = PyFuncRegistry()
 
     def __init__(self, func, out_shape, out_dtype, func_type, bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -331,7 +326,7 @@ class Custom(ops.PrimitiveWithInfer):
             self.fn_id = id(self.func)
             self.uniq_name = self.name + "_" + self.func_name + "_" + str(self.fn_id)
             if func_type == "pyfunc":
-                Custom.registered_py_id.register(self.fn_id, self.func)
+                add_pyfunc(self.fn_id, self.func)
         elif isinstance(self.func, str):
             self.func_name = self.func
             self.uniq_name = self.name + "_" + self.func_name

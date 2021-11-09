@@ -42,8 +42,7 @@ struct PyFuncArgumentInfo {
 
 class PyFuncCpuKernel : public CPUKernel {
  public:
-  PyFuncCpuKernel()
-      : is_custom_(false), init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
+  PyFuncCpuKernel() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
   ~PyFuncCpuKernel() = default;
 
   // Init kernel including analyse PyFunc input and output info.
@@ -59,10 +58,6 @@ class PyFuncCpuKernel : public CPUKernel {
   py::function GetPythonFunc();
   bool ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  // both mindspore.ops.operations.custom_ops.Custom and mindspore.ops.operations.PyFunc will launch
-  // this kernel (these two have similar features, will further be unified);if is_custom_ is true, then it's
-  // launched from Custom; if not, it's from PyFunc
-  bool is_custom_;
   bool init_;
   bool fake_output_;
   bool single_scalar_output_;

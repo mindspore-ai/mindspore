@@ -212,7 +212,6 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }  // namespace
 
 void PyFuncCpuKernel::InitKernel(const CNodePtr &kernel_node) {
-  is_custom_ = IsPrimitiveCNode(kernel_node, prim::kPrimCustom);
   func_id_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
   fake_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
   single_scalar_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
@@ -313,8 +312,7 @@ bool PyFuncCpuKernel::ExecuteKernel(const std::vector<AddressPtr> &inputs, const
 
 py::function PyFuncCpuKernel::GetPythonFunc() {
   py::gil_scoped_acquire gil_acquire;
-  static const std::string &module_name =
-    is_custom_ ? "mindspore.ops.operations.custom_ops" : "mindspore.ops.operations.other_ops";
+  static const std::string &module_name = "mindspore.ops.operations._pyfunc_registry";
   static const std::string &entrance = "get_pyfunc";
   py::module module = py::module::import(module_name.c_str());
   py::object get_pyfunc_obj = module.attr(entrance.c_str());

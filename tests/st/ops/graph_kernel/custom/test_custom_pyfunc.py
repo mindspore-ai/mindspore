@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import platform
 import numpy as np
 import pytest
 
@@ -161,3 +162,32 @@ def test_pyfunc_scalar():
     net = PyFuncGraph(func_single_output, shape, ms_dtype)
     x = net(Tensor(x1), Tensor(x2))
     assert np.allclose(x.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pyfunc_pynative():
+    """
+    Feature: test case for Custom op with func_type="pyfunc"
+    Description:  the net runs on CPU; PYNATIVE_MODE
+    Expectation: the result match with numpy result
+    """
+    sys = platform.system()
+    if sys == 'Windows':
+        pass
+    else:
+        context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+        shape = (40, 40)
+
+        np.random.seed(42)
+        x1 = np.random.randint(-5, 5, size=shape).astype(np.float32)
+        x2 = np.random.randint(-5, 5, size=shape).astype(np.float32)
+        n1, n2 = func_multi_output(x1, x2)
+
+        net = Custom(func_multi_output, (shape, shape), (ms.float32, ms.float32), "pyfunc")
+        out = net(Tensor(x1), Tensor(x2))
+        add = P.Add()
+        res = add(out[0], out[1])
+
+        assert np.allclose(res.asnumpy(), n1+n2)
