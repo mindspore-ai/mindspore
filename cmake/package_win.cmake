@@ -142,6 +142,11 @@ if(ENABLE_MPI)
       DESTINATION ${INSTALL_LIB_DIR}
       COMPONENT mindspore
     )
+    install(
+      TARGETS mpi_collective
+      DESTINATION ${INSTALL_LIB_DIR}
+      COMPONENT mindspore
+    )
   endif()
 endif()
 
@@ -149,6 +154,11 @@ if(ENABLE_GPU)
   if(ENABLE_MPI)
     install(
       TARGETS gpu_collective
+      DESTINATION ${INSTALL_LIB_DIR}
+      COMPONENT mindspore
+    )
+    install(
+      TARGETS nvidia_collective
       DESTINATION ${INSTALL_LIB_DIR}
       COMPONENT mindspore
     )

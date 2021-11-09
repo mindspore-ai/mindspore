@@ -31,12 +31,7 @@ namespace device {
 // MsCollectiveCommLib which uses the host-side communication library developed by MindSpore.
 class CollectiveCommunicationLib {
  public:
-  CollectiveCommunicationLib()
-      : collective_comm_lib_ptr_(nullptr),
-        initialized_(false),
-        global_rank_id_(0),
-        local_rank_id_(0),
-        global_rank_size_(0) {}
+  CollectiveCommunicationLib() : initialized_(false), global_rank_id_(0), local_rank_id_(0), global_rank_size_(0) {}
   virtual ~CollectiveCommunicationLib() { groups_.clear(); }
 
   // Initialize collecitve communication library.
@@ -70,9 +65,6 @@ class CollectiveCommunicationLib {
   uint32_t local_rank_id() const;
 
  protected:
-  // The third party collective communication library. They are dynamically loaded by MindSpore.
-  const void *collective_comm_lib_ptr_;
-
   // Whether this collective communication library is initialized.
   bool initialized_;
 

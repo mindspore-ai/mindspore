@@ -24,11 +24,8 @@ bool CollectiveCommunicationLib::Finalize() {
   }
 
   for (const auto &group : groups_) {
-    MS_EXCEPTION_IF_NULL(group.second);
-    if (!group.second->Finalize()) {
-      MS_LOG(EXCEPTION) << "Finalizing group failed.";
-      return false;
-    }
+    CHECK_IF_NULL(group.second);
+    CHECK_RET(group.second->Finalize(), true, "Finalizing group failed.");
   }
   groups_.clear();
   initialized_ = false;
@@ -36,33 +33,25 @@ bool CollectiveCommunicationLib::Finalize() {
 }
 
 bool CollectiveCommunicationLib::DestroyCommunicationGroup(const std::string &group_name) {
-  if (groups_.count(group_name) == 0) {
-    MS_LOG(EXCEPTION) << "The group " << group_name << " is not created.";
-    return false;
-  }
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " is not created.");
   auto group = groups_[group_name];
-  MS_EXCEPTION_IF_NULL(group);
-  group->Finalize();
+  CHECK_IF_NULL(group);
+  CHECK_RET(group->Finalize(), true, "Finalizing group failed.");
+  (void)groups_.erase(group_name);
   return true;
 }
 
 uint32_t CollectiveCommunicationLib::GetRankId(const std::string &group_name) {
-  if (groups_.count(group_name) == 0) {
-    MS_LOG(EXCEPTION) << "The group " << group_name << " does not exist.";
-    return UINT32_MAX;
-  }
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
   auto group = groups_[group_name];
-  MS_EXCEPTION_IF_NULL(group);
+  CHECK_IF_NULL(group);
   return group->GetGroupRank(global_rank_id_);
 }
 
 uint32_t CollectiveCommunicationLib::GetGroupSize(const std::string &group_name) {
-  if (groups_.count(group_name) == 0) {
-    MS_LOG(EXCEPTION) << "The group " << group_name << " does not exist.";
-    return UINT32_MAX;
-  }
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
   auto group = groups_[group_name];
-  MS_EXCEPTION_IF_NULL(group);
+  CHECK_IF_NULL(group);
   return group->group_size();
 }
 

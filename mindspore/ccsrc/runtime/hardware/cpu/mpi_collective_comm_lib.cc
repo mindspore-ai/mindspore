@@ -24,47 +24,62 @@ bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
     return false;
   }
 
-  // Initialize MPI interface.
   int initialized = 0;
-  CHECK_MPI_RET(MPI_Initialized(&initialized), "Failed to check MPI initialization status.");
+  CHECK_RET(MPI_Initialized(&initialized), MPI_SUCCESS, "Failed to check MPI initialization status.");
   if (initialized == 0) {
-    CHECK_MPI_RET(MPI_Init(nullptr, nullptr), "Failed to initialize MPI.");
+    CHECK_RET(MPI_Init(nullptr, nullptr), MPI_SUCCESS, "Failed to initialize MPI.");
   }
 
   // Generated MPI global rank id and rank size for the world group MPI_COMM_WORLD.
   int rank_id = 0;
   int rank_size = 0;
-  CHECK_MPI_RET(MPI_Comm_rank(MPI_COMM_WORLD, &rank_id), "Failed to initialize MPI global rank id.");
-  CHECK_MPI_RET(MPI_Comm_rank(MPI_COMM_WORLD, &rank_size), "Failed to initialize MPI global rank size.");
-  global_rank_id_ = IntToUint(rank_id);
-  global_rank_size_ = IntToUint(rank_size);
-  MS_LOG(INFO) << "The MPI global rank id of this process is " << global_rank_id_ << ", global rank size is "
-               << global_rank_size_;
+  CHECK_RET(MPI_Comm_rank(MPI_COMM_WORLD, &rank_id), MPI_SUCCESS, "Failed to initialize MPI global rank id.");
+  CHECK_RET(MPI_Comm_size(MPI_COMM_WORLD, &rank_size), MPI_SUCCESS, "Failed to initialize MPI global rank size.");
+  global_rank_id_ = static_cast<uint32_t>(rank_id);
+  global_rank_size_ = static_cast<uint32_t>(rank_size);
 
   // Create the world group of MPI because every other group is generated from MPI world group.
-  CHECK_MPI_RET(MPI_Comm_group(MPI_COMM_WORLD, &world_group_), "Failed to get group of MPI_COMM_WORLD.");
+  CHECK_RET(MPI_Comm_group(MPI_COMM_WORLD, &world_group_), MPI_SUCCESS, "Failed to get group of MPI_COMM_WORLD.");
   initialized_ = true;
   return true;
 }
 
 bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                     const std::vector<uint32_t> &group_ranks) {
-  if (groups_.count(group_name) != 0) {
-    MS_LOG(EXCEPTION) << "The MPI group " << group_name << " has already existed.";
-    return false;
-  }
+  CHECK_RET((groups_.count(group_name) == 0), true, "The MPI group " + group_name + " has already existed.");
 
   MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks, global_rank_id_);
-  MS_EXCEPTION_IF_NULL(group);
-  if (!group->Initialize(world_group_)) {
-    MS_LOG(EXCEPTION) << "Initializing group failed.";
-    return false;
-  }
-
+  CHECK_IF_NULL(group);
+  CHECK_RET(group->Initialize(world_group_), true, "Initializing group failed.");
   groups_[group_name] = group;
-  MS_LOG(INFO) << "MPI group of " << group_name << " is created.";
   return true;
 }
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
+
+// The exported APIs for 'dlsym' to load.
+using MPICollectiveCommLib = mindspore::device::cpu::MPICollectiveCommLib;
+bool InitializeCollectiveLib(uint32_t global_rank, uint32_t global_rank_size) {
+  return MPICollectiveCommLib::GetInstance().Initialize(global_rank, global_rank_size);
+}
+
+bool FinalizeCollectiveLib() { return MPICollectiveCommLib::GetInstance().Finalize(); }
+
+bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
+  return MPICollectiveCommLib::GetInstance().CreateCommunicationGroup(group_name, group_ranks);
+}
+
+bool DestroyCommunicationGroup(const std::string &group_name) {
+  return MPICollectiveCommLib::GetInstance().DestroyCommunicationGroup(group_name);
+}
+
+uint32_t GetRankId(const std::string &group_name) { return MPICollectiveCommLib::GetInstance().GetRankId(group_name); }
+
+uint32_t GetCommunicationGroupSize(const std::string &group_name) {
+  return MPICollectiveCommLib::GetInstance().GetGroupSize(group_name);
+}
+
+bool AssignLocalRank() { return MPICollectiveCommLib::GetInstance().AssignLocalRank(); }
+
+uint32_t local_rank_id() { return MPICollectiveCommLib::GetInstance().local_rank_id(); }

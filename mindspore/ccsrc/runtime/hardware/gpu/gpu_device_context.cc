@@ -30,9 +30,6 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_common.h"
 #include "runtime/hardware/gpu/optimizer.h"
-#ifdef ENABLE_MPI
-#include "runtime/hardware/gpu/nvidia_collective_comm_lib.h"
-#endif
 #include "common/trans.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/gpu/gpu_bucket.h"
@@ -530,8 +527,21 @@ std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint3
 
 bool GPUDeviceContext::InitCollectiveCommLib() {
 #ifdef ENABLE_MPI
-  collective_comm_lib_ = &NvidiaCollectiveCommLib::GetInstance();
-  collective_comm_lib_->Initialize();
+  std::string nvidia_comm_lib_name = "libnvidia_collective.so";
+  auto loader = std::make_shared<CollectiveCommLibLoader>(nvidia_comm_lib_name);
+  MS_EXCEPTION_IF_NULL(loader);
+  if (!loader->Initialize()) {
+    MS_LOG(EXCEPTION) << "Loading NCCL collective library failed.";
+    return false;
+  }
+  collective_comm_lib_ptr_ = loader->collective_comm_lib_ptr();
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_ptr_);
+
+  auto init_collecitve_lib_func = DlsymFuncObj(InitializeCollectiveLib, collective_comm_lib_ptr_);
+  if (!init_collecitve_lib_func(0, 0)) {
+    MS_LOG(EXCEPTION) << "Initializing for NCCL library failed.";
+    return false;
+  }
   return true;
 #else
   return false;

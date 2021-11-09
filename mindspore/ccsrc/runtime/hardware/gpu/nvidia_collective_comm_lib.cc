@@ -19,10 +19,6 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-NvidiaCollectiveCommLib::NvidiaCollectiveCommLib() {
-  collective_comm_lib_ptr_ = CollectiveInitializer::instance().collective_handle();
-}
-
 bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
   if (initialized_) {
     return false;
@@ -30,26 +26,48 @@ bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
 
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
-  MS_LOG(INFO) << "The global rank id of this process is " << global_rank_id_
-               << ", global rank size of nccl_world_group is " << global_rank_size_;
   initialized_ = true;
   return true;
 }
 
 bool NvidiaCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                        const std::vector<uint32_t> &group_ranks) {
-  if (groups_.count(group_name) != 0) {
-    MS_LOG(EXCEPTION) << "The NCCL group " << group_name << " has already existed.";
-    return false;
-  }
+  CHECK_RET((groups_.count(group_name) == 0), true, "The NCCL group " + group_name + " has already existed.");
 
   NvidiaCommunicationGroupPtr group =
     std::make_shared<NvidiaCommunicationGroup>(group_name, group_ranks, global_rank_id_);
-  MS_EXCEPTION_IF_NULL(group);
+  CHECK_IF_NULL(group);
   groups_[group_name] = group;
-  MS_LOG(INFO) << "NCCL group of " << group_name << " is created. But it's not initialized yet.";
   return true;
 }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+
+// The exported APIs for 'dlsym' to load.
+using NvidiaCollectiveCommLib = mindspore::device::gpu::NvidiaCollectiveCommLib;
+bool InitializeCollectiveLib(uint32_t global_rank, uint32_t global_rank_size) {
+  return NvidiaCollectiveCommLib::GetInstance().Initialize(global_rank, global_rank_size);
+}
+
+bool FinalizeCollectiveLib() { return NvidiaCollectiveCommLib::GetInstance().Finalize(); }
+
+bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
+  return NvidiaCollectiveCommLib::GetInstance().CreateCommunicationGroup(group_name, group_ranks);
+}
+
+bool DestroyCommunicationGroup(const std::string &group_name) {
+  return NvidiaCollectiveCommLib::GetInstance().DestroyCommunicationGroup(group_name);
+}
+
+uint32_t GetRankId(const std::string &group_name) {
+  return NvidiaCollectiveCommLib::GetInstance().GetRankId(group_name);
+}
+
+uint32_t GetCommunicationGroupSize(const std::string &group_name) {
+  return NvidiaCollectiveCommLib::GetInstance().GetGroupSize(group_name);
+}
+
+bool AssignLocalRank() { return NvidiaCollectiveCommLib::GetInstance().AssignLocalRank(); }
+
+uint32_t local_rank_id() { return NvidiaCollectiveCommLib::GetInstance().local_rank_id(); }

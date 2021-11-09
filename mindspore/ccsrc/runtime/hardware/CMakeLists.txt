@@ -7,11 +7,32 @@ endif()
 
 if(ENABLE_GPU)
     file(GLOB_RECURSE HARDWARE_GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu/*.cc")
+    list(REMOVE_ITEM HARDWARE_GPU_SRC_LIST "gpu/nvidia_collective_comm_lib.cc" "gpu/nvidia_communication_group.cc")
+    if(ENABLE_MPI)
+        set(NVIDIA_COLLECTIVE_SRCS "gpu/nvidia_collective_comm_lib.cc"
+                                "gpu/nvidia_communication_group.cc"
+                                "collective/collective_communication_lib.cc"
+                                "collective/communication_group.cc")
+        set_property(SOURCE ${NVIDIA_COLLECTIVE_SRCS} PROPERTY COMPILE_DEFINITIONS
+                        SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        add_library(nvidia_collective SHARED ${NVIDIA_COLLECTIVE_SRCS})
+        target_link_libraries(nvidia_collective PRIVATE mindspore::nccl)
+    endif()
 endif()
 
 if(ENABLE_CPU)
     file(GLOB_RECURSE HARDWARE_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
     list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "cpu/mpi_collective_comm_lib.cc" "cpu/mpi_communication_group.cc")
+    if(ENABLE_MPI)
+        set(MPI_COLLECTIVE_SRCS "cpu/mpi_collective_comm_lib.cc"
+                                "cpu/mpi_communication_group.cc"
+                                "collective/collective_communication_lib.cc"
+                                "collective/communication_group.cc")
+        set_property(SOURCE ${MPI_COLLECTIVE_SRCS} PROPERTY COMPILE_DEFINITIONS
+                        SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        add_library(mpi_collective SHARED ${MPI_COLLECTIVE_SRCS})
+        target_link_libraries(mpi_collective PRIVATE mindspore::ompi)
+    endif()
 endif()
 
 

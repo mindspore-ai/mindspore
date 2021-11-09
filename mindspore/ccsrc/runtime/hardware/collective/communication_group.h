@@ -21,8 +21,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "mindspore/core/utils/log_adapter.h"
-#include "mindspore/core/utils/convert_utils_base.h"
+#include <sstream>
+#include <algorithm>
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 namespace device {
@@ -56,9 +57,6 @@ class CommunicationGroup {
   uint32_t group_size() const;
 
  protected:
-  // The third party collective communication libraries. They are dynamically loaded by MindSpore.
-  const void *collective_comm_lib_ptr_;
-
   // Whether this communication group is initialized.
   bool initialized_;
 
@@ -81,4 +79,24 @@ class CommunicationGroup {
 using CommunicationGroupPtr = std::shared_ptr<CommunicationGroup>;
 }  // namespace device
 }  // namespace mindspore
+
+#define CHECK_RET(expression, result, message)                                                   \
+  do {                                                                                           \
+    auto ret = (expression);                                                                     \
+    if (ret != result) {                                                                         \
+      std::ostringstream oss;                                                                    \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": " << message; \
+      pybind11::pybind11_fail(oss.str());                                                        \
+    }                                                                                            \
+  } while (0)
+
+#define CHECK_IF_NULL(ptr)                                                                               \
+  do {                                                                                                   \
+    if ((ptr) == nullptr) {                                                                              \
+      std::ostringstream oss;                                                                            \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": The pointer[" << #ptr \
+          << "] is null.";                                                                               \
+      pybind11::pybind11_fail(oss.str());                                                                \
+    }                                                                                                    \
+  } while (0)
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COMMUNICATION_GROUP_H_
