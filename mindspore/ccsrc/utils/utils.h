@@ -298,6 +298,7 @@ constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
 constexpr auto kBatchMatMulOpName = "BatchMatMul";
+constexpr auto kBatchMatMulV2OpName = "BatchMatMulV2";
 constexpr auto kBroadcastToOpName = "BroadcastTo";
 constexpr auto kFusedAddReluV2Name = "FusedAddReluV2";
 constexpr auto kFusedAddReluGradV2Name = "FusedAddReluGradV2";
@@ -491,6 +492,8 @@ constexpr auto kAttrInputSize = "input_size";
 constexpr auto kAttrDstType = "dst_type";
 constexpr auto kAttrDump = "dump";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
+constexpr auto kAttrFixedInputFormat = "fixed_input_format";
+constexpr auto kAttrFixedOutputFormat = "fixed_output_format";
 constexpr auto kAttrFuncType = "func_type";
 
 // custom operator func type

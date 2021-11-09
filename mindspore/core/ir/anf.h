@@ -832,14 +832,39 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Set groups attr in FracZ format.
   ///
   /// \param[in] fracz_group Groups attr in FracZ format.
-  void set_fracz_group(int64_t fracz_group) { fracz_group_ = fracz_group; }
+  void set_fracz_group(int64_t fracz_group) { format_attrs_.fracz_group = fracz_group; }
 
   /// \brief Get groups attr in FracZ format.
   ///
   /// \return Groups attr in FracZ format.
-  int64_t fracz_group() { return fracz_group_; }
+  int64_t fracz_group() { return format_attrs_.fracz_group; }
+
+  /// \brief Set input_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  ///
+  /// \param[in] input_size input_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  void set_input_size(int64_t input_size) { format_attrs_.input_size = input_size; }
+
+  /// \brief Get input_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  ///
+  /// \return input_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  int64_t input_size() { return format_attrs_.input_size; }
+
+  /// \brief Set hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  ///
+  /// \param[in] hidden_size hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  void set_hidden_size(int64_t hidden_size) { format_attrs_.hidden_size = hidden_size; }
+
+  /// \brief Get hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  ///
+  /// \return hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
+  int64_t hidden_size() { return format_attrs_.hidden_size; }
 
  private:
+  struct FormatAttr {
+    int64_t fracz_group = 1;
+    int64_t input_size = 0;
+    int64_t hidden_size = 0;
+  };
   std::string name_;
   bool has_default_;
   std::set<uint32_t> not_used_in_graphs_;
@@ -847,8 +872,8 @@ class MS_CORE_API Parameter final : public ANode {
   ValuePtr default_param_;
   // The count of graphs using the parameter.
   int used_graph_count_;
-  // groups attr in FracZ format
-  int64_t fracz_group_ = 1;
+  // some attrs used in special format
+  FormatAttr format_attrs_;
   bool is_top_graph_param_ = false;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;

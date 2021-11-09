@@ -22,6 +22,17 @@
 
 namespace mindspore {
 namespace opt {
+struct RNNShapeSpecs {
+  size_t t_size;
+  size_t batch_size;
+  size_t input_size;
+  size_t hidden_size;
+  size_t batch_nz_size;
+  size_t input_nz_size;
+  size_t hidden_nz_size;
+  bool shape_need_align = false;
+};
+
 class DynamicRnnGradFissionV2 : public PatternProcessPass {
  public:
   explicit DynamicRnnGradFissionV2(bool multigraph = true)
@@ -32,16 +43,16 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
 
  private:
   void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                       std::vector<std::vector<AnfNodePtr>> *result_nodes) const;
+                       const RNNShapeSpecs &specs, std::vector<std::vector<AnfNodePtr>> *result_nodes) const;
   AnfNodePtr CreateLSTMSPlitV(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                               const std::vector<std::vector<size_t>> &split_shapes,
                               const std::vector<TypeId> &split_types, const std::vector<int64_t> &size_split,
                               size_t num_split_x) const;
   void CreateTLoopNodeWithEdge(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                                const std::vector<std::vector<AnfNodePtr>> &result_nodes, size_t num_split_x,
-                               std::vector<std::vector<AnfNodePtr>> *loop_node_outputs) const;
+                               bool shape_need_align, std::vector<std::vector<AnfNodePtr>> *loop_node_outputs) const;
   AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                                  std::vector<AnfNodePtr> *outputs) const;
+                                  const RNNShapeSpecs &specs, std::vector<AnfNodePtr> *outputs) const;
   AnfNodePtr CreateSplitV(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode) const;
   AnfNodePtr CreateHConcat(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                            const AnfNodePtr &splitv) const;
@@ -52,13 +63,15 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
                                const AnfNodePtr &concat) const;
   AnfNodePtr CreateBatchMatMul2(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
                                 const AnfNodePtr &node) const;
+  CNodePtr CreateTranspose(const FuncGraphPtr &func_graph, const AnfNodePtr &dw_reduce_sum,
+                           const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDwReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                               const AnfNodePtr &batch_matmul) const;
+                               const AnfNodePtr &batch_matmul, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDwReshape(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                             const AnfNodePtr &batch_matmul) const;
+                             const AnfNodePtr &batch_matmul, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode) const;
   AnfNodePtr CreateDbReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &, const AnfNodePtr &lstm_input_grad,
-                               const AnfNodePtr &value_node) const;
+                               const AnfNodePtr &value_node, const RNNShapeSpecs &specs) const;
 };
 }  // namespace opt
 }  // namespace mindspore

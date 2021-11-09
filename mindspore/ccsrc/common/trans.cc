@@ -739,7 +739,9 @@ std::vector<size_t> FracZNRNNDeviceShape(const std::vector<size_t> &shape,
   } else if (dim_last2 == input_size + hidden_size) {
     device_shape[shape.size() - kDim2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
   } else {
-    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
+    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid. Should be equal to `input_size` or "
+                         "`hidden_size` or `input_size + hidden_size`, but got second-last dim value: "
+                      << dim_last2 << " input_size: " << input_size << " hidden_size: " << hidden_size;
   }
   device_shape[shape.size() - 1] = n_num * DivCeil(hidden_size, C0);
   device_shape.push_back(NUM16);
@@ -754,8 +756,8 @@ std::vector<int64_t> FracZNRNNDeviceDynamicShape(const std::vector<int64_t> &sha
   }
   int64_t input_size = input_hidden_size[0];
   int64_t hidden_size = input_hidden_size[1];
-  auto dim_last1 = shape[shape.size() - 1];
-  auto dim_last2 = shape[shape.size() - 2];
+  auto dim_last1 = shape[shape.size() - kDim1];
+  auto dim_last2 = shape[shape.size() - kDim2];
   const int64_t NUM16 = 16;
   const int64_t C0 = SizeToLong(kCubeSize);
 
@@ -767,7 +769,9 @@ std::vector<int64_t> FracZNRNNDeviceDynamicShape(const std::vector<int64_t> &sha
   } else if (dim_last2 == input_size + hidden_size) {
     device_shape[shape.size() - kDim2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
   } else {
-    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
+    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid. Should be equal to `input_size` or "
+                         "`hidden_size` or `input_size + hidden_size` or `-1`, but got second-last dim value: "
+                      << dim_last2 << " input_size: " << input_size << " hidden_size: " << hidden_size;
   }
   if (dim_last1 == Shape::SHP_ANY) {
     device_shape[shape.size() - kDim1] = Shape::SHP_ANY;
@@ -857,18 +861,25 @@ int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
 std::vector<int64_t> GetAttrInputAndHiddenSize(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<int64_t> input_hidden_size = {kAlign16, kAlign16};
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() && !node->isa<Parameter>()) {
     return input_hidden_size;
   }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(kAttrHiddenSize, cnode) || !AnfAlgo::HasNodeAttr(kAttrInputSize, cnode)) {
-    MS_LOG(EXCEPTION)
-      << "Node with format FRACTAL_ZN_RNN or ND_RNN_BIAS should have hidden_size or input_size attr. Node info:"
-      << cnode->DebugString();
+
+  if (node->isa<Parameter>()) {
+    auto param = node->cast<ParameterPtr>();
+    input_hidden_size[0] = param->input_size();
+    input_hidden_size[1] = param->hidden_size();
+  } else {
+    CNodePtr cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || !AnfAlgo::HasNodeAttr(kAttrHiddenSize, cnode) ||
+        !AnfAlgo::HasNodeAttr(kAttrInputSize, cnode)) {
+      MS_LOG(EXCEPTION)
+        << "Node with format FRACTAL_ZN_RNN or ND_RNN_BIAS should have hidden_size or input_size attr. Node info:"
+        << node->DebugString();
+    }
+    input_hidden_size[0] = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrInputSize);
+    input_hidden_size[1] = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrHiddenSize);
   }
-  input_hidden_size[0] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrInputSize);
-  input_hidden_size[1] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrHiddenSize);
   return input_hidden_size;
 }
 
