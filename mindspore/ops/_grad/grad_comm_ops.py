@@ -18,7 +18,7 @@ from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.communication import get_rank, get_group_size
-from mindspore.parallel._utils import _get_enable_parallel_optimizer
+from mindspore.parallel._utils import _get_enable_parallel_optimizer, _get_grad_accumulation_shard
 from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -131,8 +131,22 @@ def get_bprop_virtual_assign_add(self):
     cast = P.Cast()
     dtype = P.DType()
     out_tensor = Tensor(0.0, mstype.float16)
+    reduce_scatter = None
+    group = self.get_attr_dict().get("group", None)
+    fusion = self.get_attr_dict().get("fusion", 0)
+    if group:
+        reduce_scatter = ReduceScatter(ReduceOp.SUM, group).add_prim_attr("fusion", fusion)
+        if self.instance_name:
+            instance_name = "_grad_accumulation_shard_grad" + self.instance_name
+            reduce_scatter.set_prim_instance_name(instance_name)
+            # For pipeline training, as the fused communication will be visited later
+            # this may make memory increase, so we need to add a tag to let the
+            # fused communication not be effective.
+            reduce_scatter.add_prim_attr("not_delay_fusion", True)
 
     def bprop(x, y, out, dout):
+        if reduce_scatter:
+            dout = reduce_scatter(dout)
         temp = assign_add(y, dout)
         return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(y))), temp)
 
@@ -237,8 +251,11 @@ def get_bprop_mini_step_all_gather(self):
     fusion = self.get_attr_dict()["fusion"]
     mean_flag = self.get_attr_dict()["mean_flag"]
     do_mirror = self.get_attr_dict()["do_mirror"]
+    add_accu = self.get_attr_dict().get("add_accu", False)
+    gradient_shard = _get_grad_accumulation_shard()
     scale = 1 / self.rank_size
     all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+    assign_add = P.AssignAdd()
     if self.instance_name:
         instance_name = "grad_" + self.instance_name
         all_reduce.set_prim_instance_name(instance_name)
@@ -248,15 +265,21 @@ def get_bprop_mini_step_all_gather(self):
 
     def bprop(x, z, out, dout):
         if do_mirror:
-            if mean_flag:
+            if not gradient_shard:
                 z = F.depend(z, F.assign_add(z, dout))
                 grad = all_reduce(z)
                 dx = split(grad)[rank]
-                dx = F.tensor_mul(dx, scale)
+                if mean_flag:
+                    dx = F.tensor_mul(dx, scale)
             else:
-                z = F.depend(z, F.assign_add(z, dout))
-                grad = all_reduce(z)
+                dout = F.depend(dout, z)
+                grad = all_reduce(dout)
                 dx = split(grad)[rank]
+                if mean_flag:
+                    dx = F.tensor_mul(dx, scale)
+                if add_accu:
+                    z = assign_add(z, dx)
+                dx = F.depend(dx, z)
         else:
             dx = dout
         return (dx, zeros_like(z))
@@ -269,6 +292,7 @@ def get_bprop_micro_step_all_gather(self):
     """Generate bprop for _MicroStepAllGather"""
     fusion = self.get_attr_dict()["fusion"]
     mean_flag = self.get_attr_dict()["mean_flag"]
+    do_mirror = self.get_attr_dict()["do_mirror"]
     scale = 1 / self.rank_size
     all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
     rank = get_rank(self.group)
@@ -284,6 +308,8 @@ def get_bprop_micro_step_all_gather(self):
     # z: accu_grad
     def bprop(x, z, out, dout):
         z = F.depend(z, dout)
+        if not do_mirror:
+            return (z, cast(out_tensor, dtype(z)))
         real_grad = all_reduce(z)
         real_grad = split(real_grad)[rank]
         if mean_flag:

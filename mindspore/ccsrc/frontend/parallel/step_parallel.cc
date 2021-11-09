@@ -64,7 +64,7 @@ static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
-void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool accu_flag) {
+void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_mirror, bool accu_flag) {
   if (new_node_input.empty()) {
     return;
   }
@@ -73,7 +73,8 @@ void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool acc
   MS_EXCEPTION_IF_NULL(prim);
 
   auto attrs = prim->attrs();
-  attrs[DO_MIRROR] = MakeValue<bool>(!accu_flag);
+  attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
+  attrs[ADD_ACCU] = MakeValue<bool>(accu_flag);
   prim->SetAttrs(attrs);
 }
 
@@ -189,7 +190,9 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
   SetCommunicationOpGroupLabel(new_node_input);
   // gradient accumulation
   if (grad_accumulation_step > 1) {
-    SetMiniStepOpDoMirrorLabel(new_node_input, root->has_flag(ACCUMULATION));
+    bool add_accu = root->has_flag(ACCUMULATION);
+    // MiniStep need to do mirror at each micro step as we use the gradient accumulation sharding,
+    SetMiniStepOpDoMirrorLabel(new_node_input, !add_accu, !add_accu);
   }
   return new_node_input;
 }
@@ -1510,6 +1513,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
                               const AnfNodePtr &node, const std::string &op_name, bool is_shared_param) {
   MS_EXCEPTION_IF_NULL(res.first);
   MS_EXCEPTION_IF_NULL(node);
+  bool grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
   auto cnode = res.first->cast<CNodePtr>();
   auto graph = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1528,6 +1532,12 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     op = CreateAllGatherOp(group);
   }
   CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
+  std::string opt_shard_mirror_group;
+  auto param_ptr = node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param_ptr);
+  if (param_ptr->user_data<TensorLayout>()) {
+    opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+  }
   if (!is_shared_param && cast_node) {
     allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE, param_name, root);
     MS_LOG(INFO) << "Parallel optimizer is applied before Cast for " << param_name;
@@ -1541,6 +1551,17 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   AddCommOpFusionType(allgather, node);
   // add gradients mean
   AddCommOpMeanFlag(allgather);
+  if (op_name == MICRO_STEP_ALL_GATHER) {
+    // When grad_accumulation_shard is enabled, the ReduceScatter is inserted at each micro step
+    // so no need to do backward for the micro_step_allgather
+    AddCommOpMirrorFlag(allgather, !grad_accumulation_shard);
+  } else if (op_name == MINI_STEP_ALL_GATHER) {
+    // We need to manually set the add_accu to be false if it's father node is MirrorMiniStep
+    bool add_accu = root->has_flag(ACCUMULATION);
+    bool is_with_mirror = opt_shard_mirror_group.size() > 1;
+    AddCommOpAddAccuFlag(allgather, !add_accu && !is_with_mirror);
+    AddCommOpMirrorFlag(allgather, grad_accumulation_shard || !add_accu);
+  }
 }
 
 static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &parameter,

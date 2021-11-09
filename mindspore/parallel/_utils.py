@@ -219,6 +219,11 @@ def _get_enable_parallel_optimizer():
     return auto_parallel_context().get_enable_parallel_optimizer()
 
 
+def _get_grad_accumulation_shard():
+    """Get if using parallel shard."""
+    return auto_parallel_context().get_grad_accumulation_shard()
+
+
 def _device_number_check(parallel_mode, device_number):
     """
     Check device num.

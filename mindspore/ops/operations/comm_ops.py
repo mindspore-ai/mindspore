@@ -299,6 +299,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 1)
+        self.add_prim_attr('do_mirror', False)
         self.mean_flag = mean_flag
 
     def infer_shape(self, x_shape, z_shape):

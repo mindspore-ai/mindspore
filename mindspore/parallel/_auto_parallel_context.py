@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Context of auto parallel"""
+import os
 import threading
-
-import mindspore.context as context
+from mindspore import context
 import mindspore.log as logger
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
 from mindspore.parallel._ps_context import _is_role_pserver
@@ -25,6 +25,13 @@ from mindspore._checkparam import args_type_check, Validator
 _MAX_GROUP_NAME_LEN = 127
 _DEFAULT_HCCL_FUSION_GROUP_NAME = "hccl_world_groupsum1"
 _DEFAULT_NCCL_FUSION_GROUP_NAME = "nccl_world_groupsum1"
+
+
+class _ParallelOptimizerConfig:
+    """
+    The key of the Parallel Optimizer. There are three
+    """
+    GRADIENT_ACCUMULATION_SHARD = "gradient_accumulation_shard"
 
 
 class _AutoParallelContext:
@@ -326,7 +333,6 @@ class _AutoParallelContext:
             strategy_ckpt_save_file (bool): Path to save parallel strategy checkpoint.
         """
         self.check_context_handle()
-        import os
         dir_path = os.path.dirname(strategy_ckpt_save_file)
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -340,7 +346,6 @@ class _AutoParallelContext:
     def set_group_ckpt_save_file(self, group_ckpt_save_file):
         """Set group checkpoint save path."""
         self.check_context_handle()
-        import os
         dir_path = os.path.dirname(group_ckpt_save_file)
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -488,6 +493,41 @@ class _AutoParallelContext:
         """Get parallel optimizer flag."""
         self.check_context_handle()
         return self._context_handle.get_enable_parallel_optimizer()
+
+    def set_parallel_optimizer_config(self, parallel_optimizer_config):
+        """
+        Set the configure for parallel optimizer. The configure provides more detailed behavior control about parallel
+        training when parallel optimizer is enabled.
+        Currently it supports the key `gradient_accumulation_shard`. The configure will be effective
+        when we use context.set_auto_parallel_context(enable_parallel_optimizer=True).
+
+        Args:
+            parallel_optimizer_config(dict): A dict contains the keys and values for setting the parallel optimizer
+            configure. It supports the following keys:
+
+            - gradient_accumulation_shard: If ture, the accumulation gradient parameters will be sharded
+                                           across the data parallel devices. This will introduce additional
+                                           communication(ReduceScatter) at each step when accumulate the
+                                           gradients, but saves a lot of device memories,
+                                           thus can make model be trained with larger batch size.
+                                           This configure is effective only when the model runs on pipeline
+                                           training or gradient accumulation with data parallel.
+        """
+        self.check_context_handle()
+        grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
+        if grad_shard_name in parallel_optimizer_config:
+            Validator.check_bool(
+                parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
+            self._context_handle.set_grad_accumulation_shard(
+                parallel_optimizer_config[grad_shard_name])
+        else:
+            raise ValueError(f"The parallel_optimizer_config doest not contains {grad_shard_name}, please check your "
+                             f"parallel_optimizer_config")
+
+
+    def get_grad_accumulation_shard(self):
+        self.check_context_handle()
+        return self._context_handle.get_grad_accumulation_shard()
 
     def set_sharding_propagation(self, sharding_propagation):
         """
@@ -648,6 +688,7 @@ _set_auto_parallel_context_func_map = {
     "full_batch": auto_parallel_context().set_full_batch,
     "dataset_strategy": auto_parallel_context().set_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
+    "parallel_optimizer_config": auto_parallel_context().set_parallel_optimizer_config,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
@@ -802,5 +843,6 @@ def _reset_auto_parallel_context():
     - enable_parallel_optimizer: False
     - auto_parallel_search_mode: dynamic_programming
     - pipeline_stages: 0
+    - gradient_accumulation_shard: True
     """
     auto_parallel_context().reset()

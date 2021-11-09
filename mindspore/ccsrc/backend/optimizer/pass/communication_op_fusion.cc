@@ -389,6 +389,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     auto final_node_prim = GetCNodePrimitive(final_node);
     fused_prim->set_instance_name(final_node_prim->instance_name());
   }
+  if (AnfAlgo::HasNodeAttr(kAttrNotDelayFusion, final_node)) {
+    AnfAlgo::CopyNodeAttr(kAttrNotDelayFusion, final_node, fused_node);
+  }
   return fused_node;
 }
 

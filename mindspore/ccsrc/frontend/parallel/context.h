@@ -127,6 +127,10 @@ class ParallelContext {
 
   void set_hccl_test_available(bool hccl_test_available) { hccl_test_available_ = hccl_test_available; }
   bool hccl_test_available() const { return hccl_test_available_; }
+  void set_grad_accumulation_shard(const bool grad_accumulation_shard) {
+    grad_accumulation_shard_ = grad_accumulation_shard;
+  }
+  bool grad_accumulation_shard() const { return grad_accumulation_shard_; }
 
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
@@ -174,6 +178,7 @@ class ParallelContext {
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
+  bool grad_accumulation_shard_;
   // In AUTO_PARALLEL mode, 'sharding_propagation_' = True indicates that sharding-configured operators
   // will propagate the sharding strategies to other operators with minimum redistribution cost.
   bool sharding_propagation_;

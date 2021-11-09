@@ -74,6 +74,7 @@ void ParallelContext::Reset() {
   optimizer_weight_shard_aggregated_save_ = false;
   sharding_propagation_ = false;
   enable_all2all_ = false;
+  grad_accumulation_shard_ = true;
   dataset_strategy_.clear();
 }
 

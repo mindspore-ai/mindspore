@@ -1723,11 +1723,16 @@ bool AnfRuntimeAlgorithm::IsFusedCommunicationOp(const AnfNodePtr &node) {
   auto primitive = AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr attr_fusion = primitive->GetAttr(kAttrFusion);
+  ValuePtr attr_not_delay_fusion = primitive->GetAttr(kAttrNotDelayFusion);
   if (attr_fusion == nullptr) {
     return false;
   }
+
   auto fusion = GetValue<int64_t>(attr_fusion);
   if (fusion == 0) {
+    return false;
+  }
+  if (attr_not_delay_fusion && GetValue<bool>(attr_not_delay_fusion)) {
     return false;
   }
   return true;

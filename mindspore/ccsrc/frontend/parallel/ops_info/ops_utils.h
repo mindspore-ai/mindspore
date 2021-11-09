@@ -141,6 +141,7 @@ constexpr char STRIDES[] = "strides";
 constexpr char GROUP[] = "group";
 constexpr char FUSION[] = "fusion";
 constexpr char DO_MIRROR[] = "do_mirror";
+constexpr char ADD_ACCU[] = "add_accu";
 constexpr char RECOMPUTE[] = "recompute";
 constexpr char RECOMPUTE_COMM_OP[] = "recompute_comm_op";
 constexpr char NOT_RECOMPUTE[] = "not_recompute";
@@ -407,6 +408,7 @@ constexpr char RESIZE_BILINEAR[] = "ResizeBilinear";
 constexpr char RESIZE_NEAREST_NEIGHBOR[] = "ResizeNearestNeighbor";
 
 // pipeline
+constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
 constexpr char MICRO[] = "micro";
 constexpr char DEST_RANK[] = "dest_rank";
 constexpr char SRC_RANK[] = "src_rank";

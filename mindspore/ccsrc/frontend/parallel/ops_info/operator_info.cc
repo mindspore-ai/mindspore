@@ -380,6 +380,24 @@ void AddCommOpMeanFlag(const CNodePtr &comm_node) {
   prim->SetAttrs(attrs);
 }
 
+void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
+  auto attrs = prim->attrs();
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
+  prim->SetAttrs(attrs);
+}
+
+void AddCommOpAddAccuFlag(const CNodePtr &comm_node, bool add_accu) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
+  auto attrs = prim->attrs();
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  attrs[ADD_ACCU] = MakeValue<bool>(add_accu);
+  prim->SetAttrs(attrs);
+}
+
 void AddCommOpParamFlag(const CNodePtr &comm_node) {
   MS_EXCEPTION_IF_NULL(comm_node);
   auto graph = comm_node->func_graph();
@@ -437,7 +455,6 @@ Operator CreateMiniStepAllGatherOp(const std::string &group) {
 
 Operator CreateMicroStepAllGatherOp(const std::string &group) {
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
-
   OperatorName operator_name = MICRO_STEP_ALL_GATHER;
   ValuePtr attr0_value = MakeValue(group);  // group
   Attr attr0 = std::make_pair(GROUP, attr0_value);
