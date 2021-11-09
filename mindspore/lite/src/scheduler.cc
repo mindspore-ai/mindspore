@@ -1112,6 +1112,11 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   } else if (status == RET_NOT_SUPPORT) {
     free(op_parameter);
   }
+#ifdef OP_INT8_CLIP
+  if (desc.data_type == kNumberTypeInt8) {
+    MS_LOG(ERROR) << unsupport_int8_log;
+  }
+#endif
   return nullptr;
 }
 
