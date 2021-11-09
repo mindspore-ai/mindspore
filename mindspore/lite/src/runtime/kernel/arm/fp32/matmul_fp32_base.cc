@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/matmul_fp32_base.h"
+#include <algorithm>
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 
@@ -170,11 +171,11 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
   }
 #else
   if (vec_matmul_) {
-    memcpy(a_pack_ptr_, src_ptr, params_->batch * params_->deep_ * static_cast<int>(sizeof(float)));
+    memcpy(a_pack_ptr_, src_ptr, a_batch_ * params_->deep_ * static_cast<int>(sizeof(float)));
     return RET_OK;
   }
 #endif
-  for (int i = 0; i < params_->batch; i++) {
+  for (int i = 0; i < a_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
     float *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
@@ -189,7 +190,7 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
 int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
   CHECK_NULL_RETURN(src_ptr);
   if (vec_matmul_) {
-    for (int i = 0; i < params_->batch; i++) {
+    for (int i = 0; i < b_batch_; i++) {
       const float *src_data = src_ptr + i * params_->deep_ * params_->col_;
       float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
       if (params_->b_transpose_) {
@@ -213,7 +214,7 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
     return RET_OK;
   }
 
-  for (int i = 0; i < params_->batch; i++) {
+  for (int i = 0; i < b_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
     float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
     if (params_->b_transpose_) {
@@ -331,7 +332,7 @@ int MatmulFp32BaseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   init_global_variable();
-  matrix_a_pack_size_ = params_->batch * params_->row_align_ * params_->deep_;
+  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "
                   << "matrix_a_pack_size=" << matrix_a_pack_size_;
@@ -356,13 +357,13 @@ int MatmulFp32BaseCPUKernel::Init() {
     // only copy weight data
     // resize or run to pack
     auto b_tensor = in_tensors_.at(1);
-    src_b_ = reinterpret_cast<float *>(
-      malloc(params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float))));
+    src_b_ =
+      reinterpret_cast<float *>(malloc(b_batch_ * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float))));
     if (src_b_ == nullptr) {
       MS_LOG(ERROR) << "matmul fp16 src_b_ is failed!";
       return RET_ERROR;
     }
-    memcpy(src_b_, b_tensor->data(), params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float)));
+    memcpy(src_b_, b_tensor->data(), b_batch_ * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float)));
   }
   return RET_OK;
 }
@@ -376,8 +377,8 @@ void MatmulFp32BaseCPUKernel::FreeBuffSrcB() {
 
 int MatmulFp32BaseCPUKernel::ReSize() {
   ResizeParameter();
-  matrix_a_pack_size_ = params_->batch * params_->row_align_ * params_->deep_;
-  matrix_b_pack_size_ = params_->batch * params_->col_align_ * params_->deep_;
+  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
+  matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "
                   << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size=" << matrix_b_pack_size_;
@@ -471,8 +472,13 @@ int MatmulFp32BaseCPUKernel::Run() {
   }
 
   for (int i = 0; i < params_->batch; ++i) {
-    batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
-    batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
+    if (!a_broadcast_ && !b_broadcast_) {
+      batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
+      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
+    } else {
+      batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
+      batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
+    }
     if (vec_matmul_) {
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
     } else {

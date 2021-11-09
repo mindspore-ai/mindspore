@@ -45,6 +45,8 @@ int FullconnectionCPUKernel::Init() {
   }
 
   params_->batch = 1;
+  a_batch_ = 1;
+  b_batch_ = 1;
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 

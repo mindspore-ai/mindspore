@@ -15,10 +15,15 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/matmul_fp16.h"
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
+#include "src/common/common.h"
 
+using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::kHWDimNumber;
+using mindspore::lite::kNCHWDimNumber;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
@@ -34,7 +39,7 @@ void MatmulFP16CPUKernel::InitAShape() {
   for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
-  params_->batch = batch;
+  a_batch_ = batch;
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_16_ = UP_ROUND(params_->row_, row_tile_);
@@ -50,7 +55,7 @@ void MatmulFP16CPUKernel::InitBShape() {
   for (size_t i = 0; i < b_shape.size() - 2; ++i) {
     batch *= b_shape[i];
   }
-  params_->batch = batch;
+  b_batch_ = batch;
   params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
@@ -84,9 +89,80 @@ int MatmulFP16CPUKernel::Init() {
   return ReSize();
 }
 
+int MatmulFP16CPUKernel::InitBroadcastParams() {
+  auto a_shape = in_tensors_[kInputIndex]->shape();
+  if (a_shape.size() < kNCHWDimNumber) {
+    int add_nums = kNCHWDimNumber - a_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      a_shape.insert(a_shape.begin(), 1);
+    }
+  }
+  auto b_shape = in_tensors_[kWeightIndex]->shape();
+  if (b_shape.size() < kNCHWDimNumber) {
+    int add_nums = kNCHWDimNumber - b_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      b_shape.insert(b_shape.begin(), 1);
+    }
+  }
+
+  for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
+    if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
+      batch_sizes_[i] = std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes_[i] = a_shape[i];
+      b_batch_sizes_[i] = b_shape[i];
+    } else {
+      batch_sizes_[i] = batch_sizes_[i + 1] * std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes_[i] = a_batch_sizes_[i + 1] * a_shape[i];
+      b_batch_sizes_[i] = b_batch_sizes_[i + 1] * b_shape[i];
+    }
+  }
+
+  int out_batch = 1;
+  for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
+    out_batch *= MSMAX(a_shape[i], b_shape[i]);
+    if (a_shape[i] < b_shape[i] && b_shape[i] % a_shape[i] == 0) {
+      a_broadcast_ = true;
+    } else if (a_shape[i] > b_shape[i] && a_shape[i] % b_shape[i] == 0) {
+      b_broadcast_ = true;
+    } else if (a_shape[i] != b_shape[i]) {
+      MS_LOG(ERROR) << "matmul don't support broadcast for dimension " << a_shape << " and " << b_shape;
+      return RET_ERROR;
+    }
+  }
+  params_->batch = out_batch;
+
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
+  for (int i = 0; i < params_->batch; ++i) {
+    int delta = i;
+    int a_offset = 0;
+    int b_offset = 0;
+    for (size_t j = 0; j < a_shape.size() - kHWDimNumber; ++j) {
+      if (j > 0) {
+        delta = delta % batch_sizes_[j];
+      }
+      if (j < (a_shape.size() - kCHWDimNumber)) {
+        a_offset +=
+          (delta / batch_sizes_[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes_[j + 1];
+        b_offset +=
+          (delta / batch_sizes_[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes_[j + 1];
+      } else {
+        a_offset += (delta * a_shape[j] / std::max(a_shape[j], b_shape[j]));
+        b_offset += (delta * b_shape[j] / std::max(a_shape[j], b_shape[j]));
+      }
+    }
+    a_offset_[i] = a_offset;
+    b_offset_[i] = b_offset;
+  }
+
+  return RET_OK;
+}
+
 int MatmulFP16CPUKernel::ReSize() {
   InitAShape();
   InitBShape();
+  InitBroadcastParams();
+
   return MatmulBaseFP16CPUKernel::ReSize();
 }
 
