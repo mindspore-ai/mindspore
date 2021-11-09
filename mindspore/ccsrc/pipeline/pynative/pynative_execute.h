@@ -224,6 +224,8 @@ class GradExecutor {
   // Higher derivative
   inline bool IsNestedGrad() const;
   void SwitchTopcell();
+  void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const py::tuple &forward_args,
+                          std::vector<AnfNodePtr> *inputs, ValuePtrList *weights_args);
   void MakeNestedCnode(const py::object &cell, const py::tuple &forward_args, const pipeline::ResourcePtr &resource,
                        const py::object &out);
   void PushCellStack(const std::string &cell_id);
@@ -338,6 +340,7 @@ class ForwardExecutor {
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
                                     PynativeStatusCode *status);
+  void SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i, const std::string &id);
   void GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info, abstract::AbstractBasePtrList *args_spec_list);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                            bool *prim_cache_hit);

@@ -963,6 +963,24 @@ void ForwardExecutor::RunMixedPrecisionCastOp(const OpExecInfoPtr &op_exec_info,
   *ret = std::move(res);
 }
 
+void ForwardExecutor::SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i, const std::string &id) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    abs->set_value(kAnyValue);
+  } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
+    const auto &abs_seq = abs->cast<abstract::AbstractSequeuePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    for (auto &item : abs_seq->elements()) {
+      MS_EXCEPTION_IF_NULL(item);
+      if (item->isa<abstract::AbstractTensor>()) {
+        item->set_value(kAnyValue);
+      }
+    }
+  }
+  MS_LOG(DEBUG) << "Set " << i << "th abs " << abs->ToString();
+  node_abs_map_[id] = abs;
+}
+
 void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
                                         abstract::AbstractBasePtrList *args_spec_list) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
@@ -988,21 +1006,7 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
     if (abs == nullptr || is_const_prim || is_const_input) {
       abs = PyObjToValue(obj)->ToAbstract();
       if (!is_const_prim && !is_const_input) {
-        MS_EXCEPTION_IF_NULL(abs);
-        if (abs->isa<abstract::AbstractTensor>()) {
-          abs->set_value(kAnyValue);
-        } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
-          const auto &abs_seq = abs->cast<abstract::AbstractSequeuePtr>();
-          MS_EXCEPTION_IF_NULL(abs_seq);
-          for (auto &item : abs_seq->elements()) {
-            MS_EXCEPTION_IF_NULL(item);
-            if (item->isa<abstract::AbstractTensor>()) {
-              item->set_value(kAnyValue);
-            }
-          }
-        }
-        MS_LOG(DEBUG) << "Set " << i << "th abs " << abs->ToString();
-        node_abs_map_[id] = abs;
+        SetNonCostantValueAbs(abs, i, id);
       }
     }
     args_spec_list->emplace_back(abs);
@@ -2900,22 +2904,10 @@ void GradExecutor::SwitchTopcell() {
   set_top_cell(outer_top_cell);
 }
 
-void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forward_args,
-                                   const pipeline::ResourcePtr &resource, const py::object &out) {
-  if (cell_stack_.empty()) {
-    MS_LOG(DEBUG) << "No nested grad find";
-    return;
-  }
-  FuncGraphPtr first_grad_fg = nullptr;
-  if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
-    first_grad_fg = curr_g_;
-    MS_LOG(DEBUG) << "Bprop nested";
-  } else {
-    first_grad_fg = resource->func_graph();
-  }
-  MS_EXCEPTION_IF_NULL(first_grad_fg);
-  DumpGraphIR("first_grad_fg.ir", first_grad_fg);
-
+void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const py::tuple &forward_args,
+                                      std::vector<AnfNodePtr> *inputs, ValuePtrList *weights_args) {
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(weights_args);
   auto first_df_builder = top_cell()->df_builder();
   MS_EXCEPTION_IF_NULL(first_df_builder);
   auto first_graph_info = top_cell()->graph_info_map().at(first_df_builder);
@@ -2926,7 +2918,6 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forw
   auto second_graph_info = top_cell()->graph_info_map().at(second_df_builder);
   MS_EXCEPTION_IF_NULL(second_graph_info);
 
-  std::vector<AnfNodePtr> inputs{NewValueNode(first_grad_fg)};
   std::unordered_set<std::string> params_weights_set;
   std::unordered_set<std::string> params_inputs_set;
   for (const auto &sec : second_graph_info->params) {
@@ -2944,14 +2935,13 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forw
       // Can find in second graph
       const auto &input_param_second = second_graph_info->params.at(id);
       manager->Replace(first_graph_info->params.at(id), input_param_second);
-      inputs.emplace_back(input_param_second);
+      inputs->emplace_back(input_param_second);
     } else {
-      inputs.emplace_back(GetInput(forward_args[i], false));
+      inputs->emplace_back(GetInput(forward_args[i], false));
     }
   }
 
   // Replace weights param
-  ValuePtrList weights_args;
   for (const auto &fir : first_graph_info->params) {
     if (!fir.second->has_default()) {
       continue;
@@ -2959,21 +2949,42 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forw
     // Second graph no this weight param, need add to second graph
     if (!params_weights_set.count(fir.first)) {
       SetParamNodeMapInGraphInfoMap(second_df_builder, fir.first, fir.second);
-      inputs.emplace_back(fir.second);
-      weights_args.emplace_back(fir.second->default_param());
+      inputs->emplace_back(fir.second);
+      weights_args->emplace_back(fir.second->default_param());
     } else {
       // Need replace
       for (const auto &sec : second_graph_info->params) {
         MS_LOG(DEBUG) << "Param name " << fir.first << " ptr " << fir.second.get();
         if (sec.second->has_default() && fir.second->name() == sec.second->name()) {
           manager->Replace(fir.second, sec.second);
-          inputs.emplace_back(sec.second);
-          weights_args.emplace_back(sec.second->default_param());
+          inputs->emplace_back(sec.second);
+          weights_args->emplace_back(sec.second->default_param());
           break;
         }
       }
     }
   }
+}
+
+void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forward_args,
+                                   const pipeline::ResourcePtr &resource, const py::object &out) {
+  if (cell_stack_.empty()) {
+    MS_LOG(DEBUG) << "No nested grad find";
+    return;
+  }
+  FuncGraphPtr first_grad_fg = nullptr;
+  if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
+    first_grad_fg = curr_g_;
+    MS_LOG(DEBUG) << "Bprop nested";
+  } else {
+    first_grad_fg = resource->func_graph();
+  }
+  MS_EXCEPTION_IF_NULL(first_grad_fg);
+  DumpGraphIR("first_grad_fg.ir", first_grad_fg);
+
+  std::vector<AnfNodePtr> inputs{NewValueNode(first_grad_fg)};
+  ValuePtrList weights_args;
+  DoParameterReplace(first_grad_fg, forward_args, &inputs, &weights_args);
 
   pipeline::ResourcePtr r = std::make_shared<pipeline::Resource>();
   r->manager()->AddFuncGraph(first_grad_fg);
