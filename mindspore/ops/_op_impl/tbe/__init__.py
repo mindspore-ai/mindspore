@@ -48,6 +48,7 @@ from .assign_add import _assign_add_tbe
 from .assign_sub import _assign_sub_tbe
 from .batch_matmul import _batch_matmul_tbe
 from .batch_matmul_ds import _batch_matmul_ds_tbe
+from .batch_matmul_v2 import _batch_matmul_v2_tbe
 from .batchnorm import _batch_norm_tbe
 from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe
@@ -99,6 +100,7 @@ from .trans_data_rnn import _trans_data_rnn_tbe
 from .top_k import _top_k_tbe
 from .matmul import _matmul_tbe
 from .matmul_ds import _matmul_ds_tbe
+from .matmul_v2 import _matmul_v2_tbe
 from .sub import _sub_tbe
 from .sub_ds import _sub_ds_tbe
 from .scatter_nd import _scatter_nd_tbe

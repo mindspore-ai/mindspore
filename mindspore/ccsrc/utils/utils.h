@@ -297,6 +297,7 @@ constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
 constexpr auto kBatchMatMulOpName = "BatchMatMul";
+constexpr auto kBatchMatMulV2OpName = "BatchMatMulV2";
 constexpr auto kBroadcastToOpName = "BroadcastTo";
 constexpr auto kFusedAddReluV2Name = "FusedAddReluV2";
 constexpr auto kFusedAddReluGradV2Name = "FusedAddReluGradV2";
@@ -476,6 +477,8 @@ constexpr auto kAttrMultiCallEnd = "multicall_end";
 constexpr auto kAttrProfilingIterEnd = "PROFILING_ITER_END";
 constexpr auto kAttrHiddenSize = "hidden_size";
 constexpr auto kAttrInputSize = "input_size";
+constexpr auto kAttrFixedInputFormat = "fixed_input_format";
+constexpr auto kAttrFixedOutputFormat = "fixed_output_format";
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";

@@ -49,5 +49,5 @@ matmul_op_info = TBERegOp("MatMul") \
 
 @op_info_register(matmul_op_info)
 def _matmul_tbe():
-    """Mul TBE register"""
+    """MatMul TBE register"""
     return
