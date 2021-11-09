@@ -170,6 +170,10 @@ class _Context:
     def set_param(self, param, value):
         self._context_handle.set_param(param, value)
 
+    def get_mode(self):
+        """Get current mode."""
+        return self.get_param(ms_ctx_param.mode)
+
     def set_mode(self, mode):
         """
         Switch between Graph mode and PyNative mode.
@@ -835,6 +839,17 @@ def get_context(attr_key):
     if attr_key in ms_ctx_param.__members__ and attr_key[0] != '_':
         return ctx.get_param(ms_ctx_param.__members__[attr_key])
     raise ValueError("Get context keyword %s is not recognized!" % attr_key)
+
+
+def _get_mode():
+    """
+    Get execution mode. Only for internal using.
+
+    Returns:
+        Object: The Value of execution mode.
+    """
+    ctx = _context()
+    return ctx.get_mode()
 
 
 class ParallelMode:
