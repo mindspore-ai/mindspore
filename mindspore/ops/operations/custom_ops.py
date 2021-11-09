@@ -17,116 +17,13 @@
 import os
 import inspect
 import json
-import functools
+import hashlib
 from mindspore import ops
 from mindspore import log as logger
-from mindspore.ops.op_info_register import RegOp, DataType
+from mindspore.ops.op_info_register import DataType
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Oplib
 from ._pyfunc_registry import add_pyfunc
-
-
-class CustomRegOp(RegOp):
-    """Class for Custom op info register"""
-
-    def __init__(self, op_name="Custom"):
-        super(CustomRegOp, self).__init__(op_name)
-        self.target_ = "UnKnown"
-
-    def input(self, index=None, name=None, param_type="required", **kwargs):
-        """
-        Register Custom op input information.
-
-        Args:
-            index (int): Order of the input. Default: None.
-            name (str): Name of the input. Default: None.
-            param_type (str): Param type of the input. Default: None.
-            kwargs (dict): Other information of the input.
-        """
-        param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
-        fn_list = [self._is_int, self._is_string, self._is_string]
-        input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
-        self.inputs.append(input_dict)
-        return self
-
-    def output(self, index=None, name=None, param_type="required", **kwargs):
-        """
-        Register Custom op output information.
-
-        Args:
-            index (int): Order of the output. Default: None.
-            name (str): Name of the output. Default: None.
-            param_type (str): Param type of the output. Default: None.
-            kwargs (dict): Other information of the output.
-        """
-        param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
-        fn_list = [self._is_int, self._is_string, self._is_string]
-        output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
-        self.outputs.append(output_dict)
-        return self
-
-    def attr(self, name=None, param_type=None, value_type=None, default_value=None, **kwargs):
-        """
-        Register Custom op attribute information.
-
-        Args:
-            name (str): Name of the attribute. Default: None.
-            param_type (str): Param type of the attribute. Default: None.
-            value_type (str): Value type of the attribute. Default: None.
-            default_value (str): Default value of attribute. Default: None.
-            kwargs (dict): Other information of the attribute.
-        """
-        param_list = [name, param_type, value_type, default_value]
-        key_list = ["name", "param_type", "type", "default_value"]
-        fn_list = [self._is_string]
-        attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
-        self.attr_.append(attr_dict)
-        return self
-
-    def target(self, target=None):
-        """
-        Register Custom op target information.
-
-        Args:
-            target (str): Device target for current operator information, should be one of ["Ascend", "GPU", "CPU"].
-                Please note that target and the `func_type` of `Custom` op have some constraints.
-                If func_type is "akg", target can be one of ["Ascend", "GPU"].
-                If func_type is "tbe", target can only be "Ascend".
-                If func_type is "aot", target can be one of ["GPU", "CPU"].
-                If func_type is "pyfunc", target can only be "CPU".
-                Default: None.
-        """
-        self._is_string(target)
-        self.target_ = target
-        return self
-
-
-def custom_op_info_register(*reg_info):
-    r"""
-    A decorator which is used to bind the registration information to the `func` parameter of `Custom` op.
-
-    Note:
-        The 'reg_info' will be added into oplib.
-
-    Args:
-        reg_info (tuple): Each item represents registration information in json format.
-
-    Returns:
-        Function, returns a decorator for op info register.
-    """
-
-    def decorator(func):
-        setattr(func, "reg_info", reg_info)
-
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 class Custom(ops.PrimitiveWithInfer):
@@ -194,28 +91,37 @@ class Custom(ops.PrimitiveWithInfer):
                     Custom(func="{path}/{file_name}:{func_name}",...)
                     (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_type=mstype.float32))
 
-        out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of func.
-            If func has single output, then the value of output shape is a list.
-            If func has multiple outputs, then the value of output shape is a tuple of list, each list represents the
-            shape of each output.
-        out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output dtype infer
-            function or the value of output dtype of func.
-            If func has single output, then the value of output shape is a mindspore.dtype.
-            If func has multiple outputs, then the value of output shape is a tuple of mindspore.dtype.
-        func_type (str): The implementation type of func, should be one of ["akg", "tbe", "aot", "pyfunc"].
+        out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
+            `func`.
+            If func has single output, then the value of output shape is a list or tuple of int.
+            If func has multiple outputs, then the value of output shape is a tuple, each item represents the shape
+            of each output.
+        out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output data type
+            infer function or the value of output data type of `func`.
+            If func has single output, then the value of output shape is a `mindspore.dtype`.
+            If func has multiple outputs, then the value of output shape is a tuple of `mindspore.dtype`, each item
+            represents the data type of each output.
+        func_type (str): The implementation type of `func`, should be one of ["akg", "tbe", "aot", "pyfunc"]. Each
+            `func_type` only supports specific platforms(targets). The supported platforms of `func_type`:
+
+            - "akg": supports ["Ascend", "GPU"].
+            - "tbe": supports ["Ascend"].
+            - "aot": supports ["GPU", "CPU"].
+            - "pyfunc": supports ["CPU"].
+
         bprop (function): The gradient function of func. Default: None.
-        reg_info (Union[str, dict, list, tuple]): Represents the registration information of `func` with json format of
-            type str or dict. The registration information specifies supported data types and formats of inputs and
+        reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
+            json format of type str or dict. The reg info specifies supported data types and formats of inputs and
             outputs, attributes and target of `func`. Default: None.
             If reg info is a list or tuple, then each item should be with json format of type str or dict, which
             represents the registration information of `func` in a specific target. You need to invoke `CustomRegOp`
-            or the subclass of `RegOp` to generate the registration info for `func`. Then you can invoke
-            `custom_op_info_register` to bind the reg info to `func` or just pass the reg info to `reg_info` parameter.
-            The `reg_info` parameter takes higher priority then `custom_op_info_register` and the reg info in a
+            or the subclass of `RegOp` to generate the reg info for `func`. Then you can invoke
+            `custom_info_register` to bind the reg info to `func` or just pass the reg info to `reg_info` parameter.
+            The `reg_info` parameter takes higher priority then `custom_info_register` and the reg info in a
             specific target will be registered only once.
-            If reg info is not set, then we will infer the data types and formats from the inputs of `Custom` op.
-            Please note that, if the `func` only supports some specified data types and formats, or it has attribute
-            inputs, then you should set the reg info for `func`.
+            If reg info is not set, then we will infer the data types and formats from the inputs of `Custom` operator.
+            Please note that, if `func_type` is "tbe" or the `func` only supports some specified data types and formats,
+            or it has attribute inputs, then you should set the reg info for `func`.
 
     Inputs:
         - **input** (Union(tuple, list)) - The input tuple or list is made up of multiple tensors, and attributes
@@ -226,20 +132,41 @@ class Custom(ops.PrimitiveWithInfer):
 
     Raises:
         TypeError: If the type of `func` is invalid or the type of register information for `func` is invalid.
-        ValueError: If the register information is invalid.
+        ValueError: If `func_type` is invalid.
+        ValueError: If the register information is invalid, including the target is not supported, the input numbers
+            or the attributes of `func` differs in different targets.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
+        >>> import mindspore.ops as ops
         >>> from mindspore.common import dtype as mstype
-        >>> from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
-        >>> from mindspore.ops.op_info_register import DataType
+        >>> from mindspore.ops.op_info_register import CustomRegOp, custom_info_register, DataType
         >>> from mindspore.nn import Cell
         >>>
-        >>> #-----------------------------------------------
-        >>> #--------------func_type="tbe"------------------
+        >>> # Example, func_type = "akg"
+        >>> def outer_product(a, b):
+        ...     c = output_tensor((a.shape[0], b.shape[1]), 'float32')
+        ...     for i0 in range(a.shape[0]):
+        ...         for i1 in range(b.shape[1]):
+        ...             c[i0, i1] = 0.0
+        ...             for i2 in range(a.shape[1]):
+        ...                 c[i0, i1] = c[i0, i1] + (a[i0, i2] * b[i2, i1])
+        ...     return c
+        >>>
+        >>> class AkgNet(Cell):
+        ...     def __init__(self):
+        ...         super(AkgNet, self).__init__()
+        ...         def infer_func(x, y):
+        ...             return x
+        ...         self.program = ops.Custom(outer_product, out_shape=infer_func, out_dtype=infer_func, \
+        ...                                   func_type="akg")
+        ...     def construct(self, x, y):
+        ...         return self.program(x, y)
+        >>>
+        >>> # Example, func_type = "tbe"
         >>> square_with_bias_op_info = CustomRegOp() \
         ...     .fusion_type("OPAQUE") \
         ...     .attr("bias", "required", "float") \
@@ -250,7 +177,7 @@ class Custom(ops.PrimitiveWithInfer):
         ...     .target("Ascend") \
         ...     .get_op_info()
         >>>
-        >>> @custom_op_info_register(square_with_bias_op_info)
+        >>> @custom_info_register(square_with_bias_op_info)
         ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
         ...     import te.lang.cce
         ...     from te import tvm
@@ -274,33 +201,31 @@ class Custom(ops.PrimitiveWithInfer):
         ...
         ...     te.lang.cce.cce_build_code(sch, config)
         >>>
-        >>> class Net(Cell):
+        >>> class TbeNet(Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
-        ...                                        func_type="tbe")
+        ...         super(TbeNet, self).__init__()
+        ...         self.square_with_bias = ops.Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
+        ...                                            func_type="tbe")
         ...     def construct(self, x):
         ...         res = self.square_with_bias(x, 1.0)
         ...         return res
         >>>
-        >>> #-----------------------------------------------
-        >>> #--------func_type="aot", platform=GPU----------
+        >>> # Example, func_type = "aot"
         >>> class AOTSingleOutputNet(Cell):
         ...     def __init__(self, func, out_shapes, out_types, reg=None):
         ...         super(AOTSingleOutputNet, self).__init__()
-        ...         self.program = Custom("./reorganize.so:CustomReorganize", (2, 3), mstype.float32, "aot")
+        ...         self.program = ops.Custom("./reorganize.so:CustomReorganize", (2, 3), mstype.float32, "aot")
         ...     def construct(self, x, y):
         ...         return self.program(x, y)
         >>>
-        >>> #-----------------------------------------------
-        >>> #------------func_type="pyfunc"-----------------
+        >>> # Example, func_type = "pyfunc"
         >>> def func_multi_output(x1, x2):
         ...     return (x1 + x2), (x1 - x2)
         >>>
         >>> class PyFuncNet(Cell):
-        ...     def __init__(self, fn, out_shapes, out_types,):
+        ...     def __init__(self, fn, out_shapes, out_types):
         ...         super().__init__()
-        ...         self.func = Custom(func_multi_output, ((2, 3), (2, 3)), (ms.float32, ms.float32), "pyfunc")
+        ...         self.func = ops.Custom(func_multi_output, ((2, 3), (2, 3)), (ms.float32, ms.float32), "pyfunc")
         ...     def construct(self, x1, x2):
         ...         return self.func(x1, x2)
     """
@@ -312,41 +237,32 @@ class Custom(ops.PrimitiveWithInfer):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
+        self.supported_func_type = ["akg", "tbe", "aot", "pyfunc"]
         self.func = func
+        self.func_type = func_type
         self.func_name = ""
         self.uniq_name = ""
-        self.fn_id = -1
         self.imply_path = ""
-        if callable(self.func):
-            # Get the original function if func is decorated
-            if "__wrapped__" in self.func.__dict__:
-                self.func = self.func.__dict__["__wrapped__"]
-            self.imply_path = os.path.realpath(inspect.getfile(self.func))
-            self.func_name = self.func.__name__
-            self.fn_id = id(self.func)
-            self.uniq_name = self.name + "_" + self.func_name + "_" + str(self.fn_id)
-            if func_type == "pyfunc":
-                add_pyfunc(self.fn_id, self.func)
-        elif isinstance(self.func, str):
-            self.func_name = self.func
-            self.uniq_name = self.name + "_" + self.func_name
-        else:
-            raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
+        self.func_source_str = ""
+        self.check_func()
+        self.update_func_info()
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
-        self.add_prim_attr("fn_id", self.fn_id)
         self.add_prim_attr("imply_path", self.imply_path)
+        if self.func_type == "pyfunc":
+            func_id = id(self.func)
+            add_pyfunc(func_id, self.func)
+            self.add_prim_attr("fn_id", func_id)
+
         self.out_shape = out_shape
         self.out_dtype = out_dtype
         self.bprop = bprop
-        self.func_type = func_type
         self.fake_output = False
         self.single_scalar_output = False
         if not self.out_dtype:
             self.fake_output = True
         elif not self.out_shape:
             self.single_scalar_output = True
-
         self.add_prim_attr("fake_output", self.fake_output)
         self.add_prim_attr("single_scalar_output", self.single_scalar_output)
 
@@ -354,14 +270,10 @@ class Custom(ops.PrimitiveWithInfer):
         self.register_info(reg_info)
 
         if func_type == "akg":
-            func_source_str = inspect.getsource(self.func)
-            index = func_source_str.find("def ")
-            if index != -1:
-                func_source_str = func_source_str[index:]
-            self.add_prim_attr('func_source_str', func_source_str)
-            if "ir_builder" in func_source_str:
+            self.add_prim_attr('func_source_str', self.func_source_str)
+            if "ir_builder" in self.func_source_str:
                 self.func_type = "ir_builder"
-            elif "compute" in func_source_str:
+            elif "compute" in self.func_source_str:
                 self.func_type = "tvm_compute"
             else:
                 self.func_type = "hybrid"
@@ -388,6 +300,48 @@ class Custom(ops.PrimitiveWithInfer):
 
     def get_bprop(self):
         return self.bprop
+
+    def check_func(self):
+        """Check the validity of func_type and type of func"""
+        if self.func_type not in self.supported_func_type:
+            raise ValueError("func_type should be one of {}, but got {}"
+                             .format(self.supported_func_type, self.func_type))
+        if self.func_type == "aot":
+            if not isinstance(self.func, str):
+                raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
+        else:
+            if not callable(self.func):
+                raise TypeError("{} func should be of type function, but got {}"
+                                .format(self.func_type, type(self.func)))
+
+    def update_func_info(self):
+        """Update information of func"""
+        if callable(self.func):
+            # Get the original function if func is decorated
+            if "__wrapped__" in self.func.__dict__:
+                self.func = self.func.__dict__["__wrapped__"]
+            # func name
+            self.func_name = self.func.__name__
+            # path of func
+            self.imply_path = os.path.realpath(inspect.getfile(self.func))
+            # source code of func, not include the decorator before def
+            self.func_source_str = inspect.getsource(self.func)
+            index = self.func_source_str.find("def ")
+            if index != -1:
+                self.func_source_str = self.func_source_str[index:]
+            # unique func name
+            sha256 = hashlib.sha256()
+            sha256.update(self.imply_path.encode("utf-8"))
+            sha256.update(self.func_source_str.encode("utf-8"))
+            hash_str = sha256.hexdigest()
+            self.uniq_name = self.name + "_" + self.func_name + "_" + hash_str
+        elif isinstance(self.func, str):
+            # func name
+            self.func_name = self.func
+            # uniq func name
+            self.uniq_name = self.name + "_" + self.func_name
+        else:
+            raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
 
     def register_info(self, info):
         """Register reg_info."""
@@ -562,10 +516,10 @@ class Custom(ops.PrimitiveWithInfer):
             raise TypeError("func {}: previous saved input_names should be a list, but got {}"
                             .format(self.func, type(prev_input_names)))
         if len(input_names) != len(prev_input_names):
-            raise ValueError("func {}: input_names's length {} is different from previous saved one {}"
+            raise ValueError("func {}: input_names's length {} is different from previous saved one: {}"
                              .format(self.func, len(input_names), len(prev_input_names)))
         if attr_names != prev_attr_names:
-            raise ValueError("func {}: attr_names {} is different from previous saved one {}"
+            raise ValueError("func {}: attr_names {} is different from previous saved one: {}"
                              .format(self.func, attr_names, prev_attr_names))
 
     def update_attr(self):

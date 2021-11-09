@@ -20,8 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops.operations.custom_ops import Custom
+import mindspore.ops as ops
 
 
 def func_single_output(x1, x2):
@@ -43,8 +42,8 @@ def func_no_output(x1, x2):
 class PyFuncNet(nn.Cell):
     def __init__(self, fn, out_shapes, out_types):
         super().__init__()
-        self.func = Custom(fn, out_shapes, out_types, "pyfunc")
-        self.relu = P.ReLU()
+        self.func = ops.Custom(fn, out_shapes, out_types, "pyfunc")
+        self.relu = ops.ReLU()
 
     def construct(self, x1, x2):
         x = self.func(x1, x2)
@@ -58,7 +57,7 @@ def func_with_dtype(ms_dtype, np_dtype):
     x2 = np.random.randint(-5, 5, size=shape).astype(np_dtype)
 
     expect = func_single_output(x1, x2)
-    expect = P.ReLU()(Tensor(expect))
+    expect = ops.ReLU()(Tensor(expect))
 
     net = PyFuncNet(func_single_output, (shape,), (ms_dtype,))
     x = net(Tensor(x1), Tensor(x2))
@@ -99,7 +98,7 @@ def test_pyfunc_multi_output():
     x1 = np.random.randint(-5, 5, size=shape).astype(np.float32)
     x2 = np.random.randint(-5, 5, size=shape).astype(np.float32)
     expect, _ = func_multi_output(x1, x2)
-    expect = P.ReLU()(Tensor(expect))
+    expect = ops.ReLU()(Tensor(expect))
 
     net = PyFuncNet(func_multi_output, (shape, shape), (dtype, dtype))
     x = net(Tensor(x1), Tensor(x2))
@@ -110,7 +109,7 @@ def test_pyfunc_multi_output():
 class PyFuncGraph(nn.Cell):
     def __init__(self, fn, out_shapes, out_types):
         super().__init__()
-        self.func = Custom(fn, out_shapes, out_types, "pyfunc")
+        self.func = ops.Custom(fn, out_shapes, out_types, "pyfunc")
 
     def construct(self, x1, x2):
         return self.func(x1, x2)
@@ -185,9 +184,9 @@ def test_pyfunc_pynative():
         x2 = np.random.randint(-5, 5, size=shape).astype(np.float32)
         n1, n2 = func_multi_output(x1, x2)
 
-        net = Custom(func_multi_output, (shape, shape), (ms.float32, ms.float32), "pyfunc")
+        net = ops.Custom(func_multi_output, (shape, shape), (ms.float32, ms.float32), "pyfunc")
         out = net(Tensor(x1), Tensor(x2))
-        add = P.Add()
+        add = ops.Add()
         res = add(out[0], out[1])
 
-        assert np.allclose(res.asnumpy(), n1+n2)
+        assert np.allclose(res.asnumpy(), n1 + n2)

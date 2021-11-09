@@ -143,6 +143,7 @@ class AkgKernelJsonGenerator {
 
   DumpOption dump_option_;
   std::string kernel_name_;
+  std::string all_ops_name_;
   std::unordered_map<AnfNodePtr, size_t> input_tensor_idx_;
   size_t output_tensor_idx_{0};
   nlohmann::json kernel_json_;

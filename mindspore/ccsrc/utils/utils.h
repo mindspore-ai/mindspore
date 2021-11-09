@@ -497,6 +497,7 @@ constexpr auto kAttrFuncType = "func_type";
 constexpr auto kCustomTypeAOT = "aot";
 constexpr auto kCustomTypePyfunc = "pyfunc";
 constexpr auto kCustomTypeTbe = "tbe";
+const std::set<std::string> kCustomTypeAkg = {"ir_builder", "tvm_compute", "hybrid"};
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";

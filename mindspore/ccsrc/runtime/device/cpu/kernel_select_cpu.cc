@@ -422,28 +422,26 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
 void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
-  bool is_custom_op = IsPrimitiveCNode(kernel_node, prim::kPrimCustom);
-  if (is_custom_op && !kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
-    auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
-    if (tp == kCustomTypePyfunc) {
-      kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::PyFuncCpuKernel>(); });
-    } else if (tp == kCustomTypeAOT) {
-      kernel::CPUKernelRegistrar(op_name, KernelAttr(),
-                                 []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
-    } else {
-      MS_LOG(EXCEPTION) << "Unsupported func type [" << tp << "] for Custom op [" << op_name << "] on CPU";
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    if (!kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
+      auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+      if (tp == kCustomTypePyfunc) {
+        kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::PyFuncCpuKernel>(); });
+      } else if (tp == kCustomTypeAOT) {
+        kernel::CPUKernelRegistrar(op_name, KernelAttr(),
+                                   []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
+      } else {
+        MS_LOG(EXCEPTION) << "Unsupported func type [" << tp << "] for Custom op [" << op_name << "] on CPU";
+      }
     }
-  }
-
-  // If Custom op has not set reg info, then infer info from inputs
-  if (is_custom_op && mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
-    MS_LOG(WARNING) << "Not find operator information for op[" << op_name
-                    << "]. Infer operator information from inputs.";
-    return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
-  }
-
-  // Select for dynamic kernel(both the number and data type are undetermined).
-  if (!is_custom_op && IsDynamicParamKernel(op_name)) {
+    // If Custom op has not set reg info, then infer info from inputs
+    if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
+      MS_LOG(WARNING) << "Not find operator information for op[" << op_name
+                      << "]. Infer operator information from inputs.";
+      return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
+    }
+  } else if (IsDynamicParamKernel(op_name)) {
+    // Select for dynamic kernel(both the number and data type are undetermined).
     return UpdateDynamicKernelBuildInfoAndAttrs(kernel_node);
   }
 

@@ -18,6 +18,7 @@
 import inspect
 import json
 import os
+import functools
 
 from mindspore._c_expression import Oplib
 
@@ -87,6 +88,46 @@ def op_info_register(op_info):
         return wrapped_function
 
     return register_decorator
+
+
+def custom_info_register(*reg_info):
+    r"""
+    A decorator which is used to bind the registration information to the `func` parameter of `Custom` op.
+
+    Note:
+        The 'reg_info' will be added into oplib.
+
+    Args:
+        reg_info (tuple[str, dict]): Each item represents registration information in json format.
+
+    Returns:
+        Function, returns a decorator for op info register.
+
+    Examples:
+        >>> from mindspore.ops.op_info_register import custom_info_register, CustomRegOp, DataType
+        >>> custom_func_ascend_info = CustomRegOp() \
+        ...     .input(0, "x", "dynamic") \
+        ...     .output(0, "y") \
+        ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+        ...     .target("Ascend") \
+        ...     .get_op_info()
+        >>>
+        >>> @custom_info_register(custom_func_ascend_info)
+        ... def custom_func(x):
+        ...     pass
+    """
+
+    def decorator(func):
+        setattr(func, "reg_info", reg_info)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class RegOp:
@@ -599,6 +640,95 @@ class TBERegOp(RegOp):
         fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string]
         output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.outputs.append(output_dict)
+        return self
+
+
+class CustomRegOp(RegOp):
+    r"""
+    Class for `Custom` operator info register.
+
+    Args:
+        op_name (str): kernel name. No need to set this value as `Custom` operator will generate a unique name
+            automatically. Default: "Custom".
+
+    Examples:
+        >>> from mindspore.ops.op_info_register import CustomRegOp, DataType
+        >>> custom_op_ascend_info = CustomRegOp() \
+        ...     .input(0, "x", "dynamic") \
+        ...     .output(0, "y") \
+        ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+        ...     .target("Ascend") \
+        ...     .get_op_info()
+    """
+
+    def __init__(self, op_name="Custom"):
+        super(CustomRegOp, self).__init__(op_name)
+        self.target_ = "UnKnown"
+
+    def input(self, index=None, name=None, param_type="required", **kwargs):
+        """
+        Register Custom op input information.
+
+        Args:
+            index (int): Order of the input. Default: None.
+            name (str): Name of the input. Default: None.
+            param_type (str): Param type of the input. Default: "required".
+            kwargs (dict): Other information of the input.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.inputs.append(input_dict)
+        return self
+
+    def output(self, index=None, name=None, param_type="required", **kwargs):
+        """
+        Register Custom op output information.
+
+        Args:
+            index (int): Order of the output. Default: None.
+            name (str): Name of the output. Default: None.
+            param_type (str): Param type of the output. Default: "required".
+            kwargs (dict): Other information of the output.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.outputs.append(output_dict)
+        return self
+
+    def attr(self, name=None, param_type=None, value_type=None, default_value=None, **kwargs):
+        """
+        Register Custom op attribute information.
+
+        Args:
+            name (str): Name of the attribute. Default: None.
+            param_type (str): Param type of the attribute. Default: None.
+            value_type (str): Value type of the attribute. Default: None.
+            default_value (str): Default value of attribute. If value is a list, each item should split by ','.
+                For example, if `value_type` is "listInt", then `default_value` can be "1,2,3". Default: None.
+            kwargs (dict): Other information of the attribute.
+        """
+        param_list = [name, param_type, value_type, default_value]
+        key_list = ["name", "param_type", "type", "default_value"]
+        fn_list = [self._is_string]
+        attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.attr_.append(attr_dict)
+        return self
+
+    def target(self, target=None):
+        """
+        Register Custom op target information.
+
+        Args:
+            target (str): Device target for current operator information, should be one of ["Ascend", "GPU", "CPU"].
+                Default: None.
+        """
+        self._is_string(target)
+        self.target_ = target
         return self
 
 

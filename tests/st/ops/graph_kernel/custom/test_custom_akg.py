@@ -18,8 +18,8 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.ops.op_info_register import DataType
-from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
+import mindspore.ops as ops
+from mindspore.ops.op_info_register import DataType, CustomRegOp, custom_info_register
 
 
 def outer_product(a, b):
@@ -42,7 +42,7 @@ class TestHybrid(Cell):
         def infer_func(x, y):
             return x
 
-        self.program = Custom(outer_product, out_shape=infer_func, out_dtype=infer_func, func_type="akg")
+        self.program = ops.Custom(outer_product, out_shape=infer_func, out_dtype=infer_func, func_type="akg")
 
     def construct(self, x, y):
         return self.program(x, y)
@@ -129,7 +129,7 @@ v_add_gpu_info = CustomRegOp() \
     .get_op_info()
 
 
-@custom_op_info_register(v_add_ascend_info, v_add_gpu_info)
+@custom_info_register(v_add_ascend_info, v_add_gpu_info)
 def v_add(inputs, attrs):
     def vadd_func(dst, data_1, data_2):
         ib = tvm.ir_builder.create()
@@ -148,7 +148,7 @@ class TestIRbuilder(Cell):
 
     def __init__(self, shape):
         super(TestIRbuilder, self).__init__()
-        self.program = Custom(v_add, out_shape=shape, out_dtype=mstype.float16, func_type="akg")
+        self.program = ops.Custom(v_add, out_shape=shape, out_dtype=mstype.float16, func_type="akg")
 
     def construct(self, x, y):
         return self.program([x, y])

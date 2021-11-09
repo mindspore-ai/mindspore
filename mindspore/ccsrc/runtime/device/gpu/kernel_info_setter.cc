@@ -164,7 +164,7 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
     if (!kernel::GpuKernelFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
       kernel::GpuKernelRegister(op_name, KernelAttr(), []() { return new kernel::CustomAOTGpuKernel(); });
     }
-  } else if (func_type == "ir_builder" || func_type == "tvm_compute" || func_type == "hybrid") {
+  } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported func type [" << func_type << "] for Custom op [" << op_name << "] on GPU";
