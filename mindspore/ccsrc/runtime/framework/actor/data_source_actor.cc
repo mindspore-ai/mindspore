@@ -113,13 +113,14 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
 
 void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
-        GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0],
+                        context, GetAID());
 }
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0],
+                        context);
 }
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
@@ -166,14 +167,15 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
+                        &GetAID());
 }
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
-    Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
+                          &launch_info_, device_contexts_[0], context);
   }
 }
 
@@ -192,20 +194,22 @@ void HostQueueDataSourceActor::FillDataBuffer() {
 void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                          device_contexts_[0], context, GetAID());
   } else {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors, &device_contexts_, context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
+                          &device_contexts_, context, GetAID());
   }
 }
 
 void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0],
+                          context);
   } else {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeBatchMemory, &device_tensors, &device_contexts_, context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeBatchMemory, &device_tensors, &device_contexts_,
+                          context);
   }
 }
 

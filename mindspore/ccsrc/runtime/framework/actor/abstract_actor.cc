@@ -106,7 +106,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(output_data);
     UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+    ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
     ++output_data_arrow_index;
   }
 
@@ -114,7 +114,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if (output_control_arrows_.size() > 0) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, from_aid, context);
+      ActorDispatcher::Send(output_control, &OpActor::RunOpControl, from_aid, context);
     }
   }
 

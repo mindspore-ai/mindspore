@@ -52,15 +52,15 @@ void CopyActor::Run(OpContext<DeviceTensor> *const context) {
 }
 
 void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
-        device_contexts_[kOutputDeviceContextIndex], context, GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
+                        device_contexts_[kOutputDeviceContextIndex], context, GetAID());
 }
 
 void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_,
-        device_contexts_[kInputDeviceContextIndex], context);
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_,
-        device_contexts_[kOutputDeviceContextIndex], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_,
+                        device_contexts_[kInputDeviceContextIndex], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_,
+                        device_contexts_[kOutputDeviceContextIndex], context);
 }
 
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {

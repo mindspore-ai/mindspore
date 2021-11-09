@@ -85,6 +85,11 @@ struct ActorSet {
   OutputActorPtr output_actor_{nullptr};
   ControlActorSetPtr control_actors_;
   ActorInfo name_;
+  // The related statistics information of multi thread and single thread to decide whether use the multi thread.
+  bool is_multi_thread_execution_{true};
+  size_t execution_count_{0};
+  double multi_thread_execution_time_{0};
+  double single_thread_execution_time_{0};
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 

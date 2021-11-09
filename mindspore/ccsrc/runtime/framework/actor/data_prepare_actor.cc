@@ -151,8 +151,8 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 }
 
 void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
-        graph_compiler_info_->device_contexts_, context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
+                        graph_compiler_info_->device_contexts_, context, &GetAID());
 }
 
 void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -166,8 +166,9 @@ void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 
 void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   // Allocate continuous memory in the begin of the step running.
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory, &continuous_memory_alloc_list_list_,
-        &size_list_list_, &total_size_list_, &continuous_memory_device_contexts_, context, GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
+                        &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
+                        &continuous_memory_device_contexts_, context, GetAID());
 }
 
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
