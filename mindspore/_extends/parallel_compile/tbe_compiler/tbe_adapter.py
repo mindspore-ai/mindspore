@@ -32,7 +32,7 @@ from te_fusion.parallel_compilation import init_multi_process_env, start_ga_mult
     get_finished_compilation_task
 
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
-    adjust_custom_op_info, pack_op_args, get_module_name
+    adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level
 from .tbe_job import TbeJob, JobStatus
 
 PLATFORM_FLAG = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
@@ -44,13 +44,13 @@ def _tune_init(job: TbeJob):
     :param job:
     :return:
     """
-    aoto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+    auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
     offline_tune = job.content["SocInfo"]["offlineTune"]
     op_bank_update = job.content["SocInfo"]["op_bank_update"]
     tune_dump_path = job.content["TuneInfo"]["tune_dump_path"]
     tune_bank_path = job.content["TuneInfo"]["tune_bank_path"]
-    need_ga = bool("GA" in aoto_tiling_mode)
-    need_rl = bool("RL" in aoto_tiling_mode)
+    need_ga = bool("GA" in auto_tiling_mode)
+    need_rl = bool("RL" in auto_tiling_mode)
     if offline_tune:
         os.environ["ENABLE_TUNE_DUMP"] = "TRUE"
     if op_bank_update:
@@ -166,6 +166,7 @@ def _parallel_compilation_init(initialize: TbeJob):
     os.environ["TE_PARALLEL_COMPILER"] = str(initialize.content["process_num"])
     embedding = False
     soc_info = get_soc_info(initialize.content)
+    real_debug_level = get_real_op_debug_level(initialize.content)
     auto_tiling_mode = initialize.content["SocInfo"]["autoTilingMode"]
     offline_tune = initialize.content["SocInfo"]["offlineTune"]
     global_loglevel = None
@@ -173,7 +174,7 @@ def _parallel_compilation_init(initialize: TbeJob):
     pid_str = os.getpid()
     time_str = datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
     pid_ts = "{}_pid{}".format(time_str, pid_str)
-    ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, "0",
+    ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, real_debug_level,
                                  global_loglevel, enable_event, pid_ts, None)
     if ret is None:
         initialize.error("Init multiprocess env failed")

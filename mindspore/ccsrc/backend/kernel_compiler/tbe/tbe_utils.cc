@@ -120,13 +120,13 @@ std::string TbeUtils::GetOpDebugPath() {
 }
 
 std::string GetOpDebugLevel() {
-  const std::set<std::string> exp = {"0", "1"};
+  const std::set<std::string> exp = {"0", "1", "2", "3", "4"};
   std::string op_debug_level = "0";
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
     if (exp.find(env_level) == exp.end()) {
       MS_LOG(WARNING) << "Invalid MS_COMPILER_OP_LEVEL env:" << env_level
-                      << ", the value should be 0 or 1, now using the default value 0";
+                      << ", the value should be in {0, 1, 2, 3, 4}, now using the default value 0";
     } else {
       op_debug_level = env_level;
     }
@@ -353,7 +353,8 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
     if (suffix != kJsonSuffix) {
       continue;
     }
-    if (cce_json.find("loc") != std::string::npos) {
+    if (cce_json.rfind("_loc") != std::string::npos || cce_json.rfind("_compute") != std::string::npos) {
+      // op debug file no need load into cache
       continue;
     }
     auto sp = cce_json.rfind('/');
