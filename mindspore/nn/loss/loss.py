@@ -1110,9 +1110,9 @@ class BCELoss(LossBase):
 
 
 @constexpr
-def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name):
+def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
     """Internal function, used to check whether the reduced shape meets the requirements."""
-    validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name)
+    validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)
 
 
 class CosineEmbeddingLoss(LossBase):
@@ -1173,7 +1173,7 @@ class CosineEmbeddingLoss(LossBase):
         _check_is_tensor('logits_x2', logits_x2, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         F.same_type_shape(logits_x1, logits_x2)
-        _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name)
+        _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name, "logits_x1", "labels")
         # if labels > 0, 1-cosine(logits_x1, logits_x2)
         # else, max(0, cosine(logits_x1, logits_x2)-margin)
         prod_sum = self.reduce_sum(logits_x1 * logits_x2, (1,))
@@ -1285,13 +1285,13 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
     '''Internal function, used to check whether the dimension of logits and labels meets the requirements.'''
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits_nidm < 2 or logits_nidm > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'logits' should be in [2, 4], but got"
+        raise ValueError(f"{msg_prefix} dimensions of 'logits' should be in [2, 4], but got "
                          f"dimension of 'logits' {logits_nidm}.")
     if labels_ndim < 2 or labels_ndim > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'labels' should be in [2, 4], but got"
+        raise ValueError(f"{msg_prefix} dimensions of 'labels' should be in [2, 4], but got "
                          f"dimension of 'labels' {labels_ndim}.")
     if logits_nidm != labels_ndim:
-        raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got"
+        raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got "
                          f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
 
 @constexpr
@@ -1299,12 +1299,10 @@ def _check_channel_and_shape(logits, labels, prime_name=None):
     '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits == 1:
-        raise ValueError(f"{msg_prefix} single channel prediction is not supported, but got {logits}.")
+        raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
     if labels not in (1, logits):
-        raise ValueError(f"{msg_prefix} channel of 'labels' must be one or the 'labels' must be the same as that of "
-                         f"the 'logits'. If there is only one channel, its value should be in the range [0, C-1], "
-                         f"where C is the number of classes "
-                         f"inferred from 'logits': C={logits}, but got 'labels': {labels}.")
+        raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
+                         f"but got {labels}.")
 
 
 @constexpr
