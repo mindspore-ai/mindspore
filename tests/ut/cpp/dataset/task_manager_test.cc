@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,4 +82,34 @@ TEST_F(MindDataTestTaskManager, Test2) {
   EXPECT_TRUE(rc.IsOk());
   // Now we test the async Join
   ASSERT_TRUE(vg.join_all(Task::WaitFlag::kNonBlocking).IsOk());
+}
+
+/// Feature: WaitFor in CondVar.
+/// Description: test WaitFor function
+/// Expectation: no hangs or failures
+TEST_F(MindDataTestTaskManager, Test3) {
+  (void)TaskManager::GetMasterThreadRc();
+  TaskGroup vg;
+  CondVar cv;
+  std::mutex mux;
+  Status rc;
+  rc = cv.Register(vg.GetIntrpService());
+  EXPECT_TRUE(rc.IsOk());
+  auto block_forever = [&cv, &mux]() -> Status {
+    std::unique_lock<std::mutex> lck(mux);
+    TaskManager::FindMe()->Post();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    RETURN_IF_NOT_OK(cv.WaitFor(&lck, 1000 * 5));
+    return Status::OK();
+  };
+  auto f = [&vg, &block_forever]() -> Status {
+    RETURN_IF_NOT_OK(vg.CreateAsyncTask("Spawn block threads", block_forever));
+    return Status::OK();
+  };
+  rc = f();
+
+  vg.interrupt_all();
+  ASSERT_OK(rc);
+  // Now we test the async Join
+  ASSERT_OK(vg.join_all(Task::WaitFlag::kNonBlocking));
 }

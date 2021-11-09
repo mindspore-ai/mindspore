@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,30 @@ Status CondVar::Wait(std::unique_lock<std::mutex> *lck, const std::function<bool
       auto f = [&pred]() -> bool { return (pred() || this_thread::is_interrupted()); };
       while (!f()) {
         (void)cv_.wait_for(*lck, std::chrono::milliseconds(1));
+      }
+      RETURN_IF_INTERRUPTED();
+    }
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
+  return Status::OK();
+}
+
+Status CondVar::WaitFor(std::unique_lock<std::mutex> *lck, int64_t duration) {
+  try {
+    if (svc_ != nullptr) {
+      // If this cv registers with a global resource tracking, then wait unconditionally.
+      auto f = [this]() -> bool { return this->Interrupted(); };
+      cv_.wait_for(*lck, std::chrono::milliseconds(duration), f);
+      // If we are interrupted, override the return value if this is the master thread.
+      // Master thread is being interrupted mostly because of some thread is reporting error.
+      RETURN_IF_NOT_OK(Task::OverrideInterruptRc(this->GetInterruptStatus()));
+    } else {
+      // Otherwise we wake up once a while to check for interrupt (for this thread).
+      auto f = []() -> bool { return this_thread::is_interrupted(); };
+      int64_t ctr = 0;
+      while (!f() && ctr++ < duration) {
+        (void)cv_.wait_for(*lck, std::chrono::milliseconds(1), f);
       }
       RETURN_IF_INTERRUPTED();
     }
