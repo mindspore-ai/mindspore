@@ -28,12 +28,21 @@ MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared
 Status MappableLeafOp::operator()() {
   // Registering and launching worker threads have to be before in sync with caller (i.e., before FindMe()::Post())
   RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
+  // Initialize callback
+  RETURN_IF_NOT_OK(callback_manager_.Init(this));
+  // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(InitOp());
   TensorRow sample_row;
   RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
-  int64_t row_cnt = 0;
+  int64_t ep_step = 0, total_step = 0;
+  RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
+
   while (true) {  // each iteration is 1 epoch, breaks when IsLastIteration() is true
+    if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
+      ep_step = 0;
+      RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+    }
     while (sample_row.eoe() == false) {
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
@@ -41,38 +50,29 @@ Status MappableLeafOp::operator()() {
           MS_LOG(WARNING) << "Skipping sample with ID: " << *itr << " since it is out of bound: " << num_rows_;
           continue;  // index out of bound, skipping
         }
+        ep_step++;
+        total_step++;
+        RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
         RETURN_IF_NOT_OK(
-          worker_in_queues_[row_cnt++ % num_workers_]->Add(std::make_unique<IOBlock>(*itr, IOBlock::kDeIoBlockNone)));
+          worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(*itr, IOBlock::kDeIoBlockNone)));
       }
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     }
-    if (IsLastIteration()) {
-      std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
-      std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
-      RETURN_IF_NOT_OK(worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::move(eoe_block)));
-      RETURN_IF_NOT_OK(worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::move(eof_block)));
-      for (int32_t i = 0; i < num_workers_; ++i) {
-        RETURN_IF_NOT_OK(
-          worker_in_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {  // not the last repeat.
-      RETURN_IF_NOT_OK(
-        worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
+    RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     if (!IsLastIteration()) {
+      // If not the last repeat, self-reset and go to loop again.
       RETURN_IF_NOT_OK(Reset());
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+    } else {
+      break;
     }
     UpdateRepeatAndEpochCounter();
   }
+  RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+  for (int32_t i = 0; i < num_workers_; ++i) {
+    RETURN_IF_NOT_OK(SendQuitFlagToWorker(i));
+  }
+  return Status::OK();
 }
 
 // Reset Sampler and wakeup Master thread (functor)
@@ -116,10 +116,16 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
 Status MappableLeafOp::WaitForWorkers() {
   num_workers_paused_ = 0;
   for (int32_t i = 0; i < num_workers_; i++) {
-    RETURN_IF_NOT_OK(worker_in_queues_[i]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
+    RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
   }
   RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
+  next_worker_id_ = 0;
   wait_for_workers_post_.Clear();
+  return Status::OK();
+}
+Status MappableLeafOp::SendQuitFlagToWorker(int32_t worker_id) {
+  RETURN_IF_NOT_OK(
+    worker_in_queues_[worker_id]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
   return Status::OK();
 }
 }  // namespace dataset
