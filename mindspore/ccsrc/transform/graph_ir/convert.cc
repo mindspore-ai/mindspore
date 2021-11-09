@@ -1792,7 +1792,8 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   }
 
   // Add attr pad mode to Conv2D
-  if (name == prim::kPrimConv2D->name() || name == prim::kPrimDepthwiseConv2dNative->name()) {
+  if (name == prim::kPrimConv2D->name() || name == prim::kPrimDepthwiseConv2dNative->name() ||
+      name == kNameConv2DBackpropInputV2) {
     ConvertConv2D(node);
     return true;
   }

@@ -32,6 +32,7 @@ namespace lite {
 namespace {
 constexpr auto kNumFlagOne = 1;
 constexpr auto kNumFlagTwo = 2;
+constexpr auto kNumFlagThree = 3;
 constexpr auto kCommonAttrValueNum = 2;
 constexpr auto kNamePaddingMode = "padding_mode";
 constexpr auto kNameCeilMode = "ceil_mode";
@@ -44,6 +45,7 @@ STATUS PrimitiveMapper::GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, Valu
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(value_node);
   CHECK_NULL_RETURN(prim_ptr);
+  CHECK_NULL_RETURN(cnode->input(0));
 
   *value_node = cnode->input(0)->cast<ValueNodePtr>();
   if (*value_node == nullptr) {
@@ -191,6 +193,17 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
       auto value_data = GetValue<float>(attr_val);
       auto param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+      inputs.push_back(param_node);
+      break;
+    }
+    case (kNumFlagThree): {
+      auto value_data = opt::CastToInt(attr_val);
+      if (value_data.size() < 1) {
+        MS_LOG(ERROR) << "Invalid size: " << value_data.size();
+        return lite::RET_ERROR;
+      }
+      auto param_node =
+        opt::BuildIntValueParameterNode(func_graph, value_data[0], cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }

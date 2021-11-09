@@ -38,9 +38,11 @@ ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   if (attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
+    prim->AddAttr("align_corners", MakeValue(true));
   } else if (TensorFlowUtils::FindAttrValue(tf_op, "half_pixel_centers", &attr_value) && attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
     prim->set_cubic_coeff(-0.5f);
+    prim->AddAttr("half_pixel_centers", MakeValue(true));
   } else {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   }

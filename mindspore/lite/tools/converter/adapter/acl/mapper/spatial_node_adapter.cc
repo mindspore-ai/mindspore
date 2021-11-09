@@ -21,6 +21,7 @@
 #include <string>
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/ops/ops_def.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "base/base.h"
@@ -37,7 +38,8 @@ constexpr size_t kCnodeInputMinNum = 2;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
 const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm, ops::kNameFusedBatchNorm};
-const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack};
+const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
+                                                      acl::kNameConcatV2D};
 }  // namespace
 
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode) {
@@ -87,7 +89,7 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
     auto input_cnode = input->cast<CNodePtr>();
     std::string input_func_name = GetCNodeFuncName(input_cnode);
     if (kCNodeWithMultiOutputs.find(input_func_name) != kCNodeWithMultiOutputs.end()) {
-      MS_LOG(INFO) << "Input " << input_func_name << " of cnode " << cnode_func_name << " has multioutputs";
+      MS_LOG(DEBUG) << "Input " << input_func_name << " of cnode " << cnode_func_name << " has multioutputs";
       CNodePtr get_item_cnode = CreateTupleGetItemNode(func_graph, input_cnode);
       if (get_item_cnode == nullptr) {
         MS_LOG(ERROR) << "Create tuple item for " << input_func_name << " of " << cnode_func_name << " failed.";
@@ -107,7 +109,7 @@ static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const C
   if (kCNodeWithDynamicInput.find(cnode_func_name) == kCNodeWithDynamicInput.end()) {
     return lite::RET_OK;
   }
-  MS_LOG(INFO) << "Adapter cnode with dynamic input: " << cnode_func_name;
+  MS_LOG(DEBUG) << "Adapter cnode with dynamic input: " << cnode_func_name;
   auto make_tuple_val_node = NewValueNode(prim::kPrimMakeTuple);
   if (make_tuple_val_node == nullptr) {
     MS_LOG(ERROR) << "New make tuple val node failed.";

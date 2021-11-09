@@ -327,12 +327,18 @@ constexpr const char kNameShape[] = "Shape";
 constexpr const char kNameGather[] = "Gather";
 constexpr const char kNameUnsqueeze[] = "Unsqueeze";
 constexpr const char kNamePadV3[] = "PadV3";
+constexpr const char kNamePadV2[] = "PadV2";
 constexpr const char kNameGlobalAvgPool[] = "GlobalAveragePool";
 constexpr const char kNameStridedSliceV2[] = "StridedSliceV2";
 constexpr const char kNameBNInference[] = "BNInference";
 constexpr const char kNameDeconvolution[] = "Deconvolution";
 constexpr const char kNameUpsample[] = "Upsample";
 constexpr const char kNameConv2DTransposeD[] = "Conv2DTransposeD";
+constexpr const char kNameArgMaxV2[] = "ArgMaxV2";
+constexpr const char kNameResizeNearestNeighborV2[] = "ResizeNearestNeighborV2";
+constexpr const char kNameConv2DBackpropInputV2[] = "Conv2DBackpropInputV2";
+constexpr const char kNameConcatV2D[] = "ConcatV2D";
+constexpr const char kNameFillV1[] = "FillV1";
 
 class OpAdapterMap {
  public:

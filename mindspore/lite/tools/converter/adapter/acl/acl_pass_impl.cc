@@ -36,6 +36,7 @@
 namespace mindspore {
 namespace opt {
 static const std::set<std::string> kDevice = {"Ascend310", "Ascend710"};
+static const std::set<std::string> kAdjustCnodeName = {"Resize", "Conv2dTransposeFusion", "Concat"};
 static const std::map<int64_t, std::string> kEnumFormatToStrMap = {{Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"}};
 namespace {
 constexpr auto kMakeTuple = "MakeTuple";
@@ -148,6 +149,19 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
+  std::string name = prim->name();
+  if (kAdjustCnodeName.find(name) != kAdjustCnodeName.end()) {
+    auto val_ptr = prim->GetAttr(ops::kOriginOpName);
+    if (val_ptr != nullptr) {
+      auto origin_name = GetValue<std::string>(val_ptr);
+      MS_LOG(DEBUG) << "Change old name " << name << " to new name " << origin_name;
+      name = origin_name;
+    }
+  }
+  return name;
+}
+
 STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Deparser graph start.";
   MS_ASSERT(func_graph != nullptr);
@@ -161,11 +175,8 @@ STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
       }
       auto cnode = node->cast<CNodePtr>();
       auto prim = GetCNodePrimitive(cnode);
-      if (prim == nullptr) {
-        MS_LOG(ERROR) << "Prim is nullptr.";
-        return lite::RET_ERROR;
-      }
-      auto name = prim->name();
+      CHECK_NULL_RETURN(prim);
+      std::string name = AdjustCnodeName(prim);
       auto mapper = lite::PrimitiveMapperRegister::GetInstance().GetPrimitiveMapper(name);
       if (mapper == nullptr) {
         MS_LOG(DEBUG) << "Name: " << name << " not need to mapper.";
@@ -220,10 +231,9 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     return lite::RET_ERROR;
   }
   std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &)>> fmk_proc_func = {
-    {converter::kFmkTypeMs, PreProcForMindIr},
-    {converter::kFmkTypeTf, PreProcForTF},
-    {converter::kFmkTypeCaffe, PreProcForCaffe},
-    {converter::kFmkTypeOnnx, PreProcForOnnx},
+    {converter::kFmkTypeMs, PreProcForMindIr},   {converter::kFmkTypeTf, PreProcForTF},
+    {converter::kFmkTypeCaffe, PreProcForCaffe}, {converter::kFmkTypeOnnx, PreProcForOnnx},
+    {converter::kFmkTypeTflite, PreProcForTF},
   };
   if (fmk_proc_func.find(fmk_type_) != fmk_proc_func.end()) {
     auto func = fmk_proc_func.at(fmk_type_);

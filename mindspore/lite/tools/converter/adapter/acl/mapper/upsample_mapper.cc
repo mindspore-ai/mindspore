@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr auto kUpsample = "Upsample";
 constexpr size_t kScaleMinNum = 2;
 constexpr size_t kInputNum = 3;
 }  // namespace
@@ -89,6 +90,6 @@ STATUS UpsampleMapper::RemoveConstInput(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-REGISTER_PRIMITIVE_MAPPER(kNameResize, UpsampleMapper)
+REGISTER_PRIMITIVE_MAPPER(kUpsample, UpsampleMapper)
 }  // namespace lite
 }  // namespace mindspore
