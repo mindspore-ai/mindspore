@@ -72,21 +72,21 @@ class NPUManager {
 
   int GetFrequency() { return frequency_; }
 
+  static bool CheckDDKVersion(const std::string &spec_version);
+
  private:
   bool IsKirinChip();
 
   bool CheckEMUIVersion();
 
-  bool CheckDDKVersion();
-
-  int CompareVersion(const std::string &version1, const std::string &version2);
+  static int CompareVersion(const std::string &version1, const std::string &version2);
 
   std::shared_ptr<hiai::AiModelMngerClient> CreateAiModelMngerClient();
 
  private:
   int subgraph_index_ = 0;
   bool is_check_version_ = false;
-  bool is_support_ = false;
+  bool is_support_npu_ = false;
   std::unordered_map<std::string, std::shared_ptr<SubGraphModel>> models_;
   std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
   int frequency_ = 0;

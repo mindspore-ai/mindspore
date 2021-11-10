@@ -58,7 +58,10 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
 
     // Create pre transform op: Nhwc2Nchw
     auto *trans_op = NPUPassUtils::CreateNhwc2NchwOp({op->inputs()[0]}, pre_trans_outputs, name);
-
+    if (trans_op == nullptr) {
+      MS_LOG(ERROR) << "Create Nhwc2Nchw transpose op failed.";
+      return RET_ERROR;
+    }
     trans_ops->push_back(trans_op);
 
     // Set in_ops, out_ops, inputs, outputs for transform op
@@ -115,6 +118,10 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
     std::vector<mindspore::MSTensor> nc2nh_outputs{op->outputs().at(0)};
     // Create post transform op: Nchw2Nhwc
     auto *post_trans_op = NPUPassUtils::CreateNchw2NhwcOp({*nc2nh_tensor}, nc2nh_outputs, name);
+    if (post_trans_op == nullptr) {
+      MS_LOG(ERROR) << "Create Nchw2Nhwc transpose op failed.";
+      return RET_ERROR;
+    }
     // Set in_ops, out_ops, inputs, outputs for transform op
     NPUPassUtils::UpdateOp(post_trans_op, {op}, {}, post_trans_op->inputs(), post_trans_op->outputs());
     trans_ops->push_back(post_trans_op);
@@ -140,6 +147,10 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
     // Create post transform op: Nchw2Nhwc
     auto *post_trans_op =
       NPUPassUtils::CreateNchw2NhwcOp({*nc2nh_tensor}, nc2nh_outputs, name + "_" + std::to_string(i));
+    if (post_trans_op == nullptr) {
+      MS_LOG(ERROR) << "Create Nchw2Nhwc transpose op failed.";
+      return RET_ERROR;
+    }
     // Set in_ops, out_ops, inputs, outputs for transform op
     NPUPassUtils::UpdateOp(post_trans_op, {op}, {post_insert_op}, post_trans_op->inputs(), post_trans_op->outputs());
     trans_ops->push_back(post_trans_op);

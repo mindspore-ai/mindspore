@@ -65,6 +65,10 @@ STATUS TfliteModelParser::TfliteModelVerify() {
   const auto tflite_model_operator_codes_size = tflite_model_->operator_codes.size();
 
   for (auto &subgraph : tflite_model_->subgraphs) {
+    if (subgraph == nullptr) {
+      MS_LOG(ERROR) << "tflite contain nullptr subgraph.";
+      return RET_ERROR;
+    }
     auto all_singraph_tensor_size = subgraph->tensors.size();
     if (subgraph->inputs.empty() || subgraph->outputs.empty()) {
       MS_LOG(ERROR) << "tflite subgraph inputs or outputs is empty.";

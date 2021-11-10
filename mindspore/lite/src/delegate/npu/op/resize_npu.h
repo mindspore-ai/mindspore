@@ -40,12 +40,15 @@ class ResizeNPUOp : public NPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
+  int SelectResizeOp(const mindspore::schema::Resize *prim);
+
   ge::Operator *GetNPUOp() override;
 
  private:
   schema::ResizeMethod resize_method_ = schema::ResizeMethod_UNKNOWN;
   int new_height_ = 0;
   int new_width_ = 0;
+  bool is_support_v2_ = false;
   ge::Operator *resize_ = nullptr;
   hiai::op::Const *out_size_ = nullptr;
 };

@@ -67,6 +67,9 @@ int ArithmeticSelfNPUOp::Init(const schema::Primitive *primitive, const std::vec
     case schema::PrimitiveType_Reciprocal:
       op_ = CreateOperator<hiai::op::Reciprocal>(name_);
       break;
+    case schema::PrimitiveType_ExpFusion:
+      op_ = CreateOperator<hiai::op::Exp>(name_);
+      break;
     default:
       MS_LOG(ERROR) << "Unsupported primitive type: " << schema::EnumNamePrimitiveType(type_);
       return RET_ERROR;
@@ -124,6 +127,9 @@ int ArithmeticSelfNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in
       break;
     case schema::PrimitiveType_Reciprocal:
       SetInputs<hiai::op::Reciprocal>(npu_inputs, op_);
+      break;
+    case schema::PrimitiveType_ExpFusion:
+      SetInputs<hiai::op::Exp>(npu_inputs, op_);
       break;
     default:
       MS_LOG(ERROR) << "SetInputs for npu op " << name_ << " failed.";

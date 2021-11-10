@@ -34,6 +34,7 @@ STATUS OnnxDeConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t
     } else if (onnx_node_attr.name() == "auto_pad") {
       *pad_mode = GetOnnxPadMode(onnx_node_attr);
     } else if (onnx_node_attr.name() == "output_padding") {
+      MS_CHECK_GE(onnx_node_attr.ints_size(), kInputSize1, RET_ERROR);
       output_paddings->push_back(static_cast<int32_t>(onnx_node_attr.ints(0)));
       output_paddings->push_back(static_cast<int32_t>(onnx_node_attr.ints(1)));
     } else if (onnx_node_attr.name() == "order" && onnx_node_attr.s() != "NHWC") {
@@ -45,6 +46,7 @@ STATUS OnnxDeConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t
 }
 
 ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});

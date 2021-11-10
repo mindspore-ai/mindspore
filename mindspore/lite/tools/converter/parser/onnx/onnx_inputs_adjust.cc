@@ -31,6 +31,7 @@ STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int
                       const std::string &attr_name) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
   if (!opt::CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
@@ -196,6 +197,7 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
     return lite::RET_OK;
   }
   auto perm_anf = cnode->input(opt::kInputIndexTwo);
+  MS_ASSERT(perm_anf != nullptr);
   auto perm_param = perm_anf->cast<ParameterPtr>();
   if (perm_param == nullptr || !perm_param->has_default() ||
       !utils::isa<tensor::TensorPtr>(perm_param->default_param())) {
@@ -249,7 +251,9 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   }
   int size = 1;
   for (size_t i = 2; i < cnode->inputs().size(); ++i) {
-    const auto &param_node = cnode->input(opt::kInputIndexTwo)->cast<ParameterPtr>();
+    auto param_anf = cnode->input(opt::kInputIndexTwo);
+    MS_ASSERT(param_anf != nullptr);
+    const auto &param_node = param_anf->cast<ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
@@ -260,6 +264,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     }
     auto shape = default_data->shape();
     for (size_t j = 0; j < shape.size(); j++) {
+      MS_CHECK_GE(shape.at(j), 0, RET_ERROR);
       MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(size, static_cast<int>(shape.at(j))), RET_ERROR, "Int mul overflow.");
       size = size * static_cast<int>(shape.at(j));
     }
@@ -301,6 +306,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
 
 STATUS AdjustResize(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
   auto node = cnode->input(0);
   MS_ASSERT(node != nullptr);
   auto resize_prim = GetValueNode<std::shared_ptr<ops::Resize>>(node);

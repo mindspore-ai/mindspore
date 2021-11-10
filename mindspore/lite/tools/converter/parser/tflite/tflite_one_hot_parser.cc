@@ -25,8 +25,6 @@ namespace lite {
 ops::PrimitiveC *TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   auto prim = std::make_unique<ops::OneHot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
