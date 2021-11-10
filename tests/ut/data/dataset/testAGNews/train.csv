@@ -1,0 +1,3 @@
+3,Demand analysis,"""Users simply click on the module they want to view to browse information about that module."""
+3,UML Timing Diagram,"Information is mainly displayed using locally stored data and mapping, which is not timely and does not have the ability to update itself."
+3,In summary,"This paper implements a map visualization system for Hangzhou city information, using extensive knowledge of visualization techniques."

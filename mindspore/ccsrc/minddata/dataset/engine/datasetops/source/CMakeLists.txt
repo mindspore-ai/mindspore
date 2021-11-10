@@ -27,6 +27,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     places365_op.cc
     photo_tour_op.cc
     fashion_mnist_op.cc
+    ag_news_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

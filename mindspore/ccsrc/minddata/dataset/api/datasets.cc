@@ -83,6 +83,7 @@
 #include "minddata/dataset/util/services.h"
 
 // IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/ag_news_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 
@@ -850,6 +851,14 @@ std::shared_ptr<DatasetCache> CreateDatasetCacheCharIF(session_id_type id, uint6
                                                        std::optional<int32_t> prefetch_sz) {
   auto cache = std::make_shared<DatasetCacheImpl>(id, mem_sz, spill, hostname, port, num_connections, prefetch_sz);
   return cache;
+}
+
+AGNewsDataset::AGNewsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                             ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                             const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<AGNewsNode>(CharToString(dataset_dir), num_samples, shuffle, CharToString(usage),
+                                         num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 #endif
 
