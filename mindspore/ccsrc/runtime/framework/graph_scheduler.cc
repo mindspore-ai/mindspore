@@ -575,6 +575,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
                                                                  iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
       (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
+      (void)host_queue_ds_actor->data_node_position_map_.emplace(backend_iter->second.begin()->first,
+                                                                 host_queue_ds_actor->data_nodes_.size());
       (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.begin()->first);
       (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.begin()->second);
     }
