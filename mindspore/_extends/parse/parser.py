@@ -687,7 +687,7 @@ class Parser:
             logger.debug(f"Found '{name}'({rightmost_name}) in trope namespace: {str(trope_ns)}.")
             return True
 
-        logger.error(f"Not found '{name}' in mindspore supported namespace.")
+        logger.info(f"Not found '{name}' in mindspore supported namespace.")
         return False
 
     def get_builtin_namespace_symbol(self, var: str):

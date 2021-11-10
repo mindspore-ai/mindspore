@@ -697,6 +697,7 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
 
 bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args,
                              std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments) {
+  MS_LOG(DEBUG) << "Process ast args in call";
   MS_EXCEPTION_IF_NULL(packed_arguments);
   MS_EXCEPTION_IF_NULL(group_arguments);
   bool need_unpack = false;
@@ -723,6 +724,7 @@ bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args
 
 bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node,
                                  std::vector<AnfNodePtr> *packed_arguments) {
+  MS_LOG(DEBUG) << "Process ast key words in call";
   bool need_unpack = false;
   py::list keywords = python_adapter::GetPyObjAttr(node, "keywords");
   if (!keywords.empty()) {
