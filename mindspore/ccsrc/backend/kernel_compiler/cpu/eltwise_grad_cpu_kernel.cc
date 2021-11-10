@@ -51,18 +51,14 @@ void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
-  if constexpr (!std::is_same<T, float>::value && !std::is_same<T, double>::value) {
-    MS_LOG(EXCEPTION) << "AbsGrad only support float or double.";
-  }
   if constexpr (std::is_same<T, float>::value) {
     int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
     if (ret == NNACL_ERR) {
       MS_LOG(EXCEPTION) << "AbsGrad execute failed.";
     }
-  }
-  if constexpr (std::is_same<T, double>::value) {
+  } else {
     for (size_t i = start; i < end; i++) {
-      out[i] = (input1[i] < 0.f) ? -input2[i] : ((input1[i] > 0.f) ? input2[i] : 0);
+      out[i] = (input1[i] < 0) ? -input2[i] : ((input1[i] > 0) ? input2[i] : 0);
     }
   }
 }
@@ -241,10 +237,12 @@ void EltWiseGradCPUKernel<T>::InitComputeFunc() {
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
               {prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with double as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
-  } else {
+    return;
+  }
+  if constexpr (std::is_same_v<T, float>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
       elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::ReluGrad},
@@ -261,7 +259,17 @@ void EltWiseGradCPUKernel<T>::InitComputeFunc() {
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::AcoshGrad},
               {prim::kPrimSoftplusGrad->name(), &EltWiseGradCPUKernel<T>::SoftplusGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with float as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+    return;
+  }
+  if constexpr (std::is_same_v<T, int>) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with int as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
