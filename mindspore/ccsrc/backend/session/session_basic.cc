@@ -570,9 +570,13 @@ AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, Kernel
 
   for (size_t i = 0; i < parameters.size(); ++i) {
     const auto &parameter = parameters[i];
-    // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
-    // which needs to be linked when processing the internal node.
-    graph->CacheInternalParameterToFrontNode(parameter, {node, i});
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == true) {
+      // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
+      // which needs to be linked when processing the internal node.
+      graph->CacheInternalParameterToFrontNode(parameter, {node, i});
+    }
     auto valid_inputs = graph->MutableValidInputs();
     MS_EXCEPTION_IF_NULL(valid_inputs);
     auto graph_inputs = graph->MutableInputs();
