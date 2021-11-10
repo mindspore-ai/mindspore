@@ -102,6 +102,8 @@ class Cell(Cell_):
         self.compile_cache = set()
         self.parameter_broadcast_done = False
         self._id = 1
+        self.exist_names = set("")
+        self.exist_objs = set()
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -528,7 +530,7 @@ class Cell(Cell_):
         self.insert_param_to_cell(name, value)
 
     def _set_attr_for_parameter_tuple(self, name, value):
-        """Set attr for parameter tuple."""
+        """Set attr for parameter in ParameterTuple."""
         params = self.__dict__.get('_params')
         params_list = self.__dict__.get('_params_list')
         if params is None:
@@ -557,6 +559,22 @@ class Cell(Cell_):
             params_list[name] = value
         else:
             object.__setattr__(self, name, value)
+
+    def _set_attr_for_parameter_in_list_or_tuple(self, name, value):
+        """Set attr for parameter in list or tuple."""
+        for item in value:
+            if item in self.exist_objs:
+                # If there are multiple identical objects, their names only check once.
+                continue
+            self.exist_objs.add(item)
+            if item.name == PARAMETER_NAME_DEFAULT:
+                item.name = item.name + "$" + str(self._id)
+                self._id += 1
+            if item.name in self.exist_names:
+                raise ValueError("The value {} , its name '{}' already exists.".
+                                 format(value, item.name))
+            self.exist_names.add(item.name)
+        object.__setattr__(self, name, value)
 
     def _set_attr_for_cell(self, name, value):
         """Set attr for cell."""
@@ -594,7 +612,7 @@ class Cell(Cell_):
         elif isinstance(value, ParameterTuple):
             self._set_attr_for_parameter_tuple(name, value)
         elif isinstance(value, (list, tuple)) and value and self._check_param_list_tuple(value):
-            self._set_attr_for_parameter_tuple(name, value)
+            self._set_attr_for_parameter_in_list_or_tuple(name, value)
         elif isinstance(value, Cell):
             self._set_attr_for_cell(name, value)
         elif params and name in params:
