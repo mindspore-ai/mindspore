@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
+class Kernel;
 /// \brief KernelInterface defined customized op's interface, such as infershape, and so on.
 class MS_API KernelInterface {
  public:
@@ -41,6 +42,19 @@ class MS_API KernelInterface {
   virtual Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                        const schema::Primitive *primitive) {
     return kSuccess;
+  }
+
+  /// \brief Method to infer customized op's output shape.
+  ///
+  /// \param[in] inputs Define the input tensors of op.
+  /// \param[in] outputs Define the output tensors of op.
+  /// \param[in] primitive Define the attributes of op.
+  /// \param[in] kernel Define the kernel of a certain op.
+  ///
+  /// \return  Status as a status identification of inferring.
+  virtual Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
+                       const schema::Primitive *primitive, const Kernel *kernel) {
+    return Infer(inputs, outputs, primitive);
   }
 };
 }  // namespace kernel
