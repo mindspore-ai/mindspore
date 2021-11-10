@@ -685,6 +685,7 @@ inline const PrimitivePtr kPrimPyInterpret = std::make_shared<Primitive>("PyInte
 // Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J", kSideEffectPropagate);
+inline const PrimitivePtr kPrimShard = std::make_shared<Primitive>("Shard", kSideEffectPropagate);
 
 // Used to build graph which have keyword arguments
 inline const PrimitivePtr kPrimExtractKeywordArg = std::make_shared<Primitive>("extract_keyword_arg");

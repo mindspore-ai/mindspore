@@ -714,6 +714,26 @@ AbstractBasePtr InferImplJ(const AnalysisEnginePtr &, const PrimitivePtr &primit
   return AbstractFunction::MakeAbstractFunction(jv);
 }
 
+AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  // Inputs: func, in_axes, out_axes, device, level.
+  constexpr size_t shard_input_size = 5;
+  CheckArgsSize(primitive->name(), args_spec_list, shard_input_size);
+  MS_LOG(DEBUG) << "Evaluate Shard: " << args_spec_list[0]->ToString();
+
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  MS_EXCEPTION_IF_NULL(x);
+
+  AbstractFuncAtomPtrList shard_v;
+  auto build_shard_v = [&shard_v](const AbstractFuncAtomPtr &func) {
+    auto shard_closure = std::make_shared<ShardTransformedAbstractClosure>(func);
+    shard_v.push_back(shard_closure);
+  };
+  x->Visit(build_shard_v);
+
+  return AbstractFunction::MakeAbstractFunction(shard_v);
+}
+
 AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
@@ -779,6 +799,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringConcat, prim::kPrimStringConcat, InferI
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                    InferImplBroadcastGradientArgs, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeSiice, prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);

@@ -28,7 +28,7 @@ from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
-from .composite import _Grad
+from .composite import _Grad, Shard
 from .._c_expression import security
 
 typeof = Primitive('typeof')
@@ -337,6 +337,10 @@ def vjp(fn, inputs, v):
     if isinstance(inputs, (tuple, list)):
         return wrap_container(*inputs, v)
     return wrap_container(inputs, v)
+
+shard_fn = Shard()
+def shard(fn, in_axes, out_axes, device, level=0):
+    return shard_fn(fn, in_axes, out_axes, device, level)
 
 
 @constexpr

@@ -248,6 +248,20 @@ std::size_t JTransformedAbstractClosure::hash() const {
   return hash_value;
 }
 
+bool ShardTransformedAbstractClosure::operator==(const AbstractFunction &other) const {
+  if (!other.isa<ShardTransformedAbstractClosure>()) {
+    return false;
+  }
+  auto other_transformed = static_cast<const ShardTransformedAbstractClosure *>(&other);
+  return fn_ == other_transformed->fn_;
+}
+
+std::size_t ShardTransformedAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(fn_);
+  auto hash_value = hash_combine(tid(), fn_->hash());
+  return hash_value;
+}
+
 bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<VirtualAbstractClosure>()) {
     return false;
