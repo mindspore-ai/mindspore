@@ -26,9 +26,9 @@
 extern "C" {
 #endif
 bool TimeBeforeCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
-                        const MSCallBackParamC &kernel_Info);
+                        const MSCallBackParamC kernel_Info);
 bool TimeAfterCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
-                       const MSCallBackParamC &kernel_Info);
+                       const MSCallBackParamC kernel_Info);
 #ifdef __cplusplus
 }
 #endif

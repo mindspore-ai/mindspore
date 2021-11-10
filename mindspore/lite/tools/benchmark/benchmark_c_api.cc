@@ -438,7 +438,7 @@ std::map<std::string, std::pair<int, float>> g_op_times_by_type_;
 std::map<std::string, std::pair<int, float>> g_op_times_by_name_;
 
 bool TimeBeforeCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
-                        const MSCallBackParamC &kernel_Info) {
+                        const MSCallBackParamC kernel_Info) {
   if (g_op_times_by_type_.find(kernel_Info.node_type) == g_op_times_by_type_.end()) {
     g_op_times_by_type_.insert(std::make_pair(kernel_Info.node_type, std::make_pair(0, 0.0f)));
   }
@@ -452,7 +452,7 @@ bool TimeBeforeCallback(const MSTensorHandleArray inputs, const MSTensorHandleAr
 }
 
 bool TimeAfterCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
-                       const MSCallBackParamC &kernel_Info) {
+                       const MSCallBackParamC kernel_Info) {
   uint64_t opEnd = mindspore::lite::GetTimeUs();
   float cost = static_cast<float>(opEnd - g_op_begin_) / mindspore::lite::kFloatMSEC;
   g_op_cost_total_ += cost;

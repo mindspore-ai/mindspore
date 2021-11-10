@@ -43,7 +43,7 @@ typedef struct MSCallBackParamC {
 } MSCallBackParamC;
 
 typedef bool (*MSKernelCallBackC)(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
-                                  const MSCallBackParamC &kernel_Info);
+                                  const MSCallBackParamC kernel_Info);
 
 /// \brief Create a model object. Only valid for Lite.
 ///
