@@ -30,7 +30,10 @@ class AnfUtils {
   static bool IsShapeDynamic(const std::vector<size_t> &shape);
   static bool IsNodeOutputDynamicShape(const CNodePtr &node);
   static bool IsDimUnknown(const AnfNodePtr &node);
+  // check whether the anf node is a real kernel that can run on device,parameter and constant is real kernel too
+  static bool IsRealKernel(const AnfNodePtr &node);
+  // check whether the anf node is a real kernel that is a cnode and can run on device
+  static bool IsRealCNodeKernel(const AnfNodePtr &node);
 };
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_

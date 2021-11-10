@@ -35,7 +35,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGatherFusion::Run(const FuncGra
   int64_t recompute_min_fusion_id = 0;
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!node->cast<CNodePtr>() || !AnfAlgo::IsRealKernel(node)) {
+    if (!node->cast<CNodePtr>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

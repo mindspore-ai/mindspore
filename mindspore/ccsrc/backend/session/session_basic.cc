@@ -75,7 +75,7 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
       (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
     return false;
   }
-  if (AnfAlgo::IsRealKernel(node) && !AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+  if (AnfUtils::IsRealKernel(node) && !AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     return true;
   }
   (*idx) += 1;
@@ -564,7 +564,7 @@ AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, Kernel
   auto parameters = AnfAlgo::GetAllOutput(new_parameter);
   std::vector<AnfNodePtr> pre_graph_out = {node};
   // If a cnode is a call, it's input0 is a cnode too, so it doesn't have primitive
-  if (!pre_graph_out.empty() && !AnfAlgo::IsRealKernel(node)) {
+  if (!pre_graph_out.empty() && !AnfUtils::IsRealKernel(node)) {
     pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem, prim::kPrimUpdateState});
   }
 
@@ -1832,7 +1832,7 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
       MS_EXCEPTION_IF_NULL(node);
       auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
       MS_EXCEPTION_IF_NULL(item_with_index.first);
-      if (!AnfAlgo::IsRealKernel(item_with_index.first)) {
+      if (!AnfUtils::IsRealKernel(item_with_index.first)) {
         MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
       }
       summary[n->fullname_with_scope()] = item_with_index;
@@ -1935,7 +1935,7 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
   if (!front_node->isa<CNode>()) {
     return nullptr;
   }
-  if (AnfAlgo::IsRealKernel(front_node)) {
+  if (AnfUtils::IsRealKernel(front_node)) {
     return front_node;
   }
   if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
@@ -1967,7 +1967,7 @@ bool IsUnusedInternlOutput(const AnfNodePtr &user) {
   if (IsPrimitiveCNode(user, prim::kPrimSwitch) || IsPrimitiveCNode(user, prim::kPrimSwitchLayer)) {
     return true;
   }
-  if (!AnfAlgo::IsRealKernel(user)) {
+  if (!AnfUtils::IsRealKernel(user)) {
     return true;
   }
   return false;
@@ -2001,7 +2001,7 @@ std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node
     if (!node->isa<CNode>()) {
       continue;
     }
-    if (!AnfAlgo::IsRealKernel(node)) {
+    if (!AnfUtils::IsRealKernel(node)) {
       continue;
     }
     std::string cur_target = GetCNodeTarget(node);

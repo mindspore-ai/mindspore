@@ -210,7 +210,7 @@ void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (AnfAlgo::IsRealCNodeKernel(cnode) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
+    if (AnfUtils::IsRealCNodeKernel(cnode) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
       auto fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kOpAttrFusionId);
       (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(cnode);
     }

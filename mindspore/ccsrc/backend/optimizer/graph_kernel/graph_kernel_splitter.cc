@@ -574,7 +574,7 @@ class Splitter {
             cnode->set_input(i, iter->second);
           }
         }
-        if (AnfAlgo::IsRealKernel(node)) {
+        if (AnfUtils::IsRealKernel(node)) {
           inlined_nodes_.emplace_back(node);
         }
       }
@@ -807,7 +807,7 @@ class CostModelSplitSchemer : public SplitSchemer {
 
   virtual bool IsValidKernelNode(const AnfNodePtr &node) const {
     if (!node->isa<CNode>()) return false;
-    if (AnfAlgo::IsRealKernel(node)) return true;
+    if (AnfUtils::IsRealKernel(node)) return true;
     return false;
   }
 

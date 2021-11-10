@@ -62,7 +62,7 @@ const BaseRef InsertTensorMoveForGetNext::DefinePattern() const {
 
 const AnfNodePtr InsertTensorMoveForGetNext::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                      const EquivPtr &) const {
-  if (func_graph == nullptr || node == nullptr || !AnfAlgo::IsRealKernel(node)) {
+  if (func_graph == nullptr || node == nullptr || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
 

@@ -77,7 +77,7 @@ void AddOutputs(const CNodePtr &cnode, const std::vector<size_t> &input_indices)
 
 const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                            const EquivPtr &) const {
-  if (node == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
+  if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();

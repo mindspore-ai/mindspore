@@ -262,7 +262,7 @@ class CNodeDecoder {
     if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
       kernel_info->set_feature_map_flag(true);
     }
-    if (AnfAlgo::IsRealCNodeKernel(cnode_)) {
+    if (AnfUtils::IsRealCNodeKernel(cnode_)) {
       AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode_);
       AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode_);
     }

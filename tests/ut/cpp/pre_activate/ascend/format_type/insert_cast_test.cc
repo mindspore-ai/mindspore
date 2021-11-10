@@ -70,14 +70,14 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
-  for (auto& node : node_list) {
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
     if (node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), node.get());
-    } else if (node != func_graph->get_return() && AnfAlgo::IsRealKernel(node)) {
+    } else if (node != func_graph->get_return() && AnfUtils::IsRealKernel(node)) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }
@@ -124,14 +124,14 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
-  for (auto& node : node_list) {
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
     if (node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), node.get());
-    } else if (node != func_graph->get_return() && AnfAlgo::IsRealKernel(node)) {
+    } else if (node != func_graph->get_return() && AnfUtils::IsRealKernel(node)) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }

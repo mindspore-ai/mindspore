@@ -15,6 +15,9 @@
  */
 
 #include "utils/anf_utils.h"
+#include "base/core_ops.h"
+#include "utils/trace_base.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
@@ -78,5 +81,40 @@ bool AnfUtils::IsDimUnknown(const AnfNodePtr &node) {
     return list_shape_ptr->IsDimUnknown();
   }
   return false;
+}
+
+bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+#ifndef ENABLE_SECURITY
+  static const PrimitiveSet virtual_prims = {
+    prim::kPrimImageSummary, prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
+    prim::kPrimMakeTuple,    prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimReturn,
+    prim::kPrimPartial,      prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimLoad};
+#else
+  static const PrimitiveSet virtual_prims = {prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,
+                                             prim::kPrimReturn,      prim::kPrimPartial,      prim::kPrimDepend,
+                                             prim::kPrimUpdateState, prim::kPrimLoad};
+#endif
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    // parameter and value node is a real kernel too
+    return true;
+  }
+  if (cnode->size() == 0) {
+    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString()
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  return !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
+}
+
+bool AnfUtils::IsRealCNodeKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
+    return true;
+  }
+  return AnfUtils::IsRealKernel(node);
 }
 }  // namespace mindspore

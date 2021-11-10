@@ -653,7 +653,7 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_lists = TopoSort(func_graph->get_return());
   for (auto const &node : node_lists) {
-    if (!AnfAlgo::IsRealKernel(node) || !node->isa<CNode>()) {
+    if (!AnfUtils::IsRealKernel(node) || !node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

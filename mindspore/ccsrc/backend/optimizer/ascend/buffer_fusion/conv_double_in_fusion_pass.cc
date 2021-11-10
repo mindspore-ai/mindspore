@@ -38,7 +38,7 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
   MS_EXCEPTION_IF_NULL(input_cnode);
   auto double_in_eltwise_input = input_cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(double_in_eltwise_input);
-  if (!double_in_eltwise_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(double_in_eltwise_input) ||
+  if (!double_in_eltwise_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input) ||
       fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {
     return;
   }
@@ -55,7 +55,7 @@ void ConvDoubleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
-    if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
+    if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }

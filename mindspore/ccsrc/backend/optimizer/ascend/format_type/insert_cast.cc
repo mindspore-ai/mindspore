@@ -125,7 +125,7 @@ const BaseRef InsertCast::DefinePattern() const {
 
 const AnfNodePtr InsertCast::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::IsRealCNodeKernel(node) || func_graph == nullptr) {
+  if (!AnfUtils::IsRealCNodeKernel(node) || func_graph == nullptr) {
     return nullptr;
   }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);

@@ -108,7 +108,7 @@ VectorRef MultiGraphAclSession::ConstructOutputRef(GraphId graph_id, std::deque<
       auto cnode = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));
-    } else if (AnfAlgo::IsRealKernel(anf_node)) {
+    } else if (AnfUtils::IsRealKernel(anf_node)) {
       if (out_tensors->empty()) {
         MS_LOG(EXCEPTION) << "Can not find MSTensor for output node " << out->DebugString()
                           << ", visited: " << anf_node->DebugString();
@@ -139,7 +139,7 @@ VectorRef MultiGraphAclSession::ConstructOutputRefByTupleNode(const CNodePtr &tu
       auto cnode = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));
-    } else if (AnfAlgo::IsRealKernel(anf_node)) {
+    } else if (AnfUtils::IsRealKernel(anf_node)) {
       if (out_tensors->empty()) {
         MS_LOG(EXCEPTION) << "Can not find MSTensor for output node " << tuple_node->input(i)->DebugString()
                           << ", visited: " << anf_node->DebugString();

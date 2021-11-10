@@ -57,7 +57,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
   for (const auto &node_pair : user_items) {
     auto node = node_pair.first;
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfAlgo::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
+    if (AnfUtils::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
       MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
       return true;
     }

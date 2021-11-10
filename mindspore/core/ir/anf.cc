@@ -588,4 +588,18 @@ bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
   }
   return false;
 }
+
+bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
+  return (prim && prim_set.find(prim) != prim_set.end());
+}
+
+bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr || cnode->size() == 0) {
+    return false;
+  }
+  return IsOneOfPrimitive(cnode->input(0), prim_set);
+}
 }  // namespace mindspore

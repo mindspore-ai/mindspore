@@ -68,7 +68,7 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   bool IsCasted = false;
   for (auto node : node_list) {
-    if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
+    if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
 

@@ -71,7 +71,7 @@ std::unordered_map<AnfNodePtr, NodeInfo> CollectNodeInfo(const FuncGraphPtr &fun
       continue;
     }
 
-    if (!AnfAlgo::IsRealKernel(node)) {
+    if (!AnfUtils::IsRealKernel(node)) {
       res[node] = NodeInfo(NodeType::kSupport, i);
       continue;
     }

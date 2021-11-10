@@ -77,7 +77,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   bool cnode_input_changed = false;
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     const auto &input = cnode->inputs()[i];
-    if (input->Type() != nullptr && AnfAlgo::IsRealKernel(input) && AnfAlgo::IsTupleOutput(input) &&
+    if (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && AnfAlgo::IsTupleOutput(input) &&
         !AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
       cnode->set_input(i, ConvertTupleInputToMakeTuple(func_graph, input));
       cnode_input_changed = true;

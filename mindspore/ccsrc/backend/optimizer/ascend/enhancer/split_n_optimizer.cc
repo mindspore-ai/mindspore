@@ -137,7 +137,7 @@ bool OutputCheck(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
       MS_LOG(INFO) << "Split has control edge, can not optimizer.";
       return false;
     }
-    if (AnfAlgo::IsRealKernel(item) && (AnfAlgo::GetProcessor(item) != 0)) {
+    if (AnfUtils::IsRealKernel(item) && (AnfAlgo::GetProcessor(item) != 0)) {
       MS_LOG(INFO) << "Next node is not a AICore node, can not optimizer.";
       return false;
     }
@@ -199,7 +199,7 @@ const AnfNodePtr SplitOpOptimizer::Process(const FuncGraphPtr &func_graph, const
                                            const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (!AnfAlgo::IsRealCNodeKernel(node)) {
+  if (!AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);

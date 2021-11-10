@@ -759,7 +759,7 @@ class AscendAutoMonadConverter {
       end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
     }
     for (auto iter = nodes.rbegin(); iter != end_iter; ++iter) {
-      if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
+      if (!AnfUtils::IsRealCNodeKernel(*iter)) {
         continue;
       }
       if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
@@ -789,7 +789,7 @@ class AscendAutoMonadConverter {
       end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
     }
     for (auto iter = nodes.rbegin(); iter != end_iter; ++iter) {
-      if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
+      if (!AnfUtils::IsRealCNodeKernel(*iter)) {
         continue;
       }
       if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) && AnfAlgo::HasNodeAttr(kAttrReturn, *iter)) {

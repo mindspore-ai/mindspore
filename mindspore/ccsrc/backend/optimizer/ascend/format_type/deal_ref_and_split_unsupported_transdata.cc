@@ -247,7 +247,7 @@ const AnfNodePtr DealRefAndSpiltUnSupportedTransdata::Process(const FuncGraphPtr
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::IsRealCNodeKernel(cnode)) {
+  if (!AnfUtils::IsRealCNodeKernel(cnode)) {
     return nullptr;
   }
 

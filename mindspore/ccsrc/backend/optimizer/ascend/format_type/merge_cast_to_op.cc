@@ -152,7 +152,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(next_node);
-  if (!next_node->isa<CNode>() || !AnfAlgo::IsRealKernel(next_node)) {
+  if (!next_node->isa<CNode>() || !AnfUtils::IsRealKernel(next_node)) {
     return nullptr;
   }
   auto next_cnode = next_node->cast<CNodePtr>();
@@ -208,7 +208,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
       *output_idx = LongToSize(GetValue<int64_t>(value_ptr->value()));
       *single_output = false;
     }
-    return AnfAlgo::IsRealKernel(*prior_op);
+    return AnfUtils::IsRealKernel(*prior_op);
   }
   return false;
 }

@@ -93,7 +93,7 @@ const BaseRef ConvertTupleInputToDynamicInput::DefinePattern() const {
 
 const AnfNodePtr ConvertTupleInputToDynamicInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                           const EquivPtr &) const {
-  if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
+  if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
   ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());

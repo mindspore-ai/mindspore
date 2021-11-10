@@ -426,7 +426,7 @@ void MemReuseUtil::SetGraphOutputRefCount() {
       kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
     }
     MS_EXCEPTION_IF_NULL(kernel_input.first);
-    if (!kernel_input.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_input.first)) {
+    if (!kernel_input.first->isa<CNode>() || !AnfUtils::IsRealKernel(kernel_input.first)) {
       continue;
     }
     auto ak_node = kernel_input.first->cast<CNodePtr>();

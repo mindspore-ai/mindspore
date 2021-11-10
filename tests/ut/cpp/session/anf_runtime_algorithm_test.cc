@@ -372,8 +372,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsFormat({kOpFormat_NCHW, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_NZ});
-  builder.SetOutputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id(),
-                                kFloat32->type_id()});
+  builder.SetOutputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id()});
   d_kernel_info->set_select_kernel_build_info(builder.Build());
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 0)[2], 224);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 1)[0], 2);
@@ -722,42 +721,42 @@ TEST_F(AnfRuntimeAlgorithmTest, IsRealKernel) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test value node as input
   auto value_node = NewValueNode(prim::kPrimAdd);
-  EXPECT_TRUE(AnfAlgo::IsRealKernel(value_node));
-  EXPECT_THROW(AnfAlgo::IsRealKernel(nullptr), std::runtime_error);
+  EXPECT_TRUE(AnfUtils::IsRealKernel(value_node));
+  EXPECT_THROW(AnfUtils::IsRealKernel(nullptr), std::runtime_error);
   // test parameter as input
   auto parameter_node = kernel_graph->add_parameter();
-  EXPECT_TRUE(AnfAlgo::IsRealKernel(parameter_node));
+  EXPECT_TRUE(AnfUtils::IsRealKernel(parameter_node));
   // test add as input
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_TRUE(AnfAlgo::IsRealKernel(add));
+  EXPECT_TRUE(AnfUtils::IsRealKernel(add));
   // test Depend as input
   inputs.clear();
   inputs.push_back(NewValueNode(prim::kPrimDepend));
   auto depend_node = kernel_graph->NewCNode(inputs);
-  EXPECT_FALSE(AnfAlgo::IsRealKernel(depend_node));
+  EXPECT_FALSE(AnfUtils::IsRealKernel(depend_node));
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, IsRealCNodeKernel) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test value node as input
   auto value_node = NewValueNode(prim::kPrimAdd);
-  EXPECT_FALSE(AnfAlgo::IsRealCNodeKernel(value_node));
-  EXPECT_THROW(AnfAlgo::IsRealCNodeKernel(nullptr), std::runtime_error);
+  EXPECT_FALSE(AnfUtils::IsRealCNodeKernel(value_node));
+  EXPECT_THROW(AnfUtils::IsRealCNodeKernel(nullptr), std::runtime_error);
   // test parameter as input
   auto parameter_node = kernel_graph->add_parameter();
-  EXPECT_FALSE(AnfAlgo::IsRealCNodeKernel(parameter_node));
+  EXPECT_FALSE(AnfUtils::IsRealCNodeKernel(parameter_node));
   // test add as input
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_TRUE(AnfAlgo::IsRealCNodeKernel(add));
+  EXPECT_TRUE(AnfUtils::IsRealCNodeKernel(add));
   // test ImageSummary as input
   inputs.clear();
   inputs.push_back(NewValueNode(prim::kPrimDepend));
   auto depend = kernel_graph->NewCNode(inputs);
-  EXPECT_FALSE(AnfAlgo::IsRealCNodeKernel(depend));
+  EXPECT_FALSE(AnfUtils::IsRealCNodeKernel(depend));
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, IsParameterWeight) {

@@ -102,7 +102,7 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
 
 bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::IsRealCNodeKernel(node)) {
+  if (!AnfUtils::IsRealCNodeKernel(node)) {
     return false;
   }
 

@@ -24,6 +24,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <set>
 
@@ -73,6 +74,9 @@ using FuncGraphVector = std::vector<FuncGraphPtr>;
 
 class Primitive;
 using PrimitivePtr = std::shared_ptr<Primitive>;
+class PrimitiveHasher;
+class PrimitiveEqual;
+using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
 class BaseRef;
 
@@ -1055,6 +1059,16 @@ PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 /// \param[in] value Primitive value.
 /// \return Whether the given node is a ValueNode with some Primitive value.
 MS_CORE_API bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
+
+// Check whether the given node is a ValueNode belonging to a primitive set.
+bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set);
+
+/// \brief Used to check whether the given node is a CNode belonging to a primitive set.
+///
+/// \param[in] node The input node.
+/// \param[in] prim_set Primitive set.
+/// \return Whether the given node is a CNode belonging to a primitive set.
+MS_CORE_API bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 
 // Check whether two primitives are same.
 bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);

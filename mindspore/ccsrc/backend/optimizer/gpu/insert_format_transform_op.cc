@@ -122,7 +122,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
-  if (!AnfAlgo::IsRealCNodeKernel(node)) {
+  if (!AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   auto iter = device::gpu::kKernelFormatPositionMap.find(AnfAlgo::GetCNodeName(node));

@@ -71,7 +71,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   std::vector<AnfNodePtr> other_nodes;
   for (const auto &anf_node : kernels) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    if (!AnfAlgo::IsRealKernel(anf_node)) {
+    if (!AnfUtils::IsRealKernel(anf_node)) {
       continue;
     }
     if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
