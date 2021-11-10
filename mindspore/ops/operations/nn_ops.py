@@ -1477,6 +1477,7 @@ class Conv2D(Primitive):
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
@@ -1608,6 +1609,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                              f"but got height:{self.dilation[0]},  width:{self.dilation[1]}")
         self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
         validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
@@ -1699,6 +1701,7 @@ class _Pool(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
         self.add_prim_attr("pad_mode", self.pad_mode)
         self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
@@ -2186,6 +2189,7 @@ class Conv2DBackpropInput(Primitive):
         self.dilation = _update_attr_by_format(self.dilation, self.format)
         self.add_prim_attr('dilation', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
@@ -8474,6 +8478,7 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
@@ -8774,6 +8779,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
                                                ret_five=True, third_one=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
