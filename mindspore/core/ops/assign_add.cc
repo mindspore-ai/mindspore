@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,26 +23,31 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(value_shape);
+abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto x_shape = input_args[kInputIndex1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape);
+  auto output_shape = x_shape->cast<abstract::ShapePtr>();
+  return output_shape;
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AssignAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("w", input_args[1]->BuildType());
+  (void)types.emplace("ref", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("value", input_args[kInputIndex1]->BuildType());
   // check_scalar_or_tensor_types_same
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignAdd");
 }
 }  // namespace
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  auto infer_type = AssignAddInferType(primitive, input_args);
+  auto infer_shape = AssignAddInferShape(primitive, input_args);
+  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
-REGISTER_PRIMITIVE_C(kNameAssignAdd, AssignAdd);
+REGISTER_PRIMITIVE_EVAL_IMPL(AssignAdd, prim::kPrimAssignAdd, AssignAddInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
