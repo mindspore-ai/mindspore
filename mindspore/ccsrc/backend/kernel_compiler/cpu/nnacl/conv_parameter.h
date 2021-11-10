@@ -120,10 +120,10 @@ typedef struct DeConvParam {
   int input_plane_;
   int output_plane_;
   int kernel_plane_;
-  int ic_div4_;
-  int oc_div4_;
-  int ic_up4_;
-  int oc_up4_;
+  int ic_div_;
+  int oc_div_;
+  int ic_up_;
+  int oc_up_;
   int thread_num_;
   int in_tile_count_;
   int in_tile_h_count_;

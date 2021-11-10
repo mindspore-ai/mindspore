@@ -19,7 +19,7 @@
 // w13  hw  loop control
 
 
-asm_function PostFuncBiasReluC4
+asm_function WinogradPostFuncBiasReluC4
 
   movi v26.4s, #6
   scvtf v26.4s, v26.4s

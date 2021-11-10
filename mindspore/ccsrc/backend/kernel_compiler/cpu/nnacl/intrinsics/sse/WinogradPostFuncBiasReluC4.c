@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_SSE
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/intrinsics/sse/sse_common.h"
 
-void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
-                        size_t plane_size, size_t plane_stride, size_t relu_type) {
+void WinogradPostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
+                                size_t plane_size, size_t plane_stride, size_t relu_type) {
   size_t stride = oc4div + oc4mod;
   plane_stride /= sizeof(float);
   int loop_c4 = 0;

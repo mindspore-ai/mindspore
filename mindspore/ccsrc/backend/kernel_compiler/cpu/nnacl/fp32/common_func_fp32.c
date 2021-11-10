@@ -36,7 +36,6 @@ void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_p
       out_ptr[dst_index] = value;
     }
   }
-  return;
 }
 
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
@@ -49,21 +48,24 @@ void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bi
   size_t stride_size = stride * sizeof(float);
   PostFuncBiasReluC8(out_ptr, c8_out_ptr, bias_ptr, oc8div, oc8mod, plane_size, stride_size, relu_type);
 #endif
-  return;
 }
 
-void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                        size_t plane_size, size_t plane_stride, size_t relu_type) {
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+void WinogradPostConvFuncFp32CX(const float *cx_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
+                                size_t plane_size, size_t plane_stride, size_t relu_type) {
+#ifdef ENABLE_AVX
+  size_t oc8mod = output_channel % C8NUM;
+  size_t oc8div = output_channel - oc8mod;
+  size_t stride_size = (plane_stride - plane_size) * C8NUM * sizeof(float);
+  WinogradPostFuncBiasReluC8(out_ptr, cx_out_ptr, bias_ptr, oc8div, oc8mod, plane_size, stride_size, relu_type);
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
   size_t oc4mod = output_channel % C4NUM;
   size_t oc4div = output_channel - oc4mod;
   size_t stride_size = (plane_stride - plane_size) * C4NUM * sizeof(float);
-  PostFuncBiasReluC4(out_ptr, c4_out_ptr, bias_ptr, oc4div, oc4mod, plane_size, stride_size, relu_type);
+  WinogradPostFuncBiasReluC4(out_ptr, cx_out_ptr, bias_ptr, oc4div, oc4mod, plane_size, stride_size, relu_type);
 #else
-  PostConvFuncComm(c4_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, plane_stride, output_channel, relu_type,
+  PostConvFuncComm(cx_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, plane_stride, output_channel, relu_type,
                    C4NUM);
 #endif
-  return;
 }
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
@@ -89,7 +91,7 @@ void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_
   }
 }
 
-// M = S * B , M = w*h * l, S = k*h * l, B = w*k
+// M = S * B , M = h * w * l, S = h * k * l, B = k * w
 void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length) {
   const int unitStep = 4 * length;
   for (int y = 0; y < h; ++y) {
