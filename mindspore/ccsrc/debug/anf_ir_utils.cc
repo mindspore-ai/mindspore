@@ -526,7 +526,7 @@ void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr>
   if (func_graph == nullptr) {
     return;
   }
-
+  MS_LOG_TRY_CATCH_SCOPE;
   int idx = 1;
   std::map<AnfNodePtr, int> apply_map;
   for (const AnfNodePtr &node : nodes) {
