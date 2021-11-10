@@ -28,6 +28,7 @@ void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
   ControlActor::FetchInput(context);
   output_partial_ = input_partials_[0];
+  MS_EXCEPTION_IF_NULL(output_partial_.first);
 
   // Put other real parameter in partial.
   for (const auto &device_tensor : input_device_tensors_) {

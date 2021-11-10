@@ -127,7 +127,8 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
 
       // The gather actor corresponding to a call node needs to set the branch id.
       if (AnfAlgo::IsCallNode(control_node)) {
-        gather_actor->output_branch_id_ = graph_compiler_info.control_node_parser_->GetBranchIDByCallNode(control_node);
+        gather_actor->output_branch_id_ =
+          graph_compiler_info.control_node_parser_->FetchBranchIDByCallNode(control_node);
       }
     }
   }
@@ -404,7 +405,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto exit_actor = dynamic_cast<ExitActor *>(actor);
-      size_t branch_id = parser->GetBranchIDByCallNode(from_node);
+      size_t branch_id = parser->FetchBranchIDByCallNode(from_node);
       LinkDataArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
                                 branch_id);
     }

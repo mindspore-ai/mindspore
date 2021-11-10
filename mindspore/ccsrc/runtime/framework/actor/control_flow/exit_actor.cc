@@ -75,6 +75,10 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
 }
 
 void ExitActor::CopyDeviceAddress() {
+  // If node is not empty, it is the exit of funcgraph, no need to create device address.
+  if (node_ != nullptr) {
+    return;
+  }
   std::vector<DeviceTensor *> new_device_tensors;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto input_device_tensor = input_device_tensors_[i];

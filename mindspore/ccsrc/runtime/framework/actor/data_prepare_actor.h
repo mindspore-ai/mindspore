@@ -93,10 +93,10 @@ class DataPrepareActor : public DebugAwareActor {
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
   // In control flow, all weight nodes associated with the host weight parameter need to use the same device tensor.
-  void PrepareDataForControlWeightNode(
-    const AnfNodePtr &node, const AnfNodePtr &front_node, const TensorPtr &tensor, const DeviceContext *device_context,
-    const std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> &host_parameter_to_weights,
-    OpContext<DeviceTensor> *const context);
+  void PrepareDataForControlWeightNode(const AnfNodePtr &node, const AnfNodePtr &front_node, const TensorPtr &tensor,
+                                       const DeviceContext *device_context,
+                                       const HostParameterToWeight &host_parameter_to_weights,
+                                       OpContext<DeviceTensor> *const context);
 
   const GraphCompilerInfo *graph_compiler_info_;
   GraphExecutionStrategy strategy_;
