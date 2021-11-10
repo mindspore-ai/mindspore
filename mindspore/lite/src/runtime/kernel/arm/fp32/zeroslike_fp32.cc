@@ -34,10 +34,14 @@ int ZerosLikeCPUKernel::Prepare() {
 }
 
 int ZerosLikeCPUKernel::Run() {
-  auto output_data = static_cast<float *>(out_tensors_[0]->data());
-  ApproximateZerosLike(output_data, in_tensors_[0]->ElementsNum(), sizeof(float));
+  auto output = out_tensors_[0];
+  CHECK_NULL_RETURN(output);
+  ApproximateZerosLike(output->data(), output->Size());
   return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ZerosLike, LiteKernelCreator<ZerosLikeCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ZerosLike, LiteKernelCreator<ZerosLikeCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

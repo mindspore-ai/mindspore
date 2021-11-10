@@ -44,4 +44,7 @@ int SizeCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Size, LiteKernelCreator<SizeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Size, LiteKernelCreator<SizeCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Size, LiteKernelCreator<SizeCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

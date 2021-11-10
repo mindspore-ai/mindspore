@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_WHERE_Fp32_H_
-#define MINDSPORE_NNACL_FP32_WHERE_Fp32_H_
+#ifndef MINDSPORE_NNACL_FP32_WHERE_FP32_H_
+#define MINDSPORE_NNACL_FP32_WHERE_FP32_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/where_parameter.h"
@@ -23,9 +23,9 @@
 extern "C" {
 #endif
 void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
-                           const WhereParameter *where_param_, int task_id);
+                           const WhereParameter *param, int task_id);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_WHERE_Fp32_H_
+#endif  // MINDSPORE_NNACL_FP32_WHERE_FP32_H_
