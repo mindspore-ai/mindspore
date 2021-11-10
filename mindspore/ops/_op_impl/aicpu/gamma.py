@@ -21,10 +21,13 @@ gamma_op_info = AiCPURegOp("Gamma") \
     .input(0, "shape", "required") \
     .input(1, "alpha", "required") \
     .input(2, "beta", "required") \
+    .input(3, "seed", "required") \
+    .input(4, "seed2", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I64_Default,
+                  DataType.I64_Default, DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(gamma_op_info)

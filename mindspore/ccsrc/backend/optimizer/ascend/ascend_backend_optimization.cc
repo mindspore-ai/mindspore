@@ -35,6 +35,7 @@
 #include "backend/optimizer/ascend/ir_fission/gather_v2_ds_fission.h"
 #include "backend/optimizer/ascend/ir_fission/bce_with_logits_loss_fission.h"
 #include "backend/optimizer/ascend/ir_fission/cdist_fission.h"
+#include "backend/optimizer/ascend/ir_fission/seed_adapter.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
@@ -305,6 +306,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
@@ -360,6 +363,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
