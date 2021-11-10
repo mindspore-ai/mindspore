@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ const AnfNodePtr InsertPlaceholderForDynamicGRUV2::Process(const FuncGraphPtr &f
   if (kernel_graph == nullptr) {
     new_node = std::make_shared<CNode>(*cnode);
   } else {
-    new_node = kernel_graph->NewCNode(cnode);
+    new_node = NewCNode(cnode, kernel_graph);
   }
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_inputs(new_inputs);

@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_set>
 #include <map>
+#include <optional>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "base/base.h"
@@ -288,6 +289,7 @@ class AnfRuntimeAlgorithm {
   static bool IsCondControlKernel(const CNodePtr &node);
   static bool IsIndependentNode(const CNodePtr &node);
   static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
+  static std::optional<string> GetDumpFlag(const AnfNodePtr &node);
   static void GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape);
   static std::vector<int64_t> GetInputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);

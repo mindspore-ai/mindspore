@@ -26,6 +26,12 @@ class ReduceSumOptimizer : public PatternProcessPass {
   ~ReduceSumOptimizer() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  AnfNodePtr NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
+  AnfNodePtr NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const;
+  AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
+  AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
 };
 }  // namespace opt
 }  // namespace mindspore

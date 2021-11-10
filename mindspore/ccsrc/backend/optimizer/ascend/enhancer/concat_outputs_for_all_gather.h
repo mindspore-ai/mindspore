@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,16 @@
 
 #include <memory>
 #include <vector>
+#include <string>
+#include <tuple>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
+using OutputInfo =
+  std::tuple<std::vector<TypeId>, std::vector<std::vector<size_t>>, std::vector<std::string>, std::vector<TypeId>>;
+
 class ConcatOutputsForAllGather : public PatternProcessPass {
  public:
   explicit ConcatOutputsForAllGather(bool multigraph = true)
@@ -33,6 +38,9 @@ class ConcatOutputsForAllGather : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                   const OutputInfo &output_info, const std::vector<AnfNodePtr> &new_tuple_getitems,
+                                   int64_t rank_size) const;
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt

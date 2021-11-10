@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ namespace mindspore {
 namespace opt {
 using ConditionFunc = std::function<bool(const CNodePtr &node1, const CNodePtr &node2)>;
 using RedundantOpPair = std::pair<std::string, ConditionFunc>;
+using KernelWithIndex = std::pair<CNodePtr, size_t>;
 
 class EliminateRedundantOp : public PatternProcessPass {
  public:
@@ -41,6 +42,8 @@ class EliminateRedundantOp : public PatternProcessPass {
  private:
   void Init();
   const AnfNodePtr DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
+  const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       const CNodePtr &prev_cnode, std::vector<KernelWithIndex> *pass_vector) const;
   std::unordered_map<std::string, RedundantOpPair> redundant_process_map_;
 };
 }  // namespace opt

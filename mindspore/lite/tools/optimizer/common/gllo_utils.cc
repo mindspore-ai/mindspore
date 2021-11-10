@@ -1218,5 +1218,16 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
   *type_id = type_ptr->type_id();
   return RET_OK;
 }
+
+// not implement for lite, just for api compatible
+CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+                  const std::vector<AnfNodePtr> &orig_nodes) {
+  return fg->NewCNode(inputs);
+}
+
+// not implement for lite, just for api compatible
+CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes) {
+  return nullptr;
+}
 }  // namespace opt
 }  // namespace mindspore

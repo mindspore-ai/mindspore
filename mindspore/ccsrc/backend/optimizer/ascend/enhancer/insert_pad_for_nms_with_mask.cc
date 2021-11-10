@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
-#include <vector>
 #include <memory>
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -34,14 +33,15 @@ const BaseRef InsertPadForNMSWithMask::DefinePattern() const {
   return VectorRef({prim::kPrimNMSWithMask, Xs});
 }
 
-AnfNodePtr InsertPadToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const TypeId &origin_type,
-                            const std::vector<size_t> &origin_shape) {
+AnfNodePtr InsertPadForNMSWithMask::InsertPadToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                     const TypeId &origin_type,
+                                                     const std::vector<size_t> &origin_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_pad_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimPad->name());
   new_pad_inputs.push_back(NewValueNode(prim));
   new_pad_inputs.push_back(input);
-  CNodePtr pad = func_graph->NewCNode(new_pad_inputs);
+  CNodePtr pad = NewCNode(new_pad_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(pad);
   AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, pad.get());
   return pad;
@@ -81,7 +81,7 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
   if (kernel_graph == nullptr) {
     new_node = std::make_shared<CNode>(*cnode);
   } else {
-    new_node = kernel_graph->NewCNode(cnode);
+    new_node = NewCNode(cnode, kernel_graph);
   }
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_inputs(new_inputs);

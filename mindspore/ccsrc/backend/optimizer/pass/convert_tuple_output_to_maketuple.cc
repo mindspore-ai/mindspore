@@ -88,7 +88,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   if (kernel_graph == nullptr || !cnode_input_changed) {
     return nullptr;
   }
-  return kernel_graph->NewCNode(cnode);
+  return NewCNode(cnode, kernel_graph);
 }
 }  // namespace opt
 }  // namespace mindspore

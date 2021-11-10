@@ -137,6 +137,11 @@ bool UnVisited(const BaseRef &n);
 
 bool Visited(const BaseRef &n);
 
+CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+                  const std::vector<AnfNodePtr> &orig_nodes);
+
+CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes);
+
 // check if the input node is CNode, then check it's input_size, return CNodePtr if check success.
 CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
 

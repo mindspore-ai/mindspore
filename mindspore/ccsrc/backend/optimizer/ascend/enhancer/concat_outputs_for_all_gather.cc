@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
-#include <string>
-#include <tuple>
 #include <utility>
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore::opt {
 namespace {
-using OutputInfo =
-  std::tuple<std::vector<TypeId>, std::vector<std::vector<size_t>>, std::vector<std::string>, std::vector<TypeId>>;
 OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<TypeId> output_infer_dtype;
@@ -87,9 +83,12 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   builder.SetOutputsDeviceType(outputs_device_type);
   return builder.Build();
 }
+}  // namespace
 
-AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const OutputInfo &output_info,
-                                 const std::vector<AnfNodePtr> &new_tuple_getitems, int64_t rank_size) {
+AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                            const OutputInfo &output_info,
+                                                            const std::vector<AnfNodePtr> &new_tuple_getitems,
+                                                            int64_t rank_size) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
@@ -98,7 +97,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     for (size_t j = 0, idx = i; j < LongToSize(rank_size); ++j, idx += inputs_size) {
       concat_inputs.push_back(new_tuple_getitems[idx]);
     }
-    auto concat = func_graph->NewCNode(concat_inputs);
+    auto concat = NewCNode(concat_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(concat);
     MS_EXCEPTION_IF_NULL(new_tuple_getitems[i]);
     const std::vector<TypeId> &dtypes = {std::get<0>(output_info)[i]};
@@ -122,7 +121,6 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   return make_tuple;
 }
-}  // namespace
 
 const BaseRef ConcatOutputsForAllGather::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
