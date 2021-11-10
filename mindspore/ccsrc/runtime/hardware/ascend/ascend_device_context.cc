@@ -234,7 +234,7 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
   MS_EXCEPTION_IF_NULL(graph);
   auto outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (auto output : outputs) {
-    if (!output->isa<CNode>() || !AnfAlgo::IsRealKernel(output)) {
+    if (!output->isa<CNode>() || !AnfUtils::IsRealKernel(output)) {
       continue;
     }
 
