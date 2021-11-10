@@ -61,14 +61,15 @@ class TopCellInfo {
  public:
   TopCellInfo() = default;
   ~TopCellInfo() = default;
-  TopCellInfo(bool topest, size_t grad_order, pipeline::ResourcePtr r, FuncGraphPtr df, std::string cellid,
-              std::string alread_run_cell_id)
+  TopCellInfo(bool topest, size_t grad_order, pipeline::ResourcePtr r, FuncGraphPtr fg, FuncGraphPtr df,
+              std::string cellid, std::string already_run_cell_id)
       : is_topest_(topest),
         grad_order_(grad_order),
         resource_(std::move(r)),
+        fg_(std::move(fg)),
         df_builder_(std::move(df)),
         cell_id_(std::move(cellid)),
-        alread_run_cell_id_(std::move(alread_run_cell_id)) {}
+        already_run_cell_id_(std::move(already_run_cell_id)) {}
 
   bool is_init_kpynative() const { return is_init_kpynative_; }
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
@@ -87,10 +88,12 @@ class TopCellInfo {
   void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
   pipeline::ResourcePtr resource() const { return resource_; }
   FuncGraphPtr df_builder() const { return df_builder_; }
+  FuncGraphPtr fg() const { return fg_; }
+  void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
   size_t op_num() const { return op_num_; }
   void set_op_num(size_t op_num) { op_num_ = op_num; }
   const std::string &cell_id() const { return cell_id_; }
-  const std::string &already_run_cell_id() const { return alread_run_cell_id_; }
+  const std::string &already_run_cell_id() const { return already_run_cell_id_; }
   const std::string &input_args_id() const { return input_args_id_; }
   void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
   std::string &all_op_info() { return all_op_info_; }
@@ -126,10 +129,11 @@ class TopCellInfo {
   size_t op_num_{0};
   size_t grad_order_{0};
   pipeline::ResourcePtr resource_{nullptr};
+  FuncGraphPtr fg_{nullptr};
   FuncGraphPtr df_builder_{nullptr};
   ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
   std::string cell_id_;
-  std::string alread_run_cell_id_;
+  std::string already_run_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
   std::string grad_operation_;
@@ -295,9 +299,6 @@ class GradExecutor {
   // The cell run check graph which will be top cell
   std::string check_graph_cell_id_;
   std::string grad_operation_;
-  // Only set in high grad
-  FuncGraphPtr curr_g_{nullptr};
-  // For clear pre top res
   TopCellInfoPtr top_cell_{nullptr};
   // Records forwrad cell, the bottom is top cell
   std::stack<std::string> cell_stack_;
@@ -305,7 +306,7 @@ class GradExecutor {
   std::stack<std::pair<std::string, bool>> bprop_grad_stack_;
   std::vector<std::string> bprop_cell_list_;
   // For high grad order
-  std::stack<std::pair<FuncGraphPtr, TopCellInfoPtr>> high_order_stack_;
+  std::stack<TopCellInfoPtr> high_order_stack_;
   // Use vector for keep order
   std::vector<TopCellInfoPtr> top_cell_list_;
   // Record all top cell which has been ran
@@ -355,7 +356,7 @@ class ForwardExecutor {
                                           size_t index);
   py::object DoAutoCastTuple(const py::tuple &tuple, const TypeId &type_id, const std::string &op_name, size_t index);
   py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
-  void DoSignatrueCast(const PrimitivePyPtr &prim, const std::unordered_map<SignatureEnumDType, TypeId> &dst_type,
+  void DoSignatureCast(const PrimitivePyPtr &prim, const std::unordered_map<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
 
  private:
