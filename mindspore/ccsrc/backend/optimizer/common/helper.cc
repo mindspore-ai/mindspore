@@ -40,7 +40,7 @@ namespace {
 constexpr size_t kType32Len = 4;
 constexpr size_t kType64Len = 8;
 
-void UpdateDumpFlag(const AnfNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
+void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
   for (auto &orig_node : orig_nodes) {
     if (!orig_node->isa<CNode>()) {
       continue;
@@ -51,6 +51,8 @@ void UpdateDumpFlag(const AnfNodePtr &node, const std::vector<AnfNodePtr> &orig_
       break;
     }
   }
+
+  node->AddFusedDebugInfoList(orig_nodes);
 }
 }  // namespace
 
@@ -120,14 +122,16 @@ CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
                   const std::vector<AnfNodePtr> &orig_nodes) {
   MS_EXCEPTION_IF_NULL(fg);
   auto node = fg->NewCNode(inputs);
-  UpdateDumpFlag(node, orig_nodes);
+  MS_EXCEPTION_IF_NULL(node);
+  UpdateDumpFlagAndDebugInfo(node, orig_nodes);
   return node;
 }
 
 CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes) {
   MS_EXCEPTION_IF_NULL(fg);
   auto node = fg->NewCNode(cnode);
-  UpdateDumpFlag(node, orig_nodes);
+  MS_EXCEPTION_IF_NULL(node);
+  UpdateDumpFlagAndDebugInfo(node, orig_nodes);
   return node;
 }
 

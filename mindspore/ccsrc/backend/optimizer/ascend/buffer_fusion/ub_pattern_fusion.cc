@@ -99,6 +99,7 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
     MS_LOG(EXCEPTION) << "New FusionOp kernel failed!";
   }
   buffer_fusion_kernel->set_scope((anf_nodes.back())->scope());
+  buffer_fusion_kernel->AddFusedDebugInfoList(anf_nodes);
 
   return buffer_fusion_kernel;
 }
