@@ -164,6 +164,7 @@ class MS_CORE_API AbstractBase : public Base {
   ///
   /// \return A pointer to the combined abstract.
   virtual AbstractBasePtr Join(const AbstractBasePtr &) { return shared_from_base<AbstractBase>(); }
+  bool IsBroaden() const { return value_ == kAnyValue; }
 
   /// \brief Write the abstract's string to the std::ostream.
   ///
@@ -794,6 +795,11 @@ class MS_CORE_API AbstractTuple final : public AbstractSequeue {
   AbstractBasePtr Join(const AbstractBasePtr &other) override { return ElementsJoin<AbstractTuple>(other); }
 
   std::string ToString() const override { return type_name() + "(" + AbstractSequeue::ToString() + ")"; }
+
+  /// \brief Check whether all elements of the tuple are tensors.
+  ///
+  /// \return Whether all elements of the tuple are tensors.
+  bool ContainsAllBroadenTensors() const;
 
   /// \brief Overwrite the operator '==' to compare other abstract tuple.
   ///

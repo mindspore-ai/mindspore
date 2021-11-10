@@ -31,11 +31,11 @@ context.set_context(mode=context.GRAPH_MODE)
 def get_func_graph(obj, *args, phase="validate"):
     args_names, args_list = _generate_pip_args(obj, *args)
     dic = dict(zip(args_names, args_list))
-    key = generate_arguments_key(dic)
+    key = generate_arguments_key(dic, False)
     obj.arguments_key = str(key)
     phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
     _executor = GraphExecutor_.get_instance()
-    _executor.compile(obj, args_list, phase, False, "")
+    _executor.compile(obj, args_list, phase, False, "", False)
     return _executor.get_func_graph(phase)
 
 def test_softmax_relu():

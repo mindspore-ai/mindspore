@@ -418,6 +418,17 @@ bool AbstractTuple::operator==(const AbstractBase &other) const {
   return false;
 }
 
+bool AbstractTuple::ContainsAllBroadenTensors() const {
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    if (!(elements_[i]->isa<abstract::AbstractUndetermined>() && elements_[i]->IsBroaden()) &&
+        !(elements_[i]->isa<abstract::AbstractTuple>() &&
+          elements_[i]->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors())) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequeue::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {

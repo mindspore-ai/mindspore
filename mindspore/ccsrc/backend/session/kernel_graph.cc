@@ -738,7 +738,7 @@ const std::vector<AnfNodePtr> &KernelGraph::inputs() const {
   return *inputs_;
 }
 
-void KernelGraph::FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf) {
+void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf) {
   MS_EXCEPTION_IF_NULL(front_anf);
   MS_EXCEPTION_IF_NULL(backend_anf);
   if (front_backend_anf_map_.find(front_anf) != front_backend_anf_map_.end()) {
@@ -923,6 +923,7 @@ void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNo
       MS_LOG(INFO) << "Replace input of graph:" << graph_id_ << ", old graph input: " << old_parameter->DebugString()
                    << ",new graph input:" << new_parameter->DebugString();
       (*inputs_)[i] = new_parameter;
+      FrontBackendlMapUpdate(old_parameter, new_parameter);
       break;
     }
   }
@@ -1322,6 +1323,15 @@ void KernelGraph::SetInputNodes() {
   input_nodes_.clear();
   for (const auto &input_node : inputs()) {
     auto params = AnfAlgo::GetAllOutput(input_node);
+    if (params.size() == 1) {
+      FrontBackendlMapUpdate(input_node, params[0]);
+    } else {
+      auto front_node = backend_front_anf_map_[input_node];
+      for (size_t i = 0; i < params.size(); ++i) {
+        FrontBackendlMapUpdate(input_node, params[i]);
+        tuple_backend_front_anf_index_map_[params[i]] = AnfWithOutIndex(front_node, i);
+      }
+    }
     std::copy(params.begin(), params.end(), std::back_inserter(input_nodes_));
   }
 }

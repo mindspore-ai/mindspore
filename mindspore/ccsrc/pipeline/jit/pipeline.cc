@@ -125,9 +125,21 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) 
 }
 #endif
 
-AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
+bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
+  auto elements = value_tuple->value();
+  for (auto element : elements) {
+    if (!(element->isa<ValueTuple>() && CheckAllTensor(element->cast<ValueTuplePtr>())) &&
+        !(element->isa<MetaTensor>())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false) {
   MS_EXCEPTION_IF_NULL(value);
   bool broaden = value->isa<MetaTensor>() ||
+                 (enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>())) ||
                  (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
 
   return abstract::FromValue(value, broaden);
@@ -255,7 +267,7 @@ void CheckArgsValid(const py::tuple &args) {
   }
 }
 
-py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args) {
+py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args, bool enable_tuple_broaden) {
   MS_LOG(DEBUG) << "GenerateArgumentsKey args size:" << args.size();
   abstract::AbstractBasePtrList args_spec;
 
@@ -267,7 +279,7 @@ py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object
     if (!parse::ConvertData(arg.second, &converted)) {
       MS_LOG(EXCEPTION) << "GenerateArgumentsKey convert arg failed";
     }
-    args_spec.push_back(ArgsToAbstract(converted));
+    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden));
   }
 
   uint64_t key;
@@ -711,7 +723,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 }
 
 bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
-                                   bool use_vm, const std::string &queue_name) {
+                                   bool use_vm, const std::string &queue_name, bool enable_tuple_broaden) {
   // Check if the phase is valid.
   if ((!py::isinstance<py::str>(phase_obj))) {
     MS_LOG(ERROR) << "The `phase` must be string.";
@@ -759,7 +771,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     if (!succ) {
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
-    args_spec.push_back(ArgsToAbstract(converted));
+    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden));
   }
   resource->set_args_spec(args_spec);
   executor_info->arg_list_size = size;
@@ -807,10 +819,10 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
 }
 
 bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase, bool use_vm,
-                              const std::string &queue_name) {
+                              const std::string &queue_name, bool enable_tuple_broaden) {
   bool ret_value = false;
   try {
-    ret_value = CompileInner(source_obj, args, phase, use_vm, queue_name);
+    ret_value = CompileInner(source_obj, args, phase, use_vm, queue_name, enable_tuple_broaden);
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release

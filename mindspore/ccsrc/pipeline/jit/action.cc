@@ -71,7 +71,9 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(par_abs);
     if (par_abs->isa<abstract::AbstractUndetermined>() ||
         (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && par_abs->BuildType() != nullptr &&
-         par_abs->BuildType()->isa<Number>())) {
+         par_abs->BuildType()->isa<Number>()) ||
+        (par_abs->isa<abstract::AbstractTuple>() &&
+         par_abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors())) {
       new_paras.push_back(param_node);
     }
   }
