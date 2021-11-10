@@ -81,6 +81,15 @@ std::string Location::ToString(SourceLineTip tip) const {
   return debug_info_ss.str();
 }
 
+int64_t DebugInfo::get_id() const {
+  // cppcheck-suppress variableScope
+  static int64_t current_id = 1;
+  if (id_ == 0) {
+    id_ = current_id++;
+  }
+  return id_;
+}
+
 int64_t DebugInfo::unique_id_through_copy() const {
   auto info = trace_info();
   if (info != nullptr) {
@@ -101,17 +110,8 @@ std::string NodeDebugInfo::debug_name() {
     oss << "[" << node_.lock()->type_name() << "]";
     prefix = oss.str();
   }
-  name_ = prefix + DebugInfo::debug_name();
+  name_ = prefix + std::to_string(get_id());
   return name_;
-}
-
-int64_t GraphDebugInfo::get_id() {
-  // cppcheck-suppress variableScope
-  static int64_t current_id = 1;
-  if (id_ == 0) {
-    id_ = current_id++;
-  }
-  return id_;
 }
 
 std::string GraphDebugInfo::debug_name() {
