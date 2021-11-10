@@ -26,8 +26,7 @@ from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 
 from ._lineage_adapter import serialize_to_lineage_event
 from ._summary_adapter import package_graph_event, package_summary_event
-from ._explain_adapter import package_explain_event
-from .writer import LineageWriter, SummaryWriter, ExplainWriter, ExportWriter
+from .writer import LineageWriter, SummaryWriter, ExportWriter
 
 try:
     from multiprocessing import get_context
@@ -50,8 +49,6 @@ def _pack_data(datadict, wall_time):
                             PluginEnum.IMAGE.value):
                 summaries.append({'_type': plugin.title(), 'name': data.get('tag'), 'data': data.get('value')})
                 step = data.get('step')
-            elif plugin == PluginEnum.EXPLAINER.value:
-                result.append([plugin, package_explain_event(data.get('value'))])
 
             if 'export_option' in data:
                 result.append([WriterPluginEnum.EXPORTER.value, data])
@@ -85,6 +82,7 @@ class WriterPool(ctx.Process):
         self.start()
 
     def run(self):
+        """Run the writer pool."""
         # Environment variables are used to specify a maximum number of OpenBLAS threads:
         # In ubuntu(GPU) environment, numpy will use too many threads for computing,
         # it may affect the start of the summary process.
@@ -138,8 +136,6 @@ class WriterPool(ctx.Process):
                 self._writers_.append(SummaryWriter(filepath, self._max_file_size))
             elif plugin == WriterPluginEnum.LINEAGE.value:
                 self._writers_.append(LineageWriter(filepath, self._max_file_size))
-            elif plugin == WriterPluginEnum.EXPLAINER.value:
-                self._writers_.append(ExplainWriter(filepath, self._max_file_size))
             elif plugin == WriterPluginEnum.EXPORTER.value:
                 self._writers_.append(ExportWriter(filepath, self._max_file_size))
         return self._writers_

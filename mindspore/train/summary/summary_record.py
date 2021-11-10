@@ -27,7 +27,6 @@ from ..._c_expression import Tensor, security
 from ..._checkparam import Validator
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
 from ._summary_adapter import get_event_file_name, package_graph_event
-from ._explain_adapter import check_explain_proto
 from ._writer_pool import WriterPool
 
 # for the moment, this lock is for caution's sake,
@@ -190,7 +189,6 @@ class SummaryRecord:
 
         filename_dict = dict(summary=self.file_info.get('file_name'),
                              lineage=get_event_file_name(file_prefix, '_lineage', time_second),
-                             explainer=get_event_file_name(file_prefix, '_explain', time_second),
                              exporter=export_dir)
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
@@ -253,8 +251,6 @@ class SummaryRecord:
                   see mindspore/ccsrc/lineage.proto.
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
                   see mindspore/ccsrc/lineage.proto.
-                - The data type of value should be a 'Explain' object when the plugin is 'explainer',
-                  see mindspore/ccsrc/summary.proto.
         Raises:
             ValueError: If the parameter value is invalid.
             TypeError: If the parameter type is error.
@@ -287,9 +283,6 @@ class SummaryRecord:
         elif plugin == 'graph':
             package_graph_event(value)
             self._data_pool[plugin].append(dict(value=value))
-        elif plugin == 'explainer':
-            check_explain_proto(value)
-            self._data_pool[plugin].append(dict(value=value.SerializeToString()))
         else:
             raise ValueError(f'No such plugin of {repr(plugin)}')
 
