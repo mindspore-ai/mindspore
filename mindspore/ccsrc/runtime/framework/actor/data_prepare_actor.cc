@@ -239,7 +239,8 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_address);
-      if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType())) {
+      if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType()) &&
+          !device_address->is_ptr_persisted()) {
         AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
       }
     }

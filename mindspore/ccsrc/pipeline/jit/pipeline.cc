@@ -1461,9 +1461,9 @@ void ClearResAtexit() {
   mindspore::RDR::ResetRecorder();
 #endif
   session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   runtime::GraphScheduler::GetInstance().Clear();
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();

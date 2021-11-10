@@ -149,6 +149,10 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
   } else if (dst_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
     // Other device tensor copy to CPU device tensor.
     return src_device_tensor->SyncDeviceToHost(copy_size, dst_device_tensor->GetMutablePtr());
+  } else if (dst_device_tensor->DeviceType() == src_device_tensor->DeviceType()) {
+    return dst_device_tensor->SyncDeviceToDevice(ShapeVector(), src_device_tensor->GetSize(),
+                                                 src_device_tensor->type_id(), src_device_tensor->GetPtr(),
+                                                 src_device_tensor->format());
   } else {
     MS_LOG(ERROR) << "Invalid device type, src device type: " << src_device_tensor->DeviceType()
                   << ", dst device type: " << dst_device_tensor->DeviceType();

@@ -51,6 +51,8 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   OptimizeGraphWithDeviceInfo(graph);
   OptimizeExecutionOrder(graph);
   PostOptimization(graph);
+  // must clear memo_ which holds kernelgraph after using AscendGraphOptimization class.
+  memo_.clear();
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
 }
 
@@ -71,6 +73,9 @@ void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &
   MS_EXCEPTION_IF_NULL(graph);
   memo_.clear();
   HardWareOptimization(graph);
+  // copy child graph ref output map to father graph ref output map
+  memo_.clear();
+  UpdateRefOutputMap(graph);
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
 }
 
@@ -112,9 +117,6 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
 
 void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: start post optimization. graph id: " << graph->graph_id();
-  // copy child graph ref output map to father graph ref output map
-  memo_.clear();
-  UpdateRefOutputMap(graph);
   graph->SetInputNodes();
   graph->SetOptimizerFlag();
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();

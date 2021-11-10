@@ -19,7 +19,6 @@
 #include <set>
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
-#include "backend/session/ascend_auto_monad.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
@@ -33,6 +32,17 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "debug/data_dump/e2e_dump.h"
+#endif
+#ifdef ENABLE_DEBUGGER
+#include "debug/tensor_load.h"
+#include "debug/debugger/proto_exporter.h"
+#else
+#include "debug/debugger/proto_exporter_stub.h"
+#endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/graph_recorder.h"
 #endif
 
 namespace mindspore {
@@ -69,11 +79,47 @@ void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
 }
 #endif
 
+void AscendDeviceContext::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) const {
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled() &&
+      !mindspore::RecorderManager::Instance().RdrEnable()) {
+    return;
+  }
+  for (auto &graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    std::string name = "graph_build." + std::to_string(graph->graph_id());
+    DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
+    (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");
+    if (save_graphs) {
+      std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
+      DumpIR(file_name, graph, true, kWholeStack);
+      DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
+      DumpIR("trace_code_graph", graph, true, kWholeStack);
+    }
+    std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
+    if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
+      std::string target_dir = root_dir + "/graphs";
+      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
+      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
+      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
+      DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
+                        graph->execution_order());
+    }
+  }
+#endif
+}
+
 void AscendDeviceContext::Initialize() {
   MS_LOG(INFO) << "Status record: Enter Initialize...";
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
-    runtime_instance_->SetCurrentContext();
+    runtime_instance_->SetContext();
     return;
   }
 
@@ -109,8 +155,7 @@ void AscendDeviceContext::Destroy() {
   }
   MS_LOG(INFO) << "Status record: Destroy start...";
   rank_id_ = 0;
-  if (runtime_instance_ != nullptr) {
-    runtime_instance_->ReleaseDeviceRes();
+  if (runtime_instance_) {
     runtime_instance_ = nullptr;
   }
   initialized_ = false;
@@ -181,7 +226,42 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
     return;
   }
+  AssignOutputNopNodeDeviceAddress(graph);
   MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
+}
+
+void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  for (auto output : outputs) {
+    if (!output->isa<CNode>() || !AnfAlgo::IsRealKernel(output)) {
+      continue;
+    }
+
+    if (!opt::IsNopNode(output)) {
+      continue;
+    }
+
+    size_t input_num = AnfAlgo::GetInputTensorNum(output);
+    if (input_num != 1) {
+      MS_LOG(WARNING) << "The input number of nop node :" << output->fullname_with_scope() << " is " << input_num
+                      << ", not equal 1";
+      continue;
+    }
+
+    auto real_input_index = AnfAlgo::GetRealInputIndex(output, 0);
+    auto pre_node_out_device_address = AnfAlgo::GetPrevNodeOutputAddr(output, real_input_index);
+    MS_EXCEPTION_IF_NULL(pre_node_out_device_address);
+    auto ptr = pre_node_out_device_address->GetPtr();
+    auto size = pre_node_out_device_address->GetSize();
+    std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
+    auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
+    auto device_address = CreateDeviceAddress(const_cast<void *>(ptr), size, output_format, output_type);
+    AnfAlgo::SetOutputAddr(device_address, 0, output.get());
+
+    AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
+    MS_LOG(INFO) << "Assign device address to output nop node " << output->fullname_with_scope();
+  }
 }
 
 void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const {
@@ -225,7 +305,7 @@ void AscendDeviceContext::LoadModel(const NotNull<KernelGraphPtr> &root_graph) c
 bool AscendDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->SetCurrentContext();
+  runtime_instance_->SetContext();
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
   if (!device_ptr) {
     return false;
@@ -249,7 +329,7 @@ void AscendDeviceContext::FreeMemory(DeviceAddress *const &address) const {
 bool AscendDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                                    const std::vector<size_t> &size_list) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->SetCurrentContext();
+  runtime_instance_->SetContext();
   return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
 
@@ -296,7 +376,7 @@ bool AscendDeviceContext::LaunchGraph(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: start launch graph. graph id: " << graph->graph_id();
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->SetCurrentContext();
+  runtime_instance_->SetContext();
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(graph);
   auto ret = ExecuteGraph(graph);
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << graph->graph_id();
@@ -336,7 +416,7 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 }
 
 bool AscendDeviceContext::BindDeviceToCurrentThread() const {
-  runtime_instance_->SetCurrentContext();
+  runtime_instance_->SetContext();
   return true;
 }
 
