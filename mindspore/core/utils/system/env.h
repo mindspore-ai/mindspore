@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_ENV_H_
-#define MINDSPORE_CCSRC_UTILS_SYSTEM_ENV_H_
+#ifndef MINDSPORE_CORE_UTILS_SYSTEM_ENV_H_
+#define MINDSPORE_CORE_UTILS_SYSTEM_ENV_H_
 
 #include <memory>
 #include "utils/system/base.h"
@@ -45,8 +45,7 @@ class Env {
  private:
   PlatformDefine platform_;
 };
-
 }  // namespace system
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_ENV_H_
+#endif  // MINDSPORE_CORE_UTILS_SYSTEM_ENV_H_

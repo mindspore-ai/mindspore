@@ -15,11 +15,10 @@
  */
 
 #include "utils/system/crc32c.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace mindspore {
 namespace system {
-
 const unsigned int CRC_TABLE_SIZE = 256;
 
 static const uint32_t crc_table_o32[CRC_TABLE_SIZE] = {
@@ -288,7 +287,7 @@ uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
   uint32_t crc = init_crc ^ 0xffffffffu;
   const unsigned int OFFSET = 8;
 
-  // Get the origin begin and end address(not aligment)
+  // Get the origin begin and end address(not alignment)
   auto *bp = reinterpret_cast<const uint8_t *>(data);
   const uint8_t *ep = bp + size;
 
@@ -298,7 +297,7 @@ uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
   auto pval = reinterpret_cast<uintptr_t>(bp);
   auto *bp_align = reinterpret_cast<const uint8_t *>(MEM_ALIGN(pval, 2));
 
-  // process the not aligment bits when size < 4 byte
+  // process the not alignment bits when size < 4 byte
   if (bp_align <= ep) {
     // Process bytes until complete or p-align 4 bytes.
     while (bp != bp_align) {
@@ -317,6 +316,5 @@ uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
   }
   return crc ^ 0xffffffffu;
 }
-
 }  // namespace system
 }  // namespace mindspore

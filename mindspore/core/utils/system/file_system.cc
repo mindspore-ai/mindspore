@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace system {
-
 #if defined(SYSTEM_ENV_POSIX)
 // Implement the Posix file system
 WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name) {
