@@ -116,6 +116,10 @@ using clCreateImageFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_fo
                                      cl_int *);
 using clEnqueueFillImageFunc = cl_int (*)(cl_command_queue, cl_mem, const void *, const size_t *, const size_t *,
                                           cl_uint, const cl_event *, cl_event *);
+#ifdef ENABLE_OPENGL_TEXTURE
+using clCreateFromGLTextureFunc = cl_mem (*)(cl_context context, cl_mem_flags flags, cl_GLenum target,
+                                             cl_GLint miplevel, cl_GLuint texture, cl_int *errcode_ret);
+#endif
 #endif
 #if CL_TARGET_OPENCL_VERSION >= 200
 using clCreateProgramWithILFunc = cl_program (*)(cl_context, const void *, size_t, cl_int *);
@@ -190,6 +194,9 @@ CL_DECLARE_FUNC_PTR(clRetainDevice);
 CL_DECLARE_FUNC_PTR(clReleaseDevice);
 CL_DECLARE_FUNC_PTR(clCreateImage);
 CL_DECLARE_FUNC_PTR(clEnqueueFillImage);
+#ifdef ENABLE_OPENGL_TEXTURE
+CL_DECLARE_FUNC_PTR(clCreateFromGLTexture);
+#endif
 #endif
 #if CL_TARGET_OPENCL_VERSION >= 200
 CL_DECLARE_FUNC_PTR(clGetKernelSubGroupInfoKHR);

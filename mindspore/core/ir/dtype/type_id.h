@@ -82,6 +82,7 @@ enum TypeId : int {
   kNumberTypeComplex64,
   kNumberTypeComplex128,
   kNumberTypeInt4,
+  kNumberTypeGLUInt,
   kNumberTypeEnd,
   //
   // Monad Types

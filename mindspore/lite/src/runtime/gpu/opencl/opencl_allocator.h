@@ -29,7 +29,7 @@
 
 namespace mindspore::lite::opencl {
 // OpenCL memory type, SHARED only valid on Mali devices.
-enum class MemType : char { BUF, IMG, SHARED };
+enum class MemType : char { BUF, IMG, SHARED, GLTexture };
 #define UNLOCK_AND_RETURN_NULL(condition, ptr) \
   do {                                         \
     if (condition) {                           \

@@ -966,6 +966,57 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
   return RET_OK;
 }
 
+#ifdef ENABLE_OPENGL_TEXTURE
+int LiteSession::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
+                                       std::map<std::string, GLuint> *outputGLTexture) {
+  if (!this->context_->GetGpuInfo().enable_gl_texture_) {
+    MS_LOG(ERROR) << "the context isn't set to support OpenGL texture";
+    return RET_ERROR;
+  }
+  for (const auto &[name, GLTexture_id] : inputGLTexture) {
+    auto iter = input_map_.find(name);
+    if (iter == input_map_.end()) {
+      MS_LOG(ERROR) << "the in tensor name " << name << "is not match any model input name";
+      return RET_ERROR;
+    }
+    auto in_data = iter->second->MutableData();
+    if (in_data == nullptr) {
+      std::cout << "MallocData for input Tensor failed" << std::endl;
+      return RET_ERROR;
+    }
+    memcpy(in_data, &GLTexture_id, sizeof(GLuint));
+    iter->second->set_data_type(kNumberTypeGLUInt);
+  }
+  for (auto [name, GLTexture_id] : *outputGLTexture) {
+    auto iter = output_tensor_map_.find(name);
+    if (iter == output_tensor_map_.end()) {
+      MS_LOG(ERROR) << "the out tensor name " << name << "is not match any model output name";
+      return RET_ERROR;
+    }
+    auto out_data = iter->second->MutableData();
+    if (out_data == nullptr) {
+      std::cout << "MallocData for input Tensor failed" << std::endl;
+      return RET_ERROR;
+    }
+    memcpy(out_data, &GLTexture_id, sizeof(GLuint));
+    iter->second->set_data_type(kNumberTypeGLUInt);
+  }
+  if (this->kernels_.size() != 1) {
+    MS_LOG(ERROR) << "Now only support one opencl subgraph if you want to input opengl texture";
+    return RET_ERROR;
+  }
+  auto opencl_subgraph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernels_.front());
+  for (auto i = 0; i < outputs_.size(); i++) {
+    (opencl_subgraph)->set_out_tensor(outputs_[i], i);
+  }
+  for (auto node : opencl_subgraph->out_nodes()) {
+    node->set_out_tensors(opencl_subgraph->out_tensors());
+  }
+
+  return RET_OK;
+}
+#endif
+
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                         const std::vector<std::vector<int>> &dims) {
   bool expected = false;
@@ -1040,7 +1091,16 @@ int LiteSession::InitExecutor() {
     MS_LOG(ERROR) << "Isolate output tensor failed.";
     return ret;
   }
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (this->context_->IsGLTextureEnabled()) {
+    executor_ = new (std::nothrow) Executor();
+  } else {
+    executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+  }
+  // if you want to input opengl Texture, we only support normal executor, ot do:support MindrtExecutor
+#else
   executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+#endif
 #else
   executor_ = new (std::nothrow) Executor();
 #endif
@@ -1250,6 +1310,10 @@ int LiteSession::InitGPURuntime() {
     auto gpu_device_info = this->context_->GetGpuInfo();
     auto opencl_runtime = opencl_runtime_wrapper_->GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
+#ifdef ENABLE_OPENGL_TEXTURE
+    opencl_runtime->SetGLTextureEnable(gpu_device_info.enable_gl_texture_);
+    opencl_runtime->InitGLQueue();
+#endif
     if (opencl_runtime->Init() != RET_OK) {
       this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";

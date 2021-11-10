@@ -16,8 +16,10 @@
 
 #include "include/registry/opencl_runtime_wrapper.h"
 #include <dlfcn.h>
-#ifdef SHARING_MEM_WITH_OPENGL
+#ifdef ENABLE_OPENGL_TEXTURE
 #include <EGL/egl.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl32.h>
 #endif
 #include <vector>
 #include <numeric>

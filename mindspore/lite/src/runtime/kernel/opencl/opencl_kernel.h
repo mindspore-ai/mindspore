@@ -49,6 +49,13 @@ struct OpenCLToFormatParameter {
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
 };
 
+#ifdef ENABLE_OPENGL_TEXTURE
+struct OpenGLTexture2DToOpenCLParameter {
+  OpParameter op_parameter{};
+  lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
+};
+#endif
+
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   MS_ASSERT(dst);
@@ -59,16 +66,16 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   auto *H = dst + 1;
   auto *W = dst + 2;
   auto *C = dst + 3;
-  if (src_num == 1) {  // 1 1 1 C
+  if (src_num == DIMENSION_1D) {  // 1 1 1 C
     *C = src[0];
-  } else if (src_num == 2) {  // N 1 1 C
+  } else if (src_num == DIMENSION_2D) {  // N 1 1 C
     *N = src[0];
     *C = src[1];
-  } else if (src_num == 3) {  // N 1 W C
+  } else if (src_num == DIMENSION_3D) {  // N 1 W C
     *N = src[0];
     *W = src[1];
     *C = src[2];
-  } else if (src_num == 4) {  // N H W C
+  } else if (src_num == DIMENSION_4D) {  // N H W C
     *N = src[0];
     *H = src[1];
     *W = src[2];

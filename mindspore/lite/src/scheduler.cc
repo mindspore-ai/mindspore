@@ -236,6 +236,14 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
     }
 #if GPU_OPENCL
     if (kernel->desc().arch == kernel::kGPU) {
+#ifdef ENABLE_OPENGL_TEXTURE
+      if (this->GetEnableGLTexture() == true) {
+        if (kernel == dst_kernels.front() || kernel == dst_kernels.back() - 1) {
+          kernel->SetOpenGLTextureEnable(true);
+          MS_LOG(INFO) << "Set OpenGLSharingMem for subgraph success!" << std::endl;
+        }
+      }
+#endif
       auto ret = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel)->RunPass();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "OpenCLSubGraph RunPass failed.";
