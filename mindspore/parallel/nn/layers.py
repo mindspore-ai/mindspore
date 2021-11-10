@@ -319,7 +319,7 @@ class _Linear(Cell):
         ``Ascend`` ``GPU``
     """
 
-    @cell_attr_register(attrs=['has_bias', 'in_channels', 'out_channels', 'shard_output', 'activation'])
+    @cell_attr_register
     def __init__(self,
                  in_channels,
                  out_channels,
