@@ -154,7 +154,7 @@ int QuickStart(int argc, const char **argv) {
   delete[](model_buf);
   if (build_ret != mindspore::kSuccess) {
     delete model;
-    std::cerr << "Build model failed." << std::endl;
+    std::cerr << "Build model error " << build_ret << std::endl;
     return -1;
   }
 
@@ -174,8 +174,8 @@ int QuickStart(int argc, const char **argv) {
   auto predict_ret = model->Predict(inputs, &outputs);
   if (predict_ret != mindspore::kSuccess) {
     delete model;
-    std::cerr << "Predict error " << ret << std::endl;
-    return ret;
+    std::cerr << "Predict error " << predict_ret << std::endl;
+    return -1;
   }
 
   // Print Output Tensor Data.
