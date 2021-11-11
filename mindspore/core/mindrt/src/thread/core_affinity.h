@@ -24,6 +24,9 @@
 #define BIND_CORE
 #include <sched.h>
 #endif
+#ifdef _WIN32
+#define BIND_CORE
+#endif
 
 namespace mindspore {
 enum BindMode {
@@ -31,6 +34,13 @@ enum BindMode {
   Power_Higher = 1,
   Power_Middle = 2,
 };
+#define PARSE_CPU_GAP 3
+#define PARSE_CPU_DEC 10
+#define PARSE_CPU_HEX 16
+
+#ifdef _WIN32
+void SetWindowsSelfAffinity(uint64_t core_id);
+#endif
 
 class Worker;
 class CoreAffinity {
@@ -42,19 +52,21 @@ class CoreAffinity {
 
   int BindThreads(const std::vector<Worker *> &workers, const std::vector<int> &core_list);
   int BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode);
-  int BindProcess(BindMode bind_mode) const;
+  int BindProcess(BindMode bind_mode);
   std::vector<int> GetCoreId(size_t thread_num, BindMode bind_mode);
   void SetCoreId(const std::vector<int> &core_list);
 
  private:
-#ifdef BIND_CORE
-  int SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) const;
-#endif  // BIND_CORE
+#ifdef _WIN32
+  int SetAffinity();
+#elif defined(BIND_CORE)
+  int SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set);
+#endif
 
   int InitBindCoreId(size_t thread_num, BindMode bind_mode);
 
-  int BindThreadsToCoreList(const std::vector<Worker *> &workers) const;
-  int FreeScheduleThreads(const std::vector<Worker *> &workers) const;
+  int BindThreadsToCoreList(const std::vector<Worker *> &workers);
+  int FreeScheduleThreads(const std::vector<Worker *> &workers);
 
   // bind_id contains the CPU cores to bind
   // the size of bind_id is equal to the size of workers

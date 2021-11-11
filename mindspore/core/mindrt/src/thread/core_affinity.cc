@@ -25,8 +25,15 @@
 #include <mach/machine.h>
 #endif  // MS_COMPILE_IOS
 #include "thread/threadpool.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace mindspore {
+#ifdef _WIN32
+std::vector<DWORD_PTR> WindowsCoreList;
+#endif
+
 enum Arch {
   UnKnown_Arch = 0,
   Cortex_A5,
@@ -106,20 +113,20 @@ enum Arch GetArch(int cpu_part) {
 
 int ParseCpuPart(const char *line, int start, int size) {
   int cpu_part = 0;
-  for (int i = start; i < size && i < start + 3; i++) {
+  for (int i = start; i < size && i < start + PARSE_CPU_GAP; i++) {
     char c = line[i];
     int d;
     if (c >= '0' && c <= '9') {
       d = c - '0';
-    } else if ((c - 'A') < 6) {
-      d = 10 + (c - 'A');
-    } else if ((c - 'a') < 6) {
-      d = 10 + (c - 'a');
+    } else if ((c - 'A') < (PARSE_CPU_HEX - PARSE_CPU_DEC)) {
+      d = PARSE_CPU_DEC + (c - 'A');
+    } else if ((c - 'a') < (PARSE_CPU_HEX - PARSE_CPU_DEC)) {
+      d = PARSE_CPU_DEC + (c - 'a');
     } else {
       THREAD_ERROR("CPU part in /proc/cpuinfo is ignored due to unexpected non-hex character");
       break;
     }
-    cpu_part = cpu_part * 16 + d;
+    cpu_part = cpu_part * PARSE_CPU_HEX + d;
   }
   return cpu_part;
 }
@@ -208,8 +215,31 @@ int GetMaxFrequency(int core_id) {
   return max_freq;
 }
 
+#ifdef _WIN32
+void SetWindowsAffinity(HANDLE thread, DWORD_PTR mask) {
+  THREAD_INFO("Bind thread[%ld] to core[%lld].", GetThreadId(thread), mask);
+  SetThreadAffinityMask(thread, mask);
+  return;
+}
+
+void SetWindowsSelfAffinity(uint64_t core_id) {
+  if (WindowsCoreList.size() <= core_id) {
+    return;
+  }
+  DWORD_PTR mask = WindowsCoreList[core_id];
+  SetWindowsAffinity(GetCurrentThread(), mask);
+  return;
+}
+#endif
+
 int CoreAffinity::InitHardwareCoreInfo() {
   core_num_ = std::thread::hardware_concurrency();
+#ifdef _WIN32
+  WindowsCoreList.resize(core_num_);
+  for (size_t i = 0; i < core_num_; i++) {
+    WindowsCoreList[i] = 1 << i;
+  }
+#endif
   std::vector<CpuInfo> freq_set;
   freq_set.resize(core_num_);
   core_freq_.resize(core_num_);
@@ -248,7 +278,9 @@ int CoreAffinity::InitHardwareCoreInfo() {
 
 std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) {
   std::vector<int> bind_id;
-#ifdef BIND_CORE
+#ifdef _WIN32
+  return bind_id;
+#elif defined(BIND_CORE)
   if (core_num_ != sorted_id_.size()) {
     THREAD_ERROR("init sorted core id failed");
     return bind_id;
@@ -270,16 +302,20 @@ std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) 
 void CoreAffinity::SetCoreId(const std::vector<int> &core_list) { bind_id_ = core_list; }
 
 int CoreAffinity::InitBindCoreId(size_t thread_num, BindMode bind_mode) {
+#ifndef _WIN32
   bind_id_.clear();
   bind_id_ = GetCoreId(thread_num, bind_mode);
   if (bind_id_.empty()) {
     return THREAD_ERROR;
   }
+#endif
   return THREAD_OK;
 }
 
-#ifdef BIND_CORE
-int CoreAffinity::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) const {
+#ifdef _WIN32
+int CoreAffinity::SetAffinity() { return THREAD_OK; }
+#elif defined(BIND_CORE)
+int CoreAffinity::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) {
 #ifdef __ANDROID__
 #if __ANDROID_API__ >= 21
   THREAD_INFO("thread: %d, mask: %lu", pthread_gettid_np(thread_id), cpu_set->__bits[0]);
@@ -303,10 +339,12 @@ int CoreAffinity::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) co
 #endif
   return THREAD_OK;
 }
-#endif  // BIND_CORE
+#endif
 
-int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) const {
-#ifdef BIND_CORE
+int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) {
+#ifdef _WIN32
+  return THREAD_OK;
+#elif defined(BIND_CORE)
   cpu_set_t mask;
   CPU_ZERO(&mask);
   for (int i : bind_id_) {
@@ -322,8 +360,10 @@ int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) cons
   return THREAD_OK;
 }
 
-int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) const {
-#ifdef BIND_CORE
+int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) {
+#ifdef _WIN32
+  return THREAD_OK;
+#elif defined(BIND_CORE)
   if (bind_id_.empty()) {
     THREAD_ERROR("bind id is empty");
     return THREAD_ERROR;
@@ -346,8 +386,10 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) co
   return THREAD_OK;
 }
 
-int CoreAffinity::BindProcess(BindMode bind_mode) const {
-#ifdef BIND_CORE
+int CoreAffinity::BindProcess(BindMode bind_mode) {
+#ifdef _WIN32
+  return THREAD_OK;
+#elif defined(BIND_CORE)
   if (bind_id_.empty()) {
     // initializes bind id before bind currently process
     THREAD_ERROR("bind id is empty");

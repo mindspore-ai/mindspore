@@ -70,6 +70,7 @@ class Worker {
   bool RunLocalKernelTask();
   // set max spin count before running
   void SetMaxSpinCount(int max_spin_count) { max_spin_count_ = max_spin_count; }
+  void InitWorkerMask(const std::vector<int> &core_list, size_t workers_size);
 
   void set_frequency(int frequency) { frequency_ = frequency; }
   int frequency() const { return frequency_; }
@@ -79,7 +80,10 @@ class Worker {
   float rhs_scale() const { return rhs_scale_; }
 
   std::thread::id thread_id() const { return thread_.get_id(); }
-#ifdef BIND_CORE
+
+#ifdef _WIN32
+  uint64_t core_id() { return core_id_; }
+#elif defined(BIND_CORE)
   void set_mask(const cpu_set_t &mask) { mask_ = mask; }
   pthread_t handle() { return thread_.native_handle(); }
 #endif
@@ -92,7 +96,9 @@ class Worker {
 
   bool alive_{true};
   std::thread thread_;
-#ifdef BIND_CORE
+#ifdef _WIN32
+  uint64_t core_id_;
+#elif defined(BIND_CORE)
   cpu_set_t mask_;
 #endif
   std::atomic_int status_{kThreadBusy};

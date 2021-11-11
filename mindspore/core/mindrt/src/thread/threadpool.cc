@@ -35,7 +35,9 @@ Worker::~Worker() {
 void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
 
 void Worker::SetAffinity() {
-#ifdef BIND_CORE
+#ifdef _WIN32
+  SetWindowsSelfAffinity(core_id_);
+#elif defined(BIND_CORE)
 #ifdef __ANDROID__
   int ret = sched_setaffinity(gettid(), sizeof(cpu_set_t), &mask_);
   if (ret != THREAD_OK) {
@@ -52,6 +54,21 @@ void Worker::SetAffinity() {
 #endif
 #endif
 #endif
+}
+
+void Worker::InitWorkerMask(const std::vector<int> &core_list, size_t workers_size) {
+#ifdef _WIN32
+  static uint32_t windows_core_index = 0;
+  core_id_ = windows_core_index++;
+#elif defined(BIND_CORE)
+  cpu_set_t mask;
+  CPU_ZERO(&mask);
+  if (core_list.size() > 0) {
+    CPU_SET(core_list[workers_size % core_list.size()], &mask);
+  }
+  this->set_mask(mask);
+#endif
+  return;
 }
 
 void Worker::Run() {
@@ -135,8 +152,11 @@ ThreadPool::~ThreadPool() {
     worker = nullptr;
   }
   workers_.clear();
-  delete affinity_;
-  affinity_ = nullptr;
+
+  if (affinity_ != nullptr) {
+    delete affinity_;
+    affinity_ = nullptr;
+  }
   THREAD_INFO("destruct success");
 }
 
@@ -152,14 +172,7 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
   for (size_t i = 0; i < thread_num; ++i) {
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-#ifdef BIND_CORE
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-    if (core_list.size() > 0) {
-      CPU_SET(core_list[workers_.size() % core_list.size()], &mask);
-    }
-    worker->set_mask(mask);
-#endif
+    worker->InitWorkerMask(core_list, workers_.size());
     worker->CreateThread();
     workers_.push_back(worker);
     THREAD_INFO("create kernel thread[%zu]", i);
@@ -308,33 +321,27 @@ int ThreadPool::SetCpuAffinity(BindMode bind_mode) {
   if (workers_.empty()) {
     return THREAD_ERROR;
   }
-#ifdef BIND_CORE
-  THREAD_ERROR_IF_NULL(affinity_);
-  return affinity_->BindThreads(workers_, bind_mode);
-#else
+  if (affinity_ != nullptr) {
+    return affinity_->BindThreads(workers_, bind_mode);
+  }
   return THREAD_OK;
-#endif  // BIND_CORE
 }
 
 int ThreadPool::SetCpuAffinity(const std::vector<int> &core_list) {
   if (workers_.empty()) {
     return THREAD_ERROR;
   }
-#ifdef BIND_CORE
-  THREAD_ERROR_IF_NULL(affinity_);
-  return affinity_->BindThreads(workers_, core_list);
-#else
+  if (affinity_ != nullptr) {
+    return affinity_->BindThreads(workers_, core_list);
+  }
   return THREAD_OK;
-#endif  // BIND_CORE
 }
 
 int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
-#ifdef BIND_CORE
-  THREAD_ERROR_IF_NULL(affinity_);
-  return affinity_->BindProcess(bind_mode);
-#else
+  if (affinity_ != nullptr) {
+    return affinity_->BindProcess(bind_mode);
+  }
   return THREAD_OK;
-#endif  // BIND_CORE
 }
 
 void ThreadPool::SetSpinCountMaxValue() {
