@@ -84,8 +84,7 @@ class AnfRuntimeAlgorithm {
                                                      prim::kPrimMakeTuple});
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
                                               const std::vector<PrimitivePtr> &return_types = {});
-  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node,
-                                                            std::set<AnfNodePtr> *visited_call_nodes = nullptr);
+  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);
   static void SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, size_t index);
@@ -344,6 +343,10 @@ class AnfRuntimeAlgorithm {
   // Depth represents the number of layers of the call. When the first input of the call node is a call node,
   // the funcgraph in the return value of the inner call needs to be returned.
   static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node, size_t depth = 1);
+  // Get the output number according to abstract, when there is a tuple in abstract, it needs to get recursively.
+  static size_t GetOutputNumByAbstract(const AbstractBasePtr &node_abstract);
+  // Fetch all outputs of call node.
+  static std::vector<KernelWithIndex> GetAllOutputByCallNode(const KernelWithIndex &output_with_index);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
