@@ -36,7 +36,6 @@ class NodeRemovalPass : public IRTreePass {
   class RemovalNodes : public IRNodePass {
    public:
     /// \brief Constructor
-    /// \param[in] removal_pass Raw pointer back to controlling tree pass
     RemovalNodes();
 
     /// \brief Destructor

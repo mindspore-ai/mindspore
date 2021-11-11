@@ -38,6 +38,7 @@ PYBIND_REGISTER(PythonIteratorConsumer, 1, ([](const py::module *m) {
                            THROW_IF_ERROR(self.GetNextAsDict(&output));
                            return output;
                          })
+                    .def("GetOffload", [](PythonIteratorConsumer &self) { return self.GetOffload(); })
                     .def("GetNextAsList", [](PythonIteratorConsumer &self) {
                       py::list output;
                       THROW_IF_ERROR(self.GetNextAsList(&output));
@@ -123,6 +124,7 @@ PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                     .def("Send", [](ToDevice &self) { THROW_IF_ERROR(self.Send()); })
                     .def("ContinueSend", [](ToDevice &self) { THROW_IF_ERROR(self.Continue()); })
                     .def("StopSend", [](ToDevice &self) { THROW_IF_ERROR(self.Stop()); })
+                    .def("GetOffload", [](ToDevice &self) { return self.GetOffload(); })
                     .def("GetDataInfo",
                          [](ToDevice &self) {
                            std::vector<DataType> types_c;
@@ -170,6 +172,5 @@ PYBIND_REGISTER(PythonDatasetSizeGetter, 1, ([](const py::module *m) {
                       return size;
                     });
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore

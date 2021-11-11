@@ -26,7 +26,7 @@ from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_gnn_list_of_pair_or_ndarray, \
-    check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str
+    check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id
 
 from . import datasets
 from . import samplers
@@ -548,13 +548,7 @@ def check_generatordataset(method):
 
         num_shards = param_dict.get("num_shards")
         shard_id = param_dict.get("shard_id")
-        if (num_shards is None) != (shard_id is None):
-            # These two parameters appear together.
-            raise ValueError("num_shards and shard_id need to be passed in together.")
-        if num_shards is not None:
-            check_pos_int32(num_shards, "num_shards")
-            if shard_id >= num_shards:
-                raise ValueError("shard_id should be less than num_shards.")
+        check_dataset_num_shards_shard_id(num_shards, shard_id)
 
         sampler = param_dict.get("sampler")
         if sampler is not None:
@@ -776,7 +770,7 @@ def check_map(method):
     def new_method(self, *args, **kwargs):
         from mindspore.dataset.callback import DSCallback
         [_, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
-         callbacks, max_rowsize], _ = \
+         callbacks, max_rowsize, offload], _ = \
             parse_user_args(method, *args, **kwargs)
 
         nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
@@ -788,6 +782,7 @@ def check_map(method):
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
         check_cache_option(cache)
         type_check(max_rowsize, (int,), "max_rowsize")
+        type_check(offload, (bool,), "offload")
 
         if callbacks is not None:
             if isinstance(callbacks, (list, tuple)):

@@ -12,6 +12,7 @@ set(DATASET_ENGINE_OPT_SRC_FILES
     pre/epoch_ctrl_pass.cc
     pre/getter_pass.cc
     pre/input_validation_pass.cc
+    pre/node_offload_pass.cc
     pre/node_removal_pass.cc
     )
 

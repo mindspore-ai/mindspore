@@ -20,8 +20,9 @@ import signal
 import weakref
 import numpy as np
 
-from mindspore.common.tensor import Tensor
 import mindspore._c_dataengine as cde
+from mindspore.common.tensor import Tensor
+import mindspore.dataset.engine.offload as offload
 
 from mindspore import log as logger
 
@@ -86,6 +87,10 @@ class Iterator:
                 self._transform_tensor = lambda t: Tensor.from_numpy(t.as_array())
         self.__index = 0
 
+        self.offload_model = None
+        if offload.check_map_offload(self.__ori_dataset):
+            self.offload_model = offload.GetOffloadModel(consumer)
+
         ITERATORS_LIST.append(weakref.ref(self))
         _unset_iterator_cleanup()
 
@@ -139,6 +144,10 @@ class Iterator:
                 self.__ori_dataset.dataset_size = self.__index
             raise StopIteration
         self.__index += 1
+
+        if self.offload_model is not None:
+            data = offload.apply_offload_iterators(data, self.offload_model)
+
         return data
 
     def __deepcopy__(self, memo):

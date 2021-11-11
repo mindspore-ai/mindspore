@@ -50,6 +50,10 @@ class TreeConsumer {
   /// \return Status error code
   virtual Status Terminate();
 
+  /// Function for all consumers to get the offload JSON string.
+  /// \return Offload JSON string.
+  std::string GetOffload();
+
 #ifndef ENABLE_SECURITY
   virtual Status RegisterProfilingManager();
 

@@ -35,20 +35,21 @@ namespace dataset {
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
                  const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache,
-                 std::vector<std::shared_ptr<DSCallback>> callbacks)
+                 std::vector<std::shared_ptr<DSCallback>> callbacks, bool offload)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
       project_columns_(project_columns),
       DatasetNode(std::move(cache)),
-      callbacks_(callbacks) {
+      callbacks_(callbacks),
+      offload_(offload) {
   this->AddChild(child);
 }
 
 std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
   auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
-                                        callbacks_);
+                                        callbacks_, offload_);
   return node;
 }
 
@@ -151,6 +152,8 @@ void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> 
 }
 std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
 
+void MapNode::SetOffload(bool offload) { offload_ = offload; }
+
 Status MapNode::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
@@ -182,6 +185,7 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   (void)std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
                        [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb != nullptr ? cb->step_size() : 0; });
   args["callback"] = cbs;
+
   *out_json = args;
   return Status::OK();
 }

@@ -98,6 +98,8 @@ Status TreeConsumer::RegisterProfilingManager() {
 }
 #endif
 
+std::string TreeConsumer::GetOffload() { return (tree_adapter_->GetOffloadJson()).dump(); }
+
 // IteratorConsumer
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
   RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));

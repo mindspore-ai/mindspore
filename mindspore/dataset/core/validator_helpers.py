@@ -729,3 +729,12 @@ def check_c_tensor_op(param, param_name):
 def replace_none(value, default):
     """ replaces None with a default value."""
     return value if value is not None else default
+
+def check_dataset_num_shards_shard_id(num_shards, shard_id):
+    if (num_shards is None) != (shard_id is None):
+        # These two parameters appear together.
+        raise ValueError("num_shards and shard_id need to be passed in together.")
+    if num_shards is not None:
+        check_pos_int32(num_shards, "num_shards")
+        if shard_id >= num_shards:
+            raise ValueError("shard_id should be less than num_shards.")
