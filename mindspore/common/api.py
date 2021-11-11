@@ -422,12 +422,6 @@ class _PynativeExecutor:
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
-    def enter_construct(self, cell):
-        self._executor.enter_construct(cell)
-
-    def leave_construct(self, cell):
-        self._executor.leave_construct(cell)
-
     def parameter_broadcast(self, obj, phase, auto_parallel_mode):
         if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
             _parameter_broadcast(obj, auto_parallel_mode)
