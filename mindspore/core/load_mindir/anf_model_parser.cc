@@ -32,6 +32,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_utils_secure.h"
 
 using std::string;
 
@@ -321,6 +322,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   anfnode_build_map_[parameter_proto.name()] = node;
   return true;
 }
+
 bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
                                                  const tensor::TensorPtr &tensor_info) {
   if (!tensor_proto.has_external_data()) {
@@ -368,8 +370,8 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
   }
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), data + tensor_proto.external_data().offset(),
-                      tensor_proto.external_data().length());
+  auto ret = common::huge_memcpy_s(tensor_data_buf, tensor_info->data().nbytes(),
+                                   data + tensor_proto.external_data().offset(), tensor_proto.external_data().length());
   if (ret != 0) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
