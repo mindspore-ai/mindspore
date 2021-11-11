@@ -20,8 +20,12 @@
 
 namespace mindspore::opt {
 
-STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
+STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited) {
   MS_ASSERT(func_graph != nullptr);
+  if (has_visited->find(func_graph) != has_visited->end()) {
+    return lite::RET_OK;
+  }
+  has_visited->insert(func_graph);
   auto return_node = func_graph->get_return();
   if (return_node == nullptr) {
     return RET_OK;
@@ -45,7 +49,7 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
     if (utils::isa<ValueNode>(node) && GetValueNode<FuncGraphPtr>(node) != nullptr) {
       auto sub_graph = GetValueNode<FuncGraphPtr>(node);
       MS_ASSERT(sub_graph != nullptr);
-      auto status = ProcessGraph(sub_graph);
+      auto status = ProcessGraph(sub_graph, has_visited);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "process sub graph failed";
         return RET_ERROR;
@@ -65,7 +69,8 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
 
 bool UnusedNodeRemovePass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto status = ProcessGraph(func_graph);
+  std::set<FuncGraphPtr> has_visited;
+  auto status = ProcessGraph(func_graph, &has_visited);
   return status == RET_OK;
 }
 }  // namespace mindspore::opt
