@@ -312,6 +312,7 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
 }
 
 Status VOCOp::CountTotalRows(int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   switch (task_type_) {
     case TaskType::Detection:
       RETURN_IF_NOT_OK(ParseImageIds());
@@ -338,6 +339,7 @@ Status VOCOp::ComputeColMap() {
 }
 
 Status VOCOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   if ((*output_class_indexing).empty()) {
     if (task_type_ != TaskType::Detection) {
       MS_LOG(ERROR) << "Invalid parameter, GetClassIndexing only valid in \"Detection\" task.";

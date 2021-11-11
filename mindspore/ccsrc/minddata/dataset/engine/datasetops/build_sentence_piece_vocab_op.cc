@@ -130,6 +130,10 @@ std::unordered_map<std::string, std::string> BuildSentencePieceVocabOp::BuildPar
 bool BuildSentencePieceVocabOp::Done() { return read_done_; }
 
 void BuildSentencePieceVocabOp::Next(std::string *sentence) {
+  if (sentence == nullptr) {
+    MS_LOG(ERROR) << "BuildSentencePieceVocab get nullptr element, please check data.";
+    return;
+  }
   TensorRow new_row;
   Status s = sentence_queue_->PopFront(&new_row);
 

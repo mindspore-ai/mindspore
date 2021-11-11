@@ -35,6 +35,9 @@ class CpuMapJob : public MapJob {
 
   // A pure virtual run function to execute a cpu map job
   Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override;
+
+ private:
+  Status RebuildMapErrorMsg(const TensorRow &input_row, const size_t &i, Status *rc);
 };
 
 }  // namespace dataset

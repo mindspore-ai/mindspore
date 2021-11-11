@@ -41,6 +41,7 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status EpochCtrlOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }

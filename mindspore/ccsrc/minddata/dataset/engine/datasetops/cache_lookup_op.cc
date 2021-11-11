@@ -49,6 +49,7 @@ Status CacheLookupOp::WorkerEntry(int32_t worker_id) {
 }
 Status CacheLookupOp::ResetSampler() { return Status::OK(); }
 Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+  RETURN_UNEXPECTED_IF_NULL(op);
   // We act like a sampler and as a dataset op. During handshake with leaf op,
   // We must wait until the leaf op has indexed everything.
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(op));
@@ -67,6 +68,7 @@ void CacheLookupOp::SamplerPrint(std::ostream &out, bool show_all) const {
   }
 }
 Status CacheLookupOp::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<row_id_type> cache_miss;
   RETURN_IF_NOT_OK(keys_miss_->Pop(0, &cache_miss));
   // Ignore the case we have no cache miss, we can't return empty samples.

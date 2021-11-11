@@ -57,6 +57,7 @@ Status SubsetSamplerRT::ResetSampler() {
 
 // Get the sample ids.
 Status SubsetSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   // All samples have been drawn
   if (sample_id_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
@@ -111,6 +112,7 @@ void SubsetSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 }
 
 Status SubsetSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   RETURN_IF_NOT_OK(SamplerRT::to_json(&args));
   args["sampler_name"] = "SubsetSampler";

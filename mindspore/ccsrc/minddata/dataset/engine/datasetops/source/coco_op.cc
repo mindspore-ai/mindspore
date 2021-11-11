@@ -500,6 +500,7 @@ Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &c
 }
 
 Status CocoOp::CountTotalRows(int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   RETURN_IF_NOT_OK(ParseAnnotationIds());
   *count = static_cast<int64_t>(image_ids_.size());
   return Status::OK();
@@ -518,6 +519,7 @@ Status CocoOp::ComputeColMap() {
 }
 
 Status CocoOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   if ((*output_class_indexing).empty()) {
     if ((task_type_ != TaskType::Detection) && (task_type_ != TaskType::Panoptic)) {
       MS_LOG(ERROR) << "Invalid parameter, GetClassIndex only valid in \"Detection\" and \"Panoptic\" task.";

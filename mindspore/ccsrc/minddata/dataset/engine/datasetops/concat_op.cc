@@ -106,6 +106,7 @@ Status ConcatOp::ComputeColMap() {
 
 // Gets the number of classes
 Status ConcatOp::GetNumClasses(int64_t *num_classes) {
+  RETURN_UNEXPECTED_IF_NULL(num_classes);
   int64_t max_num_classes = -1;
   for (const auto &child : child_) {
     // Choose a dataset which can get valid num_classes
@@ -148,6 +149,7 @@ bool ConcatOp::IgnoreSample() {
 }
 
 Status ConcatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {

@@ -92,6 +92,7 @@ Status DistributedSamplerRT::InitSampler() {
 }
 
 Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (cnt_ > samples_per_tensor_) {
     RETURN_STATUS_UNEXPECTED(
       "Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
@@ -212,6 +213,7 @@ void DistributedSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const 
 }
 
 Status DistributedSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   RETURN_IF_NOT_OK(SamplerRT::to_json(&args));
   args["sampler_name"] = "DistributedSampler";

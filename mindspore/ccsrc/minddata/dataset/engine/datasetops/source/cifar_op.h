@@ -75,7 +75,6 @@ class CifarOp : public MappableLeafOp {
   // @return Status The status code returned
   Status LoadTensorRow(row_id_type index, TensorRow *trow) override;
 
- private:
   // Read block data from cifar file
   // @return
   Status ReadCifarBlockDataAsync();

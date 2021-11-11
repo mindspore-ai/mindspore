@@ -95,6 +95,10 @@ Status AlbumOp::PrescanEntry() {
 // Optimization: Could take in a tensor
 // This function does not return status because we want to just skip bad input, not crash
 bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
+  if (valid == nullptr) {
+    MS_LOG(ERROR) << "Album parameter can't be nullptr.";
+    return false;
+  }
   std::ifstream file_handle;
   constexpr int read_num = 3;
   *valid = false;
@@ -389,13 +393,13 @@ Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann:
     return LoadFloatArrayTensor(column_value, i, row);
   }
   // int value
-  if (!is_array &&
-      (data_schema_->Column(i).Type() == DataType::DE_INT64 || data_schema_->Column(i).Type() == DataType::DE_INT32)) {
+  bool judge_int =
+    (data_schema_->Column(i).Type() == DataType::DE_INT64) || (data_schema_->Column(i).Type() == DataType::DE_INT32);
+  if (!is_array && judge_int) {
     return LoadIntTensor(column_value, i, row);
   }
   // int array
-  if (is_array &&
-      (data_schema_->Column(i).Type() == DataType::DE_INT64 || data_schema_->Column(i).Type() == DataType::DE_INT32)) {
+  if (is_array && judge_int) {
     return LoadIntArrayTensor(column_value, i, row);
   } else {
     MS_LOG(WARNING) << "Value type for column: " << data_schema_->Column(i).Name() << " is not supported.";

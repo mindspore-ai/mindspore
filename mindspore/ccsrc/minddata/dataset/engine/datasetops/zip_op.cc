@@ -120,6 +120,7 @@ Status ZipOp::ComputeColMap() {
 Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
 Status ZipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   int32_t skip_child = -1;
   RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child, worker_id, retry_if_eoe));
   if (row->eoe()) {
