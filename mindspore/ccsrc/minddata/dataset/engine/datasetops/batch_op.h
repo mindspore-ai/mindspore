@@ -255,7 +255,10 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @return Status The status code returned
   Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info);
 #endif
-  Status WaitForWorkers() override;
+  Status SendWaitFlagToWorker(int32_t worker_id) override;
+
+  Status SendQuitFlagToWorker(int32_t worker_id) override;
+
   Status ComputeColMap() override;
 
   int32_t start_batch_size_;

@@ -33,11 +33,11 @@ Status MappableLeafOp::operator()() {
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(InitOp());
-  TensorRow sample_row;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+
   int64_t ep_step = 0, total_step = 0;
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
-
+  TensorRow sample_row;
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
   while (true) {  // each iteration is 1 epoch, breaks when IsLastIteration() is true
     if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
       ep_step = 0;
@@ -70,7 +70,7 @@ Status MappableLeafOp::operator()() {
   }
   RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
   for (int32_t i = 0; i < num_workers_; ++i) {
-    RETURN_IF_NOT_OK(SendQuitFlagToWorker(i));
+    RETURN_IF_NOT_OK(SendQuitFlagToWorker(NextWorkerID()));
   }
   return Status::OK();
 }
@@ -113,19 +113,14 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
   }
   RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unexpected nullptr received in worker.");
 }
-Status MappableLeafOp::WaitForWorkers() {
-  num_workers_paused_ = 0;
-  for (int32_t i = 0; i < num_workers_; i++) {
-    RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
-  }
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
-  next_worker_id_ = 0;
-  wait_for_workers_post_.Clear();
+
+Status MappableLeafOp::SendWaitFlagToWorker(int32_t worker_id) {
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
   return Status::OK();
 }
+
 Status MappableLeafOp::SendQuitFlagToWorker(int32_t worker_id) {
-  RETURN_IF_NOT_OK(
-    worker_in_queues_[worker_id]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockNone)));
   return Status::OK();
 }
 }  // namespace dataset

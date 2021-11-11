@@ -130,131 +130,97 @@ class MindDataTestCallback : public UT::DatasetOpTesting {
     DatasetOpTesting::SetUp();
     GlobalInit();
   }
-};
 
-TEST_F(MindDataTestCallback, TestBasicCallback) {
-  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestBasicCallback";
-  // config callback
-  Status rc;
-  std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
-  std::shared_ptr<DSCallback> cb1 = tst_cb;
-  // config leaf_op, use random_data to avoid I/O
-  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-  TensorShape shape({});  // empty shape is a 1-value scalar Tensor
-  ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
-  ASSERT_OK(schema->AddColumn(col));
+  void TestBasicCallback(std::shared_ptr<ExecutionTree> tree, std::shared_ptr<DatasetOp> callback_node,
+                         int32_t step_size) {
+    // config callback
+    Status rc;
+    std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(step_size);
+    std::shared_ptr<DSCallback> cb1 = tst_cb;
+    std::vector<std::shared_ptr<DSCallback>> cbs = {};
+    cbs.push_back(cb1);
+    callback_node->AddCallbacks(std::move(cbs));
 
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  int32_t op_connector_size = config_manager->op_connector_size();
-  int32_t num_workers = config_manager->num_parallel_workers();
-  std::shared_ptr<RandomDataOp> leaf =
-    std::make_shared<RandomDataOp>(num_workers, op_connector_size, 44, std::move(schema));
-  // config mapOp
-  std::vector<std::string> input_columns = {"label"};
-  std::vector<std::string> output_columns = {};
-  std::vector<std::shared_ptr<TensorOp>> op_list;
-  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
-  op_list.push_back(my_no_op);
-  std::shared_ptr<MapOp> map_op =
-    std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
-  std::vector<std::shared_ptr<DSCallback>> cbs = {};
-  cbs.push_back(cb1);
-  map_op->AddCallbacks(std::move(cbs));
-  // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
-  // start build then launch tree
-  leaf->SetTotalRepeats(2);
-  leaf->SetNumRepeatsPerEpoch(2);
-  map_op->SetTotalRepeats(2);
-  map_op->SetNumRepeatsPerEpoch(2);
-  std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op});
-  rc = tree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
-  rc = tree->Launch();
-  EXPECT_TRUE(rc.IsOk());
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(tree);
-  TensorMap tensor_map;
-  rc = di.GetNextAsMap(&tensor_map);
-  EXPECT_TRUE(rc.IsOk());
-  while (!tensor_map.empty()) {
+    ASSERT_OK(tree->Prepare());
+    ASSERT_OK(tree->Launch());
+    // Start the loop of reading tensors from our pipeline
+    DatasetIterator di(tree);
+    TensorMap tensor_map;
     rc = di.GetNextAsMap(&tensor_map);
     EXPECT_TRUE(rc.IsOk());
-  }
+    while (!tensor_map.empty()) {
+      rc = di.GetNextAsMap(&tensor_map);
+      EXPECT_TRUE(rc.IsOk());
+    }
 
-  std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
-  std::sort(callback_names.begin(), callback_names.end());
-  std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
-  std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
-  // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
-  size_t len = 7;
-  EXPECT_EQ(tst_cb->all_names(len), callback_names);
-  EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
-  EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
-}
+    std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
+    std::sort(callback_names.begin(), callback_names.end());
+    std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
+    std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
+    // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
+    size_t len = 7;
+    EXPECT_EQ(tst_cb->all_names(len), callback_names);
+    EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
+    EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
+  }
+  std::vector<std::shared_ptr<DatasetOp>> GenerateNodes() {
+    // config leaf_op, use random_data to avoid I/O
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+    TensorShape shape({});  // empty shape is a 1-value scalar Tensor
+    ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
+    EXPECT_OK(schema->AddColumn(col));
+
+    std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+    int32_t op_connector_size = config_manager->op_connector_size();
+    int32_t num_workers = config_manager->num_parallel_workers();
+    int32_t num_rows = 44;
+    std::shared_ptr<RandomDataOp> leaf =
+      std::make_shared<RandomDataOp>(num_workers, op_connector_size, num_rows, std::move(schema));
+    // config mapOp
+    std::vector<std::string> input_columns = {"label"};
+    std::vector<std::string> output_columns = {};
+    std::vector<std::shared_ptr<TensorOp>> op_list;
+    std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
+    op_list.push_back(my_no_op);
+    std::shared_ptr<MapOp> map_op =
+      std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
+
+    PadInfo pad_map;
+    std::shared_ptr<BatchOp> batch_op =
+      std::make_shared<BatchOp>(1, false, false, op_connector_size, num_workers, std::vector<std::string>{}, pad_map);
+
+    // config RepeatOp
+    int32_t num_repeats = 2;
+    std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(num_repeats);
+    // start build then launch tree
+    leaf->SetTotalRepeats(num_repeats);
+    leaf->SetNumRepeatsPerEpoch(num_repeats);
+    map_op->SetTotalRepeats(num_repeats);
+    map_op->SetNumRepeatsPerEpoch(num_repeats);
+    batch_op->SetTotalRepeats(num_repeats);
+    batch_op->SetNumRepeatsPerEpoch(num_repeats);
+
+    return {leaf, map_op, batch_op, repeat_op};
+  }
+};
 
 /// Feature: Callback
 /// Description: Test callbacks with mappable dataset (RandomDataset)
 /// Expectation: number and order of callbacks generated are correct
-TEST_F(MindDataTestCallback, TestMappableBasicCallback) {
-  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestMappableBasicCallback";
-  // config callback
-  Status rc;
-  std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
-  std::shared_ptr<DSCallback> cb1 = tst_cb;
-  // config leaf_op, use random_data to avoid I/O
-  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-  TensorShape shape({});  // empty shape is a 1-value scalar Tensor
-  ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
-  ASSERT_OK(schema->AddColumn(col));
-
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  int32_t op_connector_size = config_manager->op_connector_size();
-  int32_t num_workers = config_manager->num_parallel_workers();
-  std::shared_ptr<RandomDataOp> leaf =
-    std::make_shared<RandomDataOp>(num_workers, op_connector_size, 44, std::move(schema));
-  // config mapOp
-  std::vector<std::string> input_columns = {"label"};
-  std::vector<std::string> output_columns = {};
-  std::vector<std::shared_ptr<TensorOp>> op_list;
-  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
-  op_list.push_back(my_no_op);
-  std::shared_ptr<MapOp> map_op =
-    std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
-  std::vector<std::shared_ptr<DSCallback>> cbs = {};
-  cbs.push_back(cb1);
-  leaf->AddCallbacks(std::move(cbs));
-  // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
-  // start build then launch tree
-  leaf->SetTotalRepeats(2);
-  leaf->SetNumRepeatsPerEpoch(2);
-  map_op->SetTotalRepeats(2);
-  map_op->SetNumRepeatsPerEpoch(2);
-  std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op});
-  rc = tree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
-  rc = tree->Launch();
-  EXPECT_TRUE(rc.IsOk());
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(tree);
-  TensorMap tensor_map;
-  rc = di.GetNextAsMap(&tensor_map);
-  EXPECT_TRUE(rc.IsOk());
-  while (!tensor_map.empty()) {
-    rc = di.GetNextAsMap(&tensor_map);
-    EXPECT_TRUE(rc.IsOk());
-  }
-
-  std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
-  std::sort(callback_names.begin(), callback_names.end());
-  std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
-  std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
-  // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
-  size_t len = 7;
-  EXPECT_EQ(tst_cb->all_names(len), callback_names);
-  EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
-  EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
+TEST_F(MindDataTestCallback, TestBasicCallback) {
+  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestBasicCallback";
+  // Test Mapop
+  auto nodes = GenerateNodes();
+  auto tree = Build(nodes);
+  TestBasicCallback(tree, nodes[1], 64);
+  // Test LeafOp
+  nodes = GenerateNodes();
+  tree = Build(nodes);
+  TestBasicCallback(tree, nodes[0], 64);
+  // Test BatchOp
+  nodes = GenerateNodes();
+  tree = Build(nodes);
+  TestBasicCallback(tree, nodes[2], 64);
 }
 
 TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
@@ -285,10 +251,11 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
 
   map_op->AddCallbacks(std::move(cbs));
   EXPECT_TRUE(rc.IsOk());
+  int32_t num_repeats = 2;
   // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(num_repeats);
   // config EpochCtrlOp
-  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(2);
+  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(num_repeats);
   // start build then launch tree
   leaf->SetTotalRepeats(-2);
   leaf->SetNumRepeatsPerEpoch(2);

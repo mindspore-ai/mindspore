@@ -145,6 +145,20 @@ class ParallelOp : public DatasetOp {
     return Status::OK();
   }
 
+  Status WaitForWorkers() {
+    // reset num_paused workers to 0
+    num_workers_paused_ = 0;
+    for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
+      RETURN_IF_NOT_OK(SendWaitFlagToWorker(NextWorkerID()));
+    }
+    // wait until all workers are done processing their work in local_queue_
+    RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
+    next_worker_id_ = 0;
+    // clear the WaitPost for the next Wait()
+    wait_for_workers_post_.Clear();
+    return Status::OK();
+  }
+
   /// Add a new worker to the parallelOp. The function will have to wait for all workers to process current rows.
   /// Then it adds a new thread to the list.
   /// \note The caller of this function has to be the main thread of the Op, since it's the only entity responsible to
