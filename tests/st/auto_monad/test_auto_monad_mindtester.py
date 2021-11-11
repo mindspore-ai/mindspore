@@ -771,37 +771,6 @@ def test_parameter():
     assert output2 == output2_expect
 
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_parameter_same_name():
-    """
-    Feature: Check the names of parameters.
-    Description: If the same name exists between different parameters, an exception will be thrown.
-    Expectation: Get the expected exception report.
-    """
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
-            self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
-            self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
-                                Parameter(Tensor([6], ms.float32)))
-
-        def construct(self, x):
-            res1 = self.param_a + self.param_b - self.param_tuple[0] + self.param_tuple[1] + x
-            return res1
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        net = ParamNet()
-        x = Tensor([10], ms.float32)
-        output = net(x)
-        output_expect = Tensor(14, ms.float32)
-        assert output == output_expect
-
-
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
