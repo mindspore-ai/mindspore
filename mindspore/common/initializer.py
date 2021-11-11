@@ -91,11 +91,7 @@ def _assignment(arr, num):
 @_register('zeros')
 class Zero(Initializer):
     """
-    Fills the input array with the values zero.
-
-    Args:
-        arr (Array): The array to be assigned.
-
+    Generates an array with constant value of zero in order to initialize the input tensor.
 
     Examples:
         >>> import mindspore
@@ -110,11 +106,7 @@ class Zero(Initializer):
 @_register('ones')
 class One(Initializer):
     """
-    Fills the input array with the values one.
-
-    Args:
-        arr (Array): The array to be assigned.
-
+    Generates an array with constant value of one in order to initialize the input tensor.
 
     Examples:
         >>> import mindspore
@@ -236,8 +228,8 @@ def _calculate_in_and_out(arr):
 @_register('xavier_uniform')
 class XavierUniform(Initializer):
     r"""
-    Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
-    :math:`{U}(-\text{boundary}, \text{boundary})` where:
+    Generates an array with values sampled from Xavier uniform distribution
+    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize the input tensor, where:
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
@@ -275,14 +267,12 @@ class XavierUniform(Initializer):
 @_register('he_uniform')
 class HeUniform(Initializer):
     r"""
-    Initialize the array with HeKaiming Uniform algorithm, and from a uniform distribution collect samples within
-    :math:`{U}(-\text{boundary}, \text{boundary})` where
+    Generates an array with values sampled from HeKaiming Uniform distribution
+    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize the input tensor, where
 
     .. math::
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
-
-    - where :math:`-boundary` the lower bound of the HeUniform distribution.
-    - where :math:`boundary` the upper bound of the HeUniform distribution.
+    which is the bound of the HeUniform distribution.
 
     For details of HeUniform algorithm, please check
     `<https://arxiv.org/abs/1502.01852>`_.
@@ -322,17 +312,16 @@ class HeUniform(Initializer):
 @_register('he_normal')
 class HeNormal(Initializer):
     r"""
-    Initialize the array with HeKaiming Normal algorithm, and from a normal distribution collect samples within
-    :math:`{N}(0, \text{sigma}^2)` where
+    Generates an array with values sampled from HeKaiming Normal distribution
+    :math:`{N}(0, \text{sigma}^2)` in order to initialize the input tensor, where
 
     .. math::
-        sigma = \frac{gain} {\sqrt{mode}}
+        sigma = \frac{gain} {\sqrt{N}}
 
-    - where :math:`gain` is an optional scaling factor.
-    - where :math:`mode` is the number of input units or output units in the weight tensor.
+    where :math:`gain` is an optional scaling factor. :math: `N` is the number of input units of the weight tensor,
+    if `mode` is 'fan_in'. If `mode` is 'fan_out', it is the number of output units.
 
-    For details of HeUniform algorithm, please check
-    `<https://arxiv.org/abs/1502.01852>`_.
+    For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
         negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
@@ -367,7 +356,7 @@ class HeNormal(Initializer):
 
 class Constant(Initializer):
     """
-    Initialize a constant.
+    Generates an array with constant value in order to initialize the input tensor.
 
     Args:
         value (Union[int, numpy.ndarray]): The value to initialize.
@@ -390,11 +379,11 @@ class Constant(Initializer):
 @_register()
 class Uniform(Initializer):
     r"""
-    Initialize a uniform array, and obtain values :math:`{U}(-\text{scale}, \text{scale})` from the uniform distribution
-    to fill the input tensor.
+    Generates an array with values sampled from Uniform distribution :math:`{U}(-\text{scale}, \text{scale})` in order
+    to initialize the input tensor.
 
     Args:
-        scale (float): The scale of the array. Default: 0.07.
+        scale (float): The bound of the Uniform distribution. Default: 0.07.
 
 
     Examples:
@@ -415,15 +404,15 @@ class Uniform(Initializer):
 @_register()
 class Normal(Initializer):
     r"""
-    Initialize a normal array, and obtain values :math:`{N}(\text{sigma}, \text{mean})` from the normal distribution
-    to fill the input tensor.
+    Generates an array with values sampled from Normal distribution :math:`{N}(\text{sigma}, \text{mean})` in order to
+    initialize the input tensor.
 
     .. math::
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     Args:
-        sigma (float): The sigma of the array. Default: 0.01.
-        mean (float): The mean of the array. Default: 0.0.
+        sigma (float): The standard deviation of Normal distribution. Default: 0.01.
+        mean (float): The mean of Normal distribution. Default: 0.0.
 
 
     Examples:
@@ -448,11 +437,10 @@ class Normal(Initializer):
 @_register()
 class TruncatedNormal(Initializer):
     r"""
-    Initialize a truncated normal distribution which is a bounded normal distribution
-    within :math:`{N}(\text{low}, \text{high})`.
+    Generates an array with values sampled from Truncated Normal distribution in order to initialize the input tensor.
 
     Args:
-        sigma (float): The sigma of the array. Default: 0.01.
+        sigma (float): The standard deviation of Truncated Normal distribution. Default: 0.01.
 
 
     Examples:
@@ -478,14 +466,13 @@ def initializer(init, shape=None, dtype=mstype.float32):
         init (Union[Tensor, str, Initializer, numbers.Number]): Initialize value.
 
             - `str`: The `init` should be the alias of the class inheriting from `Initializer` and the corresponding
-              class will be called. The value of 'init' can be "normal", "ones" or "zeros", etc.
+              class will be called in practice. The value of 'init' can be "normal", "ones" or "zeros", etc.
 
             - `Initializer`: The `init` should be the class inheriting from `Initializer` to initialize tensor.
 
             - `numbers.Number`: The `Constant` will be called to initialize tensor.
 
-        shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
-            output. Default: None.
+        shape (Union[tuple, list, int]): The shape of the initialized tensor. Default: None.
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
@@ -493,7 +480,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     Raises:
         TypeError: The type of the argument 'init' is not correct.
-        ValueError: Some values is not correct.
+        ValueError: The shape of the tensor which is passed through 'init' is not the same as that passed by 'shape'.
 
 
     Examples:

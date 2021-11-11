@@ -56,7 +56,7 @@ def _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, cls_name):
 
 class ExponentialDecayLR(LearningRateSchedule):
     r"""
-    Calculates learning rate base on exponential decay function.
+    Calculates learning rate based on exponential decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -257,7 +257,7 @@ class InverseDecayLR(LearningRateSchedule):
 
 class CosineDecayLR(LearningRateSchedule):
     r"""
-    Calculates learning rate base on cosine decay function.
+    Calculates learning rate based on cosine decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
