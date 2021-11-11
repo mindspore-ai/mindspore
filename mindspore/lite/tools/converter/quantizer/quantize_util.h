@@ -60,8 +60,6 @@ constexpr size_t kMaxBit = 8;
 constexpr size_t kMaxNum1024 = 1024;
 constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;
-constexpr size_t kWightIndex = 1;
-constexpr double kScaleThreashold = 1e-38;
 
 struct SessionModel {
   session::LiteSession *session{nullptr};
@@ -194,9 +192,10 @@ STATUS FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPt
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size);
+                                      bool is_debug = false);
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
+                                      int *size, bool is_debug = false);
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);

@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <set>
 #include "schema/inner/model_generated.h"
 namespace mindspore::lite::quant {
 enum ActivationQuantizedMethod {
@@ -32,6 +33,9 @@ struct CommonQuantParam {
   int bit_num = 8;
   int min_quant_weight_size = 0;
   int min_quant_weight_channel = 16;
+  bool is_debug = false;
+  std::string debug_info_save_path;
+  std::set<std::string> skip_node;
 };
 
 struct MixedBitWeightQuantParam {

@@ -154,6 +154,8 @@ set(LITE_SRC
         ${LITE_DIR}/../core/utils/status.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
+        ${LITE_DIR}/tools/converter/quantizer/fse_decoder.cc
+        ${LITE_DIR}/tools/converter/quantizer/fse_bit_stream.cc
         )
 
 set(REGISTRY_SRC

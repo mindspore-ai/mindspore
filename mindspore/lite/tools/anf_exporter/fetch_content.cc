@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "utils/check_convert_utils.h"
@@ -521,6 +522,25 @@ int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter)
   if (*op_parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::string, OpParameter *> *op_parameters) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    if (opt::IsSpecialType(cnode)) {
+      continue;
+    }
+    auto primitive = cnode->input(0);
+    OpParameter *parameter;
+    auto ret = lite::FetchOpParameterFromNode(primitive, &parameter);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";
+      return ret;
+    }
+    parameter->thread_num_ = 1;
+    op_parameters->insert({cnode->fullname_with_scope(), parameter});
   }
   return RET_OK;
 }

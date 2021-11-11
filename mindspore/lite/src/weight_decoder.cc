@@ -17,6 +17,7 @@
 #include <string>
 #include "src/weight_decoder.h"
 #include "src/huffman_decode.h"
+#include "tools/converter/quantizer/fse_decoder.h"
 
 namespace mindspore::lite {
 constexpr int kBit8 = 8;
@@ -419,5 +420,39 @@ int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const s
   }
   // The first index.
   return 0;
+}
+
+bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
+  if (src_tensor.handler()->enableHuffmanCode()) {
+    return true;
+  }
+  bool need_bit_unpack = src_tensor.handler()->quantParams() != nullptr &&
+                         src_tensor.handler()->quantParams()->size() > 0 &&
+                         src_tensor.handler()->quantParams()->Get(0) != nullptr;
+  if (need_bit_unpack) {
+    auto num_bits = src_tensor.handler()->quantParams()->Get(0)->numBits();
+    need_bit_unpack = ((num_bits >= kBitNum1 && num_bits < kBitNum8) || (num_bits > kBitNum8 && num_bits < kBitNum16));
+  }
+
+  return need_bit_unpack;
+}
+
+int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(dst_tensor != nullptr);
+  if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
+    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
+  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+    return IndexingDecompress(src_tensor, dst_tensor);
+  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
+    return SparseDecompress(src_tensor, dst_tensor);
+  }
+  if (!NeedBitUppackCheck(src_tensor)) {
+    return RET_NO_CHANGE;
+  } else {
+    return WeightDecoder::UnPack(src_tensor, dst_tensor);
+  }
 }
 }  // namespace mindspore::lite

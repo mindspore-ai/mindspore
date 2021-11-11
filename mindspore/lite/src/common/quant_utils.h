@@ -49,20 +49,20 @@ static constexpr double SCALE_THREASHOLD = 1e-38;
 
 static constexpr int kPerTensor = 1;
 
-inline int QuantMax(int bits, TypeId type) {
-  if (type == kNumberTypeInt8) {
+inline int QuantMax(int bits, bool is_unsigned) {
+  if (!is_unsigned) {
     return (1 << static_cast<unsigned int>(bits - 1)) - 1;
-  } else if (type == kNumberTypeUInt8) {
+  } else {
     return (1 << static_cast<unsigned int>(bits)) - 1;
   }
-  return 0;
 }
 
-inline int QuantMin(int bits, TypeId type) {
-  if (type == kNumberTypeInt8) {
+inline int QuantMin(int bits, bool is_unsigned) {
+  if (!is_unsigned) {
     return -(1 << static_cast<unsigned int>(bits - 1));
+  } else {
+    return -(1 << static_cast<unsigned int>(bits));
   }
-  return 0;
 }
 
 STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
@@ -123,6 +123,10 @@ template <typename T>
 STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                        const int &quant_max, const int &quant_min, const size_t &bit_num, const bool &k_means,
                        std::vector<T> *quant_datas) {
+  if (k_means) {
+    MS_LOG(ERROR) << "Unsupported K-means.";
+    return RET_ERROR;
+  }
   float min = FLT_MAX;
   float max = -FLT_MIN;
   for (uint32_t i = 0; i < elem_count; i++) {
@@ -131,21 +135,17 @@ STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<sc
   }
 
   schema::QuantParamT quant_param;
-  if (!k_means) {
-    STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-      return status;
-    }
+  STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
+    return status;
   }
   quant_params->emplace_back(quant_param);
   // update data and datatype
   for (uint32_t i = 0; i < elem_count; i++) {
     float raw_data = raw_datas[i];
-    if (!k_means) {
-      auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
-      (*quant_datas)[i] = quant_data;
-    }
+    auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
+    (*quant_datas)[i] = quant_data;
   }
   return RET_OK;
 }
@@ -206,7 +206,6 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
     }
     quant_params->emplace_back(quant_param);
   }
-
   // Do quant
   for (size_t i = 0; i < elem_count; i++) {
     float raw_data = raw_datas[i];
