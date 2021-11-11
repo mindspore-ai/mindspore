@@ -145,6 +145,15 @@ class ExecutionTree {
     return out;
   }
 
+  const bool IsPython() {
+    for (auto itr = this->begin(); itr != this->end(); ++itr) {
+      if (itr->IsPython()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// \brief Given the number of workers, launches the worker entry function for each. Essentially a
   ///     wrapper for the TaskGroup handling that is stored inside the execution tree.
   /// \param num_workers - The number of workers to launch

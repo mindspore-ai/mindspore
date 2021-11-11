@@ -209,6 +209,15 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
 
   int64_t GetTreeBatchSize() override;
 
+  bool IsPython() const override {
+#ifdef ENABLE_PYTHON
+    if (batch_map_func_ || batch_size_func_) {
+      return true;
+    }
+#endif
+    return false;
+  }
+
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
