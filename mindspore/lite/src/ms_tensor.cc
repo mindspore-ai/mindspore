@@ -26,6 +26,33 @@ tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId
     MS_LOG(ERROR) << "Failed to allocate tensor.";
     return nullptr;
   }
+
+  int shape_size = 1;
+  if (shape.empty()) {
+    shape_size = 0;
+  } else {
+    for (size_t i = 0; i < shape.size(); ++i) {
+      shape_size *= shape[i];
+    }
+  }
+  auto data_type_size = lite::DataTypeSize(type);
+  if (data_type_size == 0) {
+    MS_LOG(ERROR) << "not support create this type: " << type;
+    delete tensor;
+    return nullptr;
+  }
+
+  if (data == nullptr && data_len != 0) {
+    MS_LOG(ERROR) << "shape, data type and data len not match.";
+    delete tensor;
+    return nullptr;
+  }
+
+  if (data != nullptr && data_len != shape_size * data_type_size) {
+    MS_LOG(ERROR) << "shape, data type and data len not match.";
+    delete tensor;
+    return nullptr;
+  }
   tensor->set_data(const_cast<void *>(data));
   tensor->set_shape(shape);
   tensor->set_tensor_name(name);
