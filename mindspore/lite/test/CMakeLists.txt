@@ -174,7 +174,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ccsrc_src_mid
             converter_src_mid
             mindspore::protobuf
-            mindspore::eigen
             mindspore::json
             -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
