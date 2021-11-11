@@ -37,13 +37,13 @@ TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_FAILED) {
 TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_x2_FAILED) {
   std::vector<Graph> graphs;
   auto status =
-    Serialization::Load(std::vector<std::string>(2, "./nets/file_not_exist.mindir"), ModelType::kFlatBuffer, &graphs);
+    Serialization::Load(std::vector<std::string>(2, "./nets/file_not_exist.mindir"), ModelType::kMindIR, &graphs);
   ASSERT_TRUE(status != kSuccess);
 }
 
 TEST_F(TestCxxApiLiteSerialization, test_export_uninitialized_FAILED) {
   Model model;
-  ASSERT_TRUE(Serialization::ExportModel(model, ModelType::kFlatBuffer, "./nets/export.ms") != kSuccess);
+  ASSERT_TRUE(Serialization::ExportModel(model, ModelType::kMindIR, "./nets/export.ms") != kSuccess);
 }
 
 }  // namespace mindspore

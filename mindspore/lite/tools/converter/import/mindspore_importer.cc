@@ -246,6 +246,12 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
   }
 }
 
+FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag, const void *buff, const size_t &size) {
+  MindIRLoader mindir_loader;
+  auto func_graph = mindir_loader.LoadMindIR(buff, size);
+  return CheckAndUpdateFuncGraph(flag, func_graph);
+}
+
 FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   FuncGraphPtr func_graph;
   if (!flag.dec_key.empty()) {
@@ -264,6 +270,11 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     MindIRLoader mindir_loader;
     func_graph = mindir_loader.LoadMindIR(flag.modelFile);
   }
+
+  return CheckAndUpdateFuncGraph(flag, func_graph);
+}
+
+FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &flag, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
     MS_LOG(ERROR)

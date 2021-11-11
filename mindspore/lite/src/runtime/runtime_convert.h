@@ -20,9 +20,10 @@
 #ifdef RUNTIME_CONVERT
 #include <stdio.h>
 #include <string>
+#include <memory>
 
 namespace mindspore::lite {
-char *RuntimeConvert(const char *model_buf, size_t size);
+char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size);
 char *RuntimeConvert(const std::string &file_path, size_t *size);
 }  // namespace mindspore::lite
 #endif  // RUNTIME_CONVERT

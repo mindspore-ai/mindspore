@@ -34,6 +34,7 @@ class MindIRLoader {
 
   bool get_need_renormalize() const { return need_renormalize_; }
   void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
+  std::shared_ptr<FuncGraph> LoadMindIR(const void *buffer, const size_t &size);
   std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name);
   std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(const std::vector<std::string> file_names);
 
