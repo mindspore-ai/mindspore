@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/op/cast_tensorrt.h"
+#include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
 #include <functional>

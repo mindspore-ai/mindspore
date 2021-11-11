@@ -8,6 +8,33 @@ else()
     set(MS_ENABLE_CUDA_DISTRIBUTION "off")
 endif()
 
+# nccl mpi
+if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
+    message("enable cuda gpu distribution collective")
+    file(GLOB NCCL_MPI_SRC LIST_DIRECTORIES false
+        ${CMAKE_CURRENT_SOURCE_DIR}/distribution/*.cc
+        ${CCSRC_DIR}/runtime/device/gpu/distribution/collective_wrapper.cc
+        ${CCSRC_DIR}/runtime/device/gpu/distribution/mpi_wrapper.cc
+        ${CCSRC_DIR}/runtime/device/gpu/distribution/nccl_wrapper.cc
+    )
+    list(REMOVE_ITEM NCCL_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc)
+
+    add_compile_definitions(LITE_CUDA_DISTRIBUTION)
+    include(${TOP_DIR}/cmake/external_libs/ompi.cmake)
+    include(${TOP_DIR}/cmake/external_libs/nccl.cmake)
+
+    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC})
+    add_library(mindspore::nccl ALIAS nccl::nccl)
+    add_library(mindspore::ompi ALIAS ompi::mpi)
+    target_link_libraries(gpu_distribution_collective PRIVATE mindspore::ompi mindspore::nccl)
+else()
+    file(GLOB_RECURSE NCCL_MPI_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc
+    )
+    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC})
+endif()
+add_dependencies(gpu_distribution_collective fbs_src)
+
 file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
@@ -44,31 +71,3 @@ set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_F
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGES} -std=c++14 -fPIC")
 SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-std=c++14;)
 cuda_add_library(cuda_kernel_mid STATIC ${CUDA_KERNEL_SRC})
-
-# nccl mpi
-if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
-    message("enable cuda gpu distribution collective")
-    file(GLOB NCCL_MPI_SRC LIST_DIRECTORIES false
-        ${CMAKE_CURRENT_SOURCE_DIR}/distribution/*.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/collective_wrapper.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/mpi_wrapper.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/nccl_wrapper.cc
-    )
-    list(REMOVE_ITEM NCCL_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc)
-
-    add_compile_definitions(LITE_CUDA_DISTRIBUTION)
-    include(${TOP_DIR}/cmake/external_libs/ompi.cmake)
-    include(${TOP_DIR}/cmake/external_libs/nccl.cmake)
-
-    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC})
-    add_library(mindspore::nccl ALIAS nccl::nccl)
-    add_library(mindspore::ompi ALIAS ompi::mpi)
-    target_link_libraries(gpu_distribution_collective PRIVATE mindspore::ompi mindspore::nccl)
-else()
-    file(GLOB_RECURSE NCCL_MPI_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc
-    )
-    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC})
-endif()
-add_dependencies(gpu_distribution_collective fbs_src)
-

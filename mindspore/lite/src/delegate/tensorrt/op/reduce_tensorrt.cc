@@ -102,6 +102,11 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     squeeze_layer->setName((op_name_ + "_squeeze").c_str());
     nvinfer1::Dims squeeze_dims = ConvertCudaDims(out_tensors_[0].Shape());
+    for (int i = 0; i < squeeze_dims.nbDims; i++) {
+      if (layer->getOutput(0)->getDimensions().d[i] == -1) {
+        squeeze_dims.d[i] = 0;
+      }
+    }
     squeeze_layer->setReshapeDimensions(squeeze_dims);
     out_tensor = squeeze_layer->getOutput(0);
   }
@@ -127,11 +132,11 @@ uint32_t ReduceTensorRT::GetAxis() {
   }
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
-    int format_axis_data = *axis_data;
+    int format_axis_data = (*axis_data == -1) ? in_tensors_[0].Shape().size() - 1 : *axis_data;
+    MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << *axis_data;
     reduceAxis |= 1u << format_axis_data;
     axis_data++;
   }
-  MS_LOG(DEBUG) << "reduceAxis: " << reduceAxis;
   return reduceAxis;
 }
 }  // namespace mindspore::lite

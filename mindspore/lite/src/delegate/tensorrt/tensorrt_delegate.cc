@@ -116,6 +116,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Softmax, GetTensorRTOp<SoftMaxTensorRT>},
     {schema::PrimitiveType_ArgMaxFusion, GetTensorRTOp<TopKTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
+    {schema::PrimitiveType_Abs, GetTensorRTOp<UnaryTensorRT>},
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};
   unsupport_resize_op_list_ = {schema::PrimitiveType_ReduceScatter, schema::PrimitiveType_AllGather};

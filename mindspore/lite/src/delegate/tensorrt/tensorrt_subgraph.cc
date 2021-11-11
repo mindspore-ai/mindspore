@@ -372,10 +372,6 @@ int TensorRTSubGraph::Prepare() {
     tensor_bindings_[index] = device_ptr;
     trt_out_tensor_name_.push_back(tensor.Name());
   }
-  for (auto binding : runtime_->GetAllocator()->GetAllDevicePtr()) {
-    int index = this->engine_->getBindingIndex(binding.first.c_str());
-    tensor_bindings_[index] = binding.second.data;
-  }
   return RET_OK;
 }
 
