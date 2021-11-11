@@ -1543,6 +1543,15 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   return true;
 }  // namespace pipeline
 
+std::string GetJitLevel() {
+  auto jit_config = GraphExecutorPy::GetInstance()->jit_config();
+  auto iter = jit_config.find("jit_level");
+  if (iter != jit_config.end()) {
+    return iter->second;
+  }
+  return "";
+}
+
 void ResetOpId() { mindspore::id_generator::reset_id(); }
 
 void InitHccl() {

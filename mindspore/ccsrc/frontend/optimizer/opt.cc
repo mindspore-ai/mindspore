@@ -111,6 +111,7 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
   bool is_match = substitution->predicate_(node);
   if (is_match) {
     TraceGuard trace_guard(std::make_shared<TraceOpt>(node->debug_info()));
+    ScopeGuard scope_guard(node->scope());
     auto res = (*substitution)(optimizer, node);
     if (res != nullptr && res != node) {
 #ifdef ENABLE_PROFILE

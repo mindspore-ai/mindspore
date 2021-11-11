@@ -44,6 +44,16 @@ struct CloneInfo {
   AnfNodePtrList params;
 };
 
+struct UpdateInfo {
+  UpdateInfo(const ScopePtr &scope, const NodeDebugInfoPtr &debug_info) : scope_(scope), debug_info_(debug_info) {}
+  ~UpdateInfo() = default;
+
+  ScopePtr scope_;
+  NodeDebugInfoPtr debug_info_;
+};
+
+using UpdateInfoPtr = std::shared_ptr<UpdateInfo>;
+
 class Cloner {
  public:
   explicit Cloner(const FuncGraphVector &func_graphs = {}, bool clone_all_valuenodes = false,
@@ -67,6 +77,10 @@ class Cloner {
   // Scope of cloned graphs
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
   const ScopePtr scope() const { return scope_; }
+
+  // When clone nodes, the same debug info and scope.
+  void set_update_info(const UpdateInfoPtr &update_info) { update_info_ = update_info; }
+  const UpdateInfoPtr update_info() const { return update_info_; }
 
  private:
   void CloneNodes();
@@ -111,6 +125,7 @@ class Cloner {
   FuncGraphManagerPtr manager_;
   FuncGraphSet graph_set_;
   ScopePtr scope_;
+  UpdateInfoPtr update_info_;
   CloneType type_;
   std::vector<CloneInfo> todo_;
   mindspore::HashMap<FuncGraphPtr, bool> status_;
@@ -128,7 +143,8 @@ ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &r
 
 FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph,
                                 const TraceInfoPtr &relation = std::make_shared<TraceTransform>());
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes = false);
+FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes = false,
+                        const UpdateInfoPtr update_info = nullptr);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_

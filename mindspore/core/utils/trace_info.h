@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -393,6 +393,14 @@ class TraceListComp : public TraceInfo {
   ~TraceListComp() override = default;
   MS_DECLARE_TRACE_NAME_SYMBOL("ListComp", "G-");
   TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*this); }
+};
+
+class TraceMixedPrecision : public TraceInfo {
+ public:
+  explicit TraceMixedPrecision(const DebugInfoPtr &info) : TraceInfo(info) {}
+  MS_DECLARE_TRACE_NAME_SYMBOL("MixedPrecision", "C-");
+  ~TraceMixedPrecision() override = default;
+  TraceInfoPtr clone() override { return std::make_shared<TraceMixedPrecision>(*this); }
 };
 }  // namespace mindspore
 

@@ -72,7 +72,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   ~GraphExecutorPy();
 
   const std::string &phase() const { return phase_; }
-  std::map<std::string, std::string> &jit_config() { return jit_config_; }
+  const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
   bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
   bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
@@ -155,6 +155,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::dict weights_;
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
+
+std::string GetJitLevel();
 
 void CheckArgsValid(const py::tuple &args);
 // Generate a key for mapping function graph

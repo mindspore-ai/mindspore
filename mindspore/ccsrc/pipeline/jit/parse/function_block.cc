@@ -438,7 +438,6 @@ void FunctionBlock::Mature() {
 // Force the condition node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
   MS_EXCEPTION_IF_NULL(cond);
-  TraceGuard trace_guard(std::make_shared<TraceForceBool>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
   return op_apply_node;
 }
