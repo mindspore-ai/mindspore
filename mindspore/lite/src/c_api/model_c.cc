@@ -95,7 +95,7 @@ Status ModelC::Resize(const std::vector<MSTensor::Impl *> &inputs, const std::ve
   for (size_t i = 0; i < input_num; i++) {
     auto input = inputs[i];
     if (input == nullptr || input->lite_tensor() == nullptr) {
-      MS_LOG(ERROR) << "Input tensor " << input->Name() << " is null.";
+      MS_LOG(ERROR) << "Input tensor is null.";
       return kLiteInputTensorError;
     }
     inner_input.push_back(input->lite_tensor());

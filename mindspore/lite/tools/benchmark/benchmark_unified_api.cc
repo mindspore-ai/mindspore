@@ -112,42 +112,13 @@ int BenchmarkUnifiedApi::ReadInputFile() {
   return RET_OK;
 }
 
-int BenchmarkUnifiedApi::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
-                                        const std::vector<size_t> &dims) {
-  std::string line;
-  getline(in_file_stream, line);
-  std::stringstream line_stream(line);
-  if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
-    return RET_OK;
-  }
-  mindspore::MSTensor tensor = GetMSTensorByNameOrShape(tensor_name, dims);
+TypeId BenchmarkUnifiedApi::GetDataTypeByNameOrShape(const std::string &tensor_name, const std::vector<size_t> &dims) {
+  auto tensor = GetMSTensorByNameOrShape(tensor_name, dims);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
-    return RET_ERROR;
+    return kTypeUnknown;
   }
-  std::vector<float> data;
-  std::vector<std::string> strings_data;
-  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
-  if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
-    strings_data.push_back(line);
-    for (size_t i = 1; i < shape_size; i++) {
-      getline(in_file_stream, line);
-      strings_data.push_back(line);
-    }
-  } else {
-    for (size_t i = 0; i < shape_size; i++) {
-      float tmp_data;
-      line_stream >> tmp_data;
-      data.push_back(tmp_data);
-    }
-  }
-  auto *check_tensor = new (std::nothrow) CheckTensor(dims, data, strings_data);
-  if (check_tensor == nullptr) {
-    MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
-    return RET_ERROR;
-  }
-  this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
-  return RET_OK;
+  return static_cast<TypeId>(tensor.DataType());
 }
 
 void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
@@ -477,7 +448,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-
+  delete[] graph_buf;
   if (!flags_->resize_dims_.empty()) {
     std::vector<std::vector<int64_t>> resize_dims;
     (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
@@ -505,13 +476,6 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
   if (!flags_->benchmark_data_file_.empty()) {
     status = MarkAccuracy();
-    for (auto &data : benchmark_data_) {
-      data.second->shape.clear();
-      data.second->data.clear();
-      delete data.second;
-      data.second = nullptr;
-    }
-    benchmark_data_.clear();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
