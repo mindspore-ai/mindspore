@@ -279,7 +279,7 @@ class Cell(Cell_):
         if '_params' in self.__dict__:
             params = self.__dict__['_params']
             if name in params:
-                if context.get_context("mode") == context.PYNATIVE_MODE:
+                if context._get_mode() == context.PYNATIVE_MODE:
                     return self.cast_param(params[name])
                 return params[name]
         if '_cells' in self.__dict__:
@@ -302,7 +302,7 @@ class Cell(Cell_):
         raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
-        if context.get_context is not None and context.get_context("mode") == context.PYNATIVE_MODE:
+        if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(str(id(self)))
         if self.compile_cache:
             _cell_graph_executor.del_net_res(self.compile_cache)
@@ -442,7 +442,7 @@ class Cell(Cell_):
             kwargs = bound_arguments.kwargs
 
         # Run in Graph mode.
-        if context.get_context("mode") == context.GRAPH_MODE:
+        if context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args, **kwargs)
             if self.enable_hook:
                 raise ValueError("The graph mode does not support hook function.")
@@ -551,7 +551,7 @@ class Cell(Cell_):
                                  format(value, item.name))
             exist_names.add(item.name)
 
-        if context.get_context("mode") == context.PYNATIVE_MODE:
+        if context._get_mode() == context.PYNATIVE_MODE:
             if name in self.__dict__:
                 del self.__dict__[name]
             if name in params:
@@ -592,6 +592,24 @@ class Cell(Cell_):
         if hasattr(self, '_cell_init_args'):
             self.cell_init_args += str({name: value})
 
+    def _set_attr_for_params(self, name, value):
+        if isinstance(value, Tensor) and self._params[name] is not None:
+            self._params[name].set_data(value)
+        elif value is not None:
+            raise TypeError(f"The type of value should be Parameter or ParameterTuple, "
+                            f"but got {type(value).__name__}.")
+        else:
+            self.insert_param_to_cell(name, None)
+
+    def _set_attr_for_tensor(self, name, value):
+        if context._get_mode() == context.PYNATIVE_MODE:
+            tensor_list = self.__dict__.get('_tensor_list')
+            if name in self.__dict__:
+                del self.__dict__[name]
+            tensor_list[name] = value
+        else:
+            object.__setattr__(self, name, value)
+
     def _check_param_list_tuple(self, value):
         """
         Check the type of input in list or tuple is Parameter.
@@ -606,7 +624,6 @@ class Cell(Cell_):
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
-        tensor_list = self.__dict__.get('_tensor_list')
         if isinstance(value, Parameter):
             self._set_attr_for_parameter(name, value)
         elif isinstance(value, ParameterTuple):
@@ -616,24 +633,13 @@ class Cell(Cell_):
         elif isinstance(value, Cell):
             self._set_attr_for_cell(name, value)
         elif params and name in params:
-            if isinstance(value, Tensor) and self._params[name] is not None:
-                self._params[name].set_data(value)
-            elif value is not None:
-                raise TypeError(f"The type of value should be Parameter or ParameterTuple, "
-                                f"but got {type(value).__name__}.")
-            else:
-                self.insert_param_to_cell(name, None)
+            self._set_attr_for_params(name, value)
         elif cells and name in cells:
             if value is not None:
                 raise TypeError(f"The type of value should be cell, but got {type(value).__name__}.")
             self._cells[name] = None
         elif isinstance(value, Tensor):
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                if name in self.__dict__:
-                    del self.__dict__[name]
-                tensor_list[name] = value
-            else:
-                object.__setattr__(self, name, value)
+            self._set_attr_for_tensor(name, value)
         else:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
@@ -1481,7 +1487,7 @@ class Cell(Cell_):
         """
         Set the cell recomputed.
         """
-        if context.get_context("mode") == context.PYNATIVE_MODE:
+        if context._get_mode() == context.PYNATIVE_MODE:
             raise TypeError("Recompute is not supported in pynative mode currently.")
         Validator.check_bool(mode)
         Validator.check_bool(output_recompute)
