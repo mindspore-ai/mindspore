@@ -264,9 +264,6 @@ class Parameter(Tensor_):
                                "1. context.set_ps_context(enable_ps=True) \n"
                                "2. export MS_ROLE environment variable \n"
                                "Please refer to the official website for detailed usage.")
-        if init_in_server and (not self.name.endswith("embedding_table")):
-            raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
-                               "sparse operator support initialization in server.".format(self.name))
         self.is_param_ps = True
         self.init_in_server = init_in_server
         self.param_info.init_in_server = init_in_server
@@ -693,9 +690,6 @@ class ParameterTuple(tuple):
                 parameters in the new parameter tuple are the same as those in the original parameter tuple.
                 Default: 'same'.
 
-        Raises:
-            RuntimeError: If parameter's name is not end with embedding_table.
-
         Returns:
             Tuple, the new Parameter tuple.
         """
@@ -708,9 +702,6 @@ class ParameterTuple(tuple):
 
             if not x1.cache_enable:
                 continue
-            if not x1.name.endswith("embedding_table"):
-                raise RuntimeError("Can not enable cache for parameter '{}', Only parameters of "
-                                   "sparse operator support enable cache.".format(x1.name))
 
             if _is_role_worker():
                 _clone_hash_table(x.name, x1.name)
