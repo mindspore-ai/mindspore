@@ -49,7 +49,135 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
+namespace {
+CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
+  size_t node_sizes = kernel_nodes.size();
+  if (index >= node_sizes - 1) {
+    MS_LOG(EXCEPTION) << "there is no node after this node:" << kernel_nodes[index]->DebugString();
+  }
+  auto kernel = kernel_nodes[index + 1];
+  if (AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
+    MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, node: "
+                      << kernel_nodes[index]->DebugString();
+  }
+  return kernel;
+}
 
+std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &kernel_cnodes, const uint32_t &back_label,
+                                          uint32_t *index, std::vector<CNodePtr> *back) {
+  MS_EXCEPTION_IF_NULL(index);
+  MS_EXCEPTION_IF_NULL(back);
+  std::vector<CNodePtr> front;
+  std::vector<CNodePtr> back_temp;
+  bool back_flag = false;
+  uint32_t i = *index;
+  while (i < kernel_cnodes.size()) {
+    if (!back_flag) {
+      front.emplace_back(kernel_cnodes[i]);
+    } else {
+      back->emplace_back(kernel_cnodes[i]);
+    }
+    if (AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
+      *index = i;
+      back->insert(back->end(), back_temp.begin(), back_temp.end());
+      return front;
+    }
+    if (AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+      back_flag = true;
+      if (!AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
+        auto temp = HandleRecursiveCall(kernel_cnodes, back_label, &(++i), &back_temp);
+        front.insert(front.end(), temp.begin(), temp.end());
+      }
+    }
+    i++;
+  }
+  return front;
+}
+
+void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (!kernel_graph->recursive_call()) {
+    return;
+  }
+  auto kernel_cnodes = kernel_graph->mem_reuse_exec_order();
+  std::vector<CNodePtr> mem_reuse_order;
+  mem_reuse_order.reserve(kernel_cnodes.size());
+  for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
+    if (!AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
+      mem_reuse_order.emplace_back(kernel_cnodes[i]);
+      continue;
+    }
+    auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    std::vector<CNodePtr> back;
+    auto front = HandleRecursiveCall(kernel_cnodes, label_id, &i, &back);
+    mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
+    mem_reuse_order.insert(mem_reuse_order.end(), back.begin(), back.end());
+  }
+  kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
+}
+
+void GetSubGraphExecOrder(const KernelGraph *kernel_graph, uint32_t index, const CNodePtr &back_node,
+                          std::vector<CNodePtr> *mem_reuse_order) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(mem_reuse_order);
+  auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(back_node, kAttrLabelIndex);
+  auto kernel_cnodes = kernel_graph->execution_order();
+  for (auto i = index; i < kernel_cnodes.size(); i++) {
+    mem_reuse_order->emplace_back(kernel_cnodes[i]);
+    if (AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], label_id)) {
+      return;
+    }
+  }
+}
+
+void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (!kernel_graph->subgraph_multi_call()) {
+    return;
+  }
+  std::unordered_map<uint32_t, uint32_t> label_id_index_map;
+  auto kernel_cnodes = kernel_graph->execution_order();
+  std::vector<CNodePtr> mem_reuse_order;
+  for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
+    mem_reuse_order.emplace_back(kernel_cnodes[i]);
+    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
+        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_cnodes[i], kAttrLabelSwitchList);
+      for (auto label_id : label_list) {
+        if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
+          continue;
+        }
+        auto back_node = GetNextLabelSet(kernel_cnodes, i);
+        GetSubGraphExecOrder(kernel_graph, label_id_index_map[label_id], back_node, &mem_reuse_order);
+      }
+      continue;
+    }
+    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelGoto) &&
+        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+      if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
+        continue;
+      }
+      auto back_node = GetNextLabelSet(kernel_cnodes, i);
+      GetSubGraphExecOrder(kernel_graph, label_id_index_map[label_id], back_node, &mem_reuse_order);
+      continue;
+    }
+    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSet) &&
+        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+      if (label_id_index_map.find(label_id) != label_id_index_map.end()) {
+        MS_LOG(EXCEPTION) << "Two labelsets with same label id.";
+      }
+      label_id_index_map[label_id] = i;
+      continue;
+    }
+  }
+  kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
+  UnfoldRecursiveExecOrder(kernel_graph);
+}
+}  // namespace
 #ifndef ENABLE_SECURITY
 void DumpInit(uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
@@ -74,6 +202,7 @@ void DumpSetup(const KernelGraphPtr &graph) {
 void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(graph);
+  E2eDump::DumpRunIter(graph, rank_id);
   E2eDump::DumpData(graph.get(), rank_id);
   MS_LOG(DEBUG) << "Finish!";
 }
@@ -270,6 +399,7 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   memo_.clear();
   AssignInputMemory(root_graph, NOT_NULL(&memo_));
   device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*root_graph.get());
+  InitMemReuseExecOrder(root_graph.get().get());
   runtime_instance_->AssignStaticMemoryOutput(*root_graph.get());
   mem_manager_->ResetDynamicMemory();
   runtime_instance_->AssignDynamicMemory(*root_graph.get());
@@ -346,9 +476,6 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
     (void)gettimeofday(&start_time, nullptr);
 #endif
     MS_EXCEPTION_IF_NULL(runtime_instance_);
-#ifndef ENABLE_SECURITY
-    DumpSetup(graph);
-#endif
     {
       std::lock_guard<std::mutex> locker(launch_mutex_);
       ret = runtime_instance_->RunTask(*graph);
@@ -364,6 +491,9 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
     (void)gettimeofday(&end_time, nullptr);
     uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
     cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+#ifndef ENABLE_SECURITY
+    DumpSetup(graph);
+#endif
     MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
 #endif
   } else {
