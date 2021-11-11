@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_NODE_REMOVE_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_NODE_REMOVE_PASS_H_
 
+#include <set>
 #include <string>
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
@@ -30,7 +31,7 @@ class UnusedNodeRemovePass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  STATUS ProcessGraph(const FuncGraphPtr &func_graph);
+  STATUS ProcessGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited);
 };
 }  // namespace mindspore::opt
 

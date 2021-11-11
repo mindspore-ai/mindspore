@@ -572,13 +572,13 @@ api::FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &f
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
-  std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(func_graph, &all_func_graphs);
-  if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
+  if ((status = CommonAnfAdjust(func_graph)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(func_graph, &all_func_graphs);
   if ((status = Onnx2AnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "Onnx2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
