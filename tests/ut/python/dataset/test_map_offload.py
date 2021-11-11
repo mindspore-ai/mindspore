@@ -20,6 +20,7 @@ import mindspore.dataset.vision.c_transforms as C
 
 DATA_DIR = "../data/dataset/testPK/data"
 
+
 def test_offload():
     """
     Feature: test map offload flag.
@@ -43,5 +44,30 @@ def test_offload():
         np.testing.assert_array_equal(img_0, img_1)
 
 
+def test_auto_offload():
+    """
+    Feature: Test auto_offload config option.
+    Description: Input is image dataset.
+    Expectation: Output should same with auto_offload activated and deactivated.
+    """
+    trans = [C.Decode(), C.HWC2CHW()]
+
+    # Dataset with config.auto_offload not activated
+    dataset_auto_disabled = ds.ImageFolderDataset(DATA_DIR)
+    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image")
+    dataset_auto_disabled = dataset_auto_disabled.batch(8, drop_remainder=True)
+
+    # Dataset with config.auto_offload activated
+    ds.config.set_auto_offload(True)
+    dataset_auto_enabled = ds.ImageFolderDataset(DATA_DIR)
+    dataset_auto_enabled = dataset_auto_enabled.map(operations=trans, input_columns="image")
+    dataset_auto_enabled = dataset_auto_enabled.batch(8, drop_remainder=True)
+
+    for (img_0, _), (img_1, _) in zip(dataset_auto_disabled.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                                      dataset_auto_enabled.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_array_equal(img_0, img_1)
+
+
 if __name__ == "__main__":
     test_offload()
+    test_auto_offload()

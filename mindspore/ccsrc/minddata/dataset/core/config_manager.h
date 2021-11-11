@@ -222,6 +222,14 @@ class ConfigManager {
   // @return - Flag to indicate whether shared memory for multi-processing is enabled
   bool enable_shared_mem() { return enable_shared_mem_; }
 
+  // setter function
+  // @param offload - To enable automatic offloading of dataset ops
+  void set_auto_offload(bool offload) { auto_offload_ = offload; }
+
+  // getter function
+  // @return - Flag to indicate whether automatic offloading is enabled for the dataset
+  bool get_auto_offload() { return auto_offload_; }
+
  private:
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
@@ -244,6 +252,7 @@ class ConfigManager {
   int32_t auto_num_workers_num_shards_;
   uint8_t auto_worker_config_;
   bool enable_shared_mem_;
+  bool auto_offload_;
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);

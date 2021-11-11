@@ -471,3 +471,37 @@ def set_sending_batches(batch_num):
     if not isinstance(batch_num, int):
         raise TypeError("batch_num must be an int dtype.")
     _config.set_sending_batches(batch_num)
+
+
+def set_auto_offload(offload):
+    """
+    Set the automatic offload flag of the dataset. If set_auto_offload is True,
+    automatically offload as many dataset operations from the CPU to the Device (GPU or Ascend).
+
+    Args:
+        offload (bool): Whether to use the automatic offload feature.
+
+    Raises:
+        TypeError: If offload is not a boolean data type.
+
+    Examples:
+        >>> # Enable automatic offload feature
+        >>> ds.config.set_auto_offload(True)
+    """
+    if not isinstance(offload, bool):
+        raise TypeError("offload must be a bool dtype")
+    _config.set_auto_offload(offload)
+
+
+def get_auto_offload():
+    """
+    Get the state of the automatic offload flag (True or False)
+
+    Returns:
+        bool, Whether the automatic offload feature is enabled.
+
+    Example:
+        >>> # Get the global configuration of the automatic offload feature.
+        >>> auto_offload = ds.config.get_auto_offload()
+    """
+    return _config.get_auto_offload()
