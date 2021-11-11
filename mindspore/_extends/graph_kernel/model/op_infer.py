@@ -121,6 +121,9 @@ class _Elemwise(OpInfer):
     @staticmethod
     def defaultformat_to_nz(default_shape):
         """default format shape to fractal_Nz format shape"""
+        # As shape (1,) can broadcast to any shape, it can be regarded as a special FractalNZ shape
+        if len(default_shape) == 1 and default_shape[0] == 1:
+            return default_shape
         more_two_d_shape, two_d_shape = default_shape[:-2], default_shape[-2:]
         # (32) or (1, 32) -> (2, 1, 1, 16)
         if len(two_d_shape) == 1 or (len(two_d_shape) == 2 and two_d_shape[0] == 1):
