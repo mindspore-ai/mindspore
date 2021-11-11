@@ -110,7 +110,7 @@ build_dependencies()
 required_package = [
     'numpy >= 1.17.0',
     'protobuf >= 3.13.0',
-    'asttokens >= 1.1.13',
+    'asttokens >= 2.0.0',
     'pillow >= 6.2.0',
     'scipy >= 1.5.2',
     'packaging >= 20.0',
