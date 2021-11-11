@@ -156,6 +156,8 @@ void AscendDeviceContext::Destroy() {
   MS_LOG(INFO) << "Status record: Destroy start...";
   rank_id_ = 0;
   if (runtime_instance_) {
+    // TODO(lzlang): Destroy runtime instance after fully support MindRT, otherwise runtime will be destructed
+    // repeatedly. runtime_instance_->ReleaseDeviceRes();
     runtime_instance_ = nullptr;
   }
   initialized_ = false;
