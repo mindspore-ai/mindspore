@@ -28,6 +28,8 @@ REGISTER_PYBIND_DEFINE(FuncGraph, ([](const pybind11::module *m) {
                          (void)py::class_<FuncGraph, FuncGraphPtr>(*m, "FuncGraph")
                            .def(py::init())
                            .def("str", &FuncGraph::ToString, "Get FuncGraph string representation.")
-                           .def("get_return", &FuncGraph::get_return, "Get return node of FuncGraph");
+                           .def("get_return", &FuncGraph::get_return, "Get return node of FuncGraph")
+                           .def("update_hyper_params", &FuncGraph::UpdateHyperParams, py::arg("params_init"),
+                                "Update FuncGraph hyper parameters, and return the updated parameters.");
                        }));
 }  // namespace mindspore

@@ -54,7 +54,9 @@ class Cell(Cell_):
         currently. The bprop method must contain the self parameter.
 
     Args:
-        auto_prefix (bool): Recursively generate namespaces. Default: True.
+        auto_prefix (bool): Recursively generate namespaces. It will affect the name of the parameter in the network.
+                            If set to True, the network parameter name will be prefixed, otherwise it will not.
+                            Default: True.
         flags (dict): Network configuration information, currently it is used for the binding of network and dataset.
                       Users can also customize network attributes by this parameter. Default: None.
 
@@ -65,13 +67,23 @@ class Cell(Cell_):
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> class MyCell(nn.Cell):
-        ...    def __init__(self):
-        ...        super(MyCell, self).__init__()
-        ...        self.relu = ops.ReLU()
+        ...     def __init__(self, forward_net):
+        ...         super(MyCell, self).__init__(auto_prefix=False)
+        ...         self.net = forward_net
+        ...         self.relu = ops.ReLU()
         ...
-        ...    def construct(self, x):
-        ...        return self.relu(x)
+        ...     def construct(self, x):
+        ...         y = self.net(x)
+        ...         return self.relu(y)
+        >>>
+        >>> inner_net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
+        >>> my_net = MyCell(inner_net)
+        >>> print(my_net.trainable_params())
+        ... # If the 'auto_prefix' set to True or not set when call the '__init__' method of the parent class,
+        ... # the parameter's name will be 'net.weight'.
+        [Parameter (name=weight, shape=(240, 120, 4, 4), dtype=Float32, requires_grad=True)]
     """
+
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
                    '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
@@ -1640,7 +1652,17 @@ class GraphCell(Cell):
     diagram, and can only use data that shape and type are the same as the input when exporting the MindIR.
 
     Args:
-        graph (object): A compiled graph loaded from MindIR.
+        graph (FuncGraph): A compiled graph loaded from MindIR.
+        params_init (dict): Parameters need to be inited in the graph.
+            The key is the parameter name whose type is str, and the value is a Tensor or Parameter.
+            If the parameter exists in the graph according to the name, update it's value.
+            If the parameter does not exist, ignore it. Default: None.
+    Raises:
+        TypeError: If the `graph` is not a FuncGraph.
+        TypeError: If the `params_init` is not a dict.
+        TypeError: If the key of the `params_init` is not a str.
+        TypeError: If the value of the `params_init` is neither a Tensor nor a Parameter.
+        ValueError: If the initial value's dtype and shape are not consistent with the parameter would be inited.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1661,11 +1683,25 @@ class GraphCell(Cell):
            [6. 9. 6.]
            [4. 6. 4.]]]]
     """
-    def __init__(self, graph):
+    def __init__(self, graph, params_init=None):
         super(GraphCell, self).__init__(auto_prefix=True)
         if not isinstance(graph, FuncGraph):
-            raise TypeError(f"graph must be a FuncGraph loaded from MindIR, but got {type(graph)}.")
+            raise TypeError(f"The 'graph' must be a FuncGraph loaded from MindIR, but got {type(graph)}.")
         self.graph = graph
+
+        params_init = {} if params_init is None else params_init
+        if not isinstance(params_init, dict):
+            raise TypeError(f"The 'params_init' must be a dict, but got {type(params_init)}.")
+        for name, value in params_init.items():
+            if not isinstance(name, str) or not isinstance(value, Tensor):
+                raise TypeError("The key of the 'params_init' must be str, and the value must be Tensor or Parameter, "
+                                f"but got the key type: {type(name)}, and the value type: {type(value)}")
+
+        params_dict = self.graph.update_hyper_params(params_init)
+        for name, value in params_dict.items():
+            param = Parameter(value)
+            param.param_info = value.param_info
+            self._params[name] = param
 
     def construct(self, *inputs):
         return self.graph(*inputs)

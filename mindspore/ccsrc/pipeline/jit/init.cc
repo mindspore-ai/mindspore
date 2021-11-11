@@ -124,9 +124,8 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("init_pipeline", &mindspore::pipeline::InitPipeline, "Init Pipeline.");
 
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
-  (py::object)
-    m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
-          py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"), "Load model as Graph.");
+  (void)m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
+              py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"), "Load model as Graph.");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")

@@ -64,7 +64,6 @@ def _tensors_cast_datatype(datatype, param):
     return F.cast(param, datatype)
 
 
-
 class WithLossCell(Cell):
     r"""
     Cell with loss function.
