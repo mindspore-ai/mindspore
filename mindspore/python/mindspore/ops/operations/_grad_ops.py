@@ -45,6 +45,7 @@ class ACosGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ACosGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class AcoshGrad(Primitive):

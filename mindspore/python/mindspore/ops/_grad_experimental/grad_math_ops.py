@@ -37,6 +37,18 @@ def _generate_perm(x_dim):
     return perm
 
 
+@bprop_getters.register(P.ACos)
+def get_bprop_acos(self):
+    """Grad definition for `ACos` operation."""
+    input_grad = G.ACosGrad()
+
+    def bprop(input_x, out, dout):
+        dx = input_grad(input_x, dout)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Cdist)
 def get_bprop_cdist(self):
     """Generate bprop for Cdist"""
