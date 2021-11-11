@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,18 @@
 #define MINDSPORE_CORE_UTILS_MS_UTILS_SECURE_H_
 
 #include "securec/include/securec.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace common {
-static inline errno_t huge_memcpy_s(uint8_t *dest, size_t destMax, const uint8_t *src, size_t count) {
+static inline errno_t huge_memcpy_s(uint8_t *destAddr, size_t destMaxLen, const uint8_t *srcAddr, size_t srcLen) {
+  MS_EXCEPTION_IF_NULL(destAddr);
+  MS_EXCEPTION_IF_NULL(srcAddr);
+  auto dest = destAddr;
+  auto src = srcAddr;
+  auto destMax = destMaxLen;
+  auto count = srcLen;
+
   while (destMax > SECUREC_MEM_MAX_LEN && count > SECUREC_MEM_MAX_LEN) {
     auto ret = memcpy_s(dest, SECUREC_MEM_MAX_LEN, src, SECUREC_MEM_MAX_LEN);
     if (ret != 0) {
