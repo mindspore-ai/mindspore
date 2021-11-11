@@ -347,6 +347,22 @@ class AnfRuntimeAlgorithm {
   static size_t GetOutputNumByAbstract(const AbstractBasePtr &node_abstract);
   // Fetch all outputs of call node.
   static std::vector<KernelWithIndex> GetAllOutputByCallNode(const KernelWithIndex &output_with_index);
+
+  static inline bool IsAllgather(const CNodePtr &cnode) { return GetCNodeName(cnode) == kAllGatherOpName; }
+
+  static inline bool IsFusion(const CNodePtr &cnode) {
+    return HasNodeAttr(kAttrFusion, cnode) && GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0;
+  }
+
+  static inline bool IsFromParallelOptimizer(const CNodePtr &cnode) {
+    auto primitive = GetCNodePrimitive(cnode);
+    return (primitive != nullptr) && primitive->instance_name().find("parallel_optimizer") != std::string::npos;
+  }
+
+  static inline bool IsRecompute(const CNodePtr &cnode) {
+    auto attr_dup = cnode->GetAttr(kAttrDuplicated);
+    return attr_dup != nullptr && GetValue<bool>(attr_dup);
+  }
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

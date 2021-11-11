@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,9 @@ class IrExportBuilder {
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSequenceToAttributeProto(const ValueSequeuePtr &value, mind_ir::AttributeProto *const attr_proto,
                                    std::string *const seq_string);
@@ -831,7 +833,27 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
     int64_t attr_value = GetValue<bool>(value) ? 1 : 0;
     attr_proto->set_i(attr_value);
-  } else if (value->isa<Int8Imm>()) {
+  } else if (SetScalarToAttributeProtoForInt_ir(value, attr_proto)) {
+    return true;
+  } else if (value->isa<FP32Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
+    attr_proto->set_f(GetValue<float>(value));
+  } else if (value->isa<FP64Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
+    attr_proto->set_d(GetValue<double>(value));
+  } else if (value->isa<tensor::Tensor>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
+    return SetTensorToAttributeProto(value, attr_proto);
+  } else {
+    MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
+    return false;
+  }
+  return true;
+}
+
+bool IrExportBuilder::SetScalarToAttributeProtoForInt_ir(const ValuePtr &value,
+                                                         mind_ir::AttributeProto *const attr_proto) {
+  if (value->isa<Int8Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_INT8);
     attr_proto->set_i(value->cast<Int8ImmPtr>()->value());
   } else if (value->isa<Int16Imm>()) {
@@ -855,17 +877,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
   } else if (value->isa<UInt64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UINT64);
     attr_proto->set_i(UlongToLong(value->cast<UInt64ImmPtr>()->value()));
-  } else if (value->isa<FP32Imm>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
-    attr_proto->set_f(GetValue<float>(value));
-  } else if (value->isa<FP64Imm>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
-    attr_proto->set_d(GetValue<double>(value));
-  } else if (value->isa<tensor::Tensor>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
-    return SetTensorToAttributeProto(value, attr_proto);
   } else {
-    MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
     return false;
   }
   return true;
@@ -899,7 +911,27 @@ bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
   } else if (value->isa<BoolImm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
     attr_proto->add_ints(GetValue<bool>(value));
-  } else if (value->isa<Int8Imm>()) {
+  } else if (SetScalarToAttributeProtoForInt_irs(value, attr_proto)) {
+    return true;
+  } else if (value->isa<FP32Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
+    attr_proto->add_floats(GetValue<float>(value));
+  } else if (value->isa<FP64Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
+    attr_proto->add_doubles(GetValue<double>(value));
+  } else if (value->isa<tensor::Tensor>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
+    return SetTensorToAttributeProto(value, attr_proto);
+  } else {
+    MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
+    return false;
+  }
+  return true;
+}
+
+bool IrExportBuilder::SetScalarToAttributeProtoForInt_irs(const ValuePtr &value,
+                                                          mind_ir::AttributeProto *const attr_proto) {
+  if (value->isa<Int8Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_INT8);
     attr_proto->add_ints(value->cast<Int8ImmPtr>()->value());
   } else if (value->isa<Int16Imm>()) {
@@ -923,17 +955,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
   } else if (value->isa<UInt64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UINT64);
     attr_proto->add_ints(SizeToInt(value->cast<UInt64ImmPtr>()->value()));
-  } else if (value->isa<FP32Imm>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT);
-    attr_proto->add_floats(GetValue<float>(value));
-  } else if (value->isa<FP64Imm>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
-    attr_proto->add_doubles(GetValue<double>(value));
-  } else if (value->isa<tensor::Tensor>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
-    return SetTensorToAttributeProto(value, attr_proto);
   } else {
-    MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
     return false;
   }
   return true;

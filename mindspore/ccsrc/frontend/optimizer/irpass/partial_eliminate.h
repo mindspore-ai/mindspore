@@ -181,43 +181,12 @@ class ChoicePartialEliminater : public AnfVisitor {
   AnfNodePtrList UnifyParameters(const size_t &anchor_index, const AnfNodePtrList &fg_list,
                                  const std::vector<AnfNodePtrList> args_list) {
     std::vector<size_t> inputs_index_list[args_list.size()];
-    size_t extra_input_counter = 0;
     AnfNodePtrList extra_inputs;
     const auto &anchor_args = args_list[anchor_index];
     size_t anchor_args_size = anchor_args.size();
     auto anchor_fg = GetValueNode<FuncGraphPtr>(fg_list[anchor_index]);
     MS_EXCEPTION_IF_NULL(anchor_fg);
-    // Find the new location of the old_inputs except Zs;
-    for (size_t i = 0; i < args_list.size(); ++i) {
-      if (i == anchor_index) {
-        continue;
-      }
-      const auto &another_args = args_list[i];
-      auto &curr_inputs_index = inputs_index_list[i];
-      for (size_t j = 0; j < another_args.size(); ++j) {
-        size_t k;
-        for (k = 0; k < anchor_args_size; ++k) {
-          if (another_args[j] == anchor_args[k]) {
-            curr_inputs_index.push_back(k);
-            break;
-          }
-        }
-        if (k == anchor_args_size) {
-          // check if used by another func_graph;
-          for (k = 0; k < extra_input_counter; ++k) {
-            if (another_args[j] == extra_inputs[k]) {
-              curr_inputs_index.push_back(anchor_args_size + k);
-              break;
-            }
-          }
-          if (k == extra_input_counter) {
-            extra_inputs.push_back(another_args[j]);
-            curr_inputs_index.push_back(anchor_args_size + extra_input_counter);
-            extra_input_counter++;
-          }
-        }
-      }
-    }
+    size_t extra_input_counter = FindNewLocation(args_list, anchor_index, inputs_index_list, &extra_inputs);
 
     auto manager = anchor_fg->manager();
     MS_EXCEPTION_IF_NULL(manager);
@@ -283,6 +252,46 @@ class ChoicePartialEliminater : public AnfVisitor {
     txn.Commit();
 
     return extra_inputs;
+  }
+
+  // Find the new location of the old_inputs except Zs.
+  size_t FindNewLocation(const std::vector<AnfNodePtrList> &args_list, size_t anchor_index,
+                         std::vector<size_t> *inputs_index_list, AnfNodePtrList *extra_inputs_ptr) {
+    const auto &anchor_args = args_list[anchor_index];
+    auto &extra_inputs = *extra_inputs_ptr;
+    size_t extra_input_counter = 0;
+    size_t anchor_args_size = anchor_args.size();
+    for (size_t i = 0; i < args_list.size(); ++i) {
+      if (i == anchor_index) {
+        continue;
+      }
+      const auto &another_args = args_list[i];
+      auto &curr_inputs_index = inputs_index_list[i];
+      for (size_t j = 0; j < another_args.size(); ++j) {
+        size_t k;
+        for (k = 0; k < anchor_args_size; ++k) {
+          if (another_args[j] == anchor_args[k]) {
+            curr_inputs_index.push_back(k);
+            break;
+          }
+        }
+        if (k == anchor_args_size) {
+          // check if used by another func_graph;
+          for (k = 0; k < extra_input_counter; ++k) {
+            if (another_args[j] == extra_inputs[k]) {
+              curr_inputs_index.push_back(anchor_args_size + k);
+              break;
+            }
+          }
+          if (k == extra_input_counter) {
+            extra_inputs.push_back(another_args[j]);
+            curr_inputs_index.push_back(anchor_args_size + extra_input_counter);
+            extra_input_counter++;
+          }
+        }
+      }
+    }
+    return extra_input_counter;
   }
 };
 

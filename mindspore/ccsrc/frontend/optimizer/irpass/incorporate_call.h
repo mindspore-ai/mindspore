@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,10 @@ class IncorporateCall : public AnfVisitor {
         (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
       }
     }
+    return MakeNewNode(node, args);
+  }
 
+  AnfNodePtr MakeNewNode(const AnfNodePtr &node, const std::vector<AnfNodePtr> &args) {
     auto new_node = node->func_graph()->NewCNode(args);
     new_node->set_abstract(node->abstract());
     // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
