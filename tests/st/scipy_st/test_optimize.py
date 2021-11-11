@@ -102,7 +102,7 @@ def test_bfgs_fixes4594(dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
 def test_bfgs_graph(dtype, func_x0):
     """
     Feature: ALL TO ALL
