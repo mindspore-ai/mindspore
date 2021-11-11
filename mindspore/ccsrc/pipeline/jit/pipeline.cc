@@ -187,7 +187,9 @@ void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_na
     return;
   }
   MS_LOG(INFO) << "Use the compilation cache \"" << realpath.value() << "\" and execute the backend actions only.";
-  FuncGraphPtr fg = mindspore::LoadMindIR(realpath.value());
+  MindIRLoader mindir_loader;
+  mindir_loader.set_need_renormalize(false);
+  FuncGraphPtr fg = mindir_loader.LoadMindIR(realpath.value());
   if (fg == nullptr) {
     MS_LOG(ERROR) << "Failed to load the compilation cache file: " << realpath.value();
     return;
@@ -1373,8 +1375,8 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len,
                         const std::string &dec_mode) {
-  auto func_graph =
-    mindspore::LoadMindIR(file_name, false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode);
+  MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
+  auto func_graph = mindir_loader.LoadMindIR(file_name);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

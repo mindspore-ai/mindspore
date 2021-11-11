@@ -183,8 +183,9 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     } else {
-      anf_graph =
-        LoadMindIR(file_path, false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode));
+      MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
+                                 false);
+      anf_graph = mindir_loader.LoadMindIR(file_path);
     }
     if (anf_graph == nullptr) {
       err_msg << "Load model failed. Please check the valid of dec_key and dec_mode";
@@ -268,8 +269,9 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
-    auto anf_graphs =
-      LoadMindIRs(files_path, false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode));
+    MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
+                               true);
+    auto anf_graphs = mindir_loader.LoadMindIRs(files_path);
     if (anf_graphs.size() != files_path.size()) {
       err_msg << "Load model failed, " << files_path.size() << " files got " << anf_graphs.size() << " graphs.";
       MS_LOG(ERROR) << err_msg.str();

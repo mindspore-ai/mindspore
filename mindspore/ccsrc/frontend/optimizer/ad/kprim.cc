@@ -183,7 +183,8 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
   if (!bprop_cache_file_exists) {
     return nullptr;
   }
-  auto bprop_fg = LoadMindIR(bprop_mindir_realpath.value());
+  MindIRLoader mindir_loader;
+  auto bprop_fg = mindir_loader.LoadMindIR(bprop_mindir_realpath.value());
   if (!CheckBpropHash(bprop_fg->bprop_hash())) {
     MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date.";
   }
@@ -470,6 +471,19 @@ static void AdjustForAutoMonad(const PrimitivePtr &prim, const FuncGraphPtr &bpr
   }
 }
 
+std::vector<NodeDebugInfoPtr> GeneratePrimalDebugInfo(const ValueNodePtr &value_node,
+                                                      const pipeline::ResourceBasePtr &resources) {
+  std::vector<NodeDebugInfoPtr> primal_debug_infos;
+  if (resources != nullptr) {
+    auto manager = resources->manager();
+    auto &users = manager->node_users()[value_node];
+    for (auto user_iter = users.begin(); user_iter != users.end(); ++user_iter) {
+      primal_debug_infos.push_back(user_iter->first->debug_info());
+    }
+  }
+  return primal_debug_infos;
+}
+
 FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
                                const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
@@ -514,14 +528,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
 
   AdjustForAutoMonad(prim, bprop_fg);
   std::unordered_map<std::string, ValuePtr> primal_attrs;
-  std::vector<NodeDebugInfoPtr> primal_debug_infos;
-  if (resources != nullptr) {
-    auto manager = resources->manager();
-    auto &users = manager->node_users()[value_node];
-    for (auto user_iter = users.begin(); user_iter != users.end(); ++user_iter) {
-      primal_debug_infos.push_back(user_iter->first->debug_info());
-    }
-  }
+  std::vector<NodeDebugInfoPtr> primal_debug_infos = GeneratePrimalDebugInfo(value_node, resources);
   if (cnode != nullptr) {
     primal_attrs = cnode->primal_attrs();
     const auto forward_node_primal_attr = prim->name() + "_" + cnode->UniqueId();
