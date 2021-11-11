@@ -25,6 +25,7 @@
 #include "minddata/dataset/util/path.h"
 
 // IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/ag_news_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
@@ -61,6 +62,18 @@ namespace dataset {
 
 // PYBIND FOR LEAF NODES
 // (In alphabetical order)
+
+PYBIND_REGISTER(AGNewsNode, 2, ([](const py::module *m) {
+                  (void)py::class_<AGNewsNode, DatasetNode, std::shared_ptr<AGNewsNode>>(*m, "AGNewsNode",
+                                                                                         "to create an AGNewsNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto ag_news = std::make_shared<AGNewsNode>(dataset_dir, num_samples, toShuffleMode(shuffle),
+                                                                  usage, num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(ag_news->ValidateParams());
+                      return ag_news;
+                    }));
+                }));
 
 PYBIND_REGISTER(CelebANode, 2, ([](const py::module *m) {
                   (void)py::class_<CelebANode, DatasetNode, std::shared_ptr<CelebANode>>(*m, "CelebANode",

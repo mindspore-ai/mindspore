@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_subdirectory(samplers)
 
 set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
+        ag_news_node.cc
         album_node.cc
         celeba_node.cc
         cifar100_node.cc

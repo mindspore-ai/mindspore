@@ -67,7 +67,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
-    check_photo_tour_dataset
+    check_photo_tour_dataset, check_ag_news_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -5073,6 +5073,93 @@ class ManifestDataset(MappableDataset):
             for pair in self._class_indexing:
                 self.class_indexing[pair[0]] = pair[1][0]
         return self.class_indexing
+
+
+class AGNewsDataset(SourceDataset):
+    """
+    A source dataset that reads and parses AG News datasets.
+
+    The generated dataset has three columns: :py:obj:`[index, title, description]`.
+    The tensor of column :py:obj:`index` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`description` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test` and `all` (default=None, all samples).
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Examples:
+        >>> ag_news_dataset_dir = "/path/to/ag_news_dataset_file"
+        >>> dataset = ds.AGNewsDataset(dataset_dir=ag_news_dataset_dir, usage='all')
+
+    About AGNews dataset:
+
+    AG is a collection of over 1 million news articles. The news articles were collected
+    by ComeToMyHead from over 2,000 news sources in over 1 year of activity. ComeToMyHead
+    is an academic news search engine that has been in operation since July 2004.
+    The dataset is provided by academics for research purposes such as data mining
+    (clustering, classification, etc.), information retrieval (ranking, searching, etc.),
+    xml, data compression, data streaming, and any other non-commercial activities.
+    AG's news topic classification dataset was constructed by selecting the four largest
+    classes from the original corpus. Each class contains 30,000 training samples and
+    1,900 test samples. The total number of training samples in train.csv is 120,000
+    and the number of test samples in test.csv is 7,600.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── ag_news_dataset_dir
+            ├── classes.txt
+            ├── train.csv
+            ├── test.csv
+            └── readme.txt
+
+    Citation:
+
+    .. code-block::
+
+        @misc{zhang2015characterlevel,
+        title={Character-level Convolutional Networks for Text Classification},
+        author={Xiang Zhang and Junbo Zhao and Yann LeCun},
+        year={2015},
+        eprint={1509.01626},
+        archivePrefix={arXiv},
+        primaryClass={cs.LG}
+        }
+    """
+
+    @check_ag_news_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.AGNewsNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                              self.shard_id)
 
 
 class Cifar10Dataset(MappableDataset):
