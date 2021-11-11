@@ -231,14 +231,14 @@ std::vector<size_t> GetClearSize(const CNodePtr &pre_node) {
   return clean_size_list;
 }
 
-CNodePtr NewAtomicOp(const CNodePtr &pre_node) {
+CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fusion_clear_inputs) {
   MS_EXCEPTION_IF_NULL(pre_node);
   auto clear_zero_prim = std::make_shared<Primitive>(kAtomicAddrCleanOpName);
   MS_EXCEPTION_IF_NULL(clear_zero_prim);
   auto new_value_node = NewValueNode(clear_zero_prim);
   MS_EXCEPTION_IF_NULL(new_value_node);
   std::vector<AnfNodePtr> inputs = {new_value_node};
-  inputs.push_back(pre_node);
+  inputs.insert(inputs.end(), fusion_clear_inputs.begin(), fusion_clear_inputs.end());
   auto func_graph = pre_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -259,7 +259,7 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
                           const std::vector<size_t> &clean_size_list, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(first_clear_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
-  auto clear_zero = NewAtomicOp(first_clear_node);
+  auto clear_zero = NewAtomicOp(first_clear_node, fusion_clear_inputs);
   AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), clear_zero.get());
   (*clean_ops)[first_clear_node].emplace_back(clear_zero);
@@ -268,7 +268,7 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
 void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(pre_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
-  auto clear_zero = NewAtomicOp(pre_node);
+  auto clear_zero = NewAtomicOp(pre_node, {pre_node});
   auto clean_size = GetClearSize(pre_node);
   AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clear_zero.get());
