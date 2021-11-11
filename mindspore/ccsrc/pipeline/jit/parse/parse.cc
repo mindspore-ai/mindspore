@@ -32,6 +32,7 @@
 #include "utils/ms_context.h"
 #include "utils/interpret_node_recorder.h"
 #include "debug/trace.h"
+#include "mindspore/core/ir/cell.h"
 
 namespace mindspore {
 namespace parse {
@@ -2082,11 +2083,27 @@ bool ParseFunctionAst::IsClassMember(const py::object &node) {
   return ret.cast<bool>();
 }
 
+void SetMixedPrecisionFlag(const py::object &obj, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (!py::isinstance<Cell>(obj)) {
+    return;
+  }
+  auto cell = py::cast<CellPtr>(obj);
+  MS_EXCEPTION_IF_NULL(cell);
+  auto mixed_type = cell->GetMixedPrecisionType();
+  if (mixed_type != MixedPrecisionType::kNotSet) {
+    func_graph->set_flag(GRAPH_FLAG_MIX_PRECISION_FP16, mixed_type == MixedPrecisionType::kFP16);
+    func_graph->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, mixed_type == MixedPrecisionType::kFP32);
+  }
+}
+
 bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "FuncGraph is null";
     return false;
   }
+
+  SetMixedPrecisionFlag(obj, func_graph);
 
   if (!py::hasattr(obj, PYTHON_EXTERN_MINDSPORE_FLAG)) {
     MS_LOG(DEBUG) << "No flags";

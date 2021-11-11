@@ -38,11 +38,17 @@ void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &ob
 }
 // Define python 'Cell' class.
 REGISTER_PYBIND_DEFINE(Cell, ([](const py::module *m) {
+                         (void)py::enum_<MixedPrecisionType>(*m, "MixedPrecisionType", py::arithmetic())
+                           .value("NOTSET", MixedPrecisionType::kNotSet)
+                           .value("FP16", MixedPrecisionType::kFP16)
+                           .value("FP32", MixedPrecisionType::kFP32);
                          (void)py::class_<Cell, std::shared_ptr<Cell>>(*m, "Cell_")
                            .def(py::init<std::string &>())
                            .def("__str__", &Cell::ToString)
                            .def("_add_attr", &CellPy::AddAttr, "Add Cell attr.")
                            .def("_del_attr", &Cell::DelAttr, "Delete Cell attr.")
+                           .def("set_mixed_precision_type", &Cell::SetMixedPrecisionType, "Set mixed precision type.")
+                           .def("get_mixed_precision_type", &Cell::GetMixedPrecisionType, "Get mixed precision type.")
                            .def(
                              "construct", []() { MS_LOG(EXCEPTION) << "we should define `construct` for all `cell`."; },
                              "construct")

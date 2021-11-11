@@ -27,7 +27,7 @@ from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common._decorator import deprecated
 from mindspore.context import ParallelMode
 from .. import context
-from .._c_expression import init_pipeline, Cell_, FuncGraph
+from .._c_expression import init_pipeline, Cell_, FuncGraph, MixedPrecisionType
 from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor
@@ -431,6 +431,16 @@ class Cell(Cell_):
             if _pynative_executor.is_top_cell():
                 _pynative_executor.set_lazy_build(False)
 
+    def auto_cast_inputs(self, inputs):
+        cast_inputs = inputs
+        mixed_type = self.get_mixed_precision_type()
+        if mixed_type == MixedPrecisionType.FP16:
+            cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float16)
+        if mixed_type == MixedPrecisionType.FP32:
+            cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float32)
+
+        return cast_inputs
+
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
@@ -463,14 +473,7 @@ class Cell(Cell_):
         if self.requires_grad is True:
             _pynative_executor.set_grad_flag(True)
         _pynative_executor.new_graph(self, *args, **kwargs)
-        cast_inputs = list()
-        if hasattr(self, "_mindspore_flags"):
-            if self._mindspore_flags.get('fp16'):
-                cast_inputs = self._cast_mixed_precision_inputs(args, mstype.float16)
-            if self._mindspore_flags.get('fp32'):
-                cast_inputs = self._cast_mixed_precision_inputs(args, mstype.float32)
-        if not cast_inputs:
-            cast_inputs = args
+        cast_inputs = self.auto_cast_inputs(args)
 
         with self.CellGuard():
             try:
@@ -851,10 +854,11 @@ class Cell(Cell_):
         Returns:
             Parameter, the input parameter with type automatically cast.
         """
-        if hasattr(self, "_mindspore_flags"):
-            if self._mindspore_flags.get('fp32'):
+        mixed_type = self.get_mixed_precision_type()
+        if mixed_type != MixedPrecisionType.NOTSET:
+            if mixed_type == MixedPrecisionType.FP32:
                 param.set_cast_dtype(mstype.float32)
-            elif self._mindspore_flags.get('fp16'):
+            elif mixed_type == MixedPrecisionType.FP16:
                 param.set_cast_dtype(mstype.float16)
             elif hasattr(param, "set_cast_dtype"):
                 # retest dtype
@@ -1264,6 +1268,12 @@ class Cell(Cell_):
             self._mindspore_flags = {}
         return self._mindspore_flags
 
+    def _set_mixed_precision_type_recursive(self, mixed_type):
+        """Set mixed precision type to each cell"""
+        Cell_.set_mixed_precision_type(self, mixed_type)
+        for cell in self.cells():
+            cell._set_mixed_precision_type_recursive(mixed_type)
+
     def to_float(self, dst_type):
         """
         Add cast on all inputs of cell and child cells to run with certain float type.
@@ -1293,8 +1303,11 @@ class Cell(Cell_):
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("The dst_type should inside float32 or float16.")
+        if dst_type == mstype.float16:
+            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
+        else:
+            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
         flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32}
-        self.add_flags_recursive(**flags)
         self._add_init_args(**flags)
         return self
 
