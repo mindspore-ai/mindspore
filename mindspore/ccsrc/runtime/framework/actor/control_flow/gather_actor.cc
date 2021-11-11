@@ -21,7 +21,9 @@ namespace mindspore {
 namespace runtime {
 GatherActor::GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
                          const AnfNodePtr &node)
-    : ControlActor(name, KernelTransformType::kGatherActor, parameters, node) {}
+    : ControlActor(name, KernelTransformType::kGatherActor, parameters, node) {
+  device_contexts_.resize(parameters.size());
+}
 
 void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);

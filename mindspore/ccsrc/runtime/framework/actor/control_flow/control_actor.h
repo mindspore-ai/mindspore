@@ -54,6 +54,9 @@ class ControlActor : public AbstractActor {
 
   const std::vector<DataArrowPtr> &output_partial_arrows() const { return output_partial_arrows_; }
   const std::vector<AID> &output_branch_id_arrows() const { return output_branch_id_arrows_; }
+  const std::unordered_map<size_t, OpPartial> &local_partials() const { return local_partials_; }
+  const std::vector<AID> &input_partial_arrow_aids() const { return input_partial_arrow_aids_; }
+  const std::vector<AID> &input_branch_id_arrow_aids() const { return input_branch_id_arrow_aids_; }
 
  protected:
   friend class ControlNodeScheduler;
@@ -87,6 +90,10 @@ class ControlActor : public AbstractActor {
   // Input num.
   size_t input_partials_num_{0};
 
+  // The dependent input actors.
+  std::vector<AID> input_partial_arrow_aids_;
+  std::vector<AID> input_branch_id_arrow_aids_;
+
   // Output Arrows.
   std::vector<DataArrowPtr> output_partial_arrows_;
   OpPartial output_partial_;
@@ -99,6 +106,8 @@ class ControlActor : public AbstractActor {
 
   // Partial data in local. When partial is only funcgraph without real parameter, it is stored inside the actor.
   std::unordered_map<size_t, OpPartial> local_partials_;
+  // Device tensor in control node, but not in kernel graph.
+  std::unordered_map<size_t, DeviceTensor *> local_device_tensors_;
 
   // Cache output data by output index to modify the output data effectively.
   std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;

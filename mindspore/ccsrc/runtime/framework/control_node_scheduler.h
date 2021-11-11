@@ -78,12 +78,13 @@ class ControlNodeScheduler {
                                  const FuncGraphPtr &func_graph);
   void LinkPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor, size_t from_index,
                         size_t to_index);
-  void LinkDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_index,
-                     size_t to_index);
+  void LinkDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_index, size_t to_index,
+                     const AnfNodePtr &from_kernel = nullptr);
+  void LinkBranchIDArrow(ControlActor *const from_actor, ControlActor *const to_actor);
 
   // Since the output of exit actor has branches, it needs to be based on a dedicated interface.
   void LinkControlArrowForExitActor(ExitActor *from_actor, AbstractActor *to_actor, int branch_id);
-  void LinkDataArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor, size_t from_index,
+  void LinkDataArrowForExitActor(ExitActor *const exit_actor, AbstractActor *const to_actor, size_t from_index,
                                  size_t to_index, int branch_id);
 };
 }  // namespace runtime
