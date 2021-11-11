@@ -672,14 +672,14 @@ int RunCallback(const char *model_path) {
   auto before_call_back = [](const std::vector<mindspore::MSTensor> &before_inputs,
                              const std::vector<mindspore::MSTensor> &before_outputs,
                              const mindspore::MSCallBackParam &call_param) {
-    std::cout << "Before forwarding " << call_param.node_name_ << " " << call_param.node_type_ << std::endl;
+    std::cout << "Before forwarding " << call_param.node_name << " " << call_param.node_type << std::endl;
     return true;
   };
   // Definition of callback function after forwarding operator.
   auto after_call_back = [](const std::vector<mindspore::MSTensor> &after_inputs,
                             const std::vector<mindspore::MSTensor> &after_outputs,
                             const mindspore::MSCallBackParam &call_param) {
-    std::cout << "After forwarding " << call_param.node_name_ << " " << call_param.node_type_ << std::endl;
+    std::cout << "After forwarding " << call_param.node_name << " " << call_param.node_type << std::endl;
     return true;
   };
 
