@@ -256,6 +256,7 @@ int64_t CountTotalRowsPerFile(const std::string &file) {
 int64_t ClueOp::CountTotalRows(const std::string &file) { return CountTotalRowsPerFile(file); }
 
 Status ClueOp::CountAllFileRows(const std::vector<std::string> &files, int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   std::shared_ptr<ClueOp> op;
   *count = 0;
   for (auto file : files) {

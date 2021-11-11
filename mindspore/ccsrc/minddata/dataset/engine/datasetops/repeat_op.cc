@@ -58,6 +58,7 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 // This function sets the `retryIfEoe` flag when popping from the child connector. This way,
 // this function will retry to pop the connector again and will get the non-EOE row if any.
 Status RepeatOp::GetNextRow(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }

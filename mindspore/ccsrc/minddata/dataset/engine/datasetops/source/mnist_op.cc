@@ -251,6 +251,7 @@ Status MnistOp::WalkAllFiles() {
 }
 
 Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage, int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   // the logic of counting the number of samples is copied from ParseMnistData() and uses CheckReader()
   *count = 0;
   const int64_t num_samples = 0;

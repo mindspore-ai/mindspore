@@ -41,6 +41,7 @@ void TakeOp::Print(std::ostream &out, bool show_all) const {
 Status TakeOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
 Status TakeOp::GetNextRow(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   bool eoe_received = false;
   if (take_count_ < max_takes_) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));

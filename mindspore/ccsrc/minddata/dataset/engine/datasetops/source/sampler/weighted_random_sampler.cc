@@ -113,6 +113,7 @@ Status WeightedRandomSamplerRT::ResetSampler() {
 
 // Get the sample ids.
 Status WeightedRandomSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, size of sample weights must be less than or equal to num of data, "
@@ -188,6 +189,7 @@ void WeightedRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) con
 }
 
 Status WeightedRandomSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   RETURN_IF_NOT_OK(SamplerRT::to_json(&args));
   args["sampler_name"] = "WeightedRandomSampler";

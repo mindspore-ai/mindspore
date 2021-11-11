@@ -246,6 +246,7 @@ Status ManifestOp::CountDatasetInfo() {
 }
 
 Status ManifestOp::CountTotalRows(int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   *count = 0;
   RETURN_IF_NOT_OK(PrepareData());
   *count = static_cast<int64_t>(image_labelname_.size());
@@ -266,6 +267,7 @@ Status ManifestOp::ComputeColMap() {
 
 // Get number of classes
 Status ManifestOp::GetNumClasses(int64_t *num_classes) {
+  RETURN_UNEXPECTED_IF_NULL(num_classes);
   if (num_classes_ > 0) {
     *num_classes = num_classes_;
     return Status::OK();
@@ -279,6 +281,7 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
 }
 
 Status ManifestOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   if ((*output_class_indexing).empty()) {
     RETURN_IF_NOT_OK(PrepareData());
     RETURN_IF_NOT_OK(CountDatasetInfo());

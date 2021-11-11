@@ -150,6 +150,7 @@ Status FilterOp::CheckInput(const TensorRow &input) const {
 }
 
 Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate) {
+  RETURN_UNEXPECTED_IF_NULL(out_predicate);
   RETURN_IF_NOT_OK(CheckInput(input));
 
   TensorRow output;
