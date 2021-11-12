@@ -446,20 +446,6 @@ class _Grad(GradOperation_):
                 fn.set_grad(False)
 
     def __call__(self, fn, weights=None, grad_position=0):
-        if isinstance(grad_position, tuple):
-            for gp in grad_position:
-                if not isinstance(gp, int):
-                    raise TypeError(f"For '_Grad', the element in 'grad_position' should be int, "
-                                    f"but got {type(gp).__name__}")
-                if gp < 0:
-                    raise ValueError("The element in grad_position must be >= 0.")
-        elif isinstance(grad_position, int):
-            if grad_position < 0:
-                raise ValueError("grad_position must be >= 0.")
-            grad_position = (grad_position,)
-        else:
-            raise TypeError(f"For '_Grad', the 'grad_position' should be int or tuple, "
-                            f"but got {type(grad_position).__name__}")
         if self.grad_fn is not None and self.fn == fn:
             return self.grad_fn
         grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)

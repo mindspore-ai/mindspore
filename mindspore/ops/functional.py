@@ -159,9 +159,30 @@ partial = P.Partial()
 depend = P.Depend()
 identity = P.identity()
 
-grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
+@constexpr
+def _convert_grad_position_type(grad_position):
+    """Check and convert the type and size of grad position index."""
+    if isinstance(grad_position, tuple):
+        for gp in grad_position:
+            if not isinstance(gp, int):
+                raise TypeError(f"For 'F.grad', the element in 'grad_position' should be int, "
+                                f"but got {type(gp).__name__}")
+            if gp < 0:
+                raise ValueError("The element in grad_position must be >= 0.")
+    elif isinstance(grad_position, int):
+        if grad_position < 0:
+            raise ValueError("grad_position must be >= 0.")
+        grad_position = (grad_position,)
+    else:
+        raise TypeError(f"For 'F.grad', the 'grad_position' should be int or tuple, "
+                        f"but got {type(grad_position).__name__}")
+    return grad_position
 
-def grad(fn, grad_position=0):
+
+grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
+grad_by_position_with_sens = _Grad(get_by_list=False, sens_param=True, get_by_position=True)
+
+def grad(fn, grad_position=0, sens_param=False):
     r"""
     A wrapper function to generate the gradient function for the input function.
 
@@ -169,10 +190,15 @@ def grad(fn, grad_position=0):
         fn (Union(Cell, function)): Function to do GradOperation.
         grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+        sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
+            If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically. Default: False.
 
     Returns:
         Function, returns the gradient function for the input function or cell.
     """
+    grad_position = _convert_grad_position_type(grad_position)
+    if sens_param:
+        return grad_by_position_with_sens(fn, None, grad_position)
     return grad_by_position(fn, None, grad_position)
 
 

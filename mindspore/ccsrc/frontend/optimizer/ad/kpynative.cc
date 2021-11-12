@@ -366,6 +366,9 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std:
     (void)BackPropagate(!build_formal_param);
   }
   // Return the gradient;
+  if (grad_position.size() == 0) {
+    MS_LOG(EXCEPTION) << "grad_position in F.grad is empty!";
+  }
   SetOutput(weights, grad_position, grad_inputs, grad_weights);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
   ReplacePrimalParameter(weights, has_sens_arg);
@@ -1020,7 +1023,7 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vect
     }
     for (size_t i = 0; i < grad_list.size(); ++i) {
       if (grad_list[i] >= cell_inputs_.size()) {
-        MS_LOG(EXCEPTION) << "Position index is exceed input size!";
+        MS_LOG(EXCEPTION) << "Position index " << grad_list[i] << " is exceed input size!";
       }
       auto input = cell_inputs_[grad_list[i]];
       MS_EXCEPTION_IF_NULL(input);
@@ -1078,9 +1081,9 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vect
     tape_output = tape_->NewCNode(grad_inputs_list);
     tape_output->set_abstract(grad_inputs_spec);
   } else {
-    size_t index = 0;
-    if (pos_size == 1) {
-      index = grad_position[0];
+    size_t index = grad_position[0];
+    if (index >= cell_inputs_.size()) {
+      MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size!";
     }
     auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[index]);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
