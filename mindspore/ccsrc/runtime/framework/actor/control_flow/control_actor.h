@@ -57,6 +57,7 @@ class ControlActor : public AbstractActor {
   const std::unordered_map<size_t, OpPartial> &local_partials() const { return local_partials_; }
   const std::vector<AID> &input_partial_arrow_aids() const { return input_partial_arrow_aids_; }
   const std::vector<AID> &input_branch_id_arrow_aids() const { return input_branch_id_arrow_aids_; }
+  size_t branch_id() const { return output_branch_id_; }
 
  protected:
   friend class ControlNodeScheduler;
@@ -89,6 +90,7 @@ class ControlActor : public AbstractActor {
 
   // Input num.
   size_t input_partials_num_{0};
+  size_t input_branch_ids_num_{0};
 
   // The dependent input actors.
   std::vector<AID> input_partial_arrow_aids_;

@@ -74,7 +74,7 @@ using FuncGraphCallRelation = std::unordered_map<FuncGraphPtr, std::vector<std::
 bool HasAbstractRef(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
-KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
+KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, KernelGraph *const graph);
 
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
@@ -86,12 +86,13 @@ class ControlNodeParser {
 
   bool IsInited() { return is_inited_; }
   // Check whether there is a call node in the front input nodes of the kernel graph.
-  bool IsCallInputKernelGraph(const KernelGraphPtr &graph);
+  bool IsCallInputKernelGraph(KernelGraph *const graph);
   // Check whether the data arrow of the kernel actor needs to be connected to the control actor.
   // There are two situations:
   // 1. In control flow, the parameter input needs to be connected to the entrance actor of the funcgraph.
   // 2. In the kernel graph with call node input, the data arrow needs to be connected to the stack actor.
   bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
+  bool IsRootGraphParameter(const AnfNodePtr &node);
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
@@ -106,6 +107,7 @@ class ControlNodeParser {
   FuncGraphPtr FetchKernelGraphByFrontNode(const AnfNodePtr &kernel);
   // Fetch the backend kernel of front node.
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
+  FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
 
  private:
   friend class GraphScheduler;
@@ -140,6 +142,7 @@ class ControlNodeParser {
   // copied between different device memories. The analysis steps:
   // 1. Get the device context of the funcgraph parameter according to the device type of the kernel in the funcgraph.
   // 2. Determine the type of device context output by funcgraph according to the call relationship of funcgrpah.
+  // 3. Determine the type of device context output for the real parameters on the partial nodes and call nodes.
   void ParseDeviceContext(const std::vector<AnfNodePtr> &control_nodes,
                           const std::vector<KernelGraphPtr> &kernel_graphs,
                           const std::vector<DeviceContext *> &device_contexts,
@@ -148,7 +151,9 @@ class ControlNodeParser {
                                       const std::vector<KernelGraphPtr> &kernel_graphs,
                                       const std::vector<DeviceContext *> &device_contexts,
                                       const FuncGraphToKernelGraph &func_graph_to_kernel_graphs);
-  void ParseDeviceContextForControlNode(const DeviceContext *default_context);
+  void ParseDeviceContextForReturnNode(const DeviceContext *default_context);
+  void ParseDeviceContextForCallNode(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseDeviceContextForPartialNode(const std::vector<AnfNodePtr> &control_nodes);
 
   // In the actor model, when the funcgraph comes to an end temporarily, the exit of the funcgraph needs to notify
   // the entrance actor so that it can process next parameters. This is used to obtain the nodes corresponding to all
@@ -209,7 +214,7 @@ class ControlNodeParser {
   // The kernel graph of call exists in the front input node.
   // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a gather actor
   // is created for kernel graph which has a call input.
-  std::unordered_map<KernelGraphPtr, DeviceContext *> call_input_kernel_graphs_;
+  std::unordered_map<KernelGraph *, DeviceContext *> call_input_kernel_graphs_;
   // The dependency between kernel and call node in auto monad.
   std::unordered_map<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.

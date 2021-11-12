@@ -479,6 +479,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
   // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,
   // so need update the device tensor store always.
+  host_tensor_address->SetNodeIndex(backend_node, 0);
   DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
@@ -558,6 +559,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
                                                               OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(control_node_parser);
   for (const auto &value_node_with_context : control_node_parser->front_value_nodes()) {
+    MS_EXCEPTION_IF_NULL(value_node_with_context.first.first);
     if (AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
       PrepareDataForControlValueNode(value_node_with_context.first, value_node_with_context.second, context);
     }

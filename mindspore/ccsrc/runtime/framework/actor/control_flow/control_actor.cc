@@ -122,6 +122,23 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
     input_device_tensors_[local_device_tensor.first] = local_device_tensor.second;
   }
 
+  // Fetch input device tensor from device store.
+  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto device_context = device_contexts_[device_tensor_store_key.first];
+    MS_EXCEPTION_IF_NULL(device_context);
+    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
+                                                                device_context->GetDeviceAddressType());
+    if (device_tensor == nullptr) {
+      MS_LOG(ERROR) << GetAID() << " get device tensor store failed: " << device_tensor_store_key.second->DebugString();
+    }
+
+    if (device_tensor_store_key.first >= input_device_tensors_.size()) {
+      MS_LOG(ERROR) << "The input index is out of range, need:" << device_tensor_store_key.first
+                    << " current:" << input_device_tensors_.size() << " for actor:" << GetAID();
+    }
+    input_device_tensors_[device_tensor_store_key.first] = device_tensor;
+  }
+
   for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {
     if (output_data_by_output_index_[i].empty()) {
       continue;

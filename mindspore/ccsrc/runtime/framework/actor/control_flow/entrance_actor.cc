@@ -75,7 +75,9 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
       continue;
     }
     const auto &data = input_device_tensors_[i];
-    MS_EXCEPTION_IF_NULL(data);
+    if (data == nullptr && (!output_data_by_output_index_[i].empty())) {
+      MS_LOG(ERROR) << "Input data index:" << i << " for actor:" << GetAID() << " is empty!";
+    }
     for (auto &output_data : output_data_by_output_index_[i]) {
       MS_EXCEPTION_IF_NULL(output_data);
       output_data->data_ = data;
