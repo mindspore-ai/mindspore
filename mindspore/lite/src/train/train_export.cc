@@ -117,8 +117,8 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
     MS_LOG(ERROR) << "Quant Params is empty";
     return RET_ERROR;
   }
-  int quant_max = QuantMax(bit_num, kNumberTypeInt8);
-  int quant_min = QuantMin(bit_num, kNumberTypeInt8);
+  int quant_max = QuantMax(bit_num, false);
+  int quant_min = QuantMin(bit_num, false);
   std::vector<int8_t> data(src_tensor->ElementsNum());
   std::vector<schema::QuantParamT> quant_params;
 

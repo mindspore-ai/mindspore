@@ -60,17 +60,17 @@ int PreprocessParser::ParsePreprocess(const DataPreProcessString &data_pre_proce
       MS_LOG(ERROR) << "calibrate_size should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (data_pre_process->calibrate_size < kMinSize) {
-      MS_LOG(ERROR) << "calibrate_size must larger 0.";
+    if (data_pre_process->calibrate_size <= kMinSize || data_pre_process->calibrate_size > kMaxSize) {
+      MS_LOG(ERROR) << "calibrate size must pass and the size should in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
 
   if (!data_pre_process_str.input_type.empty()) {
     ret = ParseInputType(data_pre_process_str.input_type, &data_pre_process->input_type);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "input_type parse failed.";
-      return ret;
+    if (ret != RET_OK || data_pre_process->input_type == preprocess::INPUT_TYPE_MAX) {
+      MS_LOG(ERROR) << "input_type must pass IMAGE | BIN.";
+      return RET_INPUT_PARAM_INVALID;
     }
   }
   if (!data_pre_process_str.image_to_format.empty()) {

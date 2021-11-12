@@ -41,6 +41,8 @@ struct CommonQuantString {
   std::string bit_num;
   std::string min_quant_weight_size;
   std::string min_quant_weight_channel;
+  std::string skip_node;
+  std::string debug_info_save_path;
 };
 
 struct MixedBitWeightQuantString {

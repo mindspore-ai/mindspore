@@ -432,7 +432,7 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 }
 
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size) {
+                                      int *size, bool is_debug) {
   SessionModel sm;
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
@@ -485,16 +485,19 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
     delete model;
     return sm;
   }
-  model->Free();
+  if (!is_debug) {
+    model->Free();
+  }
   delete meta_graph;
   sm.session = session;
   sm.model = model;
   return sm;
 }
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
+                                      bool is_debug) {
   int size = 0;
-  return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
+  return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size, is_debug);
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {

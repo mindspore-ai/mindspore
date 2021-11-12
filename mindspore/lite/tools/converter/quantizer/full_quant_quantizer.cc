@@ -35,7 +35,6 @@
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/optimizer/common/format_utils.h"
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
@@ -43,6 +42,8 @@
 #include "tools/common/node_util.h"
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/quantizer/debug_info_manager.h"
+#include "tools/anf_exporter/fetch_content.h"
 
 using std::string;
 using std::vector;
@@ -55,6 +56,7 @@ static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion
 constexpr int kMinSize = 0;
 constexpr int kMaxSize = 65535;
 constexpr int kHasBiasTensorSize = 3;
+constexpr int KBiasBitNum = 32;
 }  // namespace
 namespace {
 STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
@@ -599,6 +601,7 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
     } else {
       quant_param.scale = bias_scale;
     }
+    quant_param.numBits = KBiasBitNum;
     quant_param.zeroPoint = 0;
     quant_param.inited = true;
     quant_params.emplace_back(quant_param);
@@ -915,10 +918,7 @@ STATUS FullQuantQuantizer::DoInference() {
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
       STATUS status =
         calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), calib_index, inputs[input_index]);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "generate input data from images failed!";
-        return RET_ERROR;
-      }
+      MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "generate input data from images failed!");
     }
 
     KernelCallBack beforeCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
@@ -945,7 +945,7 @@ STATUS FullQuantQuantizer::DoInference() {
       }
       for (size_t i = 0; i < (*diverg_info_map)[callParam.node_name].size(); i++) {
         auto tensor = beforeInputs[i];
-        MS_ASSERT(tensor != nullptr);
+        MS_CHECK_TRUE_MSG(tensor != nullptr, false, "tensor is nullptr.");
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_CHECK_TRUE_MSG(tensor_data != nullptr, false, "tensor_data is nullptr.");
         size_t elem_count = tensor->ElementsNum();
@@ -1244,24 +1244,14 @@ STATUS FullQuantQuantizer::ComputeThreshold() { return this->calibrator_->Comput
 
 STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to parse config file";
-  if (this->calibrator_ == nullptr) {
-    MS_LOG(ERROR) << "calibrator is null!";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(this->calibrator_);
   calibrator_->full_quant_param_ = flags.fullQuantParam;
   calibrator_->data_pre_process_param_ = flags.dataPreProcessParam;
   if (flags.dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (flags.dataPreProcessParam.calibrate_size <= kMinSize || flags.dataPreProcessParam.calibrate_size > kMaxSize) {
-    MS_LOG(ERROR) << "calibrate size must pass and the size should in [1, 65535].";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (flags.dataPreProcessParam.input_type == preprocess::INPUT_TYPE_MAX) {
-    MS_LOG(ERROR) << "input_type must pass IMAGE | BIN.";
-    return RET_INPUT_PARAM_INVALID;
-  }
+
   STATUS status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
@@ -1271,7 +1261,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   // anf -- fb
   flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
+  auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), flags.commonQuantParam.is_debug);
   fp32_session_ = sm.session;
   fp32_model_ = sm.model;
   if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
@@ -1317,12 +1307,12 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return RET_ERROR;
   }
-
-  if (calibrator_->GetBiasCorrection()) {
+  SessionModel int8_sm;
+  if (flags.commonQuantParam.is_debug || calibrator_->GetBiasCorrection()) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
     flags.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-    auto int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
+    int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), flags.commonQuantParam.is_debug);
     int8_session_ = int8_sm.session;
     int8_model_ = int8_sm.model;
     if (int8_session_ == nullptr || int8_model_ == nullptr) {
@@ -1330,10 +1320,19 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       return RET_ERROR;
     }
     MS_LOG(INFO) << "do bias correction";
+  }
+  if (calibrator_->GetBiasCorrection()) {
     status = BiasCorrection(func_graph);
     if (status != RET_OK) {
       MS_LOG(WARNING) << "BiasCorrection failed.";
     }
+  }
+  if (flags.commonQuantParam.is_debug) {
+    std::map<std::string, OpParameter *> op_parameters;
+    FetchOpParameterFromFuncGraph(func_graph, &op_parameters);
+    DebugInfoManager manager;
+    manager.CompareOriginWithDequant(sm, int8_sm, flags.dataPreProcessParam,
+                                     flags.commonQuantParam.debug_info_save_path, op_parameters);
   }
   return RET_OK;
 }

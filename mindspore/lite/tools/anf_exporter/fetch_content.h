@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
@@ -51,6 +52,8 @@ int RemoveIfMakeTuple(const CNodePtr &cnode);
 
 // Notes:The op_parameter allocates memory through malloc, and may need to manually free op_parameter.
 int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter);
+
+int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::string, OpParameter *> *op_parameters);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_

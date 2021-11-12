@@ -138,6 +138,23 @@ class WeightDecoder {
 
   static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims);
 
+  template <typename ST, typename DT = float>
+  static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim) {
+    const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
+    if (quant_datas == nullptr) {
+      MS_LOG(ERROR) << "Get quant tensor failed.";
+      return nullptr;
+    }
+    auto quant_param = input_tensor->quant_params();
+    if (quant_param.size() != kPerTensor) {
+      return DequantPerChannelData<ST, DT>(input_tensor, quant_datas, preferred_dim);
+    } else {
+      return DequantPerLayerData<ST, DT>(input_tensor, quant_datas);
+    }
+  }
+
+  static int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
+
  private:
   static int DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
@@ -221,21 +238,6 @@ class WeightDecoder {
       }
     }
     return dequant_datas;
-  }
-
-  template <typename ST, typename DT = float>
-  static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim = true) {
-    const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
-    if (quant_datas == nullptr) {
-      MS_LOG(ERROR) << "Get quant tensor failed.";
-      return nullptr;
-    }
-    auto quant_param = input_tensor->quant_params();
-    if (quant_param.size() != kPerTensor) {
-      return DequantPerChannelData<ST, DT>(input_tensor, quant_datas, preferred_dim);
-    } else {
-      return DequantPerLayerData<ST, DT>(input_tensor, quant_datas);
-    }
   }
 
   static int GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims);

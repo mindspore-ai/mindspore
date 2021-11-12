@@ -33,6 +33,7 @@ class QuantParamParser {
 
   static int ParseActivationQuantizedMethod(const std::string &activation_quant_method_str,
                                             quant::ActivationQuantizedMethod *activation_quant_method);
+  static int ParseWeightFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
 };
 }  // namespace lite
 }  // namespace mindspore
