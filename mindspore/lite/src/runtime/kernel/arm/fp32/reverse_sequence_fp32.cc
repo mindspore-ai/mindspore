@@ -103,6 +103,10 @@ int ReverseSequenceCPUKernel::Run() {
   CHECK_NULL_RETURN(input0);
   CHECK_NULL_RETURN(input1);
   CHECK_NULL_RETURN(output);
+  if (param->seq_axis_ == param->batch_axis_) {
+    MS_LOG(ERROR) << "seq_axis and batch_axis can't be the same.";
+    return RET_ERROR;
+  }
   ReverseSequence(input0, input1, output, param);
   return RET_OK;
 }
