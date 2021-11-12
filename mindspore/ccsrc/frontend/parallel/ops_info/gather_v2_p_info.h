@@ -72,6 +72,7 @@ class GatherPInfo : public OperatorInfo {
   Status InferOffset();
   Status InferGroup();
   bool ShardBatchAndAxis(const Strategys &strategy) const;
+  Shape InferOutputsTensorMapSplitAxis();
 
   int64_t axis_;
   std::string target_ = DEVICE;
