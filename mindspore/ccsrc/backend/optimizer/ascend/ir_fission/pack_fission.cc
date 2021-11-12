@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_pack_cnode, size_t begin_index,
-                         size_t offset) {
+AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_pack_cnode,
+                                      size_t begin_index, size_t offset) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_pack_cnode);
   std::vector<AnfNodePtr> new_pack_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimStack->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     new_pack_inputs.push_back(origin_pack_cnode->input(i));
   }
-  CNodePtr new_pack = func_graph->NewCNode(new_pack_inputs);
+  CNodePtr new_pack = NewCNode(new_pack_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_pack);
   new_pack->set_scope(origin_pack_cnode->scope());
   new_pack->set_abstract(origin_pack_cnode->abstract());
@@ -58,7 +57,6 @@ AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_
                                       new_pack.get());
   return new_pack;
 }
-}  // namespace
 
 const BaseRef PackFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
@@ -90,7 +88,7 @@ const AnfNodePtr PackFission::Process(const FuncGraphPtr &func_graph, const AnfN
       CreateNewPack(func_graph, cnode, cur_input_index, origin_input_size - cur_input_index + 1));
   }
 
-  CNodePtr base_concat = func_graph->NewCNode(base_concat_inputs);
+  CNodePtr base_concat = NewCNode(base_concat_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(base_concat);
   base_concat->set_scope(cnode->scope());
   base_concat->set_abstract(cnode->abstract());

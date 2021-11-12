@@ -49,7 +49,7 @@ const AnfNodePtr PReluFusion::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto prim = std::make_shared<Primitive>(kPReluOpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, weight};
-  auto fusion_node = graph->NewCNode(inputs);
+  auto fusion_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_abstract(node->abstract());
   fusion_node->set_scope(node->scope());

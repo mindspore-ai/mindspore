@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_GRAD_SPLIT_H_
 
+#include <string>
+#include <vector>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -23,18 +25,31 @@ namespace mindspore {
 namespace opt {
 class BnGradSplit : public PatternProcessPass {
  public:
-  explicit BnGradSplit(bool multigraph = true) : PatternProcessPass("bn_grad_split", multigraph) {}
+  explicit BnGradSplit(string name = "bn_grad_split", bool multigraph = true) : PatternProcessPass(name, multigraph) {}
   ~BnGradSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ protected:
+  void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                 std::vector<AnfNodePtr> *bn_update_grad_outputs) const;
+  void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
+                                 const std::vector<AnfNodePtr> &bn_update_grad_outputs,
+                                 std::vector<AnfNodePtr> *bn_reduce_grad_outputs) const;
+
+ private:
+  CNodePtr BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
 };
 
-class SyncBnGradSplit : public PatternProcessPass {
+class SyncBnGradSplit : public BnGradSplit {
  public:
-  explicit SyncBnGradSplit(bool multigraph = true) : PatternProcessPass("sync_bn_grad_split", multigraph) {}
+  explicit SyncBnGradSplit(bool multigraph = true) : BnGradSplit("sync_bn_grad_split", multigraph) {}
   ~SyncBnGradSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore

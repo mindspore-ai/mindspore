@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
   if (supported_checker_->CheckAICoreSupported(transdata_cnode, new_transdata_builder->Build())) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(new_fusion_transdata),
                                       utils::cast<AnfNodePtr>((*equiv)[input_varptr_])};
-    auto new_node = func_graph->NewCNode(inputs);
+    auto new_node = NewCNode(inputs, func_graph);
     MS_EXCEPTION_IF_NULL(new_node);
     new_node->set_abstract(node->abstract());
     AnfAlgo::CopyNodeAttrs(transdata_cnode, new_node);

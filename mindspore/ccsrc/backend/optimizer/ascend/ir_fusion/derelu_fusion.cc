@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,16 @@ CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_anf);
   return relu_anf->cast<CNodePtr>();
 }
+}  // namespace
 
-CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
+CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(relu);
   CheckCNodeInputSize(relu, kReluInputTensorNum);
   constexpr auto kMaskShapeSize = 4;
   auto prim = std::make_shared<Primitive>(kReluV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(kIndex1)};
-  auto new_node = graph->NewCNode(inputs);
+  auto new_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu->scope());
 
@@ -79,20 +80,20 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   return new_node;
 }
 
-CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, const AnfNodePtr &second_input) {
+CNodePtr DereluFusion::CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad,
+                                        const AnfNodePtr &second_input) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(relu_grad);
   MS_EXCEPTION_IF_NULL(second_input);
 
   auto prim = std::make_shared<Primitive>(kReluGradV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu_grad->input(1), second_input};
-  auto new_node = graph->NewCNode(inputs);
+  auto new_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu_grad->scope());
   new_node->set_abstract(relu_grad->abstract());
   return new_node;
 }
-}  // namespace
 
 const BaseRef DereluFusion::DefinePattern() const {
   VarPtr i0 = std::make_shared<Var>();

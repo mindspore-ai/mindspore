@@ -28,6 +28,9 @@ class BCEWithLogitsLossFission : public PatternProcessPass {
   ~BCEWithLogitsLossFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

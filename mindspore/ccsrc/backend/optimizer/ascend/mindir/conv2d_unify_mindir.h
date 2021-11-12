@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class Conv2DUnifyMindIR : public PatternProcessPass {
   ~Conv2DUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr CreateDepthwiseConv2D(const FuncGraphPtr &graph, const CNodePtr &conv2d, const CNodePtr &transpose) const;
 };
 
 class Conv2DBackpropInputUnifyMindIR : public PatternProcessPass {
@@ -36,6 +39,10 @@ class Conv2DBackpropInputUnifyMindIR : public PatternProcessPass {
   ~Conv2DBackpropInputUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr CreateDepthwiseConv2DBackpropInput(const FuncGraphPtr &graph, const CNodePtr &conv2d_backin,
+                                              const CNodePtr &transpose) const;
 };
 
 class Conv2DBackpropFilterUnifyMindIR : public PatternProcessPass {
@@ -45,6 +52,9 @@ class Conv2DBackpropFilterUnifyMindIR : public PatternProcessPass {
   ~Conv2DBackpropFilterUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr CreateDepthwiseConv2DBackpropFilter(const FuncGraphPtr &graph, const CNodePtr &conv2d_backfil) const;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origin_concat_cnode, size_t begin_index,
-                           size_t offset) {
+AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origin_concat_cnode,
+                                          size_t begin_index, size_t offset) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_concat_cnode);
   std::vector<AnfNodePtr> new_concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     new_concat_inputs.emplace_back(origin_concat_cnode->input(i));
   }
-  CNodePtr new_concat = func_graph->NewCNode(new_concat_inputs);
+  CNodePtr new_concat = NewCNode(new_concat_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_concat);
   new_concat->set_scope(origin_concat_cnode->scope());
   // Set attrs
@@ -66,7 +65,6 @@ AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origi
                                       new_concat.get());
   return new_concat;
 }
-}  // namespace
 
 const BaseRef ConcatFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
@@ -100,7 +98,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
     for (size_t i = cur_input_index; i <= origin_input_size; i++) {
       base_concat_inputs.emplace_back(new_cnode->input(i));
     }
-    CNodePtr base_concat = func_graph->NewCNode(base_concat_inputs);
+    CNodePtr base_concat = NewCNode(base_concat_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(base_concat);
     base_concat->set_scope(new_cnode->scope());
     base_concat->set_abstract(new_cnode->abstract());

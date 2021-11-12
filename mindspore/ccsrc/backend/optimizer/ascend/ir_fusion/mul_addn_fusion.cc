@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
 CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const CNodePtr &addn,
                           const size_t &lossscale_input_index) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -34,13 +33,12 @@ CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const 
   inputs.push_back(addn->input(kIndex2));
   // scalar input should be 3rd input
   inputs.push_back(mul->input(lossscale_input_index));
-  auto fusion_node = graph->NewCNode(inputs);
+  auto fusion_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(addn->scope());
   fusion_node->set_abstract(addn->abstract());
   return fusion_node;
 }
-}  // namespace
 
 const BaseRef MulAddNFusion::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();

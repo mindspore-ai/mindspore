@@ -79,7 +79,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   auto perm_vnode = CreatePermValueNode(transposed);
   std::vector<AnfNodePtr> transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeNODOpName)),
                                               transposed->input(1), perm_vnode};
-  auto transpose = kernel_graph->NewCNode(transpose_inputs);
+  auto transpose = NewCNode(transpose_inputs, kernel_graph);
   transpose->set_scope(transposed->scope());
   transpose->set_abstract(transposed->abstract());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kBatchNormRealInputNum = 3;
+}  // namespace
 
-AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) {
+AnfNodePtr SingleBatchNormFission::CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
@@ -36,7 +37,7 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
-  auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
+  auto bn_training_reduce = NewCNode(bn_training_reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
 
   // set abstract
@@ -49,8 +50,9 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   return bn_training_reduce;
 }
 
-AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNodePtr &bn,
-                                    const std::vector<AnfNodePtr> &bn_training_reduce_outputs) {
+AnfNodePtr SingleBatchNormFission::CreateBNTrainingUpdateV3(
+  const FuncGraphPtr &func_graph, const AnfNodePtr &bn,
+  const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
@@ -71,7 +73,7 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
     bn_training_reduce_outputs[kIndex1],
     bn_cnode->input(kIndex2),
     bn_cnode->input(kIndex3)};
-  auto bn_training_update_v3 = func_graph->NewCNode(bn_training_update_v3_inputs);
+  auto bn_training_update_v3 = NewCNode(bn_training_update_v3_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(bn_training_update_v3);
 
   auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn->abstract());
@@ -85,7 +87,6 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update_v3);
   return bn_training_update_v3;
 }
-}  // namespace
 
 const BaseRef SingleBatchNormFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

@@ -203,7 +203,7 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   std::vector<AnfNodePtr> avgpool_grad_vm_inputs = {NewValueNode(std::make_shared<Primitive>(kAvgPoolGradVmOpName)),
                                                     x_shape_vnode, avgpool_grad->input(3), mean_matrix_vnode,
                                                     kernel_matrix_vnode};
-  auto avgpool_grad_vm = graph->NewCNode(avgpool_grad_vm_inputs);
+  auto avgpool_grad_vm = NewCNode(avgpool_grad_vm_inputs, graph);
   MS_EXCEPTION_IF_NULL(avgpool_grad_vm);
   avgpool_grad_vm->set_scope(avgpool_grad->scope());
   avgpool_grad_vm->set_abstract(avgpool_grad->abstract());

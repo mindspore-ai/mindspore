@@ -304,7 +304,7 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
                                           pad_list, count_include_pad);
     new_inputs.push_back(multiplier);
   }
-  auto new_3d = func_graph->NewCNode(new_inputs);
+  auto new_3d = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_3d);
   new_3d->set_scope(avg_pool_3d_node->scope());
   new_3d->set_abstract(avg_pool_3d_node->abstract());

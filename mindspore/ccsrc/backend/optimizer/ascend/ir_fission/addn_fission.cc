@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-AnfNodePtr CreateNewAddn(const FuncGraphPtr &func_graph, const CNodePtr &origin_addn_cnode, size_t begin_index,
-                         size_t offset) {
+AnfNodePtr AddnFission::CreateNewAddn(const FuncGraphPtr &func_graph, const CNodePtr &origin_addn_cnode,
+                                      size_t begin_index, size_t offset) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_addn_cnode);
   std::vector<AnfNodePtr> new_addn_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAddN->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     new_addn_inputs.emplace_back(origin_addn_cnode->input(i));
   }
-  CNodePtr new_addn = func_graph->NewCNode(new_addn_inputs);
+  CNodePtr new_addn = NewCNode(new_addn_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_addn);
   new_addn->set_scope(origin_addn_cnode->scope());
   new_addn->set_abstract(origin_addn_cnode->abstract());
@@ -38,7 +37,6 @@ AnfNodePtr CreateNewAddn(const FuncGraphPtr &func_graph, const CNodePtr &origin_
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_addn);
   return new_addn;
 }
-}  // namespace
 
 const BaseRef AddnFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
@@ -68,7 +66,7 @@ const AnfNodePtr AddnFission::Process(const FuncGraphPtr &func_graph, const AnfN
     for (size_t i = cur_input_index; i <= origin_input_size; i++) {
       base_addn_inputs.emplace_back(new_cnode->input(i));
     }
-    CNodePtr base_addn = func_graph->NewCNode(base_addn_inputs);
+    CNodePtr base_addn = NewCNode(base_addn_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(base_addn);
     base_addn->set_scope(new_cnode->scope());
     base_addn->set_abstract(new_cnode->abstract());

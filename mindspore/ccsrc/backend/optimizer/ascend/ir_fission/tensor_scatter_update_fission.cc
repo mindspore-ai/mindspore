@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-CNodePtr CreateTensorMove(const FuncGraphPtr &graph, const CNodePtr &tensor_scatter_update) {
+CNodePtr TensorScatterUpdateFission::CreateTensorMove(const FuncGraphPtr &graph,
+                                                      const CNodePtr &tensor_scatter_update) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(tensor_scatter_update);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kTensorMoveOpName)),
                                     tensor_scatter_update->input(1)};
-  auto tensor_move = graph->NewCNode(inputs);
+  auto tensor_move = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(tensor_move);
   tensor_move->set_scope(tensor_scatter_update->scope());
   tensor_move->set_abstract(tensor_scatter_update->abstract());
@@ -35,20 +35,20 @@ CNodePtr CreateTensorMove(const FuncGraphPtr &graph, const CNodePtr &tensor_scat
   return tensor_move;
 }
 
-CNodePtr CreateScatterNdUpdate(const FuncGraphPtr &graph, const CNodePtr &tensor_scatter_update,
-                               const CNodePtr &tensor_move) {
+CNodePtr TensorScatterUpdateFission::CreateScatterNdUpdate(const FuncGraphPtr &graph,
+                                                           const CNodePtr &tensor_scatter_update,
+                                                           const CNodePtr &tensor_move) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(tensor_scatter_update);
   MS_EXCEPTION_IF_NULL(tensor_move);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kScatterNdUpdateOpName)), tensor_move,
                                     tensor_scatter_update->input(2), tensor_scatter_update->input(3)};
-  auto scatter_nd_update = graph->NewCNode(inputs);
+  auto scatter_nd_update = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(scatter_nd_update);
   scatter_nd_update->set_scope(tensor_scatter_update->scope());
   scatter_nd_update->set_abstract(tensor_scatter_update->abstract());
   return scatter_nd_update;
 }
-}  // namespace
 
 const BaseRef TensorScatterUpdateFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

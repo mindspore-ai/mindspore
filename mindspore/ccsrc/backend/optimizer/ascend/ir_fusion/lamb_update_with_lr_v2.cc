@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ const AnfNodePtr LambUpdateWithLrV2::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
   (void)std::transform(input_varptr_.begin(), input_varptr_.end(), std::back_inserter(inputs),
                        [&equiv](const VarPtr &in) { return utils::cast<AnfNodePtr>((*equiv)[in]); });
-  auto lamb_update_with_lr_v2 = func_graph->NewCNode(inputs);
+  auto lamb_update_with_lr_v2 = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(lamb_update_with_lr_v2);
   lamb_update_with_lr_v2->set_abstract(node->abstract());
 

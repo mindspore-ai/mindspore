@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
 
   auto prim = std::make_shared<Primitive>(kConfusionTransposeDOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[input_varptr_])};
-  auto new_node = func_graph->NewCNode(inputs);
+  auto new_node = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_abstract(node->abstract());
 
