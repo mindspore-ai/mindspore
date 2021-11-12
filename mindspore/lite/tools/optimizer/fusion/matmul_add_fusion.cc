@@ -67,13 +67,24 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
     }
     auto matmul_cnode = cnode->input(index)->cast<CNodePtr>();
     MS_ASSERT(matmul_cnode != nullptr);
+    if (IsMarkedTrainOp(matmul_cnode)) {
+      return false;
+    }
     auto bias_node = cnode->input(kInputSizeThree - index);
     if (!utils::isa<ValueNode>(bias_node) &&
         (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {
       continue;
     }
-    if (IsMarkedTrainOp(matmul_cnode)) {
+    auto abstract = bias_node->abstract();
+    MS_CHECK_TRUE_RET(abstract != nullptr, false);
+    std::vector<int64_t> bias_shape;
+    if (FetchShapeFromAbstract(abstract, &bias_shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Fetch shape from abstract failed.";
       return false;
+    }
+    // only support bias with shape size of 1.
+    if (bias_shape.size() > DIMENSION_1D) {
+      continue;
     }
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);

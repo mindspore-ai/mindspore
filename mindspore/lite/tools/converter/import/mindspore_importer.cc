@@ -22,6 +22,7 @@
 #include <regex>
 #include <queue>
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
 #include "tools/converter/import/mindir_control_flow_adjust.h"
@@ -53,6 +54,15 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
     MS_LOG(ERROR) << "MindIr adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
+  }
+  if (!flag.trainModel) {
+    auto cast_op_adjust = std::make_shared<CastOpAdjust>();
+    MS_CHECK_TRUE_MSG(cast_op_adjust != nullptr, RET_NULL_PTR, "cast_op_adjust is nullptr.");
+    if (!cast_op_adjust->Run(func_graph)) {
+      MS_LOG(ERROR) << "MindIr adjust cast operator failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
   }
   auto mindir_control_flow_adjust = std::make_shared<MindIRControlFlowAdjust>();
   MS_CHECK_TRUE_MSG(mindir_control_flow_adjust != nullptr, RET_NULL_PTR, "mindir_control_flow_adjust is nullptr.");
@@ -274,6 +284,11 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
   RemoveUnusedGraphInput(func_graph);
+  if (CommonAnfAdjust(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForAnf failed.";
+    return nullptr;
+  }
+
   auto status = GetFuncGraphOutputName(func_graph->get_return());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetFuncGraphOutputName failed.";
