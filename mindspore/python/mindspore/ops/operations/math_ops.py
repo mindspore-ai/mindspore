@@ -3473,7 +3473,6 @@ class Asinh(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-          The data type should be one of the following types: float16, float32.
 
     Outputs:
         Tensor, has the same shape and type as `x`.
@@ -3489,13 +3488,13 @@ class Asinh(Primitive):
         >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
         >>> output = asinh(x)
         >>> print(output)
-        [-2.3124385  1.1947632  1.8184465  5.298342 ]
+        [-2.3124382  1.1947632  1.8184465  5.298342 ]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Asinh"""
-
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 class Sinh(Primitive):
     r"""

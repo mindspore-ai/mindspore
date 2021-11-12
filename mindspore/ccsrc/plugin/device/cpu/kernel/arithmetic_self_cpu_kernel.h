@@ -21,15 +21,14 @@
 #include <memory>
 #include <set>
 #include <vector>
-
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
  public:
   ArithmeticSelfCpuKernelMod() = default;
@@ -164,6 +163,10 @@ MS_REG_CPU_KERNEL(Acosh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutp
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Acosh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
                   ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Asinh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Asinh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                  ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Acosh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Acosh, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
@@ -211,10 +214,6 @@ MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddO
                     IdentityCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                     IdentityCpuKernelMod, bool);
-MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                    IdentityCpuKernelMod, complex64);
-MS_REG_CPU_KERNEL_T(Identity, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                    IdentityCpuKernelMod, complex128);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -55,6 +55,7 @@ class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
   void ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void ComplexAsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -125,6 +126,22 @@ MS_REG_CPU_KERNEL_T(
   AsinhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(
+  AsinhGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EltWiseGradCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(AsinhGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddOutputAttr(kNumberTypeComplex64),
+                    EltWiseGradCpuKernelMod, complex64);
+MS_REG_CPU_KERNEL_T(AsinhGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddOutputAttr(kNumberTypeComplex128),
+                    EltWiseGradCpuKernelMod, complex128);
 MS_REG_CPU_KERNEL_T(
   AcoshGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
