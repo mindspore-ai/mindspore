@@ -108,7 +108,7 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
         memcpy(row_buffer + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(int32_t));
       }
       for (int kh = start_kh; kh < end_kh; kh++) {
-        int ih = ih_origin + conv_param->dilation_w_ * kh;
+        int ih = ih_origin + conv_param->dilation_h_ * kh;
 
         const int8_t *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
         const int16_t *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
