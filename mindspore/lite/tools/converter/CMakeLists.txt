@@ -204,7 +204,6 @@ target_link_libraries(converter_lite PRIVATE
         proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
-        mindspore::eigen
         -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
         mslite_converter_plugin
         mindspore::glog
