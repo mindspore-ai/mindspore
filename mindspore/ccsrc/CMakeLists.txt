@@ -221,7 +221,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug pybind_api utils vm profiler ps fl
+        common debug pybind_api utils vm profiler ps fl distributed
 )
 
 foreach(_comp ${SUB_COMP})

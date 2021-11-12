@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include "runtime/hardware/collective/collective_communication_lib.h"
+#include "runtime/hardware/cpu/ms_communication_group.h"
 
 namespace mindspore {
 namespace device {
@@ -37,7 +38,6 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   bool Finalize() override;
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
-  bool DestroyCommunicationGroup(const std::string &group_name) override;
 
  private:
   MsCollectiveCommLib() {}

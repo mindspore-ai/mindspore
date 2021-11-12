@@ -19,7 +19,8 @@
 
 #include <string>
 #include <vector>
-#include "runtime/hardware/communication_group.h"
+#include <memory>
+#include "runtime/hardware/collective/communication_group.h"
 
 namespace mindspore {
 namespace device {
@@ -27,13 +28,14 @@ namespace cpu {
 class MsCommunicationGroup : public CommunicationGroup {
  public:
   explicit MsCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
-      : MsCommunicationGroup(name, group_ranks, global_rank) {}
+      : CommunicationGroup(name, group_ranks, global_rank) {}
 
   ~MsCommunicationGroup() override = default;
 
-  bool Initialize(void *root_info) override;
-  bool Finalize() override;
+  bool Initialize(void *root_info) override { return true; }
+  bool Finalize() override { return true; }
 };
+using MsCommunicationGroupPtr = std::shared_ptr<MsCommunicationGroup>;
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
