@@ -184,6 +184,11 @@ void OutputActor::UpdateOutputDeviceAddress() {
                                                      device_tensor->GetPtr(), device_tensor->format())) {
         MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->DeviceType();
       }
+
+      if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {
+        // TODO(jiaorui): will be deleted after pynative mode adaptation
+        tensor->data_sync(false);
+      }
     } else {
       // Move the device ptr from device_tensor to tensor_device_address.
       tensor_device_address->set_ptr(device_tensor->GetMutablePtr());

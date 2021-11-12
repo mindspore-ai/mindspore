@@ -610,8 +610,22 @@ void SetMindRTEnable() {
   }
 
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if ((target != kGPUDevice) && (target != kCPUDevice)) {
-    return;
+  if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {
+    // exception scenario: still run original process after enable ascend mindrt
+    auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+    bool is_pynative_infer = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+    if (target == kAscendDevice && (mode == kPynativeMode || is_pynative_infer)) {
+      context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
+      return;
+    }
+
+    if ((common::GetEnv(kGraphOpRun) == "1" || common::GetEnv(kEnableMemScheduler) == "1") && target == kAscendDevice) {
+      return;
+    }
+  } else {
+    if ((target != kGPUDevice) && (target != kCPUDevice)) {
+      return;
+    }
   }
 
 #if defined(_WIN32) || defined(_WIN64)

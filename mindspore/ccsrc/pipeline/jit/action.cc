@@ -94,8 +94,26 @@ void ResetMindRTEnable(const ResourcePtr &res) {
   if (func_graph != nullptr && func_graph->manager() != nullptr) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
-    if (graph_nums == 1) {
+    // Heterogeneous scenario
+    if (graph_nums == 1 && context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
       return;
+    }
+    if (common::GetEnv("ENABLE_ASCEND_MINDRT") == "1" || common::kEnableAscendMindRT) {
+      MS_LOG(INFO) << "Enable Ascend MindRT";
+      // No control flow && control flow without while need multigraph-sink, so enable mindrt.
+      // Temporary changes: After MindRT supports control flow, the sinking mode is judged in MindRT.
+      auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+      std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      std::string backend = context_ptr->backend_policy();
+      if (!func_graph->ContainMultiTarget() && task_sink &&
+          context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+        auto graphs = manager->func_graphs();
+        bool exist_while =
+          std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+        if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
+          return;
+        }
+      }
     }
 
     MS_LOG(INFO) << "Disable mindRT in the multi graphs scenario.";
@@ -735,7 +753,6 @@ bool TaskEmitAction(const ResourcePtr &res) {
       context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
     }
   }
-
   // The graph compiling of mindRT.
   if ((backend == kMsConvert) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(res);

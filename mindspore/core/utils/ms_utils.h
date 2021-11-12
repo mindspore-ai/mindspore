@@ -29,6 +29,9 @@
 
 namespace mindspore {
 namespace common {
+// TODO(jiaorui): delete
+constexpr auto kEnableAscendMindRT = false;
+
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 const char *SafeCStr(const std::string &&str);
 
