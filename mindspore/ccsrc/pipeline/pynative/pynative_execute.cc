@@ -1450,7 +1450,7 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
     return para_node;
   }
   // Create tuple get item node for multiple output CNode
-  return CreateTupleGetItemNode(obj, obj_id);
+  return CreateTupleGetItemNode(obj_id);
 }
 
 AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string &obj_id) {
@@ -1498,13 +1498,14 @@ AnfNodePtr GradExecutor::CreateMakeTupleNode(const py::object &obj, const std::s
     if (grad_is_running_ && !bprop_grad_stack_.empty() && !bprop_grad_stack_.top().second) {
       MS_LOG(DEBUG) << "Running custom bprop, no need to do GradPynativeOp.";
     } else {
-      ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, PyObjToValue(value_outs));
+      (void)ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, PyObjToValue(value_outs));
     }
   }
   return cnode;
 }
 
-AnfNodePtr GradExecutor::CreateTupleGetItemNode(const py::object &obj, const std::string &obj_id) {
+AnfNodePtr GradExecutor::CreateTupleGetItemNode(const std::string &obj_id) {
+  // obj_id is obtained by calling the 'GetId()'
   auto graph_info = top_cell()->graph_info_map().at(curr_g());
   MS_EXCEPTION_IF_NULL(graph_info);
   if (graph_info->node_map.find(obj_id) == graph_info->node_map.end()) {
