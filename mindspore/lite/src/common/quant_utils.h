@@ -49,7 +49,7 @@ static constexpr double SCALE_THREASHOLD = 1e-38;
 
 static constexpr int kPerTensor = 1;
 
-inline int QuantMax(int bits, bool is_unsigned) {
+inline int QuantMax(int bits, bool is_unsigned = false) {
   if (!is_unsigned) {
     return (1 << static_cast<unsigned int>(bits - 1)) - 1;
   } else {
@@ -57,7 +57,7 @@ inline int QuantMax(int bits, bool is_unsigned) {
   }
 }
 
-inline int QuantMin(int bits, bool is_unsigned) {
+inline int QuantMin(int bits, bool is_unsigned = false) {
   if (!is_unsigned) {
     return -(1 << static_cast<unsigned int>(bits - 1));
   } else {
