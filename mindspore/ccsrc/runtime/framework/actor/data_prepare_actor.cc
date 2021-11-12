@@ -150,8 +150,8 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 }
 
 void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
-        graph_compiler_info_->device_contexts_, context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
+                        graph_compiler_info_->device_contexts_, context, &GetAID());
 }
 
 void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -165,8 +165,9 @@ void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 
 void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   // Allocate continuous memory in the begin of the step running.
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory, &continuous_memory_alloc_list_list_,
-        &size_list_list_, &total_size_list_, &continuous_memory_device_contexts_, context, GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
+                        &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
+                        &continuous_memory_device_contexts_, context, GetAID());
 }
 
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
@@ -176,17 +177,17 @@ void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 
 void DataPrepareActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (auto &data_source_aid : data_source_aids_) {
-    Async(data_source_aid, &DataSourceActor::FetchData, context);
+    ActorDispatcher::Send(data_source_aid, &DataSourceActor::FetchData, context);
   }
 
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &kernel_aid : no_input_kernel_aids_) {
-    Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
+    ActorDispatcher::Send(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
   }
 
   // Trigger loop count actor running when there are no data source actor and kernel actor.
   if ((data_source_aids_.size() + no_input_kernel_aids_.size() == 0) && (loop_count_aid_ != nullptr)) {
-    Async(*loop_count_aid_, &LoopCountActor::RunOpControl, source_aid, context);
+    ActorDispatcher::Send(*loop_count_aid_, &LoopCountActor::RunOpControl, source_aid, context);
   }
 }
 

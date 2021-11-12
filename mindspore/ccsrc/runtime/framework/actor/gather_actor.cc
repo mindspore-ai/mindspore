@@ -104,10 +104,10 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   // 1.Send output branch id.
   if (find(output_branch_arrows_.begin(), output_branch_arrows_.end(), switch_aid_) != output_branch_arrows_.end()) {
     int branch_id = input_branch_id_;
-    Async(switch_aid_, &SwitchActor::CollectBranchId, branch_id, context);
+    ActorDispatcher::Send(switch_aid_, &SwitchActor::CollectBranchId, branch_id, context);
   }
   if (find(output_branch_arrows_.begin(), output_branch_arrows_.end(), gather_aid_) != output_branch_arrows_.end()) {
-    Async(gather_aid_, &GatherActor::CollectBranchId, local_branch_id_, context);
+    ActorDispatcher::Send(gather_aid_, &GatherActor::CollectBranchId, local_branch_id_, context);
   }
 
   // 2.Send output result.
@@ -118,8 +118,8 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) const {
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
       if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second, false).get() ==
           input_device_tensors_[from_index]) {
-        Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
-              result_arrow->to_input_index_, context);
+        ActorDispatcher::Send(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first,
+                              backend_node.second, result_arrow->to_input_index_, context);
         break;
       }
     }
@@ -128,13 +128,13 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   // 3.Send output data.
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
+    ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data, context);
   }
 
   // 4.Send output control.
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_control_arrows_) {
-    Async(output_control, &OpActor::RunOpControl, source_aid, context);
+    ActorDispatcher::Send(output_control, &OpActor::RunOpControl, source_aid, context);
   }
 }
 

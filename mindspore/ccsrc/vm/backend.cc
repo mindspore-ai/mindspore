@@ -828,28 +828,11 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   mindspore::ScopedLongRunning long_running;
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors)) {
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, input_tensors)) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
-  }
-
-  if (graph_compiler_info.device_contexts_.empty()) {
-    MS_LOG(EXCEPTION) << "The device contexts is empty.";
-  }
-  // Sync device stream.
-  const auto &first_device_context = graph_compiler_info.device_contexts_[0];
-  MS_EXCEPTION_IF_NULL(first_device_context);
-  if (!first_device_context->SyncStream()) {
-    MS_LOG(EXCEPTION) << "Sync stream failed:" << first_device_context->device_context_key().ToString();
-  }
-  for (size_t i = 0; i < graph_compiler_info.device_contexts_.size(); ++i) {
-    const auto &device_context = graph_compiler_info.device_contexts_[i];
-    MS_EXCEPTION_IF_NULL(device_context);
-    if ((device_context != first_device_context) && (!device_context->SyncStream())) {
-      MS_LOG(EXCEPTION) << "Sync stream failed:" << device_context->device_context_key().ToString();
-    }
   }
 
   // Fetch outputs.
@@ -1068,7 +1051,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
     }
   }
 
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, {tensors_without_value_node}, *input_tensors,
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, {}, {tensors_without_value_node}, *input_tensors,
                                                   runtime::GraphExecutionStrategy::kStep)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }

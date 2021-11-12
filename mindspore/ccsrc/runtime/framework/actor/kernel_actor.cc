@@ -190,8 +190,8 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_contexts_[0], context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                          device_contexts_[0], context, GetAID());
   } else {
     AllocateMemory(memory_alloc_list_, device_contexts_[0], context, GetAID().Name());
   }
@@ -199,7 +199,8 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0], context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
+                          context);
   } else {
     FreeMemory(memory_free_list_, device_contexts_[0]);
   }
@@ -235,7 +236,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
-  Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
+                        &GetAID());
 }
 
 void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
@@ -424,28 +426,28 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   // 1.Send graph output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
+    ActorDispatcher::Send(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_,
+                          result_arrow->from_output_index_, result_arrow->to_input_index_, context);
   }
 
   // 2.Send output data.
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
+    ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data, context);
   }
 
   // 3.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+      ActorDispatcher::Send(output_control, &OpActor::RunOpControl, source_aid, context);
     }
   }
 
   // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
+                          device_contexts_[0], context);
   }
 
   // No output.

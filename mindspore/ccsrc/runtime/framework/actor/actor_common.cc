@@ -20,6 +20,8 @@
 
 namespace mindspore {
 namespace runtime {
+bool ActorDispatcher::is_multi_thread_execution_ = true;
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(OMP_thread_num);

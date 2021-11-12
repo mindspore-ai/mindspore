@@ -390,7 +390,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   if (local_branch_id_ >= 0) {
     const auto &branch_arrows = output_branch_branch_arrows_[index];
     for (const auto &branch_arrow : branch_arrows) {
-      Async(branch_arrow, &GatherActor::CollectBranchId, local_branch_id_, context);
+      ActorDispatcher::Send(branch_arrow, &GatherActor::CollectBranchId, local_branch_id_, context);
     }
   }
 
@@ -413,8 +413,8 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
         if (backend_node.first->kernel_info() != nullptr && AnfAlgo::OutputAddrExist(backend_node.first, j, false) &&
             AnfAlgo::GetMutableOutputAddr(backend_node.first, j, false).get() == input_device_tensors_[from_index]) {
           auto output_index = j;
-          Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, output_index,
-                result_arrow->to_input_index_, context);
+          ActorDispatcher::Send(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, output_index,
+                                result_arrow->to_input_index_, context);
           is_send = true;
           break;
         }
@@ -439,13 +439,13 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(data);
     data->data_ = input_device_tensors_[IntToSize(data_arrow->from_output_index_)];
-    Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
+    ActorDispatcher::Send(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
   }
 
   // 4.Send output control.
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_branch_control_arrows_[index]) {
-    Async(output_control, &OpActor::RunOpControl, source_aid, context);
+    ActorDispatcher::Send(output_control, &OpActor::RunOpControl, source_aid, context);
   }
 }
 
@@ -475,7 +475,8 @@ void SwitchActor::EraseInput(OpContext<DeviceTensor> *const context) {
 }
 
 void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensors_, device_context_, context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensors_, device_context_,
+                        context);
 }
 
 void SwitchActor::FetchInputNode(const ControlNodeParserPtr &parser) {

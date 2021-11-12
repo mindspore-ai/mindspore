@@ -85,14 +85,14 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
     }
     output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
-    Async(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
+    ActorDispatcher::Send(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
   }
 
   // 3.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+      ActorDispatcher::Send(output_control, &OpActor::RunOpControl, source_aid, context);
     }
   }
 
@@ -136,13 +136,14 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
 
 void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
-        GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0],
+                        context, GetAID());
 }
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0],
+                        context);
 }
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
@@ -194,7 +195,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
+                        &GetAID());
 }
 
 void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -205,16 +207,16 @@ void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const co
 void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context) {
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
+    ActorDispatcher::Send(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_,
+                          result_arrow->from_output_index_, result_arrow->to_input_index_, context);
   }
 }
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
-    Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
+                          &launch_info_, device_contexts_[0], context);
   }
 }
 
@@ -233,20 +235,22 @@ void HostQueueDataSourceActor::FillDataBuffer() {
 void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                          device_contexts_[0], context, GetAID());
   } else {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors, &device_contexts_, context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
+                          &device_contexts_, context, GetAID());
   }
 }
 
 void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0],
+                          context);
   } else {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeBatchMemory, &device_tensors, &device_contexts_, context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeBatchMemory, &device_tensors, &device_contexts_,
+                          context);
   }
 }
 
@@ -306,8 +310,8 @@ void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context
     if (IntToSize(result_arrow->from_output_index_) >= data_nodes_.size()) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
     }
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_nodes_[result_arrow->from_output_index_], 0,
-          result_arrow->to_input_index_, context);
+    ActorDispatcher::Send(result_arrow->to_op_id_, &OutputActor::CollectOutput,
+                          data_nodes_[result_arrow->from_output_index_], 0, result_arrow->to_input_index_, context);
   }
 }
 
