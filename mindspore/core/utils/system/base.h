@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_BASE_H_
-#define MINDSPORE_CCSRC_UTILS_SYSTEM_BASE_H_
+#ifndef MINDSPORE_CORE_UTILS_SYSTEM_BASE_H_
+#define MINDSPORE_CORE_UTILS_SYSTEM_BASE_H_
 
 #include <string>
 #include <memory>
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace system {
-
 using string = std::string;
 
 using int8 = int8_t;
@@ -131,8 +130,7 @@ inline void EncodeFixed64(char *buf, const unsigned int array_len, int64 value) 
     MS_LOG(EXCEPTION) << "Call EncodeFixed64 memcpy value failure.";
   }
 }
-
 }  // namespace system
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_BASE_H_
+#endif  // MINDSPORE_CORE_UTILS_SYSTEM_BASE_H_

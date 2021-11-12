@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_CRC32C_H_
-#define MINDSPORE_CCSRC_UTILS_SYSTEM_CRC32C_H_
+#ifndef MINDSPORE_CORE_UTILS_SYSTEM_CRC32C_H_
+#define MINDSPORE_CORE_UTILS_SYSTEM_CRC32C_H_
 
 #include <stddef.h>
 #include <cstdint>
@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace system {
-
 // Align n to (1 << m) byte boundary
 #define MEM_ALIGN(n, m) ((n + ((1 << (m)) - 1)) & ~((1 << (m)) - 1))
 
@@ -42,15 +41,14 @@ class Crc32c {
   // Calculate the crc32c value, use the 8 table method
   static uint32 MakeCrc32c(uint32 init_crc, const char *data, size_t size);
 
-  // retrun the crc32c value(need mask)
+  // return the crc32c value(need mask)
   static uint32 GetMaskCrc32cValue(const char *data, size_t n) {
     auto crc = MakeCrc32c(0, data, n);
     // Rotate right by kRightShift bits and add kMaskDelta(a constant).
     return ((crc >> kRightShift) | (crc << kLeftShift)) + kMaskDelta;
   }
 };
-
 }  // namespace system
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_CRC32C_H_
+#endif  // MINDSPORE_CORE_UTILS_SYSTEM_CRC32C_H_

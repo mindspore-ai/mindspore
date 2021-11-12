@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_FILE_SYSTEM_H_
-#define MINDSPORE_CCSRC_UTILS_SYSTEM_FILE_SYSTEM_H_
+#ifndef MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
+#define MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 
 #include <errno.h>
 #include <sys/param.h>
@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace system {
-
 class WriteFile;
 class PosixWriteFile;
 using WriteFilePtr = std::shared_ptr<WriteFile>;
@@ -143,11 +142,11 @@ class PosixWriteFile : public WriteFile {
       return true;
     }
     // check the path
-    if (nullptr == file_name_.c_str()) {
+    if (file_name_.c_str() == nullptr) {
       MS_LOG(EXCEPTION) << "The file path is null.";
     }
     char path[PATH_MAX] = {0x00};
-    if (file_name_.size() >= PATH_MAX || nullptr == realpath(file_name_.c_str(), path)) {
+    if (file_name_.size() >= PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
       MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
     }
 
@@ -247,4 +246,4 @@ class WinWriteFile : public WriteFile {
 }  // namespace system
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_FILE_SYSTEM_H_
+#endif  // MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
-#define MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
+#ifndef MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_
+#define MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_
 
 #include <string>
 
@@ -49,4 +49,4 @@ std::string GetHashFromDir(const std::string &dir);
 }  // namespace sha256
 }  // namespace system
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
+#endif  // MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_

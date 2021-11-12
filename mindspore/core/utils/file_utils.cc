@@ -16,8 +16,8 @@
 
 #include "utils/file_utils.h"
 
-#include <limits.h>
-#include <string.h>
+#include <climits>
+#include <cstring>
 #include <string>
 #include <optional>
 #include <memory>
