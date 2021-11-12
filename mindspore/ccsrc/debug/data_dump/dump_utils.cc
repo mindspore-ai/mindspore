@@ -24,6 +24,8 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "utils/utils.h"
+#include "debug/common.h"
 
 namespace mindspore {
 uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
@@ -137,13 +139,38 @@ uint64_t GetTimeStamp() {
   return timestamp;
 }
 
-std::string GetOpNameWithoutScope(const std::string &fullname_with_scope) {
-  const std::string separator("--");
+std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator) {
   std::size_t found = fullname_with_scope.rfind(separator);
   std::string op_name;
   if (found != std::string::npos) {
     op_name = fullname_with_scope.substr(found + separator.length());
   }
   return op_name;
+}
+
+void DumpToFile(const std::string &file_name, const std::string &dump_str) {
+  if (dump_str.empty()) {
+    MS_LOG(ERROR) << "Failed to dump empty tensor data.";
+    return;
+  }
+
+  auto real_path = Common::CreatePrefixPath(file_name);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "CreatePrefixPath failed.";
+    return;
+  }
+  std::string real_path_str = real_path.value();
+  ChangeFileMode(real_path_str, S_IWUSR);
+  std::ofstream file(real_path_str, std::ofstream::out | std::ofstream::trunc);
+  if (!file.is_open()) {
+    MS_LOG(EXCEPTION) << "Open file " << real_path_str << "failed: " << ErrnoToString(errno);
+  }
+  file << dump_str;
+  if (file.bad()) {
+    file.close();
+    MS_LOG(EXCEPTION) << "Dump string to file " << real_path_str << " failed: " << ErrnoToString(errno);
+  }
+  file.close();
+  ChangeFileMode(real_path_str, S_IRUSR);
 }
 }  // namespace mindspore

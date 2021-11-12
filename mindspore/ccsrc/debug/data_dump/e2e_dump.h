@@ -26,6 +26,9 @@
 #include "runtime/device/device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/dump_utils.h"
+#ifdef ENABLE_D
+#include "proto/dump_data.pb.h"
+#endif
 
 #ifndef ENABLE_DEBUGGER
 class Debugger;
@@ -59,6 +62,13 @@ class E2eDump {
 
   static bool DumpDirExists(const std::string &dump_path);
 
+#ifdef ENABLE_D
+  static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);
+
+  static void DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
+                                char *data_ptr);
+#endif
+
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
@@ -80,6 +90,13 @@ class E2eDump {
                                 bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);
 
   static void UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode);
+
+#ifdef ENABLE_D
+  static nlohmann::json ParseOverflowInfo(char *data_ptr);
+
+  template <typename T>
+  static bool ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr);
+#endif
 
   inline static unsigned int starting_graph_id = INT32_MAX;
 };

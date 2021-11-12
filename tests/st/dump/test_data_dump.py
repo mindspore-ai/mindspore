@@ -51,17 +51,12 @@ x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_async_dump():
+def run_async_dump(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump')
         dump_config_path = os.path.join(tmp_dir, 'async_dump.json')
-        generate_dump_json(dump_path, dump_config_path, 'test_async_dump')
+        generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         if os.path.isdir(dump_path):
@@ -74,6 +69,35 @@ def test_async_dump():
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
         assert len(os.listdir(dump_file_path)) == 1
         del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_async_dump():
+    """
+    Feature: async dump on Ascend
+    Description: test async dump with default file_format value
+    Expectation: dump data are generated as protobuf file format (suffix with timestamp)
+    """
+    run_async_dump("test_async_dump")
+
+
+@pytest.mark.skip(reason="wait for run package updates in Dec 01")
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_async_dump_file_format():
+    """
+    Feature: async dump on Ascend in npy format
+    Description: test async dump with file_format is configured as npy
+    Expectation: dump data are generated as npy file format
+    """
+    run_async_dump("test_async_dump_file_format")
 
 
 def run_e2e_dump():

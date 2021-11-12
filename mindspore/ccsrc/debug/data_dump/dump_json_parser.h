@@ -59,6 +59,7 @@ class DumpJsonParser {
   bool trans_flag() const { return trans_flag_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
+  bool FileFormatIsNpy() const { return file_format_ == JsonFileFormat::FORMAT_NPY; }
   bool GetIterDumpFlag() const;
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
@@ -70,6 +71,7 @@ class DumpJsonParser {
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
   const std::vector<session::KernelGraph *> &graphs() const { return graphs_; }
   enum JsonDumpMode { DUMP_ALL = 0, DUMP_KERNEL = 1, DUMP_KERNELS_WITH_FLAG = 2 };
+  enum JsonFileFormat { FORMAT_NPY = 0, FORMAT_BIN = 1 };
 
  private:
   DumpJsonParser() = default;
@@ -89,6 +91,7 @@ class DumpJsonParser {
   std::vector<std::string> cell_dump_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
+  JsonFileFormat file_format_;
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
@@ -112,6 +115,7 @@ class DumpJsonParser {
   void ParseSupportDevice(const nlohmann::json &content);
   bool ParseEnable(const nlohmann::json &content);
   void ParseOpDebugMode(const nlohmann::json &content);
+  void ParseFileFormat(const nlohmann::json &content);
 
   void JudgeDumpEnabled();
   void JsonConfigToString();

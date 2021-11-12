@@ -42,6 +42,7 @@ constexpr auto kTransFlag = "trans_flag";
 constexpr auto kStatisticDump = "statistic";
 constexpr auto kTensorDump = "tensor";
 constexpr auto kFullDump = "full";
+constexpr auto kFileFormat = "file_format";
 constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
@@ -274,6 +275,8 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseSupportDevice(*support_device);
   if (!e2e_dump_enabled_) {
     ParseOpDebugMode(*op_debug_mode);
+    ParseFileFormat(
+      *common_dump_settings);  // Pass in the whole json string to parse because file_format field is optional.
   }
 }
 
@@ -502,6 +505,23 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   const size_t max_mode = 3;
   if (op_debug_mode_ < 0 || op_debug_mode_ > max_mode) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+  }
+}
+
+void DumpJsonParser::ParseFileFormat(const nlohmann::json &content) {
+  auto iter = content.find(kFileFormat);
+  if (iter == content.end()) {
+    file_format_ = JsonFileFormat::FORMAT_BIN;
+  } else {
+    CheckJsonStringType(*iter, kFileFormat);
+    std::string file_format = *iter;
+    const std::map<std::string, JsonFileFormat> str_to_fmt_enum = {{"bin", JsonFileFormat::FORMAT_BIN},
+                                                                   {"npy", JsonFileFormat::FORMAT_NPY}};
+    if (str_to_fmt_enum.find(file_format) == str_to_fmt_enum.end()) {
+      MS_LOG(EXCEPTION) << "Dump Json Parse Failed. 'file_format' should be either 'npy' or 'bin', but got: "
+                        << file_format;
+    }
+    file_format_ = str_to_fmt_enum.at(file_format);
   }
 }
 

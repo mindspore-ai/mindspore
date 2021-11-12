@@ -118,7 +118,10 @@ def generate_dump_json(dump_path, json_file_name, test_key):
     elif test_key == "test_Ascend_async_multi_root_graph_dump":
         data = async_dump_dict_3
         data["common_dump_settings"]["path"] = dump_path
-
+    elif test_key == "test_async_dump_file_format":
+        data = async_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["file_format"] = "npy"
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")

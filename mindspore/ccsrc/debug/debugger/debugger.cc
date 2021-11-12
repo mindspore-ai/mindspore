@@ -1535,4 +1535,16 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   return debug_services_->TensorExistsInCurrent(tensor_name);
 }
 
+#ifdef ENABLE_D
+std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string &node_name) {
+  auto iter = dump_data_construct_map_.find(node_name);
+  if (iter == dump_data_construct_map_.end()) {
+    dump_data_construct_map_[node_name] = std::make_shared<DumpDataBuilder>();
+  }
+  return dump_data_construct_map_[node_name];
+}
+
+void Debugger::ClearDumpDataBuilder(const std::string &node_name) { dump_data_construct_map_.erase(node_name); }
+#endif
+
 }  // namespace mindspore

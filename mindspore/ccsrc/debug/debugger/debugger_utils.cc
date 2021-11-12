@@ -23,8 +23,12 @@
 #include "debug/debugger/debugger.h"
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
+#ifdef ENABLE_D
+#include "debug/dump_data_builder.h"
+#endif
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel.h"
+#include "debug/data_dump/e2e_dump.h"
 
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::KernelLaunchInfo;
@@ -33,8 +37,6 @@ using KernelGraph = mindspore::session::KernelGraph;
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
-static const size_t PARAMETER_OUTPUT_INDEX = 0;
-
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
   // define a vector containing real output number
   std::vector<size_t> real_outputs;
@@ -162,4 +164,52 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
   debugger->PostExecuteNode(cnode, last_kernel);
 }
+
+#ifdef ENABLE_D
+int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
+  MS_LOG(DEBUG) << "ADX DumpDataCallBack is called";
+  string file_name = dump_chunk->fileName;
+  uint32_t isLastChunk = dump_chunk->isLastChunk;
+
+  // parse chunk header
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  auto dump_data_build = debugger->LoadDumpDataBuilder(file_name);
+  if (dump_data_build == nullptr) {
+    MS_LOG(ERROR) << "Failed to load dump data builder for node " << file_name;
+    return 0;
+  }
+  if (!dump_data_build->CopyDumpChunk(dump_chunk)) {
+    return 1;
+  }
+
+  if (isLastChunk == 1) {
+    // construct dump data object
+    debugger::dump::DumpData dump_data;
+    std::vector<char> data_buf;
+    if (!dump_data_build->ConstructDumpData(&dump_data, &data_buf)) {
+      MS_LOG(ERROR) << "Failed to parse data for node " << file_name;
+      return 0;
+    }
+
+    // convert and save to files
+    auto separator = file_name.rfind("/");
+    auto path_name = file_name.substr(0, separator);
+    auto file_base_name = file_name.substr(separator + 1);
+    if (file_base_name.rfind("Opdebug.Node_OpDebug.") == 0) {
+      // save overflow data
+      E2eDump::DumpOpDebugToFile(file_name, dump_data, data_buf.data());
+    } else {
+      // save tensor data
+      auto op_type = file_base_name.substr(0, file_base_name.find("."));
+      auto file_base_name_no_scope = GetOpNameWithoutScope(file_base_name, "_");
+      E2eDump::DumpTensorToFile(path_name + "/" + op_type + "." + file_base_name_no_scope, dump_data, data_buf.data());
+    }
+
+    debugger->ClearDumpDataBuilder(file_name);
+  }
+
+  return 0;
+}
+#endif
 }  // namespace mindspore

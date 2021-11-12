@@ -19,7 +19,11 @@
 #include <string>
 #include "debug/debugger/debugger.h"
 #include "backend/kernel_compiler/kernel.h"
+#ifdef ENABLE_D
+#include "toolchain/adx_datadump_callback.h"
 
+using Adx::DumpChunk;
+#endif
 using mindspore::kernel::KernelLaunchInfo;
 
 namespace mindspore {
@@ -36,4 +40,8 @@ bool CheckReadData(const CNodePtr &cnode);
 
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
 
+#ifdef ENABLE_D
+// Callback function to dump ascend async mode
+int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size);
+#endif
 }  // namespace mindspore
