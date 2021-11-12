@@ -233,6 +233,11 @@ message NodeProto {
 
   // The full_name_with_scope of CNode
   optional string full_name = 8;
+
+  // Note: Id 9 is reserved for the source_address field of the debugger, please see debug_graph.proto
+
+  // As same as the IR file instance name field.
+  optional string instance_name = 10;
 }
 
 // Models

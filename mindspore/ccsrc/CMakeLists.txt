@@ -177,6 +177,7 @@ if(ENABLE_DUMP_PROTO)
         "utils/checkpoint.proto"
         "utils/print.proto"
         "utils/node_strategy.proto"
+        "utils/profiling_parallel.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 

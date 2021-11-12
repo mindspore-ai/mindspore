@@ -83,6 +83,8 @@ class DeviceManager {
   GroupManager group_manager() const { return gm_; }
   void set_group_manager(const GroupManager &gm) { gm_ = gm; }
 
+  std::vector<std::vector<int64_t>> stage_devices() const { return stage_devices_; }
+
   void Clear();
   std::string world_group() const { return gm_.world_group(); }
   std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info() const { return gm_.group_info(); }
