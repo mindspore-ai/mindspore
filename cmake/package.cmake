@@ -319,7 +319,6 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication
         ${CMAKE_SOURCE_DIR}/mindspore/profiler
-        ${CMAKE_SOURCE_DIR}/mindspore/explainer
         ${CMAKE_SOURCE_DIR}/mindspore/compression
         ${CMAKE_SOURCE_DIR}/mindspore/run_check
     DESTINATION ${INSTALL_PY_DIR}

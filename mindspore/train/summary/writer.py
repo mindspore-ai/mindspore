@@ -112,15 +112,6 @@ class LineageWriter(BaseWriter):
             super().write(plugin, data)
 
 
-class ExplainWriter(BaseWriter):
-    """ExplainWriter for write explain data."""
-
-    def write(self, plugin, data):
-        """Write data to file."""
-        if plugin == WriterPluginEnum.EXPLAINER.value:
-            super().write(plugin, data)
-
-
 class ExportWriter(BaseWriter):
     """ExportWriter for export data."""
 
