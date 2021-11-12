@@ -100,6 +100,7 @@ class AkgKernelJsonGenerator {
   bool CollectJson(const AnfNodePtr &anf_node);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                         const std::vector<AnfNodePtr> &output_list);
+  bool CollectFusedJsonWithSingleKernel(const CNodePtr &c_node);
 
   std::string kernel_name() const { return kernel_name_; }
   nlohmann::json kernel_json() const { return kernel_json_; }

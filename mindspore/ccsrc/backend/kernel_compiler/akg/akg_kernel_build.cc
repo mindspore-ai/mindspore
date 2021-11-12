@@ -587,16 +587,20 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
         mng = Manage(func_graph, true);
         func_graph->set_manager(mng);
       }
-      std::vector<AnfNodePtr> node_list, input_list, output_list;
       if (is_custom_node) {
-        node_list.push_back(cnode);
-        (void)input_list.insert(input_list.begin(), cnode->inputs().begin() + 1, cnode->inputs().end());
-        output_list.push_back(cnode);
+        // in this case, the cnode is a CustomOp (no matter whether graph kernel mode is enabled or not)
+        // generate the fused json for the single kernel cnode
+        if (!akg_kernel_json_generator.CollectFusedJsonWithSingleKernel(cnode)) {
+          MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
+        }
       } else {
+        // in this case, the cnode is a IsGraphKernel when graph kernel mode is enabled
+        // generate the fused json for the graph kernel subgraph
+        std::vector<AnfNodePtr> node_list, input_list, output_list;
         GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
-      }
-      if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
-        MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
+        if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
+          MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
+        }
       }
     } else {
       if (!akg_kernel_json_generator.CollectJson(anf_node)) {
