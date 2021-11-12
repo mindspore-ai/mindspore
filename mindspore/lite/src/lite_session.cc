@@ -676,6 +676,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   }
   STATUS ret = CheckTensorsInvalid(inputs_);
   if (ret != RET_OK) {
+    is_running_.store(false);
     MS_LOG(ERROR) << "CheckInputs failed.";
     return ret;
   }
@@ -834,12 +835,14 @@ LiteSession::~LiteSession() {
   this->executor_ = nullptr;
 #if GPU_OPENCL
   delete opencl_runtime_wrapper_;
+  opencl_runtime_wrapper_ = nullptr;
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
   delete this->context_;
   this->context_ = nullptr;
   delete (model_);
+  model_ = nullptr;
   is_running_.store(false);
 }
 
