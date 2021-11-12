@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/cast_impl.cuh"
+#include "src/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
 class CastTensorRT : public TensorRTOp {

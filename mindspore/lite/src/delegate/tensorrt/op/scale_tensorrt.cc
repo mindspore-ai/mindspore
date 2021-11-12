@@ -199,10 +199,15 @@ nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *n
     return nullptr;
   }
   unsqueeze_layer->setName((op_name_ + "_unsqueeze").c_str());
-  auto unsqueeze_shape = in_tensors_[0].Shape();
+  auto unsqueeze_shape = ConvertMSShape(tensorrt_in_tensors_[0].trt_tensor_->getDimensions());
   size_t unsqueeze_size = DIMENSION_4D - unsqueeze_shape.size();
   for (size_t i = 0; i < unsqueeze_size; i++) {
     unsqueeze_shape.push_back(1);
+  }
+  for (size_t i = 0; i < unsqueeze_shape.size(); i++) {
+    if (unsqueeze_shape[i] == -1) {
+      unsqueeze_shape[i] = 0;
+    }
   }
   nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(unsqueeze_shape);
   unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
@@ -216,7 +221,11 @@ nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvi
     return nullptr;
   }
   squeeze_layer->setName((op_name_ + "_squeeze").c_str());
-  nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());
+  nvinfer1::Dims squeeze_dims;
+  squeeze_dims.nbDims = out_tensors_[0].Shape().size();
+  for (int i = 0; i < squeeze_dims.nbDims; i++) {
+    squeeze_dims.d[i] = in_tensor->getDimensions().d[i] == -1 ? 0 : in_tensor->getDimensions().d[i];
+  }
   MS_LOG(DEBUG) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
   squeeze_layer->setReshapeDimensions(squeeze_dims);
   return squeeze_layer->getOutput(0);

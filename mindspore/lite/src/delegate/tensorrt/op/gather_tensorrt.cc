@@ -55,9 +55,14 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   nvinfer1::ITensor *gather_input = nullptr;
   nvinfer1::ITensor *indices_tensor = nullptr;
-  if (tensorrt_in_tensors_.size() < INPUT_SIZE2) {
-    MS_LOG(ERROR) << "invalid input size of " << op_name_;
-    return RET_ERROR;
+  if (tensorrt_in_tensors_.size() < INPUT_SIZE2 && in_tensors_.size() >= INPUT_SIZE2) {
+    int const_ms_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
+    auto const_input = ConvertConstantTensor(network, in_tensors_[const_ms_tensor_index], op_name_);
+    if (const_input == nullptr) {
+      MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
+      return RET_ERROR;
+    }
+    tensorrt_in_tensors_.push_back(ITensorHelper{const_input, Format::NHWC});
   }
 
   int indices_tensor_index = tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32 ? 0 : 1;

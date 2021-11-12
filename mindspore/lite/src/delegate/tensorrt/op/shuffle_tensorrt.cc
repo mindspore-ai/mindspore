@@ -254,6 +254,11 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   if (shape_tensor.Data() != nullptr) {
     // static shuffle layer
     nvinfer1::Dims reshape_dims = lite::ConvertCudaDims(shape_tensor.Data().get(), shape_tensor.ElementNum());
+    for (int i = 0; i < reshape_dims.nbDims; i++) {
+      if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[i] == -1) {
+        reshape_dims.d[i] = 0;
+      }
+    }
     shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
     if (tensorrt_in_tensors_.size() != INPUT_SIZE2) {
@@ -269,8 +274,13 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   nvinfer1::Dims flatten_dims;
   const std::vector<int64_t> &input_shape = in_tensors_[0].Shape();
   flatten_dims.nbDims = DIMENSION_2D;
-  flatten_dims.d[0] = input_shape[0];
+  flatten_dims.d[0] = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0] == -1
+                        ? 0
+                        : tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0];
   flatten_dims.d[1] = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
+  if (flatten_dims.d[1] <= 0) {
+    MS_LOG(ERROR) << op_name_ << "infer shape failed";
+  }
   shuffle_layer->setReshapeDimensions(flatten_dims);
   return RET_OK;
 }
