@@ -365,8 +365,6 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     CreateKernel(graph->execution_order());
     AllocateGraphMemory(NOT_NULL(graph));
     LoadModel(NOT_NULL(graph));
-    MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
-    return;
   }
   AssignOutputNopNodeDeviceAddress(graph);
   MS_LOG(INFO) << "PreprocessBeforeRunGraph success.";
@@ -381,6 +379,10 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
     }
 
     if (!opt::IsNopNode(output)) {
+      continue;
+    }
+
+    if (!AnfAlgo::IsNeedSkipNopOpAddr(output)) {
       continue;
     }
 
@@ -399,6 +401,7 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
     std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
     auto device_address = CreateDeviceAddress(const_cast<void *>(ptr), size, output_format, output_type);
+    device_address->set_is_ptr_persisted(true);
     AnfAlgo::SetOutputAddr(device_address, 0, output.get());
 
     AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);

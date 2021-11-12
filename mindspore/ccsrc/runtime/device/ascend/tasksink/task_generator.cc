@@ -212,7 +212,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
     if (!HasAbstractMonad(anf_node_ptr)) {
       size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node_ptr);
       for (size_t i = 0; i < output_num; ++i) {
-        auto it = AnfAlgo::GetOutputAddr(anf_node_ptr, i);
+        auto it = AnfAlgo::GetOutputAddr(anf_node_ptr, i, false);
         AddressPtr output = std::make_shared<Address>();
         output->addr = it->ptr_;
         output->size = it->size_;

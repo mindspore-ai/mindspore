@@ -153,6 +153,8 @@ class AscendDeviceContext : public DeviceContext {
   mutable std::set<KernelGraphPtr> memo_;
   // Using node to get it's atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
+  // Some NOP nodes have be hide in execution order, it doesn't have output device address, this function creates
+  // output device address for these nodes, and the output device address is the same with input device address.
   void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const;
   bool LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
                          const std::vector<AddressPtr> &outputs) const;

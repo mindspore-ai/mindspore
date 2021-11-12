@@ -331,7 +331,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const K
   return results;
 }
 
-std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
+std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndexInner(const AnfNodePtr &node) {
   std::vector<KernelWithIndex> ret;
   std::vector<KernelWithIndex> ret_empty;
   const PrimitiveSet expand_prims{
@@ -345,7 +345,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     auto make_tuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
-      auto make_tuple_output = GetAllOutputWithIndex(make_tuple->input(i));
+      auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i));
       (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
     }
     return ret;
@@ -355,7 +355,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto depend_node = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_node);
-    auto real_output = GetAllOutputWithIndex(depend_node->input(kRealInputIndexInDepend));
+    auto real_output = GetAllOutputWithIndexInner(depend_node->input(kRealInputIndexInDepend));
     (void)std::copy(real_output.begin(), real_output.end(), std::back_inserter(ret));
     return ret;
   }
@@ -392,7 +392,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
 
     // The MakeTuple/MakeSparse node need recurse.
     if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
-      auto output_vector = GetAllOutputWithIndex(output_with_index.first);
+      auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
       (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
       continue;
     }
@@ -412,6 +412,29 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     MS_LOG(INFO) << "Output node: " << output_with_index.first->fullname_with_scope()
                  << " with output index: " << output_with_index.second;
     ret.push_back(output_with_index);
+  }
+  return ret;
+}
+std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
+  auto ret = GetAllOutputWithIndexInner(node);
+  std::map<AnfNodePtr, size_t> value_node_index;
+
+  // Unify the output of the front and back end to the ValueTuple
+  for (auto &output_with_index : ret) {
+    auto value_node = output_with_index.first;
+    if (!value_node->isa<ValueNode>()) {
+      continue;
+    }
+    if (value_node_index.find(value_node) == value_node_index.end() ||
+        value_node_index[value_node] < output_with_index.second) {
+      value_node_index[value_node] = output_with_index.second;
+    } else {
+      value_node_index[value_node]++;
+      MS_LOG(INFO) << "Set output value node new index, value node: " << value_node->fullname_with_scope()
+                   << ", original index: " << output_with_index.second
+                   << ", new index:" << value_node_index[value_node];
+      output_with_index.second = value_node_index[value_node];
+    }
   }
   return ret;
 }
