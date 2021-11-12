@@ -23,6 +23,7 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "nnacl/matmul_parameter.h"
+#include "src/common/common.h"
 
 namespace mindspore::kernel {
 class MatmulBaseFP16CPUKernel : public InnerKernel {
@@ -54,10 +55,21 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
   void InitMatrixB(const void *src_ptr, TypeId data_type);
   void FreeResizeBufA();
   void FreeResizeBufB();
+  int NormalMatmulRun();
+  int BroadcastMatmulRun();
 
  protected:
   MatMulParameter *params_ = nullptr;
   int row_tile_ = 0;
+  bool a_broadcast_ = false;
+  bool b_broadcast_ = false;
+  int a_batch_ = 1;
+  int b_batch_ = 1;
+  int batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  int a_batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  int b_batch_sizes_[MAX_SHAPE_SIZE] = {0};
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
 
  private:
   int thread_stride_ = 0;

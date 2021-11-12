@@ -56,6 +56,8 @@ int FullconnectionFP16CPUKernel::Init() {
   row_tile_ = C12NUM;
 #endif
   params_->batch = 1;
+  a_batch_ = 1;
+  b_batch_ = 1;
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 
