@@ -121,39 +121,40 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, 
   return new_node_input;
 }
 
+AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::string &weight_name) {
+  for (auto &param : parameters) {
+    if (!ParameterIsCloned(param)) {
+      continue;
+    }
+
+    auto param_ptr = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (param_ptr->name().find(weight_name) != std::string::npos &&
+        param_ptr->name().find(ACCU_GRADS) != std::string::npos) {
+      MS_LOG(INFO) << "Find the accumulation grad node: " << param_ptr->name();
+      return param;
+    }
+  }
+  return nullptr;
+}
+
 std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operator &op, const AnfNodePtr &node,
                                           const std::string &instance_name, const std::string &weight_name) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(root->manager());
 
-  AnfNodePtr grad_accu = nullptr;
   std::string op_name = op.first;
   OperatorArgs arg_forward = op.second;
+  AnfNodePtr grad_accu = nullptr;
 
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
 
   if (grad_accumulation_step > 1 || split_stage_num > 1) {
     auto parameters = root->parameters();
-    bool find_grad_accu_node = false;
-    for (auto &param : parameters) {
-      if (!ParameterIsCloned(param)) {
-        continue;
-      }
-
-      auto param_ptr = param->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(param_ptr);
-      if (param_ptr->name().find(weight_name) != std::string::npos &&
-          param_ptr->name().find(ACCU_GRADS) != std::string::npos) {
-        find_grad_accu_node = true;
-        grad_accu = param;
-        MS_LOG(INFO) << "Find the accumulation grad node: " << param_ptr->name();
-        break;
-      }
-    }
-
-    if (!find_grad_accu_node) {
+    grad_accu = GetAccuGrad(parameters, weight_name);
+    if (!grad_accu) {
       if (op_name == MIRROR_MINI_STEP_OPERATOR) {
         op_name = MIRROR_OPERATOR;
         arg_forward.first.pop_back();
@@ -2756,7 +2757,8 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
         }
         std::vector<std::pair<int64_t, int64_t>> manual_shape;
         for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
-          manual_shape.emplace_back(std::make_pair(param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]));
+          (void)manual_shape.emplace_back(
+            std::make_pair(param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]));
         }
         manual_shape_map[param_name] = manual_shape;
       }
