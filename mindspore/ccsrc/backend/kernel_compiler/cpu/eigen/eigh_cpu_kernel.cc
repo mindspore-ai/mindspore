@@ -42,10 +42,8 @@ using MatrixSquare = Eigen::Matrix<T, Dynamic, Dynamic, RowMajor>;
 template <typename T>
 using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
 
-template <typename T, typename C>
-void EighCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
-  MS_LOG(INFO) << "init eigh cpu kernel";
-  MS_EXCEPTION_IF_NULL(kernel_node);
+template <typename T>
+void EighCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   compute_eigen_vectors = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
@@ -53,21 +51,21 @@ void EighCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   CHECK_KERNEL_INPUTS_NUM(A_shape.size(), kAMatrixDimNum, AnfAlgo::GetCNodeName(kernel_node));
 
-  if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "wrong array shape, A should be a matrix, but got [" << A_shape[kDim0] << " X "
-                      << A_shape[kDim1] << "]";
+  if (A_shape.size() != kShape2dDims || A_shape[0] != A_shape[1]) {
+    MS_LOG(EXCEPTION) << "wrong array shape, A should be a matrix, but got [" << A_shape[0] << " X " << A_shape[1]
+                      << "]";
   }
-  m_ = A_shape[kDim0];
+  m_ = A_shape[0];
 }
 
-template <typename T, typename C>
-void EighCPUKernel<T, C>::InitInputOutputSize(const CNodePtr &kernel_node) {
+template <typename T>
+void EighCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.template emplace_back(m_ * m_ * sizeof(T));
 }
 
-template <typename T, typename C>
-bool SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output, Map<MatrixSquare<C>> *outputv,
+template <typename T>
+bool SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
                             bool compute_eigen_vectors) {
   Eigen::SelfAdjointEigenSolver<MatrixSquare<T>> solver(A);
   output->noalias() = solver.eigenvalues();
@@ -77,8 +75,8 @@ bool SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> 
   return true;
 }
 
-template <typename T, typename C>
-bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output, Map<MatrixSquare<C>> *outputv,
+template <typename T>
+bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
                         bool compute_eigen_vectors) {
   Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(A);
   output->noalias() = solver.eigenvalues();
@@ -88,21 +86,21 @@ bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *out
   return true;
 }
 
-template <typename T, typename C>
-bool EighCPUKernel<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+template <typename T>
+bool EighCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                              const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
   // is the Matrix a symmetric matrix(0, all, general matxi, -1 lower triangle, 1 upper triangle)
   auto symmetric_type = reinterpret_cast<bool *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<C *>(outputs[0]->addr);
-  auto output_v_addr = reinterpret_cast<C *>(outputs[1]->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_v_addr = reinterpret_cast<T *>(outputs[1]->addr);
   Map<MatrixSquare<T>> A(A_addr, m_, m_);
   Map<MatrixSquare<T>> A_(A_addr, m_, m_);
-  Map<MatrixSquare<C>> output(output_addr, m_, 1);
-  Map<MatrixSquare<C>> outputv(output_v_addr, m_, m_);
+  Map<MatrixSquare<T>> output(output_addr, m_, 1);
+  Map<MatrixSquare<T>> outputv(output_v_addr, m_, m_);
   // selfadjoint matrix
   if (*symmetric_type) {
     A_ = A.template selfadjointView<Lower>();

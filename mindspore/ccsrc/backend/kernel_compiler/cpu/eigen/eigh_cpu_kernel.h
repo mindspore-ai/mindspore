@@ -27,13 +27,12 @@ namespace kernel {
 
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
-
 /**
  * this is for Symmetric matrix eigenvalues & eigenvectors, can decompress the lower/upper triangle matrix
  * @tparam T , input Type
  * @tparam C , output Type, complex
  */
-template <typename T, typename C>
+template <typename T>
 class EighCPUKernel : public CPUKernel {
  public:
   EighCPUKernel() = default;
@@ -51,35 +50,35 @@ class EighCPUKernel : public CPUKernel {
   TypeId dtype_{kNumberTypeFloat32};
 };
 
-MS_REG_CPU_KERNEL_T_S(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeComplex64)
-                        .AddOutputAttr(kNumberTypeComplex64),
-                      EighCPUKernel, float, float_complex);
-MS_REG_CPU_KERNEL_T_S(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeComplex128)
-                        .AddOutputAttr(kNumberTypeComplex128),
-                      EighCPUKernel, double, double_complex);
+MS_REG_CPU_KERNEL_T(Eigh,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddOutputAttr(kNumberTypeFloat32)
+                      .AddOutputAttr(kNumberTypeFloat32),
+                    EighCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Eigh,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat64)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddOutputAttr(kNumberTypeFloat64)
+                      .AddOutputAttr(kNumberTypeFloat64),
+                    EighCPUKernel, double);
 
-MS_REG_CPU_KERNEL_T_S(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeComplex64)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeComplex64)
-                        .AddOutputAttr(kNumberTypeComplex64),
-                      EighCPUKernel, float_complex, float_complex);
-MS_REG_CPU_KERNEL_T_S(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeComplex128)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeComplex128)
-                        .AddOutputAttr(kNumberTypeComplex128),
-                      EighCPUKernel, double_complex, double_complex);
+MS_REG_CPU_KERNEL_T(Eigh,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddOutputAttr(kNumberTypeComplex64)
+                      .AddOutputAttr(kNumberTypeComplex64),
+                    EighCPUKernel, float_complex);
+MS_REG_CPU_KERNEL_T(Eigh,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddOutputAttr(kNumberTypeComplex128)
+                      .AddOutputAttr(kNumberTypeComplex128),
+                    EighCPUKernel, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 
