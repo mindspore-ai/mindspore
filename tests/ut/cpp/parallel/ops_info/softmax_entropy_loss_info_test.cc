@@ -67,7 +67,7 @@ TEST_F(TestSoftmaxLoss, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   Shape dev_matrix_shape = loss->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 1};
@@ -78,7 +78,7 @@ TEST_F(TestSoftmaxLoss, InferSliceShape1) {
   Strategys str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = loss->inputs_tensor_info();
   std::vector<TensorInfo> outputs = loss->outputs_tensor_info();
 
@@ -107,7 +107,7 @@ TEST_F(TestSoftmaxLoss, GetTensorLayout1) {
   Strategys str = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = loss->inputs_tensor_info();
   std::vector<TensorInfo> outputs = loss->outputs_tensor_info();
 
@@ -136,7 +136,7 @@ TEST_F(TestSoftmaxLoss, GetForwardOp1) {
   Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   OperatorVector forward_op = loss->forward_op();
   size_t size = forward_op.size();
 
@@ -147,7 +147,7 @@ TEST_F(TestSoftmaxLoss, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 8, 1}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   MirrorOps mirror_ops = loss->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -159,7 +159,7 @@ TEST_F(TestSoftmaxLoss, GetVirtualDivOPs1) {
   Strategys inputs = {{1, 4, 8, 1}, {1, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  loss->Init(strategy);
+  loss->Init(strategy, nullptr);
   OperatorVector virtual_div_op = loss->virtual_div_op();
 
   OperatorArgs operator_args = virtual_div_op.at(0).second;
@@ -179,7 +179,7 @@ TEST_F(TestSoftmaxLoss, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = loss->Init(strategy);
+  Status ret = loss->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -188,7 +188,7 @@ TEST_F(TestSoftmaxLoss, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = loss->Init(strategy);
+  Status ret = loss->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 

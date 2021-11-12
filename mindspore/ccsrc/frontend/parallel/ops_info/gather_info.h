@@ -40,8 +40,8 @@ class GatherInfo : public OperatorInfo {
         slice_size_(0),
         replace_op_name_(replace_op_name) {}
   ~GatherInfo() override = default;
-  Status Init(const StrategyPtr &strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy) override;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;

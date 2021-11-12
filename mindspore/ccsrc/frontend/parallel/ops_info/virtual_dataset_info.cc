@@ -126,20 +126,20 @@ Status VirtualDatasetInfo::InferTensorMap() {
 
 Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
-Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
+Status VirtualDatasetInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   repeated_num_in_dev_matrix_right_ = false;
   if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
     repeated_num_in_dev_matrix_right_ = true;
   }
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+  if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
   }
   return SUCCESS;
 }
 
-Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
+Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }

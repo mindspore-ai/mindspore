@@ -727,8 +727,8 @@ Status OperatorInfo::InferSliceShape(const Strategys &inputs_strategy, const Str
   return SUCCESS;
 }
 
-Status OperatorInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+Status OperatorInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
   }
@@ -737,8 +737,8 @@ Status OperatorInfo::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status OperatorInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
+Status OperatorInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
@@ -747,9 +747,10 @@ Status OperatorInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-// method0: auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
-Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strategy) {
-  if (strategy == nullptr) {
+// auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
+Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
+                                                        const StrategyPtr &out_strategy) {
+  if (in_strategy == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null.";
     return FAILED;
   }
@@ -760,7 +761,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
   }
 
   // must be after InferAttrs()
-  if (CheckStrategy(strategy) != SUCCESS) {
+  if (CheckStrategy(in_strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": CheckStrategy failed.";
     } else {
@@ -768,12 +769,17 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
     }
     return FAILED;
   }
+  strategy_ = in_strategy;
+
+  if (out_strategy && CheckOutputStrategy(out_strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": The output strategy is invalid";
+    return FAILED;
+  }
+  out_strategy_ = out_strategy;
 
   // need to clear queues before Init(),
   // because Init() may be called multiple times by cost model
   ResetQueueMember();
-
-  strategy_ = strategy;
 
   if (InferDevMatrixShape() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
@@ -807,13 +813,13 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
   return SUCCESS;
 }
 
-Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &strategy) {
-  if (strategy == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null.";
+Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (in_strategy == nullptr) {
+    MS_LOG(ERROR) << name_ << ": The input strategy is null.";
     return FAILED;
   }
 
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
+  if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     return FAILED;
   }
 
@@ -1330,7 +1336,7 @@ Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_sh
 }
 
 Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
-  if (InitForCostModel(strategy) == FAILED) {
+  if (InitForCostModel(strategy, nullptr) == FAILED) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Initialization under the strategy failed.";
     } else {

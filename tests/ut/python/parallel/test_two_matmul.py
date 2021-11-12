@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -127,13 +127,17 @@ def test_two_matmul_repeated_calculation2():
     compile_net(net, x, y, b)
 
 
-def test_matmul_forward_reduce_scatter():
+def test_matmul_output_strategy_reduce_scatter():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is false, set output strategy and use reduce scatter
+    Expectation: compile success
+    """
     class Net(nn.Cell):
-        def __init__(self, strategy1, strategy2):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
-            self.matmul = P.MatMul().shard(strategy1)
-            self.matmul.add_prim_attr("forward_reduce_scatter", True)
-            self.mul = P.Mul().shard(strategy2)
+            self.matmul = P.MatMul().shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -141,9 +145,10 @@ def test_matmul_forward_reduce_scatter():
             return out
 
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (4, 2))
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((4, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -151,13 +156,17 @@ def test_matmul_forward_reduce_scatter():
     compile_net(net, x, y, b)
 
 
-def test_matmul_forward_reduce_scatter_transpose():
+def test_matmul_output_strategy_reduce_scatter_transpose():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is true, set output strategy and use reduce scatter
+    Expectation: compile success
+    """
     class Net(nn.Cell):
-        def __init__(self, strategy1, strategy2):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
-            self.matmul = P.MatMul(transpose_b=True).shard(strategy1)
-            self.matmul.add_prim_attr("forward_reduce_scatter", True)
-            self.mul = P.Mul().shard(strategy2)
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -165,9 +174,184 @@ def test_matmul_forward_reduce_scatter_transpose():
             return out
 
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((2, 4), (2, 4))
-    strategy2 = ((8, 2), (8, 2))
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    matmul_in_strategy = ((2, 4), (2, 4))
+    matmul_out_strategy = ((8, 2),)
+    mul_strategy = ((8, 2), (8, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_all_reduce():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is false, set output strategy and use all reduce
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul().shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_all_reduce_transpose():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is true, set output strategy and use all reduce
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_reduce_scatter_repeat_calc():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is false, set output strategy use reduce scatter and repeated calculation
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul().shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((4, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_reduce_scatter_transpose_repeat_calc():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is true, set output strategy use reduce scatter and repeated calculation
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    matmul_in_strategy = ((2, 4), (2, 4))
+    matmul_out_strategy = ((8, 2),)
+    mul_strategy = ((8, 2), (8, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_all_reduce_repeat_calc():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is false, set output strategy use all reduce and repeated calculation
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul().shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_output_strategy_all_reduce_transpose_repeat_calc():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is true, set output strategy use all reduce and repeated calculation
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)

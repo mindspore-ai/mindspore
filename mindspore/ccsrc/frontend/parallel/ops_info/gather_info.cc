@@ -851,8 +851,8 @@ Status GatherInfo::ComputeReplaceOp() {
   return SUCCESS;
 }
 
-Status GatherInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
   }
@@ -864,8 +864,8 @@ Status GatherInfo::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
+Status GatherInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
     } else {

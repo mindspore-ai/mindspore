@@ -68,7 +68,7 @@ TEST_F(TestTmpIdentityInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  identity_ptr->Init(strategy);
+  identity_ptr->Init(strategy, nullptr);
   Shape dev_matrix_shape = identity_ptr->dev_matrix_shape();
 
   Shape expect = {2, 4, 8, 16};
@@ -79,7 +79,7 @@ TEST_F(TestTmpIdentityInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  identity_ptr->Init(strategy);
+  identity_ptr->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = identity_ptr->inputs_tensor_info();
   std::vector<TensorInfo> outputs = identity_ptr->outputs_tensor_info();
 
@@ -100,7 +100,7 @@ TEST_F(TestTmpIdentityInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  identity_ptr->Init(strategy);
+  identity_ptr->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = identity_ptr->inputs_tensor_info();
   std::vector<TensorInfo> outputs = identity_ptr->outputs_tensor_info();
 
@@ -122,7 +122,7 @@ TEST_F(TestTmpIdentityInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = identity_ptr->Init(strategy);
+  Status ret = identity_ptr->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -131,7 +131,7 @@ TEST_F(TestTmpIdentityInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = identity_ptr->Init(strategy);
+  Status ret = identity_ptr->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -142,7 +142,7 @@ TEST_F(TestTmpIdentityInfo, test_generate_strategies) {
     StrategyPtr sp = swc->strategy_ptr;
     Cost cost = *(swc->cost_list[0]);
 
-    identity_ptr->Init(sp);
+    identity_ptr->Init(sp, nullptr);
     std::vector<TensorInfo> inputs_info = identity_ptr->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = identity_ptr->outputs_tensor_info();
     ASSERT_DOUBLE_EQ(identity_ptr->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),

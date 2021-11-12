@@ -66,7 +66,7 @@ TEST_F(TestTanhInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tanh->Init(strategy);
+  tanh->Init(strategy, nullptr);
   Shape dev_matrix_shape = tanh->dev_matrix_shape();
 
   Shape expect = {2, 4, 1, 16};
@@ -77,7 +77,7 @@ TEST_F(TestTanhInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  tanh->Init(strategy);
+  tanh->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = tanh->inputs_tensor_info();
   std::vector<TensorInfo> outputs = tanh->outputs_tensor_info();
 
@@ -98,7 +98,7 @@ TEST_F(TestTanhInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  tanh->Init(strategy);
+  tanh->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = tanh->inputs_tensor_info();
   std::vector<TensorInfo> outputs = tanh->outputs_tensor_info();
 
@@ -119,7 +119,7 @@ TEST_F(TestTanhInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tanh->Init(strategy);
+  tanh->Init(strategy, nullptr);
   OperatorVector forward_op = tanh->forward_op();
   size_t size = forward_op.size();
 
@@ -130,7 +130,7 @@ TEST_F(TestTanhInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  tanh->Init(strategy);
+  tanh->Init(strategy, nullptr);
   MirrorOps mirror_ops = tanh->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -143,7 +143,7 @@ TEST_F(TestTanhInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tanh->Init(strategy);
+  Status ret = tanh->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -152,7 +152,7 @@ TEST_F(TestTanhInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tanh->Init(strategy);
+  Status ret = tanh->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -161,7 +161,7 @@ TEST_F(TestTanhInfo, CheckStrategy3) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = tanh->Init(strategy);
+  Status ret = tanh->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
 }
 

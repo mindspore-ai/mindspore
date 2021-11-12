@@ -67,7 +67,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
   Strategys inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
@@ -79,7 +79,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
   Strategys inputs = {{4, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
@@ -91,7 +91,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
   Strategys inputs = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
@@ -103,7 +103,7 @@ TEST_F(TestOneHotInfo, InferTensorMap2) {
   Strategys str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info->outputs_tensor_info();
@@ -125,7 +125,7 @@ TEST_F(TestOneHotInfo, InferSliceShape1) {
   Strategys str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info->outputs_tensor_info();
@@ -147,7 +147,7 @@ TEST_F(TestOneHotInfo, InferSliceShape2) {
   Strategys str = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info->outputs_tensor_info();
@@ -169,7 +169,7 @@ TEST_F(TestOneHotInfo, InferSliceShape3) {
   Strategys str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   std::vector<TensorInfo> inputs = onehot_info->inputs_tensor_info();
   std::vector<TensorInfo> outputs = onehot_info->outputs_tensor_info();
@@ -191,7 +191,7 @@ TEST_F(TestOneHotInfo, GetMirrorOPs1) {
   Strategys inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status status = onehot_info->Init(strategy);
+  Status status = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(status, SUCCESS);
   MirrorOps mirror_ops = onehot_info->mirror_ops();
 
@@ -202,7 +202,7 @@ TEST_F(TestOneHotInfo, CheckStrategy1) {
   Strategys inputs = {{16}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = onehot_info->Init(strategy);
+  Status ret = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 }  // namespace parallel

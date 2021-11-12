@@ -306,7 +306,7 @@ Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const l
   return Status::SUCCESS;
 }
 
-Status ReshapeInfo::Init(const StrategyPtr &strategy) {
+Status ReshapeInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   auto reshape_skip_redis_iter = attrs_.find(SKIP_REDISTRIBUTION);
   if (reshape_skip_redis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(reshape_skip_redis_iter->second);
@@ -319,8 +319,8 @@ Status ReshapeInfo::Init(const StrategyPtr &strategy) {
 
   ResetQueueMember();
   device_number();
-  if (strategy) {
-    if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+  if (in_strategy) {
+    if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": Init failed.";
       return FAILED;
     }
@@ -463,7 +463,7 @@ Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<Stra
       InferTensorInfoByLayout();
       SetCostForReshape(reshape_stra);
     } else if (next_stra_costs.empty()) {
-      if (Init(nullptr) == FAILED) {
+      if (Init(nullptr, nullptr) == FAILED) {
         MS_LOG(ERROR) << "Failure:operator reshape init failed";
         return FAILED;
       }

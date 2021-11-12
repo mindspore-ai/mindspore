@@ -67,7 +67,7 @@ TEST_F(TestL2NormalizeInfo, InferDevMatrixShape1) {
   Strategys inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   Shape dev_matrix_shape = norm->dev_matrix_shape();
 
   Shape expect = {4, 1, 8};
@@ -78,7 +78,7 @@ TEST_F(TestL2NormalizeInfo, InferSliceShape1) {
   Strategys str = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = norm->inputs_tensor_info();
   std::vector<TensorInfo> outputs = norm->outputs_tensor_info();
 
@@ -99,7 +99,7 @@ TEST_F(TestL2NormalizeInfo, GetTensorLayout1) {
   Strategys str = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = norm->inputs_tensor_info();
   std::vector<TensorInfo> outputs = norm->outputs_tensor_info();
 
@@ -120,7 +120,7 @@ TEST_F(TestL2NormalizeInfo, GetForwardOp1) {
   Strategys inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   OperatorVector forward_op = norm->forward_op();
   size_t size = forward_op.size();
 
@@ -131,7 +131,7 @@ TEST_F(TestL2NormalizeInfo, GetMirrorOPs1) {
   Strategys inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   MirrorOps mirror_ops = norm->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -143,7 +143,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy1) {
   Strategys inputs = {{4, 1, 8}, {4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = norm->Init(strategy);
+  Status ret = norm->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -151,7 +151,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy2) {
   Strategys inputs = {{4, 2, 3}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = norm->Init(strategy);
+  Status ret = norm->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -159,7 +159,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy3) {
   Strategys inputs = {{4, 2, 3, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = norm->Init(strategy);
+  Status ret = norm->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -167,7 +167,7 @@ TEST_F(TestL2NormalizeInfo, CheckStrategy4) {
   Strategys inputs = {{4, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = norm->Init(strategy);
+  Status ret = norm->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
 }
 
@@ -175,7 +175,7 @@ TEST_F(TestL2NormalizeInfo, mirror_ops) {
   Strategys inputs = {{2, 1, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  norm->Init(strategy);
+  norm->Init(strategy, nullptr);
   MirrorOps mirror_ops = norm->mirror_ops();
   OperatorVector mirror_op = mirror_ops.at(0);
 

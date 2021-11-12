@@ -81,7 +81,7 @@ TEST_F(TestActivation, test_activation_strategies) {
     ASSERT_NE(sp, nullptr);
     Cost cost = *(swc->cost_list[0]);
 
-    act_ptr_->InitForCostModel(sp);
+    act_ptr_->InitForCostModel(sp, nullptr);
     std::vector<TensorInfo> inputs_info = act_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = act_ptr_->outputs_tensor_info();
     ASSERT_DOUBLE_EQ(act_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
@@ -106,7 +106,7 @@ TEST_F(TestActivation, test_softmax_strategies) {
     Dimensions input0_stra = stra[0];
     ASSERT_GT(input0_stra.size(), 2);
     ASSERT_EQ(input0_stra[2], 1);
-    soft_ptr_->InitForCostModel(sp);
+    soft_ptr_->InitForCostModel(sp, nullptr);
     std::vector<TensorInfo> inputs_info = soft_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = soft_ptr_->outputs_tensor_info();
     ASSERT_DOUBLE_EQ(soft_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),

@@ -37,8 +37,6 @@ class MatMulBase : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>()) {}
   ~MatMulBase() override = default;
 
-  Status Init(const StrategyPtr &strategy) override;
-
   // Generate all strategies and the corresponding cost for this MatMul operator
   Status GenerateStrategies(int64_t stage_id) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
@@ -75,6 +73,7 @@ class MatMul : public MatMulBase {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
 };
 
 class MatMulInfo : public MatMul {

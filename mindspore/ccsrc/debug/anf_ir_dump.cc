@@ -300,14 +300,22 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
     return;
   }
 
-  auto strategy = operator_info->strategy();
-  if (strategy == nullptr) {
+  auto in_strategy = operator_info->strategy();
+  if (in_strategy == nullptr) {
     return;
   }
 
-  ValuePtr temp = MakeValue(strategy->GetInputDim());
-  gsub->buffer << " { strategy: ";
-  gsub->buffer << temp->ToString();
+  ValuePtr in_tmp = MakeValue(in_strategy->GetInputDim());
+  gsub->buffer << " { in_strategy: ";
+  gsub->buffer << in_tmp->ToString();
+
+  auto out_strategy = operator_info->out_strategy();
+  if (out_strategy) {
+    ValuePtr out_tmp = MakeValue(out_strategy->GetInputDim());
+    gsub->buffer << ", out_strategy: ";
+    gsub->buffer << out_tmp->ToString();
+  }
+
   gsub->buffer << " }";
 }
 

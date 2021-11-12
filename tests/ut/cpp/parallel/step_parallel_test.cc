@@ -357,7 +357,7 @@ TEST_F(TestStepParallel, OperatorInstance) {
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
   TOTAL_OPS = 0;
   OperatorInfoPtr matmul_info = OperatorInstance(prim, attrs, shape);
-  matmul_info->Init(strategyPtr);
+  matmul_info->Init(strategyPtr, nullptr);
   std::string name_expect = "MatMulInfo00";
   std::string name_test = matmul_info->name();
   ASSERT_EQ(name_expect, name_test);
@@ -511,7 +511,7 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   Shapes outputs_shape = std::vector<Shape>{{64, 64}};
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
   OperatorInfoPtr matmul_info = OperatorInstance(prim, attrs, shape);
-  matmul_info->Init(strategyPtr);
+  matmul_info->Init(strategyPtr, nullptr);
   node->set_user_data<OperatorInfo>(matmul_info);
   OperatorInfoPtr distribute_operator_pre = node->user_data<OperatorInfo>();
   TensorLayout tensorlayout_e;

@@ -64,7 +64,7 @@ void TestVirtualDatasetInfo::SetUp() {
 TEST_F(TestVirtualDatasetInfo, InferDevMatrixShape1) {
   Strategys inputs = {{16, 1}, {16, 1}, {16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
-  virtual_dataset->Init(strategy);
+  virtual_dataset->Init(strategy, nullptr);
   Shape dev_matrix_shape = virtual_dataset->dev_matrix_shape();
 
   Shape expect = {16, 1};
@@ -75,7 +75,7 @@ TEST_F(TestVirtualDatasetInfo, GetForwardOp1) {
   Strategys inputs = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  virtual_dataset->Init(strategy);
+  virtual_dataset->Init(strategy, nullptr);
   OperatorVector forward_op = virtual_dataset->forward_op();
   size_t size = forward_op.size();
 
@@ -86,7 +86,7 @@ TEST_F(TestVirtualDatasetInfo, GetMirrorOPs1) {
   Strategys inputs = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  virtual_dataset->Init(strategy);
+  virtual_dataset->Init(strategy, nullptr);
   MirrorOps mirror_ops = virtual_dataset->mirror_ops();
 
   size_t size = mirror_ops.size();

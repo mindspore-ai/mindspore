@@ -67,7 +67,7 @@ TEST_F(TestLogSoftmaxInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   Shape dev_matrix_shape = log_softmax->dev_matrix_shape();
 
   Shape expect = {2, 4, 1, 16};
@@ -78,7 +78,7 @@ TEST_F(TestLogSoftmaxInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = log_softmax->inputs_tensor_info();
   std::vector<TensorInfo> outputs = log_softmax->outputs_tensor_info();
 
@@ -99,7 +99,7 @@ TEST_F(TestLogSoftmaxInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   std::vector<TensorInfo> inputs = log_softmax->inputs_tensor_info();
   std::vector<TensorInfo> outputs = log_softmax->outputs_tensor_info();
 
@@ -120,7 +120,7 @@ TEST_F(TestLogSoftmaxInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   OperatorVector forward_op = log_softmax->forward_op();
   size_t size = forward_op.size();
 
@@ -131,7 +131,7 @@ TEST_F(TestLogSoftmaxInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   MirrorOps mirror_ops = log_softmax->mirror_ops();
 
   size_t size = mirror_ops.size();
@@ -144,7 +144,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy1) {
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = log_softmax->Init(strategy);
+  Status ret = log_softmax->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -153,7 +153,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy2) {
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = log_softmax->Init(strategy);
+  Status ret = log_softmax->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -162,7 +162,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy3) {
   Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  Status ret = log_softmax->Init(strategy);
+  Status ret = log_softmax->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -170,7 +170,7 @@ TEST_F(TestLogSoftmaxInfo, GetDeviceList1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
-  log_softmax->Init(strategy);
+  log_softmax->Init(strategy, nullptr);
   RankList dev_list = log_softmax->stage_device_list();
   ASSERT_EQ(dev_list.size(), 128);
 }
