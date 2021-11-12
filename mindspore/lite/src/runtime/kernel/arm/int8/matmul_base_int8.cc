@@ -131,12 +131,20 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
   return RET_OK;
 }
 
-void MatmulBaseInt8CPUKernel::InitQuantParam() {
+int MatmulBaseInt8CPUKernel::InitQuantParam() {
   auto in_quant_params = in_tensors_.at(0)->quant_params();
+  if (in_quant_params.size() < 1) {
+    MS_LOG(ERROR) << "invalid in quant param";
+    return RET_ERROR;
+  }
   quant_param_->input_.zp_ = in_quant_params.front().zeroPoint;
   quant_param_->input_.scale_ = in_quant_params.front().scale;
 
   auto out_quant_params = out_tensors_.at(0)->quant_params();
+  if (out_quant_params.size() < 1) {
+    MS_LOG(ERROR) << "invalid out quant param";
+    return RET_ERROR;
+  }
   quant_param_->output_.zp_ = out_quant_params.front().zeroPoint;
   quant_param_->output_.scale_ = out_quant_params.front().scale;
 
@@ -159,6 +167,7 @@ void MatmulBaseInt8CPUKernel::InitQuantParam() {
   CalculateActivationRangeQuantized(param_->act_type_ == ActType_Relu, param_->act_type_ == ActType_Relu6,
                                     quant_param_->output_.zp_, quant_param_->output_.scale_,
                                     &quant_param_->out_act_min_, &quant_param_->out_act_max_);
+  return RET_OK;
 }
 
 void MatmulBaseInt8CPUKernel::InitParameter() {
@@ -286,7 +295,11 @@ int MatmulBaseInt8CPUKernel::Init() {
     return ret;
   }
 
-  InitQuantParam();
+  ret = InitQuantParam();
+  if (ret != RET_OK) {
+    FreeQuantParam();
+    return ret;
+  }
 
   ret = InitBias();
   if (ret != RET_OK) {

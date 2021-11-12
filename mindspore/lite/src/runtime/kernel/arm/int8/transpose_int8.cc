@@ -62,6 +62,13 @@ int TransposeInt8CPUKernel::ReSize() {
     transpose_param_->perm_[i] = perm_data[i];
   }
 
+  for (int i = 0; i < transpose_param_->num_axes_; i++) {
+    if (transpose_param_->perm_[i] < 0 || transpose_param_->perm_[i] >= transpose_param_->num_axes_) {
+      MS_LOG(ERROR) << "Check perm failed.";
+      return RET_ERROR;
+    }
+  }
+
   transpose_param_->strides_[transpose_param_->num_axes_ - 1] = 1;
   transpose_param_->out_strides_[transpose_param_->num_axes_ - 1] = 1;
   for (int i = transpose_param_->num_axes_ - 2; i >= 0; i--) {
@@ -84,18 +91,20 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
 void TransposeInt8CPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor,
                                                   const TransposeParameter *param) {
   auto out_shape = out_tensor->shape();
-  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[0] == 0 && param->perm_[1] == 2 &&
-      param->perm_[2] == 3 && param->perm_[3] == 1) {
-    nhnc_param_[0] = out_shape[0];
-    nhnc_param_[1] = out_shape[1] * out_shape[2];
-    nhnc_param_[2] = out_shape[3];
+  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[FIRST_INPUT] == FIRST_INPUT &&
+      param->perm_[SECOND_INPUT] == THIRD_INPUT && param->perm_[THIRD_INPUT] == FOURTH_INPUT &&
+      param->perm_[FOURTH_INPUT] == SECOND_INPUT) {
+    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
+    nhnc_param_[SECOND_INPUT] = out_shape[SECOND_INPUT] * out_shape[THIRD_INPUT];
+    nhnc_param_[THIRD_INPUT] = out_shape[FOURTH_INPUT];
     NHNCTransposeFunc_ = PackNCHWToNHWCInt8;
   }
-  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[0] == 0 && param->perm_[1] == 3 &&
-      param->perm_[2] == 1 && param->perm_[3] == 2) {
-    nhnc_param_[0] = out_shape[0];
-    nhnc_param_[1] = out_shape[2] * out_shape[3];
-    nhnc_param_[2] = out_shape[1];
+  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[FIRST_INPUT] == FIRST_INPUT &&
+      param->perm_[SECOND_INPUT] == FOURTH_INPUT && param->perm_[THIRD_INPUT] == SECOND_INPUT &&
+      param->perm_[FOURTH_INPUT] == THIRD_INPUT) {
+    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
+    nhnc_param_[SECOND_INPUT] = out_shape[THIRD_INPUT] * out_shape[FOURTH_INPUT];
+    nhnc_param_[THIRD_INPUT] = out_shape[SECOND_INPUT];
     NHNCTransposeFunc_ = PackNHWCToNCHWInt8;
   }
 }
@@ -113,7 +122,8 @@ int TransposeInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(out_ptr_);
   GetNHNCTransposeFunc(in_tensor, out_tensor, transpose_param_);
   if (NHNCTransposeFunc_ != nullptr) {
-    NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2]);
+    NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[FIRST_INPUT], nhnc_param_[SECOND_INPUT],
+                       nhnc_param_[THIRD_INPUT]);
     return RET_OK;
   }
   if (in_dims.size() > kMaxShapeSize) {
