@@ -18,7 +18,12 @@
 """The names of functional part are summarized here."""
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.common import ms_function
+from mindspore.common import Tensor
+from mindspore.nn.grad.cell_grad import _JvpInner
+from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.ops import _constants
+from mindspore.ops.primitive import constexpr
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
@@ -169,6 +174,114 @@ def grad(fn, grad_position=0):
         Function, returns the gradient function for the input function or cell.
     """
     return grad_by_position(fn, None, grad_position)
+
+
+def jvp(fn, inputs, v):
+    """
+    Compute the jacobian-vector-product of the given network.
+
+    Args:
+        fn (Function or Cell): The function or net that takes Tensor inputs and returns a tensor or tuple of Tensors.
+        inputs (Tensor or tuple or list): The inputs to `fn`.
+        v (Tensor or tuple or list): The shape and type of v should be the same as inputs.
+
+    Returns:
+        Tuple, tuple of output and jvp.
+        - netout(Tensors or Tuple of Tensors), the output of "fn(inputs)".
+        - jvp(Tensors or Tuple of Tensors), the result of the dot product.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> from mindspore import Tensor
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y):
+        ...         return x**3 + y
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> output = F.jvp(Net(), (x, y), (v, v))
+        >>> print(output[0])
+        [[ 2. 10.]
+         [30. 68.]]
+        >>> print(output[1])
+        [[ 4. 13.]
+         [28. 49.]]
+    """
+    jvp_inner = _JvpInner()
+    @ms_function
+    def _wrap_container(*arg):
+        args = arg[1:]
+        vectors = arg[0]
+        return jvp_inner(fn, vectors, *args)
+    if not isinstance(inputs, (Tensor, tuple, list)):
+        _raise_type_error()
+    if isinstance(inputs, (tuple, list)):
+        return _wrap_container(v, *inputs)
+    return _wrap_container(v, inputs)
+
+
+def vjp(fn, inputs, v):
+    """
+    Compute the vector-jacobian-product of the given network.
+
+    Args:
+        fn (Function or Cell): The function or net that takes Tensor inputs and returns a tensor or tuple of Tensors.
+        inputs (Tensor or tuple or list): The inputs to `fn`.
+        v (Tensor or tuple or list): The shape and type of v should be the same as outputs.
+
+    Returns:
+        Tuple, tuple of output and jvp.
+        - netout(Tensors or Tuple of Tensors), the output of "fn(inputs)".
+        - vjp(Tensors or Tuple of Tensors), the result of the dot product.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> from mindspore import Tensor
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y):
+        ...         return x**3 + y
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> output = F.vjp(Net(), (x, y), v)
+        >>> print(output[0])
+        [[ 2. 10.]
+         [30. 68.]]
+        >>> print(output[1])
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.00000000e+00,  1.20000000e+01],
+         [ 2.70000000e+01,  4.80000000e+01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  1.00000000e+00],
+         [ 1.00000000e+00,  1.00000000e+00]]))
+    """
+    vjp_inner = _VjpInner()
+    @ms_function
+    def wrap_container(*arg):
+        args = arg[:-1]
+        vectors = arg[-1]
+        return vjp_inner(fn, *args, vectors)
+    if not isinstance(inputs, (Tensor, tuple, list)):
+        _raise_type_error()
+    if isinstance(inputs, (tuple, list)):
+        return wrap_container(*inputs, v)
+    return wrap_container(inputs, v)
+
+
+@constexpr
+def _raise_type_error():
+    raise TypeError("The inputs type should be a Tensor, tuple or list of Tensor.")
 
 
 tuple_setitem = Primitive('tuple_setitem')
