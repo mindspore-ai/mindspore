@@ -43,7 +43,7 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
       int32_t *in_data = (int32_t *)(in_tensor->data_);
       for (int i = 0; i < size; ++i) {
         out_shape[i] = in_data[i];
-        if (out_shape[i] <= 0) {
+        if (out_shape[i] < 0) {
           return NNACL_ERR;
         }
       }
@@ -53,7 +53,7 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
       int64_t *in_data = (int64_t *)(in_tensor->data_);
       for (int i = 0; i < size; ++i) {
         out_shape[i] = in_data[i];
-        if (out_shape[i] <= 0) {
+        if (out_shape[i] < 0) {
           return NNACL_ERR;
         }
       }
