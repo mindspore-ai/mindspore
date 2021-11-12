@@ -125,8 +125,9 @@ int ConcatInt8CPUKernel::Run() {
   concat_param_->count_unit_ = count_unit_;
 
   for (int i = 0; i < input_num; i++) {
-    input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->MutableData());
-    CHECK_NULL_RETURN(input_data_[i]);
+    auto in_tensor = in_tensors_.at(i);
+    input_data_[i] = static_cast<int8_t *>(in_tensor->MutableData());
+    MS_CHECK_TRUE_RET(in_tensor->ElementsNum() == 0 || input_data_[i] != nullptr, RET_ERROR);
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(output_data_);

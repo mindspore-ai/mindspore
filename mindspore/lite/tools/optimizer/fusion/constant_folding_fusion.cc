@@ -149,7 +149,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
     MS_LOG(ERROR) << "create tensor info failed.";
     return nullptr;
   }
-  if (tensor->MutableData() != nullptr) {
+  if (tensor->MutableData() != nullptr && tensor->ElementsNum() != 0) {
     auto tensor_data = static_cast<uint8_t *>(tensor_info->data_c());
     auto ret = memcpy_s(tensor_data, tensor_info->Size(), tensor->data(), tensor->Size());
     if (ret != EOK) {
