@@ -62,6 +62,14 @@ int TransposeCPUKernel::ReSize() {
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
   }
+
+  for (int i = 0; i < param_->num_axes_; i++) {
+    if (param_->perm_[i] < 0 || param_->perm_[i] >= param_->num_axes_) {
+      MS_LOG(ERROR) << "Check perm failed.";
+      return RET_ERROR;
+    }
+  }
+
   auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
   auto in_shape = inTensor->shape();
@@ -123,18 +131,20 @@ int TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, cons
     return RET_OK;
   }
   auto out_shape = out_tensor->shape();
-  if (param_->perm_[0] == 0 && param_->perm_[1] == 2 && param_->perm_[2] == 3 && param_->perm_[3] == 1) {
-    nhnc_param_[0] = out_shape[0];
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[1], out_shape[2]), RET_ERROR);
-    nhnc_param_[1] = out_shape[1] * out_shape[2];
-    nhnc_param_[2] = out_shape[3];
+  if (param_->perm_[FIRST_INPUT] == FIRST_INPUT && param_->perm_[SECOND_INPUT] == THIRD_INPUT &&
+      param_->perm_[THIRD_INPUT] == FOURTH_INPUT && param_->perm_[FOURTH_INPUT] == SECOND_INPUT) {
+    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[SECOND_INPUT], out_shape[THIRD_INPUT]), RET_ERROR);
+    nhnc_param_[SECOND_INPUT] = out_shape[SECOND_INPUT] * out_shape[THIRD_INPUT];
+    nhnc_param_[THIRD_INPUT] = out_shape[FOURTH_INPUT];
     GetNchwToNhwcFunc(in_tensor->data_type());
   }
-  if (param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 && param_->perm_[3] == 2) {
-    nhnc_param_[0] = out_shape[0];
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[2], out_shape[3]), RET_ERROR);
-    nhnc_param_[1] = out_shape[2] * out_shape[3];
-    nhnc_param_[2] = out_shape[1];
+  if (param_->perm_[FIRST_INPUT] == FIRST_INPUT && param_->perm_[SECOND_INPUT] == FOURTH_INPUT &&
+      param_->perm_[THIRD_INPUT] == SECOND_INPUT && param_->perm_[FOURTH_INPUT] == THIRD_INPUT) {
+    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[THIRD_INPUT], out_shape[FOURTH_INPUT]), RET_ERROR);
+    nhnc_param_[SECOND_INPUT] = out_shape[THIRD_INPUT] * out_shape[FOURTH_INPUT];
+    nhnc_param_[THIRD_INPUT] = out_shape[SECOND_INPUT];
     GetNhwcToNchwFunc(in_tensor->data_type());
   }
   return RET_OK;
@@ -142,8 +152,8 @@ int TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, cons
 
 int TransposeCPUKernel::RunImpl(int task_id) {
   if (NHNCTransposeFunc_ != nullptr) {
-    NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2], task_id,
-                       op_parameter_->thread_num_);
+    NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[FIRST_INPUT], nhnc_param_[SECOND_INPUT],
+                       nhnc_param_[THIRD_INPUT], task_id, op_parameter_->thread_num_);
   } else {
     return TransposeDimGreaterThan6(task_id);
   }
