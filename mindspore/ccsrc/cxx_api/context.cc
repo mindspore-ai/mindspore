@@ -149,9 +149,20 @@ void GPUDeviceInfo::SetDeviceID(uint32_t device_id) {
   MS_EXCEPTION_IF_NULL(data_);
   data_->params[kModelOptionGPUDeviceID] = device_id;
 }
+
 uint32_t GPUDeviceInfo::GetDeviceID() const {
   MS_EXCEPTION_IF_NULL(data_);
   return GetValue<uint32_t>(data_, kModelOptionGPUDeviceID);
+}
+
+int GPUDeviceInfo::GetRankID() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return 0;
+}
+
+int GPUDeviceInfo::GetGroupSize() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return 0;
 }
 
 void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {

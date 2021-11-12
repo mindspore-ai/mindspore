@@ -26,11 +26,14 @@
 #include "include/api/data_type.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
+#include "src/delegate/tensorrt/distribution/distribution_base.h"
 
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
 constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
+constexpr auto kModelOptionGPURankID = "mindspore.option.gpu.rank_id";
+constexpr auto kModelOptionGPUGroupSize = "mindspore.option.gpu.group_size";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
@@ -290,6 +293,16 @@ uint32_t GPUDeviceInfo::GetDeviceID() const {
     return 0;
   }
   return GetValue<uint32_t>(data_, kModelOptionGPUDeviceID);
+}
+
+int GPUDeviceInfo::GetRankID() const {
+  data_->params[kModelOptionGPURankID] = lite::GetRankID();
+  return GetValue<int>(data_, kModelOptionGPURankID);
+}
+
+int GPUDeviceInfo::GetGroupSize() const {
+  data_->params[kModelOptionGPUGroupSize] = lite::GetGPUGroupSize();
+  return GetValue<int>(data_, kModelOptionGPUGroupSize);
 }
 
 void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {

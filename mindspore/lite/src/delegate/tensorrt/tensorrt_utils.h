@@ -83,7 +83,9 @@ nvinfer1::Weights TransposeWeightFP32(const mindspore::MSTensor &ms_tensor, void
 
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
-void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
+int SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
+
+int SetCudaDevice(int device_id);
 
 Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm);
 

@@ -279,34 +279,45 @@ nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
   return weights;
 }
 
-void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
+int SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
+  return SetCudaDevice(static_cast<int>(device_info_->GetDeviceID()));
+}
+
+int SetCudaDevice(int device_id) {
   int device = 0;
   auto ret = cudaGetDevice(&device);
   if (ret != cudaSuccess) {
-    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
+    MS_LOG(ERROR) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
+    return RET_ERROR;
   }
-  int set_device_id = static_cast<int>(device_info_->GetDeviceID()) + GetRankIDByGroup(NCCL_WORLD_GROUP);
+  int set_device_id = device_id + GetRankID();
   int deviceCnt = 0;
 
   ret = cudaGetDeviceCount(&deviceCnt);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
-    return;
+    return RET_ERROR;
   }
 
   if (set_device_id > deviceCnt - 1) {
-    MS_LOG(WARNING) << "invalid input device id as " << set_device_id << " for current device count " << deviceCnt;
-  } else if (device != set_device_id) {
+    MS_LOG(ERROR) << "invalid input device id as " << set_device_id << " for current device count " << deviceCnt;
+    return RET_ERROR;
+  }
+  if (device != set_device_id) {
     ret = cudaSetDevice(set_device_id);
     if (ret != cudaSuccess) {
-      MS_LOG(WARNING) << "cudaSetDevice failed, error code: " << ret;
+      MS_LOG(ERROR) << "cudaSetDevice failed, error code: " << ret;
+      return RET_ERROR;
     }
   }
   if (cudaGetDevice(&device) != cudaSuccess) {
-    MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable.";
+    MS_LOG(ERROR) << "cudaGetDevice failed, device is untrustable.";
+    return RET_ERROR;
   }
   MS_LOG(DEBUG) << "cuda is running on device: " << device;
+  return RET_OK;
 }
+
 Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm) {
   if (input_format == Format::NHWC) {
     if (perm.order[0] == 0 && perm.order[1] == 3 && perm.order[2] == 2 && perm.order[3] == 1) {

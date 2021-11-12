@@ -15,11 +15,18 @@
  */
 
 #include "src/delegate/tensorrt/distribution/distribution_collective.h"
+#include <unistd.h>
+#include <thread>
+#include <string>
+#include "runtime/device/gpu/distribution/collective_wrapper.h"
+#include "src/delegate/tensorrt/distribution/distribution_utils.h"
+#include "src/delegate/tensorrt/distribution/distribution_base.h"
 
-int GetGroupSize(const std::string &group_name) { return 0; }
-int GetRankIDByGroup(const std::string &group_name) { return 0; }
 namespace mindspore::lite {
-DistributionCollective::DistributionCollective() {}
+DistributionCollective::DistributionCollective() {
+  InitMPI();
+  InitNCCLComm();
+}
 
 DistributionCollective &DistributionCollective::instance() {
   static DistributionCollective instance;
@@ -29,12 +36,37 @@ DistributionCollective &DistributionCollective::instance() {
 int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count,
                                                  nvinfer1::DataType data_type, schema::ReduceMode reduce_type,
                                                  cudaStream_t stream, const std::string &group) {
+  int rank_id = GetRankID();
+  MS_LOG(DEBUG) << "ReduceScatter on rank: " << rank_id;
+  ncclResult_t ret = ReduceScatter(input_addr, output_addr, count, ConvertDataType(data_type),
+                                   ConvertNCCLReduceMode(reduce_type), stream, group);
+  if (ret != ncclSuccess) {
+    MS_LOG(ERROR) << "ReduceScatter failed: " << static_cast<int>(ret);
+    return RET_ERROR;
+  }
+  auto cuda_ret = cudaStreamSynchronize(stream);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaStreamSynchronize failed: " << static_cast<int>(cuda_ret);
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int DistributionCollective::AllGatherWrapper(const void *input_addr, void *output_addr, size_t count,
                                              nvinfer1::DataType data_type, cudaStream_t stream,
                                              const std::string &group_name) {
+  int rank_id = GetRankID();
+  MS_LOG(DEBUG) << "AllGather on rank: " << rank_id;
+  ncclResult_t ret = AllGather(input_addr, output_addr, count, ConvertDataType(data_type), stream, group_name);
+  if (ret != ncclSuccess) {
+    MS_LOG(ERROR) << "AllGather failed: " << static_cast<int>(ret);
+    return RET_ERROR;
+  }
+  auto cuda_ret = cudaStreamSynchronize(stream);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaStreamSynchronize failed: " << static_cast<int>(cuda_ret);
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::lite

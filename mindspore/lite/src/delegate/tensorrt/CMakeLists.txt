@@ -8,6 +8,11 @@ else()
     set(MS_ENABLE_CUDA_DISTRIBUTION "off")
 endif()
 
+set(NCCL_MPI_SRC_STUB
+    ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_base.cc
+)
+
 # nccl mpi
 if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
     message("enable cuda gpu distribution collective")
@@ -17,7 +22,7 @@ if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
         ${CCSRC_DIR}/runtime/device/gpu/distribution/mpi_wrapper.cc
         ${CCSRC_DIR}/runtime/device/gpu/distribution/nccl_wrapper.cc
     )
-    list(REMOVE_ITEM NCCL_MPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc)
+    list(REMOVE_ITEM NCCL_MPI_SRC ${NCCL_MPI_SRC_STUB})
 
     add_compile_definitions(LITE_CUDA_DISTRIBUTION)
     include(${TOP_DIR}/cmake/external_libs/ompi.cmake)
@@ -28,10 +33,7 @@ if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
     add_library(mindspore::ompi ALIAS ompi::mpi)
     target_link_libraries(gpu_distribution_collective PRIVATE mindspore::ompi mindspore::nccl)
 else()
-    file(GLOB_RECURSE NCCL_MPI_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective_stub.cc
-    )
-    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC})
+    add_library(gpu_distribution_collective OBJECT ${NCCL_MPI_SRC_STUB})
 endif()
 add_dependencies(gpu_distribution_collective fbs_src)
 

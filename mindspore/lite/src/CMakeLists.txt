@@ -328,6 +328,13 @@ if(SUPPORT_TENSORRT)
     add_subdirectory(delegate/tensorrt)
     target_link_libraries(mindspore-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
     target_link_libraries(mindspore-lite_static tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
+else()
+    set(TENSORRT_STUB
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+    )
+    add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
+    target_link_libraries(mindspore-lite tensorrt_stub)
+    target_link_libraries(mindspore-lite_static tensorrt_stub)
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)

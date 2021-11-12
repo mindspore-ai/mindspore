@@ -227,6 +227,16 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   /// \return The device id.
   uint32_t GetDeviceID() const;
 
+  /// \brief Get the distribution rank id.
+  ///
+  /// \return The device id.
+  int GetRankID() const;
+
+  /// \brief Get the distribution group size.
+  ///
+  /// \return The device id.
+  int GetGroupSize() const;
+
   /// \brief Set the precision mode.
   ///
   /// \param[in] precision_mode Optional "origin", "fp16". "origin" is set as default.
