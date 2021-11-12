@@ -36,13 +36,6 @@
 using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
-
-constexpr const int kMainGraphIndex = 0;
-constexpr const int kFirstDataIndex = 1;
-constexpr const int kSecondDataIndex = 2;
-constexpr const int kPrimIndex = 0;
-constexpr const int kSwitchFalseIndex = 3;
-
 class AnfExporter {
  public:
   AnfExporter() = default;
