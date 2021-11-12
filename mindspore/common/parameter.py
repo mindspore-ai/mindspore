@@ -87,6 +87,7 @@ class Parameter(Tensor_):
             param_a below is name_a, and the name of param_b is the variable name param_b.
 
             .. code-block::
+
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_b = Parameter(Tensor([2], ms.float32))
 
@@ -94,6 +95,7 @@ class Parameter(Tensor_):
             parameters below are Parameter$1 and Parameter$2.
 
             .. code-block::
+
                 self.param_list = [Parameter(Tensor([3], ms.float32)),
                                    Parameter(Tensor([4], ms.float32))]
 
@@ -101,6 +103,7 @@ class Parameter(Tensor_):
             will be thrown. For example, "its name 'name_a' already exists." will be thrown.
 
             .. code-block::
+
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
                                     Parameter(Tensor([6], ms.float32)))
@@ -109,6 +112,7 @@ class Parameter(Tensor_):
             example, the following example will not throw an exception.
 
             .. code-block::
+
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (self.param_a, self.param_a)
 
