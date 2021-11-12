@@ -261,7 +261,7 @@ class GradExecutor {
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr CreateMakeTupleNode(const py::object &obj, const std::string &obj_id);
-  AnfNodePtr CreateTupleGetItemNode(const py::object &obj, const std::string &obj_id);
+  AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
                                       const std::vector<int64_t> &index_sequence, bool is_param = false);
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
