@@ -43,7 +43,11 @@ def match_array(actual, expected, error=0):
         onp.testing.assert_equal(actual, expected)
 
 
-def create_batch_full_rank_matrix(shape, dtype):
+def create_full_rank_matrix(shape, dtype):
+    if len(shape) < 2 and shape[-1] != shape[-2]:
+        raise ValueError(
+            'Full rank matrix must be a square matrix, but has shape: ', shape)
+
     invertible = False
     a = None
     while not invertible:
@@ -57,15 +61,11 @@ def create_batch_full_rank_matrix(shape, dtype):
     return a
 
 
-def create_full_rank_matrix(m, n, dtype):
-    a_rank = 0
-    a = onp.random.random((m, n)).astype(dtype)
-    while a_rank != m:
-        a = (a + onp.eye(m, n)).astype(dtype)
-        a_rank = onp.linalg.matrix_rank(a)
-    return a
+def create_sym_pos_matrix(shape, dtype):
+    if len(shape) != 2 and shape[0] != shape[1]:
+        raise ValueError(
+            'Symmetric positive definite matrix must be a square matrix, but has shape: ', shape)
 
-
-def create_sym_pos_matrix(m, n, dtype):
-    a = (onp.random.random((m, n)) + onp.eye(m, n)).astype(dtype)
+    n = shape[-1]
+    a = (onp.random.random(shape) + onp.eye(n)).astype(dtype)
     return onp.dot(a, a.T)

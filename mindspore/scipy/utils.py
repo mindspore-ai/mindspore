@@ -15,12 +15,14 @@
 """internal utility functions"""
 import numpy as onp
 from .. import nn, ops
-from ..numpy import where, isnan, zeros_like
+from ..numpy import where, isnan, zeros_like, dot
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
 from .utils_const import _type_convert, _raise_type_error
 from ..ops.composite import GradOperation
+from ..ops.primitive import constexpr
+from .._c_expression import typing
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
 
@@ -95,3 +97,25 @@ _INT_ZERO = _to_tensor(0)
 _INT_ONE = _to_tensor(1)
 _BOOL_TRUE = _to_tensor(True)
 _BOOL_FALSE = _to_tensor(False)
+
+
+@constexpr
+def _callable_const(x):
+    """Returns true if x is a function in graph mode."""
+    return isinstance(x, typing.Function)
+
+
+def _normalize_matvec(f):
+    """Normalize an argument for computing matrix-vector products."""
+    if _callable_const(F.typeof(f)):
+        return f
+
+    if isinstance(f, Tensor):
+        if f.ndim != 2 or f.shape[0] != f.shape[1]:
+            _raise_type_error(
+                'linear operator must be a square matrix, but has shape: ', f.shape)
+        return F.partial(dot, f)
+
+    _raise_type_error(
+        'linear operator must be either a function or Tensor: but got', F.typeof(f))
+    return f
