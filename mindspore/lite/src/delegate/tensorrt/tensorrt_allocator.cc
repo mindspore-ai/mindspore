@@ -133,4 +133,5 @@ int TensorRTAllocator::ClearDeviceMem() {
   }
   return RET_OK;
 }
+std::map<std::string, CudaTensorParam> TensorRTAllocator::GetAllDevicePtr() { return this->cuda_tensor_map_; }
 }  // namespace mindspore::lite

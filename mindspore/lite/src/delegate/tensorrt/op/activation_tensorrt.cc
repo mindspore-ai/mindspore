@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
+#include "src/delegate/tensorrt/op/cast_tensorrt.h"
 
 namespace mindspore::lite {
 int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -56,18 +57,44 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   float alpha = activation_op->alpha();
+  nvinfer1::ITensor *activation_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
+    auto plugin =
+      std::make_shared<CastPlugin>(op_name_ + "_cast_in", nvinfer1::DataType::kINT32, nvinfer1::DataType::kFLOAT);
+    nvinfer1::ITensor *inputTensors[] = {activation_input};
+    nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    if (cast_layer == nullptr) {
+      MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
+      return RET_ERROR;
+    }
+    cast_layer->setName((op_name_ + "_cast_in").c_str());
+    activation_input = cast_layer->getOutput(0);
+  }
 
-  nvinfer1::IActivationLayer *activation_layer = ActivationTensorRT::AddActivation(
-    network, activation_op->activation_type(), alpha, tensorrt_in_tensors_[0].trt_tensor_);
+  nvinfer1::IActivationLayer *activation_layer =
+    ActivationTensorRT::AddActivation(network, activation_op->activation_type(), alpha, activation_input);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
   }
 
   activation_layer->setName(op_name_.c_str());
-  activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), tensorrt_in_tensors_[0].format_});
-
+  // cast to origin type
+  nvinfer1::ITensor *out_tensor = activation_layer->getOutput(0);
+  if (out_tensor->getType() != ConvertDataType(out_tensors_[0].DataType())) {
+    auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_out", out_tensor->getType(),
+                                               ConvertDataType(out_tensors_[0].DataType()));
+    nvinfer1::ITensor *inputTensors[] = {activation_layer->getOutput(0)};
+    nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    if (cast_layer == nullptr) {
+      MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
+      return RET_ERROR;
+    }
+    cast_layer->setName((op_name_ + "_cast_out").c_str());
+    out_tensor = cast_layer->getOutput(0);
+  }
+  out_tensor->setName((op_name_ + "_output").c_str());
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }
 nvinfer1::IActivationLayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,

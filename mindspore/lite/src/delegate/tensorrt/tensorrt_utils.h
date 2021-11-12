@@ -23,6 +23,7 @@
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
+#include "src/delegate/tensorrt/distribution/distribution_collective.h"
 
 #define kNCHW_N 0
 #define kNCHW_C 1

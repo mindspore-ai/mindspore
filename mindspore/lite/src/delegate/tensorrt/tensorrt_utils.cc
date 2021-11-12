@@ -285,7 +285,7 @@ void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
   if (ret != cudaSuccess) {
     MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
   }
-  int set_device_id = static_cast<int>(device_info_->GetDeviceID());
+  int set_device_id = static_cast<int>(device_info_->GetDeviceID()) + GetRankIDByGroup(NCCL_WORLD_GROUP);
   int deviceCnt = 0;
 
   ret = cudaGetDeviceCount(&deviceCnt);

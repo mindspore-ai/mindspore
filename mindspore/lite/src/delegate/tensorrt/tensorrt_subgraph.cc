@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <queue>
 #include "src/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
@@ -187,18 +188,18 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
     }
   }
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
-    MS_LOG(ERROR) << "setDimensions of kMIN failed.";
+    MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
     return nullptr;
   }
   nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
-    MS_LOG(ERROR) << "setDimensions of kOPT failed.";
+    MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
     return nullptr;
   }
   nvinfer1::Dims input_dims_max = ConvertCudaDims(in_tensor.Shape());
   // input_dims_max should be the same with input network dims
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
-    MS_LOG(ERROR) << "setDimensions of kMAX failed.";
+    MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return nullptr;
   }
   MS_LOG(INFO) << "add network input: " << in_tensor.Name();
@@ -235,6 +236,11 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           trt_tensor.format_ = Format::NHWC;
           MS_LOG(INFO) << "auto convert constant tensor for: " << in_tensor.Name();
           cur_op->AddInnerInTensors(trt_tensor);
+        }
+        ret = HandleCacheTensor(cur_op, in_tensor);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "HandleCacheTensor failed for " << in_tensor.Name();
+          return RET_ERROR;
         }
       } else {
         cur_op->AddInnerInTensors(trt_tensor);
@@ -341,6 +347,15 @@ int TensorRTSubGraph::Prepare() {
     }
   }
 
+  // malloc for cache weight tensor
+  for (auto cache_tensor : cache_inputs_) {
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(cache_tensor, cache_tensor.DataSize());
+    runtime_->GetAllocator()->SyncMemInHostAndDevice(cache_tensor, cache_tensor.Name().c_str(), true);
+    runtime_->GetAllocator()->MarkMemValid(cache_tensor.Name().c_str(), true);
+    int index = this->engine_->getBindingIndex(cache_tensor.Name().c_str());
+    tensor_bindings_[index] = device_ptr;
+  }
+
   if (!this->trt_context_->allInputDimensionsSpecified()) {
     MS_LOG(ERROR) << "input dims need to be specified.";
     return RET_ERROR;
@@ -356,6 +371,10 @@ int TensorRTSubGraph::Prepare() {
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
     trt_out_tensor_name_.push_back(tensor.Name());
+  }
+  for (auto binding : runtime_->GetAllocator()->GetAllDevicePtr()) {
+    int index = this->engine_->getBindingIndex(binding.first.c_str());
+    tensor_bindings_[index] = binding.second.data;
   }
   return RET_OK;
 }
@@ -503,5 +522,65 @@ ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const min
     }
   }
   return ITensorHelper{};
+}
+bool TensorRTSubGraph::IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) { return false; }
+
+void TensorRTSubGraph::FindCacheTensorInfo(TensorRTOp *cur_op) {
+  auto iter = network_cache_tensor_info_.find(cur_op->GetOpName());
+  if (iter != network_cache_tensor_info_.end()) {
+    return;
+  }
+  std::queue<TensorRTOp *> front_ops;
+  front_ops.push(cur_op);
+  network_cache_tensor_info_[cur_op->GetOpName()].front_op_can_cache_ = true;
+  iter = network_cache_tensor_info_.find(cur_op->GetOpName());
+  while (!front_ops.empty()) {
+    auto front_op = front_ops.front();
+    iter->second.front_op_can_cache_ = CanOpCache(front_op) ? iter->second.front_op_can_cache_ : false;
+    for (auto in_tensor : front_op->inputs()) {
+      if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
+        iter->second.network_input_tensor_.push_back(in_tensor);
+        MS_LOG(DEBUG) << cur_op->GetOpName() << "'s network input tensor name is " << in_tensor.Name()
+                      << ", can cache: " << iter->second.front_op_can_cache_;
+      }
+    }
+    for (auto fronts_op : front_op->in_ops()) {
+      front_ops.push(fronts_op);
+    }
+    front_ops.pop();
+  }
+}
+
+bool TensorRTSubGraph::CanOpCache(TensorRTOp *cur_op) { return true; }
+
+int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
+  if (IsCached(cur_op, in_tensor) && in_tensor.Data() != nullptr) {
+    FindCacheTensorInfo(cur_op);
+    // cache kernel weight tensor
+    cache_inputs_.push_back(in_tensor);
+    MS_LOG(INFO) << "auto add cache constant tensor for: " << in_tensor.Name();
+    auto cuda_dtype = ConvertDataType(in_tensor.DataType());
+    nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
+    nvinfer1::ITensor *cache_input = network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+    if (cache_input == nullptr) {
+      MS_LOG(ERROR) << "add cache Weight Tensor data is nullptr.";
+      return RET_ERROR;
+    }
+    if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
+    if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
+    if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
+    ITensorHelper trt_tensor{cache_input, Format::NHWC};
+    cur_op->AddInnerInTensors(trt_tensor);
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite

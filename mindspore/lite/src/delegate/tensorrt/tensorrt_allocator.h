@@ -41,6 +41,8 @@ class TensorRTAllocator {
 
   void *GetDevicePtr(const std::string &tensor_name);
 
+  std::map<std::string, CudaTensorParam> GetAllDevicePtr();
+
   int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
                              bool is_host2device, bool sync = true);
 

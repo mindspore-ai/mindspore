@@ -40,6 +40,8 @@
 #include "src/delegate/tensorrt/op/equal_tensorrt.h"
 #include "src/delegate/tensorrt/op/cast_tensorrt.h"
 #include "src/delegate/tensorrt/op/topk_tensorrt.h"
+#include "src/delegate/tensorrt/op/reducescatter_tensorrt.h"
+#include "src/delegate/tensorrt/op/allgather_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -78,6 +80,7 @@ Status TensorRTDelegate::Init() {
   op_func_lists_.clear();
   op_func_lists_ = {
     {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
+    {schema::PrimitiveType_AllGather, GetTensorRTOp<AllGatherTensorRT>},
     {schema::PrimitiveType_Concat, GetTensorRTOp<ConcateTensorRT>},
     {schema::PrimitiveType_Conv2DFusion, GetTensorRTOp<ConvolutionTensorRT>},
     {schema::PrimitiveType_Cast, GetTensorRTOp<CastTensorRT>},
@@ -99,6 +102,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
+    {schema::PrimitiveType_ReduceScatter, GetTensorRTOp<ReduceScatterTensorRT>},
     {schema::PrimitiveType_Resize, GetTensorRTOp<ResizeTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
     {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
@@ -114,7 +118,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};
-  unsupport_resize_op_list_ = {};
+  unsupport_resize_op_list_ = {schema::PrimitiveType_ReduceScatter, schema::PrimitiveType_AllGather};
   lite::SetCudaDevice(device_info_);
   if (runtime_ == nullptr) {
     runtime_ = new (std::nothrow) TensorRTRuntime();

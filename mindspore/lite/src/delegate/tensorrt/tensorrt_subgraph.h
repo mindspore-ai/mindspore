@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
 #include <utility>
 #include <set>
+#include <map>
 #include <string>
 #include <vector>
 #include <memory>
@@ -28,6 +29,11 @@
 namespace mindspore::lite {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+struct CacheTensorInfo {
+  std::vector<mindspore::MSTensor> network_input_tensor_;
+  bool front_op_can_cache_;
+};
+
 class TensorRTSubGraph : public kernel::Kernel {
  public:
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
@@ -81,6 +87,14 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int MarkOutputs();
 
+  bool IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
+
+  void FindCacheTensorInfo(TensorRTOp *cur_op);
+
+  bool CanOpCache(TensorRTOp *cur_op);
+
+  int HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
+
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
   std::vector<TensorRTOp *> in_ops_{};
@@ -98,6 +112,9 @@ class TensorRTSubGraph : public kernel::Kernel {
   // save in/out tensor name for subgraph isolate.
   std::vector<std::string> trt_in_tensor_name_;
   std::vector<std::string> trt_out_tensor_name_;
+
+  std::vector<mindspore::MSTensor> cache_inputs_;
+  std::map<std::string, CacheTensorInfo> network_cache_tensor_info_;
 
   nvinfer1::INetworkDefinition *network_{nullptr};
   nvinfer1::IBuilderConfig *config_{nullptr};
