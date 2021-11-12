@@ -82,7 +82,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
     .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
-         py::arg("use_vm") = py::bool_(false), py::arg("queue_name"), "Compile obj by executor.")
+         py::arg("use_vm") = py::bool_(false), py::arg("queue_name"),
+         py::arg("enable_tuple_broaden") = py::bool_(false), "Compile obj by executor.")
     .def("updata_param_node_default_input", &GraphExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
          py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
     .def("get_parameter_layout", &GraphExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),

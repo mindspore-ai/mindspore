@@ -104,6 +104,11 @@ def _exec_init_graph(obj, init_phase):
     if param_dict:
         inst_executor.run_init_graph(param_dict, init_phase)
 
+def _check_all_tensor(sequence):
+    for element in sequence:
+        if not isinstance(element, Tensor) and not (isinstance(element, tuple) and _check_all_tensor(element)):
+            return False
+    return True
 
 class _MindsporeFunctionExecutor:
     """
@@ -175,13 +180,19 @@ class _MindsporeFunctionExecutor:
             # To avoid unexpected phase matched, add create_time to generate_name.
             generate_name = generate_name + '.' + str(self._create_time)
 
-        key = generate_arguments_key(dic)
+        if hasattr(self.obj, "enable_tuple_broaden"):
+            self.enable_tuple_broaden = self.obj.enable_tuple_broaden
+        else:
+            self.enable_tuple_broaden = False
+        key = generate_arguments_key(dic, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
         if phase not in ms_compile_cache.keys():
             if self.obj is None:
-                is_compile = self._graph_executor.compile(self.fn, args_list, phase, True, "")
+                is_compile = self._graph_executor.compile(self.fn, args_list, phase, True, "",
+                                                          self.enable_tuple_broaden)
             else:
-                is_compile = self._graph_executor.compile(self.obj, args_list, phase, True, "")
+                is_compile = self._graph_executor.compile(self.obj, args_list, phase, True, "",
+                                                          self.enable_tuple_broaden)
             if not is_compile:
                 raise RuntimeError("Executor compile failed.")
             if context.get_context("enable_ge"):
@@ -214,8 +225,9 @@ class _MindsporeFunctionExecutor:
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
+            elif self.enable_tuple_broaden and isinstance(i, tuple) and _check_all_tensor(i):
+                new_inputs.append(i)
         output = self._graph_executor(tuple(new_inputs), phase)
-
         if context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_executor.set_graph_phase(phase)
             output = _pynative_executor.grad_ms_function(output, *new_inputs)
@@ -520,7 +532,11 @@ class _CellGraphExecutor:
 
         args_names, args_list = _generate_pip_args(obj, *args)
         dic = dict(zip(args_names, args_list))
-        key = generate_arguments_key(dic)
+        if hasattr(obj, "enable_tuple_broaden"):
+            self.enable_tuple_broaden = obj.enable_tuple_broaden
+        else:
+            self.enable_tuple_broaden = False
+        key = generate_arguments_key(dic, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
@@ -540,7 +556,7 @@ class _CellGraphExecutor:
         enable_debug_runtime = context.get_context("enable_debug_runtime")
         enable_ge = context.get_context("enable_ge")
         use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
-        result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name)
+        result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name, self.enable_tuple_broaden)
         obj.compile_cache.add(phase)
         if not result:
             raise RuntimeError("Executor compile failed.")

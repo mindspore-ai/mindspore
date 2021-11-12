@@ -74,9 +74,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   const std::string &phase() const { return phase_; }
   void SaveCompiledGraph(const std::string &phase);
   bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
-                    const std::string &queue_name);
+                    const std::string &queue_name, bool enable_tuple_broaden = false);
   bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
-               const std::string &queue_name);
+               const std::string &queue_name, bool enable_tuple_broaden = false);
 
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
 
@@ -144,7 +144,8 @@ using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 void CheckArgsValid(const py::tuple &args);
 // Generate a key for mapping function graph
-py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args);
+py::object GenerateArgumentsKey(const std::unordered_map<std::string, py::object> &args,
+                                bool enable_tuple_broaden = false);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);

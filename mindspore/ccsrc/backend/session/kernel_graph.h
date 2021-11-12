@@ -149,7 +149,7 @@ class KernelGraph : public FuncGraph {
   void set_root_graph_id(uint32_t root_graph_id) { root_graph_id_ = root_graph_id; }
 
   // and a new front to backend anf relation to maop
-  void FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf);
+  void FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf);
   // replace old backend anf with new backend anf
   void FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, const AnfNodePtr &new_backend_anf);
   // get backend anf by front anf
@@ -391,6 +391,14 @@ class KernelGraph : public FuncGraph {
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
   void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
 
+  AnfWithOutIndex GetElementInTupleBackendFrontIndexMap(const AnfNodePtr &back_node) {
+    auto iter = tuple_backend_front_anf_index_map_.find(back_node);
+    if (iter == tuple_backend_front_anf_index_map_.end()) {
+      return AnfWithOutIndex(nullptr, 0);
+    }
+    return iter->second;
+  }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -426,6 +434,7 @@ class KernelGraph : public FuncGraph {
   // record map bettween front anf and backend anf,use two map implement bidirectional map
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> backend_front_anf_map_;
+  std::unordered_map<AnfNodePtr, AnfWithOutIndex> tuple_backend_front_anf_index_map_;
   // there may be a tensor from ME backend ,a value ndoe will be create according the tensor,map record
   std::unordered_map<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
   // include all value nodes

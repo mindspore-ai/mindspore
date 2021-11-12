@@ -277,7 +277,7 @@ ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
     return nullptr;
   }
   auto new_value_node = graph->NewValueNode(value_node);
-  graph->FrontBackendlMapAdd(anf, new_value_node);
+  graph->FrontBackendMapAdd(anf, new_value_node);
   graph->AddValueNodeToGraph(new_value_node);
   return new_value_node;
 }
@@ -687,7 +687,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     } else if (anf->isa<Parameter>()) {
       auto new_parameter = CreateNewParameterFromParameter(anf, graph);
       cnode_inputs->push_back(new_parameter);
-      graph->FrontBackendlMapAdd(anf, new_parameter);
+      graph->FrontBackendMapAdd(anf, new_parameter);
       continue;
     } else {
       // the input node is a cnode from other graph
@@ -1067,7 +1067,7 @@ ValueNodePtr SessionBasic::CreateValueNodeKernelGraph(const AnfNodePtr &anf, Ker
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
   AnfAlgo::SetGraphId(graph->graph_id(), new_value_node.get());
 
-  graph->FrontBackendlMapAdd(anf, new_value_node);
+  graph->FrontBackendMapAdd(anf, new_value_node);
 
   return new_value_node;
 }
@@ -1122,7 +1122,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
       new_cnode->set_fullname_with_scope(cnode->input(kFirstDataInputIndex)->fullname_with_scope());
     }
     // record map relations between anf from ME and new anf node used in backend
-    graph->FrontBackendlMapAdd(node, new_cnode);
+    graph->FrontBackendMapAdd(node, new_cnode);
   }
   // add a make_tuple at the end of graph as output
   graph->set_output(ConstructOutput(outputs, graph));
@@ -1525,7 +1525,7 @@ bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph 
   }
   new_cnode->set_fullname_with_scope(fullname);
   new_cnode->set_scope(cnode->scope());
-  graph->FrontBackendlMapAdd(node, new_cnode);
+  graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
   return true;
 }
@@ -1548,7 +1548,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
       MS_EXCEPTION_IF_NULL(graph_inputs);
       auto new_parameter = CreateNewParameter(node, graph.get());
       graph_inputs->push_back(new_parameter);
-      graph->FrontBackendlMapAdd(node, new_parameter);
+      graph->FrontBackendMapAdd(node, new_parameter);
       continue;
     }
     // Create value node
@@ -1604,7 +1604,7 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
       // for example "def f(x,y,z) {return x + y}", parameter z in unused
       auto new_parameter = CreateNewParameter(parameter, graph);
       graph_inputs->push_back(new_parameter);
-      graph->FrontBackendlMapAdd(parameter, new_parameter);
+      graph->FrontBackendMapAdd(parameter, new_parameter);
       MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
       continue;
     }

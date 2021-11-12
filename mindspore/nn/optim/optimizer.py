@@ -203,6 +203,7 @@ class Optimizer(Cell):
         self.hyper_map = C.HyperMap()
         self.hyper_map_reverse = C.HyperMap(None, True)
         self._use_parallel_optimizer()
+        self.enable_tuple_broaden = True
 
     def _use_parallel_optimizer(self):
         """Indicates whether to use automatic parallelism."""

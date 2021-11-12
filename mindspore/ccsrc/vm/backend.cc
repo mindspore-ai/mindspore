@@ -733,6 +733,45 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 }
 }  // namespace
 
+void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value) {
+  for (size_t i = 0; i < value.size(); ++i) {
+    auto value_element = value[i];
+    MS_EXCEPTION_IF_NULL(value_element);
+    if (utils::isa<tensor::TensorPtr>(value_element)) {
+      flatted_value->emplace_back(value_element);
+    } else if (utils::isa<ValueTuplePtr>(value_element)) {
+      auto value_tuple_element = value_element->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(value_tuple_element);
+      FlatValueTupleValue(value_tuple_element->value(), flatted_value);
+    } else {
+      MS_LOG(EXCEPTION) << "The value input to FlatValueTupleValue should only contains Tensor and ValueTuple.";
+    }
+  }
+}
+
+void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
+                     size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
+  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
+  const size_t position = iter - parameters.begin();
+  if (position >= args.size()) {
+    MS_LOG(EXCEPTION) << "Position out of args range, position value is " << position << " and args size is "
+                      << args.size() << ".";
+  }
+  auto value_tuple = utils::cast<ValueTuplePtr>(args[position]);
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  auto value_tuple_value = value_tuple->value();
+  ValuePtrList flatted_value_tuple_value;
+  FlatValueTupleValue(value_tuple_value, &flatted_value_tuple_value);
+  if (index >= flatted_value_tuple_value.size()) {
+    MS_LOG(EXCEPTION) << "Index out of flatted_value_tuple_value range, index value is " << index
+                      << " and flatted_value_tuple_value size is " << flatted_value_tuple_value.size() << ".";
+  }
+  auto input = flatted_value_tuple_value[index];
+  MS_EXCEPTION_IF_NULL(input);
+  auto tensor_input = input->cast<tensor::TensorPtr>();
+  input_tensor->push_back(tensor_input);
+}
+
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -824,8 +863,13 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     std::vector<tensor::TensorPtr> input_tensor;
     MS_EXCEPTION_IF_NULL(kernel_graph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
-      const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-      PushTensor(args, origin_parameters, front_node, &input_tensor);
+      auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
+      if (element_pair.first) {
+        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensor);
+      } else {
+        const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
+        PushTensor(args, origin_parameters, front_node, &input_tensor);
+      }
     }
     (void)input_tensors.emplace_back(input_tensor);
   }

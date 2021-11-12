@@ -30,7 +30,7 @@ from .. import context
 from .._c_expression import init_pipeline, Cell_, FuncGraph
 from .._checkparam import Validator
 from ..common import dtype as mstype
-from ..common.api import _cell_graph_executor, _pynative_executor
+from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor
 from ..common.parameter import Parameter, ParameterTuple
 from ..common.tensor import Tensor
 from ..ops.operations import HookBackward, Cast
@@ -784,6 +784,9 @@ class Cell(Cell_):
                     i.init_data()
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
+                new_inputs.append(i)
+            elif hasattr(self, "enable_tuple_broaden") and self.enable_tuple_broaden and isinstance(i, tuple) and\
+                    _check_all_tensor(i):
                 new_inputs.append(i)
 
         if self._auto_parallel_mode:
