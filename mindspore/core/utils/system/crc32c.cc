@@ -285,7 +285,7 @@ static inline void CRC32T8(uint32 *crc, const uint8 **p) {
 uint32 Crc32c::MakeCrc32c(uint32 init_crc, const char *data, size_t size) {
   MS_EXCEPT_CHECK_NULL(data);
   uint32_t crc = init_crc ^ 0xffffffffu;
-  const unsigned int OFFSET = 8;
+  const int OFFSET = 8;
 
   // Get the origin begin and end address(not alignment)
   auto *bp = reinterpret_cast<const uint8_t *>(data);
