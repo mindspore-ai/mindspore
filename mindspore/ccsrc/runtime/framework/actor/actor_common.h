@@ -95,6 +95,64 @@ enum class KernelTransformType {
     return;                                                                                                        \
   }
 
+// Encapsulate the actor APIs associated with execution.
+class ActorDispatcher {
+ public:
+  template <typename T, typename Arg0, typename Arg1>
+  static void Send(const AID &aid, void (T::*method)(Arg0), Arg1 &&arg) {
+    if (is_multi_thread_execution_) {
+      Async(aid, method, arg);
+    } else {
+      // The single thread execution doesn't need to switch threads and calls function directly.
+      auto actor_manager = ActorMgr::GetActorMgrRef();
+      MS_EXCEPTION_IF_NULL(actor_manager);
+      auto base_actor = actor_manager->GetActor(aid);
+      T *actor = dynamic_cast<T *>(base_actor.get());
+      MS_EXCEPTION_IF_NULL(actor);
+      (actor->*method)(arg);
+    }
+  }
+
+  template <typename T, typename... Args0, typename... Args1>
+  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+    if (is_multi_thread_execution_) {
+      auto tuple = std::make_tuple(std::forward<Args1>(args)...);
+      Async(aid, method, std::move(tuple));
+    } else {
+      // The single thread execution doesn't need to switch threads and calls function directly.
+      auto actor_manager = ActorMgr::GetActorMgrRef();
+      MS_EXCEPTION_IF_NULL(actor_manager);
+      auto base_actor = actor_manager->GetActor(aid);
+      T *actor = dynamic_cast<T *>(base_actor.get());
+      MS_EXCEPTION_IF_NULL(actor);
+      (actor->*method)(std::forward<Args1>(args)...);
+    }
+  }
+
+  static void is_multi_thread_execution(bool is_multi_thread_execution) {
+    is_multi_thread_execution_ = is_multi_thread_execution;
+  }
+
+  // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
+  // and the next next five executions are statistics of single thread execution time.
+  static constexpr size_t kMultiThreadExecutionCountBegin{6};
+  static constexpr size_t kMultiThreadExecutionCountEnd{10};
+  static constexpr size_t kSingleThreadExecutionCountBegin{11};
+  static constexpr size_t kSingleThreadExecutionCountEnd{15};
+  // The single thread execution constraint.
+  static constexpr size_t kSingleThreadExecutionActorMaxNum{100};
+
+ private:
+  ActorDispatcher() = default;
+  ~ActorDispatcher() = default;
+  DISABLE_COPY_AND_ASSIGN(ActorDispatcher);
+
+  // Decide whether use the multi thread to execute actors.
+  // There are scenarios with small network and data, and the performance of multi thread execution is not as good as
+  // that of single thread, so single thread execution is required at this time.
+  static bool is_multi_thread_execution_;
+};
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);

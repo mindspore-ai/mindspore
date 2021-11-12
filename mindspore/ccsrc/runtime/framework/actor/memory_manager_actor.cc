@@ -42,7 +42,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
 void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
@@ -76,7 +76,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
 void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
@@ -107,7 +107,7 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
@@ -164,7 +164,7 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
 
 void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   // Call back to the from actor to process.
-  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
 void MemoryManagerActor::SetOpContextMemoryAllocFail(const std::string &kernel_name,

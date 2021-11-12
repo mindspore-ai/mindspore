@@ -68,15 +68,15 @@ void CopyActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *
 }
 
 void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
-        device_contexts_[kOutputDeviceContextIndex], context, GetAID());
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
+                        device_contexts_[kOutputDeviceContextIndex], context, GetAID());
 }
 
 void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_,
-        device_contexts_[kInputDeviceContextIndex], context);
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_,
-        device_contexts_[kOutputDeviceContextIndex], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_,
+                        device_contexts_[kInputDeviceContextIndex], context);
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_,
+                        device_contexts_[kOutputDeviceContextIndex], context);
 }
 
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
@@ -157,14 +157,14 @@ void CopyActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
     output_data->data_ = output_device_tensor_[0];
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+    ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
   }
 
   // Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+      ActorDispatcher::Send(output_control, &OpActor::RunOpControl, source_aid, context);
     }
   }
 }

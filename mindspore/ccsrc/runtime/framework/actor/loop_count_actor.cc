@@ -32,7 +32,7 @@ void LoopCountActor::RunOpControl(AID *const input_control, OpContext<DeviceTens
   if (CheckRunningCondition(context)) {
     // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
     // LoopCountActor exits, because other processors which are not in actor also will process device tensor.
-    Async(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
   }
 }
 
@@ -60,7 +60,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
 }
 
 void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
 }
 
 void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -71,11 +71,11 @@ void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
   }
 
   // Send loop count to output actor.
-  Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
+  ActorDispatcher::Send(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
 
   // The LoopCountActor exits.
   if (current_count_ == loop_count_) {
@@ -85,7 +85,7 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   // Send to DataPrepareActor to trigger next step running.
   std::vector<std::vector<TensorPtr>> input_tensors;
-  Async(data_prepare_aid_, &DataPrepareActor::PrepareData, input_tensors, context);
+  ActorDispatcher::Send(data_prepare_aid_, &DataPrepareActor::PrepareData, input_tensors, context);
 }
 }  // namespace runtime
 }  // namespace mindspore

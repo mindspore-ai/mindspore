@@ -75,6 +75,11 @@ struct ActorSet {
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
   ActorInfo name_;
+  // The related statistics information of multi thread and single thread to decide whether use the multi thread.
+  bool is_multi_thread_execution_{true};
+  size_t execution_count_{0};
+  double multi_thread_execution_time_{0};
+  double single_thread_execution_time_{0};
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 
@@ -101,7 +106,8 @@ class GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The third parameter is used only in the step execution strategy.
-  bool Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  bool Run(ActorSet *constactor_set, const std::vector<DeviceContext *> &device_contexts,
+           const std::vector<std::vector<TensorPtr>> &input_tensors,
            const std::vector<TensorPtr> &input_tensors_with_value_node = {},
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
@@ -112,6 +118,9 @@ class GraphScheduler {
   GraphScheduler() = default;
   ~GraphScheduler() = default;
   DISABLE_COPY_AND_ASSIGN(GraphScheduler);
+
+  // Set using the multi thread or single thread to execute the actor set by the execution time compared.
+  void SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy, double execution_time);
 
   // The Global actors contain memory manager actor, recorder actor and debug actor.
   void BuildAndScheduleGlobalActor();
