@@ -50,6 +50,7 @@ class OutputActor : public AbstractActor {
         current_outputs_num_(0) {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
+    output_device_tensors_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
   }
   ~OutputActor() override = default;
@@ -86,6 +87,7 @@ class OutputActor : public AbstractActor {
   // The outputs.
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
+  std::vector<DeviceTensor *> output_device_tensors_;
   // Record the output nodes whose output address must be persisted and can't be changed.
   // For example the output address of output node in the sink graph is persisted.
   std::set<AnfNodePtr> output_address_persisted_nodes_;

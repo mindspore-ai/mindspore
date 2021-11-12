@@ -131,6 +131,11 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     return;
   }
 
+  const auto &control_iter = input_op_controls_.find(sequential_num);
+  if (control_iter != input_op_controls_.end()) {
+    input_op_controls_.erase(control_iter);
+  }
+
   const auto &iter = input_op_data_with_branch_id_.find(sequential_num);
   if (iter == input_op_data_with_branch_id_.end() || iter->second.empty()) {
     MS_LOG(ERROR) << "Cannot find input in batch op result for actor:" << GetAID();
