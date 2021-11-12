@@ -740,6 +740,7 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
                    << ", type: " << GetPrimitiveTypeName(primitive, schema_version_) << ", set infer flag to false.";
       subgraph_infershape_ret = RET_INFER_INVALID;
     } else if (ret != RET_OK) {
+      FreeOpParameters();
       MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
                     << ", type: " << GetPrimitiveTypeName(primitive, schema_version_);
       return RET_INFER_ERR;
