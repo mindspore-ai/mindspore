@@ -12,6 +12,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         clue_node.cc
         coco_node.cc
         csv_node.cc
+        dbpedia_node.cc
         div2k_node.cc
         emnist_node.cc
         fake_image_node.cc

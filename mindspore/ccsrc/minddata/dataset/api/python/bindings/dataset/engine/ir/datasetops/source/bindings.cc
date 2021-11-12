@@ -33,6 +33,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/dbpedia_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
@@ -155,6 +156,18 @@ PYBIND_REGISTER(CSVNode, 2, ([](const py::module *m) {
                                                   num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(csv->ValidateParams());
                       return csv;
+                    }));
+                }));
+
+PYBIND_REGISTER(DBpediaNode, 2, ([](const py::module *m) {
+                  (void)py::class_<DBpediaNode, DatasetNode, std::shared_ptr<DBpediaNode>>(*m, "DBpediaNode",
+                                                                                           "to create a DBpediaNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int64_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto dbpedia = std::make_shared<DBpediaNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(dbpedia->ValidateParams());
+                      return dbpedia;
                     }));
                 }));
 
