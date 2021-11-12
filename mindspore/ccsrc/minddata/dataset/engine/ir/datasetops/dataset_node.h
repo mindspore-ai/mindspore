@@ -83,6 +83,7 @@ constexpr char kCityscapesNode[] = "CityscapesDataset";
 constexpr char kCLUENode[] = "CLUEDataset";
 constexpr char kCocoNode[] = "CocoDataset";
 constexpr char kCSVNode[] = "CSVDataset";
+constexpr char kDBpediaNode[] = "DBpediaDataset";
 constexpr char kDIV2KNode[] = "DIV2KDataset";
 constexpr char kEMnistNode[] = "EMnistDataset";
 constexpr char kFakeImageNode[] = "FakeImageDataset";

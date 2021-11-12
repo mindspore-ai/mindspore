@@ -28,6 +28,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     photo_tour_op.cc
     fashion_mnist_op.cc
     ag_news_op.cc
+    dbpedia_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

@@ -68,7 +68,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
-    check_photo_tour_dataset, check_ag_news_dataset
+    check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -7871,6 +7871,102 @@ class CityscapesDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.CityscapesNode(self.dataset_dir, self.usage, self.quality_mode, self.task, self.decode, self.sampler)
+
+
+class DBpediaDataset(SourceDataset):
+    """
+    A source dataset that reads and parses the DBpedia dataset.
+
+    The generated dataset has three columns :py:obj:`[class, title, content]`.
+    The tensor of column :py:obj:`class` is of the string type.
+    The tensor of column :py:obj:`title` is of the string type.
+    The tensor of column :py:obj:`content` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
+            `train` will read from 560,000 train samples,
+            `test` will read from 70,000 test samples,
+            `all` will read from all 630,000 samples (default=None, all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all text).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL;
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> dbpedia_dataset_dir = "/path/to/dbpedia_dataset_directory"
+        >>>
+        >>> # 1) Read 3 samples from DBpedia dataset
+        >>> dataset = ds.DBpediaDataset(dataset_dir=dbpedia_dataset_dir, num_samples=3)
+        >>>
+        >>> # 2) Read train samples from DBpedia dataset
+        >>> dataset = ds.DBpediaDataset(dataset_dir=dbpedia_dataset_dir, usage="train")
+
+    About DBpedia dataset:
+
+    The DBpedia dataset consists of 630,000 text samples in 14 classes, there are 560,000 samples in the train.csv
+    and 70,000 samples in the test.csv.
+    The 14 different classes represent Company, EducationaInstitution, Artist, Athlete, OfficeHolder,
+    MeanOfTransportation, Building, NaturalPlace, Village, Animal, Plant, Album, Film, WrittenWork.
+
+    Here is the original DBpedia dataset structure.
+    You can unzip the dataset files into this directory structure and read by Mindspore's API.
+
+    .. code-block::
+
+        .
+        └── dbpedia_dataset_dir
+            ├── train.csv
+            ├── test.csv
+            ├── classes.txt
+            └── readme.txt
+
+    .. code-block::
+
+        @article{DBpedia,
+        title   = {DBPedia Ontology Classification Dataset},
+        author  = {Jens Lehmann, Robert Isele, Max Jakob, Anja Jentzsch, Dimitris Kontokostas,
+                Pablo N. Mendes, Sebastian Hellmann, Mohamed Morsey, Patrick van Kleef,
+                    Sören Auer, Christian Bizer},
+        year    = {2015},
+        howpublished = {http://dbpedia.org}
+        }
+    """
+
+    @check_dbpedia_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.DBpediaNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                               self.shard_id)
 
 
 class DIV2KDataset(MappableDataset):

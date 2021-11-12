@@ -1855,6 +1855,54 @@ inline std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_f
                                       cache);
 }
 
+/// \class DBpediaDataset
+/// \brief A source dataset for reading and parsing DBpedia dataset.
+class DBpediaDataset : public Dataset {
+ public:
+  /// \brief Constructor of DBpediaDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of DBpedia, can be "train", "test" or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kFiles - Shuffle files only.
+  ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  DBpediaDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                 ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of DBpediaDataset.
+  ~DBpediaDataset() = default;
+};
+
+/// \brief Function to create a DBpediaDataset.
+/// \note The generated dataset has three columns ["class", "title", "content"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of DBpedia, can be "train", "test" or "all" (default = "all").
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode::kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the DBpediaDataset
+inline std::shared_ptr<DBpediaDataset> DBpedia(const std::string &dataset_dir, const std::string &usage = "all",
+                                               int64_t num_samples = 0, ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                               int32_t num_shards = 1, int32_t shard_id = 0,
+                                               const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<DBpediaDataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle,
+                                          num_shards, shard_id, cache);
+}
+
 /// \class DIV2KDataset
 /// \brief A source dataset for reading and parsing DIV2K dataset.
 class DIV2KDataset : public Dataset {

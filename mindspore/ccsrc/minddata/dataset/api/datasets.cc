@@ -96,6 +96,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/dbpedia_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
@@ -1027,6 +1028,14 @@ CSVDataset::CSVDataset(const std::vector<std::vector<char>> &dataset_files, char
     std::make_shared<CSVNode>(VectorCharToString(dataset_files), field_delim, column_defaults,
                               VectorCharToString(column_names), num_samples, shuffle, num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+DBpediaDataset::DBpediaDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                               int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                               const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<DBpediaNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
+                                          num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DBpediaNode>(ds);
 }
 
 DIV2KDataset::DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
