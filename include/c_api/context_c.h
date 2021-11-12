@@ -18,6 +18,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "include/c_api/types_c.h"
 
 #ifdef __cplusplus
