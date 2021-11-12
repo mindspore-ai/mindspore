@@ -267,7 +267,7 @@ void EltWiseGradCPUKernel<T>::InitComputeFunc() {
   if constexpr (std::is_same_v<T, int>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
+      elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with int as input.";
     }

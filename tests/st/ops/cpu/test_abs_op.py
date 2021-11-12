@@ -47,7 +47,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype', [np.int, np.float32, np.float64])
 def test_abs(dtype):
     """
     Feature: ALL To ALL
