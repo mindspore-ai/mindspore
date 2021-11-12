@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -673,6 +673,68 @@ void CheckAndApplyApproximation() {
   }
 }
 
+static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode) {
+  auto &inputs = cnode->inputs();
+  ValueNodePtr prim_anf_node = inputs[0]->cast<ValueNodePtr>();
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  size_t edge_count = 0;
+  auto node_op_info = cnode->user_data<OperatorInfo>();
+
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto prev_cnode = inputs[i]->cast<CNodePtr>();
+    bool bool_result_prev_cnode = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
+    if (bool_result_prev_cnode) {
+      continue;
+    }
+    ValueNodePtr prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
+    PrimitivePtr prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
+    size_t output_index = 0;
+
+    while ((IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == prim::kTupleGetItem) ||
+           (prev_prim->name() == DEPEND)) {
+      if (IsAutoParallelCareNode(prev_cnode)) {
+        auto prev_op_info = prev_cnode->user_data<OperatorInfo>();
+        CreateEdgeBetweenTwoOps(prev_op_info, node_op_info, cnode, prev_cnode, prim, prev_prim, output_index, i,
+                                &edge_count);
+        break;
+      } else if (prev_prim->name() == prim::kTupleGetItem) {
+        // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
+        // this 'tuple_getitem'
+        MS_LOG(INFO) << "Jumping the 'tuple_getitem' operator.";
+        output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(2))));
+        prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
+        bool bool_result_tuple = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
+        if (bool_result_tuple) {
+          break;
+        }
+        prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
+        prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
+        if (!IsAutoParallelCareNode(prev_cnode)) {
+          MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
+        }
+        MS_LOG(INFO) << "Jumped the 'tuple_getitem' operator, "
+                     << "and creating an edge between the Operator before "
+                     << "'tuple_getitem' and the Operator after 'tuple_getitem'.";
+      } else if (prev_prim->name() == DEPEND) {
+        // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
+        // this 'depend'
+        MS_LOG(INFO) << "Jumping the 'depend' operator.";
+        prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
+        bool bool_result_depend = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
+        if (bool_result_depend) {
+          break;
+        }
+        prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
+        prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
+        MS_LOG(INFO) << "Jumped the 'depend' operator, "
+                     << "and creating an edge between the Operator before "
+                     << "'depend' and the Operator after 'depend'.";
+      }
+    }
+  }
+  MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
+}
+
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
   // Step 2
   MS_LOG(INFO) << "Constructing edges for cost graph begins.";
@@ -681,68 +743,10 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
-    auto &inputs = cnode->inputs();
-    ValueNodePtr prim_anf_node = inputs[0]->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
       continue;
     }
-    PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    size_t edge_count = 0;
-    auto node_op_info = cnode->user_data<OperatorInfo>();
-
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      auto prev_cnode = inputs[i]->cast<CNodePtr>();
-      bool bool_result_prev_cnode = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
-      if (bool_result_prev_cnode) {
-        continue;
-      }
-      ValueNodePtr prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
-      PrimitivePtr prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
-      size_t output_index = 0;
-
-      while ((IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == prim::kTupleGetItem) ||
-             (prev_prim->name() == DEPEND)) {
-        if (IsAutoParallelCareNode(prev_cnode)) {
-          auto prev_op_info = prev_cnode->user_data<OperatorInfo>();
-          CreateEdgeBetweenTwoOps(prev_op_info, node_op_info, cnode, prev_cnode, prim, prev_prim, output_index, i,
-                                  &edge_count);
-          break;
-        } else if (prev_prim->name() == prim::kTupleGetItem) {
-          // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
-          // this 'tuple_getitem'
-          MS_LOG(INFO) << "Jumping the 'tuple_getitem' operator.";
-          output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(2))));
-          prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
-          bool bool_result_tuple = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
-          if (bool_result_tuple) {
-            break;
-          }
-          prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
-          prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
-          if (!IsAutoParallelCareNode(prev_cnode)) {
-            MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
-          }
-          MS_LOG(INFO) << "Jumped the 'tuple_getitem' operator, "
-                       << "and creating an edge between the Operator before "
-                       << "'tuple_getitem' and the Operator after 'tuple_getitem'.";
-        } else if (prev_prim->name() == DEPEND) {
-          // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
-          // this 'depend'
-          MS_LOG(INFO) << "Jumping the 'depend' operator.";
-          prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
-          bool bool_result_depend = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
-          if (bool_result_depend) {
-            break;
-          }
-          prev_prim_anf_node = prev_cnode->input(0)->cast<ValueNodePtr>();
-          prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
-          MS_LOG(INFO) << "Jumped the 'depend' operator, "
-                       << "and creating an edge between the Operator before "
-                       << "'depend' and the Operator after 'depend'.";
-        }
-      }
-    }
-    MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
+    ConstructCNodeCostGraphEdges(cnode);
   }
   CheckAndApplyApproximation();
 

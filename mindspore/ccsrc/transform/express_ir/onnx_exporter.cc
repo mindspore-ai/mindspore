@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 #include <utility>
 #include <functional>
+#include <algorithm>
 
 #include "ir/tensor.h"
 #include "ir/param_info.h"
@@ -384,6 +386,7 @@ class OnnxExporter {
 
   void MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
                     std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
+  void MatchAndMarkCNode(const CNodePtr &cnode, std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, size_t> *node_map_ptr,
                    onnx::GraphProto *graph_proto);
 
@@ -600,7 +603,7 @@ void OnnxExporter::SetTensorProtoInfo(const ParameterPtr &param, onnx::TensorPro
 
 void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
                                 std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
-  std::unordered_map<AnfNodePtr, OpMergedInfo> &op_merged_infos = *op_merged_infos_ptr;
+  auto &op_merged_infos = *op_merged_infos_ptr;
 
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
@@ -623,36 +626,41 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
       // if the key `input` does not exist, just create a new one
       op_merged_infos[input].referred_count += 1;
     }
-    // MindSpore Conv + BiasAdd --> ONNX Conv
-    if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) &&
-        IsPrimitiveCNode(cnode->input(1), prim::kPrimConv2D)) {
-      op_merged_infos[cnode].mode = OP_MERGE_CONV;
-      op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
-      op_merged_infos[cnode->input(1)].referred_count -= 1;
-    } else if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) &&
-               IsPrimitiveCNode(cnode->input(1), prim::kPrimMatMul)) {
-      op_merged_infos[cnode].mode = OP_MERGE_GEMM;
-      op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
-      op_merged_infos[cnode->input(1)].referred_count -= 1;
-    } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
-               IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("BatchNorm")) &&
-               GetInt64Value(cnode->input(2)) == 0) {
-      op_merged_infos[cnode].mode = OP_MERGE_BATCH_NORM;
-      op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
-      op_merged_infos[cnode->input(1)].referred_count -= 1;
-    } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
-               IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("MaxPoolWithArgmax")) &&
-               GetInt64Value(cnode->input(2)) == 0) {
-      op_merged_infos[cnode].mode = OP_MERGE_MAXPOOL_WITH_ARGMAX;
-      op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
-      op_merged_infos[cnode->input(1)].referred_count -= 1;
-    } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
-               IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("LayerNorm")) &&
-               GetInt64Value(cnode->input(2)) == 0) {
-      op_merged_infos[cnode].mode = OP_MERGE_LAYER_NORM;
-      op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
-      op_merged_infos[cnode->input(1)].referred_count -= 1;
-    }
+    MatchAndMarkCNode(cnode, op_merged_infos_ptr);
+  }
+}
+
+void OnnxExporter::MatchAndMarkCNode(const CNodePtr &cnode,
+                                     std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+  auto &op_merged_infos = *op_merged_infos_ptr;
+  // MindSpore Conv + BiasAdd --> ONNX Conv
+  if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) && IsPrimitiveCNode(cnode->input(1), prim::kPrimConv2D)) {
+    op_merged_infos[cnode].mode = OP_MERGE_CONV;
+    op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
+    op_merged_infos[cnode->input(1)].referred_count -= 1;
+  } else if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) &&
+             IsPrimitiveCNode(cnode->input(1), prim::kPrimMatMul)) {
+    op_merged_infos[cnode].mode = OP_MERGE_GEMM;
+    op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
+    op_merged_infos[cnode->input(1)].referred_count -= 1;
+  } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
+             IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("BatchNorm")) &&
+             GetInt64Value(cnode->input(2)) == 0) {
+    op_merged_infos[cnode].mode = OP_MERGE_BATCH_NORM;
+    op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
+    op_merged_infos[cnode->input(1)].referred_count -= 1;
+  } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
+             IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("MaxPoolWithArgmax")) &&
+             GetInt64Value(cnode->input(2)) == 0) {
+    op_merged_infos[cnode].mode = OP_MERGE_MAXPOOL_WITH_ARGMAX;
+    op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
+    op_merged_infos[cnode->input(1)].referred_count -= 1;
+  } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
+             IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("LayerNorm")) &&
+             GetInt64Value(cnode->input(2)) == 0) {
+    op_merged_infos[cnode].mode = OP_MERGE_LAYER_NORM;
+    op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
+    op_merged_infos[cnode->input(1)].referred_count -= 1;
   }
 }
 
@@ -1571,59 +1579,30 @@ void OnnxExporter::ExportPrimGatherV2(const FuncGraphPtr &, const CNodePtr &node
 
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
-  // Type of the 2nd input of 'Reshape' of MindSpore is tuple, but ONNX's is tensor, need to do some convert
-  if (node->IsApply(prim::kPrimReshape)) {
-    return ExportPrimReshape(func_graph, node, node_map_ptr, graph_proto);
-  }
-  if (node->IsApply(prim::kPrimReduceMean) || node->IsApply(prim::kPrimReduceSum)) {
-    return ExportPrimReduce(func_graph, node, node_map_ptr, graph_proto);
-  }
-  if (node->IsApply(prim::kPrimTranspose)) {
-    return ExportPrimTranspose(func_graph, node, node_map_ptr, graph_proto);
-  }
-  if (node->IsApply(prim::kPrimStridedSlice)) {
-    return ExportPrimStridedSlice(func_graph, node, node_map_ptr, graph_proto);
-  }
-  if (node->IsApply(prim::kPrimResizeNearestNeighbor)) {
-    return ExportPrimResizeNearestNeighbor(func_graph, node, node_map_ptr, graph_proto);
-  }
-  if (node->IsApply(prim::kPrimConcat)) {
-    return ExportPrimConcat(func_graph, node, node_map_ptr, graph_proto);
-  }
+  using ExportFunc = std::function<void(OnnxExporter *, const FuncGraphPtr &, const CNodePtr &,
+                                        std::map<AnfNodePtr, size_t> *, onnx::GraphProto *const)>;
+  static std::vector<std::pair<PrimitivePtr, ExportFunc>> export_table = {
+    {prim::kPrimReshape, &OnnxExporter::ExportPrimReshape},
+    {prim::kPrimReduceMean, &OnnxExporter::ExportPrimReduce},
+    {prim::kPrimReduceSum, &OnnxExporter::ExportPrimReduce},
+    {prim::kPrimTranspose, &OnnxExporter::ExportPrimTranspose},
+    {prim::kPrimStridedSlice, &OnnxExporter::ExportPrimStridedSlice},
+    {prim::kPrimResizeNearestNeighbor, &OnnxExporter::ExportPrimResizeNearestNeighbor},
+    {prim::kPrimConcat, &OnnxExporter::ExportPrimConcat},
+    {prim::kPrimCast, &OnnxExporter::ExportPrimCast},
+    {prim::kPrimPRelu, &OnnxExporter::ExportPrimPReLU},
+    {prim::kPrimRelu6, &OnnxExporter::ExportPrimReLU6},
+    {prim::kPrimDepthwiseConv2dNative, &OnnxExporter::ExportPrimDepthwiseConv2d},
+    {prim::kPrimTile, &OnnxExporter::ExportPrimTile},
+    {prim::kPrimSquare, &OnnxExporter::ExportPrimSquare},
+    {prim::kPrimGather, &OnnxExporter::ExportPrimGatherV2},
+  };
 
-  // MindSpore Cast(x, T) --> ONNX Cast[to=T](x)
-  if (node->IsApply(prim::kPrimCast)) {
-    return ExportPrimCast(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // ONNX PRelu requires unidirectional broadcasting, here need some process
-  if (node->IsApply(std::make_shared<Primitive>("PReLU"))) {
-    return ExportPrimPReLU(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // MindSpore ReLU6(x) --> ONNX Clip[min=0.f, max=6.f](x)
-  if (node->IsApply(std::make_shared<Primitive>("ReLU6"))) {
-    return ExportPrimReLU6(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // MindSpore DepthwiseConv2dNative --> ONNX Conv(x, reshape(w))
-  if (node->IsApply(std::make_shared<Primitive>("DepthwiseConv2dNative"))) {
-    return ExportPrimDepthwiseConv2d(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // MindSpore Tile(x) --> ONNX Tile(x, repeat)
-  if (node->IsApply(prim::kPrimTile)) {
-    return ExportPrimTile(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // MindSpore Square(x) --> ONNX Pow(x, 2)
-  if (node->IsApply(prim::kPrimSquare)) {
-    return ExportPrimSquare(func_graph, node, node_map_ptr, graph_proto);
-  }
-
-  // MindSpore GatherV2(x, indices, axis) --> ONNX Gather(x, indices)
-  if (node->IsApply(prim::kPrimGather)) {
-    return ExportPrimGatherV2(func_graph, node, node_map_ptr, graph_proto);
+  auto iter = std::find_if(export_table.begin(), export_table.end(),
+                           [&node](const auto &item) { return node->IsApply(item.first); });
+  if (iter != export_table.end()) {
+    iter->second(this, func_graph, node, node_map_ptr, graph_proto);
+    return;
   }
 
   auto inputs = node->inputs();

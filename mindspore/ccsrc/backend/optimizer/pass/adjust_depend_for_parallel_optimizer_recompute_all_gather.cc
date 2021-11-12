@@ -35,13 +35,10 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
-    auto instance_name = primitive->instance_name();
-    bool is_allgather = AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName;
-    bool is_fusion = AnfAlgo::HasNodeAttr(kAttrFusion, cnode) && AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0;
-    bool is_recompute = cnode->GetAttr(kAttrDuplicated) != nullptr && GetValue<bool>(cnode->GetAttr(kAttrDuplicated));
-    bool is_from_parallel_optimizer = instance_name.find("parallel_optimizer") != std::string::npos;
-    if (is_allgather && is_fusion && is_recompute && is_from_parallel_optimizer) {
+    if (!AnfAlgo::IsAllgather(cnode) || !AnfAlgo::IsFusion(cnode) || !AnfAlgo::IsFromParallelOptimizer(cnode)) {
+      continue;
+    }
+    if (AnfAlgo::IsRecompute(cnode)) {
       int64_t fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
       if (std::find(parallel_optimizer_recompute_allgather_fusion_ids.begin(),
                     parallel_optimizer_recompute_allgather_fusion_ids.end(),
@@ -54,16 +51,14 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
       } else {
         parallel_optimizer_recompute_allgathers.push_back(node);
       }
-    }
-    if (!is_recompute && is_fusion && is_allgather && is_from_parallel_optimizer) {
+    } else {
       int64_t unrecompute_fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
       unrecompute_max_fusion_id = std::max(unrecompute_fusion_id, unrecompute_max_fusion_id);
       bool would_be_recomputed =
         AnfAlgo::HasNodeAttr(kAttrRecompute, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrRecompute);
-      if (forward_allgather_recompute_value_in_fusion_group.find(unrecompute_fusion_id) ==
-          forward_allgather_recompute_value_in_fusion_group.end()) {
-        forward_allgather_recompute_value_in_fusion_group[unrecompute_fusion_id] = would_be_recomputed;
-      } else if (forward_allgather_recompute_value_in_fusion_group[unrecompute_fusion_id] != would_be_recomputed) {
+      auto [iter, inserted] =
+        forward_allgather_recompute_value_in_fusion_group.emplace(unrecompute_fusion_id, would_be_recomputed);
+      if (!inserted && iter->second != would_be_recomputed) {
         MS_LOG(EXCEPTION) << "In same fusion group, the allgather recompute attribute should be equal. "
                              "The normal node is:"
                           << cnode->fullname_with_scope();
