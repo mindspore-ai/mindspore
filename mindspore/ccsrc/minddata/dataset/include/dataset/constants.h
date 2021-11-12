@@ -283,6 +283,8 @@ constexpr uint8_t kCVInvalidType = 255;
 using connection_id_type = uint64_t;
 using session_id_type = uint32_t;
 using row_id_type = int64_t;
+
+constexpr uint32_t kCfgAutoTuneInterval = 100;  // ms
 }  // namespace dataset
 }  // namespace mindspore
 

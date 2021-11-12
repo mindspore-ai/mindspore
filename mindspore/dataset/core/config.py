@@ -410,6 +410,76 @@ def load(file):
     _config.load(file)
 
 
+def set_enable_autotune(enable):
+    """
+    Set the default state of AutoTune flag. If it is True, will facilitate users to improve
+    performance for a given workload by automatically finding the better settings for data pipeline.
+
+    Args:
+        enable (bool): Whether to use AutoTune feature when running data pipeline.
+
+    Raises:
+        TypeError: If enable is not a boolean data type.
+
+    Examples:
+        >>> # Enable AutoTune
+        >>> ds.config.set_enable_autotune(True)
+    """
+    if not isinstance(enable, bool):
+        raise TypeError("enable must be of type bool.")
+    _config.set_enable_autotune(enable)
+
+
+def get_enable_autotune():
+    """
+    Get the default state of AutoTune enabled variable.
+
+    Returns:
+        bool, the state of AutoTune enabled variable (default=True).
+
+    Examples:
+        >>> # Get the flag of AutoTune feature.
+        >>> autotune_flag = ds.config.get_enable_autotune()
+    """
+    return _config.get_enable_autotune()
+
+
+def set_autotune_interval(interval):
+    """
+    Set the default interval (in milliseconds) for data pipeline auto-tuning.
+
+    Args:
+        interval (int): Interval (in milliseconds) to be used for data pipeline auto-tuning.
+
+    Raises:
+        ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
+
+    Examples:
+        >>> # Set a new global configuration value for the auto-tuning interval.
+        >>> ds.config.set_autotune_interval(100)
+    """
+    if not isinstance(interval, int):
+        raise TypeError("interval must be of type int.")
+    if interval <= 0 or interval > INT32_MAX:
+        raise ValueError("Interval given is not within the required range.")
+    _config.set_autotune_interval(interval)
+
+
+def get_autotune_interval():
+    """
+    Get the global configuration of sampling interval of pipeline auto-tuning.
+
+    Returns:
+        int, interval (in milliseconds) for data pipeline auto-tuning.
+
+    Examples:
+        >>> # Get the global configuration of the auto-tuning interval.
+        >>> # If set_autotune_interval() is never called before, the default value(100) will be returned.
+        >>> autotune_interval = ds.config.get_autotune_interval()
+    """
+    return _config.get_autotune_interval()
+
+
 def get_enable_shared_mem():
     """
     Get the default state of shared mem enabled variable.

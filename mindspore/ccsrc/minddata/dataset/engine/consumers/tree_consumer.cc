@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #ifndef ENABLE_SECURITY
+#include "minddata/dataset/engine/perf/auto_tune.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #endif
@@ -37,12 +38,16 @@
 
 namespace mindspore {
 namespace dataset {
+#ifndef ENABLE_SECURITY
+using ProfilingRegistrationState = ProfilingManager::ProfilingRegistrationState;
+#endif
 // TreeConsumer
 TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
 Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) {
   RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d)));
 #ifndef ENABLE_SECURITY
+  profiling_manager_ = GlobalContext::profiling_manager();
   RETURN_IF_NOT_OK(RegisterProfilingManager());
 #endif
   return Status::OK();
@@ -55,9 +60,14 @@ Status TreeConsumer::Terminate() {
 
 #ifndef ENABLE_SECURITY
 Status IteratorConsumer::RegisterProfilingManager() {
-  profiling_manager_ = GlobalContext::profiling_manager();
-  // Profiling infrastructures need to be initialized before Op launching
-  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
+  auto profiler_state = profiling_manager_->GetProfilerTreeState(tree_adapter_->tree_.get());
+  // This should never happen
+  CHECK_FAIL_RETURN_UNEXPECTED(profiler_state != ProfilingManager::kEnabledTreeRegistered,
+                               "Something went wrong. Current tree is already registered with the MD Profiler");
+  if (profiler_state == ProfilingManager::kEnabledDifferentTreeRegistered) {
+    MS_LOG(WARNING) << "MD Profiler is already enabled for a different tree.";
+  } else if (profiler_state == ProfilingRegistrationState::kEnabledTreeNotRegistered) {
+    // Profiling infrastructures need to be initialized before Op launching
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
     // dataset_iterator node is used for graph mode
@@ -72,9 +82,14 @@ Status IteratorConsumer::RegisterProfilingManager() {
 }
 
 Status ToDevice::RegisterProfilingManager() {
-  profiling_manager_ = GlobalContext::profiling_manager();
-  // Profiling infrastructures need to be initialized before Op launching
-  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
+  auto profiler_state = profiling_manager_->GetProfilerTreeState(tree_adapter_->tree_.get());
+  // This should never happen
+  CHECK_FAIL_RETURN_UNEXPECTED(profiler_state != ProfilingManager::kEnabledTreeRegistered,
+                               "Something went wrong. Current tree is already registered with the MD Profiler");
+  if (profiler_state == ProfilingManager::kEnabledDifferentTreeRegistered) {
+    MS_LOG(WARNING) << "MD Profiler is already enabled for a different tree.";
+  } else if (profiler_state == ProfilingRegistrationState::kEnabledTreeNotRegistered) {
+    // Profiling infrastructures need to be initialized before Op launching
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
     // device_queue node is used for graph mode
@@ -90,9 +105,36 @@ Status ToDevice::RegisterProfilingManager() {
 }
 
 Status TreeConsumer::RegisterProfilingManager() {
-  profiling_manager_ = GlobalContext::profiling_manager();
-  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
-    return Status(StatusCode::kMDUnexpectedError, "Profiling is not supported for this consumer.");
+  auto profiler_state = profiling_manager_->GetProfilerTreeState(tree_adapter_->tree_.get());
+  if (profiler_state == ProfilingRegistrationState::kEnabledTreeNotRegistered) {
+    return {StatusCode::kMDUnexpectedError, "Profiling is not supported for this consumer."};
+  }
+  return Status::OK();
+}
+
+Status TreeConsumer::InitAutoTune() {
+  if (profiling_manager_->IsAutotuning()) {
+    // future improvement to show tree UUID in log
+    MS_LOG(WARNING) << "MD Auto-tune is already running for another tree";
+    return Status::OK();
+  }
+  auto profiler_state = profiling_manager_->GetProfilerTreeState(tree_adapter_->tree_.get());
+  if (profiler_state == ProfilingRegistrationState::kNotEnabled) {
+    // Init ProfilingManager to `Enable` it.
+    RETURN_IF_NOT_OK(profiling_manager_->Init());
+    // Register this tree
+    RETURN_IF_NOT_OK(RegisterProfilingManager());
+    // Start Profiler
+    RETURN_IF_NOT_OK(profiling_manager_->Start());
+    // AutoTune object and thread init
+    autotune_ = std::make_unique<AutoTune>(this->tree_adapter_.get(), GetProfilingManager());
+    RETURN_IF_NOT_OK(autotune_->LaunchThread());
+    // Set flag to distinguish between MD Profiler and MD Autotuning
+    // to generate appropriate logs
+    profiling_manager_->EnableAutotuneFlag();
+  } else {
+    MS_LOG(WARNING) << "Unable to start MD Auto-tune as MD Profiler is already enabled. Disable MD Profiler to "
+                       "continue with auto-tune.";
   }
   return Status::OK();
 }
@@ -104,7 +146,12 @@ std::string TreeConsumer::GetOffload() { return (tree_adapter_->GetOffloadJson()
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
   RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
 #ifndef ENABLE_SECURITY
-  RETURN_IF_NOT_OK(RegisterProfilingManager());
+  profiling_manager_ = GlobalContext::profiling_manager();
+  if (GlobalContext::config_manager()->enable_autotune()) {
+    RETURN_IF_NOT_OK(InitAutoTune());
+  } else {
+    RETURN_IF_NOT_OK(RegisterProfilingManager());
+  }
 #endif
   return Status::OK();
 }
@@ -213,7 +260,12 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 Status ToDevice::Init(std::shared_ptr<DatasetNode> d) {
   RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d), num_epochs_));
 #ifndef ENABLE_SECURITY
-  RETURN_IF_NOT_OK(RegisterProfilingManager());
+  profiling_manager_ = GlobalContext::profiling_manager();
+  if (GlobalContext::config_manager()->enable_autotune()) {
+    RETURN_IF_NOT_OK(InitAutoTune());
+  } else {
+    RETURN_IF_NOT_OK(RegisterProfilingManager());
+  }
 #endif
   return Status::OK();
 }

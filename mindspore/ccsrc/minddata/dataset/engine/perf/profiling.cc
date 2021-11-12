@@ -182,35 +182,31 @@ Tracing::Tracing(int32_t records_per_step) : records_per_step_(records_per_step)
 
 // Constructor
 ProfilingManager::ProfilingManager()
-    : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false), tree_(nullptr) {}
+    : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false), tree_(nullptr), autotuning_(false) {}
 
 bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
-  if (tree_ == nullptr) {
-    return enabled_;
-  } else {
-    return enabled_ && (tree_ == tree);
-  }
+  auto external_state = GetProfilerTreeState(tree);
+  return (external_state == kEnabledTreeNotRegistered || external_state == kEnabledTreeRegistered);
 }
 
 Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
-  if (IsProfilingEnable()) {
-    tree_ = tree_adapter->tree_.get();
-
-    perf_monitor_ = std::make_unique<Monitor>(this);
-
-    // Register all profiling node.
-    std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
-    RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
+  CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "Another tree is already registered.");
+  CHECK_FAIL_RETURN_UNEXPECTED(enabled_ == true, "MD Profiler is disabled. Cannot register a tree.");
+  tree_ = tree_adapter->tree_.get();
+  perf_monitor_ = std::make_unique<Monitor>(this);
+  // Register all sampling nodes here.
+  // Tracing node registration is the responsibility of the Consumer
+  std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
+  RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
 
 #ifndef ENABLE_ANDROID
-    std::shared_ptr<Sampling> cpu_sampler = std::make_shared<CpuSampler>(tree_);
-    RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampler));
+  std::shared_ptr<Sampling> cpu_sampler = std::make_shared<CpuSampler>(tree_);
+  RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampler));
 #endif
-    // can insert a correct timestamp so that we can ignore the samples that were taken
-    // during start up of the pipeline.
-    (void)epoch_end_ts_.emplace_back(0);
-    (void)epoch_end_step_.emplace_back(0);
-  }
+  // can insert a correct timestamp so that we can ignore the samples that were taken
+  // during start up of the pipeline.
+  (void)epoch_end_ts_.emplace_back(0);
+  (void)epoch_end_step_.emplace_back(0);
   return Status::OK();
 }
 
@@ -400,7 +396,6 @@ Status ProfilingManager::EpochToTimeInterval(int32_t epoch_num, uint64_t *start_
 Status ProfilingManager::EpochToStepInterval(int32_t epoch_num, uint32_t *start_step, uint32_t *end_step) {
   if (epoch_num <= 0 || epoch_num >= epoch_end_step_.size()) {
     std::string err = "Epoch: " + std::to_string(epoch_num) + " is invalid.";
-    MS_LOG(INFO) << err;
     return {StatusCode::kMDUnexpectedError, err};
   }
   *start_step = epoch_end_step_[epoch_num - 1] + 1;
@@ -603,6 +598,7 @@ Status ProfilingManager::Reset() {
   perf_monitor_.reset();
   tree_ = nullptr;
   profiling_state_ = ProfilingState::kProfilingStateUnBegun;
+  autotuning_ = false;
   return Status::OK();
 }
 
@@ -614,10 +610,6 @@ Status ProfilingManager::Init() {
   Reset();
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ == ProfilingState::kProfilingStateUnBegun,
                                "MD Profiler is in an unexpected state.");
-  if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
-    profiling_state_ = ProfilingState::kProfilingStateUnBegun;
-  }
-
   // Enable profiling
   enabled_ = true;
 
@@ -702,6 +694,15 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
   RETURN_IF_NOT_OK(SaveProfilingData(std::string(profile_data_path), rank_id));
   RETURN_IF_NOT_OK(ChangeFileMode(std::string(profile_data_path), rank_id));
   return Status::OK();
+}
+
+ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
+  if (!enabled_) return kNotEnabled;
+  if (tree_ == nullptr) {
+    return enabled_ ? kEnabledTreeNotRegistered : kNotEnabled;
+  } else {
+    return tree_ == tree ? kEnabledTreeRegistered : kEnabledDifferentTreeRegistered;
+  }
 }
 
 uint64_t ProfilingTime::GetCurMilliSecond() {
