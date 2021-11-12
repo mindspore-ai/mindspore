@@ -100,10 +100,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     return {local_py_params_keys_, local_py_params_values_};
   }
   void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
-    // Ignore the FuncGraph node.
-    if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
-      return;
-    }
     MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
     local_py_params_keys_.emplace_back(NewValueNode(name));
     local_py_params_values_.emplace_back(node);
