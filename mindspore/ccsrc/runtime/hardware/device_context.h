@@ -23,6 +23,7 @@
 #include "runtime/device/device_address.h"
 #include "runtime/device/bucket.h"
 #include "runtime/hardware/collective/collective_communication_lib.h"
+#include "runtime/hardware/collective/collective_comm_lib_loader.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
@@ -49,7 +50,7 @@ struct DeviceContextKey {
 class DeviceContext {
  public:
   explicit DeviceContext(const DeviceContextKey &device_context_key)
-      : device_context_key_(device_context_key), collective_comm_lib_(nullptr) {}
+      : device_context_key_(device_context_key), collective_comm_lib_ptr_(nullptr) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -150,7 +151,7 @@ class DeviceContext {
   virtual bool InitCollectiveCommLib() { return true; }
 
   // Return collective communication object for caller to access
-  CollectiveCommunicationLibPtr collective_comm_lib() const { return collective_comm_lib_; }
+  void *collective_comm_lib() const { return collective_comm_lib_ptr_; }
 
   // TODO(jiaorui): will be delete
   // Dump all graphs.
@@ -158,10 +159,11 @@ class DeviceContext {
 
  protected:
   DeviceContextKey device_context_key_;
-  CollectiveCommunicationLibPtr collective_comm_lib_;
+
+  // The dynamic loaded handle for collective communication library.
+  void *collective_comm_lib_ptr_;
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 }  // namespace device
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_CONTEXT_H_

@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 #include "runtime/hardware/collective/communication_group.h"
+#include "utils/dlopen_macro.h"
 
 namespace mindspore {
 namespace device {
@@ -44,16 +45,6 @@ class MPICommunicationGroup : public CommunicationGroup {
   MPI_Comm group_communicator_;
 };
 using MPICommunicationGroupPtr = std::shared_ptr<MPICommunicationGroup>;
-
-#define CHECK_MPI_RET(expression, message) \
-  do {                                     \
-    {                                      \
-      auto ret = (expression);             \
-      if (ret != MPI_SUCCESS) {            \
-        MS_LOG(EXCEPTION) << (message);    \
-      }                                    \
-    }                                      \
-  } while (false)
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

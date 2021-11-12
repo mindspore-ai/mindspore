@@ -814,9 +814,9 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release
-      std::string exception_info = GetCompileExceptionInfo();
-      if (!exception_info.empty()) {
-        MS_LOG(ERROR) << exception_info;
+      std::string compile_exception_info = GetCompileExceptionInfo();
+      if (!compile_exception_info.empty()) {
+        MS_LOG(ERROR) << compile_exception_info;
       }
     }
     ReleaseResource(phase);

@@ -27,8 +27,10 @@ bool MPICommunicationGroup::Finalize() {
   if (!initialized_) {
     return false;
   }
-  CHECK_MPI_RET(MPI_Comm_free(&group_communicator_), "Freeing MPI group communicator for " + name_ + " failed.");
-  CHECK_MPI_RET(MPI_Group_free(&group_), "Freeing MPI group for " + name_ + " failed.");
+
+  CHECK_RET(MPI_Comm_free(&group_communicator_), MPI_SUCCESS,
+            "Freeing MPI group communicator for " + name_ + " failed.");
+  CHECK_RET(MPI_Group_free(&group_), MPI_SUCCESS, "Freeing MPI group for " + name_ + " failed.");
   initialized_ = false;
   return true;
 }
@@ -38,15 +40,12 @@ bool MPICommunicationGroup::Initialize(const MPI_Group &world_group) {
     return false;
   }
   std::vector<int> ranks(group_ranks_.begin(), group_ranks_.end());
-  CHECK_MPI_RET(MPI_Group_incl(world_group, ranks.size(), ranks.data(), &group_),
-                "Creating MPI group for " + name_ + " failed.");
+  CHECK_RET(MPI_Group_incl(world_group, ranks.size(), ranks.data(), &group_), MPI_SUCCESS,
+            "Creating MPI group for " + name_ + " failed.");
+  CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, group_, &group_communicator_), MPI_SUCCESS,
+            "Creating MPI group communicator for " + name_ + " failed.");
 
-  CHECK_MPI_RET(MPI_Comm_create(MPI_COMM_WORLD, group_, &group_communicator_),
-                "Creating MPI group communicator for " + name_ + " failed.");
-  if (group_communicator_ == MPI_COMM_NULL) {
-    MS_LOG(EXCEPTION) << "The MPI communicator for group " << name_ << " failed.";
-    return false;
-  }
+  CHECK_RET(group_communicator_ != MPI_COMM_NULL, true, "The MPI communicator for group " + name_ + " failed.");
   initialized_ = true;
   return true;
 }

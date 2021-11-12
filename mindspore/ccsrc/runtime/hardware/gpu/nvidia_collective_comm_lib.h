@@ -40,10 +40,24 @@ class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
  private:
-  NvidiaCollectiveCommLib();
+  NvidiaCollectiveCommLib() = default;
   ~NvidiaCollectiveCommLib() override = default;
 };
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+
+#ifndef EXPORT_NCCL_WRAPPER
+#define EXPORT_NCCL_WRAPPER __attribute__((visibility("default")))
+#endif
+extern "C" EXPORT_NCCL_WRAPPER bool InitializeCollectiveLib(uint32_t global_rank = UINT32_MAX,
+                                                            uint32_t global_rank_size = UINT32_MAX);
+extern "C" EXPORT_NCCL_WRAPPER bool FinalizeCollectiveLib();
+extern "C" EXPORT_NCCL_WRAPPER bool CreateCommunicationGroup(const std::string &group_name,
+                                                             const std::vector<uint32_t> &group_ranks);
+extern "C" EXPORT_NCCL_WRAPPER bool DestroyCommunicationGroup(const std::string &group_name);
+extern "C" EXPORT_NCCL_WRAPPER uint32_t GetRankId(const std::string &group_name);
+extern "C" EXPORT_NCCL_WRAPPER uint32_t GetCommunicationGroupSize(const std::string &group_name);
+extern "C" EXPORT_NCCL_WRAPPER bool AssignLocalRank();
+extern "C" EXPORT_NCCL_WRAPPER uint32_t local_rank_id();
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_NVIDIA_COLLECTIVE_COMM_LIB_H_
