@@ -239,10 +239,14 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
     // Sync data from host_tensor_device_address to device_tensor.
     if (tensor_device_address != nullptr) {
-      if ((tensor_device_address.get() != device_tensor) && (!Copy(device_tensor, tensor_device_address.get()))) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+      if (CheckMemcpyInDevice(device_tensor, tensor_device_address.get())) {
+        if ((tensor_device_address.get() != device_tensor) && (!Copy(device_tensor, tensor_device_address.get()))) {
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+        }
+        continue;
+      } else {
+        host_tensor->data_sync(false);
       }
-      continue;
     }
 
     // Sync data from host_tensor to device_tensor.

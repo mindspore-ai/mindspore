@@ -255,18 +255,17 @@ bool CheckHitTargetDtype(const std::map<TypeId, TypeId> &type_map, const TypeId 
 }
 
 bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
-                    const std::map<TypeId, TypeId> &type_map) {
+                    const std::map<TypeId, TypeId> &type_map, bool *int64_flag) {
   // filte kernel info that unsupported raise or reduce datatype
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_build_info);
-  bool flag = false;
   for (size_t input_index = 0; input_index < kernel_build_info->GetInputNum(); ++input_index) {
     auto in_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
     auto device_dtype = kernel_build_info->GetInputDeviceType(input_index);
     if (device_dtype == kNumberTypeFloat || device_dtype == kNumberTypeFloat32) {
       device_dtype = kNumberTypeFloat32;
     }
-    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, &flag)) {
+    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, int64_flag)) {
       return false;
     }
   }
@@ -278,13 +277,9 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
       device_dtype = kNumberTypeFloat32;
     }
 
-    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, &flag)) {
+    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, int64_flag)) {
       return false;
     }
-  }
-  if (flag) {
-    auto node_name = AnfAlgo::GetCNodeName(cnode);
-    MS_LOG(WARNING) << "Operator:[" << node_name << "] don't support int64, reduce precision from int64 to int32.";
   }
   return true;
 }
@@ -298,10 +293,11 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
   const std::map<TypeId, TypeId> reduce_map = {{kNumberTypeInt64, kNumberTypeInt32},
                                                {kNumberTypeFloat, kNumberTypeFloat16},
                                                {kNumberTypeFloat32, kNumberTypeFloat16}};
+  bool int64_reduce = false;
   // raise precision
   for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
     MS_EXCEPTION_IF_NULL(kernel_info_list[info_index]);
-    if (TagRaiseReduce(kernel_info_list[info_index], cnode, raise_map)) {
+    if (TagRaiseReduce(kernel_info_list[info_index], cnode, raise_map, &int64_reduce)) {
       filtered_kernel_info_list.push_back(kernel_info_list[info_index]);
     }
   }
@@ -317,13 +313,17 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION)) {
     for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
       MS_EXCEPTION_IF_NULL(kernel_info_list[info_index]);
-      if (TagRaiseReduce(kernel_info_list[info_index], cnode, reduce_map)) {
+      if (TagRaiseReduce(kernel_info_list[info_index], cnode, reduce_map, &int64_reduce)) {
         filtered_kernel_info_list.push_back(kernel_info_list[info_index]);
       }
     }
   }
   if (!filtered_kernel_info_list.empty()) {
     *precision_reduce = true;
+  }
+  if (int64_reduce) {
+    auto node_name = AnfAlgo::GetCNodeName(cnode);
+    MS_LOG(WARNING) << "Operator:[" << node_name << "] don't support int64, reduce precision from int64 to int32.";
   }
   return filtered_kernel_info_list;
 }

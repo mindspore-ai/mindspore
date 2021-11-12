@@ -298,8 +298,8 @@ void TbeKernelCompileManager::ParseTargetJobStatus(const nlohmann::json &json, T
       MS_LOG(EXCEPTION) << "Parse query result error.";
     }
     auto json_name = GetJsonValue<std::string>(query_result, kFusionOpName);
-    auto target_job_id = query_result.at(kJobId);
-    auto status = query_result.at(kStatus);
+    auto target_job_id = GetJsonValue<int>(query_result, kJobId);
+    auto status = GetJsonValue<std::string>(query_result, kStatus);
     auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(query_result, kProcessInfo);
     auto message = FilterExceptionMessage(all_logs);
     // save job status and exception message
@@ -354,8 +354,8 @@ void TbeKernelCompileManager::JsonAssemble(const std::string &job_type, const nl
     (*dst_json)[kJobContent] = job_info;
   } else if (job_type == kQuery) {
     nlohmann::json content;
-    content[kSourceId] = src_json[kSourceId];
-    content[kJobId] = src_json[kJobId];
+    content[kSourceId] = GetJsonValue<int>(src_json, kSourceId);
+    content[kJobId] = GetJsonValue<int>(src_json, kJobId);
     (*dst_json)[kJobContent] = content;
   } else {
     (*dst_json)[kJobContent] = src_json;
@@ -438,7 +438,8 @@ void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const s
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
   if (!output_nodes.empty()) {
-    (void)TbeKernelBuild::GetIOSize(json[kOpList], output_nodes, &input_size_list, &output_size_list);
+    (void)TbeKernelBuild::GetIOSize(GetJsonValue<nlohmann::json>(json, kOpList), output_nodes, &input_size_list,
+                                    &output_size_list);
   } else {
     (void)TbeKernelBuild::GetIOSize(json, &input_size_list, &output_size_list);
   }
