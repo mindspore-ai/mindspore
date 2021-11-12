@@ -24,7 +24,6 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/scheduler_test.cc
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
-        ${TEST_DIR}/ut/src/runtime/runtime_pass_tests.cc
         ${TEST_DIR}/st/multiple_device_test.cc
         ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
         ${TEST_DIR}/st/mix_data_type_test.cc
@@ -38,6 +37,10 @@ file(GLOB_RECURSE TEST_UT_SRC
 
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/runtime/runtime_convert_tests.cc)
+endif()
+
+if(MSLITE_ENABLE_RUNTIME_PASS)
+    list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/runtime/runtime_pass_tests.cc)
 endif()
 
 if(MSLITE_ENABLE_TRAIN)
@@ -160,13 +163,14 @@ if(MSLITE_ENABLE_MINDRT)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)
+    target_link_libraries(lite-test tflite_parser_mid caffe_parser_mid
+                                    onnx_parser_mid tf_parser_mid)
+endif()
+
+if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
     target_link_libraries(lite-test
             anf_exporter_mid
             mslite_converter_plugin
-            tflite_parser_mid
-            caffe_parser_mid
-            onnx_parser_mid
-            tf_parser_mid
             graph_pass_mid
             fusion_mid
             quantizer_mid

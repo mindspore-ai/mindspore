@@ -133,6 +133,23 @@ std::vector<std::shared_ptr<FuncGraph>> MindIRLoader::LoadMindIRs(std::vector<st
   return funcgraph_vec;
 }
 
+std::shared_ptr<FuncGraph> MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
+  /* mindir -> func_graph
+   * only support lite */
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(buffer, size);
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return nullptr;
+  }
+
+  MSANFModelParser model_parser;
+  model_parser.SetLite();
+  FuncGraphPtr func_graph = model_parser.Parse(model);
+
+  return func_graph;
+}
+
 std::shared_ptr<FuncGraph> MindIRLoader::LoadMindIR(const std::string &file_name) {
   if (file_name.length() > PATH_MAX) {
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";

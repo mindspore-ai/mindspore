@@ -39,7 +39,12 @@ class Converter {
     this->model_parser_ = nullptr;
   }
   schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag);
+  schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag, const void *buf, const size_t &size);
+
+ private:
   FuncGraphPtr BuildFuncGraph(const converter::Flags &flag);
+  FuncGraphPtr BuildFuncGraph(const converter::Flags &flag, const void *buf, const size_t &size);
+  schema::MetaGraphT *TransferFuncGraph(const std::unique_ptr<converter::Flags> &flag, FuncGraphPtr func_graph);
 
  protected:
   converter::ModelParser *model_parser_ = nullptr;

@@ -1321,67 +1321,66 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
   return session;
 }
 
-const char *lite::LiteSession::LoadModelByBuff(const char *model_buf, mindspore::ModelType model_type, size_t size) {
+mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
+                                                        size_t *size, mindspore::ModelType model_type) {
   if (model_type == mindspore::ModelType::kMindIR_Opt) {
+    *size = buf_size;
+    *lite_buf = const_cast<char *>(model_buf);
+    return mindspore::ModelType::kMindIR_Opt;
+  }
+
+  if (model_type != mindspore::ModelType::kMindIR) {
+    return mindspore::ModelType::kUnknownType;
+  }
+
+  flatbuffers::Verifier verify((const uint8_t *)model_buf, buf_size);
+  auto version_verify = lite::LiteModel::VersionVerify(&verify);
+  if (version_verify != SCHEMA_INVALID) {
+    MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";
+    *size = buf_size;
+    *lite_buf = const_cast<char *>(model_buf);
+    return mindspore::ModelType::kMindIR_Opt;
+  }
+
+#ifdef RUNTIME_CONVERT
+  *lite_buf = RuntimeConvert(model_buf, buf_size, size);
+#else
+  MS_LOG(ERROR) << "Please enable runtime convert.";
+#endif
+  return mindspore::ModelType::kMindIR;
+}
+
+const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size) {
+  size_t buf_size;
+  auto model_buf = lite::ReadFile(file.c_str(), &buf_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "The model path is invalid";
     return model_buf;
   }
 
-  if (model_type == mindspore::ModelType::kMindIR) {
-    flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
-    auto version_verify = lite::LiteModel::VersionVerify(&verify);
-    if (version_verify != SCHEMA_INVALID) {
-      MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";
-      return model_buf;
-    }
-
-#ifdef RUNTIME_CONVERT
-    return RuntimeConvert(model_buf, size);
-#endif
-    MS_LOG(ERROR) << "Please enable runtime convert.";
+  char *lite_buf = nullptr;
+  auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, size, model_type);
+  if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
     return nullptr;
   }
-
-  MS_LOG(ERROR) << "Invalid Model Type";
-  return nullptr;
+  if (buf_model_type == mindspore::ModelType::kMindIR) {
+    free(model_buf);
+    model_buf = nullptr;
+  }
+  return lite_buf;
 }
 
-char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size) {
-  if (model_type == mindspore::ModelType::kMindIR_Opt) {
-    return lite::ReadFile(file.c_str(), size);
-  }
-
-  if (model_type == mindspore::ModelType::kMindIR) {
-    size_t tmp_size;
-    auto tmp_buf = lite::ReadFile(file.c_str(), &tmp_size);
-    flatbuffers::Verifier verify((const uint8_t *)tmp_buf, tmp_size);
-    auto version_verify = lite::LiteModel::VersionVerify(&verify);
-    if (version_verify != SCHEMA_INVALID) {
-      MS_LOG(DEBUG) << "The kMindIR type model path is valid mslite model";
-      return tmp_buf;
-    }
-    free(tmp_buf);
-    tmp_buf = nullptr;
-
-#ifdef RUNTIME_CONVERT
-    return RuntimeConvert(file, size);
-#endif
-    MS_LOG(ERROR) << "Please enable runtime convert.";
-    return nullptr;
-  }
-
-  MS_LOG(ERROR) << "Invalid Model Type";
-  return nullptr;
-}
-
-int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::ModelType model_type, size_t size,
-                                          session::LiteSession *session) {
-  auto lite_buf = LoadModelByBuff(model_buf, model_type, size);
-  if (lite_buf == nullptr) {
+int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::ModelType model_type,
+                                          const size_t &buf_size, session::LiteSession *session) {
+  size_t lite_buf_size = 0;
+  char *lite_buf = nullptr;
+  auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
+  if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
 
-  auto *model = lite::ImportFromBuffer(model_buf, size, true);
+  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;

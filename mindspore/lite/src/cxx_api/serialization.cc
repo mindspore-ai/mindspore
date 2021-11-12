@@ -136,7 +136,7 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
     MS_LOG(ERROR) << "Model is not TrainModel.";
     return kLiteError;
   }
-  if (model_type != kFlatBuffer) {
+  if (model_type != kMindIR && model_type != kMindIR_Opt) {
     MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
     return kLiteParamInvalid;
   }

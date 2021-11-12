@@ -77,13 +77,41 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   return func_graph;
 }
 
+FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag, const void *buf, const size_t &size) {
+  MindsporeImporter ms_import;
+  FuncGraphPtr func_graph = ms_import.ImportMindIR(flag, buf, size);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Get funcGraph failed.";
+    return nullptr;
+  }
+
+  if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "Update graph inputs and outputs dtype failed.";
+    return nullptr;
+  }
+
+  return func_graph;
+}
+
+schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag, const void *buf,
+                                       const size_t &size) {
+  if (flag == nullptr || buf == nullptr) {
+    MS_LOG(ERROR) << "Input flag is nullptr";
+    return nullptr;
+  }
+  auto graph = BuildFuncGraph(*flag, buf, size);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Parser/Import model return nullptr";
+    return nullptr;
+  }
+  return TransferFuncGraph(flag, graph);
+}
+
 schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
   if (flag == nullptr) {
     MS_LOG(ERROR) << "Input flag is nullptr";
     return nullptr;
   }
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
-  MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
 
   // load plugin
   static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
@@ -106,15 +134,23 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     return nullptr;
   }
 
+  return TransferFuncGraph(flag, graph);
+}
+
+schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter::Flags> &flag,
+                                                 FuncGraphPtr func_graph) {
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
+  MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
+
   // funcgraph compile
-  graph = funcgraph_transform_->Transform(graph, flag.get());
-  if (graph == nullptr) {
+  func_graph = funcgraph_transform_->Transform(func_graph, flag.get());
+  if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
     return nullptr;
   }
 
   // protobuf -> flatbuffer
-  auto meta_graph = Export(graph, false, false, flag->trainModel);
+  auto meta_graph = Export(func_graph, false, false, flag->trainModel);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
