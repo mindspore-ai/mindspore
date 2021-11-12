@@ -120,6 +120,7 @@ class ParallelOpFusion : public opt::Pass {
   ParallelCostModelPtr cost_model_ptr_;
   std::set<AnfNodePtr> virtual_noout_nodes_;
   std::set<AnfNodePtr> ignore_noin_nodes_;
+  unsigned int parallel_level_{0};
 };
 using ParallelOpFusionPtr = std::shared_ptr<ParallelOpFusion>;
 }  // namespace mindspore::graphkernel

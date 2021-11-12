@@ -290,6 +290,12 @@ def block_parallel_estimate(graphs):
     return ParalGain(fusion_type, max_weight, sum_weight - max_weight, blocks, type_info)
 
 
-def parallel_estimate(graphs):
+def parallel_estimate(graphs, target):
     """Estimate parallel gain"""
+    if target == "aicore":
+        fusion_type = "block_fusion"
+        type_info = None
+        fake_estimate = 1000
+        fake_blocks = [1 for g in graphs]
+        return ParalGain(fusion_type, fake_estimate, fake_estimate, fake_blocks, type_info)
     return block_parallel_estimate(graphs)
