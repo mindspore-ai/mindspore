@@ -60,7 +60,7 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if (control_iter != output_branch_control_arrows_.end()) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (const auto &control_arrow : control_iter->second) {
-      Async(control_arrow, &OpActor::RunOpControl, source_aid, context);
+      ActorDispatcher::Send(control_arrow, &OpActor::RunOpControl, source_aid, context);
     }
   }
 
@@ -69,7 +69,7 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if (branch_data_iter != output_branch_data_.end()) {
     for (const auto &output_data : branch_data_iter->second) {
       MS_EXCEPTION_IF_NULL(output_data.second);
-      Async(output_data.second->op_id_, &OpActor::RunOpData, output_data.second.get(), context);
+      ActorDispatcher::Send(output_data.second->op_id_, &OpActor::RunOpData, output_data.second.get(), context);
     }
   }
 }

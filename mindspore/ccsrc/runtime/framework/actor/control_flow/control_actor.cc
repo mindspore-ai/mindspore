@@ -186,7 +186,7 @@ void ControlActor::EraseInput(const OpContext<DeviceTensor> *context) {
 void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send branch id.
   for (const auto &branch_id_arrow : output_branch_id_arrows_) {
-    Async(branch_id_arrow, &ControlActor::RunBranchID, output_branch_id_, context);
+    ActorDispatcher::Send(branch_id_arrow, &ControlActor::RunBranchID, output_branch_id_, context);
   }
 
   // Send data in base class.
@@ -196,8 +196,8 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);
     MS_EXCEPTION_IF_NULL(output_partial_.first);
-    Async(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial_.first, output_partial_.second,
-          IntToSize(partial_arrow->to_input_index_), context);
+    ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial_.first,
+                          output_partial_.second, IntToSize(partial_arrow->to_input_index_), context);
   }
 }
 }  // namespace runtime

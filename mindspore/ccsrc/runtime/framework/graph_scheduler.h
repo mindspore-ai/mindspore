@@ -65,8 +65,9 @@ class GraphScheduler {
   // will be supported in the future.
   void Schedule(const ActorSet *actor_set);
 
-  // The processing entry of actors running. The third parameter is used only in the step execution strategy.
-  void Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  // The processing entry of actors running. The fourth parameter is used only in the step execution strategy.
+  void Run(ActorSet *constactor_set, const std::vector<DeviceContext *> &device_contexts,
+           const std::vector<std::vector<TensorPtr>> &input_tensors,
            const std::vector<TensorPtr> &input_tensors_with_value_node = {},
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
@@ -77,6 +78,9 @@ class GraphScheduler {
   GraphScheduler() = default;
   ~GraphScheduler() = default;
   DISABLE_COPY_AND_ASSIGN(GraphScheduler);
+
+  // Set using the multi thread or single thread to execute the actor set by the execution time compared.
+  void SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy, double execution_time);
 
   // The Global actors contain memory manager actor, recorder actor and debug actor.
   void BuildAndScheduleGlobalActor();

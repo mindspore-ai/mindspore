@@ -42,7 +42,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 
   if (!node->isa<CNode>()) {
     // Call back to the from actor to process after debug finished.
-    Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+    ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
     return;
   }
 
@@ -72,7 +72,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   }
 
   // Call back to the from actor to process after debug finished.
-  Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
 void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
@@ -98,7 +98,7 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
   }
 #endif
   // Call back to the from actor to process after debug finished.
-  Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
@@ -126,7 +126,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 #endif
 
   // Call back to the from actor to process after debug finished.
-  Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 }  // namespace runtime
 }  // namespace mindspore

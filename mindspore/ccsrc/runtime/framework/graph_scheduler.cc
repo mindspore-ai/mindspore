@@ -27,6 +27,7 @@
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
+#include "utils/profile.h"
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "utils/signal_util.h"
 #endif
@@ -335,7 +336,8 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   }
 }
 
-void GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceContext *> &device_contexts,
+                         const std::vector<std::vector<TensorPtr>> &input_tensors,
                          const std::vector<TensorPtr> &input_tensors_with_value_node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
@@ -357,17 +359,26 @@ void GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
   }
 
   // Trigger data prepare actor running.
-  Async(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, &op_context);
+  MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
+  auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();
+  MS_EXCEPTION_IF_NULL(thread_pool);
+  if (actor_set->is_multi_thread_execution_) {
+    thread_pool->SetSpinCountMaxValue();
+  }
+  ActorDispatcher::is_multi_thread_execution(actor_set->is_multi_thread_execution_);
+  double start_time = GetTime();
+  ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
+                        &op_context);
 
   // Get the run result.
   auto result_future = result[0].GetFuture();
   result_future.Wait();
   MsException::Instance().CheckException();
+  thread_pool->SetSpinCountMinValue();
   if (!result_future.IsOK()) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
-
     // When temporary variable 'op_context' has beed set failed status, the main thread need wait other threads until
     // they finish respective task, otherwise segmentation fault will happen when these task access 'op_context',
     // because it has been destroyed.
@@ -376,8 +387,76 @@ void GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
     std::condition_variable thread_blocker;
     const int64_t kTimeToWait = 2;
     thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
-
     MS_LOG(EXCEPTION) << op_context.error_info_;
+  }
+
+  // Sync device stream.
+  if (strategy == GraphExecutionStrategy::kPipeline) {
+    std::set<DeviceContext *> sync_stream_device_contexts;
+    for (auto &device_context : device_contexts) {
+      MS_EXCEPTION_IF_NULL(device_context);
+      if ((sync_stream_device_contexts.count(device_context) == 0) && (!device_context->SyncStream())) {
+        MS_LOG(EXCEPTION) << "Sync stream failed:" << device_context->device_context_key().ToString();
+      }
+      (void)sync_stream_device_contexts.insert(device_context);
+    }
+  }
+
+  double end_time = GetTime();
+  const size_t kSecondsToMilliseconds = 1000;
+  SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
+}
+
+void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
+                                               double execution_time) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(actor_set->loop_count_actor_);
+  ++actor_set->execution_count_;
+  MS_LOG(DEBUG) << "Execution count: " << actor_set->execution_count_ << ", execution time cost: " << execution_time
+                << " ms in multi thread or not: " << actor_set->is_multi_thread_execution_ << ".";
+#if defined(_WIN32) || defined(_WIN64)
+  return;
+#endif
+
+  // The step mode uses the default multi thread.
+  if (strategy == GraphExecutionStrategy::kStep) {
+    return;
+  }
+
+  if ((actor_set->copy_actors_.size() > 0) || (actor_set->super_kernel_actors_.size() > 0) ||
+      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
+    return;
+  }
+
+  if ((actor_set->is_multi_thread_execution_) &&
+      (actor_set->execution_count_ >= ActorDispatcher::kMultiThreadExecutionCountBegin) &&
+      (actor_set->execution_count_ <= ActorDispatcher::kMultiThreadExecutionCountEnd)) {
+    actor_set->multi_thread_execution_time_ += execution_time;
+    if (actor_set->execution_count_ == ActorDispatcher::kMultiThreadExecutionCountEnd) {
+      actor_set->multi_thread_execution_time_ /=
+        (ActorDispatcher::kMultiThreadExecutionCountEnd - ActorDispatcher::kMultiThreadExecutionCountBegin + 1);
+      actor_set->multi_thread_execution_time_ /= actor_set->loop_count_actor_->loop_count();
+      actor_set->is_multi_thread_execution_ = false;
+    }
+    return;
+  }
+
+  if ((!actor_set->is_multi_thread_execution_) &&
+      (actor_set->execution_count_ >= ActorDispatcher::kSingleThreadExecutionCountBegin) &&
+      (actor_set->execution_count_ <= ActorDispatcher::kSingleThreadExecutionCountEnd)) {
+    actor_set->single_thread_execution_time_ += execution_time;
+    if (actor_set->execution_count_ == ActorDispatcher::kSingleThreadExecutionCountEnd) {
+      actor_set->single_thread_execution_time_ /=
+        (ActorDispatcher::kSingleThreadExecutionCountEnd - ActorDispatcher::kSingleThreadExecutionCountBegin + 1);
+      actor_set->single_thread_execution_time_ /= actor_set->loop_count_actor_->loop_count();
+      actor_set->is_multi_thread_execution_ =
+        (actor_set->multi_thread_execution_time_ <= actor_set->single_thread_execution_time_) ? true : false;
+      MS_LOG(INFO) << "Multi thread execution time cost: " << actor_set->multi_thread_execution_time_
+                   << " ms, single thread execution time cost: " << actor_set->single_thread_execution_time_
+                   << " ms, decide to use multi thread execution or not: " << actor_set->is_multi_thread_execution_
+                   << ".";
+    }
+    return;
   }
 }
 

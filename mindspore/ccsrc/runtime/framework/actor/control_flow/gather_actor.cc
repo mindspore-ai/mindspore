@@ -43,8 +43,8 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   const auto &iter = output_data_with_branch_id_arrows_.find(output_partial_.first);
   if (iter != output_data_with_branch_id_arrows_.end()) {
     for (const auto &data_with_branch_id_arrow : iter->second) {
-      Async(data_with_branch_id_arrow, &EntranceActor::RunOpDataWithBranchID, output_partial_.second, output_branch_id_,
-            context);
+      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpDataWithBranchID, output_partial_.second,
+                            output_branch_id_, context);
     }
   }
 

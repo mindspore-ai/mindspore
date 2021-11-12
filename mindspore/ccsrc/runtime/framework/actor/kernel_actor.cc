@@ -167,8 +167,8 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_contexts_[0], context,
-          GetAID());
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                          device_contexts_[0], context, GetAID());
   } else {
     AllocateMemory(memory_alloc_list_, device_contexts_[0], context, GetAID().Name());
   }
@@ -176,7 +176,8 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0], context);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
+                          context);
   } else {
     FreeMemory(memory_free_list_, device_contexts_[0]);
   }
@@ -212,7 +213,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
-  Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
+  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
+                        &GetAID());
 }
 
 void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
@@ -413,8 +415,8 @@ void KernelActor::UpdateOutputAddrSize() {
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(kernel_);
-    Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
-          device_contexts_[0], context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
+                          device_contexts_[0], context);
   }
 }
 }  // namespace runtime
