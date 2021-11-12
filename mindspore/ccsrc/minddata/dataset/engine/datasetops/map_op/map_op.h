@@ -183,12 +183,10 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @return - Status
   Status InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_name_id_map);
 
-  // This function should only be called from master thread. It intends to suspend the operation of all workers and
-  // have them wait on the QueueList. Master thread would send a token to each worker then wait on a WaitPost.
-  // Workers upon receiving the suspension token from master thread, increment an atomic count, the last worker
-  // who does the increment wakes up the master.
-  // @return - Status
-  Status WaitForWorkers() override;
+  /// Send wait flag row to worker at worker_id to make it wait
+  /// \param worker_id id of the worker
+  /// \return Status code
+  Status SendWaitFlagToWorker(int32_t worker_id) override;
 
   /// Send quit flag row to worker at worker_id to make it exit
   /// \param worker_id id of the worker

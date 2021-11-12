@@ -338,6 +338,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   virtual Status SendQuitFlagToWorker(int32_t worker_id) { return Status::OK(); }
 
+  virtual Status SendWaitFlagToWorker(int32_t worker_id) { return Status::OK(); }
+
   // \brief Add callback to DatasetOp, only MapOp supports Callback at the moment
   void AddCallbacks(std::vector<std::shared_ptr<DSCallback>> callbacks) { callback_manager_.AddCallbacks(callbacks); }
 

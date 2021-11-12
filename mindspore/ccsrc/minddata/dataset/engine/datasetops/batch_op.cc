@@ -78,9 +78,14 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
 
 Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
+  // Initialize callback
+  RETURN_IF_NOT_OK(callback_manager_.Init(this));
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   int64_t epoch_num = 0, batch_num = 0, cnt = 0;
+  int64_t ep_step = 0, total_step = 0;
+  RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
+
   TensorRow new_row;
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
@@ -88,11 +93,21 @@ Status BatchOp::operator()() {
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
   while (child_iterator_->EofHandled() == false) {
+    if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
+      ep_step = 0;
+      RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+    }
     while (new_row.empty() == false) {
+      // we only call stepBegin when a new batch is starting to be filled.
+      if (table->size() == 0) {
+        ep_step++;
+        total_step++;
+        RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+      }
       table->emplace_back(new_row);
       // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
-        RETURN_IF_NOT_OK(worker_in_queues_[cnt % num_workers_]->EmplaceBack(
+        RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
           std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
         cnt++;
         table = std::make_unique<TensorQTable>();
@@ -102,7 +117,7 @@ Status BatchOp::operator()() {
     }
     // Reminder logic, execute only when there is a remainder (table is non empty) and don't drop
     if (drop_ == false && table->empty() == false) {
-      RETURN_IF_NOT_OK(worker_in_queues_[cnt % num_workers_]->EmplaceBack(
+      RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
         std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
       cnt++;
     }
@@ -111,7 +126,7 @@ Status BatchOp::operator()() {
     batch_num = 0;
     epoch_num++;
     RETURN_IF_NOT_OK(
-      worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
+      worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
@@ -123,13 +138,13 @@ Status BatchOp::operator()() {
                       << "reduce memory usage.";
     }
 #endif
+    UpdateRepeatAndEpochCounter();
   }  // end of EofHandled() == false
   RETURN_IF_NOT_OK(
-    worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
+    worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
   // EOF received, send quit signal to all workers
   for (int32_t ind = 0; ind < num_workers_; ind++) {
-    RETURN_IF_NOT_OK(
-      worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
+    RETURN_IF_NOT_OK(SendQuitFlagToWorker(NextWorkerID()));
   }
   return Status::OK();
 }
@@ -507,7 +522,9 @@ Status BatchOp::ComputeColMap() {
 
   // column names are unchanged
   if (col_name_flag) {
-    if (out_col_names_.empty()) out_col_names_ = in_col_names_;
+    if (out_col_names_.empty()) {
+      out_col_names_ = in_col_names_;
+    }
     column_name_id_map_ = child_map_;
     return Status::OK();
   }
@@ -575,15 +592,14 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   }
   return Status::OK();
 }
-Status BatchOp::WaitForWorkers() {
-  num_workers_paused_ = 0;
-  for (int32_t i = 0; i < num_workers_; i++) {
-    RETURN_IF_NOT_OK(worker_in_queues_[i]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kWait))));
-  }
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
-  wait_for_workers_post_.Clear();
+Status BatchOp::SendWaitFlagToWorker(int32_t worker_id) {
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kWait))));
   return Status::OK();
 }
 
+Status BatchOp::SendQuitFlagToWorker(int32_t worker_id) {
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

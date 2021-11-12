@@ -96,7 +96,7 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// Reset function to be called after every epoch to reset the source op after
   /// \return Status The status code returned
   Status Reset() override;
-  Status WaitForWorkers() override;
+  Status SendWaitFlagToWorker(int32_t worker_id) override;
   Status SendQuitFlagToWorker(int32_t worker_id) override;
 };
 }  // namespace dataset

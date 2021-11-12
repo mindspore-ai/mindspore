@@ -371,25 +371,15 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
   }
 }
 
-Status MapOp::WaitForWorkers() {
-  // reset num_paused workers to 0
-  num_workers_paused_ = 0;
-  for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
-    // a special row (id=-1, empty, none flag) is used to signal that worker needs to pause.
-    TensorRow waitRow(TensorRow::kFlagWait);
-    RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::make_unique<MapWorkerJob>(waitRow)));
-  }
-  // wait until all workers are done processing their work in local_queue_
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
-  next_worker_id_ = 0;
-  // clear the WaitPost for the next Wait()
-  wait_for_workers_post_.Clear();
+Status MapOp::SendWaitFlagToWorker(int32_t worker_id) {
+  TensorRow wait_row(TensorRow::kFlagWait);
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<MapWorkerJob>(wait_row)));
   return Status::OK();
 }
+
 Status MapOp::SendQuitFlagToWorker(int32_t worker_id) {
   TensorRow quit_flag(TensorRow::kFlagQuit);
-  auto quit = std::make_unique<MapWorkerJob>(quit_flag);
-  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::move(quit)));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<MapWorkerJob>(quit_flag)));
   return Status::OK();
 }
 }  // namespace dataset

@@ -167,6 +167,8 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   ASSERT_NE(to_number, nullptr);
   ds = ds->Map({to_number}, {"col1"}, {"col1"});
   ds->SetNumWorkers(1);
+  ds = ds->Batch(1);
+  ds->SetNumWorkers(1);
 
   auto tree_adapter = std::make_shared<TreeAdapter>();
   // Disable IR optimization pass
@@ -174,10 +176,15 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   ASSERT_OK(tree_adapter->Compile(ds->IRNode(), 1));
 
   auto tree_modifier = std::make_unique<TreeModifier>(tree_adapter.get());
-  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(2));
-  tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(20));
-  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>());
+  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>(2));
+  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>());
+  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>(10));
+
+  tree_modifier->AddChangeRequest(1, std::make_shared<ResizeConnectorRequest>(20));
   tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
+
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(2));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>());
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
 
   std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
@@ -189,7 +196,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   while (row.size() != 0) {
     auto tensor = row[0];
     int32_t num;
-    ASSERT_OK(tensor->GetItemAt(&num, {}));
+    ASSERT_OK(tensor->GetItemAt(&num, {0}));
     EXPECT_EQ(num, expected_result[i]);
     ASSERT_OK(tree_adapter->GetNext(&row));
     i++;
