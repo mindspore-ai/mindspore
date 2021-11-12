@@ -306,7 +306,7 @@ constexpr auto kDropoutGradOpName = "DropoutGrad";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kDropoutDoMaskOpName = "DropoutDoMask";
 constexpr auto kGammaOpName = "Gamma";
-constexpr auto kPossionOpName = "Possion";
+constexpr auto kPoissonOpName = "Poisson";
 constexpr auto kStandardLaplaceOpName = "StandardLaplace";
 constexpr auto kStandardNormalOpName = "StandardNormal";
 constexpr auto kUniformIntOpName = "UniformInt";
@@ -683,7 +683,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kCombineMomentumOpName,
                                                kSparseApplyProximalAdagradOpName};
 
-const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPossionOpName,    kStandardLaplaceOpName,
+const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
                                                       kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName};
 const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
