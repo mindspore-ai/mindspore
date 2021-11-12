@@ -58,8 +58,8 @@ class MatmulBaseInt8CPUKernel : public InnerKernel {
 
  private:
   int MallocQuantParam();
+  int InitQuantParam();
   void FreeQuantParam();
-  void InitQuantParam();
 
  protected:
   MatMulParameter *param_ = nullptr;

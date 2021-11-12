@@ -31,6 +31,10 @@ int ExpandDimsInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
     return NNACL_INFER_INVALID;
   }
 
+  if (inputs_size < C2NUM) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
+
   if (inputs[1]->data_ == NULL) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
