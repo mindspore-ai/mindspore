@@ -360,6 +360,10 @@ function Run_arm() {
          echo "rm -f ${inference_file}*" >> ${run_arm_log_file}
             echo "rm -f ${inference_file}*" >> ${adb_cmd_run_file}
         fi
+        if [ ${enable_fp16} = "true" ]; then
+            export_file=""
+            inference_file=""
+        fi
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         adb_cmd=$(cat <<-ENDM
         export LD_LIBRARY_PATH=./:/data/local/tmp/:${tmp_dir};./benchmark_train \
