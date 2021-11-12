@@ -505,6 +505,7 @@ inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>(kMul);
 inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
 inline const PrimitivePtr kPrimMod = std::make_shared<Primitive>("Mod");
 inline const PrimitivePtr kPrimFloor = std::make_shared<Primitive>("Floor");
+inline const PrimitivePtr kPrimInvert = std::make_shared<Primitive>("Invert");
 inline const PrimitivePtr kPrimDivNoNan = std::make_shared<Primitive>("DivNoNan");
 inline const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 inline const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");

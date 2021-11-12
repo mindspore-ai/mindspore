@@ -5064,7 +5064,7 @@ class Inv(PrimitiveWithInfer):
         return x_dtype
 
 
-class Invert(PrimitiveWithInfer):
+class Invert(Primitive):
     r"""
     Flips all bits of input tensor element-wise.
 
@@ -5094,14 +5094,8 @@ class Invert(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x_dtype', x_dtype, [mstype.int16, mstype.uint16], self.name)
-        return x_dtype
+        """Initialize Invert"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class Eps(PrimitiveWithInfer):
