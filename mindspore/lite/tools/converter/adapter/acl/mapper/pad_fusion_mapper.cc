@@ -25,6 +25,13 @@
 
 namespace mindspore {
 namespace lite {
+static const std::map<std::string, PrimitivePtr> kPadTypeMap = {
+  {"Pad", std::make_shared<acl::PadV1>()},
+  {"PadV2", std::make_shared<acl::PadV2>()},
+  {"PadV3", std::make_shared<acl::PadV3>()},
+  {"MirrorPad", std::make_shared<acl::MirrorPad>()},
+};
+
 namespace {
 constexpr size_t kNumFlagTwo = 2;
 constexpr size_t kNamePadInputNum = 3;
@@ -38,30 +45,26 @@ STATUS PadFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  PrimitivePtr dst_prim = nullptr;
+  std::string origin_name;
   if (src_prim->GetAttr(kNamePadContiguous) != nullptr) {
-    dst_prim = std::make_shared<acl::PadV3>();
-  } else {
-    dst_prim = std::make_shared<acl::PadV2>();
+    origin_name = "PadV3";
+  }
+  auto value_ptr = src_prim->GetAttr(ops::kOriginalOpName);
+  if (value_ptr != nullptr) {
+    origin_name = GetValue<std::string>(value_ptr);
+  }
+  PrimitivePtr dst_prim = nullptr;
+  if (kPadTypeMap.find(origin_name) != kPadTypeMap.end()) {
+    dst_prim = kPadTypeMap.at(origin_name);
   }
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
   AdjustPadAttr(dst_prim);
-
-  if (cnode->size() != kNamePadInputNum) {
-    MS_LOG(INFO) << "No need to add attr to input, input num: " << cnode->size();
-    value_node->set_value(dst_prim);
-    return lite::RET_OK;
-  }
-  auto func_graph = cnode->func_graph();
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Func graph is nullptr.";
-    return lite::RET_ERROR;
-  }
-  int status = AddAttrToInput(func_graph, cnode, dst_prim, ops::kConstantValue, kNumFlagTwo);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "Add constant value to input failed.";
-    return lite::RET_ERROR;
+  if (origin_name != "Pad") {
+    if (ConvertAttrToInput(cnode, dst_prim) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Convert attr to input failed.";
+      return lite::RET_ERROR;
+    }
   }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -81,6 +84,21 @@ void PadFusionMapper::AdjustPadAttr(const PrimitivePtr &dst_prim) {
       dst_prim->DelAttr(ops::kPaddingMode);
     }
   }
+}
+
+STATUS PadFusionMapper::ConvertAttrToInput(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  if (cnode->size() != kNamePadInputNum) {
+    MS_LOG(INFO) << "No need to add attr to input, real input num: " << cnode->size();
+    return lite::RET_OK;
+  }
+  auto func_graph = cnode->func_graph();
+  CHECK_NULL_RETURN(func_graph);
+  auto status = AddAttrToInput(func_graph, cnode, prim, ops::kConstantValue, kNumFlagTwo);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "Add constant value to input failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNamePadFusion, PadFusionMapper)

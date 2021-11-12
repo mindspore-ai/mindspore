@@ -33,6 +33,7 @@ class PadFusionMapper : public PrimitiveMapper {
 
  private:
   void AdjustPadAttr(const PrimitivePtr &dst_prim);
+  STATUS ConvertAttrToInput(const CNodePtr &cnode, const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore

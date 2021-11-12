@@ -152,7 +152,7 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
 std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
   std::string name = prim->name();
   if (kAdjustCnodeName.find(name) != kAdjustCnodeName.end()) {
-    auto val_ptr = prim->GetAttr(ops::kOriginOpName);
+    auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
     if (val_ptr != nullptr) {
       auto origin_name = GetValue<std::string>(val_ptr);
       MS_LOG(DEBUG) << "Change old name " << name << " to new name " << origin_name;
@@ -249,6 +249,10 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
+  if (fmk_type_ == converter::kFmkTypeTf) {
+    MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
+    return lite::RET_OK;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass})) {
     MS_LOG(ERROR) << "To NHWC Format failed.";
     return lite::RET_ERROR;
