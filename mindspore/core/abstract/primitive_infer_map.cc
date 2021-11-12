@@ -128,7 +128,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimReal, {InferImplReal, nullptr, true}},
     // Array
     {prim::kPrimRange, {InferImplRange, nullptr, true}},
-    {prim::kPrimStack, {InferImplStack, nullptr, true}},
     {prim::kPrimScalarToArray, {InferImplScalarToArray, nullptr, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, nullptr, true}},
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, nullptr, true}},
@@ -261,6 +260,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimLinSpace, {InferImplLinSpace, nullptr, true}},
 
     {prim::kPrimLess, {InferImplLess, nullptr, true}},
+    {prim::kPrimStack, {InferImplStack, nullptr, true}},
     {prim::kPrimPad, {InferImplPad, nullptr, true}},
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, {InferImplDiv, nullptr, true}},

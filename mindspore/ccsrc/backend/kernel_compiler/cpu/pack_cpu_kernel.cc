@@ -35,6 +35,7 @@ void PackCpuFwdKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     axis_ += (SizeToInt(input_shape.size()) + 1);
   }
 
+  dims_behind_axis_ = 1;
   // calculate elements while dim >= axis
   auto first_input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   for (size_t i = IntToSize(axis_); i < first_input_shape.size(); i++) {

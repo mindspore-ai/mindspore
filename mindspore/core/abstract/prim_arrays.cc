@@ -91,16 +91,27 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
 
 AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple of tensor.
+  // Inputs: a tuple or tensor.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto arg = CheckArg<AbstractSequeue>(op_name, args_spec_list, 0);
-  if (arg->elements().empty()) {
-    MS_LOG(EXCEPTION) << "Arg elements is empty.";
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
   }
 
-  size_t tuple_len = arg->elements().size();
-  AbstractTensorPtr tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
+  AbstractTuplePtr arg = nullptr;
+  AbstractTensorPtr tensor_base = nullptr;
+  size_t tuple_len = 0;
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  if (args_spec_list[0]->isa<AbstractTuple>()) {
+    CheckArgsSize(op_name, args_spec_list, 1);
+    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+    tuple_len = arg->elements().size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
+  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
+    tuple_len = args_spec_list.size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  }
+
+  MS_EXCEPTION_IF_NULL(tensor_base);
   auto shape = tensor_base->shape();
   MS_EXCEPTION_IF_NULL(shape);
   int64_t rank_base = SizeToLong(shape->shape().size());
@@ -112,7 +123,12 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
   axis_value = GetPositiveAxis(axis_value, LongToSize(rank_base + 1));
 
   for (size_t i = 1; i < tuple_len; ++i) {
-    AbstractTensorPtr tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
+    AbstractTensorPtr tensor = nullptr;
+    if (args_spec_list[0]->isa<AbstractTuple>()) {
+      tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
+    } else if (args_spec_list[0]->isa<AbstractTensor>()) {
+      tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+    }
     (void)CheckDtypeSame(op_name, tensor_base, tensor);
     CheckShapeSame(op_name, tensor_base, tensor);
   }
