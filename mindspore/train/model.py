@@ -97,7 +97,9 @@ class Model:
               the accuracy is the same as the original accuracy.
             - O2: Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
+
             If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
+
     Examples:
         >>> from mindspore import Model, nn
         >>>

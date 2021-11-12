@@ -47,35 +47,39 @@ class AutoBoost:
     Args:
         level (str): Boost config level. Default: "O0".
         boost_config_dict (dict): User config hyperparameter dict, recommended config format:
-            {
-                "boost": {
-                    "//": "suggest mode: ["auto", "manual", "enable_all", "disable_all"]",
-                    "mode": "auto",
-                    "less_bn": false,
-                    "grad_freeze": false,
-                    "adasum": false,
-                    "grad_accumulation": false
-                },
-                "common": {
-                    "gradient_split_groups": [50, 100]
-                },
-                "less_bn": {
-                    "fn_flag": true,
-                    "gc_flag": true
-                },
-                "grad_freeze": {
-                    "param_groups": 10,
-                    "freeze_type": 1,
-                    "freeze_p": 0.7,
-                    "total_steps": 65536
-                },
-                "adasum": {
-                    "device_number": 8
-                },
-                "grad_accumulation": {
-                    "grad_accumulation_step": 1
+
+            .. code-block::
+
+                {
+                    "boost": {
+                        "//": "suggest mode: ["auto", "manual", "enable_all", "disable_all"]",
+                        "mode": "auto",
+                        "less_bn": false,
+                        "grad_freeze": false,
+                        "adasum": false,
+                        "grad_accumulation": false
+                    },
+                    "common": {
+                        "gradient_split_groups": [50, 100]
+                    },
+                    "less_bn": {
+                        "fn_flag": true,
+                        "gc_flag": true
+                    },
+                    "grad_freeze": {
+                        "param_groups": 10,
+                        "freeze_type": 1,
+                        "freeze_p": 0.7,
+                        "total_steps": 65536
+                    },
+                    "adasum": {
+                        "device_number": 8
+                    },
+                    "grad_accumulation": {
+                        "grad_accumulation_step": 1
+                    }
                 }
-            }
+
             User can load the config through the JSON file or use the dictionary directly.
             The unconfigured parameters will adopt the default values. Default: "".
 
@@ -134,8 +138,8 @@ class AutoBoost:
         Boost network train.
 
         Args:
-            network (Cell) - The training network.
-            optimizer (Cell) - Optimizer for updating the weights.
+            network (Cell): The training network.
+            optimizer (Cell): Optimizer for updating the weights.
         """
         if self.boost_config["less_bn"]:
             network = LessBN(network, fn_flag=self._fn_flag)
@@ -162,7 +166,7 @@ class AutoBoost:
         Boost network eval.
 
         Args:
-            network (Cell) - The inference network.
+            network (Cell): The inference network.
         """
         if self.boost_config["less_bn"]:
             network = LessBN(network)
