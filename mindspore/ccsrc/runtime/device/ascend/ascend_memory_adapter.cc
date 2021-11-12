@@ -25,6 +25,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 constexpr uint64_t kMemSizeGB = 30;
+constexpr uint64_t kMaxAvailableMSHBMSizeThreshold = 30;
 
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
@@ -44,7 +45,7 @@ bool AscendMemAdapter::Initialize() {
 
   auto user_define_ms_size_ = GetDeviceMemSizeFromContext();
   size_t default_hbm_size;
-  if (max_available_ms_hbm_size_ >= (static_cast<size_t>(31) << kMemSizeGB)) {
+  if (max_available_ms_hbm_size_ >= (kMaxAvailableMSHBMSizeThreshold << kMemSizeGB)) {
     // Some HCCL case on 32GB Ascend device will Out Of Memory when reserved only 1GB memory for HCCL, so resize
     // default HBM size for MindSpore to 30GB User can use context variable_memory_max_size="31GB" to Allocate 31GB
     // HBM for MindSpore in some extreme case.

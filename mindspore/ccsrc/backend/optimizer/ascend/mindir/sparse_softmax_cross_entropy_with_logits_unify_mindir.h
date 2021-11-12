@@ -68,6 +68,15 @@ class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public Patter
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
+
+class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2 : public PatternProcessPass {
+ public:
+  explicit PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2(bool multigraph = true)
+      : PatternProcessPass("pynative_grad_sparse_softmax_cross_entropy_with_logits_unify_mindir_v2", multigraph) {}
+  ~PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_UNIFY_MINDIR_H
