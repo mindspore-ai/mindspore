@@ -665,6 +665,14 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   (*edge_count)++;
 }
 
+void CheckAndApplyApproximation() {
+  // If 'approximation' is enabled, the edges need to be checked have effective costs.
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (approximation) {
+    entire_costgraph->CheckApproximateCostGraphEdges();
+  }
+}
+
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
   // Step 2
   MS_LOG(INFO) << "Constructing edges for cost graph begins.";
@@ -736,11 +744,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     }
     MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
   }
-  // If 'approximation' is enabled, the edges need to be checked have effective costs.
-  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
-  if (approximation) {
-    entire_costgraph->CheckApproximateCostGraphEdges();
-  }
+  CheckAndApplyApproximation();
 
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
 }
@@ -913,7 +917,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       reshape_info->set_next_operator_index(in_index);
     }
     bool is_prev_param = pre_node->isa<Parameter>();
-    if (reshape_info->GenetateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param,
+    if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param,
                                             is_next_reshape) != SUCCESS) {
       MS_LOG(EXCEPTION) << "reshape generate strategy_costs failed!";
     }

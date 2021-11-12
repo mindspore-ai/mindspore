@@ -58,7 +58,7 @@ class ReshapeInfo : public OperatorInfo {
   void set_next_operator_name(const std::string &next_name) { next_operator_name_ = next_name; }
   void set_pre_operator_index(int64_t pre_index) { pre_operator_index_ = pre_index; }
   void set_next_operator_index(int64_t next_index) { next_operator_index_ = next_index; }
-  Status GenetateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
+  Status GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs, int64_t out_index,
                                int64_t in_index, bool is_prev_param, bool is_next_reshape);
   Status GenerateStrategies(int64_t stage_id) override;
@@ -68,6 +68,16 @@ class ReshapeInfo : public OperatorInfo {
   std::string next_operator_name() const { return next_operator_name_; }
   int64_t pre_operator_index() const { return pre_operator_index_; }
   int64_t next_operator_index() const { return next_operator_index_; }
+
+  int64_t GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &);
+  int64_t GetSWCIndexByOutputLayout(const TensorLayout &);
+  int64_t GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &);
+  int64_t GetSWCIndexByInputLayout(const TensorLayout &);
+  bool CheckStrategyConsistencyByOutputLayout(int64_t, const TensorLayout &);
+  bool CheckStrategyConsistencyByInputLayout(int64_t, const TensorLayout &);
+
+  TensorLayout GetInputLayoutBySWCIndex(int64_t);
+  TensorLayout GetOutputLayoutBySWCIndex(int64_t);
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
