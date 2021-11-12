@@ -19,6 +19,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
 #include "backend/optimizer/pass/custom_op_const_input_to_attr.h"
+#include "backend/optimizer/pass/custom_op_reg_info_to_attr.h"
 #include "backend/optimizer/pass/convert_tuple_output_to_maketuple.h"
 #include "backend/optimizer/pass/convert_const_input_to_tensor_input.h"
 #include "backend/optimizer/pass/convert_tuple_input_to_dynamic_input.h"
@@ -111,6 +112,7 @@ void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   auto opt = std::make_shared<GraphOptimizer>();
   auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
   pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
+  pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

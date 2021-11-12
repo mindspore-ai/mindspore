@@ -483,7 +483,7 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   auto func_type = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
   if (func_type == kCustomTypeTbe) {
     *kernel_type = KernelType::TBE_KERNEL;
-  } else if (func_type == "ir_builder" || func_type == "tvm_compute" || func_type == "hybrid") {
+  } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported func type [" << func_type << "] for Custom op [" << op_name << "] on Ascend";

@@ -23,7 +23,8 @@ Examples:
 
 from .primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
-from .op_info_register import op_info_register, AkgGpuRegOp, AkgAscendRegOp, AiCPURegOp, TBERegOp, CpuRegOp, DataType
+from .op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, AiCPURegOp, \
+    TBERegOp, CpuRegOp, CustomRegOp, DataType
 from .primitive import constexpr
 from . import composite, operations, functional
 from . import signature
@@ -36,7 +37,8 @@ __primitive__ = [
 ]
 
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
-           "op_info_register", "AkgGpuRegOp", "AkgAscendRegOp", "AiCPURegOp", "TBERegOp", "CpuRegOp", "DataType",
+           "op_info_register", "custom_info_register", "AkgGpuRegOp", "AkgAscendRegOp", "AiCPURegOp", "TBERegOp",
+           "CpuRegOp", "CustomRegOp", "DataType",
            "constexpr"]
 __all__.extend(__primitive__)
 __all__.extend(composite.__all__)

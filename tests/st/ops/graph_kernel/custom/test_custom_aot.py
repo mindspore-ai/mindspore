@@ -17,19 +17,18 @@ import os
 import platform
 import numpy as np
 import pytest
-from mindspore import context, ops, Tensor
+from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
-from mindspore.ops.op_info_register import DataType
-from mindspore.ops.operations.custom_ops import Custom, CustomRegOp
+import mindspore.ops as ops
+from mindspore.ops.op_info_register import DataType, CustomRegOp
 
 
 class AOTSingleOutputNet(Cell):
     def __init__(self, func, out_shapes, out_types, reg=None):
         super(AOTSingleOutputNet, self).__init__()
 
-        self.program = Custom(func, out_shapes, out_types, "aot", reg_info=reg)
+        self.program = ops.Custom(func, out_shapes, out_types, "aot", reg_info=reg)
 
     def construct(self, x, y):
         return self.program(x, y)
@@ -175,7 +174,7 @@ def test_hetero_square_mul():
 class SquareGradNet(Cell):
     def __init__(self, func, out_shapes, out_types, bprop, reg):
         super(SquareGradNet, self).__init__()
-        self.square = Custom(func, out_shapes, out_types, "aot", bprop, reg)
+        self.square = ops.Custom(func, out_shapes, out_types, "aot", bprop, reg)
 
     def construct(self, x):
         res = self.square(x)[0]
@@ -232,8 +231,8 @@ def test_square_aot_bprop():
     cmd_bprop, func_path_bprop = get_file_path_gpu("square_bprop.cu", "square_bprop.so")
     check_exec_file(cmd_bprop, func_path_bprop, "square_bprop.cu", "square_bprop.so")
     try:
-        aot_bprop = Custom(func_path_bprop + ":CustomSquareBprop",
-                           ([3],), (mstype.float32,), "aot", reg_info=None)
+        aot_bprop = ops.Custom(func_path_bprop + ":CustomSquareBprop",
+                               ([3],), (mstype.float32,), "aot", reg_info=None)
     except Exception as e:
         if os.path.exists(func_path_bprop):
             os.remove(func_path_bprop)
@@ -264,9 +263,9 @@ class AOTMultiOutputNet(Cell):
     def __init__(self, func, out_shapes, out_types, bprop=None, reg=None):
         super(AOTMultiOutputNet, self).__init__()
 
-        self.program = Custom(func, out_shapes, out_types, "aot", bprop, reg)
-        self.add = P.Add()
-        self.mul = P.Mul()
+        self.program = ops.Custom(func, out_shapes, out_types, "aot", bprop, reg)
+        self.add = ops.Add()
+        self.mul = ops.Mul()
 
     def construct(self, x, y):
         aot = self.program(x, y)
@@ -310,8 +309,8 @@ def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     cmd_bprop, func_path_bprop = get_file_path_gpu(source_prop, execf_prop)
     check_exec_file(cmd_bprop, func_path_bprop, source_prop, execf_prop)
     try:
-        aot_bprop = Custom(func_path_bprop + ":CustomAddMulDivBprop",
-                           ([3], [3]), (mstype.float32, mstype.float32), "aot", reg_info=multioutput_bprop_gpu_info)
+        aot_bprop = ops.Custom(func_path_bprop + ":CustomAddMulDivBprop",
+                               ([3], [3]), (mstype.float32, mstype.float32), "aot", reg_info=multioutput_bprop_gpu_info)
     except Exception as e:
         if os.path.exists(func_path_bprop):
             os.remove(func_path_bprop)
@@ -342,9 +341,9 @@ def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     assert np.allclose(expect_dy, dy_np, 0.0001, 0.0001)
 
 
-@ pytest.mark.level0
-@ pytest.mark.env_onecard
-@ pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_add_mul_div_bprop_graph():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, GRAPH_MODE
@@ -355,9 +354,9 @@ def test_add_mul_div_bprop_graph():
     add_mul_div_bprop("add_mul_div.cu", "add_mul_div.so", "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
 
 
-@ pytest.mark.level0
-@ pytest.mark.env_onecard
-@ pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_add_mul_div_bprop_pynative():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, PYNATIVE_MODE

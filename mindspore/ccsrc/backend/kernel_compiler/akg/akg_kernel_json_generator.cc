@@ -127,7 +127,7 @@ class OpInfoExtractor {
         }
       }
       if (op_attr->type().empty()) {
-        MS_LOG(DEBUG) << "Unknown type, ignore attr " << name;
+        MS_LOG(WARNING) << "Unknown type, ignore attr: " << name;
         continue;
       }
       op_info->add_attrs_ptr(op_attr);
@@ -374,7 +374,7 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
           attrs_json->push_back(attr_json);
         }
       } else {
-        MS_LOG(ERROR) << "op [" << anf_node->fullname_with_scope() << "] should have attr :" << op_attr->name();
+        MS_LOG(ERROR) << "op [" << anf_node->fullname_with_scope() << "] should have attr: " << op_attr->name();
         return false;
       }
     } else {
@@ -497,13 +497,20 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
   MS_EXCEPTION_IF_NULL(op_info);
 
   // get basic params from currentNodeOpDesc
+  std::string op_name;
   if (IsPrimitiveCNode(anf_node, prim::kPrimCustom)) {
     auto primitive = GetCNodePrimitive(anf_node);
     MS_EXCEPTION_IF_NULL(primitive);
-    (*node_json)[kJsonKeyName] = primitive->name();
+    op_name = primitive->name();
   } else {
-    (*node_json)[kJsonKeyName] = op_info->op_name();
+    op_name = op_info->op_name();
   }
+  if (all_ops_name_.empty()) {
+    all_ops_name_ = op_name;
+  } else {
+    static_cast<void>(all_ops_name_.append("_").append(op_name));
+  }
+  (*node_json)[kJsonKeyName] = op_name;
   (*node_json)[kJsonKeyImplPath] = op_info->impl_path();
   SaveNodeAddress(anf_node, node_json);
 
@@ -665,16 +672,21 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   MS_EXCEPTION_IF_NULL(fg);
   auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
   constexpr size_t name_len_limited = 80;
+  std::string ops_name = all_ops_name_;
   if (attr_val != nullptr) {
-    auto fg_name = GetValue<std::string>(attr_val);
-    if (fg_name.size() > name_len_limited) {
-      (*kernel_json)[kJsonKeyOpFullName] = kernel_name_ + fg_name;
-      auto suffix_pos = fg_name.find_last_of("_");
-      fg_name =
-        fg_name.substr(0, name_len_limited - fg_name.size() + suffix_pos) + "_more" + fg_name.substr(suffix_pos);
-    }
-    static_cast<void>(kernel_name_.append(fg_name).append("_"));
+    ops_name = GetValue<std::string>(attr_val);
   }
+  if (ops_name.size() > name_len_limited) {
+    (*kernel_json)[kJsonKeyOpFullName] = kernel_name_ + ops_name;
+    auto suffix_pos = ops_name.find_last_of("_");
+    if (suffix_pos != std::string::npos && ops_name.size() - suffix_pos < name_len_limited) {
+      ops_name =
+        ops_name.substr(0, name_len_limited - (ops_name.size() - suffix_pos)) + "_more" + ops_name.substr(suffix_pos);
+    } else {
+      ops_name = ops_name.substr(0, name_len_limited) + "_more";
+    }
+  }
+  static_cast<void>(kernel_name_.append(ops_name).append("_"));
   static_cast<void>(kernel_name_.append(std::to_string(hash_id)));
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;

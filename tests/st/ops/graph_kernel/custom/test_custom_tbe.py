@@ -15,12 +15,11 @@
 
 import pytest
 import numpy as np
-from mindspore import context, ops, Tensor
+from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
-from mindspore.ops.op_info_register import TBERegOp, DataType
-from mindspore.ops.operations.custom_ops import Custom, CustomRegOp, custom_op_info_register
+import mindspore.ops as ops
+from mindspore.ops.op_info_register import TBERegOp, DataType, CustomRegOp, custom_info_register
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 square_with_bias_op_info = CustomRegOp() \
@@ -33,7 +32,7 @@ square_with_bias_op_info = CustomRegOp() \
     .get_op_info()
 
 
-@custom_op_info_register(square_with_bias_op_info)
+@custom_info_register(square_with_bias_op_info)
 def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
     import te.lang.cce
     from te import tvm
@@ -69,7 +68,7 @@ square_with_bias_v2_op_info = CustomRegOp() \
     .get_op_info()
 
 
-@custom_op_info_register(square_with_bias_v2_op_info)
+@custom_info_register(square_with_bias_v2_op_info)
 def square_with_bias_v2(input_x, output1, output2, bias=0.0, kernel_name="square_with_bias_v2"):
     import te.lang.cce
     from te import tvm
@@ -139,14 +138,15 @@ class Net1(Cell):
     def __init__(self):
         super(Net1, self).__init__()
         # TBE dsl with attr
-        self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, func_type="tbe")
+        self.square_with_bias = ops.Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32,
+                                           func_type="tbe")
         # TBE dsl with multiple inputs and attr
-        self.add_n_with_bias = Custom(add_n_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, func_type="tbe",
-                                      reg_info=add_n_with_bias_op_info)
+        self.add_n_with_bias = ops.Custom(add_n_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, func_type="tbe",
+                                          reg_info=add_n_with_bias_op_info)
         # TBE dsl with multiple outputs and attr
-        self.square_with_bias_v2 = Custom(square_with_bias_v2, out_shape=([2, 3], [2, 3]),
-                                          out_dtype=(mstype.float32, mstype.float32), func_type="tbe")
-        self.neg = P.Neg()
+        self.square_with_bias_v2 = ops.Custom(square_with_bias_v2, out_shape=([2, 3], [2, 3]),
+                                              out_dtype=(mstype.float32, mstype.float32), func_type="tbe")
+        self.neg = ops.Neg()
 
     def construct(self, x):
         tmp1 = self.square_with_bias(x, 1.0)
@@ -222,22 +222,22 @@ def bprop(data, axis, out, dout):
 class Net2(Cell):
     """Net definition"""
 
-    def __init__(self):
+    def __init__(self, bprop_func):
         super(Net2, self).__init__()
-        self.square_with_bias = Custom(square_with_bias, out_shape=[3], out_dtype=mstype.float32, bprop=bprop,
-                                       func_type="tbe")
+        self.square_with_bias = ops.Custom(square_with_bias, out_shape=[3], out_dtype=mstype.float32, bprop=bprop_func,
+                                           func_type="tbe")
 
     def construct(self, x):
         res = self.square_with_bias(x, 1.0)
         return res
 
 
-def grad_case():
+def grad_case(bprop_func):
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     expect = np.array([2.0, 8.0, 18.0]).astype(np.float32)
 
-    net = Net2()
+    net = Net2(bprop_func)
     dx = ops.GradOperation(sens_param=True)(net)(Tensor(x), Tensor(sens))
     dx_np = dx.asnumpy()
 
@@ -257,7 +257,8 @@ def test_net2_graph_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    grad_case()
+    # bprop function using bprop
+    grad_case(bprop)
 
 
 @pytest.mark.level0
@@ -271,4 +272,80 @@ def test_net2_pynative_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    grad_case()
+    # bprop function using bprop
+    grad_case(bprop)
+
+
+square_with_bias_grad_info = CustomRegOp() \
+    .input(0, "x") \
+    .input(1, "dout") \
+    .output(0, "y") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .target("Ascend") \
+    .get_op_info()
+
+
+@custom_info_register(square_with_bias_grad_info)
+def square_with_bias_grad(input_x, dout, output_y, kernel_name="square_with_bias_grad"):
+    import te.lang.cce
+    from te import tvm
+
+    shape1 = input_x.get("shape")
+    dtype1 = input_x.get("dtype").lower()
+    data1 = tvm.placeholder(shape1, name="data1", dtype=dtype1.lower())
+
+    shape2 = dout.get("shape")
+    dtype2 = dout.get("dtype").lower()
+    data2 = tvm.placeholder(shape2, name="data2", dtype=dtype2.lower())
+
+    res0 = te.lang.cce.vmuls(data1, 2.0)
+    res = te.lang.cce.vmul(res0, data2)
+    with tvm.target.cce():
+        sch = te.lang.cce.auto_schedule(res)
+
+    config = {"print_ir": False,
+              "name": kernel_name,
+              "tensor_list": [data1, data2, res]}
+
+    te.lang.cce.cce_build_code(sch, config)
+
+
+def bprop1():
+    op = ops.Custom(square_with_bias_grad, [3], mstype.float32, func_type="tbe")
+
+    def custom_bprop(data, axis, out, dout):
+        dx = op(data, dout)
+        return dx, zeros_like(axis)
+
+    return custom_bprop
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net2_bprop1_graph_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: grad test case in GRAPH_MODE, grad function using Custom op.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    # bprop function using the return of bprop1
+    grad_case(bprop1())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_net2_bprop1_pynative_mode():
+    """
+    Feature: test case for Custom op with func_type="tbe"
+    Description: grad test case in PYNATIVE_MODE, grad function using Custom op.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    # bprop function using the return of bprop1
+    grad_case(bprop1())

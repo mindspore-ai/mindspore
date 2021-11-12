@@ -120,6 +120,7 @@ from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, L
                                 ConstrainForceVirial, ConstrainForce, Constrain)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
+from .custom_ops import (Custom)
 
 __all__ = [
     'CeLU',
@@ -489,6 +490,7 @@ __all__ = [
     "NeighborExchangeV2",
     "NeighborExchange",
     "AlltoAll",
+    "Custom",
 ]
 
 __sponge__ = [
