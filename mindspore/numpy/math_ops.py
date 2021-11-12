@@ -3958,7 +3958,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     The returned gradient hence has the same shape as the input array.
 
     Note:
-        Currently we only support `edge_order`=1 and uniform spacing of `varargs`.
+        Currently we only support `edge_order` =1 and uniform spacing of `varargs`.
 
     Args:
         f (Union[tuple, list, Tensor]): An N-dimensional array containing samples of

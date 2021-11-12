@@ -216,8 +216,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         r"""
         Gradient freeze algorithm process.
 
-        Inputs:
-            - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        Args:
+            inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
         Outputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
@@ -239,9 +239,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         r"""
         Gradient accumulation algorithm process.
 
-        Inputs:
-            - **loss** (Tensor) -  Tensor with shape :math:`()`.
-            - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+        Args:
+            loss (Tensor): Tensor with shape :math:`()`.
+            grads (tuple(Tensor)): Tuple of gradient tensors.
 
         Outputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
@@ -266,9 +266,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         r"""
         Adasum algorithm process.
 
-        Inputs:
-            - **loss** (Tensor) -  Tensor with shape :math:`()`.
-            - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+        Args:
+            loss (Tensor): Tensor with shape :math:`()`.
+            grads (tuple(Tensor)): Tuple of gradient tensors.
 
         Outputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
@@ -295,8 +295,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Check adasum enable.
 
         Args:
-            optimizer (Union[Cell]) - Optimizer for updating the weights.
-            reducer_flag (bool) - Reducer flag.
+            optimizer (Union[Cell]): Optimizer for updating the weights.
+            reducer_flag (bool): Reducer flag.
         """
         if not getattr(optimizer, "adasum", None) or not reducer_flag:
             return False

@@ -72,7 +72,7 @@ class OptimizerProcess:
         Build the parameter's dict of the network.
 
         Args:
-            network (Cell) - The training network.
+            network (Cell): The training network.
         """
         cells = network.cells_and_names()
         params_dict = {}
@@ -86,8 +86,8 @@ class OptimizerProcess:
         Build the parameter's group with grad centralization.
 
         Args:
-            params_dict (dict) - The network's parameter dict.
-            parameters (list) - The network's parameter list.
+            params_dict (dict): The network's parameter dict.
+            parameters (list): The network's parameter list.
         """
         group_params = []
         for group_param in parameters:
@@ -122,7 +122,7 @@ class OptimizerProcess:
         Add gradient centralization.
 
         Args:
-            network (Cell) - The training network.
+            network (Cell): The training network.
         """
         params_dict = self.build_params_dict(network)
 
@@ -191,8 +191,8 @@ class ParameterProcess:
         Assign parameter group.
 
         Args:
-            parameters (list) - The network's parameter list.
-            split_point (list) - The gradient split point of this network. default: None.
+            parameters (list): The network's parameter list.
+            split_point (list): The gradient split point of this network. default: None.
         """
         if not isinstance(parameters, (list, tuple)) or not parameters:
             return parameters
@@ -213,8 +213,8 @@ class ParameterProcess:
         Generate group parameters.
 
         Args:
-            parameters (list) - The network's parameter list.
-            origin_params (list) - The network's origin parameter list.
+            parameters (list): The network's parameter list.
+            origin_params (list): The network's origin parameter list.
         """
         origin_params_copy = origin_params
         if origin_params_copy is not None:

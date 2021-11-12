@@ -553,18 +553,18 @@ def batch_dot(x1, x2, axes=None):
     .. math::
         output = x1[batch, :] * x2[batch, :]
 
-    Inputs:
-        - **x1** (Tensor) - First tensor in Batch Dot op with datatype float32 and the rank of `x1` must be greater
+    Args:
+        x1 (Tensor): First tensor in Batch Dot op with datatype float32 and the rank of `x1` must be greater
           than or equal to 2.
-        - **x2** (Tensor) - Second tensor in Batch Dot op with datatype float32. The datatype of `x2` should
+        x2 (Tensor): Second tensor in Batch Dot op with datatype float32. The datatype of `x2` should
           be same as `x1` and the rank of `x2` must be greater than or equal to 2.
-        - **axes** (Union[int, tuple(int), list(int)]) - Single value or tuple/list of length 2 with dimensions
+        axes (Union[int, tuple(int), list(int)]): Single value or tuple/list of length 2 with dimensions
           specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
           `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
           Default: None.
 
     Outputs:
-        Tensor, batch dot product of `x1` and `x2`.For example: The Shape of output
+        Tensor, batch dot product of `x1` and `x2`. For example: The Shape of output
         for input `x1` shapes (batch, d1, axes, d2) and `x2` shapes (batch, d3, axes, d4) is (batch, d1, d2, d3, d4),
         where d1 and d2 means any number.
 

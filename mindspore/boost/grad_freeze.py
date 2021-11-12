@@ -184,8 +184,8 @@ class GradientFreeze:
         Split parameter groups for gradients freezing training.
 
         Args:
-            net (Cell) - The training network.
-            freeze_para_groups_number (int) - The number of gradient freeze groups.
+            net (Cell): The training network.
+            freeze_para_groups_number (int): The number of gradient freeze groups.
         """
         grouped_params = []
         tmp = []
@@ -211,10 +211,10 @@ class GradientFreeze:
         Generate index sequence for gradient freezing training.
 
         Args:
-            parameter_groups_number (int) - The number of parameter groups.
-            freeze_strategy (int) - Gradient freeze grouping strategy, select from [0, 1].
-            freeze_p (float) - Gradient freezing probability.
-            total_steps (int) - Total training steps.
+            parameter_groups_number (int): The number of parameter groups.
+            freeze_strategy (int): Gradient freeze grouping strategy, select from [0, 1].
+            freeze_p (float): Gradient freezing probability.
+            total_steps (int): Total training steps.
         """
         total_step = int(total_steps * 1.01)
         if parameter_groups_number <= 1:
@@ -253,8 +253,8 @@ class GradientFreeze:
         Generate freeze network and optimizer.
 
         Args:
-            network (Cell) - The training network.
-            optimizer (Cell) - Optimizer for updating the weights.
+            network (Cell): The training network.
+            optimizer (Cell): Optimizer for updating the weights.
         """
         train_para_groups = self.split_parameters_groups(
             network, self._param_groups)
@@ -274,15 +274,15 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
     Generate freeze network and optimizer.
 
     Args:
-        reducer_flag (bool) - Reducer flag.
-        network (Cell) - The training network.
-        optimizer (Cell) - Optimizer for updating the weights.
-        sens (Tensor) -  Tensor with shape :math:`()`
-        grad (Tuple(Tensor)) - Tuple of gradient tensors.
-        use_grad_accumulation (bool) - Use gradient accumulation flag.
-        mean (bool) - Gradients mean flag. default: None.
-        degree (int) - Device number. default: None.
-        max_accumulation_step (int) - Max accumulation steps. default: 1.
+        reducer_flag (bool): Reducer flag.
+        network (Cell): The training network.
+        optimizer (Cell): Optimizer for updating the weights.
+        sens (Tensor):  Tensor with shape :math:`()`
+        grad (tuple(Tensor)): Tuple of gradient tensors.
+        use_grad_accumulation (bool): Use gradient accumulation flag.
+        mean (bool): Gradients mean flag. default: None.
+        degree (int): Device number. default: None.
+        max_accumulation_step (int): Max accumulation steps. default: 1.
 
     Examples:
         >>> import numpy as np
