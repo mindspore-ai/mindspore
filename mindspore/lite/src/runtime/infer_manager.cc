@@ -65,11 +65,13 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return RET_NOT_SUPPORT;
   }
   std::vector<mindspore::MSTensor> in_tensors;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(in_tensors),
-                 [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(in_tensors), [](lite::Tensor *tensor) {
+    return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor));
+  });
   std::vector<mindspore::MSTensor> out_tensors;
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(out_tensors),
-                 [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
+  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(out_tensors), [](lite::Tensor *tensor) {
+    return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor));
+  });
   auto ret =
     kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive), kernel);
   if (ret == kLiteInferInvalid) {

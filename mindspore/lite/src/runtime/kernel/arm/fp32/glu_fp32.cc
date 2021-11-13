@@ -34,7 +34,7 @@ const int kGluBranchNum = 2;
 int GluCPUKernel::MallocTmpBuffer() {
   FreeTmpBuffer();
   auto in_tensor = in_tensors_.front();
-  for (int i = 0; i < kSplitNum; i++) {
+  for (size_t i = 0; i < kSplitNum; i++) {
     split_ptr_[i] = ms_context_->allocator->Malloc(in_tensor->Size() / kSplitNum);
     if (split_ptr_[i] == nullptr) {
       MS_LOG(ERROR) << "GluCPUKernel malloc split ptr failed.";
@@ -50,7 +50,7 @@ int GluCPUKernel::MallocTmpBuffer() {
 }
 
 void GluCPUKernel::FreeTmpBuffer() {
-  for (int i = 0; i < kSplitNum; i++) {
+  for (size_t i = 0; i < kSplitNum; i++) {
     if (split_ptr_.at(i) != nullptr) {
       ms_context_->allocator->Free(split_ptr_.at(i));
       split_ptr_.at(i) = nullptr;

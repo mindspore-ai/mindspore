@@ -33,7 +33,7 @@ int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     return NNACL_INFER_INVALID;
   }
   int input_num = GetElementNum(inputs[0]);
-  if (input_num > MAX_SHAPE_SIZE) {
+  if (input_num > MAX_SHAPE_SIZE || input_num < 0) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
   int output_shape[MAX_SHAPE_SIZE];

@@ -36,7 +36,7 @@ void ParseLine(const std::string &line, std::map<std::string, std::string> *sect
   //     key=value
   if (line[0] == '[' && line[line.length() - 1] == ']') {
     if (!section->empty() && !section_config->empty()) {
-      config->insert(std::make_pair(*section, *section_config));
+      (void)config->insert(std::make_pair(*section, *section_config));
     }
     section_config->clear();
     *section = line.substr(1, line.length() - kLengthOfParentheses);
@@ -55,7 +55,7 @@ void ParseLine(const std::string &line, std::map<std::string, std::string> *sect
     auto value = line.substr(index + 1);
     lite::Trim(&key);
     lite::Trim(&value);
-    section_config->insert(std::make_pair(key, value));
+    (void)section_config->insert(std::make_pair(key, value));
     *valid_line_count = *valid_line_count + 1;
   }
 }
@@ -109,7 +109,7 @@ int GetAllSectionInfoFromConfigFile(const std::string &file,
     ParseLine(line, &section_config, &section, &valid_line_count, config);
   }
   if (!section.empty() && !section_config.empty()) {
-    config->insert(std::make_pair(section, section_config));
+    (void)config->insert(std::make_pair(section, section_config));
   }
   ifs.close();
   return RET_OK;
@@ -150,7 +150,7 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
       MS_LOG(WARNING) << "Invalid value in execution_plan: " << value;
       continue;
     }
-    data_type_plan->insert(std::make_pair(op_name, type_id));
+    (void)data_type_plan->insert(std::make_pair(op_name, type_id));
   }
 }
 }  // namespace lite

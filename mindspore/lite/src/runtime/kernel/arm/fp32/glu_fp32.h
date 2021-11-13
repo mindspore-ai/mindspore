@@ -28,7 +28,7 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-constexpr int kSplitNum = 2;
+constexpr size_t kSplitNum = 2;
 
 class GluCPUKernel : public InnerKernel {
  public:
