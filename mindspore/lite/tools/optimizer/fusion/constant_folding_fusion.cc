@@ -193,6 +193,9 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   parameter->thread_num_ = 1;
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK) {
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     MS_LOG(ERROR) << "infershape failed!type: " << schema::EnumNamePrimitiveType(prim->value_type());
     return nullptr;
@@ -203,13 +206,16 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, ms_context, desc, parameter,
                                                        &lite_kernel);
   if (ret != lite::RET_OK) {
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     return nullptr;
   }
   ret = lite_kernel->Init();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init failed.";
-    free(parameter);
+    delete lite_kernel;  // parameter will be freed in destructor of lite-kernel.
     return nullptr;
   }
   return lite_kernel;

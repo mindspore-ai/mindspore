@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/strided_slice_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/op_base.h"
 
 const size_t kStridedSliceOutputNum = 1;
 const size_t kStridedSliceInputNum = 1;
@@ -124,10 +125,9 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
 
   int *stride_data = NULL;
   const TensorC *stride_tensor = inputs[4];
-  if (GetElementNum(stride_tensor) != 0) {
-    if (GetElementNum(stride_tensor) != begin_ndim) {
-      return NNACL_ERR;
-    }
+  int stride_data_num = GetElementNum(stride_tensor);
+  if (stride_data_num != 0) {
+    MS_CHECK_TRUE_RET(stride_data_num == begin_ndim, NNACL_ERR);
     stride_data = (int *)(stride_tensor->data_);
   }
 
@@ -271,9 +271,10 @@ int ApplyEllipsisMask(StridedSliceTransferBuffer *transfer_buffer, const int *in
   return NNACL_OK;
 }
 
-int TransIndexToPositive(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t in_shape_size) {
+int TransIndexToPositive(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t max_shape_size,
+                         size_t in_shape_size) {
   for (size_t i = 0; i < transfer_buffer->begins_size_; i++) {
-    if (i >= in_shape_size) {
+    if (i >= max_shape_size) {
       return NNACL_ERR;
     }
     if (transfer_buffer->begins_[i] < 0) {
@@ -281,6 +282,15 @@ int TransIndexToPositive(StridedSliceTransferBuffer *transfer_buffer, const int 
     }
     if (transfer_buffer->ends_[i] < 0) {
       transfer_buffer->ends_[i] += in_shape[i];
+    }
+    if (i < in_shape_size) {
+      if (transfer_buffer->begins_[i] < 0 || transfer_buffer->begins_[i] > in_shape[i]) {
+        return NNACL_ERR;
+      }
+      if ((transfer_buffer->ends_[i] < 0 && transfer_buffer->ends_[i] != -1) ||
+          transfer_buffer->ends_[i] > in_shape[i]) {
+        return NNACL_ERR;
+      }
     }
   }
   return NNACL_OK;
@@ -426,7 +436,7 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   int output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = 0;
   ShapeSet(output_shape, &output_shape_size, in_shape, in_shape_size);
-  ret = TransIndexToPositive(&transfer_buffer, in_shape, MAX_SHAPE_SIZE);
+  ret = TransIndexToPositive(&transfer_buffer, in_shape, MAX_SHAPE_SIZE, input->shape_size_);
   if (ret != NNACL_OK) {
     return ret;
   }

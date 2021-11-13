@@ -20,21 +20,14 @@
 
 int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
-  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, C3NUM, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
-  NNACL_CHECK_NULL_RETURN_ERR(output);
-
-  if (inputs_size == C3NUM) {
-    output->data_type_ = input->data_type_;
-  } else {
-    output->data_type_ = kNumberTypeInt32;
-  }
+  output->data_type_ = inputs_size == C3NUM ? input->data_type_ : kNumberTypeInt32;
   output->format_ = input->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
