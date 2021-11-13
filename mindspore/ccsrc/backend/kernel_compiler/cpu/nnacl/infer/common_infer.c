@@ -273,6 +273,9 @@ int GetChannel(const TensorC *tensor) {
 }
 
 int GetElementNum(const TensorC *tensor) {
+  if (tensor == NULL) {
+    return -1;
+  }
   if (tensor->shape_size_ == 0) {
     return 1;  // scalar mode
   }
