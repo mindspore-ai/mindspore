@@ -106,12 +106,14 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (input_c != weight_tensor->shape_[3] && input_c != 1 && (input_c / param->group_) != weight_tensor->shape_[3]) {
     return NNACL_PARAM_INVALID;
   }
-  if (param->stride_h_ == 0 || param->stride_w_ == 0) {
+  if (param->stride_h_ <= 0 || param->stride_w_ <= 0) {
     return NNACL_PARAM_INVALID;
   }
 
   param->kernel_h_ = param->kernel_h_ != -1 ? param->kernel_h_ : weight_tensor->shape_[1];
   param->kernel_w_ = param->kernel_w_ != -1 ? param->kernel_w_ : weight_tensor->shape_[2];
+  MS_CHECK_TRUE_RET(param->kernel_h_ == weight_tensor->shape_[1], NNACL_PARAM_INVALID);
+  MS_CHECK_TRUE_RET(param->kernel_w_ == weight_tensor->shape_[2], NNACL_PARAM_INVALID);
   int ret = ConvInferShape(input_h, input_w, &output_h, &output_w, param);
   if (ret != NNACL_OK) {
     return ret;

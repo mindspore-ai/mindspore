@@ -561,6 +561,11 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   parameter->quant_type_ = node->quant_type_;
   parameter->thread_num_ = context_->thread_num_;
 
+  if (node->output_indices_.empty()) {
+    MS_LOG(ERROR) << "The output size is invalid";
+    free(parameter);
+    return RET_ERROR;
+  }
   if (op_parameters_.find(node->output_indices_.at(0)) != op_parameters_.end()) {
     free(parameter);
     parameter = op_parameters_[node->output_indices_.at(0)];
@@ -608,6 +613,9 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
 void Scheduler::FreeOpParameters() {
   for (auto &param : op_parameters_) {
     if (param.second != nullptr) {
+      if (param.second->destroy_func_ != nullptr) {
+        param.second->destroy_func_(param.second);
+      }
       free(param.second);
       param.second = nullptr;
     }
@@ -1354,13 +1362,12 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
   ResetByExecutionPlan(src_node->name_, &prefer_data_type);
 
   auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
-  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
                   << ", type: " << GetPrimitiveTypeName(src_node->primitive_, schema_version_);
     return nullptr;
   }
-
+  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   SetKernelTensorDataType(kernel);
   kernel->set_name(src_node->name_);
   return kernel;

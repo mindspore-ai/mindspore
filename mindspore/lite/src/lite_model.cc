@@ -25,6 +25,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
+#include "src/tensor.h"
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
 #endif
@@ -279,6 +280,13 @@ bool LiteModel::ModelVerify() const {
     auto *tensor = this->all_tensors_.at(input_index);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Tensor in all tensors is nullptr.";
+      return false;
+    }
+    // check the input data type
+    if ((static_cast<const TypeId>(tensor->dataType()) <= kNumberTypeBegin ||
+         static_cast<const TypeId>(tensor->dataType()) >= kNumberTypeEnd) &&
+        static_cast<const TypeId>(tensor->dataType()) != kObjectTypeString) {
+      MS_LOG(ERROR) << "The data type is not supported to malloc.";
       return false;
     }
   }

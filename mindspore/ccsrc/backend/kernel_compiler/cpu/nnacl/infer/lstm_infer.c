@@ -17,6 +17,37 @@
 #include "nnacl/infer/lstm_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *parameter) {
+  const TensorC *input = inputs[FIRST_INPUT];
+  const TensorC *weight_i = inputs[SECOND_INPUT];
+  const TensorC *weight_g = inputs[THIRD_INPUT];
+  const TensorC *bias = inputs[FOURTH_INPUT];
+  const TensorC *cell = inputs[FIFTH_INPUT];
+  int batch = input->shape_[kNHWC_H];
+  int input_size = input->shape_[kNHWC_W];
+  int hidden_size = weight_i->shape_[kNHWC_H] / C4NUM;
+  bool bidirectional = parameter->bidirectional_;
+  if (input->shape_size_ != DIMENSION_3D || weight_i->shape_size_ != DIMENSION_3D) {
+    return NNACL_ERR;
+  }
+  int bidirection = bidirectional ? C2NUM : C1NUM;
+  MS_CHECK_TRUE_RET(weight_i->shape_[kNHWC_N] == bidirection && weight_i->shape_[kNHWC_H] == hidden_size * C4NUM &&
+                      weight_i->shape_[kNHWC_W] == input_size,
+                    NNACL_ERR);
+  MS_CHECK_TRUE_RET(weight_g->shape_[kNHWC_N] == bidirection && weight_g->shape_[kNHWC_H] == hidden_size * C4NUM &&
+                      weight_g->shape_[kNHWC_W] == hidden_size,
+                    NNACL_ERR);
+  MS_CHECK_TRUE_RET(bias->shape_[kNHWC_N] == bidirection && bias->shape_[kNHWC_H] == hidden_size * C8NUM, NNACL_ERR);
+  if (!bidirectional && cell->shape_size_ == DIMENSION_2D) {
+    MS_CHECK_TRUE_RET(cell->shape_[kNHWC_N] == batch && cell->shape_[kNHWC_H] == hidden_size, NNACL_ERR);
+  } else {
+    MS_CHECK_TRUE_RET(
+      cell->shape_[kNHWC_N] == bidirection && cell->shape_[kNHWC_H] == batch && cell->shape_[kNHWC_W] == hidden_size,
+      NNACL_ERR);
+  }
+  return NNACL_OK;
+}
+
 int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 6, 3);
@@ -37,7 +68,7 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     return NNACL_INFER_INVALID;
   }
 
-  if (input->shape_size_ != 3 || weight_i->shape_size_ != 3) {
+  if (CheckInputShapeValid(inputs, param) != NNACL_OK) {
     return NNACL_ERR;
   }
 

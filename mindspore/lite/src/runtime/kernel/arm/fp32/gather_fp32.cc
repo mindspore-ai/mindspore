@@ -122,14 +122,21 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
       MS_LOG(ERROR) << "Memory allocation failed";
       return RET_ERROR;
     }
-    if (indices_tensor->data_type() == kNumberTypeInt64) {
-      for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->MutableData())[i];
-      }
-    } else {
-      for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = static_cast<int>(reinterpret_cast<float *>(indices_tensor->MutableData())[i]);
-      }
+    switch (indices_tensor->data_type()) {
+      case kNumberTypeInt64:
+        for (int i = 0; i < indices_num; i++) {
+          indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->MutableData())[i];
+        }
+        break;
+      case kNumberTypeFloat:
+      case kNumberTypeFloat32:
+        for (int i = 0; i < indices_num; i++) {
+          indices_data_[i] = static_cast<int>(reinterpret_cast<float *>(indices_tensor->MutableData())[i]);
+        }
+        break;
+      default:
+        MS_LOG(ERROR) << "Does not support data type: " << indices_tensor->data_type();
+        return RET_ERROR;
     }
   } else {
     indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->MutableData());

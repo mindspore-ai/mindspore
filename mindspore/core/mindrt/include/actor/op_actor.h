@@ -79,9 +79,7 @@ struct OpContext {
     if (code == MindrtStatus::KINIT) {
       code = MindrtStatus::KERROR;
     }
-    for (auto promise : *results_) {
-      promise.SetFailed(code);
-    }
+    results_->front().SetFailed(code);
   }
 
   void SetSuccess(int32_t code) {

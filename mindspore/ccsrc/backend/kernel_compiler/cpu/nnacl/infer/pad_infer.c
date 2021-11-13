@@ -45,6 +45,7 @@ int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   }
   param->padding_length = size;
   for (int i = 0; i < size; ++i) {
+    MS_CHECK_TRUE_RET(((int *)paddings->data_)[i] >= 0, NNACL_INFER_INVALID);
     param->paddings_[i] = ((int *)paddings->data_)[i];
   }
 

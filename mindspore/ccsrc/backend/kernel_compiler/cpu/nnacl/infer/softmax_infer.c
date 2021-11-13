@@ -35,6 +35,12 @@ int SoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   if (input->shape_size_ > 5) {
     return NNACL_ERR;
   }
+
+  SoftmaxParameter *param = (SoftmaxParameter *)parameter;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
+  if (param->axis_ < (-1 * (int)(input->shape_size_)) || param->axis_ > (int)(input->shape_size_)) {
+    return NNACL_PARAM_INVALID;
+  }
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
