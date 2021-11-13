@@ -28,10 +28,6 @@
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
 
-#ifndef EXPORT_WRAPPER
-#define EXPORT_WRAPPER __attribute__((visibility("default")))
-#endif
-
 namespace mindspore {
 namespace lite {
 enum NodeType {
@@ -46,7 +42,7 @@ uint64_t GetTimeUs();
 
 bool IsSupportSDot();
 
-size_t EXPORT_WRAPPER GetMaxMallocSize();
+size_t GetMaxMallocSize();
 
 #ifdef __ANDROID__
 uint32_t getHwCap(int hwcap_type);

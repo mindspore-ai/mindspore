@@ -154,6 +154,7 @@ bool IsSupportSDot() {
 #endif
   return status;
 }
+
 size_t GetMaxMallocSize() {
   size_t max_malloc_size = 0;
 #if defined(_MSC_VER) || defined(_WIN32)
