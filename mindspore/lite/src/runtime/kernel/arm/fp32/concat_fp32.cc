@@ -50,7 +50,7 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
     inputs_addr[i] = in_tensors_[i]->data();
-    CHECK_NULL_RETURN(inputs_addr[i]);
+    MS_CHECK_TRUE_RET(in_tensors_[i]->ElementsNum() == 0 || inputs_addr[i] != nullptr, RET_ERROR);
     shapes.push_back(in_tensors_[i]->shape());
     MS_CHECK_LT(concat_param_->axis_, static_cast<int>(in_tensors_[i]->shape().size()), RET_ERROR);
     inputs_output_shape[i] = shapes[i].data();
