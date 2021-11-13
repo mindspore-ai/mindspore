@@ -123,7 +123,7 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
       MS_LOG(WARNING) << "Invalid value in execution_plan: " << value;
       continue;
     }
-    data_type_plan->insert(std::make_pair(op_name, type_id));
+    (void)data_type_plan->insert(std::make_pair(op_name, type_id));
   }
 }
 }  // namespace lite

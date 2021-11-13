@@ -27,7 +27,7 @@ OpParameter *PopulateClipParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc ClipParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(OpParameter));
+  (void)memset(param, 0, sizeof(OpParameter));
 
   param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);

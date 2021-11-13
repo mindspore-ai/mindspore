@@ -50,7 +50,7 @@ class DefaultAllocator : public Allocator {
  private:
   void Lock();
   void UnLock();
-  bool ReuseMemory(size_t free_size, size_t size);
+  bool ReuseMemory(size_t free_size, size_t size) const;
   struct MemBuf {
     std::atomic_int ref_count_ = {0};
     size_t size = 0;

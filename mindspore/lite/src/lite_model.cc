@@ -283,7 +283,7 @@ bool LiteModel::ModelVerify() const {
     }
   }
 
-  if (std::any_of(this->output_indices_.begin(), this->output_indices_.end(),
+  if (std::any_of(output_indices_.begin(), output_indices_.end(),
                   [&all_tensors_size](const uint32_t &idx) { return idx >= all_tensors_size; })) {
     MS_LOG(ERROR) << "Graph output indices is beyond tensor_size.";
     return false;
