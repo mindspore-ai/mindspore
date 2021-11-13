@@ -932,8 +932,8 @@ class Moments(Cell):
           :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
-        - **mean** (Tensor) - The mean of `x`, with the same date type as input `x`.
-        - **variance** (Tensor) - The variance of `x`, with the same date type as input `x`.
+        - **mean** (Tensor) - The mean of `x`, with the same data type as input `x`.
+        - **variance** (Tensor) - The variance of `x`, with the same data type as input `x`.
 
     Raises:
         TypeError: If `axis` is not one of int, tuple, None.

@@ -524,10 +524,25 @@ class CheckBprop(PrimitiveWithInfer):
     Raises:
         TypeError: If `input_x` or `input_y` is not a Tensor.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.op = ops.CheckBprop()
+        ...     def construct(self, x, y):
+        ...         return self.op(x, y)
+        ...
+        >>> net = Net()
         >>> input_x = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
         >>> input_y = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
-        >>> out = ops.CheckBprop()(input_x, input_y)
+        >>> output = net(input_x, input_y)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000000e+00,  2.00000000e+00],
+         [ 2.00000000e+00,  2.00000000e+00]]),)
     """
 
     @prim_attr_register

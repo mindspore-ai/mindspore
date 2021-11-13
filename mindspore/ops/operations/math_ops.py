@@ -4614,13 +4614,13 @@ class Tan(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32 or int32.
+          Data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: float16, float32, int32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
@@ -4935,8 +4935,15 @@ class BitwiseXor(_BitwiseBinaryOp):
 
 
 class BesselI0e(PrimitiveWithInfer):
-    """
+    r"""
     Computes BesselI0e of input element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        BesselI0e(x) = \exp(|x|) * bessel\_i0(x)
+
+    where bessel_i0 is Bessel function of the first kind with 0 order.
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
@@ -4973,8 +4980,15 @@ class BesselI0e(PrimitiveWithInfer):
 
 
 class BesselI1e(PrimitiveWithInfer):
-    """
+    r"""
     Computes BesselI1e of input element-wise.
+
+    The formula is defined as:
+
+    .. math::
+        BesselI1e(x) = \exp(|x|) * bessel\_i1(x)
+
+    where bessel_i1 is Bessel function of the first kind with 1 order.
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
