@@ -374,7 +374,7 @@ void HandleNoUsedParameter(const FuncGraphPtr &root) {
   }
 }
 
-static bool IsFullySplitParameter(const ParameterPtr &param_ptr) {
+bool IsFullySplitParameter(const ParameterPtr &param_ptr) {
   auto tensor_layout = param_ptr->user_data<parallel::TensorLayout>();
   if (tensor_layout == nullptr) {
     return false;

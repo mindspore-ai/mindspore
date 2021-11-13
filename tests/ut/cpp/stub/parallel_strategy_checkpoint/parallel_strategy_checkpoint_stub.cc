@@ -34,6 +34,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
 
 Status StrategyCheckpoint::LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) { return SUCCESS; }
 
-Status StrategyCheckpoint::SaveGroupInfo(const GroupInfoMap &group_info_map) { return SUCCESS; }
+Status StrategyCheckpoint::SaveGroupInfo(const GroupInfoMap &group_info_map,
+                                         const RankList &restore_rank_list) { return SUCCESS; }
 }  // namespace parallel
 }  // namespace mindspore

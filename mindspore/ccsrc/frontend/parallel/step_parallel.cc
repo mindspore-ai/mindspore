@@ -3121,11 +3121,53 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
           current_stage == split_stage_num - 1);
 }
 
-static void HandleGroupInfo() {
+RankList FindCommonMirrorGroup(const FuncGraphPtr &root) {
+  auto parameters = root->parameters();
+  for (auto &parameter : parameters) {
+    auto param_ptr = parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (IsFullySplitParameter(param_ptr)) {
+      MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
+                      << " is fully shard, thus cannot find common data parallel group for this rank";
+      return {};
+    }
+  }
+  AnfNodePtr ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<int64_t> common_group_list;
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  bool is_first_group = true;
+  for (auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimMirror)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(node);
+    if (!prim->HasAttr(GROUP)) {
+      MS_LOG(EXCEPTION) << "The mirror operator dose not have group attr : " << node->DebugString();
+    }
+    std::string group_name = GetValue<std::string>(prim->GetAttr(GROUP));
+    std::vector<int64_t> group_list = g_device_manager->FindRankListByHashName(group_name);
+    if (is_first_group) {
+      common_group_list = group_list;
+      is_first_group = false;
+    } else {
+      std::vector<int64_t> new_comm_group_list;
+      std::set_intersection(common_group_list.begin(), common_group_list.end(), group_list.begin(), group_list.end(),
+                            std::back_inserter(new_comm_group_list));
+      common_group_list = new_comm_group_list;
+    }
+  }
+  MS_LOG(INFO) << "The common mirror group is:" << common_group_list;
+  return common_group_list;
+}
+
+static void HandleGroupInfo(const FuncGraphPtr &root) {
   auto group_info = g_device_manager->group_info();
-  if (StrategyCheckpoint::GetInstance().group_info_save_on() &&
-      StrategyCheckpoint::GetInstance().SaveGroupInfo(group_info) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Save group info failed";
+  if (StrategyCheckpoint::GetInstance().group_info_save_on()) {
+    RankList comm_group = FindCommonMirrorGroup(root);
+    if (StrategyCheckpoint::GetInstance().SaveGroupInfo(group_info, comm_group) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Save group info failed";
+    }
   }
 }
 
@@ -3239,7 +3281,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   PipelinePostProcess(root, all_nodes);
 
-  HandleGroupInfo();
+  HandleGroupInfo(root);
 
   // handle full split parammeters in grad accumulation, do not contain optimizer-sharding's parameter
   HandleFullySplitParameters(root);

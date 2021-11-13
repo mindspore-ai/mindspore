@@ -247,6 +247,32 @@ std::string DeviceManager::FindRankListNameByHashName(const std::string &hash_na
   return iter->second;
 }
 
+RankList DeviceManager::FindRankListByHashName(const std::string &hash_name) {
+  std::string rank_list_name = FindRankListNameByHashName(hash_name);
+  if (rank_list_name == "WORLD_GROUP") {
+    int64_t device_num = g_device_manager->DeviceNum();
+    RankList rank_list;
+    for (size_t i = 0; i < size_t(device_num); ++i) {
+      rank_list.push_back(i);
+    }
+    return rank_list;
+  }
+  RankList rank_list;
+  std::string rank_str = "";
+  for (size_t i = 0; i < rank_list_name.size(); i++) {
+    if (rank_list_name[i] == '-') {
+      int64_t rank_id = std::stoi(rank_str);
+      rank_list.push_back(rank_id);
+      rank_str = "";
+    } else if (rank_list_name[i] <= '9' && rank_list_name[i] >= '0') {
+      rank_str.push_back(rank_list_name[i]);
+    } else {
+      MS_LOG(EXCEPTION) << "The rank list name cannot convert to rank list: " << rank_list_name;
+    }
+  }
+  return rank_list;
+}
+
 std::string HashName(const std::string &origin_name) { return std::to_string(std::hash<string>{}(origin_name)); }
 
 // Group name is generated using the increasing ranks of the devices.
