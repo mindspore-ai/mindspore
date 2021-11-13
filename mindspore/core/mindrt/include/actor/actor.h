@@ -205,8 +205,11 @@ class ActorBase {
 
   AID id;
   std::map<std::string, ActorFunction> actionFunctions;
+#ifdef _MSC_VER
+  std::recursive_mutex waiterLock;
+#else
   std::mutex waiterLock;
-
+#endif
   std::string msgRecords[MAX_ACTOR_RECORD_SIZE];
   uint32_t recordNextPoint = 0;
 
