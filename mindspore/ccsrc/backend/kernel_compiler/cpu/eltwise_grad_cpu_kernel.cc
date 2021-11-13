@@ -212,6 +212,20 @@ void EltWiseGradCPUKernel<T>::AcoshGrad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
+void EltWiseGradCPUKernel<T>::ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start,
+                                               size_t end) const {
+  for (size_t i = start; i < end; i++) {
+    T dividend = input2[i];
+    T divisor = std::conj(sinh(input1[i]));
+    if (divisor == static_cast<T>(0)) {
+      out[i] = std::numeric_limits<T>::quiet_NaN();
+      continue;
+    }
+    out[i] = dividend / divisor;
+  }
+}
+
+template <typename T>
 void EltWiseGradCPUKernel<T>::SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
     MS_LOG(EXCEPTION) << "For 'SoftplusGrad', the dtype of input should be float.";
@@ -270,6 +284,15 @@ void EltWiseGradCPUKernel<T>::InitComputeFunc() {
       elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCPUKernel<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_ << " with int as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+  }
+  if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCPUKernel<T>::ComplexAcoshGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCPUKernel does not support " << kernel_name_;
     }
     compute_func_ = elt_map.at(kernel_name_);
   }

@@ -3285,7 +3285,7 @@ class Acosh(Primitive):
         Input range is [1, inf].
 
     Inputs:
-        - **x** (Tensor) - The data type should be one of the following types: float16, float32.
+        - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
@@ -3293,7 +3293,6 @@ class Acosh(Primitive):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3306,13 +3305,13 @@ class Acosh(Primitive):
         >>> x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), dtype.float32)
         >>> output = acosh(x)
         >>> print(output)
-        [0. 0.9624236 1.7627472 5.298292]
+        [0.        0.9624237 1.7627472 5.298292 ]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Acosh"""
-        self.init_prim_io_names(inputs=['x'], outputs='output')
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 class Cosh(Primitive):
     r"""

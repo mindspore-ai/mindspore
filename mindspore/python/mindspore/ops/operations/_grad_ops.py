@@ -53,6 +53,7 @@ class AcoshGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize AcoshGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class AsinGrad(Primitive):

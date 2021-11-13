@@ -243,6 +243,16 @@ void Asinh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
 }
 
 template <typename T>
+void ComplexAcosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(acosh(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void Acosh(ArithmeticSelfCPUKernel *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -376,7 +386,7 @@ void ArithmeticSelfCPUKernel::LaunchKernelComplex(const std::vector<AddressPtr> 
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t lens = outputs[0]->size / sizeof(T);
   static const std::unordered_map<std::string, std::function<void(ArithmeticSelfCPUKernel *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}};
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}, {prim::kPrimAcosh->name(), ComplexAcosh<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCPUKernel does not support " << kernel_name_;

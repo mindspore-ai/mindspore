@@ -15,12 +15,17 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELTWISE_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELTWISE_GRAD_CPU_KERNEL_H_
+#include <complex>
 #include <memory>
 #include <vector>
 #include <limits>
 #include <string>
+#include "mindspore/core/ir/dtype/type_id.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 namespace mindspore {
 namespace kernel {
@@ -51,6 +56,7 @@ class EltWiseGradCPUKernel : public CPUKernel {
   void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
 
   using TypeComputeFunc = std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>;
@@ -119,6 +125,22 @@ MS_REG_CPU_KERNEL_T(
   AcoshGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  AcoshGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EltWiseGradCPUKernel, double);
+MS_REG_CPU_KERNEL_T(AcoshGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddOutputAttr(kNumberTypeComplex64),
+                    EltWiseGradCPUKernel, complex64);
+MS_REG_CPU_KERNEL_T(AcoshGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddOutputAttr(kNumberTypeComplex128),
+                    EltWiseGradCPUKernel, complex128);
 MS_REG_CPU_KERNEL_T(
   SoftplusGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
