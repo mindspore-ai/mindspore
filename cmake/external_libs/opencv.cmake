@@ -69,6 +69,7 @@ if(MSVC)
             -DBUILD_TIFF=OFF
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
+            -DCV_TRACE=OFF    # cause memory usage increacing
             -DTIFF_INCLUDE_DIR=${tiff_INC}
             -DTIFF_LIBRARY=${tiff_LIB})
 elseif(WIN32)
@@ -96,6 +97,7 @@ elseif(WIN32)
                 -DBUILD_TIFF=OFF
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DCV_TRACE=OFF    # cause memory usage increacing
                 -DTIFF_INCLUDE_DIR=${tiff_INC}
                 -DTIFF_LIBRARY=${tiff_LIB})
     elseif(PYTHON_VERSION MATCHES "3.8" OR PYTHON_VERSION MATCHES "3.7")
@@ -122,6 +124,7 @@ elseif(WIN32)
                 -DBUILD_TIFF=OFF
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DTIFF_INCLUDE_DIR=${tiff_INC}
                 -DTIFF_LIBRARY=${tiff_LIB})
@@ -149,6 +152,7 @@ else()
                 -DBUILD_TIFF=OFF
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DCV_TRACE=OFF    # cause memory usage increacing
                 -DTIFF_INCLUDE_DIR=${tiff_INC}
                 -DTIFF_LIBRARY=${tiff_LIB})
     elseif(PYTHON_VERSION MATCHES "3.8" OR PYTHON_VERSION MATCHES "3.7")
@@ -173,6 +177,7 @@ else()
                 -DBUILD_TIFF=OFF
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DTIFF_INCLUDE_DIR=${tiff_INC}
                 -DTIFF_LIBRARY=${tiff_LIB})
