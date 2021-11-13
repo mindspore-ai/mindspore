@@ -53,7 +53,6 @@
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
-#include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
@@ -192,15 +191,6 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
   fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
-  if (config->fmk == converter::kFmkTypeMs && !config->trainModel) {
-    auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
-    if (remove_unused_cast_pass == nullptr) {
-      MS_LOG(ERROR) << "RemoveUnusedCastOpPass should be specified";
-      return RET_ERROR;
-    }
-    remove_unused_cast_pass->SetFmkType(config->fmk);
-    fusion_pm->AddPass(remove_unused_cast_pass);
-  }
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvPadFusion>());
   fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
