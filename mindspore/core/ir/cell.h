@@ -29,6 +29,7 @@
 namespace mindspore {
 using abstract::AbstractBasePtr;
 using abstract::AbstractBasePtrList;
+enum MixedPrecisionType { kNotSet = 0, kFP16 = 1, kFP32 = 2 };
 
 /// \brief The Cell class of MindSpore is the base class for building all networks and the basic unit of a network.
 class MS_CORE_API Cell final : public Named {
@@ -87,6 +88,16 @@ class MS_CORE_API Cell final : public Named {
     return !(iter == attrs_.cend());
   }
 
+  /// \brief Get mixed precision type.
+  ///
+  /// \return The mixed precision type.
+  enum MixedPrecisionType GetMixedPrecisionType() { return mixed_type_; }
+
+  /// \brief Set mixed precision type.
+  ///
+  /// \param[in] mixed_type The type of mixed precision, float16 or float32.
+  void SetMixedPrecisionType(enum MixedPrecisionType mixed_type) { mixed_type_ = mixed_type; }
+
   bool operator==(const Value &other) const override;
 
   /// \brief Determine whether Cell is the same as other.
@@ -100,6 +111,7 @@ class MS_CORE_API Cell final : public Named {
 
  private:
   std::unordered_map<std::string, ValuePtr> attrs_;
+  enum MixedPrecisionType mixed_type_ { kNotSet };
 };
 
 using CellPtr = std::shared_ptr<Cell>;
