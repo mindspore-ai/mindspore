@@ -688,6 +688,9 @@ class Map(Map_):
     Outputs:
         Sequence, the sequence of output after applying the function. e.g. `operation(args[0][i], args[1][i])`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> from mindspore import dtype as mstype
         >>> tensor_list = (Tensor(1, mstype.float32), Tensor(2, mstype.float32), Tensor(3, mstype.float32))

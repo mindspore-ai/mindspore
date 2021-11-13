@@ -86,15 +86,17 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
     validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)
     rank_base = len(x_shp[0])
-    validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
+    for i in range(1, len(x_shp)):
+        validator.check('len of x_shp[%d]' % i, len(x_shp[i]), 'len of x_shp[0]', len(x_shp[0]), Rel.EQ, prim_name)
+        validator.check('x_type[%d]' % i, x_type[i], 'x_type[0]', x_type[0], Rel.EQ, prim_name)
+
+    validator.check_int_range(axis, -rank_base, rank_base - 1, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base
     all_shp = x_shp[0][axis]
     offset = [0]
     for i in range(1, len(x_shp)):
         v = x_shp[i]
-        validator.check('len of x_shp[%d]' % i, len(v), 'len of x_shp[0]', len(x_shp[0]), Rel.EQ, prim_name)
-        validator.check('x_type[%d]' % i, x_type[i], 'x_type[0]', x_type[0], Rel.EQ, prim_name)
         for j in range(rank_base):
             if j != axis and v[j] != x_shp[0][j]:
                 raise ValueError(f"The shape of the two input elements of the Concat operator do not match:"
