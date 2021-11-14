@@ -24,6 +24,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     qmnist_op.cc
     emnist_op.cc
     fake_image_op.cc
+    lj_speech_op.cc
     places365_op.cc
     photo_tour_op.cc
     fashion_mnist_op.cc

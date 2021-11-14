@@ -68,7 +68,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
-    check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset
+    check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6841,6 +6841,142 @@ class Flowers102Dataset(GeneratorDataset):
             class_dict[class_name] = i
 
         return class_dict
+
+
+class LJSpeechDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing LJSpeech dataset.
+
+    The generated dataset has four columns :py:obj:`[waveform, sample_rate, transcription, normalized_transcript]`.
+    The tensor of column :py:obj:`waveform` is a tensor of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
+    The tensor of column :py:obj:`transcription` is a scalar of the string type.
+    The tensor of column :py:obj:`normalized_transcript` is a scalar of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of audios to be included in the dataset
+            (default=None, all audios).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> lj_speech_dataset_dir = "/path/to/lj_speech_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from LJSPEECH dataset in sequence
+        >>> dataset = ds.LJSpeechDataset(dataset_dir=lj_speech_dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from LJSPEECH dataset
+        >>> dataset = ds.LJSpeechDataset(dataset_dir=lj_speech_dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from LJSPEECH dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.LJSpeechDataset(dataset_dir=lj_speech_dataset_dir, num_shards=2, shard_id=0)
+        >>>
+        >>> # In LJSPEECH dataset, each dictionary has keys "waveform", "sample_rate", "transcription"
+        >>> # and "normalized_transcript"
+
+    About LJSPEECH dataset:
+
+    This is a public domain speech dataset consisting of 13,100 short audio clips of a single speaker
+    reading passages from 7 non-fiction books. A transcription is provided for each clip.
+    Clips vary in length from 1 to 10 seconds and have a total length of approximately 24 hours.
+
+    The texts were published between 1884 and 1964, and are in the public domain.
+    The audio was recorded in 2016-17 by the LibriVox project and is also in the public domain.
+
+    Here is the original LJSPEECH dataset structure.
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── LJSpeech-1.1
+            ├── README
+            ├── metadata.csv
+            └── wavs
+                ├── LJ001-0001.wav
+                ├── LJ001-0002.wav
+                ├── LJ001-0003.wav
+                ├── LJ001-0004.wav
+                ├── LJ001-0005.wav
+                ├── LJ001-0006.wav
+                ├── LJ001-0007.wav
+                ├── LJ001-0008.wav
+                ...
+                ├── LJ050-0277.wav
+                └── LJ050-0278.wav
+
+    Citation:
+
+    .. code-block::
+
+        @misc{lj_speech17,
+        author       = {Keith Ito and Linda Johnson},
+        title        = {The LJ Speech Dataset},
+        howpublished = {url{https://keithito.com/LJ-Speech-Dataset}},
+        year         = 2017
+        }
+    """
+
+    @check_lj_speech_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+
+    def parse(self, children=None):
+        return cde.LJSpeechNode(self.dataset_dir, self.sampler)
 
 
 class TextFileDataset(SourceDataset):

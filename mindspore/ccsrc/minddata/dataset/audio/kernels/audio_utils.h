@@ -989,6 +989,31 @@ Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out
   RETURN_IF_NOT_OK(TypeCast(output_waveform, output, input->type()));
   return Status::OK();
 }
+
+// A brief structure of wave file header.
+struct WavHeader {
+  int8_t chunkID[4] = {0};
+  int32_t chunkSize = 0;
+  int8_t format[4] = {0};
+  int8_t subChunk1ID[4] = {0};
+  int32_t subChunk1Size = 0;
+  int16_t audioFormat = 0;
+  int16_t numChannels = 0;
+  int32_t sampleRate = 0;
+  int32_t byteRate = 0;
+  int16_t byteAlign = 0;
+  int16_t bitsPerSample = 0;
+  int8_t subChunk2ID[4] = {0};
+  int32_t subChunk2Size = 0;
+  WavHeader() {}
+};
+
+/// \brief Get an audio data from a wav file and store into a vector.
+/// \param wav_file_dir: wave file dir.
+/// \param waveform_vec: vector of waveform.
+/// \param sample_rate: sample rate.
+/// \return Status code.
+Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *waveform_vec, int32_t *sample_rate);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

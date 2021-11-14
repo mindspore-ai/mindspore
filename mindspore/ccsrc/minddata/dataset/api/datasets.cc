@@ -103,6 +103,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
@@ -1206,6 +1207,27 @@ ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, boo
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<ImageFolderNode>(CharToString(dataset_dir), decode, sampler_obj, recursive,
                                               SetCharToString(extensions), MapCharToString(class_indexing), cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LJSpeechDataset::LJSpeechDataset(const std::vector<char> &dataset_dir, const std::shared_ptr<Sampler> &sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LJSpeechNode>(CharToString(dataset_dir), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LJSpeechDataset::LJSpeechDataset(const std::vector<char> &dataset_dir, const Sampler *sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LJSpeechNode>(CharToString(dataset_dir), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LJSpeechDataset::LJSpeechDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<LJSpeechNode>(CharToString(dataset_dir), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

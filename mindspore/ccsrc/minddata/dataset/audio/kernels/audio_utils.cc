@@ -16,10 +16,13 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
+#include <fstream>
+
 #include "mindspore/core/base/float16.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/random.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -848,6 +851,44 @@ Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, 
     RETURN_IF_NOT_OK(TypeCast(wave_table, output, DataType(DataType::DE_FLOAT32)));
   }
 
+  return Status::OK();
+}
+
+Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *waveform_vec, int32_t *sample_rate) {
+  RETURN_UNEXPECTED_IF_NULL(waveform_vec);
+  RETURN_UNEXPECTED_IF_NULL(sample_rate);
+  auto wav_realpath = FileUtils::GetRealPath(wav_file_dir.data());
+  if (!wav_realpath.has_value()) {
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << wav_file_dir;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + wav_file_dir);
+  }
+
+  const float kMaxVal = 32767.0;
+  const int kDataMove = 2;
+  Path file_path(wav_realpath.value());
+  CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                               "Invalid file, failed to find metadata file:" + file_path.ToString());
+  std::ifstream in(file_path.ToString(), std::ios::in | std::ios::binary);
+  CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open metadata file:" + file_path.ToString() +
+                                               ", make sure the file not damaged or permission denied.");
+  WavHeader *header = new WavHeader();
+  in.read(reinterpret_cast<char *>(header), sizeof(WavHeader));
+  *sample_rate = header->sampleRate;
+  std::unique_ptr<char[]> data = std::make_unique<char[]>(header->subChunk2Size);
+  in.read(data.get(), header->subChunk2Size);
+  float bytesPerSample = header->bitsPerSample / 8;
+  if (bytesPerSample == 0) {
+    in.close();
+    delete header;
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "ReadWaveFile: divide zero error.");
+  }
+  int numSamples = header->subChunk2Size / bytesPerSample;
+  waveform_vec->resize(numSamples);
+  for (int i = 0; i < numSamples; i++) {
+    (*waveform_vec)[i] = static_cast<int16_t>(data[kDataMove * i] / kMaxVal);
+  }
+  in.close();
+  delete header;
   return Status::OK();
 }
 }  // namespace dataset

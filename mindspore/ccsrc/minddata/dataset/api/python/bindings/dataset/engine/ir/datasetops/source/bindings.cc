@@ -47,6 +47,7 @@
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
@@ -261,6 +262,16 @@ PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                                                                            toStringMap(class_indexing), nullptr);
                       THROW_IF_ERROR(imagefolder->ValidateParams());
                       return imagefolder;
+                    }));
+                }));
+
+PYBIND_REGISTER(LJSpeechNode, 2, ([](const py::module *m) {
+                  (void)py::class_<LJSpeechNode, DatasetNode, std::shared_ptr<LJSpeechNode>>(*m, "LJSpeechNode",
+                                                                                             "to create a LJSpeechNode")
+                    .def(py::init([](std::string dataset_dir, py::handle sampler) {
+                      auto lj_speech = std::make_shared<LJSpeechNode>(dataset_dir, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(lj_speech->ValidateParams());
+                      return lj_speech;
                     }));
                 }));
 

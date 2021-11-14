@@ -44,6 +44,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
   friend class FashionMnistDataset;
   friend class FlickrDataset;
   friend class ImageFolderDataset;
+  friend class LJSpeechDataset;
   friend class ManifestDataset;
   friend class MindDataDataset;
   friend class MnistDataset;
