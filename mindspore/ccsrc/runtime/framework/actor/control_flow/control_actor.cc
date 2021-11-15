@@ -42,7 +42,8 @@ void ControlActor::Init() {
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << node.first->DebugString() << " for actor:" << GetAID();
+    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << node.first->DebugString() << " index:" << node.second
+                      << " for actor:" << GetAID();
   }
   return iter - formal_parameters_.begin();
 }
@@ -112,18 +113,13 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
   }
 
   // Fetch input device tensor from device store.
-  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                device_contexts_[0]->GetDeviceAddressType());
-    if (device_tensor == nullptr) {
-      MS_LOG(ERROR) << GetAID() << " get device tensor store failed: " << device_tensor_store_key.second->DebugString();
+  for (auto &local_device_tensor : local_device_tensors_) {
+    MS_EXCEPTION_IF_NULL(local_device_tensor.second);
+    if (local_device_tensor.first >= input_device_tensors_.size()) {
+      MS_LOG(ERROR) << "Invalid local index:" << local_device_tensor.first
+                    << " current:" << local_device_tensors_.size() << " for actor:" << GetAID();
     }
-
-    if (device_tensor_store_key.first >= input_device_tensors_.size()) {
-      MS_LOG(ERROR) << "The input index is out of range, need:" << device_tensor_store_key.first
-                    << " current:" << input_device_tensors_.size() << " for actor:" << GetAID();
-    }
-    input_device_tensors_[device_tensor_store_key.first] = device_tensor;
+    input_device_tensors_[local_device_tensor.first] = local_device_tensor.second;
   }
 
   for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {

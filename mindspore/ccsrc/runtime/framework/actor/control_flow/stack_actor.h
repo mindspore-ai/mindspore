@@ -38,6 +38,11 @@ class StackActor : public ControlActor {
   StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters);
   ~StackActor() override = default;
 
+  void Init() override;
+  // The input data of the stack actor needs to be pushed into the stack according to the input index, so it is
+  // implemented separately.
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
@@ -46,6 +51,12 @@ class StackActor : public ControlActor {
  private:
   friend class ControlNodeScheduler;
 
+  // The input data records that the stack actor is copied from the input nodes and needs to be stored in the
+  // device tensor in the stack.
+  std::unordered_map<int, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
+  // Input parameter data num represents the number of actor's input come from funcgraph itself, these inputs
+  // will be ranked at the front of input.
+  size_t input_parameter_data_num_{0};
   // The backend parameter is used to save the backend node corresponding to the device tensor in the stack.
   // When these device tensors are used as output, they need to be placed in the node of the result arrow,
   // so these nodes need to be saved.

@@ -235,7 +235,24 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   for (size_t i = 0; i < host_tensors.size(); ++i) {
     auto &host_tensor = host_tensors[i];
     auto &device_tensor = device_tensors[i];
-    MS_EXCEPTION_IF_NULL(host_tensor);
+    if (host_tensor == nullptr) {
+      // In the control flow, the weight device tensor needs to be sent by the data source actor, and the input of
+      // the data prepare actor is host tensor, the device tensor of the weight cannot be obtained, the input will
+      // be empty, here to check whether it is weight, if it is, get the device tensor from the device tensor store.
+      if (IsPersistentDeviceTensor(data_nodes_[i])) {
+        MS_EXCEPTION_IF_NULL(device_contexts_[i]);
+        auto device_store_tensor =
+          DeviceTensorStore::GetInstance().Fetch(data_nodes_[i].get(), device_contexts_[i]->GetDeviceAddressType());
+        if (device_store_tensor == nullptr) {
+          std::string error_info = GetAID().Name() + " failed get device tensor for: " + data_nodes_[i]->DebugString();
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+        }
+        device_tensor = device_store_tensor;
+        continue;
+      } else {
+        MS_LOG(EXCEPTION) << "Invalid host tensor for index:" << i << " node:" << data_nodes_[i]->DebugString();
+      }
+    }
     MS_EXCEPTION_IF_NULL(device_tensor);
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
     // Sync data from host_tensor_device_address to device_tensor.

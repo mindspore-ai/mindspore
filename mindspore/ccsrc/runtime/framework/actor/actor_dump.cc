@@ -64,7 +64,9 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   }
 
   if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
-    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes.";
+    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes, arrow num:"
+                      << actor->output_data_arrows().size() << " node num:" << actor->output_data_nodes().size()
+                      << " for actor:" << actor->GetAID();
   }
   if (actor->output_data_arrows().size() > 0) {
     ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() << "\n ";
@@ -178,22 +180,30 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
 }
 
 void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
-  const auto &output_data_arrows = actor->output_data_arrows();
-  if (output_data_arrows.size() > 0) {
-    ofs << "\t\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
-    for (const auto &data_arrow : output_data_arrows) {
-      MS_EXCEPTION_IF_NULL(data_arrow);
-      ofs << "\t\t\t\tfrom_output_index:" << data_arrow->from_output_index_
-          << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
-          << "\n";
+  MS_EXCEPTION_IF_NULL(actor);
+  DumpAbstractActor(actor, ofs);
+  const auto &local_partials = actor->local_partials();
+  if (local_partials.size() > 0) {
+    ofs << "\t\t\tlocal partial num:" << local_partials.size() << "\n ";
+    for (const auto &local_partial : local_partials) {
+      MS_EXCEPTION_IF_NULL(local_partial.second.first);
+      ofs << "\t\t\t\tlocal partial index:" << local_partial.first
+          << "\tgraph:" << local_partial.second.first->ToString()
+          << "\tparameter num:" << local_partial.second.second.size() << "\n";
     }
   }
 
-  const auto &output_control_arrows = actor->output_control_arrows();
-  if (output_control_arrows.size() > 0) {
-    ofs << "\t\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
-    for (const auto &aid : output_control_arrows) {
-      ofs << "\t\t\t\tto_actor_name:" << aid.Name() << "\n";
+  if (actor->input_partial_arrow_aids().size() > 0) {
+    ofs << "\t\tinput_partial_arrow_actor:" << actor->input_partial_arrow_aids().size() << "\n ";
+    for (const auto &input_partial_arrow_aid : actor->input_partial_arrow_aids()) {
+      ofs << "\t\t\tfrom_actor_name:" << input_partial_arrow_aid.Name() << "\n";
+    }
+  }
+
+  if (actor->input_branch_id_arrow_aids().size() > 0) {
+    ofs << "\t\tinput_branch_id_arrow_actor:" << actor->input_branch_id_arrow_aids().size() << "\n ";
+    for (const auto &input_branch_id_arrow_aid : actor->input_branch_id_arrow_aids()) {
+      ofs << "\t\t\tfrom_actor_name:" << input_branch_id_arrow_aid.Name() << "\n";
     }
   }
 
@@ -219,13 +229,13 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
 
 void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\ttactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
 }
 
 void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
 
   const auto &output_data_with_branch_id_arrows = actor->output_data_with_branch_id_arrows();
@@ -242,13 +252,13 @@ void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
 
 void DumpEntranceActor(const EntranceActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
 }
 
 void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
 
   const auto &output_branch_data_arrows = actor->output_branch_data_arrows();
@@ -291,40 +301,40 @@ void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
 
 void DumpStackActor(const StackActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
 }
 
 void DumpSwitchActors(const std::vector<SwitchActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n\t[Switch actors:" << actors.size() << "]\n";
+  ofs << "\n\n[Switch actors:" << actors.size() << "]\n";
   for (const auto &switch_actor : actors) {
     DumpSwitchActor(switch_actor.get(), ofs);
   }
 }
 
 void DumpGatherActors(const std::vector<GatherActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n\t[Gather actors:" << actors.size() << "]\n";
+  ofs << "\n\n[Gather actors:" << actors.size() << "]\n";
   for (const auto &gather_actor : actors) {
     DumpGatherActor(gather_actor.get(), ofs);
   }
 }
 
 void DumpEntranceActors(const std::vector<EntranceActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n\t[Entrance actors:" << actors.size() << "]\n";
+  ofs << "\n\n[Entrance actors:" << actors.size() << "]\n";
   for (const auto &entrance_actor : actors) {
     DumpEntranceActor(entrance_actor.get(), ofs);
   }
 }
 
 void DumpExitActors(const std::vector<ExitActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n\t[Exit actors:" << actors.size() << "]\n";
+  ofs << "\n\n[Exit actors:" << actors.size() << "]\n";
   for (const auto &exit_actor : actors) {
     DumpExitActor(exit_actor.get(), ofs);
   }
 }
 
 void DumpStackActors(const std::vector<StackActorPtr> &actors, std::ofstream &ofs) {
-  ofs << "\n\n\t[Stack actors:" << actors.size() << "]\n";
+  ofs << "\n\n[Stack actors:" << actors.size() << "]\n";
   for (const auto &stack_actor : actors) {
     DumpStackActor(stack_actor.get(), ofs);
   }

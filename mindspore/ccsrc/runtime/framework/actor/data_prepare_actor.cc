@@ -347,6 +347,60 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
   }
 }
 
+void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &node_with_index,
+                                                      const DeviceContext *device_context,
+                                                      OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(node_with_index.first);
+  if (!node_with_index.first->isa<ValueNode>()) {
+    return;
+  }
+
+  const auto &node = node_with_index.first->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &node_value = node->value();
+  MS_EXCEPTION_IF_NULL(node_value);
+
+  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
+    std::vector<TensorPtr> tensors;
+    // Fetch all of tensors in value node.
+    TensorValueToTensor(node_value, &tensors);
+
+    for (size_t i = 0; i < tensors.size(); i++) {
+      const auto &tensor = tensors[i];
+      if (tensor == nullptr) {
+        MS_LOG(WARNING) << "Tensor is null";
+        return;
+      }
+
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      if (device_tensor->GetPtr() != nullptr) {
+        return;
+      }
+
+      MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << i;
+      tensor->set_device_address(device_tensor);
+      UpdateRefCount(device_tensor.get(), true);
+
+      if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+        SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *device_context, node->fullname_with_scope(),
+                                                    device_tensor->GetSize());
+      }
+
+      auto host_tensor_size = LongToSize(tensor->data().nbytes());
+      auto host_tensor_type = tensor->data_type();
+      auto shape = tensor->shape();
+      if (!device_tensor->SyncHostToDevice(shape, host_tensor_size, host_tensor_type, tensor->data_c(),
+                                           tensor->device_info().host_format_)) {
+        std::string error_info = "Sync host to device failed for node:" + node->DebugString();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+    }
+  }
+}
+
 // Prepare the device data for persistent device tensor of value node.
 void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const DeviceContext *device_context,
                                                OpContext<DeviceTensor> *const context) {
@@ -504,9 +558,8 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
                                                               OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(control_node_parser);
   for (const auto &value_node_with_context : control_node_parser->front_value_nodes()) {
-    if (AnfAlgo::OutputAddrExist(value_node_with_context.first, 0)) {
-      PrepareDataForValueNode(value_node_with_context.first->cast<ValueNodePtr>(), value_node_with_context.second,
-                              context);
+    if (AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
+      PrepareDataForControlValueNode(value_node_with_context.first, value_node_with_context.second, context);
     }
   }
 
@@ -517,7 +570,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     MS_EXCEPTION_IF_NULL(input_node);
     if (IsPersistentDeviceTensor(input_node)) {
       const auto &front_to_backend_parameters = control_node_parser->front_to_backend_parameters();
-      const auto &iter = front_to_backend_parameters.find(input_node);
+      const auto &iter = front_to_backend_parameters.find({input_node, 0});
       if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
         MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:"
                           << AnfAlgo::GetNodeDebugString(input_node);

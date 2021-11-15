@@ -57,11 +57,11 @@ constexpr size_t kSingleControlNode = 1;
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kStackActorNameSuffix[] = "_StackActor";
 
-using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
+using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraph = std::unordered_map<FuncGraphPtr, std::vector<KernelGraphPtr>>;
 using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>>;
-using NodeWithDeviceContext = std::set<std::pair<AnfNodePtr, DeviceContext *>>;
+using NodeWithDeviceContext = std::set<std::pair<KernelWithIndex, DeviceContext *>>;
 using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 using FormalToRealParameter = std::unordered_map<AnfNodePtr, std::set<KernelWithIndex>>;
 using RealToFormalParameter = std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>>;
@@ -114,7 +114,7 @@ class ControlNodeParser {
   // value nodes will not enter the kernel graph, so these nodes need to be saved separately, and space is allocated for
   // them separately during initialization.
   // The interface is initialized by finding the backend node in the kernel graph that the front node finally sends to.
-  void FetchFrontValueNode();
+  void FetchFrontValueNode(DeviceContext *default_context);
   // Create branch id for all call node in the control flow.
   void CreateBranchIDForCallNode(const std::vector<AnfNodePtr> &control_nodes);
 

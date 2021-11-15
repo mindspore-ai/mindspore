@@ -625,10 +625,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
   // the corresponding backend parameter from the map, and insert it into the host data source actor
   const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
   for (const auto &parameter : control_node_parameters) {
-    if (IsPersistentDeviceTensor(parameter)) {
-      continue;
-    }
-    auto backend_iter = front_to_backend_parameter.find(parameter);
+    auto backend_iter = front_to_backend_parameter.find({parameter, 0});
     if (backend_iter == front_to_backend_parameter.end() || backend_iter->second.empty()) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
     }
@@ -1730,6 +1727,9 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       MS_EXCEPTION_IF_NULL(device_tensor);
       if (IsPersistentDeviceTensor(input_node)) {
         AddDeviceTensorStore(front_node.get(), device_tensor);
+        // In the control flow, the device tensor of the weight needs to be obtained according to the backend node,
+        // so insert the relationship between the backend node and the device tensor.
+        AddDeviceTensorStore(input_node.get(), device_tensor);
       }
 
       // Share the weight in the host and device, then input_node is internal parameter and front_node is weight.
@@ -1743,16 +1743,11 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         auto other_type_device_tensor = device_context->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id());
         AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
+        // In the control flow, the device tensor of the weight needs to be obtained according to the backend node,
+        // so insert the relationship between the backend node and the device tensor.
+        AddDeviceTensorStore(input_node.get(), other_type_device_tensor);
       }
     }
-  }
-
-  // In control flow, there may be some value nodes that is not in the kernel graph and needs to be placed
-  // in the tensor store separately.
-  for (const auto &value_node : graph_compiler_info.control_node_parser_->front_value_nodes_) {
-    MS_EXCEPTION_IF_NULL(value_node.first);
-    auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node.first, 0, false);
-    AddDeviceTensorStore(value_node.first.get(), device_tensor);
   }
 }
 

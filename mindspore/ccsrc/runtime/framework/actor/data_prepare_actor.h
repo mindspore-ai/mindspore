@@ -97,6 +97,8 @@ class DataPrepareActor : public DebugAwareActor {
                                        const DeviceContext *device_context,
                                        const HostParameterToWeight &host_parameter_to_weights,
                                        OpContext<DeviceTensor> *const context);
+  void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
+                                      OpContext<DeviceTensor> *const context);
 
   const GraphCompilerInfo *graph_compiler_info_;
   GraphExecutionStrategy strategy_;

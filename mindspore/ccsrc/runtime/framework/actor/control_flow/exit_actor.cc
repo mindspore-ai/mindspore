@@ -85,10 +85,11 @@ void ExitActor::CopyDeviceAddress() {
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
-    if (!node_with_index.first->isa<CNode>()) {
+    if (device_contexts_[i] == nullptr) {
+      // If device context is empty, it means that the input is from a parameter, need not to copy a new device tensor.
+      new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
-
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
     auto new_device_tensor =
       device_contexts_[i]->CreateDeviceAddress(nullptr, input_device_tensors_[i]->GetSize(),
