@@ -132,7 +132,7 @@ INPUT_MAP(BatchMatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(BatchMatMulV2) = {{"transpose_x1", ATTR_DESC(adj_x1, AnyTraits<bool>())},
                            {"transpose_x2", ATTR_DESC(adj_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(BatchMatMulV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(BatchMatMul, kNameBatchMatMul, ADPT_DESC(BatchMatMulV2))
+REG_ADPT_DESC(BatchMatMul, kNameBatchMatMul, ADPT_DESC(BatchMatMul))
 REG_ADPT_DESC(BatchMatMulV2, kNameBatchMatMulV2, ADPT_DESC(BatchMatMulV2))
 
 // L2Loss
