@@ -23,7 +23,8 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (ret != NNACL_OK) {
     return ret;
   }
-  if (inputs_size < 2 || outputs_size != 1) {
+  const size_t kMinimumGradInputsNum = 3;
+  if (inputs_size < kMinimumGradInputsNum || outputs_size != 1) {
     return NNACL_ERR;
   }
   const TensorC *input = inputs[0];

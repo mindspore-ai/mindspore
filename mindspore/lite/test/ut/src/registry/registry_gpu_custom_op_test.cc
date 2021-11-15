@@ -156,12 +156,19 @@ struct GpuTensorInfo {
 class CustomAddKernel : public kernel::Kernel {
  public:
   CustomAddKernel(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
-                  const schema::Primitive *primitive, const mindspore::Context *ctx, const std::string &build_options,
-                  bool fp16_enable)
-      : Kernel(inputs, outputs, primitive, ctx), build_options_(build_options), fp16_enable_(fp16_enable) {}
+                  const schema::Primitive *primitive, const mindspore::Context *ctx, bool fp16_enable)
+      : Kernel(inputs, outputs, primitive, ctx), fp16_enable_(fp16_enable) {}
   ~CustomAddKernel() override { FreeWeight(); }
+
+  int CheckInputsDataTypes() { return lite::RET_OK; }
+
   // Prepare will be called during graph compilation
   int Prepare() override {
+    auto ret = CheckSpecs();
+    if (ret != lite::RET_OK) {
+      std::cerr << "Prepare failed for check kernel specs!";
+      return ret;
+    }
     const std::string kernel_name_ = "ElementAdd";
     const std::string program_name = "Arithmetic";
     std::string source = arithmetic_source;
@@ -170,8 +177,12 @@ class CustomAddKernel : public kernel::Kernel {
       return lite::RET_ERROR;
     }
     std::vector<std::string> build_options_ext = {"-cl-mad-enable -cl-fast-relaxed-math -Werror"};
+    if (fp16_enable_) {
+      build_options_ext.push_back(" -DFLT4=half4 -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh");
+    } else {
+      build_options_ext.push_back(" -DFLT4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef");
+    }
 
-    build_options_ext.push_back(build_options_);
     if (opencl_runtime_.BuildKernel(&kernel_, program_name, kernel_name_, build_options_ext) != kSuccess) {
       std::cerr << "Build kernel failed.";
       return lite::RET_ERROR;
@@ -182,8 +193,8 @@ class CustomAddKernel : public kernel::Kernel {
     global_range_ = cl::NDRange(out_shape.width, out_shape.height);
     for (int i = 0; i < inputs_.size(); ++i) {
       auto &in_tensor = inputs_.at(i);
-      GpuTensorInfo in_shape = GpuTensorInfo(&in_tensor, &opencl_runtime_);
       if (in_tensor.IsConst()) {
+        GpuTensorInfo in_shape = GpuTensorInfo(&in_tensor, &opencl_runtime_);
         std::vector<char> weight(in_shape.Image2DSize, 0);
         bool src_is_fp16 = in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat16;
         PackNHWCToNHWC4(in_tensor.MutableData(), weight.data(), src_is_fp16, fp16_enable_, in_shape,
@@ -274,6 +285,19 @@ class CustomAddKernel : public kernel::Kernel {
       return lite::RET_ERROR;
     }
 
+    for (int i = 0; i < inputs_.size(); ++i) {
+      auto &in_tensor = inputs_.at(i);
+      if (!in_tensor.IsConst()) {
+        if (fp16_enable_ && in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat32) {
+          std::cerr << "Inputs data type error, expectation kNumberTypeFloat16 but kNumberTypeFloat32.";
+          return lite::RET_ERROR;
+        } else if (!fp16_enable_ && in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat16) {
+          std::cerr << "Inputs data type error, expectation kNumberTypeFloat32 but kNumberTypeFloat16.";
+          return lite::RET_ERROR;
+        }
+      }
+    }
+
     return lite::RET_OK;
   }
 
@@ -288,12 +312,7 @@ class CustomAddKernel : public kernel::Kernel {
       std::cerr << "infer failed." << std::endl;
       return lite::RET_ERROR;
     }
-    auto ret = CheckSpecs();
-    if (ret != lite::RET_OK) {
-      std::cerr << "ReSize failed for check kernel specs!";
-      return ret;
-    }
-    ret = Prepare();
+    auto ret = Prepare();
     if (ret != lite::RET_OK) {
       std::cerr << "ReSize failed for kernel prepare!";
       return ret;
@@ -302,8 +321,7 @@ class CustomAddKernel : public kernel::Kernel {
   }
 
  private:
-  std::string build_options_;
-  bool fp16_enable_;
+  const bool fp16_enable_;
   cl::Kernel kernel_;
   cl::Event event_;
   cl::NDRange global_range_{cl::NullRange};
@@ -412,11 +430,10 @@ namespace {
 std::shared_ptr<kernel::Kernel> CustomAddCreator(const std::vector<MSTensor> &inputs,
                                                  const std::vector<MSTensor> &outputs,
                                                  const schema::Primitive *primitive, const mindspore::Context *ctx) {
-  const std::string build_options = " -DFLT4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef ";
   bool fp16_enable = false;
 
   std::cout << "using fp32 add.\n" << std::endl;
-  return std::make_shared<CustomAddKernel>(inputs, outputs, primitive, ctx, build_options, fp16_enable);
+  return std::make_shared<CustomAddKernel>(inputs, outputs, primitive, ctx, fp16_enable);
 }
 
 std::shared_ptr<kernel::KernelInterface> CustomAddInferCreator() { return std::make_shared<CustomAddInfer>(); }

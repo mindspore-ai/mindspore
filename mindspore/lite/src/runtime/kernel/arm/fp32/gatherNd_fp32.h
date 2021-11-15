@@ -40,7 +40,7 @@ class GatherNdCPUKernel : public InnerKernel {
   int DoGatherNd(int task_id) const;
 
  private:
-  void InitOffset();
+  int InitOffset();
   int thread_sz_count_ = 0;
   int thread_sz_stride_ = 0;
   int count_ = 0;
