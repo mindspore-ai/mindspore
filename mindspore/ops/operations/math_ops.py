@@ -1145,6 +1145,63 @@ class Cdist(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
 
 
+class LpNorm(Primitive):
+    """
+    Returns the matrix norm or vector norm of a given tensor.
+
+    .. math::
+        output = sum(abs(input)**p)**(1/p)
+
+    Args:
+        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
+        p(int): The order of norm.
+        keep_dims(bool): Whether the output tensors have dim retained or not.
+
+    Inputs:
+        - **input** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same dtype as `input`, which shape is depend on the args axis.For example, if the size of input
+        is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not one of: float16, float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `axis` is not an int, a tuple or a list.
+        TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input.shape)).
+        ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+        >>> op = ops.LpNorm(axis=[0, 1], p=2, keep_dims=False)
+        >>> output = op(input)
+        >>> print(output)
+        [ 9.165152 10.954452]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis, p=2, keep_dims=False, epsilon=1e-12):
+        """Initialize LpNorm"""
+        validator.check_value_type("p", p, [int], self.name)
+        validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+        validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_non_negative_int(p, "p", self.name)
+        validator.check_non_negative_float(epsilon, "epsilon", self.name)
+        if isinstance(axis, int):
+            self.add_prim_attr('axis', [self.axis])
+        else:
+            for element_of_axis in axis:
+                validator.check_value_type("element_of_axis", element_of_axis, [int], self.name)
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
+
+
 class MatMul(PrimitiveWithCheck):
     r"""
     Multiplies matrix `x` and matrix `y`.

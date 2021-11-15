@@ -428,6 +428,7 @@ from .cdist_grad import _cdist_grad_tbe
 from .neg_ds import _neg_ds_tbe
 from .not_equal_ds import _not_ds_equal_tbe
 from .reciprocal_ds import _reciprocal_ds_tbe
+from .lp_norm import _lp_norm_tbe
 from .ctc_loss_v2 import _ctc_loss_v2_tbe
 from .ctc_loss_v2_grad import _ctc_loss_v2_grad_tbe
 from .roll import _roll_tbe
