@@ -50,10 +50,12 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
         continue;
       }
     }
-    if (*shape != *shape_0) {
-      MS_EXCEPTION(ValueError) << "The primitive[" << primitive->name() << "]'s input shape must be same, "
-                               << "but got the shape of input[" << i << "]: " << shape->ToString()
-                               << ", shape of input[0]:" << shape_0->ToString();
+    if (!shape->IsDynamic() && !shape_0->IsDynamic()) {
+      if (*shape != *shape_0) {
+        MS_EXCEPTION(ValueError) << "The primitive[" << primitive->name() << "]'s input shape must be same, "
+                                 << "but got the shape of input[" << i << "]: " << shape->ToString()
+                                 << ", shape of input[0]:" << shape_0->ToString();
+      }
     }
   }
   auto in_shape = element0_shape_map[kShape];
