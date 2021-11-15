@@ -126,6 +126,50 @@ Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &
   return stra;
 }
 
+Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                         Dimensions basic_stra) {
+  Strategys strategies;
+  strategies.push_back(basic_stra);
+  std::vector<int64_t> axis_list;
+  string axis_name = AXIS;
+
+  auto iter = ops[iter_ops]->attrs().find(axis_name);
+  if (iter != ops[iter_ops]->attrs().end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {
+      axis_list.push_back(iter->second->cast<Int64ImmPtr>()->value());
+    } else if (iter->second->isa<ValueTuple>()) {
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": The value_tuple is nullptr.";
+      }
+
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_list),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+    } else {
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": The value of axis is not int64_t or tuple int64_t.";
+    }
+  } else {
+    axis_list.push_back(-1);
+  }
+
+  for (auto &axis : axis_list) {
+    if (axis < 0) {
+      int64_t input_dim = SizeToLong(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
+      axis = input_dim + axis;
+    }
+    if (axis >= SizeToLong(strategies[0].size()) || axis < 0) {
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": axis value is out of range.";
+    }
+    if (strategies[0][axis] != 1) {
+      strategies[0][axis] = 1;
+      MS_LOG(INFO) << ops[iter_ops]->name() << ": adjust strategy to 1 on axis " << axis;
+    }
+  }
+  return strategies;
+}
+
 Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                         const size_t iter_graph, const size_t iter_ops) {
   Strategys strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
@@ -523,11 +567,11 @@ Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector
     return PrepareMatMul(graph, ops, iter_graph, iter_ops);
   } else if (type == ONEHOT) {
     return PrepareOneHot(graph, ops, iter_graph, iter_ops);
-  } else if ((type == SOFTMAX) || (type == LAYER_NORM)) {
+  } else if (type == LAYER_NORM) {
     return PrepareAxisRelatedStrategy(graph, ops, iter_graph, iter_ops);
-  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "Dropout") || (type == BATCH_MATMUL)) {
+  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == DROPOUT) || (type == BATCH_MATMUL)) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
-  } else if (type == "_VirtualDataset") {
+  } else if (type == VIRTUAL_DATA_SET) {
     if (ParallelContext::GetInstance()->full_batch()) {
       return MakeFullBatchStrategy(graph, ops, iter_graph, iter_ops);
     } else {
@@ -875,6 +919,10 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
   Strategys stra;
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
+  if (iter_ops >= ops.size()) {
+    MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
+  }
+
   if (basic_stra.size() == 0) {
     for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();
          iter_op_inputs++) {
@@ -906,7 +954,9 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
       ops[iter_ops]->type() == DIV) {
     return CheckBroadcast(ops, iter_ops, basic_stra);
   }
-
+  if (ops[iter_ops]->type() == SOFTMAX) {
+    return PrepareSoftMax(ops, iter_ops, basic_stra);
+  }
   return CheckDivisible(ops, iter_ops, basic_stra);
 }
 
