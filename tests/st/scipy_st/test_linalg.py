@@ -12,18 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""st for linalg."""
+"""st for scipy.linalg."""
 
 import pytest
 import numpy as onp
 import scipy as osp
 
-from mindspore import context, Tensor
+from mindspore import Tensor
 import mindspore.scipy as msp
-from .utils import match_array, create_full_rank_matrix, create_batch_full_rank_matrix
-
-context.set_context(mode=context.PYNATIVE_MODE)
-
+from .utils import match_array, create_full_rank_matrix
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -57,10 +54,7 @@ def test_inv(dtype, shape):
     Expectation: the result match numpy
     """
     onp.random.seed(0)
-    if len(shape) == 2:
-        x = create_full_rank_matrix(shape[0], shape[1], dtype)
-    else:
-        x = create_batch_full_rank_matrix(shape, dtype)
+    x = create_full_rank_matrix(shape, dtype)
 
     ms_res = msp.linalg.inv(Tensor(x))
     scipy_res = onp.linalg.inv(x)
