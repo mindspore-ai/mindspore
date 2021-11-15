@@ -26,6 +26,7 @@
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "abstract/dshape.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -85,7 +86,11 @@ class ReduceOneEliminater : public AnfVisitor {
         new_node->set_abstract(node_abstract);
         return new_node;
       }
-      return node->func_graph()->NewCNode({NewValueNode(reshape_op), x_, NewValueNode(new_shape)});
+      auto new_node = node->func_graph()->NewCNode({NewValueNode(reshape_op), x_, NewValueNode(new_shape)});
+      if (AnfUtils::GetDumpFlag(node)) {
+        AnfUtils::SetDumpFlag(new_node);
+      }
+      return new_node;
     }
 
     return nullptr;

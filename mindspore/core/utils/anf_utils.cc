@@ -250,4 +250,28 @@ bool AnfUtils::IsNodeInGraphKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->func_graph() != nullptr && node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
+
+void AnfUtils::SetDumpFlag(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return;
+  }
+  auto prim = GetCNodePrimitive(node);
+  if (prim != nullptr) {
+    prim->set_attr(kAttrDump, MakeValue(kValueTrue));
+  }
+}
+
+bool AnfUtils::GetDumpFlag(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(node);
+  if (prim != nullptr) {
+    auto attr = prim->GetAttr(kAttrDump);
+    if (attr != nullptr && attr->isa<StringImm>() && attr->cast<StringImmPtr>()->value() == kValueTrue) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace mindspore

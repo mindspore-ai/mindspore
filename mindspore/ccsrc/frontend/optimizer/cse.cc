@@ -25,6 +25,7 @@
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
 #include "utils/utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -246,6 +247,9 @@ bool CSE::DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::si
           }
           if (CheckReplace(node, main)) {
             changes = true;
+            if (AnfUtils::GetDumpFlag(node) && !AnfUtils::GetDumpFlag(main)) {
+              AnfUtils::SetDumpFlag(main);
+            }
             (void)manager->Replace(node, main);
             (void)clear_set.insert(i);
           }
