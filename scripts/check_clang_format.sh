@@ -97,6 +97,8 @@ fi
 CHECK_RESULT_FILE=__code_format_check_result__
 echo "0" > "$CHECK_RESULT_FILE"
 
+set +e
+
 # check format of files modified in the latest commit
 while read line; do
   if [ ! -e ${line} ]; then
@@ -115,6 +117,8 @@ while read line; do
     break
   fi
 done < "${CHECK_LIST_FILE}"
+
+set -e
 
 result=$(cat "${CHECK_RESULT_FILE}")
 rm "${CHECK_RESULT_FILE}"
