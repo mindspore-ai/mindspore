@@ -69,17 +69,18 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);
-  int SelectCalculatorFunc();
-  int ResizePrepare();
+
+ protected:
   void CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len) const;
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-
- protected:
+  virtual int ResizePrepare();
+  virtual int SelectCalculatorFunc();
+  virtual int DataTypeLen() { return sizeof(float); }
   ResizeCoordinate coordinate_;
-  float *y_weights_ = nullptr;
-  float *x_weights_ = nullptr;
-  float *line_buffer_ = nullptr;
+  void *y_weights_ = nullptr;
+  void *x_weights_ = nullptr;
+  void *line_buffer_ = nullptr;
   CalculateOriginalCoordinate calculate_ = nullptr;
 };
 }  // namespace mindspore::kernel
