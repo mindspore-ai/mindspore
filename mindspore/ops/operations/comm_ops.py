@@ -713,9 +713,9 @@ class AlltoAll(PrimitiveWithInfer):
 
 class NeighborExchangeV2(Primitive):
     """
-    NeighborExchange is a collective operation.
+    NeighborExchangeV2 is a collective operation.
 
-    NeighborExchange sends data from the local rank to ranks in the send_rank_ids,
+    NeighborExchangeV2 sends data from the local rank to ranks in the send_rank_ids,
     as while receive data from recv_rank_ids.
 
     Args:
