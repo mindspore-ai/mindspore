@@ -48,6 +48,11 @@
 #endif
 #include "src/runtime/runtime_convert.h"
 namespace mindspore {
+#ifdef USE_GLOG
+extern "C" {
+extern void common_log_init();
+}
+#endif
 namespace lite {
 namespace {
 bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
@@ -97,7 +102,12 @@ int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) 
 }
 }  // namespace
 
-LiteSession::LiteSession() { this->is_running_.store(false); }
+LiteSession::LiteSession() {
+#ifdef USE_GLOG
+  mindspore::common_log_init();
+#endif
+  this->is_running_.store(false);
+}
 
 void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
