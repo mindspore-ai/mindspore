@@ -96,6 +96,7 @@ from .relu_grad_v2 import _relu_grad_v2_tbe
 from .relu_v2_ds import _relu_v2_ds_tbe
 from .relu_grad_v2_ds import _relu_grad_v2_ds_tbe
 from .softmax_cross_entropy_with_logits import _softmax_cross_entropy_with_logits_tbe
+from .softmax_cross_entropy_with_logits_ds import _softmax_cross_entropy_with_logits_ds_tbe
 from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
 from .tensor_add import _tensor_add_tbe

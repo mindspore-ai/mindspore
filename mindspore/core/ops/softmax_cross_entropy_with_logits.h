@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ constexpr auto kNameSoftmaxCrossEntropyWithLogits = "SoftmaxCrossEntropyWithLogi
 class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
  public:
   /// \brief Constructor.
-  SoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSoftmaxCrossEntropyWithLogits) {}
+  SoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSoftmaxCrossEntropyWithLogits) {
+    InitIOName({"features", "labels"}, {"loss", "backprop"});
+  }
   /// \brief Destructor.
   ~SoftmaxCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SoftmaxCrossEntropyWithLogits, PrimitiveC);
@@ -41,6 +43,7 @@ class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
 };
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args);
+using kPrimSoftmaxCrossEntropyWithLogitsPtr = std::shared_ptr<SoftmaxCrossEntropyWithLogits>;
 }  // namespace ops
 }  // namespace mindspore
 
