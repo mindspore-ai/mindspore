@@ -123,7 +123,7 @@ class Model:
     """
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
-                 eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs):
+                 eval_indexes=None, amp_level="O0", acc_level="O0", **kwargs):
         self._network = network
         self._loss_fn = loss_fn
         self._optimizer = optimizer
@@ -132,7 +132,7 @@ class Model:
         self._keep_bn_fp32 = True
         self._check_kwargs(kwargs)
         self._amp_level = amp_level
-        self._boost_level = boost_level
+        self._acc_level = acc_level
         self._eval_network = eval_network
         self._process_amp_args(kwargs)
         self._parallel_mode = _get_parallel_mode()
@@ -187,7 +187,7 @@ class Model:
 
     def _build_acc_network(self, kwargs):
         """Build the acc network."""
-        processor = acc.AutoAcc(self._boost_level, kwargs)
+        processor = acc.AutoAcc(self._acc_level, kwargs)
         if processor.level not in ["O1", "O2"]:
             return
         if self._optimizer is None:
