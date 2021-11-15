@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace lite {
-schema::Tensor *AttrToTensor(const void *data, int data_size, bool is_array, TypeId type_id,
+schema::Tensor *AttrToTensor(const void *data, size_t data_size, bool is_array, TypeId type_id,
                              std::vector<char *> *const tensor_bufs);
 }  // namespace lite
 }  // namespace mindspore

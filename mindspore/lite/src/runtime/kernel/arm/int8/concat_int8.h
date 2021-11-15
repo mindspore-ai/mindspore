@@ -40,13 +40,13 @@ class ConcatInt8CPUKernel : public InnerKernel {
     if (output_shape != nullptr) {
       free(output_shape);
     }
-    for (std::size_t i = 0; i < in_tensors().size(); i++) {
-      int *input_shape = concat_param_->input_shapes_[i];
-      if (input_shape != nullptr) {
-        free(input_shape);
-      }
-    }
     if (concat_param_->input_shapes_ != nullptr) {
+      for (std::size_t i = 0; i < in_tensors().size(); i++) {
+        int *input_shape = concat_param_->input_shapes_[i];
+        if (input_shape != nullptr) {
+          free(input_shape);
+        }
+      }
       free(concat_param_->input_shapes_);
     }
     if (concat_param_->quant_arg_.in_args_ != nullptr) {
