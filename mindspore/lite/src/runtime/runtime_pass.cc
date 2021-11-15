@@ -33,7 +33,7 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
   {
     /* transpose_kernel */
     Tensor *transpose_param_tensor = transpose_kernel->in_tensors().at(1);
-    VectorSetNull(tensors, transpose_param_tensor);
+    (void)VectorSetNull(tensors, transpose_param_tensor);
     delete transpose_param_tensor;
     transpose_param_tensor = nullptr;
 
@@ -41,14 +41,14 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
     conv_out_tensor->set_format(NC4HW4);
     Tensor *c4_input_tensor = c4_kernel->in_tensors().front();
     c4_kernel->set_in_tensor(conv_out_tensor, 0);
-    VectorSetNull(tensors, c4_input_tensor);
+    (void)VectorSetNull(tensors, c4_input_tensor);
     delete c4_input_tensor;
     c4_input_tensor = nullptr;
   }
   {
     /* transpose2_kernel */
     Tensor *transpose_param_tensor = transpose2_kernel->in_tensors().at(1);
-    VectorSetNull(tensors, transpose_param_tensor);
+    (void)VectorSetNull(tensors, transpose_param_tensor);
     delete transpose_param_tensor;
     transpose_param_tensor = nullptr;
 
@@ -61,13 +61,13 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
       end->set_in_tensor(nwhc_tensor, 0);
     }
     Tensor *trans_out = transpose2_kernel->out_tensors().front();
-    VectorSetNull(tensors, trans_out);
+    (void)VectorSetNull(tensors, trans_out);
     delete trans_out;
     trans_out = nullptr;
   }
 
   /* kernel */
-  VectorErase(kernels, transpose_kernel);
+  (void)VectorErase(kernels, transpose_kernel);
   delete transpose_kernel;
   transpose_kernel = nullptr;
   conv_kernel->set_out_kernels({c4_kernel});
@@ -77,7 +77,7 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
   for (auto end : end_kernels) {
     end->set_in_kernels({c4_kernel});
   }
-  VectorErase(kernels, transpose2_kernel);
+  (void)VectorErase(kernels, transpose2_kernel);
   delete transpose2_kernel;
   transpose2_kernel = nullptr;
 
