@@ -66,6 +66,7 @@ def test_resnet50_cifar10_gpu():
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
     config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     os.system("nvidia-smi")
+    os.system("fuser -v /dev/nvidia*")
     exec_network_shell = "cd resnet/scripts; sh run_distribute_train_gpu.sh {} {}" \
         .format(dataset_path, config_path)
     logger.warning("cmd [{}] is running...".format(exec_network_shell))
