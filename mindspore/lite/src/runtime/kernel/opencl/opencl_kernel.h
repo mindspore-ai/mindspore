@@ -215,6 +215,7 @@ class OpenCLKernel : public InnerKernel {
   virtual int InferShape();
 
  protected:
+  void PrintShape(lite::Tensor *output_tensor);
   static std::set<size_t> GenerateLocalByGlobal(size_t global_i);
 
   virtual std::string Key() {
