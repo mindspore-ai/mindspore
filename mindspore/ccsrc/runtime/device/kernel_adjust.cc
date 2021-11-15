@@ -527,7 +527,7 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), stream_switch_app.get());
   stream_switch_app->set_abstract(typeNone_abstract);
   // set attr: cond_ RT_LESS
-  int condition = static_cast<int>(RT_LESS);
+  int condition = static_cast<int>(RT_LESS_OR_EQUAL);
   ValuePtr cond = MakeValue(condition);
   AnfAlgo::SetNodeAttr(kAttrSwitchCondition, cond, stream_switch_app);
   // set attr:data_type
@@ -958,7 +958,8 @@ void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGra
   // constant loop num in epoch tensor
   int32_t initial_value = 0;
   if (NeedLoopSink()) {
-    initial_value = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
+    // iter_num minus one because the device side counts from 0
+    initial_value = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num() - 1));
   } else {
     MS_LOG(INFO) << "Tensor const_loop_num_in_epoch only used in loop sink mode.";
     initial_value = 0;
