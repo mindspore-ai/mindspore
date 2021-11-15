@@ -75,6 +75,11 @@ lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &sh
     return nullptr;
   }
 
+  if (new_tensor->Size() == 0) {
+    delete new_tensor;
+    MS_LOG(ERROR) << "Tensor data size should not be 0.";
+    return nullptr;
+  }
   uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size();
   memcpy(new_tensor->data(), new_tensor_data, new_tensor->Size());
   return new_tensor;
