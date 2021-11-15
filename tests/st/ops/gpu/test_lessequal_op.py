@@ -59,10 +59,13 @@ def test_lessequal():
     x7 = Tensor(np.array([[1, 2, 3]]).astype(np.int8))
     y7 = Tensor(np.array([[2]]).astype(np.int8))
     expect7 = np.array([[True, True, False]])
+    x8 = Tensor(np.array([[6.67054e-10, 6.67054e-10]]).astype(np.float32))
+    y8 = Tensor(np.array([[0, 6.67054e-10]]).astype(np.float32))
+    expect8 = np.array([[False, True]])
 
-    x = [x, x1, x2, x3, x4, x5, x6, x7]
-    y = [y, y1, y2, y3, y4, y5, y6, y7]
-    expect = [expect, expect1, expect2, expect3, expect4, expect5, expect6, expect7]
+    x = [x, x1, x2, x3, x4, x5, x6, x7, x8]
+    y = [y, y1, y2, y3, y4, y5, y6, y7, y8]
+    expect = [expect, expect1, expect2, expect3, expect4, expect5, expect6, expect7, expect8]
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     lessequal = Net()

@@ -88,7 +88,7 @@ struct LessEqualFunc<half> {
 template <>
 struct LessEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs < rhs);
+    return lhs <= rhs;
   }
 };
 
