@@ -107,7 +107,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // clear the old tensor row
   out_row->clear();
 #ifndef ENABLE_SECURITY
-  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable(root_->Tree());
 #endif
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.

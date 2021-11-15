@@ -146,7 +146,6 @@ class CpuSampler : public Sampling {
   Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override;
   Status SaveToFile(const std::string &dir_path, const std::string &rank_id) override;
   std::string Name() const override { return kCpuSamplerName; }
-  Status Analyze() override;
   Status GetSystemUserCpuUtil(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
   Status GetSystemSysCpuUtil(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
   Status GetOpUserCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);

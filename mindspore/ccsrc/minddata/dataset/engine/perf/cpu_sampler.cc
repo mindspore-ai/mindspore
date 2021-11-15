@@ -458,8 +458,6 @@ Status CpuSampler::SaveToFile(const std::string &dir_path, const std::string &ra
   return Status::OK();
 }
 
-Status CpuSampler::Analyze() { return Status::OK(); }
-
 Status CpuSampler::GetOpUserCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result) {
   std::lock_guard<std::mutex> guard(lock_);
   // find first ts that is not less than start_ts

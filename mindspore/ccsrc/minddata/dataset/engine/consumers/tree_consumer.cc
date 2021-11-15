@@ -57,7 +57,7 @@ Status TreeConsumer::Terminate() {
 Status IteratorConsumer::RegisterProfilingManager() {
   profiling_manager_ = GlobalContext::profiling_manager();
   // Profiling infrastructures need to be initialized before Op launching
-  if (profiling_manager_->IsProfilingEnable()) {
+  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
     // dataset_iterator node is used for graph mode
@@ -74,7 +74,7 @@ Status IteratorConsumer::RegisterProfilingManager() {
 Status ToDevice::RegisterProfilingManager() {
   profiling_manager_ = GlobalContext::profiling_manager();
   // Profiling infrastructures need to be initialized before Op launching
-  if (profiling_manager_->IsProfilingEnable()) {
+  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->RegisterTree(this->tree_adapter_.get()));
     // device_queue node is used for graph mode
@@ -91,7 +91,7 @@ Status ToDevice::RegisterProfilingManager() {
 
 Status TreeConsumer::RegisterProfilingManager() {
   profiling_manager_ = GlobalContext::profiling_manager();
-  if (profiling_manager_->IsProfilingEnable()) {
+  if (profiling_manager_->IsProfilingEnable(tree_adapter_->tree_.get())) {
     return Status(StatusCode::kMDUnexpectedError, "Profiling is not supported for this consumer.");
   }
   return Status::OK();

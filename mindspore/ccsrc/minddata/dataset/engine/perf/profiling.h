@@ -79,8 +79,6 @@ class Sampling : public Profiling {
  public:
   // Sampling action function. This function will be invoked by performance monitor thread.
   virtual Status Sample() = 0;
-  // virtual Status TestPrint() = 0;
-  virtual Status Analyze() = 0;
   virtual ~Sampling() = default;
 };
 
@@ -167,7 +165,8 @@ class ProfilingManager {
   Status GetTracingNode(const std::string &name, std::shared_ptr<Tracing> *node);
 
   // return true if enabled_ is set to true, namely if Init() has been called successfully
-  bool IsProfilingEnable() const;
+  // @param tree - Execution tree pointer
+  bool IsProfilingEnable(const ExecutionTree *tree = nullptr) const;
 
   // Record end of epoch information
   // @param step_num - The number of steps
@@ -180,10 +179,6 @@ class ProfilingManager {
 
   // @return Status The status code returned
   Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id);
-
-  // Analyze profile data and print warning messages
-  // @return Status The status code returned
-  Status Analyze();
 
 #ifndef ENABLE_ANDROID
   /// \brief API to get User CPU utilization for the system
@@ -463,7 +458,7 @@ class ProfilingManager {
   /// \param [in] epoch_num The epoch number to be converted
   /// \param [out] start_step The corresponding start step for the given epoch
   /// \param [out] end_step The corresponding end step for the given epoch
-  /// \return
+  /// \return Status object with the error code
   Status EpochToStepInterval(int32_t epoch_num, uint32_t *start_step, uint32_t *end_step);
 
   /// \brief Helper to convert a given epoch number to a time interval

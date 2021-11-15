@@ -189,7 +189,7 @@ Status DeviceQueueOp::SendDataToAscend() {
 
 #ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable(tree_);
   if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
     RETURN_IF_NOT_OK(GlobalContext::profiling_manager()->GetTracingNode(kDeviceQueueTracingName, &node));
@@ -407,17 +407,15 @@ Status DeviceQueueOp::PushDataToGPU() {
   TaskManager::FindMe()->Post();
 #ifndef ENABLE_SECURITY
   uint64_t batch_start_time = 0;
+  uint64_t end_time = 0;
   int32_t push_cost = 0;
-  int32_t connector_size = 0;
-  int32_t connector_capacity = 0;
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable();
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable(tree_);
   if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
     RETURN_IF_NOT_OK(GlobalContext::profiling_manager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
     batch_start_time = ProfilingTime::GetCurMilliSecond();
-    connector_capacity = gpu_connector_->capacity();
   }
 #endif
 #ifdef ENABLE_DUMP_IR
@@ -451,24 +449,11 @@ Status DeviceQueueOp::PushDataToGPU() {
                       "Failed to prefetch data in current PS mode(cache data when sending).");
       }
       RETURN_IF_NOT_OK(RetryPushData(handle, items));
-      send_batch++;
 #ifndef ENABLE_SECURITY
-      if (is_profiling_enable) {
-        uint64_t end_time = ProfilingTime::GetCurMilliSecond();
-        // record push data time
-        profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost, end_time);
-        int32_t batch_cost = (int32_t)(end_time - batch_start_time);
-        // record batch time
-        profiling_node->Record(TIME, BATCH_TIME, send_batch, batch_cost, end_time);
-        // record pipeline time
-        profiling_node->Record(TIME, PIPELINE_TIME, send_batch, batch_cost - push_cost, end_time);
-        batch_start_time = end_time;
-        // record connector depth
-        profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch, connector_size, end_time);
-        connector_size = gpu_connector_->size();
-        connector_capacity = gpu_connector_->capacity();
-      }
+      ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
+                        gpu_connector_->size(), gpu_connector_->capacity());
 #endif
+      send_batch++;
 #ifdef ENABLE_DUMP_IR
       md_channel_info_->RecordBatchQueue(gpu_connector_->size());
       md_channel_info_->RecordPreprocessBatch(send_batch);

@@ -202,6 +202,10 @@ class ExecutionTree {
            tree_state_ == TreeState::kDeTStateFinished;
   }
 
+  /// \brief Get a unique identifier for the tree
+  /// \return unique ID as a string
+  std::string GetUniqueId() { return unique_id_; }
+
  private:
   /// \brief A helper functions for doing the recursive printing
   /// \param dataset_op - The dataset op to print
@@ -216,6 +220,7 @@ class ExecutionTree {
   int32_t id_count_;                 // Counter for generating operator id's
   uint32_t prepare_flags_;           // Flags used during tree prepare
   TreeState tree_state_;             // Tracking the current tree state
+  std::string unique_id_;            // A unique identifier for the tree
 
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   // This rank_id is for numa and device_queue, one process work with only one rank_id,

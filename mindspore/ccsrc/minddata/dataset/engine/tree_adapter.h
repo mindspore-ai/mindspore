@@ -31,10 +31,15 @@ namespace mindspore {
 namespace dataset {
 class DatasetNode;
 class TreeModifier;
+class ToDevice;
+class IteratorConsumer;
 
 class TreeAdapter {
 #ifndef ENABLE_SECURITY
   friend ProfilingManager;
+  friend TreeConsumer;
+  friend ToDevice;
+  friend IteratorConsumer;
 #endif
   friend TreeModifier;
 

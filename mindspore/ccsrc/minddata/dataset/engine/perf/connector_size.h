@@ -65,8 +65,6 @@ class ConnectorSize : public Sampling {
   // Change file mode after save throughput data
   Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override { return Status::OK(); }
 
-  Status Analyze() override;
-
   // Get the vector of connector sizes of given op for samples taken between start and end time
   Status GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time, std::vector<int32_t> *result);
 
