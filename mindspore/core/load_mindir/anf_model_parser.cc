@@ -235,6 +235,8 @@ string GetTypeString(const std::string &ref_attr_name, size_t *pos) {
     return ref_attr_name.substr(*pos, string("type:").length() - 1);
   } else if ((*pos = ref_attr_name.find("tensor:")) != std::string::npos) {
     return ref_attr_name.substr(*pos, string("tensor:").length() - 1);
+  } else if (ref_attr_name == "none") {
+    return ref_attr_name;
   }
   return "";
 }
@@ -653,6 +655,10 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     }
     case FORM_PARSE_TENSOR: {
       ObtainCNodeAttrInTensorForm(prim, attr_proto);
+      break;
+    }
+    case FORM_PARSE_NONE: {
+      prim->AddAttr(attr_name, kNone);
       break;
     }
     default:
