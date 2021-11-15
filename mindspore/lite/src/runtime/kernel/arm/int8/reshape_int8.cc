@@ -34,11 +34,17 @@ int ReshapeInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
+  if (in_quant_args.empty()) {
+    return RET_ERROR;
+  }
   reshape_param_->quant_para_.in_args_.scale_ = in_quant_args.front().scale;
   reshape_param_->quant_para_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
+  if (out_quant_args.empty()) {
+    return RET_ERROR;
+  }
   reshape_param_->quant_para_.out_args_.scale_ = out_quant_args.front().scale;
   reshape_param_->quant_para_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
