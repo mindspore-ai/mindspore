@@ -16,9 +16,11 @@
 from .. import numpy as mnp
 from .. import ops
 from .ops import SolveTriangular
+from .ops import CholeskySolver
+from .ops import Cholesky
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular', 'inv']
+__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve']
 
 
 def block_diag(*arrs):
@@ -191,3 +193,128 @@ def inv(a, overwrite_a=False, check_finite=True):
     """
     matrix_inverse = P.MatrixInverse(adjoint=False)
     return matrix_inverse(a)
+
+
+def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
+    """
+    Compute the Cholesky decomposition of a matrix, to use in cho_solve
+
+    Returns a matrix containing the Cholesky decomposition,
+    ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
+    The return value can be directly used as the first parameter to cho_solve.
+
+    .. warning::
+        The returned matrix also contains random data in the entries not
+        used by the Cholesky decomposition. If you need to zero these
+        entries, use the function `cholesky` instead.
+
+    Args:
+        a (Tensor): square Matrix of (M, M) to be decomposed
+        lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization
+            (Default: upper-triangular)
+        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance)
+        check_finite(bool, optional): Whether to check that the input matrix contains only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        c (Tensor): Matrix whose upper or lower triangle contains the Cholesky factor of `a`.
+         Other parts of the matrix contain random data.
+        lower (bool, optional): Flag indicating whether the factor is in the lower or upper triangle
+
+    Raises:
+        LinAlgError: Raised if decomposition fails.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import cho_factor
+        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
+        >>> c, low = cho_factor(A)
+        >>> c
+        [[ 2.9999998   0.99999994  0.3333333   1.6666665 ]
+         [ 0.          2.4494896   1.9051585  -0.27216542]
+         [ 0.          0.          2.2933078   0.8559527 ]
+         [ 0.          0.          0.          1.5541859 ]]
+    """
+    cholesky_net = Cholesky(lower=lower, clean=False)
+    c = cholesky_net(a)
+    return c, lower
+
+
+def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
+    """
+    Compute the Cholesky decomposition of a matrix.
+
+    Returns the Cholesky decomposition, :math:`A = L L^*` or
+    :math:`A = U^* U` of a Hermitian positive-definite matrix A.
+
+    Args:
+        a (Tensor): square Matrix of (M, M) to be decomposed
+        lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
+            factorization.  Default is upper-triangular.
+        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance).
+        check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        c (Tensor): Upper- or lower-triangular Cholesky factor of `a`.
+
+    Raises:
+        LinAlgError: if decomposition fails.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import cholesky
+        >>> a = Tensor(onp.array([[1, -2],[2, 5]]).astype(onp.float32))
+        >>> L = cholesky(a, lower=True)
+        >>> L
+        [[1., 0.],
+         [2., 1.]]
+    """
+    cholesky_net = Cholesky(lower=lower, clean=True)
+    c = cholesky_net(a)
+    return c
+
+
+def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
+    """Solve the linear equations Ax = b, given the Cholesky factorization of A.
+
+    Args:
+        c_and_lower ((Tensor, bool)): Cholesky factorization of a, as given by cho_factor
+        b (Tensor): Right-hand side
+        overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance)
+        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        x (Tensor):
+            The solution to the system A x = b
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import cho_factor, cho_solve
+        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
+        >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float32))
+        >>> c, low = cho_factor(A)
+        >>> x = cho_solve((c, low), b)
+        >>> x
+        [-0.01749271,  0.11953353,  0.01166181,  0.1574344 ]
+    """
+    (c, lower) = c_and_lower
+    cholesky_solver_net = CholeskySolver(lower=lower)
+    x = cholesky_solver_net(c, b)
+    return x
