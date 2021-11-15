@@ -28,9 +28,10 @@
 #include <cstdlib>
 #include "securec/include/securec.h"
 
-#if defined(_WIN32) && defined(SUPPORT_MSVC)
+#ifdef _MSC_VER
 #define PATH_MAX 1024
 #define F_OK 0
+#define R_OK 4
 #endif
 
 namespace mindspore {

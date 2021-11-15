@@ -139,6 +139,11 @@ MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType
   return nullptr;
 }
 
+MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexcept {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
+}
+
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
 #ifndef STRING_KERNEL_CLIP
   auto impl = Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));

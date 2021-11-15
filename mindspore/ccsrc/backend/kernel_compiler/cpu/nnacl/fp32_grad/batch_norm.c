@@ -22,7 +22,8 @@ void var2Invar(float *save_var, int size, float eps) {
     save_var[i] = 1.0f / sqrtf(save_var[i] + eps);
   }
 }
-#ifdef SUPPORT_MSVC
+
+#ifdef _MSC_VER
 void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
                  int ch, float *dbias, float *dscale, float *dx) {
 #else
@@ -52,7 +53,7 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
   }
 }
 
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 void backwardP1(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
                 int ch, float *dbias, float *dscale) {
 #else
@@ -71,9 +72,9 @@ void backwardP1(const float *restrict in, const float *restrict yt, const float 
   }
 }
 
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 void backwardP2(const float *in, const float *yt, const float *mean, const float *invar, const float *dscale,
-                const float *dbias, const float *scale, int size, int total_size, int ch, float *restrict dx) {
+                const float *dbias, const float *scale, int size, int total_size, int ch, float *dx) {
 #else
 void backwardP2(const float *restrict in, const float *restrict yt, const float *restrict mean,
                 const float *restrict invar, const float *restrict dscale, const float *restrict dbias,
