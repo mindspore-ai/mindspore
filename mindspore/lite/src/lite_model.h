@@ -26,6 +26,7 @@
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
+#include "nnacl/op_base.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
@@ -62,21 +63,12 @@ class LiteModel : public Model {
 
   template <typename T = schema::MetaGraph, typename U = schema::CNode>
   bool ConvertNodes(const T &meta_graph) {
-    if (meta_graph.nodes() == nullptr) {
-      MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
-      return false;
-    }
+    MS_CHECK_TRUE_MSG(meta_graph.nodes() != nullptr, false, "meta_graph is invalid, please check your model file.");
     for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
       auto *node = new (std::nothrow) Model::Node();
-      if (node == nullptr) {
-        MS_LOG(ERROR) << "new node fail!";
-        return false;
-      }
+      MS_CHECK_TRUE_MSG(node != nullptr, false, "new node fail!");
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
-      if (c_node == nullptr) {
-        MS_LOG(ERROR) << "get as cnode fail!";
-        return false;
-      }
+      MS_CHECK_TRUE_MSG(c_node != nullptr, false, "get as cnode fail!");
 #ifdef ENABLE_MODEL_OBF
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
       auto src_prim_type = src_prim->value_type();
@@ -110,6 +102,11 @@ class LiteModel : public Model {
         SetNodeDeviceType(node, *c_node);
       }
 #endif
+      if (node->quant_type_ < schema::QuantType_MIN || node->quant_type_ > schema::QuantType_MAX) {
+        MS_LOG(ERROR) << "node->quant_type_:" << node->quant_type_ << " is invalid.";
+        delete node;
+        return false;
+      }
       if (node->quant_type_ == schema::QuantType_PostTraining || node->quant_type_ == schema::QuantType_AwareTraining) {
         node->quant_type_ = schema::QuantType_QUANT_ALL;
       } else if (node->quant_type_ == schema::QuantType_WeightQuant) {
