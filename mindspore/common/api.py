@@ -514,6 +514,13 @@ class _CellGraphExecutor:
         else:
             _set_dataset_mode_config('normal')
 
+    @staticmethod
+    def _use_vm_mode():
+        enable_ge = context.get_context("enable_ge")
+        enable_debug_runtime = context.get_context("enable_debug_runtime")
+        exe_mode = context.get_context("mode") == context.PYNATIVE_MODE
+        return not enable_ge or (enable_debug_runtime and exe_mode)
+
     def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False):
         """
         Compiles graph.
@@ -540,7 +547,7 @@ class _CellGraphExecutor:
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
-        if phase in obj.compile_cache:
+        if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
             return phase, False
 
@@ -553,9 +560,8 @@ class _CellGraphExecutor:
             args_full = _to_full_tensor(args, _get_device_num(), _get_global_rank())
             _, args_list = _generate_pip_args(obj, *args_full)
 
-        enable_debug_runtime = context.get_context("enable_debug_runtime")
         enable_ge = context.get_context("enable_ge")
-        use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
+        use_vm = self._use_vm_mode()
         result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name, self.enable_tuple_broaden)
         obj.compile_cache.add(phase)
         if not result:

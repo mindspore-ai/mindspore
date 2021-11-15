@@ -61,7 +61,7 @@ def test_tensor():
 
     t3 = ms.Tensor(0.1)
     assert isinstance(t3, ms.Tensor)
-    assert t3.dtype == ms.float64
+    assert t3.dtype == ms.float32
 
     t4 = ms.Tensor(1)
     assert isinstance(t4, ms.Tensor)
@@ -149,7 +149,7 @@ def test_tensor_type_float64():
     t = ms.Tensor([[1.0, 2, 3], [4, 5, 6]])
     assert isinstance(t, ms.Tensor)
     assert t.shape == (2, 3)
-    assert t.dtype == ms.float64
+    assert t.dtype == ms.float32
 
     t_zero = ms.Tensor(np.zeros([1, 2, 3]))
     assert isinstance(t_zero, ms.Tensor)

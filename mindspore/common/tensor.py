@@ -129,17 +129,19 @@ class Tensor(Tensor_):
             if isinstance(input_data, (tuple, list)):
                 if np.array(input_data).dtype not in valid_dtypes:
                     raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
+
             if dtype is not None:
                 validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
+            else:
+                dtype = self._set_default_dtype(input_data, dtype)
 
             if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
                 input_data = np.ascontiguousarray(input_data)
-            if dtype is None:
-                Tensor_.__init__(self, input_data)
-            else:
-                Tensor_.__init__(self, input_data, dtype)
+
+            Tensor_.__init__(self, input_data, dtype)
         else:
             Tensor_.__init__(self, dtype, shape)
+
         self._virtual_flag = False
         self.init = init
         self.init_finished = True
@@ -149,6 +151,13 @@ class Tensor(Tensor_):
         # index_of_parent_ will set to the index
         self.parent_tensor_ = None
         self.index_of_parent_ = None
+
+    @staticmethod
+    def _set_default_dtype(input_data, dtype):
+        if isinstance(input_data, (float, list, tuple)):
+            if np.array(input_data).dtype == np.float64:
+                return mstype.float32
+        return dtype
 
     def __deepcopy__(self, memodict):
         new_obj = Tensor(self)
