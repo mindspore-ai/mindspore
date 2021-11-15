@@ -18,9 +18,11 @@
 #define MINDSPORE_MONITOR_H
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 #include "minddata/dataset/engine/perf/profiling.h"
+#include "minddata/dataset/util/cond_var.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -46,6 +48,8 @@ class Monitor {
   ProfilingManager *profiling_manager_;
   int64_t sampling_interval_;
   ExecutionTree *tree_;
+  std::mutex mux_;
+  CondVar cv_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -29,39 +29,23 @@ Monitor::Monitor(ProfilingManager *profiling_manager) : profiling_manager_(profi
 Status Monitor::operator()() {
   // Register this thread with TaskManager to receive proper interrupt signal.
   TaskManager::FindMe()->Post();
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  cfg->set_profiler_file_status(false);
+  std::unique_lock<std::mutex> _lock(mux_);
 
   // Keep sampling if
   // 1) Monitor Task is not interrupted by TaskManager AND
   // 2) Iterator has not received EOF
 
-  // this will trigger a save on 2min, 4min, 8min, 16min ... mark on top of the save per_epoch
-  // The idea is whenever training is interrupted, you will get at least half of the sampling data during training
-  constexpr int64_t num_ms_in_two_minutes = 120000;
-  int64_t save_interval = 1 + (num_ms_in_two_minutes / sampling_interval_);
-  int64_t loop_cnt = 1;
-  constexpr int64_t geometric_series_ratio = 2;
-  while (!this_thread::is_interrupted() && !(tree_->isFinished()) && !(cfg->stop_profiler_status())) {
+  while (!this_thread::is_interrupted() && !(tree_->isFinished())) {
     if (tree_->IsEpochEnd()) {
-      RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
       tree_->SetExecuting();
-    } else if (loop_cnt % save_interval == 0) {
-      RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData());
     }
     for (auto &node : profiling_manager_->GetSamplingNodes()) {
       RETURN_IF_NOT_OK(node.second->Sample());
     }
-    if (loop_cnt % save_interval == 0) save_interval *= geometric_series_ratio;
-    loop_cnt += 1;
-    std::this_thread::sleep_for(std::chrono::milliseconds(sampling_interval_));
+    RETURN_IF_NOT_OK(cv_.WaitFor(&_lock, sampling_interval_));
   }
+  MS_LOG(INFO) << "Monitor Thread terminating...";
 
-  // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(profiling_manager_->Analyze(true));
-  RETURN_IF_NOT_OK(profiling_manager_->SaveProfilingData(true));
-  RETURN_IF_NOT_OK(profiling_manager_->ChangeFileMode(true));
-  cfg->set_profiler_file_status(true);
   return Status::OK();
 }
 

@@ -40,7 +40,7 @@ Status ConnectorSize::Sample() {
 }
 
 // JSON serializer helper function
-json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size) {
+json ConnectorSize::ParseOpInfo(const DatasetOp &node) {
   json json_node;
   json_node["op_id"] = node.id();
   json_node["op_type"] = node.Name();
@@ -49,7 +49,7 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
   // DeviceQueueOp is a special op,it is not inlined but its output queue is invalid.
   // So we should not output its queue size.
   if (!node.inlined() && node.Name() != "DeviceQueueOp") {
-    metrics["output_queue"] = {{"size", size}, {"length", node.ConnectorCapacity()}};
+    metrics["output_queue"] = {{"length", node.ConnectorCapacity()}};
   }
   json_node["metrics"] = metrics;
 
@@ -65,44 +65,42 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
 }
 
 // Save profiling data to file
-// If the file is already exist (created by other sampling node), simply add the data to metrics field.
-Status ConnectorSize::SaveToFile() {
-  json output;
-  RETURN_IF_NOT_OK(ReadJson(&output));
+Status ConnectorSize::SaveToFile(const std::string &dir_path, const std::string &rank_id) {
+  Path path = GetFileName(dir_path, rank_id);
+  // Remove the file if it exists (from prior profiling usage)
+  RETURN_IF_NOT_OK(path.Remove());
+  std::string file_path = path.ToString();
 
-  Path path = Path(file_path_);
-  uint32_t idx = 0;
-  // Traverse the ExecutionTree for JSON node generation
-  for (auto &node : *tree_) {
+  json output = initial_nodes_data;
+  output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
+
+  // Traverse the JSON initialized in Init() to access each op's information
+  CHECK_FAIL_RETURN_UNEXPECTED(output.contains("op_info"), "JSON data does not include op_info!");
+  for (uint32_t idx = 0; idx < output["op_info"].size(); idx++) {
     std::vector<int32_t> cur_queue_size;
     (void)std::transform(sample_table_.begin(), sample_table_.end(), std::back_inserter(cur_queue_size),
                          [&](const ConnectorSizeSample &sample) { return sample[idx]; });
-    if (!path.Exists()) {
-      json json_node = ParseOpInfo(node, cur_queue_size);
-      output["op_info"].push_back(json_node);
-    } else {
-      if (!node.inlined() && node.Name() != "DeviceQueueOp") {
-        auto &ops_data = output["op_info"];
-        ops_data[idx]["metrics"]["output_queue"]["size"] = cur_queue_size;
-        ops_data[idx]["metrics"]["output_queue"]["length"] = node.ConnectorCapacity();
-      }
-    }
 
-    idx++;
+    auto &ops_data = output["op_info"];
+    if (ops_data[idx]["metrics"].contains("output_queue") && ops_data[idx]["op_type"] != "DeviceQueueOp") {
+      ops_data[idx]["metrics"]["output_queue"]["size"] = cur_queue_size;
+    }
   }
 
   // Discard the content of the file when opening.
-  std::ofstream os(file_path_, std::ios::trunc);
+  std::ofstream os(file_path, std::ios::trunc);
   os << output;
   os.close();
   return Status::OK();
 }
 
-Status ConnectorSize::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).ToString();
-  Path path = Path(file_path_);
-  // Remove the file if it exists (from prior profiling usage)
-  RETURN_IF_NOT_OK(path.Remove());
+Status ConnectorSize::Init() {
+  // Traverse the ExecutionTree for JSON node generation
+  for (auto &node : *tree_) {
+    json json_node = ParseOpInfo(node);
+    initial_nodes_data["op_info"].push_back(json_node);
+  }
+
   return Status::OK();
 }
 
@@ -138,6 +136,10 @@ Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uin
                        [&](const ConnectorSizeSample &sample) { return sample[op_id]; });
 
   return Status::OK();
+}
+
+Path ConnectorSize::GetFileName(const std::string &dir_path, const std::string &rank_id) {
+  return Path(dir_path) / Path("pipeline_profiling_" + rank_id + ".json");
 }
 }  // namespace dataset
 }  // namespace mindspore

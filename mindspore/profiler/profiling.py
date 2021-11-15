@@ -23,7 +23,6 @@ from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, release, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
-from mindspore.dataset.core.config import _stop_dataset_profiler
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.util import get_file_path, fwrite_format
@@ -144,7 +143,7 @@ class Profiler:
 
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init(self._output_path)
+        self._md_profiler.init()
         self._md_profiler.start()
 
         if self._device_target:
@@ -253,7 +252,7 @@ class Profiler:
         _environment_check()
         self._cpu_profiler.stop()
         self._md_profiler.stop()
-        _stop_dataset_profiler()
+        self._md_profiler.save(self._output_path)
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
 
