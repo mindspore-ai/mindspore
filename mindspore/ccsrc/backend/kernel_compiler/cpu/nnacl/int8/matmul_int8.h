@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,22 @@
 extern "C" {
 #endif
 /* 4x16 16x4 -> 4x4 */
+/* sdot 4x4 4x16 -> 4x16 */
 /* matmul */
 void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                      const int *input_sum, const int *bias);
 void RowMajor2Row16x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
-void RowMajor2Col16x4MajorInt8(const int8_t *src, int row, int col, int8_t *dst);
+void RowMajor2Col16x4MajorInt8(const int8_t *src, int8_t *dst, int row, int col);
+void RowMajor2Col4x16MajorInt8(const int8_t *src, int8_t *dst, int row, int col);
+void RowMajor2Col4x16MajorPartInt8(const int8_t *src, int8_t *dst, int row, int col, int cur_oc);
+void PackInput2Col4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, int row,
+                                     int col, int row_stride, int32_t filter_zp);
 void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order);
 void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
                         int *dst, DataOrder order, bool filter_per_channel);
+void CalcPartWeightBiasSums(const int8_t *weight, int row, int stride, int cur_col, int input_zp,
+                            const int *weight_zp_ptr, const int *bias, int *dst, DataOrder order,
+                            bool filter_per_channel);
 void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
                    const int *bias, int act_min, int act_max, int out_zp, const int32_t *multiplier,
                    const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,

@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/matmul_base_int8.h"
+#include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -32,6 +33,97 @@ int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
   return RET_OK;
 }
 
+#ifdef ENABLE_ARM64
+int Arm64SdotPreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
+  auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
+  auto ret = op->Arm64SdotPre(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MatmulInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int Arm64SdotRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  CHECK_NULL_RETURN(cdata);
+  auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
+  auto ret = op->Arm64SdotImpl(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MatmulInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int MatmulBaseInt8CPUKernel::Arm64SdotPre(int task_id) {
+  int row_thread_count = MSMIN(op_parameter_->thread_num_, UP_DIV(param_->row_align_, row_tile_));
+  int row_stride = UP_DIV(UP_DIV(param_->row_align_, row_tile_), row_thread_count) * row_tile_;
+
+  int row_current_stride = task_id * row_stride;
+  int row_res_stride = param_->row_ - row_current_stride;
+  int cur_r = MSMIN(row_res_stride, row_stride);
+  if (cur_r <= 0) {
+    return RET_OK;
+  }
+
+  int tmp_weight_zp = filter_per_channel_ ? 1 : quant_param_->filter_zp_[0];
+  auto current_a_pack = pack_a_ptr_ + row_current_stride * param_->deep_align_;
+
+  if (param_->a_transpose_) {
+    auto current_src_a = batch_input_ptr_ + row_current_stride;
+    PackInput2Col4x4AndInputSumPert(current_src_a, current_a_pack, input_sums_ + row_current_stride, param_->deep_,
+                                    cur_r, param_->row_, tmp_weight_zp);
+  } else {
+    auto current_src_a = batch_input_ptr_ + row_current_stride * param_->deep_;
+    PackInput4x4AndInputSumPert(current_src_a, current_a_pack, input_sums_ + row_current_stride, param_->deep_, cur_r,
+                                tmp_weight_zp);
+  }
+  return RET_OK;
+}
+
+int MatmulBaseInt8CPUKernel::Arm64SdotImpl(int task_id) {
+  int stride = thread_stride_ * col_tile_;
+  int cur_stride = task_id * stride;
+  int res_stride = param_->col_ - cur_stride;
+  int cur_oc = MSMIN(stride, res_stride);
+  if (cur_oc <= 0) {
+    return RET_OK;
+  }
+  if (param_->b_const_ == false) {
+    auto current_sums = batch_sums_ + cur_stride;
+    auto current_b_pack = batch_b_ptr_ + cur_stride * param_->deep_align_;
+    auto current_filter_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
+    auto current_bias = bias_ptr_ == nullptr ? nullptr : bias_ptr_ + cur_stride;
+    if (param_->b_transpose_) {
+      auto current_weight = batch_weight_ptr_ + cur_stride * param_->deep_;
+
+      RowMajor2Row4x16MajorInt8(current_weight, current_b_pack, cur_oc, param_->deep_);
+      CalcPartWeightBiasSums(current_weight, param_->deep_, param_->col_, cur_oc, quant_param_->input_.zp_,
+                             current_filter_zp, current_bias, current_sums, ColMajor, filter_per_channel_);
+    } else {
+      auto current_weight = batch_weight_ptr_ + cur_stride;
+      RowMajor2Col4x16MajorPartInt8(current_weight, current_b_pack, param_->deep_, param_->col_, cur_oc);
+      CalcPartWeightBiasSums(current_weight, param_->deep_, param_->col_, cur_oc, quant_param_->input_.zp_,
+                             current_filter_zp, current_bias, current_sums, RowMajor, filter_per_channel_);
+    }
+  }
+
+  int32_t *cur_left = filter_per_channel_ ? quant_param_->left_shift_ + cur_stride : quant_param_->left_shift_;
+  int32_t *cur_right = filter_per_channel_ ? quant_param_->right_shift_ + cur_stride : quant_param_->right_shift_;
+  int32_t *cur_mul =
+    filter_per_channel_ ? quant_param_->quant_multiplier_ + cur_stride : quant_param_->quant_multiplier_;
+  int32_t *cur_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
+
+  MatmulInt8DpOpt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, batch_c_ptr_ + cur_stride, param_->row_,
+                  cur_oc, param_->deep_align_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
+                  quant_param_->out_act_max_, quant_param_->output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
+                  filter_per_channel_, cur_zp);
+
+  return RET_OK;
+}
+#endif
+
 int MatmulBaseInt8CPUKernel::RunImpl(int task_id) {
   int stride = thread_stride_ * col_tile_;
   int cur_stride = task_id * stride;
@@ -47,8 +139,8 @@ int MatmulBaseInt8CPUKernel::RunImpl(int task_id) {
     filter_per_channel_ ? quant_param_->quant_multiplier_ + cur_stride : quant_param_->quant_multiplier_;
   int32_t *cur_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
 
-  MatmulInt8Opt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_16_, batch_c_ptr_ + cur_stride, param_->row_,
-                cur_oc, param_->deep_16_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
+  MatmulInt8Opt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, batch_c_ptr_ + cur_stride, param_->row_,
+                cur_oc, param_->deep_align_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
                 quant_param_->out_act_max_, quant_param_->output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
                 filter_per_channel_, cur_zp);
 
@@ -59,11 +151,6 @@ MatmulBaseInt8CPUKernel::~MatmulBaseInt8CPUKernel() {
   FreeQuantParam();
 
   FreeTmpBuffer();
-
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
-  }
 }
 
 void MatmulBaseInt8CPUKernel::FreeQuantParam() {
@@ -180,17 +267,59 @@ void MatmulBaseInt8CPUKernel::InitParameter() {
 #ifdef ENABLE_ARM32
   row_tile_ = C4NUM;
   col_tile_ = C2NUM;
+  deep_tile_ = C16NUM;
+#elif ENABLE_ARM64
+  support_sdot_ = mindspore::lite::IsSupportSDot();
+  row_tile_ = C4NUM;
+  if (support_sdot_) {
+    col_tile_ = C16NUM;
+    deep_tile_ = C4NUM;
+  } else {
+    col_tile_ = C4NUM;
+    deep_tile_ = C16NUM;
+  }
 #else
   row_tile_ = C4NUM;
   col_tile_ = C4NUM;
+  deep_tile_ = C16NUM;
 #endif
+  if (param_->a_transpose_) {
+    a_pack_func_ = RowMajor2Col16x4MajorInt8;
+  } else {
+    a_pack_func_ = RowMajor2Row16x4MajorInt8;
+  }
+  if (param_->b_transpose_) {
+#ifdef ENABLE_ARM32
+    b_pack_func_ = RowMajor2Row2x16MajorInt8;
+#elif ENABLE_ARM64
+    if (support_sdot_) {
+      b_pack_func_ = RowMajor2Row4x16MajorInt8;
+    } else {
+      b_pack_func_ = RowMajor2Row16x4MajorInt8;
+    }
+#else
+    b_pack_func_ = RowMajor2Row16x4MajorInt8;
+#endif
+  } else {
+#ifdef ENABLE_ARM32
+    b_pack_func_ = RowMajor2Col16x2MajorInt8;
+#elif ENABLE_ARM64
+    if (support_sdot_) {
+      b_pack_func_ = RowMajor2Col4x16MajorInt8;
+    } else {
+      b_pack_func_ = RowMajor2Col16x4MajorInt8;
+    }
+#else
+    b_pack_func_ = RowMajor2Col16x4MajorInt8;
+#endif
+  }
   return;
 }
 
 void MatmulBaseInt8CPUKernel::ResizeParameter() {
   param_->row_align_ = UP_ROUND(param_->row_, row_tile_);
   param_->col_align_ = UP_ROUND(param_->col_, col_tile_);
-  param_->deep_16_ = UP_ROUND(param_->deep_, C16NUM);
+  param_->deep_align_ = UP_ROUND(param_->deep_, deep_tile_);
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(param_->col_align_, col_tile_));
   thread_stride_ = UP_DIV(UP_DIV(param_->col_align_, col_tile_), thread_count_);
@@ -221,37 +350,30 @@ void MatmulBaseInt8CPUKernel::TransferB() {
   auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   for (int i = 0; i < param_->batch; i++) {
     auto current_weight = weight_data + i * param_->deep_ * param_->col_;
-    auto current_b_pack = pack_b_ptr_ + i * param_->col_align_ * param_->deep_16_;
+    auto current_b_pack = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
     auto current_sums = weight_bias_sums_ + i * param_->col_align_;
+    MS_CHECK_PTR_IF_NULL(b_pack_func_);
     if (param_->b_transpose_) {
-#ifdef ENABLE_ARM32
-      RowMajor2Row2x16MajorInt8(current_weight, current_b_pack, param_->col_, param_->deep_);
-#else
-      RowMajor2Row16x4MajorInt8(current_weight, current_b_pack, param_->col_, param_->deep_);
-#endif
+      b_pack_func_(current_weight, current_b_pack, param_->col_, param_->deep_);
       CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_param_->input_.zp_,
                          quant_param_->filter_zp_, bias_ptr_, current_sums, ColMajor, filter_per_channel_);
     } else {
-#ifdef ENABLE_ARM32
-      RowMajor2Col16x2MajorInt8(current_weight, current_b_pack, param_->deep_, param_->col_);
-#else
-      RowMajor2Col16x4MajorInt8(current_weight, param_->deep_, param_->col_, current_b_pack);
-#endif
+      b_pack_func_(current_weight, current_b_pack, param_->deep_, param_->col_);
       CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_param_->input_.zp_,
-                         quant_param_->filter_zp_, bias_ptr_, current_sums, RowMajor, false);
+                         quant_param_->filter_zp_, bias_ptr_, current_sums, RowMajor, filter_per_channel_);
     }
   }
   return;
 }
 
 int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
-  pack_a_ptr_ = reinterpret_cast<int8_t *>(malloc(param_->row_align_ * param_->deep_16_ * sizeof(int8_t)));
+  pack_a_ptr_ = reinterpret_cast<int8_t *>(malloc(param_->row_align_ * param_->deep_align_ * sizeof(int8_t)));
   if (pack_a_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_ERROR;
   }
   pack_b_ptr_ =
-    reinterpret_cast<int8_t *>(malloc(param_->batch * param_->col_align_ * param_->deep_16_ * sizeof(int8_t)));
+    reinterpret_cast<int8_t *>(malloc(param_->batch * param_->col_align_ * param_->deep_align_ * sizeof(int8_t)));
   if (pack_b_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_ERROR;
@@ -267,8 +389,8 @@ int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_16_ * sizeof(int8_t));
-  memset(pack_b_ptr_, 0, param_->batch * param_->col_align_ * param_->deep_16_ * sizeof(int8_t));
+  memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
+  memset(pack_b_ptr_, 0, param_->batch * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
   memset(input_sums_, 0, param_->row_align_ * sizeof(int));
   memset(weight_bias_sums_, 0, param_->batch * param_->col_align_ * sizeof(int));
 
@@ -278,9 +400,7 @@ int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
 int MatmulBaseInt8CPUKernel::InitBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
-    MS_CHECK_GT(bias_tensor->ElementsNum(), 0, RET_ERROR);
-    int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C4NUM);
-    bias_ptr_ = reinterpret_cast<int *>(malloc(max_bias_data * sizeof(int)));
+    bias_ptr_ = reinterpret_cast<int *>(bias_tensor->data());
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
       FreeTmpBuffer();
@@ -332,11 +452,47 @@ int MatmulBaseInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
+#ifdef ENABLE_ARM64
+int MatmulBaseInt8CPUKernel::RunArm64Sdot() {
+  int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
+  int8_t *b_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
+  int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
+  CHECK_NULL_RETURN(a_ptr);
+  CHECK_NULL_RETURN(b_ptr);
+  CHECK_NULL_RETURN(c_ptr);
+
+  for (int i = 0; i < param_->batch; i++) {
+    batch_input_ptr_ = a_ptr + i * param_->row_ * param_->deep_;
+    auto ret = ParallelLaunch(this->ms_context_, Arm64SdotPreRun, this, op_parameter_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "RunArm64Sdot error: [" << ret << "]";
+      return ret;
+    }
+
+    batch_weight_ptr_ = b_ptr + i * param_->col_ * param_->deep_;
+    batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
+    batch_sums_ = weight_bias_sums_ + i * param_->col_align_;
+    batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
+
+    ret = ParallelLaunch(this->ms_context_, Arm64SdotRun, this, thread_count_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "RunArm64Sdot error: [" << ret << "]";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+#endif
+
 int MatmulBaseInt8CPUKernel::Run() {
+#ifdef ENABLE_ARM64
+  if (support_sdot_) {
+    return RunArm64Sdot();
+  }
+#endif
   if (param_->b_const_ == false) {
     TransferB();
   }
-
   int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
   int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(a_ptr);
@@ -345,14 +501,16 @@ int MatmulBaseInt8CPUKernel::Run() {
   for (int i = 0; i < param_->batch; i++) {
     auto current_src_a = a_ptr + i * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {
-      RowMajor2Col16x4MajorInt8(current_src_a, param_->deep_, param_->row_, pack_a_ptr_);
+      MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
+      a_pack_func_(current_src_a, pack_a_ptr_, param_->deep_, param_->row_);
       CalcInputSums(current_src_a, param_->row_, param_->deep_, tmp_weight_zp, input_sums_, ColMajor);
     } else {
-      RowMajor2Row16x4MajorInt8(current_src_a, pack_a_ptr_, param_->row_, param_->deep_);
+      MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
+      a_pack_func_(current_src_a, pack_a_ptr_, param_->row_, param_->deep_);
       CalcInputSums(current_src_a, param_->row_, param_->deep_, tmp_weight_zp, input_sums_, RowMajor);
     }
 
-    batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_16_;
+    batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
     batch_sums_ = weight_bias_sums_ + i * param_->col_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 

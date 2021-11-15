@@ -54,6 +54,7 @@ typedef struct MatMulParameter {
   int deep_;
   int deep_4_;
   int deep_16_;
+  int deep_align_;
   int batch;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */
