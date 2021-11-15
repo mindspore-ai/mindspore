@@ -624,6 +624,7 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::stri
 
 Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std::string> &filenames, int64_t threads,
                                   bool estimate) {
+  RETURN_UNEXPECTED_IF_NULL(out_total_rows);
   try {
     if (threads > filenames.size()) {
       threads = filenames.size();
@@ -631,6 +632,9 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 
     std::vector<std::future<int64_t>> async_results;
 
+    if (threads <= 0) {
+      RETURN_STATUS_UNEXPECTED("Invalid data, the threads of TFReader should be greater than zero, but got zero.");
+    }
     int64_t chunk_size = filenames.size() / threads;
     int64_t remainder = filenames.size() % threads;
 

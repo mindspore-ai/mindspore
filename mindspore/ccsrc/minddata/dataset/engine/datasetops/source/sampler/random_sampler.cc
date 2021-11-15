@@ -31,6 +31,7 @@ RandomSamplerRT::RandomSamplerRT(bool replacement, int64_t num_samples, bool res
       reshuffle_each_epoch_(reshuffle_each_epoch) {}
 
 Status RandomSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("Sampler index must be less than or equal to num_samples(total rows in dataset), but got" +
                              std::to_string(next_id_) + ", num_samplers:" + std::to_string(num_samples_));
@@ -127,6 +128,7 @@ void RandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 }
 
 Status RandomSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   RETURN_IF_NOT_OK(SamplerRT::to_json(&args));
   args["sampler_name"] = "RandomSampler";

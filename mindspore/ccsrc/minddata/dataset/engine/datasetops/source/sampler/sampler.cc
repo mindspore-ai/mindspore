@@ -21,6 +21,7 @@
 namespace mindspore {
 namespace dataset {
 Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
+  RETURN_UNEXPECTED_IF_NULL(num);
   // The sampler base class itself does not compute it's own num_rows_ value.
   // Instead, this value is computed by the derived leaf op during it's own initialization
   // after it has interacted with it's storage layers.
@@ -41,6 +42,7 @@ SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_tensor)
       is_initialized(false) {}
 
 Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+  RETURN_UNEXPECTED_IF_NULL(op);
   std::shared_ptr<SamplerRT> child_sampler;
   if (HasChildSampler()) {
     child_sampler = std::dynamic_pointer_cast<SamplerRT>(child_[0]);
@@ -70,6 +72,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
 }
 
 Status SamplerRT::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements) {
+  RETURN_UNEXPECTED_IF_NULL(sample_ids);
   if (col_desc_ == nullptr) {
     // a ColDescriptor for Tensor that holds SampleIds
     col_desc_ = std::make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);
@@ -91,6 +94,7 @@ void SamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 
 #ifdef ENABLE_PYTHON
 Status SamplerRT::GetAllIdsThenReset(py::array *data) {
+  RETURN_UNEXPECTED_IF_NULL(data);
   std::shared_ptr<Tensor> sample_ids;
   TensorRow sample_row;
 
@@ -175,6 +179,7 @@ Status SamplerRT::AddChild(std::shared_ptr<SamplerRT> child) {
 bool SamplerRT::HasChildSampler() const { return !child_.empty(); }
 
 Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
+  RETURN_UNEXPECTED_IF_NULL(out_associated_id);
   if (child_ids_.empty()) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Trying to get associated child id, but there are no child ids!");
   }
@@ -184,6 +189,7 @@ Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   return Status::OK();
 }
 Status SamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_samples"] = num_samples_;
   if (this->HasChildSampler()) {

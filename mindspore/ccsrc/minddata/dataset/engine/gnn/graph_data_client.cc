@@ -86,6 +86,7 @@ Status GraphDataClient::Stop() {
 }
 
 Status GraphDataClient::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -97,6 +98,7 @@ Status GraphDataClient::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> 
 }
 
 Status GraphDataClient::GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -108,6 +110,7 @@ Status GraphDataClient::GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> 
 }
 
 Status GraphDataClient::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -122,6 +125,7 @@ Status GraphDataClient::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_li
 
 Status GraphDataClient::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, NodeIdType>> &node_list,
                                           std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -141,6 +145,7 @@ Status GraphDataClient::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType
 
 Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                                         const OutputFormat &format, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -159,6 +164,7 @@ Status GraphDataClient::GetSampledNeighbors(const std::vector<NodeIdType> &node_
                                             const std::vector<NodeIdType> &neighbor_nums,
                                             const std::vector<NodeType> &neighbor_types, SamplingStrategy strategy,
                                             std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -180,6 +186,7 @@ Status GraphDataClient::GetSampledNeighbors(const std::vector<NodeIdType> &node_
 
 Status GraphDataClient::GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
                                                NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -198,6 +205,7 @@ Status GraphDataClient::GraphDataClient::RandomWalk(const std::vector<NodeIdType
                                                     const std::vector<NodeType> &meta_path, float step_home_param,
                                                     float step_away_param, NodeIdType default_node,
                                                     std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -219,6 +227,7 @@ Status GraphDataClient::GraphDataClient::RandomWalk(const std::vector<NodeIdType
 
 Status GraphDataClient::GetNodeFeature(const std::shared_ptr<Tensor> &nodes,
                                        const std::vector<FeatureType> &feature_types, TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   if (!nodes || nodes->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input nodes is empty");
@@ -254,6 +263,7 @@ Status GraphDataClient::GetNodeFeature(const std::shared_ptr<Tensor> &nodes,
 
 Status GraphDataClient::GetEdgeFeature(const std::shared_ptr<Tensor> &edges,
                                        const std::vector<FeatureType> &feature_types, TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   if (!edges || edges->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input edges is empty");
@@ -288,6 +298,7 @@ Status GraphDataClient::GetEdgeFeature(const std::shared_ptr<Tensor> &edges,
 }
 
 Status GraphDataClient::GraphInfo(py::dict *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
 #if !defined(_WIN32) && !defined(_WIN64)
   RETURN_IF_NOT_OK(CheckPid());
   void *tag;

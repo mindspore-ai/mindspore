@@ -134,6 +134,7 @@ Status GraphDataImpl::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list
 
 Status GraphDataImpl::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, NodeIdType>> &node_list,
                                         std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (node_list.empty()) {
     RETURN_STATUS_UNEXPECTED("Input node list is empty.");
   }
@@ -292,6 +293,7 @@ Status GraphDataImpl::NegativeSample(const std::vector<NodeIdType> &data, const 
                                      int32_t samples_num, std::vector<NodeIdType> *out_samples) {
   CHECK_FAIL_RETURN_UNEXPECTED(!data.empty(), "Input data is empty.");
   RETURN_UNEXPECTED_IF_NULL(start_index);
+  RETURN_UNEXPECTED_IF_NULL(out_samples);
   size_t index = *start_index;
   for (size_t i = index; i < shuffled_ids.size(); ++i) {
     ++index;
