@@ -21,24 +21,26 @@
 
 namespace mindspore {
 namespace lite {
-schema::Tensor *AttrToTensor(const void *data, int data_size, bool is_array, TypeId type_id,
+schema::Tensor *AttrToTensor(const void *data, size_t data_size, bool is_array, TypeId type_id,
                              std::vector<char *> *const tensor_bufs) {
   if (data == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return nullptr;
   }
-  auto dst_tensor = (is_array ? new (std::nothrow) Tensor(type_id, {data_size}, mindspore::NHWC, Category::CONST_TENSOR)
-                              : new (std::nothrow) Tensor(type_id, {}, mindspore::NHWC, Category::CONST_SCALAR));
-  auto dst_data = dst_tensor->MutableData();
-  if (dst_data == nullptr) {
-    MS_LOG(ERROR) << "Data from tensor is nullptr";
-    delete dst_tensor;
+  if (data_size > static_cast<size_t>(INT32_MAX)) {
+    MS_LOG(ERROR) << "the amount of data exceeds the INT32_MAX.";
+    return nullptr;
+  }
+  auto shape = is_array ? std::vector<int>{static_cast<int>(data_size)} : std::vector<int>{};
+  auto dst_tensor = (is_array ? new (std::nothrow) Tensor(type_id, shape, mindspore::NHWC, Category::CONST_TENSOR)
+                              : new (std::nothrow) Tensor(type_id, shape, mindspore::NHWC, Category::CONST_SCALAR));
+  if (dst_tensor == nullptr) {
+    MS_LOG(ERROR) << "w a tensor failed.";
     return nullptr;
   }
   std::vector<uint8_t> uint8_data;
   uint8_data.resize(dst_tensor->Size());
   memcpy(uint8_data.data(), data, dst_tensor->Size());
-  auto shape = dst_tensor->shape();
   flatbuffers::FlatBufferBuilder fbb(1024);
   auto tensor_offset =
     schema::CreateTensorDirect(fbb, NodeType_ValueNode, type_id, &shape, schema::Format_NHWC, 0, 0, &uint8_data);
