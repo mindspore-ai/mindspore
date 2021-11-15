@@ -108,8 +108,7 @@ int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const
 }
 
 FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
-                                                        const std::vector<AnfNodePtr> &one_of_inline_fg_output,
-                                                        const string &switch_node_name) {
+                                                        const std::vector<AnfNodePtr> &one_of_inline_fg_output) {
   MS_CHECK_TRUE_MSG(fg != nullptr, nullptr, "fg is nullptr.");
   // create after partial node to call
   auto after_fg = std::make_shared<FuncGraph>();
@@ -117,14 +116,15 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
   auto manager = fg->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager is nullptr.");
   manager->AddFuncGraph(after_fg);
-  after_fg->set_attr("graph_name", MakeValue(switch_node_name + "_after_fg"));
+  std::string after_fg_name = "after_fg";
+  after_fg->set_attr("graph_name", MakeValue(after_fg_name));
   after_fg->set_manager(fg->manager());
 
   int i = 0;
   for (auto &iter : one_of_inline_fg_output) {
     auto new_parameter = after_fg->add_parameter();
     MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "new_parameter is nullptr.");
-    new_parameter->set_name(switch_node_name + ":" + std::to_string(i++));
+    new_parameter->set_name(after_fg_name + ":" + std::to_string(i++));
     new_parameter->set_abstract(iter->abstract());
   }
 
@@ -170,25 +170,8 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
   return after_fg;
 }
 
-CNodePtr MindIRControlFlowAdjust::GetMainFgSwitchNode(const FuncGraphPtr &fg) {
-  MS_CHECK_TRUE_MSG(fg != nullptr, nullptr, "fg is nullptr.");
-  auto node_list = TopoSort(fg->get_return());
-  for (auto &node : node_list) {
-    if (IsSwitch(node)) {
-      return node->cast<CNodePtr>();
-    }
-  }
-  return nullptr;
-}
-
 int MindIRControlFlowAdjust::AddAfterFgForInlinedFg(const std::set<FuncGraphPtr> &all_func_graphs,
                                                     const FuncGraphPtr &main_fg) {
-  auto switch_cnode = GetMainFgSwitchNode(main_fg);
-  if (switch_cnode == nullptr) {
-    MS_LOG(DEBUG) << "not a control flow model.";
-    return RET_OK;
-  }
-
   // get all inline fg
   std::vector<FuncGraphPtr> all_inline_fgs{};
   for (auto &graph : all_func_graphs) {
@@ -199,11 +182,12 @@ int MindIRControlFlowAdjust::AddAfterFgForInlinedFg(const std::set<FuncGraphPtr>
   }
 
   // checkout all inline fg
-  if (all_inline_fgs.empty()) {
-    MS_LOG(ERROR) << "graph is not right.";
-    return RET_ERROR;
+  MS_CHECK_TRUE_MSG(!all_inline_fgs.empty(), RET_ERROR, "graph is not right.");
+  // only one graph no need insert partial call.
+  if (all_inline_fgs.size() == 1) {
+    MS_LOG(DEBUG) << "no need add after fg.";
+    return RET_OK;
   }
-
   auto first_fg_output = GetFgOutput(all_inline_fgs.front());
   auto inline_fg_output_size = first_fg_output.size();
   for (auto &graph : all_inline_fgs) {
@@ -217,7 +201,7 @@ int MindIRControlFlowAdjust::AddAfterFgForInlinedFg(const std::set<FuncGraphPtr>
     }
   }
 
-  auto after_fg = AddAfterFuncGraph(main_fg, first_fg_output, switch_cnode->fullname_with_scope());
+  auto after_fg = AddAfterFuncGraph(main_fg, first_fg_output);
   if (after_fg == nullptr) {
     MS_LOG(ERROR) << "AddAfterFuncGraph failed.";
     return RET_ERROR;

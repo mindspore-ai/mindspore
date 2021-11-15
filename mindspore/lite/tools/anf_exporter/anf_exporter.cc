@@ -48,6 +48,14 @@
 
 using mindspore::ops::PrimitiveC;
 
+namespace {
+constexpr const int kMainGraphIndex = 0;
+constexpr const int kFirstDataIndex = 1;
+constexpr const int kSecondDataIndex = 2;
+constexpr const int kThirdDataIndex = 3;
+constexpr const int kPrimIndex = 0;
+};  // namespace
+
 namespace mindspore::lite {
 namespace {
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
@@ -546,20 +554,23 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph, int i) {
 
   // if call input is switch, meta output is call switch false partial's fg'output!
   auto cnode = call_cnode->input(kFirstDataIndex)->cast<CNodePtr>();
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
-    auto false_cnode = cnode->input(kSwitchFalseIndex)->cast<CNodePtr>();
+  if (IsSwitch(cnode)) {
+    auto false_cnode = cnode->input(kThirdDataIndex)->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(false_cnode != nullptr, nullptr, "cast failed");
     auto false_fg = GetValueNode<FuncGraphPtr>(false_cnode->input(kFirstDataIndex));
     MS_CHECK_TRUE_MSG(false_fg != nullptr, nullptr, "GetValueNode failed");
     return GetFinalGraph(false_fg, i);
+  } else if (IsSwitchLayer(cnode)) {
+    auto first_partial_cnode = cnode->input(kSecondDataIndex)->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(first_partial_cnode != nullptr, nullptr, "cast failed");
+    auto next_fg = GetValueNode<FuncGraphPtr>(first_partial_cnode->input(kFirstDataIndex));
+    MS_CHECK_TRUE_MSG(next_fg != nullptr, nullptr, "GetValueNode failed");
+    return GetFinalGraph(next_fg, i);
   } else {
     auto fg = GetValueNode<FuncGraphPtr>(cnode->input(kFirstDataIndex));
     MS_CHECK_TRUE_MSG(fg != nullptr, nullptr, "GetValueNode failed");
     return GetFinalGraph(fg, i);
   }
-
-  MS_LOG(ERROR) << "Can not find final graph.";
-  return nullptr;
 }
 
 int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
