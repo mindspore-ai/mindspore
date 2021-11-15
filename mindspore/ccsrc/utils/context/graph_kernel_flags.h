@@ -42,7 +42,7 @@ class GraphKernelFlags {
     static std::unique_ptr<GraphKernelFlags> flags(nullptr);
     auto contexts = GetGraphKernelContext();
     if (flags == nullptr || contexts.first != flags->flags_cache_ || contexts.second != flags->enable_graph_kernel_) {
-      flags.reset(new GraphKernelFlags(contexts.first, contexts.second));
+      flags = std::make_unique<GraphKernelFlags>(contexts.first, contexts.second);
       flags->Refresh();
     }
     return *flags;
@@ -53,6 +53,9 @@ class GraphKernelFlags {
 
   // Check whether graph_kernel is enabled
   bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
+
+  GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)
+      : flags_cache_(graph_kernel_flags), enable_graph_kernel_(enable_graph_kernel) {}
 
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
   ~GraphKernelFlags() = default;
@@ -192,9 +195,6 @@ class GraphKernelFlags {
   std::vector<std::string> disable_pass;
 
  private:
-  GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)
-      : flags_cache_(graph_kernel_flags), enable_graph_kernel_(enable_graph_kernel) {}
-
   // get the `graph_kernel_flags` and `enable_graph_kernel`
   static std::pair<std::string, bool> GetGraphKernelContext() {
     auto context = MsContext::GetInstance();
