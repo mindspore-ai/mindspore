@@ -71,6 +71,8 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
 
 bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs);
 
+AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::string &weight_name);
+
 void MarkForwardCNode(const FuncGraphPtr &root);
 
 bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);

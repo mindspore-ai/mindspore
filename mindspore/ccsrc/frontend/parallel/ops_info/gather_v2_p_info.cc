@@ -487,6 +487,36 @@ void GatherPInfo::InferInputsTensorMap() {
   inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
 }
 
+Shape GatherPInfo::InferOutputsTensorMapSplitAxis() {
+  Shape tensor_map_out;
+  size_t param_size = inputs_shape_.at(0).size();
+  size_t index_size = inputs_shape_.at(1).size();
+  if (axis_ == 0) {
+    if ((dynamic_shape_indices_ && target_ != CPU) || axis_split_forward_allreduce_) {
+      // the output is repeat calculation
+      tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
+    } else {
+      tensor_map_out.insert(tensor_map_out.end(), param_size - 1);
+    }
+    tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
+    for (size_t i = 1; i < param_size; ++i) {
+      tensor_map_out.push_back(param_size - 1 - i);
+    }
+  } else {
+    for (size_t i = 0; i < param_size; ++i) {
+      if (i == LongToSize(axis_)) {
+        tensor_map_out.insert(tensor_map_out.end(), index_size, MAP_NONE);
+      } else {
+        if (i == 0 && dynamic_shape_indices_ && target_ != CPU) {
+          tensor_map_out.push_back(MAP_NONE);
+        }
+        tensor_map_out.push_back(SizeToLong(i));
+      }
+    }
+  }
+  return tensor_map_out;
+}
+
 void GatherPInfo::InferOutputsTensorMap() {
   // infer output tensor map
   size_t param_size = inputs_shape_.at(0).size();
@@ -507,29 +537,7 @@ void GatherPInfo::InferOutputsTensorMap() {
     }
   } else {
     // param_strategy(axis) is not 1
-    if (axis_ == 0) {
-      if ((dynamic_shape_indices_ && target_ != CPU) || axis_split_forward_allreduce_) {
-        // the output is repeat calculation
-        tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
-      } else {
-        tensor_map_out.insert(tensor_map_out.end(), param_size - 1);
-      }
-      tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
-      for (size_t i = 1; i < param_size; ++i) {
-        tensor_map_out.push_back(param_size - 1 - i);
-      }
-    } else {
-      for (size_t i = 0; i < param_size; ++i) {
-        if (i == LongToSize(axis_)) {
-          tensor_map_out.insert(tensor_map_out.end(), index_size, MAP_NONE);
-        } else {
-          if (i == 0 && dynamic_shape_indices_ && target_ != CPU) {
-            tensor_map_out.push_back(MAP_NONE);
-          }
-          tensor_map_out.push_back(SizeToLong(i));
-        }
-      }
-    }
+    tensor_map_out = InferOutputsTensorMapSplitAxis();
   }
   (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
 }
