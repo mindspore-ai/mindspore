@@ -28,10 +28,8 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
         ${TEST_DIR}/st/mix_data_type_test.cc
         ${TEST_DIR}/ut/nnacl/infer/*.cc
-        ${TEST_DIR}/ut/nnacl/int8/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
         )
 
@@ -66,6 +64,14 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
                 )
         list(APPEND TEST_UT_SRC ${TEST_GPU_UT_SRC})
     endif()
+endif()
+
+if(MSLITE_ENABLE_INT8)
+    file(GLOB_RECURSE TEST_INT8_UT_SRC
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
+            ${TEST_DIR}/ut/nnacl/int8/*.cc
+            )
+    list(APPEND TEST_UT_SRC ${TEST_INT8_UT_SRC})
 endif()
 
 if(MSLITE_ENABLE_FP16)

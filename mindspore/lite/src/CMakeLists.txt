@@ -27,6 +27,9 @@ endif()
 if(NOT MSLITE_ENABLE_DELEGATE)
     add_compile_definitions(DELEGATE_CLIP)
 endif()
+if(NOT MSLITE_ENABLE_INT8)
+    add_compile_definitions(OP_INT8_CLIP)
+endif()
 
 if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance

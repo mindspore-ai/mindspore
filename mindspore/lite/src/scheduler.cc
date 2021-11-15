@@ -1111,6 +1111,11 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
     }
   }
+#ifdef OP_INT8_CLIP
+  if (desc.data_type == kNumberTypeInt8) {
+    MS_LOG(ERROR) << unsupport_int8_log;
+  }
+#endif
   return nullptr;
 }
 

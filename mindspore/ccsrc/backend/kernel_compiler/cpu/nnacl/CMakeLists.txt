@@ -30,11 +30,26 @@ endif()
 file(GLOB KERNEL_SRC
     ${NNACL_DIR}/*.c
     ${NNACL_DIR}/fp32/*.c
-    ${NNACL_DIR}/int8/*.c
     ${NNACL_DIR}/infer/*.c
     ${NNACL_DIR}/base/*.c
     ${NNACL_DIR}/fp32_grad/*.c
 )
+
+if(OP_INT8_CLIP)
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${NNACL_DIR}/int8/pack_int8.c
+            ${NNACL_DIR}/int8/quantize.c
+            )
+else()
+    file(GLOB KERNEL_SRC_INT8
+            ${NNACL_DIR}/int8/*.c
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${KERNEL_SRC_INT8}
+            )
+endif()
 
 if(MSLITE_ENABLE_SPARSE_COMPUTE)
     file(GLOB KERNEL_SRC_SPARSE

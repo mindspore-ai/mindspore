@@ -3,8 +3,20 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
     )
+
+if(MSLITE_ENABLE_INT8)
+    file(GLOB INT8_KERNEL_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${INT8_KERNEL_SRC}
+            )
+    list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
+else()
+    list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/base/quant_dtype_cast.cc)
+endif()
 
 if(MSLITE_ENABLE_SPARSE_COMPUTE)
     file(GLOB SPARSE_KERNEL_SRC
@@ -34,7 +46,6 @@ if(MSLITE_ENABLE_CONTROLFLOW)
             ${KERNEL_CONTROL_TENSORLIST}
             )
 endif()
-list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
 
 if(SUPPORT_TRAIN)
     file(GLOB TRAIN_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16_grad/*.cc)
