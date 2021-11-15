@@ -195,33 +195,59 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
   return MakeResolve(name_space, symbol);
 }
 
-AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &namespace_info) {
-  const size_t namespace_info_size = 2;
-  const size_t namespace_more_info_size = 3;
-  if (namespace_info.size() != namespace_info_size && namespace_info.size() != namespace_more_info_size) {
-    MS_EXCEPTION(NameError) << "namespace info size should be 2 or 3, but got " << namespace_info.size();
+AnfNodePtr FunctionBlock::GetResolveNode(const py::tuple &info) {
+  constexpr size_t namespace_index = 0;
+  constexpr size_t symbol_index = 1;
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, info[namespace_index]);
+  SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
+  return MakeResolve(name_space, symbol);
+}
+
+AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &info) {
+  constexpr size_t namespace_index = 0;
+  constexpr size_t symbol_index = 1;
+  constexpr size_t namespace_info_size = 2;
+  if (info.size() != namespace_info_size) {
+    MS_EXCEPTION(NameError) << "namespace info size should be 2, but got " << info.size();
   }
-  bool unsupported = false;
-  py::object py_obj;
-  if (namespace_info.size() == namespace_more_info_size) {
-    if (namespace_info[0].is_none()) {  // If namespace is None, the symbol is an undefined name.
-      MS_EXCEPTION(NameError) << namespace_info[namespace_more_info_size - 1].cast<std::string>();
-    } else {  // Or, the symbol is an unsupported builtin symbol in Graph mode.
-      unsupported = true;
-      py_obj = namespace_info[namespace_more_info_size - 1];
+
+  // If namespace is None, the symbol is an undefined name.
+  if (info[namespace_index].is_none()) {
+    MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
+  }
+  return GetResolveNode(info);
+}
+
+AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
+  constexpr size_t closure_info_size = 2;
+  constexpr size_t unsupported_info_size = 3;
+  constexpr size_t supported_info_size = 4;
+  constexpr size_t namespace_index = 0;
+  constexpr size_t symbol_index = 1;
+  constexpr size_t value_index = 2;
+  if (info.size() < closure_info_size || info.size() > supported_info_size) {
+    MS_EXCEPTION(NameError) << "namespace info size should be 2, 3 or 4, but got " << info.size();
+  }
+
+  // Handle closure namespace info.
+  if (info.size() == closure_info_size) {
+    // If namespace is None, the symbol is an undefined name.
+    if (info[namespace_index].is_none()) {
+      MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
     }
+    return GetResolveNode(info);
   }
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
-  SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[1].cast<std::string>());
-  MS_LOG(DEBUG) << "[" << func_graph()->ToString() << "] name_space: " << name_space->ToString()
-                << ", symbol: " << symbol->ToString() << ", unsupported: " << unsupported;
-  auto resolved_node = MakeResolve(name_space, symbol);
-  if (unsupported) {
+
+  // Handle global namespace info.
+  auto resolved_node = GetResolveNode(info);
+  if (info.size() == unsupported_info_size) {
     resolved_node->set_interpret(true);
-    AddGlobalPyParam(symbol->name(), py_obj);
-    MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol->name() << " : "
-                 << py::str(py_obj) << "}";
   }
+  SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
+  py::object py_obj = info[value_index];
+  AddGlobalPyParam(symbol->name(), py_obj);
+  MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol->name() << " : "
+               << py::str(py_obj) << "}";
   return resolved_node;
 }
 
@@ -248,7 +274,7 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
     return HandleNamespaceInfo(namespace_info);
   } else {
     py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, value);
-    return HandleNamespaceInfo(namespace_info);
+    return HandleBuiltinNamespaceInfo(namespace_info);
   }
 }
 
@@ -537,10 +563,12 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   isolated_nodes_.clear();
 
   AnfNodePtr state = nullptr;
-  if (states.size() == 1) {
+  constexpr size_t no_state_size = 1;
+  constexpr size_t only_one_state_size = 2;
+  if (states.size() == no_state_size) {
     // Only MakeTuple, no state left.
     return;
-  } else if (states.size() == 2) {
+  } else if (states.size() == only_one_state_size) {
     // If there are only MakeTuple and another node in states(the states size is 2),
     // do not need to MakeTuple, just use the node.
     state = states[1];
