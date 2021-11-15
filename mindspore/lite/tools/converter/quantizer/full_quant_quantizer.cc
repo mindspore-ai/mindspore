@@ -1261,7 +1261,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   // anf -- fb
   flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), flags.commonQuantParam.is_debug);
+  auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), false);
   fp32_session_ = sm.session;
   fp32_model_ = sm.model;
   if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
@@ -1308,11 +1308,11 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return RET_ERROR;
   }
   SessionModel int8_sm;
-  if (flags.commonQuantParam.is_debug || calibrator_->GetBiasCorrection()) {
+  if (calibrator_->GetBiasCorrection()) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
     flags.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-    int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), flags.commonQuantParam.is_debug);
+    int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum(), false);
     int8_session_ = int8_sm.session;
     int8_model_ = int8_sm.model;
     if (int8_session_ == nullptr || int8_model_ == nullptr) {
@@ -1320,19 +1320,10 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       return RET_ERROR;
     }
     MS_LOG(INFO) << "do bias correction";
-  }
-  if (calibrator_->GetBiasCorrection()) {
     status = BiasCorrection(func_graph);
     if (status != RET_OK) {
       MS_LOG(WARNING) << "BiasCorrection failed.";
     }
-  }
-  if (flags.commonQuantParam.is_debug) {
-    std::map<std::string, OpParameter *> op_parameters;
-    FetchOpParameterFromFuncGraph(func_graph, &op_parameters);
-    DebugInfoManager manager;
-    manager.CompareOriginWithDequant(sm, int8_sm, flags.dataPreProcessParam,
-                                     flags.commonQuantParam.debug_info_save_path, op_parameters);
   }
   return RET_OK;
 }

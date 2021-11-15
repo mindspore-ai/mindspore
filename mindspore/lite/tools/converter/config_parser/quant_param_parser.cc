@@ -27,8 +27,7 @@ constexpr int kQuantBitNumInt8 = 8;
 constexpr int kMinSize = 0;
 constexpr int kMaxSize = 65535;
 }  // namespace
-int QuantParamParser::ParseWeightFilter(const CommonQuantString &common_quant_string,
-                                        quant::CommonQuantParam *common_quant) {
+int QuantParamParser::ParseFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant) {
   if (!common_quant_string.min_quant_weight_size.empty()) {
     if (!ConvertIntNum(common_quant_string.min_quant_weight_size, &common_quant->min_quant_weight_size)) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_size should be a valid number.";
@@ -48,6 +47,12 @@ int QuantParamParser::ParseWeightFilter(const CommonQuantString &common_quant_st
     if (common_quant->min_quant_weight_channel < kMinSize || common_quant->min_quant_weight_channel > kMaxSize) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should in [0,65535]." << std::endl;
       return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!common_quant_string.skip_node.empty()) {
+    std::vector<std::string> nodes = SplitStringToVector(common_quant_string.skip_node, ',');
+    for (const auto &node : nodes) {
+      common_quant->skip_node.insert(node);
     }
   }
   return RET_OK;
@@ -78,18 +83,13 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  auto ret = ParseWeightFilter(common_quant_string, common_quant);
+  auto ret = ParseFilter(common_quant_string, common_quant);
   if (ret != RET_OK) {
     return ret;
   }
   common_quant->debug_info_save_path = common_quant_string.debug_info_save_path;
   if (!common_quant->debug_info_save_path.empty()) {
     common_quant->is_debug = true;
-  }
-
-  std::vector<std::string> nodes = SplitStringToVector(common_quant_string.skip_node, ',');
-  for (const auto &node : nodes) {
-    common_quant->skip_node.insert(node);
   }
   return RET_OK;
 }
