@@ -142,7 +142,7 @@ void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
       multiple_nums *= multiple_shape[i];
     }
     for (size_t i = 0; i < multiple_nums; ++i) {
-      multiples_.emplace_back(multiples_addr[i]);
+      (void)multiples_.emplace_back(multiples_addr[i]);
     }
     TileMultipleCompute();
   }

@@ -177,7 +177,7 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
       max_thread_num = 1;
     }
     max_thread_num = max_thread_num < kMaxThreadNum ? max_thread_num : kMaxThreadNum;
-    actor_manager->Initialize(true, 0, max_thread_num);
+    (void)actor_manager->Initialize(true, 0, max_thread_num);
     thread_pool = actor_manager->GetActorThreadPool();
     MS_EXCEPTION_IF_NULL(thread_pool);
   }
@@ -204,7 +204,7 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size, Content c
     task(start, end);
     return common::SUCCESS;
   };
-  thread_pool->ParallelLaunch(func, content, task_num);
+  (void)thread_pool->ParallelLaunch(func, content, task_num);
 }
 
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,

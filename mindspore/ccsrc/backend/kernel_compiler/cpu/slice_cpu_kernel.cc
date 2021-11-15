@@ -136,7 +136,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
     std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
     std::vector<int64_t> size{size_ptr, size_ptr + size_shape[0]};
     for (size_t i = 0; i < begin.size(); ++i) {
-      if (input_shape[i] < IntToSize(begin[i] + size[i])) {
+      if (input_shape[i] < LongToSize(begin[i] + size[i])) {
         MS_LOG(EXCEPTION) << "Slice shape can not bigger than origin shape.";
       }
     }
