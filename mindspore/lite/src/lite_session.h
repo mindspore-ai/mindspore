@@ -93,6 +93,8 @@ class LiteSession : public session::LiteSession {
     config_info_ = config_info;
   }
 
+  const std::vector<Tensor *> &GetTensors() const { return this->tensors_; }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 

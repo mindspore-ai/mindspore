@@ -1110,8 +1110,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
       MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
     }
-  } else if (status == RET_NOT_SUPPORT) {
-    return nullptr;
   }
   return nullptr;
 }

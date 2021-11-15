@@ -78,6 +78,7 @@
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl_pass.h"
 #include "tools/converter/quantizer/parameter_tunner.h"
+#include "tools/converter/quantizer/debug_info_manager.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -354,8 +355,20 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 }
 
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  constexpr int thread_num = 2;
   // quant
+  if (config->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL &&
+      config->commonQuantParam.quant_type != schema::QuantType_QUANT_WEIGHT) {
+    return RET_OK;
+  }
   int status;
+  quant::SessionModel origin;
+  quant::SessionModel quant;
+  if (config->commonQuantParam.is_debug) {
+    converter::Flags new_flag = *config;
+    new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, thread_num, true);
+  }
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
     this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
     if (m_quantizer_ == nullptr) {
@@ -408,6 +421,37 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
         }
       }
     }
+  }
+  if (config->commonQuantParam.is_debug) {
+    quant = quant::CreateSessionByFuncGraph(old_graph, *config, thread_num, true);
+    std::map<std::string, OpParameter *> op_parameters;
+    FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
+    DebugInfoManager manager;
+    CHECK_NULL_RETURN(origin.model);
+    CHECK_NULL_RETURN(origin.session);
+    CHECK_NULL_RETURN(quant.model);
+    CHECK_NULL_RETURN(quant.session);
+    status = manager.CompareOriginWithQuant(origin, quant, op_parameters, config->commonQuantParam.debug_info_save_path,
+                                            config->dataPreProcessParam);
+    auto free_buffer = [&] {
+      delete origin.session;
+      delete origin.model;
+      delete quant.session;
+      delete quant.model;
+      for (auto parameter : op_parameters) {
+        if (parameter.second != nullptr) {
+          free(parameter.second);
+          parameter.second = nullptr;
+        }
+      }
+      op_parameters.clear();
+    };
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Compare origin with quant failed.";
+      free_buffer();
+      return status;
+    }
+    free_buffer();
   }
   return RET_OK;
 }

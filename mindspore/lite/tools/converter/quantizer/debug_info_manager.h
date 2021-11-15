@@ -45,7 +45,7 @@ struct PrimaryKey {
 };
 
 struct TensorData {
-  void *data;
+  void *data = nullptr;
   TypeId data_type;
   size_t size;
   size_t elements_num;
@@ -72,26 +72,26 @@ struct QuantDebugInfo {
 
 class DebugInfoManager {
  public:
+  int CompareOriginWithQuant(const quant::SessionModel &origin, const quant::SessionModel &quant,
+                             const std::map<std::string, OpParameter *> &op_parameters,
+                             const std::string &debug_info_save_path,
+                             const preprocess::DataPreProcessParam &data_preprocess);
+
+ private:
   int AddOriginInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
                     int tensor_index, mindspore::lite::Tensor *origin_tensor);
 
   int AddComparedInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
                       int tensor_index, mindspore::lite::Tensor *compared_tensor);
 
-  int CompareOriginWithDequant(const quant::SessionModel &origin, const quant::SessionModel &dequant,
-                               const preprocess::DataPreProcessParam &data_preprocess,
-                               const std::string &debug_info_save_path,
-                               const std::map<std::string, OpParameter *> &op_parameters);
-
- private:
   void PrintInfo();
 
   int SaveInfo(const std::string &file_path);
 
   int SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor);
 
-  int SetDequantStaticInfo(OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
-                           const mindspore::lite::Tensor &tensor);
+  int SetQuantStaticInfo(OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
+                         const mindspore::lite::Tensor &tensor);
 
   std::string ParseDataTypeFlagToString(DataTypeFlag data_type_flag);
 
@@ -107,8 +107,7 @@ class DebugInfoManager {
 
   std::map<std::string, mindspore::schema::Tensor *> ParseOutputTensorFromModel(const Model &model);
 
-  int GetDataFromTensorMap(const std::map<std::string, mindspore::schema::Tensor *> &maps,
-                           const std::string &tensor_name, mindspore::lite::Tensor *dst_tensor);
+  int GetDataFromTensorMap(const mindspore::schema::Tensor &schema_tensor, mindspore::lite::Tensor *dst_tensor);
 
   KernelCallBack GetBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
                                    const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
@@ -117,6 +116,9 @@ class DebugInfoManager {
 
   void FreeBuffer();
 
+  void PrintQuantParam(const std::vector<Tensor *> &quant_tensors);
+
+  int SaveQuantParam(const std::string &file_path, const std::vector<Tensor *> &quant_tensors);
   template <typename T>
   void GetStatByTensor(const std::vector<T> &tensor_data, QuantDebugInfo *infos) {
     MS_ASSERT(infos != nullptr);
