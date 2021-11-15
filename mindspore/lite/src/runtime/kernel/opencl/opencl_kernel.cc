@@ -91,6 +91,18 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
   return RET_OK;
 }
 
+void OpenCLKernel::PrintShape(lite::Tensor *output_tensor) {
+  printf("shape=(");
+  auto shape = output_tensor->shape();
+  for (size_t i = 0; i < shape.size(); ++i) {
+    printf("%4d", shape[i]);
+    if (i + 1 < shape.size()) {
+      printf(",");
+    }
+  }
+  printf(") ");
+}
+
 void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   printf("%-30s ", name().c_str());
   if (out_tensors().empty()) {
@@ -123,15 +135,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
     runtime->ReadImage(tensor->data(), data.data());
   }
 
-  printf("shape=(");
-  auto shape = tensor->shape();
-  for (size_t i = 0; i < shape.size(); ++i) {
-    printf("%4d", shape[i]);
-    if (i + 1 < shape.size()) {
-      printf(",");
-    }
-  }
-  printf(") ");
+  PrintShape(tensor);
 
   auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
   for (int i = 0; i < print_num && i < static_cast<int>(total_num); ++i) {
@@ -198,8 +202,8 @@ int OpenCLKernel::InferShape() {
   }
   auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InferShape failed, type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type()));
+    MS_LOG(WARNING) << "InferShape failed, type: "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type()));
     return ret;
   }
   return RET_OK;
