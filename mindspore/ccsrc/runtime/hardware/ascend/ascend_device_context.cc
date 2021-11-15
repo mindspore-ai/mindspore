@@ -45,6 +45,14 @@
 #include "debug/rdr/graph_recorder.h"
 #endif
 
+#ifndef ENABLE_SECURITY
+#include "profiler/device/ascend/memory_profiling.h"
+#include "runtime/device/ascend/profiling/profiling_manager.h"
+
+using mindspore::device::ascend::ProfilingManager;
+using mindspore::profiler::ascend::MemoryProfiling;
+#endif
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -406,6 +414,15 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   mem_manager_->ResetDynamicMemory();
   runtime_instance_->AssignDynamicMemory(*root_graph.get());
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());
+
+#ifndef ENABLE_SECURITY
+  auto profiling_instance = MemoryProfiling::GetInstance();
+  if (profiling_instance.IsMemoryProfilingEnable()) {
+    uint64_t mem_size = runtime_instance_->GetAvailableMemMaxSize();
+    profiling_instance.SetDeviceMemSize(mem_size);
+    profiling_instance.SaveMemoryProfiling();
+  }
+#endif
 }
 
 void AscendDeviceContext::AssignInputMemory(const NotNull<KernelGraphPtr> &graph,
