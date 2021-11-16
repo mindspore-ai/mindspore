@@ -40,8 +40,20 @@ void ActorBase::Await() {
   // lock here or at spawn(). and unlock here or at worker(). wait for the worker to finish.
   MS_LOG(DEBUG) << "ACTOR is waiting for terminate to finish. a=" << actorName.c_str();
 
+#ifdef _MSC_VER
+  std::chrono::milliseconds interval(10);
+  while (true) {
+    if (waiterLock.try_lock()) {
+      waiterLock.unlock();
+      break;
+    } else {
+      std::this_thread::sleep_for(interval);
+    }
+  }
+#else
   waiterLock.lock();
   waiterLock.unlock();
+#endif
 
   // mailbox's hook may hold the actor reference, we need explicitly free the mailbox to avoid the memory leak. the
   // details can refer to the comments in ActorMgr::Spawn
