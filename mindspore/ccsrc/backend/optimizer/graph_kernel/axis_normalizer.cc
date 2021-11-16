@@ -15,6 +15,7 @@
  */
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
 
+#include <vector>
 #include "ir/scalar.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
