@@ -74,6 +74,7 @@ message ParallelGroupItem {
 
 message ParallelGroupMap {
     repeated ParallelGroupItem parallel_group_item = 1;
+    required ParallelGroupRanks ckpt_restore_rank_list = 2;
 }
 
 message ParallelStrategyMap {

@@ -28,7 +28,7 @@ from threading import Thread, Lock
 import numpy as np
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
-from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts
+from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts, ParallelGroupMap
 from mindspore.train.print_pb2 import Print
 
 import mindspore
@@ -1159,6 +1159,45 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
 
     return merged_tensor
 
+
+def ckpt_restore_group_info(group_info_file_name):
+    """
+    Build rank list, the checkpoint of ranks in the rank list has the same contents with the local rank
+    that saves the group_info_file_name
+    Args:
+        group_info_file_name (str): Name of group information file.
+
+    Returns:
+        List, the rank list.
+
+    Raises:
+        ValueError: group information file is incorrect.
+        TypeError: group_info_file_name is not str.
+
+    Examples:
+        >>> restore_list = ckpt_restore_group_info("./group_info.ckpt")
+    """
+    if not isinstance(group_info_file_name, str):
+        raise TypeError(f"The group_info_file_name should be str, but got {type(group_info_file_name)}.")
+
+    if not os.path.isfile(group_info_file_name):
+        raise ValueError(f"No such group info file: {group_info_file_name}.")
+
+    if os.path.getsize(group_info_file_name) == 0:
+        raise ValueError("The group info file should not be empty.")
+
+    parallel_group_map = ParallelGroupMap()
+
+    with open(group_info_file_name, 'rb') as f:
+        pb_content = f.read()
+    parallel_group_map.ParseFromString(pb_content)
+
+    restore_list = parallel_group_map.ckpt_restore_rank_list
+    if not restore_list:
+        raise ValueError("The group info file has no restore rank list.")
+
+    restore_rank_list = [rank for rank in restore_list.dim]
+    return restore_rank_list
 
 def build_searched_strategy(strategy_filename):
     """
