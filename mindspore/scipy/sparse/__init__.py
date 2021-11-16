@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Sparse linear algebra submodule"""
+"""Sparse submodule"""
+from . import linalg
 from .linalg import cg, gmres
 
 __all__ = ["cg", "gmres"]

@@ -30,7 +30,7 @@ def to_tensor(obj, dtype=None):
     return res
 
 
-def match_array(actual, expected, error=0):
+def match_array(actual, expected, error=0, err_msg=''):
     if isinstance(actual, int):
         actual = onp.asarray(actual)
 
@@ -38,9 +38,9 @@ def match_array(actual, expected, error=0):
         expected = onp.asarray(expected)
 
     if error > 0:
-        onp.testing.assert_almost_equal(actual, expected, decimal=error)
+        onp.testing.assert_almost_equal(actual, expected, decimal=error, err_msg=err_msg)
     else:
-        onp.testing.assert_equal(actual, expected)
+        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
 
 
 def create_full_rank_matrix(shape, dtype):

@@ -14,12 +14,14 @@
 # ============================================================================
 """Scipy-like interfaces in mindspore."""
 
-from . import optimize, linalg
-from .optimize import *
-from .linalg import *
+from . import optimize, sparse, linalg
+from .optimize import minimize, line_search
+from .sparse import cg, gmres
+from .linalg import block_diag, solve_triangular, inv, cho_factor, cholesky, cho_solve
 
 __all__ = []
 __all__.extend(optimize.__all__)
+__all__.extend(sparse.__all__)
 __all__.extend(linalg.__all__)
 
 __all__.sort()

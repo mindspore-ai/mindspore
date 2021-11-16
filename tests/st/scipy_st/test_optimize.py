@@ -70,9 +70,9 @@ def test_bfgs(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6)).x
-    scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS').x
-    match_array(ms_res.asnumpy(), scipy_res, error=5)
+                                   options=dict(maxiter=None, gtol=1e-6))
+    scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
+    match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
 @pytest.mark.level0

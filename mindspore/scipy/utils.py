@@ -15,7 +15,7 @@
 """internal utility functions"""
 import numpy as onp
 from .. import nn, ops
-from ..numpy import where, isnan, zeros_like, dot
+from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
@@ -25,6 +25,7 @@ from ..ops.primitive import constexpr
 from .._c_expression import typing
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
+_eps_net = ops.Eps()
 
 
 def _convert_64_to_32(tensor):
@@ -69,13 +70,16 @@ def _to_scalar(arr):
     raise ValueError("{} are not supported.".format(type(arr)))
 
 
+def _eps(x):
+    return _eps_net(x[(0,) * x.ndim])
+
+
 class _SafeNormalize(nn.Cell):
     """Normalize method that cast very small results to zero."""
 
     def __init__(self):
         """Initialize LineSearch."""
         super(_SafeNormalize, self).__init__()
-        self.eps = ops.Eps()
 
     def construct(self, x, threshold=None):
         x_sum2 = F.reduce_sum(F.pows(x, 2.0))
@@ -83,11 +87,13 @@ class _SafeNormalize(nn.Cell):
         if threshold is None:
             if x.dtype in mstype.float_type:
                 # pick the first element of x to get the eps
-                threshold = self.eps(x[(0,) * x.ndim])
+                threshold = _eps(x)
             else:
                 threshold = 0
-        normalized_x = where(norm > threshold, x / norm, zeros_like(x))
-        normalized_x = where(isnan(normalized_x), 0, normalized_x)
+        use_norm = greater(norm, threshold)
+        x_norm = x / norm
+        normalized_x = where(use_norm, x_norm, zeros_like(x))
+        norm = where(use_norm, norm, zeros_like(norm))
         return normalized_x, norm
 
 
@@ -95,6 +101,9 @@ _safe_normalize = _SafeNormalize()
 
 _INT_ZERO = _to_tensor(0)
 _INT_ONE = _to_tensor(1)
+_INT_NEG_ONE = _to_tensor(-1)
+_FLOAT_ONE = _to_tensor(1.0)
+_FLOAT_TWO = _to_tensor(2.0, dtype=float)
 _BOOL_TRUE = _to_tensor(True)
 _BOOL_FALSE = _to_tensor(False)
 
