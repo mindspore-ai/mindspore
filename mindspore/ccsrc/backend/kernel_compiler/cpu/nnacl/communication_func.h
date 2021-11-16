@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#define DEFAULT_GROUP_NAME_LEN 100
+#define DEFAULT_GROUP_NAME_LEN 101
 #define DEFAULT_GROUP_SIZE 2
 
 static inline int get_rank(char *group) { return DEFAULT_GROUP_SIZE; }
