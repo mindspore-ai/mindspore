@@ -27,12 +27,7 @@ CollectiveInitializer &CollectiveInitializer::instance() {
 
 bool CollectiveInitializer::collective_inited() const { return collective_inited_; }
 
-const void *CollectiveInitializer::collective_handle() {
-  if (collective_handle_ == nullptr) {
-    DynamicLoadCollectiveLib();
-  }
-  return collective_handle_;
-}
+const void *CollectiveInitializer::collective_handle() { return collective_handle_; }
 
 void CollectiveInitializer::InitCollective() {
   void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
@@ -60,22 +55,6 @@ void CollectiveInitializer::FinalizeCollective() {
       MS_LOG(EXCEPTION) << "Closing libgpu_collective.so handle failed.";
     }
   }
-}
-
-void CollectiveInitializer::DynamicLoadCollectiveLib() {
-  void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
-  if (handle == nullptr) {
-    MS_LOG(EXCEPTION)
-      << "Loading libgpu_collective.so failed. Many reasons could cause this:\n"
-         "1.libgpu_collective.so is not found, please check this MindSpore package is GPU version and built "
-         "with distributed feature.\n"
-         "2.NCCL is not found or the user-installed NCCL version installed is incompatible: MindSpore "
-         "requires NCCL-2.7.6.\n"
-         "3.OpenMPI is not found or the user-installed OpenMPI version is incompatible: MindSpore "
-         "requires OpenMPI-4.0.3.\n";
-  }
-  collective_inited_ = true;
-  collective_handle_ = handle;
 }
 }  // namespace gpu
 }  // namespace device
