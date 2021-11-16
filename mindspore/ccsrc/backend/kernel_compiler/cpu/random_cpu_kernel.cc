@@ -71,8 +71,7 @@ void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
   }
 }
 
-void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &inputs,
-                       const std::vector<AddressPtr> &outputs) {
+void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs) {
   // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
 
@@ -85,7 +84,7 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &inputs,
 
   // Generate random real values.
   for (size_t i = 0; i < num_sample; ++i) {
-    output[i] = distrib(gen);
+    output[i] = static_cast<float>(distrib(gen));
   }
 }
 

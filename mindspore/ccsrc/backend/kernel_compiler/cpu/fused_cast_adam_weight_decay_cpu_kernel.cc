@@ -121,7 +121,7 @@ void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) 
 }
 
 void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+                                                   const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but AdamWeightDecay needs 9 inputs.";
   }
