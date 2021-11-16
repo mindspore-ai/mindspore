@@ -33,6 +33,7 @@ std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"Ba
                                                                             {"BasicLSTMCellWeightGrad", "HWCN"},
                                                                             {"ExtractImagePatches", "NCHW"},
                                                                             {"Conv3D", "format"},
+                                                                            {"MaxPool3D", "NCDHW"},
                                                                             {"Conv3DBackpropFilter", "format"},
                                                                             {"Conv3DBackpropInput", "format"},
                                                                             {"Conv3DTranspose", "format"}};
