@@ -93,8 +93,10 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
 #endif
-
-  opt::HideNopNode(graph.get());
+  // TODO(sida): do not hide nop op in kernel_by_kernel mode
+  if (graph->is_executing_sink()) {
+    opt::HideNopNode(graph.get());
+  }
 
   auto execution_order = graph->execution_order();
   AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));

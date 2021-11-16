@@ -17,6 +17,7 @@
 #include "runtime/hardware/ascend/ascend_device_context.h"
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -49,6 +50,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
+constexpr size_t kAtomicCleanInputSize = 2;
 namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();
@@ -273,6 +275,7 @@ void AscendDeviceContext::Initialize() {
 #ifndef ENABLE_SECURITY
   DumpInit(rank_id_);
 #endif
+  compute_stream_ = runtime_instance_->compute_stream();
   initialized_ = true;
   MS_LOG(INFO) << "Status record: Initialize success.";
 }
@@ -519,7 +522,13 @@ bool AscendDeviceContext::SyncStream(size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   return runtime_instance_->SyncStream();
 }
-bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const { return true; }
+
+bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+}
+
 bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const { return true; }
 
 // kernel by kernel mode interface
@@ -543,13 +552,93 @@ std::shared_ptr<Bucket> AscendDeviceContext::CreateBucket(uint32_t bucket_id, ui
 bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                        const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
                                        bool is_dynamic_shape) const {
-  MS_LOG(ERROR) << "!!! Ascend with MindRT not support kernel by kernel mode. !!! ";
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
+  BindDeviceToCurrentThread();
+
+  if (!LaunchAtomicClean(kernel, workspace, outputs)) {
+    MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
+    return false;
+  }
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  std::vector<AddressPtr> real_inputs;
+  auto input_num = AnfAlgo::GetInputTensorNum(kernel);
+  if (input_num != inputs.size()) {
+    MS_LOG(ERROR) << "Input num is " << input_num << " but input address num is " << inputs.size();
+    return false;
+  }
+
+  for (size_t i = 0; i < input_num; ++i) {
+    auto real_index = AnfAlgo::GetRealInputIndex(kernel, i);
+    if (real_index >= input_num) {
+      MS_LOG(ERROR) << "Total input num is " << input_num << " but get real_index " << real_index;
+      return false;
+    }
+    real_inputs.push_back(inputs[real_index]);
+  }
+
+  std::lock_guard<std::mutex> locker(launch_mutex_);
+  auto ret = kernel_mod->Launch(real_inputs, workspace, outputs, compute_stream_);
+  if (!ret) {
+    MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+    return false;
+  }
+
+  // Sync running.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !SyncStream()) {
+    return false;
+  }
   return true;
 }
 
 bool AscendDeviceContext::BindDeviceToCurrentThread() const {
   runtime_instance_->SetContext();
   return true;
+}
+
+bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs) const {
+  auto iter = node_atomics_.find(node);
+  if (iter == node_atomics_.end()) {
+    return true;
+  }
+  auto atomic_node = iter->second.at(0);
+  vector<AddressPtr> atomic_inputs;
+  // The output addr need to clean
+  MS_EXCEPTION_IF_NULL(atomic_node);
+  if (atomic_node->inputs().size() != kAtomicCleanInputSize) {
+    MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
+  }
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node)) {
+    auto clean_output_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
+    for (auto output_index : clean_output_indexes) {
+      if (output_index >= outputs.size()) {
+        MS_LOG(EXCEPTION) << "Invalid output_index:" << output_index << " except less than " << outputs.size();
+      }
+      atomic_inputs.push_back(outputs[output_index]);
+    }
+  }
+
+  // The workspace addr need to clean
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node)) {
+    auto clean_workspace_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
+    for (auto workspace_index : clean_workspace_indexes) {
+      if (workspace_index >= workspace.size()) {
+        MS_LOG(EXCEPTION) << "Invalid workspace_index:" << workspace_index << " except less than " << workspace.size();
+      }
+      atomic_inputs.push_back(workspace[workspace_index]);
+    }
+  }
+  // Launch Atomic Node
+  auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  return kernel_mod->Launch(atomic_inputs, {}, {}, compute_stream_);
 }
 
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
