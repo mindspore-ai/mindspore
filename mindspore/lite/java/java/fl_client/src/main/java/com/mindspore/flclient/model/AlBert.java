@@ -152,7 +152,7 @@ public class AlBert extends TrainModel {
             maskIdTensor = trainSession.getInputsByTensorName("input_mask");
             labelIdTensor.setData(labelIdBufffer);
         } else {
-            if (inputs.size() != EVAL_BERT_INPUTS) {
+            if (inputs.size() < EVAL_BERT_INPUTS) {
                 logger.severe(Common.addTag("eval bert input size error"));
                 return new ArrayList<>();
             }

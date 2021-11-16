@@ -554,10 +554,11 @@ void TrainSession::CompileEvalOutputs() {
             eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
             auto index = TSFindTensor(tensors_, ms_tensor);
             if (index != tensors_.size()) {
-              eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
               if (!ms_tensor->tensor_name().empty()) {
+                eval_output_tensor_map_.insert(std::make_pair(ms_tensor->tensor_name(), ms_tensor));
                 eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
               } else {
+                eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
                 eval_output_tensor_names_.emplace_back(std::to_string(index));
               }
             }
@@ -566,9 +567,9 @@ void TrainSession::CompileEvalOutputs() {
       }
     }
   }
-  if (eval_output_node_map_.size() == 0) eval_output_node_map_ = orig_output_node_map_;
-  if (eval_output_tensor_map_.size() == 0) eval_output_tensor_map_ = orig_output_tensor_map_;
-  if (eval_output_tensor_names_.size() == 0) eval_output_tensor_names_ = orig_output_tensor_names_;
+  if (eval_output_node_map_.empty()) eval_output_node_map_ = orig_output_node_map_;
+  if (eval_output_tensor_map_.empty()) eval_output_tensor_map_ = orig_output_tensor_map_;
+  if (eval_output_tensor_names_.empty()) eval_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::CompileTrainOutputs() {
@@ -586,19 +587,20 @@ void TrainSession::CompileTrainOutputs() {
         train_output_node_map_[kernel->name()].emplace_back(ms_tensor);
         auto index = TSFindTensor(tensors_, ms_tensor);
         if (index != tensors_.size()) {
-          train_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
           if (!ms_tensor->tensor_name().empty()) {
+            train_output_tensor_map_.insert(std::make_pair(ms_tensor->tensor_name(), ms_tensor));
             train_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
           } else {
+            train_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
             train_output_tensor_names_.emplace_back(std::to_string(index));
           }
         }
       }
     }
   }
-  if (train_output_node_map_.size() == 0) train_output_node_map_ = orig_output_node_map_;
-  if (train_output_tensor_map_.size() == 0) train_output_tensor_map_ = orig_output_tensor_map_;
-  if (train_output_tensor_names_.size() == 0) train_output_tensor_names_ = orig_output_tensor_names_;
+  if (train_output_node_map_.empty()) train_output_node_map_ = orig_output_node_map_;
+  if (train_output_tensor_map_.empty()) train_output_tensor_map_ = orig_output_tensor_map_;
+  if (train_output_tensor_names_.empty()) train_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {

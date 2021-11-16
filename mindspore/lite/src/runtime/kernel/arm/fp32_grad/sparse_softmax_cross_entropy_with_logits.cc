@@ -94,7 +94,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   int length = sm_params_.input_shape_[sm_params_.axis_];
   int stride = UP_DIV(outter_size_, threads_);
   int count = MSMIN(stride, outter_size_ - stride * task_id);
-  if (count <= 0) return RET_OK;
+  if (count <= 0) return RET_ERROR;
   switch (stage_) {
     case 0:
       SoftMaxP1(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
@@ -104,11 +104,10 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
       break;
     case 2:
       if (sce_param->is_grad_) {
-        GradPostExecute(labels, losses, out);
+        return GradPostExecute(labels, losses, out);
       } else {
-        ForwardPostExecute(labels, losses, out);
+        return ForwardPostExecute(labels, losses, out);
       }
-      break;
   }
   return RET_OK;
 }
