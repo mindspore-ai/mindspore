@@ -552,8 +552,9 @@ void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *b
   gpu_profiler_inst->ProcessBuffer(ctx, streamId, buffer, size, validSize);
 }
 
-void ProcessActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record, CUpti_ActivityMemcpy *memcpy) {
-  switch (memcpy->copyKind) {
+void ProcessActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record,
+                                 CUpti_ActivityMemcpy *cupti_activity_memcpy) {
+  switch (cupti_activity_memcpy->copyKind) {
     case CUPTI_ACTIVITY_MEMCPY_KIND_HTOD:
       profilingData->activity_type = ActivityType::kMemcpyH2D;
       profilingData->kernel_name = "MemcpyH2D";
@@ -598,20 +599,20 @@ void ProcessActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record, C
 }
 
 void HandleActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record) {
-  CUpti_ActivityMemcpy *memcpy = reinterpret_cast<CUpti_ActivityMemcpy *>(record);
-  ProcessActivityMemcpyRecord(profilingData, record, memcpy);
+  CUpti_ActivityMemcpy *cupti_activity_memcpy = reinterpret_cast<CUpti_ActivityMemcpy *>(record);
+  ProcessActivityMemcpyRecord(profilingData, record, cupti_activity_memcpy);
 
   profilingData->kernel_type = "cuMemcpy";
   profilingData->api_type = CUPTIApiType::kActivity;
-  profilingData->start_time_stamp = memcpy->start;
-  profilingData->end_time_stamp = memcpy->end;
-  profilingData->device_id = memcpy->deviceId;
-  profilingData->context_id = memcpy->contextId;
-  profilingData->stream_id = memcpy->streamId;
-  profilingData->correlation_id = memcpy->correlationId;
-  profilingData->memcpy_info.bytes = memcpy->bytes;
-  profilingData->memcpy_info.src_kind = memcpy->srcKind;
-  profilingData->memcpy_info.dst_kind = memcpy->dstKind;
+  profilingData->start_time_stamp = cupti_activity_memcpy->start;
+  profilingData->end_time_stamp = cupti_activity_memcpy->end;
+  profilingData->device_id = cupti_activity_memcpy->deviceId;
+  profilingData->context_id = cupti_activity_memcpy->contextId;
+  profilingData->stream_id = cupti_activity_memcpy->streamId;
+  profilingData->correlation_id = cupti_activity_memcpy->correlationId;
+  profilingData->memcpy_info.bytes = cupti_activity_memcpy->bytes;
+  profilingData->memcpy_info.src_kind = cupti_activity_memcpy->srcKind;
+  profilingData->memcpy_info.dst_kind = cupti_activity_memcpy->dstKind;
 }
 
 void HandleActivityMemcpy2Record(Event *profilingData, CUpti_Activity *record) {
@@ -632,17 +633,17 @@ void HandleActivityMemcpy2Record(Event *profilingData, CUpti_Activity *record) {
 }
 
 void HandleActivityMemsetRecord(Event *profilingData, CUpti_Activity *record) {
-  CUpti_ActivityMemset *memset = reinterpret_cast<CUpti_ActivityMemset *>(record);
+  CUpti_ActivityMemset *cupti_activity_memset = reinterpret_cast<CUpti_ActivityMemset *>(record);
   profilingData->activity_type = ActivityType::kMemset;
   profilingData->kernel_name = "MemorySet";
   profilingData->api_type = CUPTIApiType::kActivity;
-  profilingData->start_time_stamp = memset->start;
-  profilingData->end_time_stamp = memset->end;
-  profilingData->device_id = memset->deviceId;
-  profilingData->context_id = memset->contextId;
-  profilingData->stream_id = memset->streamId;
-  profilingData->correlation_id = memset->correlationId;
-  profilingData->memcpy_info.bytes = memset->bytes;
+  profilingData->start_time_stamp = cupti_activity_memset->start;
+  profilingData->end_time_stamp = cupti_activity_memset->end;
+  profilingData->device_id = cupti_activity_memset->deviceId;
+  profilingData->context_id = cupti_activity_memset->contextId;
+  profilingData->stream_id = cupti_activity_memset->streamId;
+  profilingData->correlation_id = cupti_activity_memset->correlationId;
+  profilingData->memcpy_info.bytes = cupti_activity_memset->bytes;
 }
 
 void HandleActivityKernelRecord(Event *profilingData, CUpti_Activity *record) {
