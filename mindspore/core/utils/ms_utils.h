@@ -27,6 +27,15 @@
   ClassType(const ClassType &) = delete;   \
   ClassType &operator=(const ClassType &) = delete;
 
+#define TRY_AND_CATCH_WITH_EXCEPTION(expr, error_msg)                            \
+  do {                                                                           \
+    try {                                                                        \
+      (expr);                                                                    \
+    } catch (const std::exception &e) {                                          \
+      MS_LOG(EXCEPTION) << "Caught exception " << e.what() << ". " << error_msg; \
+    }                                                                            \
+  } while (0)
+
 namespace mindspore {
 namespace common {
 // TODO(jiaorui): delete
