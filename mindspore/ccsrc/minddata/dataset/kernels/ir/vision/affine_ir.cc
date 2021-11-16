@@ -42,8 +42,7 @@ Status AffineOperation::ValidateParams() {
   if (translation_.size() != kExpectedTranslationSize) {
     std::string err_msg =
       "Affine: translate expecting size 2, got: translation.size() = " + std::to_string(translation_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[0], {-1, 1}, false, false));
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[1], {-1, 1}, false, false));
@@ -52,8 +51,7 @@ Status AffineOperation::ValidateParams() {
   constexpr size_t kExpectedShearSize = 2;
   if (shear_.size() != kExpectedShearSize) {
     std::string err_msg = "Affine: shear_ranges expecting size 2, got: shear.size() = " + std::to_string(shear_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // Fill Value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Affine", fill_value_));
@@ -61,8 +59,7 @@ Status AffineOperation::ValidateParams() {
   if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour &&
       interpolation_ != InterpolationMode::kCubic && interpolation_ != InterpolationMode::kArea) {
     std::string err_msg = "Affine: Invalid InterpolationMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();

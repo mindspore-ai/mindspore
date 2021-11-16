@@ -102,32 +102,28 @@ Status BucketBatchByLengthNode::ValidateParams() {
     std::string err_msg =
       "BucketBatchByLengthNode: when element_length_function is not specified, size of column_name must be 1 but is: " +
       std::to_string(column_names_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   // Check bucket_boundaries: must be positive and strictly increasing
   if (bucket_boundaries_.empty()) {
     std::string err_msg = "BucketBatchByLengthNode: bucket_boundaries cannot be empty.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   for (int i = 0; i < bucket_boundaries_.size(); i++) {
     if (bucket_boundaries_[i] <= 0) {
-      std::string err_msg = "BucketBatchByLengthNode: Invalid non-positive bucket_boundaries, index: ";
-      MS_LOG(ERROR)
-        << "BucketBatchByLength: bucket_boundaries must only contain positive numbers. However, the element at index: "
-        << i << " was: " << bucket_boundaries_[i];
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      std::string err_msg =
+        "BucketBatchByLength: bucket_boundaries must only contain positive numbers. However, the element at index: " +
+        std::to_string(i) + " was: " + std::to_string(bucket_boundaries_[i]);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (i > 0 && bucket_boundaries_[i - 1] >= bucket_boundaries_[i]) {
-      std::string err_msg = "BucketBatchByLengthNode: Invalid bucket_boundaries not be strictly increasing.";
-      MS_LOG(ERROR)
-        << "BucketBatchByLength: bucket_boundaries must be strictly increasing. However, the elements at index: "
-        << i - 1 << " and " << i << " were: " << bucket_boundaries_[i - 1] << " and " << bucket_boundaries_[i]
-        << " respectively.";
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      std::string err_msg =
+        "BucketBatchByLength: bucket_boundaries must be strictly increasing. However, the elements at index: " +
+        std::to_string(i - 1) + " and " + std::to_string(i) + " were: " + std::to_string(bucket_boundaries_[i - 1]) +
+        " and " + std::to_string(bucket_boundaries_[i]) + " respectively.";
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
 
@@ -138,21 +134,18 @@ Status BucketBatchByLengthNode::ValidateParams() {
   // Check bucket_batch_sizes: must be positive
   if (bucket_batch_sizes_.empty()) {
     std::string err_msg = "BucketBatchByLengthNode: bucket_batch_sizes must be non-empty";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (bucket_batch_sizes_.size() != bucket_boundaries_.size() + 1) {
     std::string err_msg =
       "BucketBatchByLengthNode: bucket_batch_sizes's size must equal the size of bucket_boundaries + 1";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (std::any_of(bucket_batch_sizes_.begin(), bucket_batch_sizes_.end(), [](int i) { return i <= 0; })) {
     std::string err_msg = "BucketBatchByLengthNode: bucket_batch_sizes must only contain positive numbers.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();

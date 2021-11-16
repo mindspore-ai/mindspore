@@ -55,8 +55,7 @@ Status FilterNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (predicate_ == nullptr) {
     std::string err_msg = "FilterNode: predicate is not specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (!input_columns_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("FilterNode", "input_columns", input_columns_));

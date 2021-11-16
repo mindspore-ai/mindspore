@@ -55,8 +55,7 @@ Status TFRecordNode::ValidateParams() {
 
   if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
     std::string err_msg = "TFRecordNode: Invalid ShuffleMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (dataset_files_.empty()) {

@@ -666,7 +666,7 @@ Status SchemaObj::Init() {
                                    "\"columns\" node is required in the schema json file.");
     } catch (const std::exception &err) {
       std::string err_msg = "Schema file failed to load: ";
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     return from_json(js);
   }
@@ -753,13 +753,13 @@ Status SchemaObj::parse_column(nlohmann::json columns) {
     for (auto column : columns) {
       auto key_name = column.find("name");
       if (key_name == column.end()) {
-        RETURN_STATUS_SYNTAX_ERROR("Column's name is missing");
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Column's name is missing");
       }
       name = *key_name;
 
       auto key_type = column.find("type");
       if (key_type == column.end()) {
-        RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
       }
       de_type = *key_type;
 
@@ -775,7 +775,7 @@ Status SchemaObj::parse_column(nlohmann::json columns) {
       name = it_child.key();
       auto key_type = it_child.value().find("type");
       if (key_type == it_child.value().end()) {
-        RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
       }
       de_type = *key_type;
 
@@ -788,7 +788,7 @@ Status SchemaObj::parse_column(nlohmann::json columns) {
       RETURN_IF_NOT_OK(add_column(name, de_type, shape));
     }
   } else {
-    RETURN_STATUS_SYNTAX_ERROR("columns must be dict or list, columns contain name, type, shape(optional).");
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR("columns must be dict or list, columns contain name, type, shape(optional).");
   }
   return Status::OK();
 }
@@ -803,14 +803,14 @@ Status SchemaObj::from_json(nlohmann::json json_obj) {
     } else if (it_child.key() == "columns") {
       RETURN_IF_NOT_OK(parse_column(it_child.value()));
     } else {
-      RETURN_STATUS_SYNTAX_ERROR("Unknown field " + it_child.key());
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Unknown field " + it_child.key());
     }
   }
   if (data_->columns_.empty()) {
-    RETURN_STATUS_SYNTAX_ERROR("Columns are missing.");
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Columns are missing.");
   }
   if (data_->num_rows_ < 0) {
-    RETURN_STATUS_SYNTAX_ERROR("numRows must be greater than or equal to 0");
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR("numRows must be greater than or equal to 0");
   }
 
   return Status::OK();
@@ -825,7 +825,7 @@ Status SchemaObj::FromJSONStringCharIF(const std::vector<char> &json_string) {
   } catch (const std::exception &err) {
     std::string err_msg = "FromJSONString: JSON string failed to parse: ";
     err_msg += err.what();
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -837,7 +837,7 @@ Status SchemaObj::ParseColumnStringCharIF(const std::vector<char> &json_string) 
   } catch (const std::exception &err) {
     std::string err_msg = "ParseColumnString: JSON string failed to parse: ";
     err_msg += err.what();
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

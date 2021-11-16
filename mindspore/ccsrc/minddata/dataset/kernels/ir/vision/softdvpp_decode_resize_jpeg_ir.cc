@@ -42,8 +42,7 @@ Status SoftDvppDecodeResizeJpegOperation::ValidateParams() {
     if (size_[i] % value_two == value_one) {
       std::string err_msg = "SoftDvppDecodeResizeJpeg: size[" + std::to_string(i) +
                             "] must be even values, got: " + std::to_string(size_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   return Status::OK();

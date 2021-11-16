@@ -54,14 +54,12 @@ Status TextFileNode::ValidateParams() {
 
   if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
     std::string err_msg = "TextFileNode: Invalid ShuffleMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (num_samples_ < 0) {
     std::string err_msg = "TextFileNode: Invalid number of samples: " + std::to_string(num_samples_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("TextFileNode", num_shards_, shard_id_));

@@ -53,8 +53,7 @@ Status TakeNode::ValidateParams() {
   if (take_count_ <= 0 && take_count_ != -1) {
     std::string err_msg =
       "TakeNode: take_count should be either -1 or positive integer, take_count: " + std::to_string(take_count_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

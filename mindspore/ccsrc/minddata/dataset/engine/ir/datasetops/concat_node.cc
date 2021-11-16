@@ -57,22 +57,19 @@ Status ConcatNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (children_.size() < kMinChildrenSize) {
     std::string err_msg = "ConcatNode: concatenated datasets are not specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (find(children_.begin(), children_.end(), nullptr) != children_.end()) {
     std::string err_msg = "ConcatNode: concatenated datasets should not be null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   // Either one of children_flag_and_nums_ or children_start_end_index_ should be non-empty.
   if ((children_flag_and_nums_.empty() && !children_start_end_index_.empty()) ||
       (!children_flag_and_nums_.empty() && children_start_end_index_.empty())) {
     std::string err_msg = "ConcatNode: children_flag_and_nums and children_start_end_index should be used together";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

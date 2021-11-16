@@ -24,21 +24,18 @@ namespace dataset {
 Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::string &tokenizer_file) {
   if (tokenizer_file.empty()) {
     std::string err_msg = tokenizer_name + ": tokenizer_file is not specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   Path file(tokenizer_file);
   if (!file.Exists()) {
     std::string err_msg = tokenizer_name + ": tokenizer_file: [" + tokenizer_file + "] is an invalid directory path.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (access(tokenizer_file.c_str(), R_OK) == -1) {
     std::string err_msg = tokenizer_name + ": No access to specified tokenizer path: " + tokenizer_file;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();

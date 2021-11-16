@@ -48,8 +48,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
     if (size_[i] % value_two == value_one) {
       std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: size[" + std::to_string(i) +
                             "] must be even values, got: " + std::to_string(size_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   // scale
@@ -60,8 +59,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
   if (max_attempts_ < 1) {
     std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: max_attempts must be greater than or equal to 1, got: " +
                           std::to_string(max_attempts_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

@@ -34,8 +34,7 @@ Status TimeStretchOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   // check shape
   if (input->shape().Rank() < 3 || !input->IsComplex()) {
     std::string err_msg = "TimeStretch: input tensor is not in shape of <..., freq, num_frame, complex=2>.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::shared_ptr<Tensor> input_tensor;

@@ -238,7 +238,8 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
       if (Py_IsInitialized() != 0) {
         RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
       } else {
-        RETURN_STATUS_SYNTAX_ERROR("Python module is not initialized or Pyfunction is not supported on this platform.");
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
+          "Python module is not initialized or Pyfunction is not supported on this platform.");
       }
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_name") != item.end(), "Failed to find tensor_op_name");

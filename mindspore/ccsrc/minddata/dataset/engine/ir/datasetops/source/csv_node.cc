@@ -60,28 +60,24 @@ Status CSVNode::ValidateParams() {
 
   if (field_delim_ == '"' || field_delim_ == '\r' || field_delim_ == '\n') {
     std::string err_msg = "CSVNode: The field delimiter should not be \", \\r, \\n";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
     std::string err_msg = "CSVNode: Invalid ShuffleMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (num_samples_ < 0) {
     std::string err_msg = "CSVNode: Invalid number of samples: " + std::to_string(num_samples_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("CSVNode", num_shards_, shard_id_));
 
   if (find(column_defaults_.begin(), column_defaults_.end(), nullptr) != column_defaults_.end()) {
     std::string err_msg = "CSVNode: column_default should not be null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (!column_names_.empty()) {

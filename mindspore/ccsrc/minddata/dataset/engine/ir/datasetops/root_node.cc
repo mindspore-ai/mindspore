@@ -54,23 +54,19 @@ Status RootNode::ValidateParams() {
   if (num_epochs_ <= 0 && num_epochs_ != -1) {
     std::string err_msg =
       "RootNode: num_epochs should be either -1 or positive integer, num_epochs: " + std::to_string(num_epochs_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (parent_ != nullptr) {
-    std::string err_msg = "Internal error: root node should not have a parent";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    std::string err_msg = "[Internal ERROR]: root node should not have a parent";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (children_.size() != 1) {
-    std::string err_msg = "Internal error: root node should have one child node";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    std::string err_msg = "[Internal ERROR]: root node should have one child node";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (children_[0] == nullptr) {
-    std::string err_msg = "Internal error: root node's child is a null pointer";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    std::string err_msg = "[Internal ERROR]: root node's child is a null pointer";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

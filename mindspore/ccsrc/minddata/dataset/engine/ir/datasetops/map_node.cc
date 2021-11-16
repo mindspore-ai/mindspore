@@ -104,14 +104,12 @@ Status MapNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (operations_.empty()) {
     std::string err_msg = "MapNode: No operation is specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (const auto &op : operations_) {
     if (op == nullptr) {
       std::string err_msg = "MapNode: operation must not be nullptr.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     } else {
       RETURN_IF_NOT_OK(op->ValidateParams());
     }

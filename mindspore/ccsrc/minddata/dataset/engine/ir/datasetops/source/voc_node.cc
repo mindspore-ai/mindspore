@@ -64,26 +64,24 @@ Status VOCNode::ValidateParams() {
   if (task_ == "Segmentation") {
     if (!class_index_.empty()) {
       std::string err_msg = "VOCNode: class_indexing is invalid in Segmentation task.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     Path imagesets_file = dir / "ImageSets" / "Segmentation" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
       std::string err_msg = "VOCNode: Invalid usage: " + usage_ + ", file does not exist";
       MS_LOG(ERROR) << "VOCNode: Invalid usage: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   } else if (task_ == "Detection") {
     Path imagesets_file = dir / "ImageSets" / "Main" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
       std::string err_msg = "VOCNode: Invalid usage: " + usage_ + ", file does not exist";
       MS_LOG(ERROR) << "VOCNode: Invalid usage: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   } else {
     std::string err_msg = "VOCNode: Invalid task: " + task_;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();

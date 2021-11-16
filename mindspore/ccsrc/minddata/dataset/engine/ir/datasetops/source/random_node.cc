@@ -44,8 +44,7 @@ Status RandomNode::ValidateParams() {
   if (total_rows_ < 0) {
     std::string err_msg =
       "RandomNode: total_rows must be greater than or equal 0, now get " + std::to_string(total_rows_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (!columns_list_.empty()) {

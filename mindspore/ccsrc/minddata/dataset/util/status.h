@@ -75,8 +75,9 @@ namespace dataset {
     }                                 \
   } while (false)
 
-#define RETURN_STATUS_SYNTAX_ERROR(_e)                                 \
+#define LOG_AND_RETURN_STATUS_SYNTAX_ERROR(_e)                         \
   do {                                                                 \
+    MS_LOG(ERROR) << _e;                                               \
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
   } while (false)
 

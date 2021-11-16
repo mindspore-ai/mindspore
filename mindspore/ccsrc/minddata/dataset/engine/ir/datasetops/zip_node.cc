@@ -41,14 +41,12 @@ Status ZipNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (children_.size() < kMinChildrenSize) {
     std::string err_msg = "ZipNode: input datasets are not specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (find(children_.begin(), children_.end(), nullptr) != children_.end()) {
     std::string err_msg = "ZipNode: input datasets should not be null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
