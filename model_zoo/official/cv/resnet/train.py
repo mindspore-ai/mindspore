@@ -177,7 +177,7 @@ def set_parameter():
                                               gradients_mean=True)
             set_algo_parameters(elementwise_op_strategy_follow=True)
             if config.net_name == "resnet50" or config.net_name == "se-resnet50":
-                if config.boost_mode not in ["O1", "O2"]:
+                if config.acc_mode not in ["O1", "O2"]:
                     context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             elif config.net_name == "resnet101":
                 context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
@@ -293,7 +293,7 @@ def init_group_prams(net):
     group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
-    if config.boost_mode in ["O1", "O2"]:
+    if config.acc_mode in ["O1", "O2"]:
         group_params = acc_group_params_generator(net, config.weight_decay)
     return group_params
 
@@ -358,7 +358,7 @@ def train_net():
         model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network)
     else:
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics=metrics,
-                      amp_level="O2", boost_level=config.boost_mode, keep_batchnorm_fp32=False,
+                      amp_level="O2", acc_level=config.acc_mode, keep_batchnorm_fp32=False,
                       eval_network=dist_eval_network)
 
     if config.optimizer == "Thor" and config.dataset == "imagenet2012":
