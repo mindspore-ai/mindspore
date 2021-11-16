@@ -70,8 +70,7 @@ Status BasicTokenizerOperation::ValidateParams() {
       normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
       normalize_form_ != NormalizeForm::kNfkd) {
     std::string err_msg = "BasicTokenizer: Invalid NormalizeForm, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -103,23 +102,20 @@ BertTokenizerOperation::~BertTokenizerOperation() = default;
 Status BertTokenizerOperation::ValidateParams() {
   if (vocab_ == nullptr) {
     std::string err_msg = "BertTokenizer: vocab object type is incorrect or null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (normalize_form_ != NormalizeForm::kNone && normalize_form_ != NormalizeForm::kNfc &&
       normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
       normalize_form_ != NormalizeForm::kNfkd) {
     std::string err_msg = "BertTokenizer: Invalid NormalizeForm, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (max_bytes_per_token_ < 0) {
     std::string err_msg = "BertTokenizer : The parameter max_bytes_per_token must be greater than or equal to 0: " +
                           std::to_string(max_bytes_per_token_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -149,20 +145,17 @@ JiebaTokenizerOperation::JiebaTokenizerOperation(const std::string &hmm_path, co
 Status JiebaTokenizerOperation::ValidateParams() {
   if (hmm_path_.empty()) {
     std::string err_msg = "JiebaTokenizer: The dict of HMMSegment in cppjieba is not provided.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (mp_path_.empty()) {
     std::string err_msg = "JiebaTokenizer: The dict of MPSegment in cppjieba is not provided.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (mode_ != JiebaMode::kMix && mode_ != JiebaMode::kMp && mode_ != JiebaMode::kHmm) {
     std::string err_msg = "JiebaTokenizer: Invalid JiebaMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateTokenizerDirParam("JiebaTokenizer", hmm_path_));
@@ -208,23 +201,20 @@ LookupOperation::~LookupOperation() = default;
 Status LookupOperation::ValidateParams() {
   if (vocab_ == nullptr) {
     std::string err_msg = "Lookup: vocab object type is incorrect or null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (unknown_token_ != std::nullopt) {
     default_id_ = vocab_->Lookup(*unknown_token_);
     if (default_id_ == Vocab::kNoTokenExists) {
       std::string err_msg = "Lookup: \"" + *unknown_token_ + "\" doesn't exist in vocab.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
 
   if (!data_type_.IsNumeric()) {
     // Note: For DEType, Bool is counted as numeric, and is a valid type for Lookup
     std::string err_msg = "Lookup : The parameter data_type must be numeric including bool.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -243,15 +233,13 @@ NgramOperation::NgramOperation(const std::vector<int32_t> &ngrams, const std::pa
 Status NgramOperation::ValidateParams() {
   if (ngrams_.size() == 0) {
     std::string err_msg = "Ngram : Container cannot be empty.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   } else {
     for (int32_t i = 0; i < ngrams_.size(); ++i) {
       if (ngrams_[i] <= 0) {
         std::string err_msg =
           "Ngram : The value of ngrams vector must be greater than 0: " + std::to_string(ngrams_[i]);
-        MS_LOG(ERROR) << err_msg;
-        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
       }
     }
   }
@@ -260,16 +248,14 @@ Status NgramOperation::ValidateParams() {
     std::string err_msg =
       "Ngram : The second parameter pad_width in left_pad vector must be greater than or equal to 0: " +
       std::to_string(left_pad_.second);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (right_pad_.second < 0) {
     std::string err_msg =
       "Ngram : The second parameter pad_width in right_pad vector must be greater than or equal to 0: " +
       std::to_string(right_pad_.second);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -292,8 +278,7 @@ Status NormalizeUTF8Operation::ValidateParams() {
       normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
       normalize_form_ != NormalizeForm::kNfkd) {
     std::string err_msg = "NormalizeUTF8: Invalid NormalizeForm, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -342,14 +327,12 @@ SentencePieceTokenizerOperation::SentencePieceTokenizerOperation(const std::stri
 Status SentencePieceTokenizerOperation::ValidateParams() {
   if (out_type_ != SPieceTokenizerOutType::kString && out_type_ != SPieceTokenizerOutType::kInt) {
     std::string err_msg = "SentencePieceTokenizer: Invalid SPieceTokenizerOutType, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (load_type_ == SPieceTokenizerLoadType::kModel) {
     if (vocab_ == nullptr) {
       std::string err_msg = "SentencePieceTokenizer: vocab object type is incorrect or null.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   } else {
     std::string real_vocab_path;
@@ -357,13 +340,11 @@ Status SentencePieceTokenizerOperation::ValidateParams() {
     Path vocab_file(real_vocab_path);
     if (!vocab_file.Exists() || vocab_file.IsDirectory()) {
       std::string err_msg = "SentencePieceTokenizer : vocab file: [" + vocab_path_ + "] is invalid or does not exist.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (access(vocab_file.ToString().c_str(), R_OK) == -1) {
       std::string err_msg = "SentencePieceTokenizer : no access to specified dataset file: " + vocab_path_;
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   return Status::OK();
@@ -389,8 +370,7 @@ Status SlidingWindowOperation::ValidateParams() {
   if (width_ < 1) {
     std::string err_msg =
       "SlidingWindow : The parameter width must be greater than or equal to 1: " + std::to_string(width_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -415,8 +395,7 @@ Status ToNumberOperation::ValidateParams() {
   if (!data_type_.IsNumeric() || data_type_.IsBool()) {
     // Note: For DEType, Bool is counted as numeric, but is not a valid type for ToNumber.
     std::string err_msg = "ToNumber : The parameter data_type must be numeric and excludes bool.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -448,8 +427,7 @@ Status TruncateSequencePairOperation::ValidateParams() {
   if (max_length_ < 0) {
     std::string err_msg = "TruncateSequencePair : The parameter max_length must be greater than or equal to 0: " +
                           std::to_string(max_length_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -484,15 +462,13 @@ WordpieceTokenizerOperation::WordpieceTokenizerOperation(const std::shared_ptr<V
 Status WordpieceTokenizerOperation::ValidateParams() {
   if (vocab_ == nullptr) {
     std::string err_msg = "WordpieceTokenizer: vocab object type is incorrect or null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (max_bytes_per_token_ < 0) {
     std::string err_msg =
       "WordpieceTokenizer : The parameter max_bytes_per_token must be greater than or equal to 0: " +
       std::to_string(max_bytes_per_token_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

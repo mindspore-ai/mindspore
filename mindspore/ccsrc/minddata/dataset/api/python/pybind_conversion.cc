@@ -244,8 +244,8 @@ Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_samp
       } else if (py::isinstance<py::str>(padded_sample[key])) {
         obj_json = padded_sample[key].cast<std::string>();  // also catch py::bytes
       } else {
-        MS_LOG(ERROR) << "Python object convert to json failed: " << py::cast<std::string>(padded_sample[key]);
-        RETURN_STATUS_SYNTAX_ERROR("Python object convert to json failed");
+        std::string err_msg = "Python object convert to json failed: " + py::cast<std::string>(padded_sample[key]);
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
       }
       (*padded_sample_json)[py::str(key).cast<std::string>()] = obj_json;
     }

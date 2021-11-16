@@ -83,21 +83,18 @@ ConcatenateOperation::ConcatenateOperation(int8_t axis, const std::shared_ptr<Te
 Status ConcatenateOperation::ValidateParams() {
   if (axis_ != 0 && axis_ != -1) {
     std::string err_msg = "Concatenate: Only 1D concatenation supported.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (prepend_) {
     if (prepend_->shape().Size() != 1) {
       std::string err_msg = "Concatenate: Can only prepend 1D arrays.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   if (append_) {
     if (append_->shape().Size() != 1) {
       std::string err_msg = "Concatenate: Can only append 1D arrays.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   return Status::OK();
@@ -121,8 +118,7 @@ FillOperation::FillOperation(const std::shared_ptr<Tensor> &fill_value) : fill_v
 Status FillOperation::ValidateParams() {
   if (fill_value_->shape() != TensorShape::CreateScalar()) {
     std::string err_msg = "Fill: fill_value is not a scalar tensor.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -149,8 +145,7 @@ MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &con
 Status MaskOperation::ValidateParams() {
   if (!dtype_.IsBool() && !dtype_.IsFloat() && !dtype_.IsInt()) {
     std::string err_msg = "Mask: Only supports bool or numeric datatype for generated mask type.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -164,8 +159,7 @@ OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes
 Status OneHotOperation::ValidateParams() {
   if (num_classes_ <= 0) {
     std::string err_msg = "OneHot: Number of classes must be greater than 0, but got: " + std::to_string(num_classes_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();
@@ -272,8 +266,7 @@ TypeCastOperation::TypeCastOperation(const std::string &data_type) {
 Status TypeCastOperation::ValidateParams() {
   if (data_type_ == DataType::DE_UNKNOWN) {
     std::string err_msg = "TypeCast: Invalid data type";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -304,7 +297,7 @@ Status PluginOperation::ValidateParams() {
   err_msg += lib_path_.empty() ? "lib_path is empty, please specify a path to .so file. " : "";
   err_msg += func_name_.empty() ? "func_name_ is empty, please specify function name to load." : "";
   if (!err_msg.empty()) {
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

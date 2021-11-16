@@ -40,8 +40,7 @@ Status NormalizePadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorMeanStd("NormalizePad", mean_, std_));
   if (dtype_ != "float32" && dtype_ != "float16") {
     std::string err_msg = "NormalizePad: dtype must be float32 or float16, but got: " + dtype_;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

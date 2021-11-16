@@ -37,8 +37,7 @@ std::string RescaleOperation::Name() const { return kRescaleOperation; }
 Status RescaleOperation::ValidateParams() {
   if (rescale_ < 0) {
     std::string err_msg = "Rescale: rescale must be greater than or equal to 0, got: " + std::to_string(rescale_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

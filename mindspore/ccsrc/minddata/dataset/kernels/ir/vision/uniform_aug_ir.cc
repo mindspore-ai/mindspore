@@ -43,8 +43,7 @@ Status UniformAugOperation::ValidateParams() {
   if (num_ops_ > transforms_.size()) {
     std::string err_msg =
       "UniformAug: num_ops must be less than or equal to transforms size, but got: " + std::to_string(num_ops_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // num_ops
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("UniformAug", "num_ops", num_ops_));

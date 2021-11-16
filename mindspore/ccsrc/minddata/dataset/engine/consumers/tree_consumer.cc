@@ -278,35 +278,29 @@ Status ToDevice::Terminate() {
 Status SaveToDisk::ValidateParams() {
   if (dataset_path_.empty()) {
     std::string err = "SaveToDisk failed, dataset_path must not be empty";
-    MS_LOG(ERROR) << err;
-    RETURN_STATUS_SYNTAX_ERROR(err);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err);
   }
   Path dir(dataset_path_);
   if (dir.IsDirectory()) {
     std::string err = "SaveToDisk failed, dataset_path must not be a directory";
-    MS_LOG(ERROR) << err;
-    RETURN_STATUS_SYNTAX_ERROR(err);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err);
   }
   std::string real_path;
   if (Path::RealPath(dir.ParentPath(), real_path).IsError()) {
     std::string err_msg = "SaveToDisk failed, can not get real dataset path: " + dir.ParentPath();
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (access(dir.ParentPath().c_str(), R_OK) == -1) {
     std::string err_msg = "SaveToDisk failed, no access to specified dataset path: " + dataset_path_;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (num_files_ <= 0 || num_files_ > 1000) {
     std::string err = "SaveToDisk failed, num_files must between 1 and 1000, but got " + std::to_string(num_files_);
-    MS_LOG(ERROR) << err;
-    RETURN_STATUS_SYNTAX_ERROR(err);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err);
   }
   if (dataset_type_ != "mindrecord") {
     std::string err = "SaveToDisk failed, only \"mindrecord\" dataset format is supported, but got " + dataset_type_;
-    MS_LOG(ERROR) << err;
-    RETURN_STATUS_SYNTAX_ERROR(err);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err);
   }
   return Status::OK();
 }

@@ -34,8 +34,7 @@ Status ResizePreserveAROperation::ValidateParams() {
   if (img_orientation_ < 1 || img_orientation_ > 8) {
     std::string err_msg =
       "ResizePreserveAR: img_orientation must be in range of [1, 8], got: " + std::to_string(img_orientation_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

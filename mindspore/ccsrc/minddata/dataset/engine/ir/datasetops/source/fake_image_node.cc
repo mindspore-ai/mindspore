@@ -52,29 +52,25 @@ Status FakeImageNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetSampler("FakeImageNode", sampler_));
   if (num_images_ <= 0) {
     std::string err_msg = "FakeImageNode: num_images must be greater than 0, but got: " + std::to_string(num_images_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (image_size_.size() != 3) {
     std::string err_msg =
       "FakeImageNode: image_size expecting size 3, but got image_size.size(): " + std::to_string(image_size_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   for (auto i = 0; i < 3; i++) {
     if (image_size_[i] <= 0) {
       std::string err_msg = "FakeImageNode: image_size[" + std::to_string(i) +
                             "] must be greater than 0, but got: " + std::to_string(image_size_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   if (num_classes_ <= 0) {
     std::string err_msg = "FakeImageNode: num_classes must be greater than 0, but got: " + std::to_string(num_classes_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

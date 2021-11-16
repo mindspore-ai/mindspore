@@ -79,15 +79,13 @@ Status MindDataNode::ValidateParams() {
     std::string err_msg =
       "MindDataNode: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
       std::to_string(dataset_file_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (shuffle_mode_ != ShuffleMode::kFalse && shuffle_mode_ != ShuffleMode::kFiles &&
       shuffle_mode_ != ShuffleMode::kGlobal && shuffle_mode_ != ShuffleMode::kInfile) {
     std::string err_msg = "MindDataNode: Invalid ShuffleMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::vector<std::string> dataset_file_vec =
@@ -104,27 +102,24 @@ Status MindDataNode::ValidateParams() {
     if (num_padded_ < 0 || num_padded_ > INT_MAX) {
       std::string err_msg =
         "MindDataNode: num_padded must to be between 0 and INT32_MAX, but got: " + std::to_string(num_padded_);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (columns_list_.empty()) {
       std::string err_msg = "MindDataNode: padded_sample is specified and requires columns_list as well";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     for (std::string &column : columns_list_) {
       if (padded_sample_.find(column) == padded_sample_.end()) {
         std::string err_msg = "MindDataNode: " + column + " in columns_list does not match any column in padded_sample";
         MS_LOG(ERROR) << err_msg << ", padded_sample: " << padded_sample_;
-        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+        return Status(StatusCode::kMDSyntaxError, err_msg);
       }
     }
   }
   if (num_padded_ > 0) {
     if (padded_sample_ == nullptr) {
       std::string err_msg = "MindDataNode: num_padded is specified but padded_sample is not";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
 
@@ -140,8 +135,7 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
     std::string err_msg =
       "MindDataNode: Unsupported sampler is supplied for MindDataset. Supported sampler list: "
       "SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler and DistributedSampler";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   std::stack<std::shared_ptr<mindrecord::ShardOperator>> stack_ops;
   while (op != nullptr) {
@@ -153,8 +147,7 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
         (op->GetShuffleMode() == ShuffleMode::kFiles || op->GetShuffleMode() == ShuffleMode::kInfile)) {
       std::string err_msg =
         "MindDataNode: Shuffle.FILES or Shuffle.INFILE and num_samples cannot be specified at the same time.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
 
     auto distributed_sampler_op = std::dynamic_pointer_cast<mindrecord::ShardDistributedSample>(op);

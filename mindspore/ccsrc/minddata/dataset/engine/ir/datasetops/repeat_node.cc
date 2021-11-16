@@ -62,8 +62,7 @@ Status RepeatNode::ValidateParams() {
   if (repeat_count_ <= 0 && repeat_count_ != -1) {
     std::string err_msg = "RepeatNode: repeat_count should be either -1 or positive integer, repeat_count_: " +
                           std::to_string(repeat_count_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   return Status::OK();

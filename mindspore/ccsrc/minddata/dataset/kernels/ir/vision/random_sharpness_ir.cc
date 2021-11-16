@@ -44,12 +44,12 @@ Status RandomSharpnessOperation::ValidateParams() {
     std::string err_msg = "RandomSharpness: degrees must be a vector of two values and greater than or equal to 0.";
     MS_LOG(ERROR) << "RandomSharpness: degrees must be a vector of two values and greater than or equal to 0, got: "
                   << degrees_;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (degrees_[dimension_one] < degrees_[dimension_zero]) {
     std::string err_msg = "RandomSharpness: degrees must be in the format of (min, max).";
     MS_LOG(ERROR) << "RandomSharpness: degrees must be in the format of (min, max), got: " << degrees_;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

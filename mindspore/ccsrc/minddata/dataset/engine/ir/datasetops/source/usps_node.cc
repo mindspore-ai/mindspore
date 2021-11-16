@@ -61,8 +61,7 @@ Status USPSNode::ValidateParams() {
 
   if (num_samples_ < 0) {
     std::string err_msg = "USPSNode: Invalid number of samples: " + std::to_string(num_samples_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("USPSNode", num_shards_, shard_id_));

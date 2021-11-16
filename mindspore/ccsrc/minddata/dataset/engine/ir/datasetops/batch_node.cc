@@ -73,21 +73,18 @@ Status BatchNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (batch_size_ <= 0) {
     std::string err_msg = "BatchNode: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
 #ifdef ENABLE_PYTHON
   if (batch_map_func_ && pad_) {
     std::string err_msg = "BatchNode: per_batch_map and pad should not be used at the same time.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (batch_map_func_ && in_col_names_.empty()) {
     std::string err_msg = "BatchNode: in_col_names cannot be empty when per_batch_map is used.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 #endif
   return Status::OK();

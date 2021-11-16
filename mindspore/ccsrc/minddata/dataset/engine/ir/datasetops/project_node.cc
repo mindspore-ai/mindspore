@@ -43,8 +43,7 @@ Status ProjectNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (columns_.empty()) {
     std::string err_msg = "ProjectNode: No columns are specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetColumnParam("ProjectNode", "columns", columns_));

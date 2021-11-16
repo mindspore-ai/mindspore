@@ -67,22 +67,19 @@ Status DIV2KNode::ValidateParams() {
   auto s_it = scale_arr.find(scale_);
   if (s_it == scale_arr.end()) {
     std::string err_msg = "DIV2KNode: " + std::to_string(scale_) + " does not match any mode in [2, 3, 4, 8].";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (scale_ == 8 && downgrade_ != "bicubic") {
     std::string err_msg = "DIV2KNode: scale equal to 8 is allowed only in bicubic downgrade.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::set<std::string> downgrade_2018 = {"mild", "difficult", "wild"};
   auto it = downgrade_2018.find(downgrade_);
   if (it != downgrade_2018.end() && scale_ != 4) {
     std::string err_msg = "DIV2KNode: " + downgrade_ + " downgrade requires scale equal to 4.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

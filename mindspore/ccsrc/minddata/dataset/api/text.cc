@@ -144,13 +144,11 @@ std::shared_ptr<TensorOperation> JiebaTokenizer::Parse() {
 Status JiebaTokenizer::AddWordChar(const std::vector<char> &word, int64_t freq) {
   if (word.empty()) {
     std::string err_msg = "JiebaTokenizer : The parameter word is empty or not provided.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (freq < 0) {
     std::string err_msg = "JiebaTokenizer : The parameter freq must be greater than or equal to 0.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   (void)data_->words_list_.emplace_back(CharToString(word), freq);
   return Status::OK();
@@ -174,15 +172,14 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
                                   std::vector<std::pair<std::string, int64_t>> *const user_dict) {
   auto realpath = FileUtils::GetRealPath(file_path.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
-    RETURN_STATUS_SYNTAX_ERROR("Get real path failed, path=" + file_path);
+    std::string err_msg = "Get real path failed, path: " + file_path;
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::ifstream ifs(realpath.value());
   if (!ifs) {
     std::string err_msg = "JiebaTokenizer : Fail to load dictionary from the input file, check the file path.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::string line;

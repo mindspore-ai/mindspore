@@ -66,29 +66,25 @@ Status BuildSentenceVocabNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (vocab_ == nullptr) {
     std::string err_msg = "BuildSentenceVocabNode: vocab is null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (model_type_ != SentencePieceModel::kUnigram && model_type_ != SentencePieceModel::kBpe &&
       model_type_ != SentencePieceModel::kChar && model_type_ != SentencePieceModel::kWord) {
     std::string err_msg = "BuildSentenceVocabNode: Invalid SentencePieceModel, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (vocab_size_ <= 0) {
     std::string err_msg =
       "BuildSentenceVocabNode: vocab_size should be positive, but got: " + std::to_string(vocab_size_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (character_coverage_ < 0.98f || character_coverage_ > 1.0f) {
     std::string err_msg = "BuildSentenceVocabNode: character_coverage should to be between 0.98 and 1.0, but got " +
                           std::to_string(character_coverage_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (!col_names_.empty()) {

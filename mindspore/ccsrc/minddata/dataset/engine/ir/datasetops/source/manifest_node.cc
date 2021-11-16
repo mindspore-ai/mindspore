@@ -66,21 +66,18 @@ Status ManifestNode::ValidateParams() {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
     if (p != forbidden_symbols.end()) {
       std::string err_msg = "ManifestNode: filename should not contain :*?\"<>|`&;\'";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
 
   Path manifest_file(dataset_file_);
   if (!manifest_file.Exists()) {
     std::string err_msg = "ManifestNode: dataset file: [" + dataset_file_ + "] is invalid or not exist";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (access(dataset_file_.c_str(), R_OK) == -1) {
     std::string err_msg = "ManifestNode: No access to specified annotation file: " + dataset_file_;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestNode", sampler_));

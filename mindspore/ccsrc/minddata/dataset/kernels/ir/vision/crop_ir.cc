@@ -37,8 +37,7 @@ Status CropOperation::ValidateParams() {
   constexpr size_t size_two = 2;
   if (coordinates_.size() != size_two) {
     std::string err_msg = "Crop: coordinates must be a vector of two values";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   RETURN_IF_NOT_OK(ValidateVectorNonNegative("Crop", "coordinates", coordinates_));
   return Status::OK();

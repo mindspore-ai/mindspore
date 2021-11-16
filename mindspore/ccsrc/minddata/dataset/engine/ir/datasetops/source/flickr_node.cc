@@ -63,8 +63,7 @@ Status FlickrNode::ValidateParams() {
 
   if (annotation_file_.empty()) {
     std::string err_msg = "FlickrNode: annotation_file is not specified.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::vector<char> forbidden_symbols = {':', '*', '?', '"', '<', '>', '|', '`', '&', '\'', ';'};
@@ -72,15 +71,13 @@ Status FlickrNode::ValidateParams() {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
     if (p != forbidden_symbols.end()) {
       std::string err_msg = "FlickrNode: annotation_file: [" + annotation_file_ + "] should not contain :*?\"<>|`&;\'.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   Path annotation_file(annotation_file_);
   if (!annotation_file.Exists()) {
     std::string err_msg = "FlickrNode: annotation_file: [" + annotation_file_ + "] is invalid or not exist.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("FlickrNode", sampler_));

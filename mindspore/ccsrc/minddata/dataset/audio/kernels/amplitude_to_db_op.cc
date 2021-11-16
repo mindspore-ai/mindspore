@@ -25,8 +25,7 @@ Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::share
   IO_CHECK(input, output);
   if (input->shape().Rank() < 2) {
     std::string err_msg = "AmplitudeToDB: input tensor is not in shape of <..., freq, time>.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::shared_ptr<Tensor> input_tensor;

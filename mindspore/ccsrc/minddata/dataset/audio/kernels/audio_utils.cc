@@ -59,8 +59,7 @@ Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   // check complex
   if (!input->IsComplex()) {
     std::string err_msg = "ComplexAngle: input tensor is not in shape of <..., 2>.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
@@ -91,8 +90,7 @@ Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
   // check complex
   if (!input->IsComplex()) {
     std::string err_msg = "ComplexAngle: input tensor is not in shape of <..., 2>.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
@@ -122,8 +120,7 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
   // check shape
   if (abs->shape() != angle->shape()) {
     std::string err_msg = "Polar: input tensor shape of abs and angle must be the same.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   TensorShape input_shape = abs->shape();

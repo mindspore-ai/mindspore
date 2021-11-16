@@ -42,8 +42,7 @@ Status ResizeWithBBoxOperation::ValidateParams() {
       interpolation_ != InterpolationMode::kCubic && interpolation_ != InterpolationMode::kArea &&
       interpolation_ != InterpolationMode::kCubicPil) {
     std::string err_msg = "ResizeWithBBox: Invalid InterpolationMode, check input value of enum.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

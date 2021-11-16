@@ -49,16 +49,14 @@ Status RotateOperation::ValidateParams() {
   if (center_.size() != 0 && center_.size() != 2) {
     std::string err_msg =
       "Rotate: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Rotate", fill_value_));
 #else
   if (angle_id_ < 1 || angle_id_ > 8) {
     std::string err_msg = "Rotate: angle_id must be in range of [1, 8], got: " + std::to_string(angle_id_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 #endif
   return Status::OK();

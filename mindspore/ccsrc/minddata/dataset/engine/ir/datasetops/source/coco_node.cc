@@ -60,13 +60,11 @@ Status CocoNode::ValidateParams() {
   Path annotation_file(annotation_file_);
   if (!annotation_file.Exists()) {
     std::string err_msg = "CocoNode: annotation_file is invalid or does not exist.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (access(annotation_file_.c_str(), R_OK) == -1) {
     std::string err_msg = "CocoNode: No access to specified annotation file: " + annotation_file_;
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   RETURN_IF_NOT_OK(ValidateStringValue("CocoNode", task_, {"Detection", "Stuff", "Panoptic", "Keypoint"}));

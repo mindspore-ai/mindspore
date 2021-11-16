@@ -40,21 +40,18 @@ std::string RandomSelectSubpolicyOperation::Name() const { return kRandomSelectS
 Status RandomSelectSubpolicyOperation::ValidateParams() {
   if (policy_.empty()) {
     std::string err_msg = "RandomSelectSubpolicy: policy must not be empty";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (int32_t i = 0; i < policy_.size(); i++) {
     if (policy_[i].empty()) {
       std::string err_msg = "RandomSelectSubpolicy: policy[" + std::to_string(i) + "] must not be empty";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     for (int32_t j = 0; j < policy_[i].size(); j++) {
       if (policy_[i][j].first == nullptr) {
         std::string transform_pos = "[" + std::to_string(i) + "]" + "[" + std::to_string(j) + "]";
         std::string err_msg = "RandomSelectSubpolicy: transform in policy" + transform_pos + " must not be null";
-        MS_LOG(ERROR) << err_msg;
-        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
       } else {
         RETURN_IF_NOT_OK(policy_[i][j].first->ValidateParams());
       }
@@ -62,8 +59,7 @@ Status RandomSelectSubpolicyOperation::ValidateParams() {
         std::string transform_pos = "[" + std::to_string(i) + "]" + "[" + std::to_string(j) + "]";
         std::string err_msg = "RandomSelectSubpolicy: probability of transform in policy" + transform_pos +
                               " must be between 0.0 and 1.0, got: " + std::to_string(policy_[i][j].second);
-        MS_LOG(ERROR) << err_msg;
-        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+        LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
       }
     }
   }

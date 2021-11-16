@@ -37,8 +37,7 @@ std::string ConvertColorOperation::Name() const { return kConvertColorOperation;
 Status ConvertColorOperation::ValidateParams() {
   if (convert_mode_ < ConvertMode::COLOR_BGR2BGRA || convert_mode_ > ConvertMode::COLOR_RGBA2GRAY) {
     std::string err_msg = "ConvertColorOperation: convert_mode must be in ConvertMode.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

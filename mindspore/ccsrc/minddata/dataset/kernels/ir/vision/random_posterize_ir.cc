@@ -45,27 +45,23 @@ Status RandomPosterizeOperation::ValidateParams() {
   if (bit_range_.size() != size_two) {
     std::string err_msg =
       "RandomPosterize: bit_range needs to be of size 2 but is of size: " + std::to_string(bit_range_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[dimension_zero] < kMinimumBitValue || bit_range_[dimension_zero] > kMaximumBitValue) {
     std::string err_msg =
       "RandomPosterize: min_bit value is out of range [1-8]: " + std::to_string(bit_range_[dimension_zero]);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[dimension_one] < kMinimumBitValue || bit_range_[dimension_one] > kMaximumBitValue) {
     std::string err_msg =
       "RandomPosterize: max_bit value is out of range [1-8]: " + std::to_string(bit_range_[dimension_one]);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[dimension_one] < bit_range_[dimension_zero]) {
     std::string err_msg =
       "RandomPosterize: max_bit value is less than min_bit: max =" + std::to_string(bit_range_[dimension_one]) +
       ", min = " + std::to_string(bit_range_[dimension_zero]);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
