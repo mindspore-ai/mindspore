@@ -589,8 +589,8 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
 
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,
-                                        const ShapeVector &host_shape, TypeId host_type, size_t slot,
-                                        bool keep_prev) const {
+                                        const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
+                                        uint32_t root_graph_id) const {
   bool ret = false;
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
@@ -619,6 +619,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetByteSize(LongToSize(out_tensor->data().nbytes()));
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
+  tensor_data->SetRootGraphId(root_graph_id);
   ret = debugger->LoadNewTensor(tensor_data, keep_prev);
   return ret;
 }

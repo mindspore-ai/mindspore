@@ -324,6 +324,7 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
   auto backend_node = graph->output();
   MS_EXCEPTION_IF_NULL(backend_node);
   graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
+  graph->set_root_graph_id(graph_id);
 
   return graph_id;
 }

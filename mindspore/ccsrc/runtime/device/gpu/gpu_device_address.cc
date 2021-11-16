@@ -141,8 +141,8 @@ GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
 
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                                     const ShapeVector &host_shape, TypeId host_type, size_t slot,
-                                     bool keep_prev) const {
+                                     const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
+                                     uint32_t root_graph_id) const {
   bool ret = false;
   if (size_ == 0) {
     return true;
@@ -171,6 +171,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   tensor_data->SetByteSize(out_tensor->data().nbytes());
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
+  tensor_data->SetRootGraphId(root_graph_id);
   ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   return ret;

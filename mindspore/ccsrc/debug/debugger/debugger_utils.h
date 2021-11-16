@@ -26,9 +26,11 @@ namespace mindspore {
 
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+                uint32_t root_graph_id);
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+                 uint32_t root_graph_id);
 
 bool CheckReadData(const CNodePtr &cnode);
 

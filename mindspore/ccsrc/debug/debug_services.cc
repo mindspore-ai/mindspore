@@ -335,7 +335,41 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
 }
 #endif
 
+#ifdef ONLINE_DBG_MODE
+bool DebugServices::CompareCurrentRootGraph(uint32_t id) {
+  auto debugger = Debugger::GetInstance();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto cur_root_graph_id = debugger->GetCurrentRootGraphId();
+  if ((device_target == kGPUDevice && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) ||
+      device_target == kAscendDevice) {
+    if (cur_root_graph_id != id) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const void *DebugServices::PreparePrevTensor(uint32_t *prev_num_elements, const std::string &tensor_name) {
+  std::shared_ptr<TensorData> prev_tensor_data;
+  if (!CompareCurrentRootGraph(Debugger::GetInstance()->GetPrevRootGraphId())) {
+    // not supporting watchpoints that need prev tensor for multi root graph networks.
+    MS_LOG(DEBUG) << "Previous root graph is different from current root graph, setting prev_tensor to nullptr.";
+    prev_tensor_data = nullptr;
+  } else {
+    prev_tensor_data = tensor_loader_->GetPrevTensor(tensor_name);
+  }
+  if (prev_tensor_data) {
+    *prev_num_elements = prev_tensor_data->GetNumElements();
+    return prev_tensor_data->GetDataPtr();
+  }
+  return nullptr;
+}
+#endif
+
 void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_found) {
+  // check history error_code only for offline debugger
   if (history_not_found) {
     *error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
   }
@@ -401,13 +435,14 @@ void DebugServices::CheckWatchpointsForTensor(
     bool history_not_found = 0;
     previous_tensor_ptr = GetPrevTensor(tensor, previous_iter_tensor_needed, &prev_num_elements, &history_not_found);
 #else
-    std::shared_ptr<TensorData> prev_tensor_data = tensor_loader_->GetPrevTensor(tensor_name);
-    if (prev_tensor_data) {
-      previous_tensor_ptr = prev_tensor_data->GetDataPtr();
-      prev_num_elements = prev_tensor_data->GetNumElements();
+    if (!CompareCurrentRootGraph(tensor->GetRootGraphId())) {
+      MS_LOG(DEBUG)
+        << "Current root_graph_id is different from tensor's root_graph_id, skipping checkwatchpoints for tensor: "
+        << tensor->GetName();
+      continue;
     }
+    previous_tensor_ptr = PreparePrevTensor(&prev_num_elements, tensor_name);
 #endif
-
     std::unique_ptr<ITensorSummary> base_summary_ptr;
     if (!(watchpoints_to_check.size() == 1 && watchpoints_to_check[0].condition.type == IS_OVERFLOW)) {
       base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, num_elements, prev_num_elements, tensor_dtype);
@@ -440,7 +475,6 @@ void DebugServices::CheckWatchpointsForTensor(
           tensor->GetDeviceId(), tensor->GetRootGraphId(), parameter_list, error_code);
       }
     }
-
 #ifdef OFFLINE_DBG_MODE
     SetTensorToNotInUse(tensor, previous_tensor_ptr);
     // in offline mode remove the need for the data
@@ -448,6 +482,7 @@ void DebugServices::CheckWatchpointsForTensor(
 #endif
   }
 }
+
 void DebugServices::CheckWatchpoints(
   std::vector<std::string> *const name, std::vector<std::string> *const slot, std::vector<int> *const condition,
   std::vector<unsigned int> *const watchpoint_id, std::vector<std::vector<parameter_t>> *const parameters,
@@ -1362,6 +1397,14 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
     if (std::get<1>(result) == nullptr) {
       continue;
     }
+#ifdef ONLINE_DBG_MODE
+    if (!CompareCurrentRootGraph(std::get<1>(result)->GetRootGraphId())) {
+      MS_LOG(INFO) << "tensor root_graph_id: " << std::get<1>(result)->GetRootGraphId()
+                   << " is different from cur_root_graph_id: " << Debugger::GetInstance()->GetCurrentRootGraphId()
+                   << ".";
+      MS_LOG(INFO) << "Not reading tensor: " << std::get<0>(result) << ".";
+    }
+#endif
     (void)ret_name->emplace_back(std::get<0>(result));
     (void)data_ptr->emplace_back(reinterpret_cast<const char *>(std::get<1>(result)->GetDataPtr()));
     (void)data_size->emplace_back(std::get<1>(result)->GetByteSize());
