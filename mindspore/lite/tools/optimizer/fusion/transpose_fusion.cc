@@ -166,7 +166,7 @@ AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, con
   }
   std::vector<int> post_perm;
   if (GetTransposePerm(trans_cnode_2, &post_perm) != lite::RET_OK) {
-    MS_LOG(ERROR) << "get tanspose perm failed.";
+    MS_LOG(ERROR) << "get transpose perm failed.";
     return nullptr;
   }
   std::vector<int> pre_perm;
@@ -179,7 +179,7 @@ AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, con
     return nullptr;
   }
   if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
-    MS_LOG(ERROR) << "get tanspose perm failed.";
+    MS_LOG(ERROR) << "get transpose perm failed.";
     return nullptr;
   }
   if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
