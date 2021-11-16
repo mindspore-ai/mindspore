@@ -497,7 +497,7 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
         ClearOldTask();
         MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
                           << "\n except_msg : " << target_status.except_msg
-                          << "\n node trace: " << trace::DumpSourceLines(target_node);
+                          << "\n Trace: " << trace::DumpSourceLines(target_node);
       } else {
         MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
         (void)success_job->emplace_back(target_status.target_job_id);
@@ -537,6 +537,7 @@ void TbeKernelCompileManager::Query(const std::string &type) {
 }
 
 void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_list) {
+  MS_LOG(INFO) << "Gen kernel mod start!";
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetKernelMod(node) != nullptr) {
@@ -569,10 +570,12 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
   }
   ClearOldTask();
+  MS_LOG(INFO) << "Gen kernel mod end!";
 }
 
 void TbeKernelCompileManager::LoadPreBuildResult(const std::vector<CNodePtr> &nodes) {
   // save prebuild result as fusion_type, output_data_desc
+  MS_LOG(INFO) << "Start update fusion type after pre build";
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto full_name = node->fullname_with_scope();
@@ -583,6 +586,7 @@ void TbeKernelCompileManager::LoadPreBuildResult(const std::vector<CNodePtr> &no
     AnfAlgo::SetFusionType(node, fusion_type);
     AnfAlgo::SetOutputDataDesc(node, {output_data_desc});
   }
+  MS_LOG(INFO) << "End update fusion type after pre build";
 }
 
 void TbeKernelCompileManager::PrintInitResult(const nlohmann::json &json) {
@@ -598,21 +602,24 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
   MS_EXCEPTION_IF_NULL(node);
   auto job_type = GetJsonValue<std::string>(json, kJobType);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
-  if (json.at(kStatus) == kFailed) {
-    if (job_type == kCheckSupport) {
-      PrintProcessLog(json, WARNING);
-      MS_LOG(WARNING) << job_type << " running failed, op:" << json_name;
+  auto res = GetJsonValue<std::string>(json, kResult);
+  if (job_type == kCheckSupport) {
+    if (json.at(kStatus) == kFailed) {
+      auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
+      auto message = FilterExceptionMessage(all_logs);
+      MS_LOG(INFO) << json_name << " " << kCheckSupport << " failed.\nRes: " << message;
       return kFailed;
-    } else {
+    }
+    if (res != kFullySupported) {
+      PrintProcessLog(json, WARNING);
+    }
+  } else {
+    if (json.at(kStatus) == kFailed) {
       auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
       auto except_msg = FilterExceptionMessage(all_logs);
       MS_LOG(EXCEPTION) << job_type << " running failed, op: " << json_name << "\nexception message:" << except_msg
                         << "\ntrace: " << trace::DumpSourceLines(node);
     }
-  }
-  auto res = GetJsonValue<std::string>(json, kResult);
-  if (job_type == kCheckSupport && res != kFullySupported) {
-    PrintProcessLog(json, WARNING);
   }
   MS_LOG(DEBUG) << json_name << " " << job_type << " success, get: " << res;
   return res;
@@ -812,7 +819,7 @@ void TbeKernelCompileManager::TbeInitialize() {
 
   auto init_str = init_json.dump();
   MS_LOG(INFO) << "TbeInitialize json file : " << init_str;
-  TbeUtils::SaveJsonInfo(kInitialize, init_str);
+  TbeUtils::SaveJsonInfo(kInitialize, init_json.dump(indent));
   auto init_ret = DispatchCompileTask(init_json);
   auto json_ret = TurnStrToJson(init_ret);
   PrintInitResult(json_ret);

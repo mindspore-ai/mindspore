@@ -190,25 +190,24 @@ void TbeKernelSelect::GetReducePatternKernelInfo(const OpInfo &op_info) {
 
 void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
   if (kernel_info_list_->empty()) {
-    MS_LOG(INFO) << "Warning: get kernel build info failed. Op name: " << full_name_;
+    MS_LOG(INFO) << "Warning: get kernel build info failed. Skip check supported. Op name: " << full_name_;
     return;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
   auto dynamic_inputs = GetNodeDynamicInputs();
+  auto need_check_supported = op_info.need_check_supported();
   for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
     if (!FilterInVaildShape(iter, !dynamic_inputs.empty())) {
       continue;
     }
-    if (op_info.need_check_supported()) {
-      if (!TbeCheckSupported(iter)) {
-        continue;
-      }
+    if (need_check_supported && !TbeCheckSupported(iter)) {
+      continue;
     }
     kernel_info_list.emplace_back(*iter);
   }
   if (kernel_info_list.empty()) {
-    MS_LOG(WARNING) << "Tbe kernel info list is empty, all valid kernel info was filtered out. "
-                       "Check the input shape, attrs or other value of node : "
+    MS_LOG(WARNING) << "After tbe check supported, all valid AI CORE kernel infos were filtered out."
+                       "It will try to find in AI CPU kernel infos. Node:"
                     << full_name_;
   }
   (*kernel_info_list_) = kernel_info_list;
