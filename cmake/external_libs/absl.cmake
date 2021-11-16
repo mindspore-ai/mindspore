@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20200923.3.tar.gz")
-    set(MD5 "425588c377891eaf368cfad0ea934601")
+    set(MD5 "daba6e99c7a84e2242a0107bbd873669")
 else()
     set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20200923.3.tar.gz")
     set(MD5 "daba6e99c7a84e2242a0107bbd873669")
