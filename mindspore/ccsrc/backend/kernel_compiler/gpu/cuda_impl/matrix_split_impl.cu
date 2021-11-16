@@ -68,3 +68,5 @@ void MatrixSplit(const size_t size, const size_t split_dim, const size_t dim, T 
 template void MatrixSplit<float>(const size_t size, const size_t split_dim, const size_t dim, float *input_addr,
                                  float *output_addr, cudaStream_t cuda_stream);
 
+template void MatrixSplit<double>(const size_t size, const size_t split_dim, const size_t dim, double *input_addr,
+                                  double *output_addr, cudaStream_t cuda_stream);

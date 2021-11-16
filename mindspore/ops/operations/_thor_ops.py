@@ -708,8 +708,14 @@ class _Cholesky(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, split_dim=0):
+    def __init__(self, lower=False, clean=True, split_dim=0):
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.clean = validator.check_value_type("clean", clean, [bool], self.clean)
+        self.lower = lower
+        self.add_prim_attr('lower', self.lower)
+        self.clean = clean
+        self.add_prim_attr('clean', self.clean)
         self.split_dim = split_dim
         self.add_prim_attr('split_dim', self.split_dim)
 
@@ -729,7 +735,7 @@ class _Cholesky(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x1_dtype):
-        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32, mstype.float64], self.name)
         return x1_dtype
 
 

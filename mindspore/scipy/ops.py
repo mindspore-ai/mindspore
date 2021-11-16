@@ -96,3 +96,91 @@ class SolveTriangular(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid(x_dtype, [mstype.float32, mstype.float64],
                                            self.name, True)
         return x_dtype
+
+
+class Cholesky(PrimitiveWithInfer):
+    """
+    Inner API for _Cholesky base class.
+    """
+
+    @prim_attr_register
+    def __init__(self, lower=False, clean=True, split_dim=0):
+        super().__init__("Cholesky")
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.clean = validator.check_value_type("clean", clean, [bool], self.clean)
+        self.lower = lower
+        self.add_prim_attr('lower', self.lower)
+        self.clean = clean
+        self.add_prim_attr('clean', self.clean)
+        self.split_dim = split_dim
+        self.add_prim_attr('split_dim', self.split_dim)
+
+    def infer_shape(self, x1_shape):
+        if self.split_dim != 0:
+            height = x1_shape[0]
+            width = x1_shape[1]
+            if height <= self.split_dim:
+                out_shape = [1, height, width]
+            else:
+                batch = height // self.split_dim
+                if height != batch * self.split_dim:
+                    batch += 1
+                out_shape = [batch, self.split_dim, self.split_dim]
+        else:
+            out_shape = x1_shape
+        return out_shape
+
+    def infer_dtype(self, x1_dtype):
+        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32, mstype.float64], self.name)
+        return x1_dtype
+
+
+class CholeskySolver(PrimitiveWithInfer):
+    """Solve the linear equations A x = b, given the Cholesky factorization of A.
+
+    Parameters
+    ----------
+    lower : bool, optional
+        Whether to compute the upper or lower triangular Cholesky factorization
+        (Default: upper-triangular)
+    b : array
+        Right-hand side
+
+    Inputs:
+        - **A** (Tensor) - A matrix of shape :math:`(M, M)` to be decomposed.
+        - **b** (Tensor) - A tensor of shape :math:`(M,)` or :math:`(..., M)`.
+                           Right-hand side matrix in :math:`A x = b`.
+    Returns
+    -------
+    x : array
+        The solution to the system A x = b
+    Supported Platforms:
+        ``CPU`` ``GPU``
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.ops import CholeskySolver
+        >>> from mindspore.scipy.linalg import cho_factor
+
+        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]))
+        >>> b = Tensor(onp.array([1.0, 1.0, 1.0, 1.0], dtype=onp.dtype))
+        >>> c, lower = cho_factor(A)
+        >>> cholesky_solver = CholeskySolver(lower=lower)
+        >>> x = cholesky_solver(c, b)
+    """
+
+    @prim_attr_register
+    def __init__(self, lower=False):
+        super().__init__(name="CholeskySolver")
+        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.init_prim_io_names(inputs=['x', 'b'], outputs=['y'])
+
+    def __infer__(self, x, b):
+        b_shape = b['shape']
+        x_dtype = x['dtype']
+        return {
+            'shape': tuple(b_shape),
+            'dtype': x_dtype,
+            'value': None
+        }

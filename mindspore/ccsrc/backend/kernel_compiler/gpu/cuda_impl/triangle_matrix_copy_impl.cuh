@@ -23,9 +23,5 @@ void TriangleMatrixCopy(const T *input, T *output, cublasFillMode_t uplo, const 
                         const size_t m, cudaStream_t cuda_stream);
 
 template <typename T>
-void ScipyTriangleMatrixCopy(const T *input, T *output, cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                             const size_t m, cudaStream_t cuda_stream);
-
-template <typename T>
 void MatrixCopy(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TRIANGLEMATRIXCOPYIMPL_H_

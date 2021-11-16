@@ -37,3 +37,4 @@ void Eye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_
 }
 
 template void Eye<float>(const size_t size, const size_t dim, float *output_addr, cudaStream_t cuda_stream);
+template void Eye<double>(const size_t size, const size_t dim, double *output_addr, cudaStream_t cuda_stream);
