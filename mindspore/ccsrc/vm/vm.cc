@@ -22,6 +22,7 @@
 #include "vm/backend.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pybind_api/ir/base_ref_py.h"
+#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace compile {
@@ -469,8 +470,10 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
     tuple.push_back(Ref(index));
   }
 
-  if (prim->name() == "bprop_cut") {
-    auto outs = RunHook(prim, tuple);
+  if (prim->name() == kBpropCutOpName) {
+    auto py_prim = prim->cast<PrimitivePyPtr>();
+    MS_EXCEPTION_IF_NULL(py_prim);
+    auto outs = py_prim->RunHookFunction(tuple);
     Push(outs);
   } else {
     auto outs = RunOperation(prim, tuple);
@@ -491,12 +494,6 @@ void FinalVM::SyncData(const py::object &arg) {
     auto tensor = py::cast<tensor::TensorPtr>(arg);
     tensor->data_sync();
   }
-}
-
-BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
-  MS_LOG(DEBUG) << "Input for operation:";
-  MS_EXCEPTION_IF_NULL(prim);
-  return prim->RunHookFunction(args);
 }
 }  // namespace compile
 }  // namespace mindspore

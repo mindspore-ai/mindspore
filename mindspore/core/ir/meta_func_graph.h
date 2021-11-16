@@ -57,7 +57,7 @@ class MetaFuncGraph : public FuncGraphBase {
 
   // Generate a Graph for this type signature.
   virtual FuncGraphPtr GenerateFromTypes(const TypePtrList &) {
-    MS_LOG(EXCEPTION) << "Undefine the method of generating graph from types.";
+    MS_LOG(EXCEPTION) << "Undefined the method of generating graph from types.";
   }
 
   std::string name() { return name_; }

@@ -131,7 +131,8 @@ std::vector<TypePtr> StringToVectorOfType(const std::string &type_names) {
     end = type_names.find_first_of(',', start);
   }
   if (start >= type_names.size()) {
-    MS_LOG(EXCEPTION) << "Type name is empty string.";
+    MS_LOG(EXCEPTION) << "Expect type list format 'type1, type2, type3', but got '" << type_names
+                      << "' which has empty type.";
   }
   types.push_back(StringToType(type_names.substr(start)));
   return types;

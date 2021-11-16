@@ -652,7 +652,9 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, co
     VectorRef args;
     GetControlOpInput(graph_compiler, cnode, kernel, op_output_map, parameter_index, graph_inputs, input_tensor_info,
                       &args);
-    BaseRef out = prim->RunHookFunction(args);
+    auto py_prim = prim->cast<PrimitivePyPtr>();
+    MS_EXCEPTION_IF_NULL(py_prim);
+    BaseRef out = py_prim->RunHookFunction(args);
     // Convert pyobject output to tensor.
     if (utils::isa<PyObjectRef>(out)) {
       PyObjectRef py_ref = utils::cast<PyObjectRef>(out);

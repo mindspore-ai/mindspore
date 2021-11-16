@@ -119,7 +119,6 @@ class FinalVM {
   void InstSwitchReturn(const VectorRef &args);
   void InstSwitchLayer(const VectorRef &args);
   void set_insts(const InstSet &value) { insts_ = value; }
-  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &arg);
 
  protected:
   BaseRef Ref(int64_t i);
