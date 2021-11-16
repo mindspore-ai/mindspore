@@ -398,6 +398,23 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
     }
+  } else if (node_value->isa<BoolImm>()) {
+    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    if (device_tensor->GetPtr() != nullptr) {
+      return;
+    }
+
+    if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *device_context, node->fullname_with_scope(),
+                                                  device_tensor->GetSize());
+    }
+
+    auto value = GetValue<bool>(node_value);
+    if (!device_tensor->SyncHostToDevice({}, sizeof(bool), kNumberTypeBool, &value)) {
+      std::string error_info = "SyncHostToDevice failed, node name: " + node->DebugString();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 }
 

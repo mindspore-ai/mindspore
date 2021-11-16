@@ -79,14 +79,18 @@ void ExitActor::CopyDeviceAddress() {
   if (node_ != nullptr) {
     return;
   }
+  if (input_device_tensors_.size() != is_need_copy_device_tensors_.size()) {
+    MS_LOG(ERROR) << "Invalid input device tensor size:" << input_device_tensors_.size()
+                  << " need:" << is_need_copy_device_tensors_.size() << " for actor:" << GetAID();
+  }
+
   std::vector<DeviceTensor *> new_device_tensors;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto input_device_tensor = input_device_tensors_[i];
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
-    if (device_contexts_[i] == nullptr) {
-      // If device context is empty, it means that the input is from a parameter, need not to copy a new device tensor.
+    if (!is_need_copy_device_tensors_[i]) {
       new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }

@@ -206,7 +206,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   MS_EXCEPTION_IF_NULL(front_node);
 
   const auto &node_value = front_node->cast<ValueNodePtr>()->value();
-  if ((!node_value->isa<tensor::Tensor>()) && (!node_value->isa<ValueTuple>())) {
+  if ((!node_value->isa<tensor::Tensor>()) && (!node_value->isa<ValueTuple>()) && (!node_value->isa<BoolImm>())) {
     return;
   }
 
@@ -315,15 +315,15 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseFrontToBackendParameter(graphs, device_contexts);
 
+  FetchFrontToBackendKernel(graphs, device_contexts);
+
   FetchHostParameterToWeight();
 
   FetchCallInputKernelGraph(graphs, device_contexts);
 
-  FetchFrontValueNode(device_contexts[0]);
-
-  FetchFrontToBackendKernel(graphs, device_contexts);
-
   ParseDeviceContext(control_nodes, graphs, device_contexts, func_graph_to_kernel_graphs);
+
+  FetchFrontValueNode(device_contexts[0]);
 
   FetchControlNodeParameter(control_nodes);
 
@@ -447,6 +447,9 @@ void ControlNodeParser::ParseDeviceContextForPartialNode(const std::vector<AnfNo
 
     // Get the device contexts for the real parameters.
     std::vector<const DeviceContext *> device_contexts;
+    // In partial node, the first input is always a partial, maybe a funcgraph or a partial node, so we need
+    // to insert an empty device context for it.
+    device_contexts.emplace_back(nullptr);
     for (size_t i = 0; i < inputs.size() - kPartialInputStartPos; ++i) {
       if (i >= iter->second.size()) {
         MS_LOG(EXCEPTION) << "Invalid device context index:" << i << " for funcgraph:" << func_graph->ToString()
@@ -480,6 +483,9 @@ void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodeP
     }
 
     std::vector<const DeviceContext *> device_contexts;
+    // In call node, the first input is always a partial, maybe a funcgraph or a partial node, so we need
+    // to insert an empty device context for it.
+    device_contexts.emplace_back(nullptr);
     const auto &cnode = control_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     const auto &inputs = cnode->inputs();
@@ -503,6 +509,7 @@ void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodeP
 }
 
 void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *default_context) {
+  MS_EXCEPTION_IF_NULL(default_context);
   // Collect the call realationship between funcgraphs.
   FuncGraphCallRelation func_graph_call_relation;
   for (const auto &call_node_to_func_graphs : call_node_to_func_graphs_) {
