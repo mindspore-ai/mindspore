@@ -3,7 +3,7 @@ set(cppjieba_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/cppjieba/repository/archive/v5.0.3.tar.gz")
-    set(MD5 "82adcdc04ee1ea79e9fa119074120b60")
+    set(MD5 "06fcc22b4db6c332dc1b0bd353bdf6f2")
 else()
     set(REQ_URL "https://github.com/yanyiwu/cppjieba/archive/v5.0.3.tar.gz")
     set(MD5 "b8b3f7a73032c9ce9daafa4f67196c8c")
@@ -18,3 +18,4 @@ mindspore_add_pkg(cppjieba
 include_directories(${cppjieba_INC}include)
 include_directories(${cppjieba_INC}deps)
 add_library(mindspore::cppjieba ALIAS cppjieba)
+

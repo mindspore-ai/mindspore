@@ -17,7 +17,7 @@ set(tiff_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libtiff/repository/archive/v4.2.0.tar.gz")
-    set(MD5 "92ca290a13115e80f94528506c66af16")
+    set(MD5 "1b8f32e39940ffbdac3638f7081ba9e0")
 else()
     set(REQ_URL "http://download.osgeo.org/libtiff/tiff-4.2.0.tar.gz")
     set(MD5 "2bbf6db1ddc4a59c89d6986b368fc063")
