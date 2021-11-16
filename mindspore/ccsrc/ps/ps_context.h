@@ -37,6 +37,7 @@ constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
 constexpr char kDPEncryptType[] = "DP_ENCRYPT";
 constexpr char kPWEncryptType[] = "PW_ENCRYPT";
+constexpr char kStablePWEncryptType[] = "STABLE_PW_ENCRYPT";
 constexpr char kNotEncryptType[] = "NOT_ENCRYPT";
 
 // Use binary data to represent federated learning server's context so that we can judge which round resets the

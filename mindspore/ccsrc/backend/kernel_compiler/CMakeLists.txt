@@ -60,6 +60,8 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/start_fl_job_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/update_model_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/push_metrics_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/get_keys_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/exchange_keys_kernel.cc")
 endif()
 
 if(ENABLE_SECURITY)

@@ -88,6 +88,12 @@ class DistributedMetadataStore {
   // Do updating metadata in the server where the metadata for the name is stored.
   bool DoUpdateMetadata(const std::string &name, const PBMetadata &meta);
 
+  // Update client keys stored in server
+  bool UpdatePairClientKeys(const std::string &name, const PBMetadata &meta);
+
+  // Update client shares stored in server
+  bool UpdatePairClientShares(const std::string &name, const PBMetadata &meta);
+
   // Members for the communication between servers.
   std::shared_ptr<ps::core::ServerNode> server_node_;
   std::shared_ptr<ps::core::TcpCommunicator> communicator_;

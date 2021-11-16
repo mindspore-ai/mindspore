@@ -58,6 +58,7 @@ parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
+parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--dataset_path", type=str, default="")
 # The user_id is used to set each worker's dataset path.
 parser.add_argument("--user_id", type=str, default="0")
@@ -87,6 +88,7 @@ worker_step_num_per_iteration = args.worker_step_num_per_iteration
 scheduler_manage_port = args.scheduler_manage_port
 config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
+cipher_time_window = args.cipher_time_window
 dataset_path = args.dataset_path
 user_id = args.user_id
 
@@ -111,7 +113,8 @@ ctx = {
     "worker_step_num_per_iteration": worker_step_num_per_iteration,
     "scheduler_manage_port": scheduler_manage_port,
     "config_file_path": config_file_path,
-    "encrypt_type": encrypt_type
+    "encrypt_type": encrypt_type,
+    "cipher_time_window": cipher_time_window,
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
@@ -285,6 +288,24 @@ class StartFLJob(nn.Cell):
         return self.start_fl_job()
 
 
+class ExchangeKeys(nn.Cell):
+    def __init__(self):
+        super(ExchangeKeys, self).__init__()
+        self.exchange_keys = P.ExchangeKeys()
+
+    def construct(self):
+        return self.exchange_keys()
+
+
+class GetKeys(nn.Cell):
+    def __init__(self):
+        super(GetKeys, self).__init__()
+        self.get_keys = P.GetKeys()
+
+    def construct(self):
+        return self.get_keys()
+
+
 class UpdateAndGetModel(nn.Cell):
     def __init__(self, weights):
         super(UpdateAndGetModel, self).__init__()
@@ -328,6 +349,11 @@ def train():
         if context.get_fl_context("ms_role") == "MS_WORKER":
             start_fl_job = StartFLJob(dataset.get_dataset_size() * args.client_batch_size)
             start_fl_job()
+            if encrypt_type == "STABLE_PW_ENCRYPT":
+                exchange_keys = ExchangeKeys()
+                exchange_keys()
+                get_keys = GetKeys()
+                get_keys()
 
         for _ in range(epoch):
             print("step is ", epoch, flush=True)

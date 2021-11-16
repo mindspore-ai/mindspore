@@ -31,6 +31,7 @@ parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--local_worker_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--dataset_path", type=str, default="")
+parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -47,6 +48,7 @@ worker_step_num_per_iteration = args.worker_step_num_per_iteration
 local_worker_num = args.local_worker_num
 config_file_path = args.config_file_path
 dataset_path = args.dataset_path
+encrypt_type = args.encrypt_type
 
 if local_worker_num == -1:
     local_worker_num = worker_num
@@ -73,6 +75,7 @@ for i in range(local_worker_num):
     cmd_worker += " --client_learning_rate=" + str(client_learning_rate)
     cmd_worker += " --worker_step_num_per_iteration=" + str(worker_step_num_per_iteration)
     cmd_worker += " --dataset_path=" + str(dataset_path)
+    cmd_worker += " --encrypt_type=" + str(encrypt_type)
     cmd_worker += " --user_id=" + str(i)
     cmd_worker += " > worker.log 2>&1 &"
 

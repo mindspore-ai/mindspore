@@ -885,6 +885,40 @@ class GetModel(PrimitiveWithInfer):
         return mstype.float32
 
 
+class ExchangeKeys(PrimitiveWithInfer):
+    """
+    Exchange pairwise public keys for federated learning worker.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr('side_effect_mem', True)
+        self.init_prim_io_names(inputs=[], outputs=["result"])
+
+    def infer_shape(self):
+        return [1]
+
+    def infer_dtype(self):
+        return mstype.float32
+
+
+class GetKeys(PrimitiveWithInfer):
+    """
+    Get pairwise public keys for federated learning worker.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr('side_effect_mem', True)
+        self.init_prim_io_names(inputs=[], outputs=["result"])
+
+    def infer_shape(self):
+        return [1]
+
+    def infer_dtype(self):
+        return mstype.float32
+
+
 class identity(Primitive):
     """
     Makes a identify primitive, used for pynative mode.

@@ -56,7 +56,9 @@ enum class TcpUserCommand {
   kNewInstance,
   kQueryInstance,
   kEnableFLS,
-  kDisableFLS
+  kDisableFLS,
+  kExchangeKeys,
+  kGetKeys
 };
 
 // CommunicatorBase is used to receive request and send response for server.

@@ -66,7 +66,7 @@ int PrivateKey::GetPrivateBytes(size_t *len, uint8_t *privKeyBytes) const {
 }
 
 int PrivateKey::GetPublicBytes(size_t *len, uint8_t *pubKeyBytes) const {
-  if (pubKeyBytes == nullptr || len == nullptr || evpPrivKey == nullptr) {
+  if (evpPrivKey == nullptr) {
     MS_LOG(ERROR) << "input pubKeyBytes invalid.";
     return -1;
   }

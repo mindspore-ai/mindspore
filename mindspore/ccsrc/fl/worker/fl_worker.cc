@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include "fl/worker/fl_worker.h"
+#include "fl/armour/secure_protocol/key_agreement.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
@@ -173,7 +174,25 @@ uint64_t FLWorker::fl_iteration_num() const { return iteration_num_.load(); }
 
 void FLWorker::set_data_size(int data_size) { data_size_ = data_size; }
 
+void FLWorker::set_secret_pk(armour::PrivateKey *secret_pk) { secret_pk_ = secret_pk; }
+
+void FLWorker::set_pw_salt(std::vector<uint8_t> pw_salt) { pw_salt_ = pw_salt; }
+
+void FLWorker::set_pw_iv(std::vector<uint8_t> pw_iv) { pw_iv_ = pw_iv; }
+
+void FLWorker::set_public_keys_list(std::vector<EncryptPublicKeys> public_keys_list) {
+  public_keys_list_ = public_keys_list;
+}
+
 int FLWorker::data_size() const { return data_size_; }
+
+armour::PrivateKey *FLWorker::secret_pk() const { return secret_pk_; }
+
+std::vector<uint8_t> FLWorker::pw_salt() const { return pw_salt_; }
+
+std::vector<uint8_t> FLWorker::pw_iv() const { return pw_iv_; }
+
+std::vector<EncryptPublicKeys> FLWorker::public_keys_list() const { return public_keys_list_; }
 
 std::string FLWorker::fl_name() const { return ps::kServerModeFL; }
 

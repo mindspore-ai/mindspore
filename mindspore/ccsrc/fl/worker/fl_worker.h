@@ -23,10 +23,18 @@
 #include "proto/comm.pb.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
+#include "fl/armour/secure_protocol/key_agreement.h"
 #include "ps/ps_context.h"
 #include "ps/core/worker_node.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/tcp_communicator.h"
+
+struct EncryptPublicKeys {
+  std::string flID;
+  std::vector<uint8_t> publicKey;
+  std::vector<uint8_t> pwIV;
+  std::vector<uint8_t> pwSalt;
+};
 
 namespace mindspore {
 namespace fl {
@@ -88,6 +96,18 @@ class FLWorker {
   void set_data_size(int data_size);
   int data_size() const;
 
+  void set_secret_pk(armour::PrivateKey *secret_pk);
+  armour::PrivateKey *secret_pk() const;
+
+  void set_pw_salt(std::vector<uint8_t> pw_salt);
+  std::vector<uint8_t> pw_salt() const;
+
+  void set_pw_iv(std::vector<uint8_t> pw_iv);
+  std::vector<uint8_t> pw_iv() const;
+
+  void set_public_keys_list(std::vector<EncryptPublicKeys> public_keys_list);
+  std::vector<EncryptPublicKeys> public_keys_list() const;
+
   std::string fl_name() const;
   std::string fl_id() const;
 
@@ -105,7 +125,11 @@ class FLWorker {
         worker_step_num_per_iteration_(1),
         server_iteration_state_(IterationState::kCompleted),
         worker_iteration_state_(IterationState::kCompleted),
-        safemode_(false) {}
+        safemode_(false),
+        secret_pk_(nullptr),
+        pw_salt_({}),
+        pw_iv_({}),
+        public_keys_list_({}) {}
   ~FLWorker() = default;
   FLWorker(const FLWorker &) = delete;
   FLWorker &operator=(const FLWorker &) = delete;
@@ -152,6 +176,18 @@ class FLWorker {
 
   // The flag that represents whether worker is in safemode, which is decided by both worker and server iteration state.
   std::atomic_bool safemode_;
+
+  // The private key used for computing the pairwise encryption's secret.
+  armour::PrivateKey *secret_pk_;
+
+  // The salt value used for generate pairwise noise.
+  std::vector<uint8_t> pw_salt_;
+
+  // The initialization vector value used for generate pairwise noise.
+  std::vector<uint8_t> pw_iv_;
+
+  // The public keys used for computing the pairwise encryption's secret.
+  std::vector<EncryptPublicKeys> public_keys_list_;
 };
 }  // namespace worker
 }  // namespace fl

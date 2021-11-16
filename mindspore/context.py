@@ -985,11 +985,12 @@ def set_fl_context(**kwargs):
             client number. The smaller the dp_delta, the better the privacy protection effect. Default: 0.01.
         dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
             suggested to be 0.5~2. Default: 1.0.
-        encrypt_type (string): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT' or
-            'PW_ENCRYPT'. If 'DP_ENCRYPT', differential privacy schema would be applied for clients and the privacy
-            protection effect would be determined by dp_eps, dp_delta and dp_norm_clip as described above. If
-            'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients' model from stealing.
-            Default: 'NOT_ENCRYPT'.
+        encrypt_type (string): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
+            'PW_ENCRYPT' or 'STABLE_PW_ENCRYPT'. If 'DP_ENCRYPT', differential privacy schema would be applied
+            for clients and the privacy protection effect would be determined by dp_eps, dp_delta and dp_norm_clip
+            as described above. If 'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients'
+            model from stealing in cross-device scenario. If 'STABLE_PW_ENCRYPT', pairwise secure aggregation would
+            be applied to protect clients' model from stealing in cross-silo scenario. Default: 'NOT_ENCRYPT'.
         config_file_path (string): Configuration file path used by recovery. Default: ''.
         scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: true.

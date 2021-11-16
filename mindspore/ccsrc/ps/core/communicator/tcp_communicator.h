@@ -53,6 +53,8 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kProceedToNextIter, "proceedToNextIter"},
   {TcpUserCommand::kEndLastIter, "endLastIter"},
   {TcpUserCommand::kStartFLJob, "startFLJob"},
+  {TcpUserCommand::kExchangeKeys, "exchangeKeys"},
+  {TcpUserCommand::kGetKeys, "getKeys"},
   {TcpUserCommand::kUpdateModel, "updateModel"},
   {TcpUserCommand::kGetModel, "getModel"},
   {TcpUserCommand::kPushMetrics, "pushMetrics"},

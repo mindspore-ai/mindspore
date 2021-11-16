@@ -81,6 +81,11 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
     }
     MS_LOG(INFO) << " CipherInit::Init Success";
   }
+
+  if (param.encrypt_type == mindspore::ps::kStablePWEncryptType) {
+    cipher_meta_storage_.RegisterStablePWClass();
+    MS_LOG(INFO) << "Register metadata for StablePWEncrypt is finished.";
+  }
   return true;
 }
 
