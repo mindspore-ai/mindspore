@@ -25,7 +25,7 @@ eval: False
 save_ckpt: False
 mode_name: "GRAPH"
 dtype: "fp16"
-boost_mode: "O0"
+acc_mode: "O0"
 conv_init: "XavierUniform"
 dense_init: "TruncatedNormal"
 
