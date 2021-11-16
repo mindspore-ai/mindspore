@@ -31,9 +31,6 @@ using mindspore::converter::kFmkTypeTf;
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
-const constexpr int kTensorDataSize = 12;
-const constexpr int kSwitchTrueIndex = 1;
-const constexpr int kSwitchFalseIndex = 2;
 struct InferTensor {
   std::vector<uint32_t> next_nodes_;
   std::vector<uint32_t> prev_nodes_;
@@ -53,7 +50,7 @@ class InferShapePass : public GraphPass {
   void AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes, uint32_t infer_node_index);
   void ResetIncorrectTensorShape(MetaGraphT *graph);
   int InferPartialNode(const CNodeT *partial_node, MetaGraphT *graph);
-  int InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
+  int InferSwitchOrSwitchLayerNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
   int InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph);
   int CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph);
   void RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph);
