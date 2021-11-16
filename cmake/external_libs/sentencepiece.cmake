@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/sentencepiece/repository/archive/v0.1.92.tar.gz")
-    set(MD5 "0376a7ca1a70b187da8952449c3f7b71")
+    set(MD5 "0fc99de9f09b9184398f49647791799f")
 else()
     set(REQ_URL "https://github.com/google/sentencepiece/archive/v0.1.92.tar.gz")
     set(MD5 "5dfd2241914b5598a68b2a8542ed8e91")
@@ -46,3 +46,4 @@ endif()
 include_directories(${sentencepiece_INC})
 add_library(mindspore::sentencepiece ALIAS sentencepiece::sentencepiece)
 add_library(mindspore::sentencepiece_train ALIAS sentencepiece::sentencepiece_train)
+

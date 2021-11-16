@@ -4,7 +4,7 @@ set(LIB_ICU_I18N icui18n)
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/icu/repository/archive/release-67-1.tar.gz")
-    set(MD5 "5737b3606a06a6b5bf82b44047594d5a")
+    set(MD5 "0c2662a2b0bc80b0eb56495205247c8f")
 else()
     set(REQ_URL "https://github.com/unicode-org/icu/archive/release-67-1.tar.gz")
     set(MD5 "fd525fb47d8827b0b7da78b51dd2d93f")
