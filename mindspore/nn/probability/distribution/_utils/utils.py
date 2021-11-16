@@ -175,9 +175,11 @@ def check_sum_equal_one(probs):
         probs = probs.asnumpy()
     prob_sum = np.sum(probs, axis=-1)
     # add a small tolerance here to increase numerical stability
-    comp = np.allclose(prob_sum, np.ones(prob_sum.shape), rtol=1e-14, atol=1e-14)
+    comp = np.allclose(prob_sum, np.ones(prob_sum.shape),
+                       rtol=np.finfo(prob_sum.dtype).eps * 10, atol=np.finfo(prob_sum.dtype).eps)
     if not comp:
-        raise ValueError('Probabilities for each category should sum to one for Categorical distribution.')
+        raise ValueError(
+            'Probabilities for each category should sum to one for Categorical distribution.')
 
 
 def check_rank(probs):
@@ -191,7 +193,8 @@ def check_rank(probs):
             return
         probs = probs.data
     if probs.asnumpy().ndim == 0:
-        raise ValueError('probs for Categorical distribution must have rank >= 1.')
+        raise ValueError(
+            'probs for Categorical distribution must have rank >= 1.')
 
 
 def logits_to_probs(logits, is_binary=False):
@@ -235,7 +238,8 @@ def raise_none_error(name):
 
 @constexpr
 def raise_probs_logits_error():
-    raise TypeError("Either 'probs' or 'logits' must be specified, but not both.")
+    raise TypeError(
+        "Either 'probs' or 'logits' must be specified, but not both.")
 
 
 @constexpr
@@ -327,7 +331,8 @@ class CheckTensor(PrimitiveWithInfer):
     def __call__(self, x, name):
         if isinstance(x, Tensor):
             return x
-        raise TypeError(f"For {name}, input type should be a Tensor or Parameter.")
+        raise TypeError(
+            f"For {name}, input type should be a Tensor or Parameter.")
 
 
 def set_param_type(args, hint_type):
@@ -354,7 +359,8 @@ def set_param_type(args, hint_type):
             if common_dtype is None:
                 common_dtype = cur_dtype
             elif cur_dtype != common_dtype:
-                raise TypeError(f"{name} should have the same dtype as other arguments.")
+                raise TypeError(
+                    f"{name} should have the same dtype as other arguments.")
     if common_dtype in int_type or common_dtype == mstype.float64:
         return mstype.float32
     return hint_type if common_dtype is None else common_dtype

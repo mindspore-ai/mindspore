@@ -14,6 +14,7 @@
 # ============================================================================
 """Normal Distribution"""
 import numpy as np
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore._checkparam import Validator
@@ -143,7 +144,8 @@ class Normal(Distribution):
         param = dict(locals())
         param['param_dict'] = {'mean': mean, 'sd': sd}
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Normal, self).__init__(seed, dtype, name, param)
 
         self._mean_value = self._add_parameter(mean, 'mean')
@@ -154,7 +156,10 @@ class Normal(Distribution):
         # ops needed for the class
         self.exp = exp_generic
         self.expm1 = P.Expm1()
-        self.log = log_generic
+        # when the graph kernel mode is enable
+        # use Log directly as akg will handle the corner cases
+        self.log = P.Log() if context.get_context(
+            "enable_graph_kernel") else log_generic
         self.erf = P.Erf()
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
@@ -166,7 +171,8 @@ class Normal(Distribution):
     def extend_repr(self):
         """Display instance object as string."""
         if self.is_scalar_batch:
-            s = 'mean = {}, standard deviation = {}'.format(self._mean_value, self._sd_value)
+            s = 'mean = {}, standard deviation = {}'.format(
+                self._mean_value, self._sd_value)
         else:
             s = 'batch_shape = {}'.format(self._broadcast_shape)
         return s
