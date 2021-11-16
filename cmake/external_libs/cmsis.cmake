@@ -2,7 +2,7 @@ set(cmsis_pkg_name cmsis)
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/CMSIS_5/repository/archive/5.7.0.tar.gz")
-    set(MD5 "feb96c10a99bd0eb54fb7ce49af8d285")
+    set(MD5 "0eaa594b0c62dd72e41ec181c4689842")
 else()
     set(REQ_URL "https://github.com/ARM-software/CMSIS_5/archive/5.7.0.tar.gz")
     set(MD5 "0eaa594b0c62dd72e41ec181c4689842")
