@@ -130,17 +130,23 @@ bool AscendPsCache::InitDevice(uint32_t device_id, const void *context) {
 
 void *AscendPsCache::MallocMemory(size_t size) {
   const auto device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(size);
-  MS_EXCEPTION_IF_NULL(device_addr);
+  if (device_addr == nullptr) {
+    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << size;
+  }
   return device_addr;
 }
 
 bool AscendPsCache::MallocConstantMemory(size_t cache_vocab_size) {
   offset_addr_ = reinterpret_cast<int *>(device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(sizeof(int)));
-  MS_ERROR_IF_NULL(offset_addr_);
+  if (offset_addr_ == nullptr) {
+    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << sizeof(int);
+  }
   rtMemset(offset_addr_, sizeof(int), 0, sizeof(int));
   cache_vocab_size_addr_ =
     reinterpret_cast<int *>(device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(sizeof(int)));
-  MS_ERROR_IF_NULL(cache_vocab_size_addr_);
+  if (cache_vocab_size_addr_ == nullptr) {
+    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << sizeof(int);
+  }
   int copy_value = SizeToInt(cache_vocab_size);
   if (!CopyHostMemToDevice(cache_vocab_size_addr_, &copy_value, sizeof(int))) {
     return false;
