@@ -121,7 +121,7 @@ class MS_API Status {
   inline std::string GetErrDescription() const;
   inline std::string SetErrDescription(const std::string &err_description);
 
-  friend std::ostream &operator<<(std::ostream &os, const Status &s);
+  MS_API friend std::ostream &operator<<(std::ostream &os, const Status &s);
 
   bool operator==(const Status &other) const;
   bool operator==(enum StatusCode other_code) const;
