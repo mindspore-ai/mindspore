@@ -259,6 +259,16 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
+
+void RecordInitStatus() {
+  static bool printed = false;
+  if (!printed) {
+    MS_LOG(INFO) << "Status record: system init.";
+    printed = true;
+  }
+}
+
+void RecordExitStatus() { MS_LOG(INFO) << "Status record: system exit."; }
 }  // namespace
 
 void CheckArgsValid(const py::tuple &args) {
@@ -923,9 +933,9 @@ void Pipeline::Run(const std::string &phase) {
 #endif
       bool result = true;
       WITH(MsProfile::GetProfile()->Step(action.first))[&result, &action, this]() {
-        MS_LOG(DEBUG) << "Action " << action.first << " start ...";
+        MS_LOG(INFO) << "Status record: start " << action.first << " action.";
         result = action.second(resource_);
-        MS_LOG(DEBUG) << "Action " << action.first << " end.";
+        MS_LOG(INFO) << "Status record: end " << action.first << " action.";
       };
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
@@ -1447,6 +1457,7 @@ void StartUpProfiling() {
 
 void InitPipeline() {
   // set python env flag
+  RecordInitStatus();
   mindspore::parse::python_adapter::set_python_env_flag(true);
 #ifndef ENABLE_SECURITY
   // Startup profiling before open tsd
@@ -1470,6 +1481,7 @@ void FinalizeBackend() {
 
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
+  RecordExitStatus();
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
