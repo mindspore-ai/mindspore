@@ -33,7 +33,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.27.3.tar.gz")
-    set(MD5 "b8b6d8defeda0355105e3b64b4201786")
+    set(MD5 "7564258d5850b7b1d67174cae564c6a4")
 else()
     set(REQ_URL "https://github.com/grpc/grpc/archive/v1.27.3.tar.gz")
     set(MD5 "0c6c3fc8682d4262dd0e5e6fabe1a7e2")
