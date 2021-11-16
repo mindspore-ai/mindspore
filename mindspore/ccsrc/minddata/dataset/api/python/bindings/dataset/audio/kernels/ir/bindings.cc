@@ -47,6 +47,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
@@ -384,6 +385,17 @@ PYBIND_REGISTER(
         return riaa_biquad;
       }));
   }));
+
+PYBIND_REGISTER(SlidingWindowCmnOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::SlidingWindowCmnOperation, TensorOperation,
+                                   std::shared_ptr<audio::SlidingWindowCmnOperation>>(*m, "SlidingWindowCmnOperation")
+                    .def(py::init([](int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars) {
+                      auto sliding_window_cmn = std::make_shared<audio::SlidingWindowCmnOperation>(
+                        cmn_window, min_cmn_window, center, norm_vars);
+                      THROW_IF_ERROR(sliding_window_cmn->ValidateParams());
+                      return sliding_window_cmn;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   TimeMaskingOperation, 1, ([](const py::module *m) {

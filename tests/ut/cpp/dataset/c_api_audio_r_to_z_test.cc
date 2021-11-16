@@ -203,6 +203,58 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadWrongArg) {
   EXPECT_EQ(iter01, nullptr);
 }
 
+/// Feature: SlidingWindowCmn
+/// Description: test basic function of SlidingWindowCmn
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestSlidingWindowCmn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowCmn.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {1, 2, 400}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+  auto sliding_window_cmn = audio::SlidingWindowCmn(600, 100, false, false);
+  auto ds1 = ds->Map({sliding_window_cmn});
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+/// Feature: SlidingWindowCmn
+/// Description: test wrong input args of SlidingWindowCmn
+/// Expectation: get nullptr of iterator
+TEST_F(MindDataTestPipeline, TestSlidingWindowCmnWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowCmnWrongArgs.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {1, 2, 400}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // SlidingWindowCmn: cmn_window must be greater than or equal to 0.
+  auto sliding_window_cmn_1 = audio::SlidingWindowCmn(-1, 100, false, false);
+  auto ds_1 = ds->Map({sliding_window_cmn_1});
+  EXPECT_NE(ds_1, nullptr);
+  std::shared_ptr<Iterator> iter_1 = ds_1->CreateIterator();
+  EXPECT_EQ(iter_1, nullptr);
+
+  // SlidingWindowCmn: min_cmn_window must be greater than or equal to 0.
+  auto sliding_window_cmn_2 = audio::SlidingWindowCmn(600, -1, false, false);
+  auto ds2 = ds->Map({sliding_window_cmn_2});
+  EXPECT_NE(ds2, nullptr);
+  std::shared_ptr<Iterator> iter_2 = ds2->CreateIterator();
+  EXPECT_EQ(iter_2, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingPipeline.";
   // Original waveform

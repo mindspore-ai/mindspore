@@ -29,6 +29,7 @@ add_library(audio-ir-kernels OBJECT
         overdrive_ir.cc
         phaser_ir.cc
         riaa_biquad_ir.cc
+        sliding_window_cmn_ir.cc
         time_masking_ir.cc
         time_stretch_ir.cc
         treble_biquad_ir.cc

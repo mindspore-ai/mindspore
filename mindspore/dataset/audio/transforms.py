@@ -28,8 +28,8 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, \
     check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, \
     check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, \
-    check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, check_time_stretch, \
-    check_treble_biquad, check_vol
+    check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
+    check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -868,6 +868,38 @@ class RiaaBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.RiaaBiquadOperation(self.sample_rate)
+
+
+class SlidingWindowCmn(AudioTensorOperation):
+    """
+    Apply sliding-window cepstral mean (and optionally variance) normalization per utterance.
+
+    Args:
+        cmn_window (int, optional): Window in frames for running average CMN computation (default=600).
+        min_cmn_window (int, optional): Minimum CMN window used at start of decoding (adds latency only at start).
+            Only applicable if center is False, ignored if center is True (default=100).
+        center (bool, optional): If True, use a window centered on the current frame. If False, window is
+            to the left. (default=False).
+        norm_vars (bool, optional): If True, normalize variance to one. (default=False).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float64)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.SlidingWindowCmn()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_sliding_window_cmn
+    def __init__(self, cmn_window=600, min_cmn_window=100, center=False, norm_vars=False):
+        self.cmn_window = cmn_window
+        self.min_cmn_window = min_cmn_window
+        self.center = center
+        self.norm_vars = norm_vars
+
+    def parse(self):
+        return cde.SlidingWindowCmnOperation(self.cmn_window, self.min_cmn_window, self.center, self.norm_vars)
 
 
 class TimeMasking(AudioTensorOperation):

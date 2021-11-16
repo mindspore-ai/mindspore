@@ -556,3 +556,23 @@ def check_flanger(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_sliding_window_cmn(method):
+    """Wrapper method to check the parameters of SlidingWidowCmn."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [cmn_window, min_cmn_window, center, norm_vars], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(cmn_window, (int,), "cmn_window")
+        check_non_negative_int32(cmn_window, "cmn_window")
+
+        type_check(min_cmn_window, (int,), "min_cmn_window")
+        check_non_negative_int32(min_cmn_window, "min_cmn_window")
+
+        type_check(center, (bool,), "center")
+        type_check(norm_vars, (bool,), "norm_vars")
+        return method(self, *args, **kwargs)
+
+    return new_method

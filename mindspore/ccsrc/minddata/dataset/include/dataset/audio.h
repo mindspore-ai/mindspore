@@ -664,6 +664,32 @@ class RiaaBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply sliding-window cepstral mean (and optionally variance) normalization per utterance.
+class SlidingWindowCmn final : public TensorTransform {
+ public:
+  /// \brief Constructor of SlidingWindowCmnOp.
+  /// \param[in] cmn_window The window in frames for running average CMN computation (Default: 600).
+  /// \param[in] min_cmn_window The minimum CMN window. Only applicable if center is false, ignored if center
+  ///      is true (Default: 100).
+  /// \param[in] center If true, use a window centered on the current frame. If false, window is to the left
+  ///     (Default: false).
+  /// \param[in] norm_vars If true, normalize variance to one (Default: false).
+  explicit SlidingWindowCmn(int32_t cmn_window = 600, int32_t min_cmn_window = 100, bool center = false,
+                            bool norm_vars = false);
+
+  /// \brief Destructor.
+  ~SlidingWindowCmn() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
 class TimeMasking final : public TensorTransform {
