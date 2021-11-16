@@ -33,8 +33,7 @@ constexpr int32_t BATCH_TIME_OFFSET = 1;
 constexpr int32_t PIPELINE_TIME_OFFSET = 2;
 constexpr int32_t CONNECTOR_DEPTH_OFFSET = 3;
 
-Status DeviceQueueTracing::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("device_queue_profiling_" + device_id + ".txt")).ToString();
+Status DeviceQueueTracing::Init() {
   (void)ts_.emplace_back(0);
   return Status::OK();
 }
@@ -81,6 +80,10 @@ Status DeviceQueueTracing::GetEmptyQueueFrequency(int32_t start_step, int32_t en
 
 Status DeviceQueueTracing::GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
   return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "extra_info", result);
+}
+
+Path DeviceQueueTracing::GetFileName(const std::string &dir_path, const std::string &rank_id) {
+  return Path(dir_path) / Path("device_queue_profiling_" + rank_id + ".txt");
 }
 }  // namespace dataset
 }  // namespace mindspore

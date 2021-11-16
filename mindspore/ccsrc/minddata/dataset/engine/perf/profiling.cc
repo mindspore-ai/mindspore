@@ -48,12 +48,18 @@ Status Profiling::Stop() {
   return Status::OK();
 }
 
-Status Tracing::SaveToFile() {
+Status Tracing::SaveToFile(const std::string &dir_path, const std::string &rank_id) {
   if (value_.empty()) {
     return Status::OK();
   }
 
-  std::ofstream handle(file_path_, std::ios::trunc);
+  Path path = GetFileName(dir_path, rank_id);
+  // Remove the file if it exists (from prior profiling usage)
+  RETURN_IF_NOT_OK(path.Remove());
+  std::string file_path = path.ToString();
+
+  MS_LOG(INFO) << "Start to save profiling data for a tracing node.";
+  std::ofstream handle(file_path, std::ios::trunc);
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Profiling file can not be opened.");
   }
@@ -65,13 +71,15 @@ Status Tracing::SaveToFile() {
   return Status::OK();
 }
 
-Status Tracing::ChangeFileMode() {
+Status Tracing::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
   if (value_.empty()) {
     return Status::OK();
   }
 
-  if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
-    std::string err_str = "Change file mode failed," + file_path_;
+  Path path = GetFileName(dir_path, rank_id);
+  std::string file_path = path.ToString();
+  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
+    std::string err_str = "Change file mode failed," + file_path;
     return Status(StatusCode::kMDUnexpectedError, err_str);
   }
   return Status::OK();
@@ -172,24 +180,6 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
 
 Tracing::Tracing(int32_t records_per_step) : records_per_step_(records_per_step) {}
 
-Status Sampling::ReadJson(nlohmann::json *output) {
-  RETURN_UNEXPECTED_IF_NULL(output);
-  Path path = Path(file_path_);
-  if (path.Exists()) {
-    MS_LOG(DEBUG) << file_path_ << " exists";
-    try {
-      std::ifstream file(file_path_);
-      file >> (*output);
-    } catch (const std::exception &err) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
-                               ", please delete it and try again!");
-    }
-  } else {
-    (*output)["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
-  }
-  return Status::OK();
-}
-
 // Constructor
 ProfilingManager::ProfilingManager() : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false) {}
 
@@ -202,24 +192,7 @@ Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
 
     perf_monitor_ = std::make_unique<Monitor>(this);
 
-#ifdef ENABLE_GPUQUE
-    std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-    int32_t rank_id = cfg->rank_id();
-    // If DEVICE_ID is not set, default value is 0
-    if (rank_id < 0) {
-      device_id_ = common::GetEnv("DEVICE_ID");
-    } else {
-      device_id_ = std::to_string(rank_id);
-    }
-#else
-    device_id_ = common::GetEnv("RANK_ID");
-#endif
-    // If RANK_ID is not set, default value is 0
-    if (device_id_.empty()) {
-      device_id_ = "0";
-    }
     // Register all profiling node.
-
     std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
     RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
 
@@ -249,7 +222,7 @@ Status ProfilingManager::RegisterTracingNode(std::shared_ptr<Tracing> node) {
     return Status(StatusCode::kMDProfilingError, "Profiling node already exist: " + node->Name());
   }
   // Register the node with its name as key.
-  RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
+  RETURN_IF_NOT_OK(node->Init());
   tracing_nodes_[node->Name()] = node;
 
   // the user may have already started profiling.
@@ -279,7 +252,7 @@ Status ProfilingManager::RegisterSamplingNode(std::shared_ptr<Sampling> node) {
     return Status(StatusCode::kMDProfilingError, "Profiling node already exist: " + node->Name());
   }
   // Register the node with its name as key.
-  RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
+  RETURN_IF_NOT_OK(node->Init());
   sampling_nodes_[node->Name()] = node;
 
   // the user may have already started profiling.
@@ -301,25 +274,19 @@ Status ProfilingManager::GetSamplingNode(const std::string &name, std::shared_pt
   return Status::OK();
 }
 
-Status ProfilingManager::SaveProfilingData(const bool final_round) {
-  if ((!IsProfilingEnable()) && !final_round) {
-    return Status::OK();
-  }
+Status ProfilingManager::SaveProfilingData(const std::string &dir_path, const std::string &rank_id) {
   MS_LOG(INFO) << "Start to save profiling data.";
   for (auto node : tracing_nodes_) {
-    RETURN_IF_NOT_OK(node.second->SaveToFile());
+    RETURN_IF_NOT_OK(node.second->SaveToFile(dir_path, rank_id));
   }
   for (auto node : sampling_nodes_) {
-    RETURN_IF_NOT_OK(node.second->SaveToFile());
+    RETURN_IF_NOT_OK(node.second->SaveToFile(dir_path, rank_id));
   }
   MS_LOG(INFO) << "Save profiling data end.";
   return Status::OK();
 }
 
-Status ProfilingManager::Analyze(const bool final_round) {
-  if (!IsProfilingEnable() && !final_round) {
-    return Status::OK();
-  }
+Status ProfilingManager::Analyze() {
   MS_LOG(INFO) << "Start to analyze profiling data.";
   for (auto node : sampling_nodes_) {
     RETURN_IF_NOT_OK(node.second->Analyze());
@@ -327,16 +294,13 @@ Status ProfilingManager::Analyze(const bool final_round) {
   return Status::OK();
 }
 
-Status ProfilingManager::ChangeFileMode(const bool final_round) {
-  if (!IsProfilingEnable() && !final_round) {
-    return Status::OK();
-  }
+Status ProfilingManager::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
   MS_LOG(INFO) << "Start to change file mode.";
   for (auto node : tracing_nodes_) {
-    RETURN_IF_NOT_OK(node.second->ChangeFileMode());
+    RETURN_IF_NOT_OK(node.second->ChangeFileMode(dir_path, rank_id));
   }
   for (auto node : sampling_nodes_) {
-    RETURN_IF_NOT_OK(node.second->ChangeFileMode());
+    RETURN_IF_NOT_OK(node.second->ChangeFileMode(dir_path, rank_id));
   }
   MS_LOG(INFO) << "Change file mode end.";
   return Status::OK();
@@ -642,23 +606,7 @@ Status ProfilingManager::Reset() {
   return Status::OK();
 }
 
-Status ProfilingManager::Init(const std::string &profile_data_path = "") {
-  // Validate input profile data path
-  CHECK_FAIL_RETURN_UNEXPECTED(!profile_data_path.empty(), "Invalid parameter, Profiling directory is not set.");
-  CHECK_FAIL_RETURN_UNEXPECTED(profile_data_path.size() < PATH_MAX, "Invalid file, Profiling directory is invalid.");
-
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, common::SafeCStr(profile_data_path), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
-  }
-#else
-  if (realpath(common::SafeCStr(profile_data_path), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
-  }
-#endif
-  dir_path_ = real_path;
-
+Status ProfilingManager::Init() {
   if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
     profiling_state_ = ProfilingState::kProfilingStateUnBegun;
   }
@@ -666,7 +614,7 @@ Status ProfilingManager::Init(const std::string &profile_data_path = "") {
   // Enable profiling
   enabled_ = true;
 
-  MS_LOG(INFO) << "MD profiler is initialized with directory path: " << dir_path_;
+  MS_LOG(INFO) << "MD profiler is initialized successfully.";
   return Status::OK();
 }
 
@@ -705,6 +653,48 @@ Status ProfilingManager::Stop() {
   profiling_state_ = ProfilingState::kProfilingStateFinished;
   enabled_ = false;
   MS_LOG(INFO) << "MD profiler is stopped.";
+  return Status::OK();
+}
+
+Status ProfilingManager::Save(const std::string &profile_data_path) {
+  // Validate input profile data path
+  CHECK_FAIL_RETURN_UNEXPECTED(!profile_data_path.empty(), "Invalid parameter, Profiling directory is not set.");
+  CHECK_FAIL_RETURN_UNEXPECTED(profile_data_path.size() < PATH_MAX, "Invalid file, Profiling directory is invalid.");
+
+  //  profiling file: <profile_data_path>/filename_rank_id.suffix
+  char real_path[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(real_path, common::SafeCStr(profile_data_path), PATH_MAX) == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
+  }
+#else
+  if (realpath(common::SafeCStr(profile_data_path), real_path) == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
+  }
+#endif
+
+  std::string rank_id;
+#ifdef ENABLE_GPUQUE
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int32_t rank_id_int = cfg->rank_id();
+  // If DEVICE_ID is not set, default value is 0
+  if (rank_id_int < 0) {
+    rank_id = common::GetEnv("DEVICE_ID");
+  } else {
+    rank_id = std::to_string(rank_id_int);
+  }
+#else
+  rank_id = common::GetEnv("RANK_ID");
+#endif
+  // If RANK_ID is not set, default value is 0
+  if (rank_id.empty()) {
+    rank_id = "0";
+  }
+
+  // Output all profiling data upon request.
+  RETURN_IF_NOT_OK(Analyze());
+  RETURN_IF_NOT_OK(SaveProfilingData(std::string(profile_data_path), rank_id));
+  RETURN_IF_NOT_OK(ChangeFileMode(std::string(profile_data_path), rank_id));
   return Status::OK();
 }
 

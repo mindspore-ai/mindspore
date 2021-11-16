@@ -50,7 +50,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManager1) {
   // Enable profiler and check
   common::SetEnv("RANK_ID", "1");
   std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
-  EXPECT_OK(profiler_manager->Init("."));
+  EXPECT_OK(profiler_manager->Init());
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
@@ -95,12 +95,13 @@ TEST_F(MindDataTestProfiler, TestProfilerManager1) {
   // Manually terminate the pipeline
   iter->Stop();
 
-  // File_id is expected to equal RANK_ID
-  EXPECT_OK(DeleteFiles(1));
-
-  // Disable profiler
+  // Stop MindData Profiling and save output files to current working directory
   EXPECT_OK(profiler_manager->Stop());
   EXPECT_FALSE(profiler_manager->IsProfilingEnable());
+  EXPECT_OK(profiler_manager->Save("."));
+
+  // File_id is expected to equal RANK_ID
+  EXPECT_OK(DeleteFiles(1));
 }
 
 /// Feature: MindData Profiling Support
@@ -112,7 +113,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManager2) {
   // Enable profiler and check
   common::SetEnv("RANK_ID", "2");
   std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
-  EXPECT_OK(profiler_manager->Init("."));
+  EXPECT_OK(profiler_manager->Init());
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
@@ -147,12 +148,13 @@ TEST_F(MindDataTestProfiler, TestProfilerManager2) {
   // Manually terminate the pipeline
   iter->Stop();
 
-  // File_id is expected to equal RANK_ID
-  EXPECT_OK(DeleteFiles(2));
-
-  // Disable profiler
+  // Stop MindData Profiling and save output files to current working directory
   EXPECT_OK(profiler_manager->Stop());
   EXPECT_FALSE(profiler_manager->IsProfilingEnable());
+  EXPECT_OK(profiler_manager->Save("."));
+
+  // File_id is expected to equal RANK_ID
+  EXPECT_OK(DeleteFiles(2));
 }
 }  // namespace test
 }  // namespace dataset

@@ -77,8 +77,8 @@ class TestMinddataProfilingManager:
         os.environ['RANK_ID'] = file_id
         os.environ['DEVICE_ID'] = file_id
 
-        # Initialize MindData profiling manager with current working directory
-        self.md_profiler.init("./")
+        # Initialize MindData profiling manager
+        self.md_profiler.init()
 
         # Start MindData Profiling
         self.md_profiler.start()
@@ -87,8 +87,6 @@ class TestMinddataProfilingManager:
         """
         Run after each test function.
         """
-        # Stop MindData Profiling
-        self.md_profiler.stop()
 
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
@@ -155,6 +153,10 @@ class TestMinddataProfilingManager:
         for _ in data1:
             pass
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         # Confirm profiling files now exist
         assert os.path.exists(pipeline_file) is True
         assert os.path.exists(cpu_util_file) is True
@@ -185,6 +187,10 @@ class TestMinddataProfilingManager:
 
         for _ in data3:
             pass
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -238,6 +244,10 @@ class TestMinddataProfilingManager:
 
         assert num_iter == 10
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         # Confirm pipeline is created with EpochCtrl op
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -280,6 +290,10 @@ class TestMinddataProfilingManager:
         for _ in data1:
             pass
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
@@ -316,6 +330,10 @@ class TestMinddataProfilingManager:
 
         ds.config.set_monitor_sampling_interval(interval_origin)
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
     def test_profiling_basic_pipeline(self):
         """
         Test with this basic pipeline
@@ -346,6 +364,10 @@ class TestMinddataProfilingManager:
             num_iter += 1
 
         assert num_iter == 1000
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -394,6 +416,10 @@ class TestMinddataProfilingManager:
 
         assert num_iter == 750
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
@@ -434,17 +460,30 @@ class TestMinddataProfilingManager:
             num_iter += 1
         assert num_iter == 2
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
         self.confirm_cpuutil(3, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs=1
+
+        # Initialize and Start MindData profiling manager
+        self.md_profiler.init()
+        self.md_profiler.start()
+
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs=1,
         # then EpochCtrlOp should not be NOT added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=1):
             num_iter += 1
         assert num_iter == 2
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
@@ -473,17 +512,30 @@ class TestMinddataProfilingManager:
             num_iter += 1
         assert num_iter == 4
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
         self.confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs>1
+
+        # Initialize and Start MindData profiling manager
+        self.md_profiler.init()
+        self.md_profiler.start()
+
         num_iter = 0
         # Note: If create_dict_iterator() is called with num_epochs>1,
         # then EpochCtrlOp should be added to the pipeline
         for _ in data2.create_dict_iterator(num_epochs=2):
             num_iter += 1
         assert num_iter == 4
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
@@ -511,16 +563,29 @@ class TestMinddataProfilingManager:
             num_iter += 1
         assert num_iter == 4
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
+
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
         self.confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Add repeat op to pipeline.  Call create_dict_iterator with 3 ops in pipeline
+
+        # Initialize and Start MindData profiling manager
+        self.md_profiler.init()
+        self.md_profiler.start()
+
         data2 = data2.repeat(5)
         num_iter = 0
         for _ in data2.create_dict_iterator(num_epochs=1):
             num_iter += 1
         assert num_iter == 20
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save('./')
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"], pipeline_file)

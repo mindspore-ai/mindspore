@@ -16,13 +16,15 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PROFILE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PROFILE_H_
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <memory>
+#include <atomic>
 #include <chrono>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <nlohmann/json.hpp>
+#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 
@@ -50,15 +52,15 @@ class Profiling : std::enable_shared_from_this<Profiling> {
   // Destructor
   virtual ~Profiling() = default;
 
-  virtual Status Init(const std::string &dir_path, const std::string &device_id) = 0;
+  virtual Status Init() = 0;
 
   // Default serialization file generator
-  virtual Status SaveToFile() = 0;
+  virtual Status SaveToFile(const std::string &dir_path, const std::string &rank_id) = 0;
 
   // Profiling name
   virtual std::string Name() const = 0;
 
-  virtual Status ChangeFileMode() = 0;
+  virtual Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) = 0;
 
   // Start collecting data
   Status Start();
@@ -68,8 +70,8 @@ class Profiling : std::enable_shared_from_this<Profiling> {
 
  protected:
   bool active_;  // show current state of ProfilingManager (running, or paused)
-  std::string file_path_;
   std::mutex lock_;
+  virtual Path GetFileName(const std::string &dir_path, const std::string &rank_id) = 0;
 };
 
 // Sampling is a class of profiling which generate samples periodically.
@@ -80,7 +82,6 @@ class Sampling : public Profiling {
   // virtual Status TestPrint() = 0;
   virtual Status Analyze() = 0;
   virtual ~Sampling() = default;
-  Status ReadJson(nlohmann::json *output);
 };
 
 typedef struct TracingRecord_s {
@@ -101,8 +102,8 @@ class Tracing : public Profiling {
  public:
   // Tracing has minimal interface to provide flexible on data recording.
   // It only includes some common routines.
-  Status SaveToFile() override;
-  Status ChangeFileMode() override;
+  Status SaveToFile(const std::string &dir_path, const std::string &rank_id) override;
+  Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override;
   virtual Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
   virtual Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
   virtual Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
@@ -149,9 +150,9 @@ class ProfilingManager {
   Status Reset();
 
   // Save profile data to file
-  // @param final_round The boolean to show if the monitor thread is terminating.
+  // @param dir_path_ The path to the directory where the profiling data will be saved.
   // @return Status The status code returned
-  Status SaveProfilingData(const bool final_round = false);
+  Status SaveProfilingData(const std::string &dir_path, const std::string &rank_id);
 
   // Sampling node getter
   // @param name - The name of the requested node
@@ -177,14 +178,12 @@ class ProfilingManager {
   // Launch monitoring thread.
   Status LaunchMonitor();
 
-  // @param final_round The boolean to show if the monitor thread is terminating.
   // @return Status The status code returned
-  Status ChangeFileMode(const bool final_round = false);
+  Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id);
 
   // Analyze profile data and print warning messages
-  // @param final_round The boolean to show if the monitor thread is terminating.
   // @return Status The status code returned
-  Status Analyze(const bool final_round = false);
+  Status Analyze();
 
 #ifndef ENABLE_ANDROID
   /// \brief API to get User CPU utilization for the system
@@ -424,7 +423,7 @@ class ProfilingManager {
 
   /// \brief API to initialize profiling manager
   /// \return Status object with the error code
-  Status Init(const std::string &profile_data_path);
+  Status Init();
 
   /// \brief API to signal the profiling nodes to start collecting data
   /// \return Status object with the error code
@@ -433,6 +432,10 @@ class ProfilingManager {
   /// \brief API to signal profiling nodes to stop collecting data
   /// \return Status object with the error code
   Status Stop();
+
+  /// \brief API to save to file all the collected data between Start and Stop calls
+  /// \return Status object with the error code
+  Status Save(const std::string &profile_data_path);
 
  private:
   std::unique_ptr<Monitor> perf_monitor_;
@@ -444,12 +447,10 @@ class ProfilingManager {
     kProfilingStateFinished,
   };
   ProfilingState profiling_state_;  // show current state of ProfilingManager (running, or paused)
-  bool enabled_;
+  std::atomic<bool> enabled_;
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;
   ExecutionTree *tree_;                   // ExecutionTree pointer
-  std::string dir_path_;                  // where to create profiling file
-  std::string device_id_;                 // used when create profiling file,filename_device_id.suffix
   std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp
   std::vector<uint32_t> epoch_end_step_;  // End of epoch step number
 

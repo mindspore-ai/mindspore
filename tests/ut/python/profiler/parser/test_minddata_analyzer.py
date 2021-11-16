@@ -55,7 +55,6 @@ class TestMinddataProfilingAnalyzer:
              'parent_id', 'per_batch_time', 'per_pipeline_time', 'per_push_queue_time', 'pipeline_ops',
              'queue_average_size', 'queue_empty_freq_pct', 'queue_utilization_pct']
 
-
     def setup_method(self):
         """
         Run before each test function.
@@ -81,19 +80,16 @@ class TestMinddataProfilingAnalyzer:
         os.environ['RANK_ID'] = file_id
         os.environ['DEVICE_ID'] = file_id
 
-        # Initialize MindData profiling manager with current working directory
-        self.md_profiler.init(os.getcwd())
+        # Initialize MindData profiling manager
+        self.md_profiler.init()
 
         # Start MindData Profiling
         self.md_profiler.start()
-
 
     def teardown_method(self):
         """
         Run after each test function.
         """
-        # Stop MindData Profiling
-        self.md_profiler.stop()
 
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
@@ -219,6 +215,10 @@ class TestMinddataProfilingAnalyzer:
         # Confirm number of rows returned
         assert num_iter == 1000
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save(os.getcwd())
+
         # Confirm MindData Profiling files are created
         assert os.path.exists(pipeline_file) is True
         assert os.path.exists(cpu_util_file) is True
@@ -279,6 +279,10 @@ class TestMinddataProfilingAnalyzer:
         # Confirm number of rows returned
         assert num_iter == 125
 
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save(os.getcwd())
+
         # Confirm MindData Profiling files are created
         assert os.path.exists(pipeline_file) is True
         assert os.path.exists(cpu_util_file) is True
@@ -286,6 +290,11 @@ class TestMinddataProfilingAnalyzer:
 
         # Phase 2 - For the pipeline, call create_tuple_iterator with num_epochs=1
         # Note: This pipeline has 3 ops: Generator -> Map -> Batch
+
+        # Initialize and Start MindData profiling manager
+        self.md_profiler.init()
+        self.md_profiler.start()
+
         num_iter = 0
         # Note: If create_tuple_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=1):
@@ -293,6 +302,10 @@ class TestMinddataProfilingAnalyzer:
 
         # Confirm number of rows returned
         assert num_iter == 125
+
+        # Stop MindData Profiling and save output files to current working directory
+        self.md_profiler.stop()
+        self.md_profiler.save(os.getcwd())
 
         # Confirm MindData Profiling files are created
         # Note: There is an MD bug in which which the pipeline file is not recreated;

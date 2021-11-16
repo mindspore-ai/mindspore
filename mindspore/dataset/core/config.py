@@ -25,7 +25,6 @@ Common imported modules in corresponding API examples are as follows:
 import os
 import platform
 import random
-import time
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
@@ -409,20 +408,6 @@ def load(file):
         >>> ds.config.load(config_file)
     """
     _config.load(file)
-
-
-def _stop_dataset_profiler():
-    """
-    Mainly for stop dataset profiler.
-
-    Returns:
-        bool, whether the profiler file has generated.
-    """
-
-    while not _config.get_profiler_file_status():
-        _config.stop_dataset_profiler(True)
-        logger.warning("Profiling: waiting for dataset part profiling stop.")
-        time.sleep(1)
 
 
 def get_enable_shared_mem():

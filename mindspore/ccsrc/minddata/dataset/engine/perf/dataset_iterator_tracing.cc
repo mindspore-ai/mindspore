@@ -29,8 +29,7 @@ namespace dataset {
 
 constexpr int32_t CONNECTOR_DEPTH_OFFSET = 0;
 
-Status DatasetIteratorTracing::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("dataset_iterator_profiling_" + device_id + ".txt")).ToString();
+Status DatasetIteratorTracing::Init() {
   (void)ts_.emplace_back(0);
   return Status::OK();
 }
@@ -80,5 +79,8 @@ Status DatasetIteratorTracing::GetConnectorCapacity(int32_t start_step, int32_t 
   return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "extra_info", result);
 }
 
+Path DatasetIteratorTracing::GetFileName(const std::string &dir_path, const std::string &rank_id) {
+  return Path(dir_path) / Path("dataset_iterator_profiling_" + rank_id + ".txt");
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "minddata/dataset/engine/perf/profiling.h"
+#include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {
@@ -34,7 +35,7 @@ class DeviceQueueTracing : public Tracing {
 
   std::string Name() const override { return kDeviceQueueTracingName; };
 
-  Status Init(const std::string &dir_path, const std::string &device_id) override;
+  Status Init() override;
 
   Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
@@ -42,6 +43,9 @@ class DeviceQueueTracing : public Tracing {
   Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
   Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) override;
+
+ private:
+  Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -386,14 +386,10 @@ Status CpuSampler::UpdateTaskList() {
   return Status::OK();
 }
 
-Status CpuSampler::Init(const std::string &dir_path, const std::string &device_id) {
+Status CpuSampler::Init() {
 #if defined(USING_LINUX)
   main_pid_ = syscall(SYS_getpid);
 #endif
-  auto path = Path(dir_path) / Path("minddata_cpu_utilization_" + device_id + ".json");
-  // remove file if it already exists
-  RETURN_IF_NOT_OK(path.Remove());
-  file_path_ = path.ToString();
   for (auto iter = tree->begin(); iter != tree->end(); iter++) {
     auto op_id = iter->id();
     (void)op_info_by_id_.emplace(std::make_pair(op_id, MDOperatorCpuInfo(op_id)));
@@ -406,15 +402,22 @@ Status CpuSampler::Init(const std::string &dir_path, const std::string &device_i
   return Status::OK();
 }
 
-Status CpuSampler::ChangeFileMode() {
-  if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
-    std::string err_str = "Change file mode failed," + file_path_;
+Status CpuSampler::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
+  Path path = GetFileName(dir_path, rank_id);
+  std::string file_path = path.ToString();
+  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
+    std::string err_str = "Change file mode failed," + file_path;
     return Status(StatusCode::kMDUnexpectedError, err_str);
   }
   return Status::OK();
 }
 
-Status CpuSampler::SaveToFile() {
+Status CpuSampler::SaveToFile(const std::string &dir_path, const std::string &rank_id) {
+  Path path = GetFileName(dir_path, rank_id);
+  // Remove the file if it exists (from prior profiling usage)
+  RETURN_IF_NOT_OK(path.Remove());
+  std::string file_path = path.ToString();
+
   // construct json obj to write to file
   json output;
   output["cpu_processor_num"] = SystemCpuInfo::num_cpu_;
@@ -448,7 +451,7 @@ Status CpuSampler::SaveToFile() {
   output["time_stamp"] = ts_;
 
   // Discard the content of the file when opening.
-  std::ofstream os(file_path_, std::ios::trunc);
+  std::ofstream os(file_path, std::ios::trunc);
   os << output;
   os.close();
 
@@ -507,6 +510,10 @@ Status CpuSampler::GetSystemSysCpuUtil(uint64_t start_ts, uint64_t end_ts, std::
   auto start_index = std::distance(ts_.begin(), lower);
   auto end_index = std::distance(ts_.begin(), upper);
   return sys_cpu_info_.GetSysCpuUtil(start_index, end_index, result);
+}
+
+Path CpuSampler::GetFileName(const std::string &dir_path, const std::string &rank_id) {
+  return Path(dir_path) / Path("minddata_cpu_utilization_" + rank_id + ".json");
 }
 }  // namespace dataset
 }  // namespace mindspore

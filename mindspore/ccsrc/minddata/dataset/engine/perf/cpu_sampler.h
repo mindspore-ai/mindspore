@@ -142,9 +142,9 @@ class CpuSampler : public Sampling {
   explicit CpuSampler(ExecutionTree *tree) : fetched_all_python_multiprocesses_(false), tree(tree) {}
   ~CpuSampler() = default;
   Status Sample() override;
-  Status Init(const std::string &dir_path, const std::string &device_id) override;
-  Status ChangeFileMode() override;
-  Status SaveToFile() override;
+  Status Init() override;
+  Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override;
+  Status SaveToFile(const std::string &dir_path, const std::string &rank_id) override;
   std::string Name() const override { return kCpuSamplerName; }
   Status Analyze() override;
   Status GetSystemUserCpuUtil(uint64_t start_ts, uint64_t end_ts, std::vector<uint8_t> *result);
@@ -163,6 +163,7 @@ class CpuSampler : public Sampling {
   std::shared_ptr<ThreadCpuInfo> main_thread_cpu_info_;
   std::shared_ptr<ProcessCpuInfo> main_process_cpu_info_;
   std::unordered_map<int32_t, MDOperatorCpuInfo> op_info_by_id_;
+  Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };
 }  // namespace dataset
 }  // namespace mindspore
