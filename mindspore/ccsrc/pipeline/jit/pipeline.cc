@@ -657,12 +657,6 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   info_[phase]->func_graph = func_graph;
 
-#ifndef ENABLE_SECURITY
-#ifdef ENABLE_D
-  profiler::ascend::DumpProfileParallelStrategy(func_graph);
-#endif
-#endif
-
   if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
@@ -919,6 +913,30 @@ void CheckInterpretNodeLineInfos() {
   InterpretNodeRecorder::GetInstance().Clear();
 }
 
+#ifdef ENABLE_DUMP_IR
+void RDRRecordGraph(const size_t action_index, const size_t action_size, const std::string &filename,
+                    const FuncGraphPtr graph) {
+  if (mindspore::RecorderManager::Instance().RdrEnable()) {
+    MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
+    if (graph != nullptr) {
+      auto graph_clone = BasicClone(graph);
+      if (graph_clone != nullptr) {
+        DumpGraphParams dump_params = {false, static_cast<int>(kTopStack)};
+        if (action_index == action_size) {
+          dump_params.dump_mode = static_cast<int>(kWholeStack);
+        }
+        (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, filename, graph_clone, dump_params, ".ir");
+      } else {
+        MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
+      }
+    } else {
+      MS_LOG(WARNING) << "Pipeline Resource has no FuncGraph, no FuncGraph recording in RDR";
+    }
+    MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
+  }
+}
+#endif
+
 void Pipeline::Run(const std::string &phase) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
@@ -942,6 +960,12 @@ void Pipeline::Run(const std::string &phase) {
       } else if (action.first == "validate") {
         CheckInterpretNodeLineInfos();
         CacheValidateFuncGraph(phase, resource_);
+#ifndef ENABLE_SECURITY
+#ifdef ENABLE_D
+        FuncGraphPtr graph = resource_->func_graph();
+        profiler::ascend::DumpProfileParallelStrategy(graph);
+#endif
+#endif
       }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
@@ -949,25 +973,8 @@ void Pipeline::Run(const std::string &phase) {
 
       FuncGraphPtr graph = resource_->func_graph();
 #ifdef ENABLE_DUMP_IR
-      if (mindspore::RecorderManager::Instance().RdrEnable()) {
-        MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
-        std::string name = GetBaseNameForIR(SizeToLong(i), action.first);
-        if (graph != nullptr) {
-          auto graph_clone = BasicClone(graph);
-          if (graph_clone != nullptr) {
-            DumpGraphParams dump_params = {false, static_cast<int>(kTopStack)};
-            if (i == actions_.size()) {
-              dump_params.dump_mode = static_cast<int>(kWholeStack);
-            }
-            (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, dump_params, ".ir");
-          } else {
-            MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
-          }
-        } else {
-          MS_LOG(WARNING) << "Pipeline Resource has no FuncGraph, no FuncGraph recording in RDR";
-        }
-        MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
-      }
+      std::string filename = GetBaseNameForIR(SizeToLong(i), action.first);
+      RDRRecordGraph(i, actions_.size(), filename, graph);
 
       if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
         user_graph = graph;

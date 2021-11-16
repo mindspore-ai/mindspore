@@ -41,7 +41,7 @@ class ProtoExporter {
 
  private:
   void InitModelInfo();
-  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, irpb::NodeProto *node_proto);
+  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const CNodePtr &cnode, irpb::NodeProto *node_proto);
   std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr);
@@ -326,23 +326,26 @@ void ProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::Va
   }
 }
 
-void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const AnfNodePtr &node, irpb::NodeProto *node_proto) {
-  if (node == nullptr || node_proto == nullptr) {
+void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const CNodePtr &cnode, irpb::NodeProto *node_proto) {
+  const auto &inputs = cnode->inputs();
+  AnfNodePtr op_node = inputs[0];
+
+  if (op_node == nullptr || node_proto == nullptr) {
     return;
   }
 
-  if (node->isa<CNode>() || node->isa<Parameter>() || IsValueNode<FuncGraph>(node)) {
-    MS_LOG(EXCEPTION) << "Op node can not be CNode, Parameter or ValueNode Graph. But got " << node->ToString();
+  if (op_node->isa<CNode>() || op_node->isa<Parameter>() || IsValueNode<FuncGraph>(op_node)) {
+    MS_LOG(EXCEPTION) << "Op node can not be CNode, Parameter or ValueNode Graph. But got " << op_node->ToString();
   }
 
-  if (!IsValueNode<Primitive>(node)) {
-    MS_LOG(EXCEPTION) << "Op node is not primitive: " << node->ToString();
+  if (!IsValueNode<Primitive>(op_node)) {
+    MS_LOG(EXCEPTION) << "Op node is not primitive: " << op_node->ToString();
   }
 
-  const PrimitivePtr &prim = GetValueNode<PrimitivePtr>(node);
+  const PrimitivePtr &prim = GetValueNode<PrimitivePtr>(op_node);
 
   // set node parallel info
-  auto operator_info = node->user_data<parallel::OperatorInfo>();
+  auto operator_info = cnode->user_data<parallel::OperatorInfo>();
   if (operator_info != nullptr) {
     auto strategy = operator_info->strategy();
     if (strategy != nullptr) {
@@ -360,7 +363,7 @@ void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const AnfNodePtr
     attr_proto->set_name(attr.first);
     SetValueToProto(attr.second, attr_proto->mutable_value());
   }
-  node_proto->set_scope(node->scope()->name());
+  node_proto->set_scope(op_node->scope()->name());
 }
 
 std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodePtr &node,
@@ -487,7 +490,7 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &
   if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
     MS_LOG(DEBUG) << "Operator must be a primitive";
   } else {
-    GetOpNodeTypeAndAttrs(func_graph, op, node_proto);
+    GetOpNodeTypeAndAttrs(func_graph, node, node_proto);
     node_proto->set_name(std::to_string(apply_idx));
     node_proto->set_scope(node->scope()->name());
     node_proto->set_full_name(GetKernelNodeName(node));

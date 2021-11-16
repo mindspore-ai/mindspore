@@ -39,6 +39,7 @@ bool IsProfilingParallelStrategyEnabled() {
   auto ascend_profiler = AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->GetProfilingEnableFlag()) {
+    MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
 
