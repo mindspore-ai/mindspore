@@ -14,6 +14,7 @@
 # ============================================================================
 """test vjp in graph mode"""
 import numpy as np
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
@@ -55,3 +56,16 @@ def test_vjp_multiple_inputs_default_v_graph():
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = MultipleInputsOutputNet()
     vjp(net, (x, y), (v, v))
+
+
+def test_vjp_wrong_input_type_graph():
+    """
+    Features: Function vjp
+    Description: Test vjp with wrong input type in graph mode.
+    Expectation: No exception.
+    """
+    x = 1
+    v = 1
+    net = SingleInputNet()
+    with pytest.raises(TypeError):
+        vjp(net, x, v)

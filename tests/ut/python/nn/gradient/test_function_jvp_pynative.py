@@ -15,6 +15,7 @@
 """test function jvp in pynative mode """
 
 import numpy as np
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
@@ -142,3 +143,16 @@ def test_jvp_multiple_inputs_single_output_custom_v_pynative():
     v2 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = MultipleInputSingleOutputNet()
     jvp(net, (x, y), (v1, v2))
+
+
+def test_jvp_wrong_input_type_pynative():
+    """
+    Features: Function jvp
+    Description: Test jvp with wrong input type in pynative mode.
+    Expectation: No exception.
+    """
+    x = 1
+    v = 1
+    net = SingleInputSingleOutputNet()
+    with pytest.raises(TypeError):
+        jvp(net, x, v)

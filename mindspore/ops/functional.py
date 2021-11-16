@@ -195,6 +195,31 @@ def grad(fn, grad_position=0, sens_param=False):
 
     Returns:
         Function, returns the gradient function for the input function or cell.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> import mindspore.context as context
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.functional import grad
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x*y*z
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
+        >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+        >>> net = Net()
+        >>> output = grad(net, grad_position=(1, 2))(x, y, z)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 0.00000000e+00,  6.00000000e+00],
+         [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-2.00000000e+00,  6.00000000e+00],
+         [-3.00000000e+00,  8.00000000e+00]]))
     """
     grad_position = _convert_grad_position_type(grad_position)
     if sens_param:
