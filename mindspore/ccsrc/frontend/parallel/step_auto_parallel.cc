@@ -665,7 +665,7 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   (*edge_count)++;
 }
 
-void CheckAndApplyApproximation() {
+void ApplyApproximationForGraphs() {
   // If 'approximation' is enabled, the edges need to be checked have effective costs.
   auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
   if (approximation) {
@@ -748,9 +748,17 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     }
     ConstructCNodeCostGraphEdges(cnode);
   }
-  CheckAndApplyApproximation();
+  ApplyApproximationForGraphs();
 
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
+}
+
+void ApplyApproximationForParaNode(OperatorInfoPtr target_op_info) {
+  // If 'approximation' is enabled, the edges need to be checked have effective costs.
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (approximation) {
+    target_op_info->ExactStrategiesAndRelatedEdges();
+  }
 }
 
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
@@ -850,11 +858,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       }
       std::shared_ptr<Edge> edge_ptr =
         std::make_shared<Edge>(edge_name, tmp_identity_ptr, target_op_info, 0, input_index - 1, false, true);
-      // If 'approximation' is enabled, the edges need to be checked have effective costs.
-      auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
-      if (approximation) {
-        target_op_info->ExactStrategiesAndRelatedEdges();
-      }
+      ApplyApproximationForParaNode(target_op_info);
 
       if (edge_ptr->InitEdgeCost() != SUCCESS) {
         MS_LOG(EXCEPTION) << "Edge cost initialization failed";
