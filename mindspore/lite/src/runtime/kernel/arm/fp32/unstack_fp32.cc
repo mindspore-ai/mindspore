@@ -71,8 +71,8 @@ int UnstackCPUKernel::ReSize() {
 }
 
 int UnstackCPUKernel::Run() {
-  float *input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  CHECK_NULL_RETURN(input);
+  void *input_data = in_tensors_.front()->MutableData();
+  CHECK_NULL_RETURN(input_data);
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
     output_addr_array_[i] = out_tensors_.at(i)->data();
@@ -80,9 +80,13 @@ int UnstackCPUKernel::Run() {
   }
   auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
   para->num_ = static_cast<int>(out_num);
-  Unstack(input, output_addr_array_, para, sizeof(float));
+  int data_type_len = in_tensors_.front()->data_type() == kNumberTypeFloat16 ? FP16_DATA_TYPE_LEN : sizeof(float);
+  Unstack(input_data, output_addr_array_, para, data_type_len);
   return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unstack, LiteKernelCreator<UnstackCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Unstack, LiteKernelCreator<UnstackCPUKernel>)
+#endif
 }  // namespace mindspore::kernel
