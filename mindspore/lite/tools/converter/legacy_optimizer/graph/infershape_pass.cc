@@ -17,7 +17,6 @@
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
 #include <deque>
-#include <set>
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -447,31 +446,36 @@ int InferShapePass::InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, 
     return RET_PARAM_INVALID;
   }
 
-  static std::set<CNodeT *> partial_cnode_inferred{};
   std::deque<CNodeT *> to_process{};
   auto true_branch_output_index = switch_node->inputIndex.at(kSwitchTrueIndex);
   auto false_branch_output_index = switch_node->inputIndex.at(kSwitchFalseIndex);
+  bool find_true_partial = false;
+  bool find_false_partial = false;
+  CNodeT *true_partial_cnode = nullptr;
+  CNodeT *false_partial_cnode = nullptr;
   for (auto &node : graph->nodes) {
     if (node->primitive->value.type != PrimitiveType_PartialFusion) {
       continue;
     }
-    if (IsContain(node->outputIndex, true_branch_output_index) &&
-        partial_cnode_inferred.find(node.get()) == partial_cnode_inferred.end()) {
-      to_process.push_back(node.get());
-      partial_cnode_inferred.insert(node.get());
+    if (!find_true_partial && IsContain(node->outputIndex, true_branch_output_index)) {
+      true_partial_cnode = node.get();
+      find_true_partial = true;
+    }
+    if (!find_false_partial && IsContain(node->outputIndex, false_branch_output_index)) {
+      false_partial_cnode = node.get();
+      find_false_partial = true;
+    }
+    if (find_true_partial && find_false_partial) {
       break;
     }
   }
-  for (auto &node : graph->nodes) {
-    if (node->primitive->value.type != PrimitiveType_PartialFusion) {
-      continue;
-    }
-    if (IsContain(node->outputIndex, false_branch_output_index) &&
-        partial_cnode_inferred.find(node.get()) == partial_cnode_inferred.end()) {
-      to_process.push_back(node.get());
-      partial_cnode_inferred.insert(node.get());
-      break;
-    }
+  if (partial_cnode_inferred_.find(true_partial_cnode) == partial_cnode_inferred_.end()) {
+    to_process.push_back(true_partial_cnode);
+    partial_cnode_inferred_.insert(true_partial_cnode);
+  }
+  if (partial_cnode_inferred_.find(false_partial_cnode) == partial_cnode_inferred_.end()) {
+    to_process.push_back(false_partial_cnode);
+    partial_cnode_inferred_.insert(false_partial_cnode);
   }
 
   while (!to_process.empty()) {
@@ -493,32 +497,19 @@ int InferShapePass::InferCallNode(const std::unique_ptr<CNodeT> &call_node, Meta
     return RET_PARAM_INVALID;
   }
   auto call_first_input_index = call_node->inputIndex.front();
-  bool find_partial = false;
-  bool find_switch = false;
   for (auto &node : graph->nodes) {
-    if (IsContain(node->outputIndex, call_first_input_index) &&
-        node->primitive->value.type == PrimitiveType_PartialFusion) {
-      find_partial = true;
-      int ret = InferPartialNode(node.get(), graph);
-      if (ret != RET_OK) {
-        MS_LOG(WARNING) << "not support partial infer.";
-        return ret;
-      }
-      break;
+    if (!IsContain(node->outputIndex, call_first_input_index)) {
+      continue;
     }
-    if (IsContain(node->outputIndex, call_first_input_index) && node->primitive->value.type == PrimitiveType_Switch) {
-      find_switch = true;
-      int ret = InferSwitchNode(node, graph);
-      if (ret != RET_OK) {
-        MS_LOG(WARNING) << "not support partial infer.";
-        return ret;
-      }
-      break;
+    switch (node->primitive->value.type) {
+      case PrimitiveType_PartialFusion:
+        return InferPartialNode(node.get(), graph);
+      case PrimitiveType_Switch:
+        return InferSwitchNode(node, graph);
+      default:
+        MS_LOG(ERROR) << "not able to call partial or call switch.";
+        return RET_ERROR;
     }
-  }
-  if (!find_partial && !find_switch) {
-    MS_LOG(ERROR) << "not able to call partial or call switch.";
-    return RET_ERROR;
   }
   return RET_OK;
 }

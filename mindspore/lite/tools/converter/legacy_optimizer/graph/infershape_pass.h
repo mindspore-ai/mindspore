@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <set>
 #include "tools/common/graph_util.h"
 #include "tools/converter/optimizer.h"
 #include "tools/converter/converter_flags.h"
@@ -61,6 +62,7 @@ class InferShapePass : public GraphPass {
 
   converter::FmkType fmk_type_ = kFmkTypeTf;
   std::vector<InferTensor> tensors_ = {};
+  std::set<CNodeT *> partial_cnode_inferred_{};
 };
 }  // namespace lite
 }  // namespace mindspore
