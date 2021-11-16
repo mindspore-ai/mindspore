@@ -2976,7 +2976,7 @@ CommInfo GetCommInfo() {
       !ParallelContext::GetInstance()->hccl_test_available()) {
     // hccl_test_available is used when we compile graphs in real ascend card environment, but with hccl_test.
     MS_LOG(EXCEPTION) << "The device_num " << device_num << " set in the context is not consist with "
-                      << world_rank_size << " devices you have "
+                      << world_rank_size << " devices you have"
                       << ". Please check your rank_table file(for Ascend) or host file(for GPU).";
   }
 #endif

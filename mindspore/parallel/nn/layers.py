@@ -338,14 +338,10 @@ class _Linear(Cell):
             raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
         if activation and not isinstance(activation, str):
             raise ValueError("Activation can only be str, but found type {}".format(activation))
-        if isinstance(weight_init, Tensor):
-            if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
-                    weight_init.shape[1] != in_channels:
-                raise ValueError("Weight init shape error.")
-        if transpose_b:
-            weight_shape = [out_channels, in_channels]
-        else:
-            weight_shape = [in_channels, out_channels]
+        if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
+                    weight_init.shape[1] != in_channels):
+            raise ValueError("Weight init shape error.")
+        weight_shape = [out_channels, in_channels] if transpose_b else [in_channels, out_channels]
         self.expert_num = expert_num
         if self.expert_num > 1:
             self.expert_flag = True
@@ -359,9 +355,8 @@ class _Linear(Cell):
         self.bias = None
         self.has_bias = has_bias
         if self.has_bias:
-            if isinstance(bias_init, Tensor):
-                if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
-                    raise ValueError("Bias init shape error.")
+            if isinstance(bias_init, Tensor) and (bias_init.ndim != 1 or bias_init.shape[0] != out_channels):
+                raise ValueError("Bias init shape error.")
             self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
             self.bias_add = P.Add()
         self.act_name = activation
