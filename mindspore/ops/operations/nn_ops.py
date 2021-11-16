@@ -1086,33 +1086,13 @@ class InstanceNorm(PrimitiveWithInfer):
 
 class BNTrainingReduce(PrimitiveWithInfer):
     """
-    For the BatchNorm operation this operator updates the moving averages for training and is used in conjunction with
-    BNTrainingUpdate.
-
-    Inputs:
-        - **x** (Tensor) - A 4-D Tensor with float16 or float32 data type. Tensor of shape :math:`(N, C, A, B)`.
-
-    Outputs:
-        - **sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
-        - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type. Tensor of shape :math:`(C,)`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+    The BNTrainingReduce interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
 
     Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> x = Tensor(np.ones([128, 3, 32, 3]), mindspore.float32)
-        >>> bn_training_reduce = ops.BNTrainingReduce()
-        >>> output = bn_training_reduce(x)
-        >>> print(output)
-        (Tensor(shape=[3], dtype=Float32, value=
-        [ 1.22880000e+04, 1.22880000e+04, 1.22880000e+04]), Tensor(shape=[3], dtype=Float32, value=
-        [ 1.22880000e+04, 1.22880000e+04, 1.22880000e+04]))
+        Deprecated
     """
 
+    @deprecated("1.5", "ops.BatchNorm", False)
     @prim_attr_register
     def __init__(self):
         """Initialize BNTrainingReduce."""
@@ -1129,74 +1109,13 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
 class BNTrainingUpdate(PrimitiveWithInfer):
     """
-    For the BatchNorm operation, this operator updates the moving averages for training and is used in conjunction with
-    BNTrainingReduce. Where the moving averages is a method of analyzing data points by creating a series of averages
-    of different subsets of the entire data set.
-
-    .. warning::
-        For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
-
-    Args:
-        isRef (bool): If a ref. Default: True. Ref indicates whether to enable the output multiplexing input address.
-        epsilon (float): A small value added to variance avoid dividing by zero. Default: 1e-5.
-        factor (float): A weight for updating the mean and variance. Default: 0.1.
-
-    Inputs:
-        - **input_x** (Tensor) - A 4-D Tensor with float16 or float32 data type. Tensor of shape :math:`(N, C, A, B)`.
-        - **sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator BNTrainingReduce.
-          Tensor of shape :math:`(C,)`.
-        - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator
-          BNTrainingReduce. Tensor of shape :math:`(C,)`.
-        - **scale** (Tensor) - A 1-D Tensor with float16 or float32, for the scaling factor.
-          Tensor of shape :math:`(C,)`.
-        - **offset** (Tensor) - A 1-D Tensor with float16 or float32, for the scaling offset.
-          Tensor of shape :math:`(C,)`.
-        - **mean** (Tensor) - A 1-D Tensor with float16 or float32, for the scaling mean. Tensor of shape :math:`(C,)`.
-        - **variance** (Tensor) - A 1-D Tensor with float16 or float32, for the update variance.
-          Tensor of shape :math:`(C,)`.
-
-    Outputs:
-        - **y** (Tensor) - Tensor, has the same shape and data type as `input_x`.
-        - **mean** (Tensor) - Tensor for the updated mean, with float32 data type.
-          Has the same shape as `variance`.
-        - **variance** (Tensor) - Tensor for the updated variance, with float32 data type.
-          Has the same shape as `variance`.
-        - **batch_mean** (Tensor) - Tensor for the mean of `input_x`, with float32 data type.
-          Has the same shape as `variance`.
-        - **batch_variance** (Tensor) - Tensor for the mean of `variance`, with float32 data type.
-          Has the same shape as `variance`.
-
-    Raises:
-        TypeError: If `isRef` is not a bool.
-        TypeError: If dtype of `epsilon` or `factor` is not float.
-        TypeError: If `input_x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is not a Tensor.
-        TypeError: If dtype of `input_x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is neither
-                   float16 nor float32.
+    The BNTrainingUpdate interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
 
     Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
-        >>> sum_val = Tensor(np.ones([2]), mindspore.float32)
-        >>> square_sum = Tensor(np.ones([2]), mindspore.float32)
-        >>> scale = Tensor(np.ones([2]), mindspore.float32)
-        >>> offset = Tensor(np.ones([2]), mindspore.float32)
-        >>> mean = Tensor(np.ones([2]), mindspore.float32)
-        >>> variance = Tensor(np.ones([2]), mindspore.float32)
-        >>> bn_training_update = ops.BNTrainingUpdate()
-        >>> output = bn_training_update(input_x, sum_val, square_sum, scale, offset, mean, variance)
-        >>> print(output)
-        (Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]],
-          [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [9.24999952e-01,
-        9.24999952e-01]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01, 9.24999952e-01]),
-        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-01, 2.50000000e-01]), Tensor(shape=[2], dtype=Float32,
-        value= [ 1.87500000e-01, 1.87500000e-01]))
+        Deprecated
     """
 
+    @deprecated("1.5", "ops.BatchNorm", False)
     @prim_attr_register
     def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
         """Initialize BNTrainingUpdate."""
@@ -2158,7 +2077,7 @@ class Conv2DBackpropInput(Primitive):
         sig.make_sig('input_sizes', dtype=sig.sig_dtype.T2)
     )
 
-    @deprecated("1.5", "ops.Conv2dTranspose", True)
+    @deprecated("1.5", "ops.Conv2dTranspose", False)
     @prim_attr_register
     def __init__(self,
                  out_channel,
@@ -3445,7 +3364,7 @@ class DropoutGenMask(Primitive):
         Deprecated
     """
 
-    @deprecated("1.5", "ops.Dropout", True)
+    @deprecated("1.5", "ops.Dropout", False)
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
         """Initialize DropoutGenMask."""
@@ -3463,7 +3382,7 @@ class DropoutDoMask(Primitive):
         Deprecated
     """
 
-    @deprecated("1.5", "ops.Dropout", True)
+    @deprecated("1.5", "ops.Dropout", False)
     @prim_attr_register
     def __init__(self):
         pass
@@ -7818,9 +7737,9 @@ class DynamicGRUV2(PrimitiveWithInfer):
 
         A note about the bias_type:
 
-        - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is date type of `init_h`.
-        - If `bias_input` is not `None`, `bias_type` is the date type of `bias_input`.
-        - If `bias_input` is `None` and `bias_hidden` is not `None`, `bias_type` is the date type of `bias_hidden`.
+        - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is data type of `init_h`.
+        - If `bias_input` is not `None`, `bias_type` is the data type of `bias_input`.
+        - If `bias_input` is `None` and `bias_hidden` is not `None`, `bias_type` is the data type of `bias_hidden`.
 
     Raises:
         TypeError: If `direction`, `activation` or `gate_order` is not a str.
