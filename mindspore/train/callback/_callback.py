@@ -80,6 +80,10 @@ class Callback:
     You can use this mechanism to initialize and release resources automatically.
 
     Callback function will execute some operations in the current step or epoch.
+    To create a custom callback, subclass Callback and override the method associated
+    with the stage of interest. See
+    https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html#callback
+    for more information.
 
     It holds the information of the model. Such as `network`, `train_network`, `epoch_num`, `batch_num`,
     `loss_fn`, `optimizer`, `parallel_mode`, `device_number`, `list_callback`, `cur_epoch_num`,
