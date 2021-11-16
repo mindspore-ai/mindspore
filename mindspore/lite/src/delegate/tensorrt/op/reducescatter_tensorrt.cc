@@ -136,10 +136,10 @@ nvinfer1::DimsExprs ReduceScatterPlugin::getOutputDimensions(int outputIndex, co
                                                              nvinfer1::IExprBuilder &exprBuilder) noexcept {
   auto out_dims = new nvinfer1::DimsExprs();
   out_dims->nbDims = inputs->nbDims;
-  out_dims->d[0] = exprBuilder.constant(inputs->d[0]->getConstantValue() / rank_);
-  MS_LOG(DEBUG) << "output of ReduceScatter: " << out_dims->d[0]->getConstantValue();
+  auto rank_dim = exprBuilder.constant(rank_);
+  out_dims->d[0] = exprBuilder.operation(nvinfer1::DimensionOperation::kCEIL_DIV, *inputs->d[0], *rank_dim);
   for (int i = 1; i < inputs->nbDims; i++) {
-    out_dims->d[i] = exprBuilder.constant(inputs->d[i]->getConstantValue());
+    out_dims->d[i] = inputs->d[i];
   }
   return *out_dims;
 }

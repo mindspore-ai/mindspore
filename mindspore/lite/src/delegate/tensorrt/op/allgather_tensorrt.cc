@@ -125,9 +125,10 @@ nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const 
                                                          int nbInputs, nvinfer1::IExprBuilder &exprBuilder) noexcept {
   auto out_dims = new nvinfer1::DimsExprs();
   out_dims->nbDims = inputs->nbDims;
-  out_dims->d[0] = exprBuilder.constant(inputs->d[0]->getConstantValue() * rank_);
+  auto rank_dim = exprBuilder.constant(rank_);
+  out_dims->d[0] = exprBuilder.operation(nvinfer1::DimensionOperation::kPROD, *inputs->d[0], *rank_dim);
   for (int i = 1; i < inputs->nbDims; i++) {
-    out_dims->d[1] = inputs->d[i];
+    out_dims->d[i] = inputs->d[i];
   }
   return *out_dims;
 }
