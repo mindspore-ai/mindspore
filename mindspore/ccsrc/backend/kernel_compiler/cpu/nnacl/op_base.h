@@ -45,6 +45,8 @@
 #define C64NUM 64
 #define TILE_NUM 8
 
+#define FP16_DATA_TYPE_LEN 2
+
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
 #define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))

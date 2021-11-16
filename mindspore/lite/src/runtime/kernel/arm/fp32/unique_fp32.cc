@@ -17,6 +17,10 @@
 #include "src/runtime/kernel/arm/fp32/unique_fp32.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/fp32/unique_fp32.h"
+#ifdef ENABLE_FP16
+#include "nnacl/fp16/unique_fp16.h"
+#endif
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -27,27 +31,41 @@ namespace mindspore::kernel {
 int UniqueCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[1]);
   return RET_OK;
 }
 
 int UniqueCPUKernel::ReSize() { return RET_OK; }
 
 int UniqueCPUKernel::Run() {
-  auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto input = in_tensors_[0]->MutableData();
   CHECK_NULL_RETURN(input);
-  auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto output0 = out_tensors_[0]->MutableData();
   CHECK_NULL_RETURN(output0);
-  auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->MutableData());
+  auto output1 = reinterpret_cast<int *>(out_tensors_[1]->MutableData());
   CHECK_NULL_RETURN(output1);
 
   int output0_len = 0;
-  Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    UniqueFp16(static_cast<float16_t *>(input), in_tensors_[0]->ElementsNum(), static_cast<float16_t *>(output0),
+               &output0_len, output1);
+#endif
+  } else {
+    Unique(static_cast<float *>(input), in_tensors_[0]->ElementsNum(), static_cast<float *>(output0), &output0_len,
+           output1);
+  }
 
-  std::vector<int> out_shape = out_tensors_.at(0)->shape();
-  out_shape.at(out_shape.size() - 1) = output0_len;
-  out_tensors_.at(0)->set_shape(out_shape);
+  std::vector<int> out_shape = out_tensors_[0]->shape();
+  out_shape[out_shape.size() - 1] = output0_len;
+  out_tensors_[0]->set_shape(out_shape);
   return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unique, LiteKernelCreator<UniqueCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Unique, LiteKernelCreator<UniqueCPUKernel>)
+#endif
 }  // namespace mindspore::kernel
