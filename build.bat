@@ -87,6 +87,8 @@ EXIT /b 0
 :clean
     IF EXIST "%BASE_PATH%/output" (
         cd %BASE_PATH%/output
-        rd /s /q _CPack_Packages
+        if EXIST "%BASE_PATH%/output/_CPack_Packages" (
+             rd /s /q _CPack_Packages
+        )
     )
     cd %BASE_PATH%
