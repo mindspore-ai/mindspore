@@ -335,6 +335,11 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
 }
 #endif
 
+void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_found) {
+  if (history_not_found) {
+    *error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
+  }
+}
 void DebugServices::CheckWatchpointsForTensor(
   partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
   partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
@@ -422,9 +427,7 @@ void DebugServices::CheckWatchpointsForTensor(
         is_hit = std::get<ITensorSummary::eHitPos>(item);
         error_code = std::get<ITensorSummary::eErrorCodePos>(item);
 #ifdef OFFLINE_DBG_MODE
-        if (history_not_found) {
-          error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
-        }
+        CheckHistoryErrorCode(&error_code, history_not_found);
 #endif
         parameter_list = std::get<ITensorSummary::eParamListPos>(item);
       }
@@ -1413,6 +1416,10 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
 #endif
 
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetTensor() const { return tensor_loader_->GetTensor(); }
+
+std::shared_ptr<TensorData> DebugServices::GetTensor(const std::string &tensor_name) const {
+  return tensor_loader_->GetTensor(tensor_name);
+}
 
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 

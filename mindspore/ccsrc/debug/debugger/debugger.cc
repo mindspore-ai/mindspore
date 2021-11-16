@@ -1093,6 +1093,14 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
   return tensor_summary_list;
 }
 
+std::shared_ptr<TensorData> Debugger::GetTensor(const std::string &tensor_name) const {
+  return debug_services_->GetTensor(tensor_name);
+}
+
+DebugServices::TensorStat Debugger::GetTensorStatistics(std::shared_ptr<TensorData> tensor_data) const {
+  return DebugServices::GetTensorStatistics(tensor_data);
+}
+
 void Debugger::Exit(bool exit_success) {
   // debugger will notify main thread to exit because main thread can only exit at step boundary.
   MS_LOG(INFO) << "Exit Debugger";
