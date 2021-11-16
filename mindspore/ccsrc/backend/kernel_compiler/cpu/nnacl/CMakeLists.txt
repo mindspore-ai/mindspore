@@ -35,19 +35,19 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/fp32_grad/*.c
 )
 
-if(OP_INT8_CLIP)
-    set(KERNEL_SRC
-            ${KERNEL_SRC}
-            ${NNACL_DIR}/int8/pack_int8.c
-            ${NNACL_DIR}/int8/quantize.c
-            )
-else()
+if((NOT DEFINED MSLITE_ENABLE_INT8) OR MSLITE_ENABLE_INT8)
     file(GLOB KERNEL_SRC_INT8
             ${NNACL_DIR}/int8/*.c
             )
     set(KERNEL_SRC
             ${KERNEL_SRC}
             ${KERNEL_SRC_INT8}
+            )
+else()
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${NNACL_DIR}/int8/pack_int8.c
+            ${NNACL_DIR}/int8/quantize.c
             )
 endif()
 
