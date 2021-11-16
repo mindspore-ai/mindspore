@@ -335,6 +335,8 @@ class SideEffectFinder {
     UpdateOrderLists();
     // Find side effects by DFS from the top graph.
     (void)GetEffectInfo(root_);
+    // Check switch calls, add monad arguments if need.
+    HandleSwitchCalls();
     // Check switch layer calls, add monad arguments if need.
     HandleSwitchLayerCalls();
   }
@@ -424,11 +426,11 @@ class SideEffectFinder {
   EffectInfo TraceSwitchEffectInfo(const CNodePtr &cnode) {
     // Find branches from switch cnode.
     auto branches = GetSwitchBranches(cnode);
+    // Save branch caller, so that we can update arguments for the caller.
+    SaveBranchCaller(cnode, branches);
     // For some case, only one branch is set.
     if (branches.size() == 1) {
       auto &branch = branches.front();
-      // Save branch caller, so that we can update arguments for the caller.
-      SaveBranchCaller(cnode, branch);
       return GetEffectInfo(branch);
     }
     // When both branches are set, merge their effect infos.
@@ -456,6 +458,39 @@ class SideEffectFinder {
       call.branches = move(branches);
     }
     return info;
+  }
+
+  void HandleSwitchCalls() {
+    for (auto &call : switch_calls_) {
+      const auto &caller = call.first;
+      const auto &branches = call.second;
+      CheckAndFixSwitchCall(caller, branches);
+    }
+  }
+
+  void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) {
+    const auto caller_input_size = caller->inputs().size();
+    for (auto &branch : branches) {
+      if (caller_input_size != branch->parameters().size() + 1) {
+        // Fix branch if number of parameter mismatch.
+        FixSwitchBranch(caller, branch);
+        // The number of parameter should matched after fix.
+        if (caller_input_size != branch->parameters().size() + 1) {
+          MS_LOG(EXCEPTION) << "Fix switch branch parameters failed! " << caller->DebugString();
+        }
+      }
+    }
+  }
+
+  void FixSwitchBranch(const CNodePtr &caller, const FuncGraphPtr &branch) {
+    for (size_t i = caller->size() - 1; i > 0; --i) {
+      auto &input = caller->input(i);
+      if (HasAbstractUMonad(input)) {
+        AddMonadParameter(branch, "u", input->abstract());
+      } else if (HasAbstractIOMonad(input)) {
+        AddMonadParameter(branch, "io", input->abstract());
+      }
+    }
   }
 
   void HandleSwitchLayerCalls() {
@@ -708,6 +743,9 @@ class SideEffectFinder {
     // For func graph calls, we trace effect info from graph output.
     auto called_graph = GetFuncGraph(cnode);
     if (called_graph) {
+      // Save the caller of the graph, so that we can update
+      // monad parameters for it when requires.
+      graph_callers_[called_graph].emplace(cnode);
       return TraceEffectInfo(called_graph->output());
     }
 
@@ -864,6 +902,9 @@ class SideEffectFinder {
     // For func graph, detect effect info by its children cnodes.
     auto func_graph = GetFuncGraph(cnode);
     if (func_graph) {
+      // Save the caller of the graph, so that we can update
+      // monad parameters for it when requires.
+      graph_callers_[func_graph].emplace(cnode);
       return GetEffectInfo(func_graph);
     }
 
@@ -989,10 +1030,13 @@ class SideEffectFinder {
     return info;
   }
 
-  void SaveBranchCaller(const CNodePtr &switch_node, const FuncGraphPtr &branch) {
-    MS_EXCEPTION_IF_NULL(branch);
+  // The caller of switch node is also a caller of the branches, we save them
+  // so that we can update monad parameters for the caller when it requires.
+  void SaveBranchCaller(const CNodePtr &switch_node, const FuncGraphVector &branches) {
     MS_EXCEPTION_IF_NULL(switch_node);
-    auto manager = branch->manager();
+    auto fg = switch_node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto manager = fg->manager();
     MS_EXCEPTION_IF_NULL(manager);
     auto &node_users = manager->node_users();
     auto found = node_users.find(switch_node);
@@ -1000,26 +1044,34 @@ class SideEffectFinder {
       MS_LOG(WARNING) << "Caller not found for " << switch_node->DebugString();
       return;
     }
-    if (found->second.size() != 1) {
-      MS_LOG(WARNING) << "Wrong callers " << found->second.size() << " for " << switch_node->DebugString();
-      return;
-    }
-    auto &user = *found->second.begin();
-    auto cnode = dyn_cast<CNode>(user.first);
-    if (cnode != nullptr || user.second == 0) {
-      branch_caller_map.emplace(branch, cnode);
+    bool is_multi_branches = (branches.size() > 1);
+    for (auto &user : found->second) {
+      auto cnode = dyn_cast<CNode>(user.first);
+      if (cnode == nullptr || user.second != 0) {
+        continue;
+      }
+      // The cnode is the switch caller.
+      if (is_multi_branches) {
+        // Caller to branches.
+        switch_calls_.emplace(cnode, branches);
+      }
+      for (auto &branch : branches) {
+        // Branch to caller.
+        graph_callers_[branch].emplace(cnode);
+      }
     }
   }
 
   void UpdateBranchCaller(const FuncGraphPtr &branch) {
     MS_EXCEPTION_IF_NULL(branch);
-    auto iter = branch_caller_map.find(branch);
-    if (iter == branch_caller_map.end()) {
+    auto iter = graph_callers_.find(branch);
+    if (iter == graph_callers_.end()) {
       return;
     }
-    const auto &caller = iter->second;
     const auto &info = branch->GetEffectInfo();
-    AddMonadForCaller(caller, info);
+    for (auto &caller : iter->second) {
+      AddMonadForCaller(caller, info);
+    }
   }
 
   void AddMonadForCaller(const CNodePtr &caller, const EffectInfo &info) {
@@ -1064,11 +1116,16 @@ class SideEffectFinder {
   // SCC map.
   SccMap scc_map_;
 
-  // Single branch (in switch) and its caller cnode.
-  std::map<FuncGraphPtr, CNodePtr> branch_caller_map;
+  // Map graph to its caller cnodes, so that we can add monad inputs to the
+  // caller cnode when we late found that the graph added monad parameters.
+  std::map<FuncGraphPtr, std::set<CNodePtr>> graph_callers_;
 
   // Current high order func caller cnode.
   CNodePtr caller_ = nullptr;
+
+  // Save switch caller cnodes and their branches, so that we can check and
+  // update monad parameters for branches according the caller inputs.
+  std::map<CNodePtr, FuncGraphVector> switch_calls_;
 
   // switch_layer_calls save all switch_layer calls, so that
   // we can check whether monad argument should be added for them.
