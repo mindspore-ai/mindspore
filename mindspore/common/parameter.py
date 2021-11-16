@@ -228,9 +228,10 @@ class Parameter(Tensor_):
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor) and data.has_init:
-            if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
-                # do not init data while in auto parallel.
-                return (Tensor, None, data.dtype, data.shape, data.init)
+            if not context.get_fl_context('enable_fl'):
+                if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
+                    # do not init data while in auto parallel.
+                    return (Tensor, None, data.dtype, data.shape, data.init)
             data = data.init_data().asnumpy()
         elif isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
