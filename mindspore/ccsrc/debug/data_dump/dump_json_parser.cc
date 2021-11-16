@@ -315,10 +315,17 @@ void CheckJsonArrayType(const nlohmann::json &content, const std::string &key) {
 }
 
 void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   CheckJsonUnsignedType(content, kDumpMode);
   dump_mode_ = content;
-  if (dump_mode_ != 0 && dump_mode_ != 1) {
-    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0 or 1, but got " << dump_mode_;
+  if (dump_mode_ < DUMP_ALL || dump_mode_ > DUMP_CELL) {
+    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0, 1 or 2, but got " << dump_mode_;
+  }
+  if (dump_mode_ == DUMP_CELL) {
+    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice || e2e_dump_enabled_) {
+      MS_LOG(EXCEPTION) << "Cell dump is only supported in Ascend async dump. Please set dump_mode to 0 or 1.";
+    }
   }
 }
 
@@ -546,11 +553,23 @@ void DumpJsonParser::JudgeDumpEnabled() {
 }
 
 bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
-  if (dump_mode_ == 0) {
-    return true;
+  bool need_dump = false;
+  switch (dump_mode_) {
+    case DUMP_ALL:
+      need_dump = true;
+      break;
+    case DUMP_KERNEL:
+      if (kernels_.find(op_full_name) != kernels_.end()) {
+        need_dump = true;
+      }
+      break;
+    case DUMP_CELL:
+      if (std::find(cell_dump_kernels_.begin(), cell_dump_kernels_.end(), op_full_name) != cell_dump_kernels_.end()) {
+        need_dump = true;
+      }
+      break;
   }
-  auto iter = kernels_.find(op_full_name);
-  return iter != kernels_.end();
+  return need_dump;
 }
 
 void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
@@ -610,10 +629,29 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
+void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
+  if (dump_mode_ != 2) {
+    return;
+  }
+  for (const auto &kernel : kernel_graph.execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    auto dump_flag = AnfAlgo::GetDumpFlag(kernel);
+    if (!dump_flag) {
+      continue;
+    }
+    MS_LOG(INFO) << "Dump flag is true for " << GetKernelNodeName(kernel);
+    cell_dump_kernels_.push_back(GetKernelNodeName(kernel));
+  }
+}
+
 void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph) {
   if (!async_dump_enabled_) {
     return;
   }
+
+  MS_LOG(INFO) << "Get async kernel dump flag";
+  GetCellDumpFlag(kernel_graph);
+
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
   std::map<std::string, uint32_t> update_kernels;
   for (const auto &kernel : kernel_graph.execution_order()) {
