@@ -209,7 +209,7 @@ class OperatorInfo {
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
   virtual void InferReplaceOps() {}
-  virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy) { return SUCCESS; }
+  virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();

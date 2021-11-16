@@ -126,6 +126,25 @@ void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
 Status ResizeNearestNeighborInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
 
+  if (align_corners_) {
+    std::vector<Dimensions> stra = strategy->GetInputDim();
+    if (stra.size() != 1) {
+      MS_LOG(ERROR) << name_ << ": The size of strategy must be 1, but got " << stra.size();
+      return FAILED;
+    }
+
+    Dimensions input_strategy = stra[0];
+    if (input_strategy.size() != 4) {
+      MS_LOG(ERROR) << name_ << ": The size of input strategy must be 4, but got" << input_strategy.size();
+      return FAILED;
+    }
+
+    if (input_strategy[2] != 1 || input_strategy[3] != 1) {
+      MS_LOG(ERROR) << name_ << ": The align_corners is True, do not support split from H or W";
+      return FAILED;
+    }
+  }
+
   // check input strategy
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Check input strategy failed";
@@ -143,6 +162,10 @@ Status ResizeNearestNeighborInfo::CheckStrategy(const StrategyPtr &strategy) {
 
 std::vector<StrategyPtr> ResizeNearestNeighborInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape multiples_split(inputs_shape_[0].size(), 1);
+  if (align_corners_) {
+    multiples_split[2] = 0;
+    multiples_split[3] = 0;
+  }
   Shapes splittable_inputs = {multiples_split};
 
   std::vector<StrategyPtr> sp_vector;
