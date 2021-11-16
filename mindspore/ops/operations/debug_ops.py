@@ -334,6 +334,9 @@ class HookBackward(PrimitiveWithInfer):
         TypeError: If `inputs` are not a Tensor.
         TypeError: If `hook_fn` is not a function of python.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> def hook_fn(grad_out):
         ...     print(grad_out)
