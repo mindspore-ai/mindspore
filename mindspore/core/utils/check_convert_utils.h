@@ -316,6 +316,7 @@ class CheckAndConvertUtils {
   static void CheckInputArgs(const std::vector<AbstractBasePtr> &input_args, const CompareEnum compare_operator,
                              const int64_t match_value, const std::string &prim_name);
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
+  static void GetFormatStringVal(const PrimitivePtr &prim, std::string *format);
 
  private:
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
