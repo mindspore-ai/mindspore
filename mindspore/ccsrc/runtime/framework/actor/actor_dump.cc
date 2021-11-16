@@ -310,6 +310,7 @@ void DumpSwitchActors(const std::vector<SwitchActorPtr> &actors, std::ofstream &
   ofs << "\n\n[Switch actors:" << actors.size() << "]\n";
   for (const auto &switch_actor : actors) {
     DumpSwitchActor(switch_actor.get(), ofs);
+    ofs << "\n";
   }
 }
 
@@ -317,6 +318,7 @@ void DumpGatherActors(const std::vector<GatherActorPtr> &actors, std::ofstream &
   ofs << "\n\n[Gather actors:" << actors.size() << "]\n";
   for (const auto &gather_actor : actors) {
     DumpGatherActor(gather_actor.get(), ofs);
+    ofs << "\n";
   }
 }
 
@@ -324,6 +326,7 @@ void DumpEntranceActors(const std::vector<EntranceActorPtr> &actors, std::ofstre
   ofs << "\n\n[Entrance actors:" << actors.size() << "]\n";
   for (const auto &entrance_actor : actors) {
     DumpEntranceActor(entrance_actor.get(), ofs);
+    ofs << "\n";
   }
 }
 
@@ -331,6 +334,7 @@ void DumpExitActors(const std::vector<ExitActorPtr> &actors, std::ofstream &ofs)
   ofs << "\n\n[Exit actors:" << actors.size() << "]\n";
   for (const auto &exit_actor : actors) {
     DumpExitActor(exit_actor.get(), ofs);
+    ofs << "\n";
   }
 }
 
@@ -338,6 +342,7 @@ void DumpStackActors(const std::vector<StackActorPtr> &actors, std::ofstream &of
   ofs << "\n\n[Stack actors:" << actors.size() << "]\n";
   for (const auto &stack_actor : actors) {
     DumpStackActor(stack_actor.get(), ofs);
+    ofs << "\n";
   }
 }
 }  // namespace
@@ -441,11 +446,11 @@ void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstrea
     return;
   }
 
+  DumpEntranceActors(control_actor_set->entrance_actors_, ofs);
   DumpSwitchActors(control_actor_set->switch_actors_, ofs);
   DumpGatherActors(control_actor_set->gather_actors_, ofs);
-  DumpEntranceActors(control_actor_set->entrance_actors_, ofs);
-  DumpExitActors(control_actor_set->exit_actors_, ofs);
   DumpStackActors(control_actor_set->stack_actors_, ofs);
+  DumpExitActors(control_actor_set->exit_actors_, ofs);
 }
 }  // namespace runtime
 }  // namespace mindspore

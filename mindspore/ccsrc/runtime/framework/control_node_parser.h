@@ -55,6 +55,7 @@ constexpr size_t kReturnInputPos = 1;
 constexpr size_t kSingleControlNode = 1;
 
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
+const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
 
 using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
