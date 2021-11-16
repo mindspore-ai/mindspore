@@ -24,6 +24,7 @@ PythonSamplerRT::PythonSamplerRT(int64_t num_samples, py::object py_sampler_inst
       py_sampler_instance(std::move(py_sampler_instance)) {}
 
 Status PythonSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (need_to_reset_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {

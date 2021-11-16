@@ -126,6 +126,10 @@ class CsvOp : public NonMappableLeafOp {
 
     int CatchException(int c);
 
+    void InitSDL();
+
+    void InitSD();
+
     int32_t worker_id_;
     JaggedConnector *rows_connector_;
     const char csv_field_delim_;

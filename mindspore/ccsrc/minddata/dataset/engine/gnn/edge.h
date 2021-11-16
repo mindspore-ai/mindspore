@@ -61,6 +61,7 @@ class Edge {
   // Get nodes on the edge
   // @param std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> *out_node - Source and destination nodes returned
   Status GetNode(std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> *out_node) {
+    RETURN_UNEXPECTED_IF_NULL(out_node);
     *out_node = std::make_pair(src_node_, dst_node_);
     return Status::OK();
   }

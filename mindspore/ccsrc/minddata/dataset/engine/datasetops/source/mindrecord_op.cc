@@ -317,6 +317,8 @@ Status MindRecordOp::LaunchThreadsAndInitOp() {
 
 Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
                                     const std::shared_ptr<ShardOperator> &op, int64_t *count, int64_t num_padded) {
+  RETURN_UNEXPECTED_IF_NULL(op);
+  RETURN_UNEXPECTED_IF_NULL(count);
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
   RETURN_IF_NOT_OK(shard_reader->CountTotalRows(dataset_path, load_dataset, op, count, num_padded));
   return Status::OK();

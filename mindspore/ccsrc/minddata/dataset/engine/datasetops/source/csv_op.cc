@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/engine/datasetops/source/csv_op.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <stdexcept>
@@ -229,7 +230,12 @@ int CsvOp::CsvParser::CountRows(int c) {
 
 Status CsvOp::CsvParser::InitCsvParser() {
   str_buf_.resize(CSV_BUFFER_SIZE);
+  InitSDL();
+  InitSD();
+  return Status::OK();
+}
 
+void CsvOp::CsvParser::InitSDL() {
   // State diagram for counting rows
   sdl = {// START_OF_FILE
          // |---------------------------------------|
@@ -290,7 +296,9 @@ Status CsvOp::CsvParser::InitCsvParser() {
          {{State::END_OF_LINE, Message::MS_NORMAL}, {State::UNQUOTE, &CsvParser::NullFunc}},
          {{State::END_OF_LINE, Message::MS_QUOTE}, {State::QUOTE, &CsvParser::NullFunc}},
          {{State::END_OF_LINE, Message::MS_END_OF_LINE}, {State::END_OF_LINE, &CsvParser::NullFunc}}};
+}
 
+void CsvOp::CsvParser::InitSD() {
   // State diagram for CSV parser
   sd = {// START_OF_FILE
         // |-------------------------------------------------------------------|
@@ -442,7 +450,6 @@ Status CsvOp::CsvParser::InitCsvParser() {
           }}},
         {{State::END_OF_LINE, Message::MS_END_OF_LINE}, {State::END_OF_LINE, &CsvParser::NullFunc}},
         {{State::END_OF_LINE, Message::MS_END_OF_FILE}, {State::END_OF_FILE, &CsvParser::EndFile}}};
-  return Status::OK();
 }
 
 Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {

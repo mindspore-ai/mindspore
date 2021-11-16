@@ -64,6 +64,7 @@ void SubsetRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const
 }
 
 Status SubsetRandomSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   RETURN_IF_NOT_OK(SubsetSamplerRT::to_json(&args));
   args["sampler_name"] = "SubsetRandomSampler";

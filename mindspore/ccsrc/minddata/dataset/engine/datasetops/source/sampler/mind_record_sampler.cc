@@ -23,6 +23,7 @@ MindRecordSamplerRT::MindRecordSamplerRT(mindrecord::ShardReader *shard_reader, 
     : SamplerRT(0, samples_per_tensor), shard_reader_(shard_reader), sample_ids_(nullptr), next_id_(0) {}
 
 Status MindRecordSamplerRT::GetNextSample(TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED(
       "Sampler index must be less than or equal to num_samples(total rows in dataset), but got: " +
@@ -78,6 +79,7 @@ void MindRecordSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 }
 
 Status MindRecordSamplerRT::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["sampler_name"] = "MindRecordSampler";
   *out_json = args;

@@ -254,12 +254,14 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status DatasetOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
   return child_[0]->GetNextRowPullMode(row);
 }
 
 // Gets the next row from the given child
 Status DatasetOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
   RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), row, retry_if_eoe));
   return Status::OK();
@@ -267,6 +269,7 @@ Status DatasetOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eo
 
 // Gets the number of classes
 Status DatasetOp::GetNumClasses(int64_t *num_classes) {
+  RETURN_UNEXPECTED_IF_NULL(num_classes);
   if (child_.size() == 1) {
     return child_[0]->GetNumClasses(num_classes);
   } else if (child_.size() > 1) {
@@ -283,6 +286,7 @@ Status DatasetOp::GetNumClasses(int64_t *num_classes) {
 }
 
 Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   if (child_.size() == 1) {
     return child_[0]->GetClassIndexing(output_class_indexing);
   } else if (child_.size() > 1) {
@@ -364,6 +368,7 @@ Status DatasetOp::ComputeColMap() {
 
 // Getter for the sampler, and it also removes the sampler from the op
 Status DatasetOp::FetchRemoveSampler(std::shared_ptr<SamplerRT> *sampler) {
+  RETURN_UNEXPECTED_IF_NULL(sampler);
   *sampler = sampler_;  // It's okay if it sampler_ points to nullptr
   sampler_.reset();     // clear our member-copy of this pointer.  We no longer have this sampler
   return Status::OK();

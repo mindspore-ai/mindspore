@@ -34,6 +34,7 @@ RenameOp::~RenameOp() {}
 
 // Gets a row from the child operator and projects the row.
 Status RenameOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
