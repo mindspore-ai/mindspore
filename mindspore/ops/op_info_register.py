@@ -104,7 +104,7 @@ def custom_info_register(*reg_info):
         Function, returns a decorator for op info register.
 
     Examples:
-        >>> from mindspore.ops.op_info_register import custom_info_register, CustomRegOp, DataType
+        >>> from mindspore.ops import custom_info_register, CustomRegOp, DataType
         >>> custom_func_ascend_info = CustomRegOp() \
         ...     .input(0, "x", "dynamic") \
         ...     .output(0, "y") \
@@ -652,7 +652,7 @@ class CustomRegOp(RegOp):
             automatically. Default: "Custom".
 
     Examples:
-        >>> from mindspore.ops.op_info_register import CustomRegOp, DataType
+        >>> from mindspore.ops import CustomRegOp, DataType
         >>> custom_op_ascend_info = CustomRegOp() \
         ...     .input(0, "x", "dynamic") \
         ...     .output(0, "y") \

@@ -19,7 +19,7 @@ from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops.op_info_register import TBERegOp, DataType, CustomRegOp, custom_info_register
+from mindspore.ops import TBERegOp, DataType, CustomRegOp, custom_info_register
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 square_with_bias_op_info = CustomRegOp() \

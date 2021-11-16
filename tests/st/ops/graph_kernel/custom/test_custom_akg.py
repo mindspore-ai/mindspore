@@ -19,7 +19,7 @@ from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops.op_info_register import DataType, CustomRegOp, custom_info_register
+from mindspore.ops import DataType, CustomRegOp, custom_info_register
 
 
 def outer_product(a, b):

@@ -20,7 +20,7 @@ import json
 import hashlib
 from mindspore import ops
 from mindspore import log as logger
-from mindspore.ops.op_info_register import DataType
+from mindspore.ops import DataType
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Oplib
 from ._pyfunc_registry import add_pyfunc
@@ -38,69 +38,95 @@ class Custom(ops.PrimitiveWithInfer):
 
     Args:
         func (Union[function, str]):
-            function:
+
+            - function:
+
                 If func is of function type, then func should be a Python function which describes
                 the computation logic of a user defined operator. The function can be one of the following:
+
                 1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
                 2. A TBE operator implementation function.
                 3. A pure python function
 
-            str:
+            - str:
+
                 If func is of str type, then str should be a path of binary file along with a function name. This could
                 only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
                 "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as
                 an operator. Users need compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time, and
                 offer the path of the file along with a function name.
 
-                "xxx.so" file Generation:
+                - "xxx.so" file generation:
+
                     1) GPU Platform:
                         Given user defined "xxx.cu" file (ex. "{path}/add.cu"),
                         use nvcc command to compile it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
+
                     2) CPU Platform:
                         Given user defined "xxx.cc" file (ex. "{path}/add.cc"),
                         use g++/gcc command to compile it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
-                Define a "xxx.cc"/"xxx.cu" file:
+
+                - Define a "xxx.cc"/"xxx.cu" file:
+
                     "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same
                     args. Typically, the function should be as:
 
-                    int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream,
-                         void *extra)
+                    .. code-block::
+
+                        int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
+                                 void *stream, void *extra)
 
                     Parameters:
-                        nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3
-                        outputs, then nparam=5
-                        params(void **): a pointer to the array of inputs and outputs' pointer; the pointer type of
-                        inputs and outputs is void * ; suppose the operator has 2 inputs and 3 outputs, then the first
-                        input's pointer is nparam[0] and the second output's pointer is nparam[4]
-                        ndims(int *): a pointer to the array of inputs and outputs' dimension num; suppose params[i]
-                            is a 1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
-                        shapes(int64_t **): a pointer to the array of inputs and outputs' shapes(int64_t *); the ith
-                            input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i]
-                            is a 2x3 tensor and params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
-                        dtypes(const char **): a pointer to the array of inputs and outputs' types(const char *);
-                            (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64",
-                            "uint", "uint8", "uint16", "uint32", "uint64", "bool")
-                        stream(void *): stream pointer, only used in cuda file
-                        extra(void *): used for further extension
+
+                        - nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3
+                          outputs, then nparam=5
+                        - params(void **): a pointer to the array of inputs and outputs' pointer; the pointer type of
+                          inputs and outputs is void * ; suppose the operator has 2 inputs and 3 outputs, then the first
+                          input's pointer is nparam[0] and the second output's pointer is nparam[4]
+                        - ndims(int *): a pointer to the array of inputs and outputs' dimension num; suppose params[i]
+                          is a 1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
+                        - shapes(int64_t **): a pointer to the array of inputs and outputs' shapes(int64_t *); the ith
+                          input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i]
+                          is a 2x3 tensor and params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
+                        - dtypes(const char **): a pointer to the array of inputs and outputs' types(const char *);
+                          (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64",
+                          "uint", "uint8", "uint16", "uint32", "uint64", "bool")
+                        - stream(void *): stream pointer, only used in cuda file
+                        - extra(void *): used for further extension
+
                     Return Value(int):
+
                         0: raise no Exception
+
                         larger than 0: will raise Exception
+
                     Examples:
+
                         see details tests/st/ops/graph_kernel/custom/aot_test_files/
-                Use it in Custom:
+
+                - Use it in Custom:
+
+                .. code-block::
+
                     Custom(func="{path}/{file_name}:{func_name}",...)
-                    (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_type=mstype.float32))
+                    (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32))
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
             `func`.
+
             If func has single output, then the value of output shape is a list or tuple of int.
+
             If func has multiple outputs, then the value of output shape is a tuple, each item represents the shape
             of each output.
+
         out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output data type
             infer function or the value of output data type of `func`.
+
             If func has single output, then the value of output shape is a `mindspore.dtype`.
+
             If func has multiple outputs, then the value of output shape is a tuple of `mindspore.dtype`, each item
             represents the data type of each output.
+
         func_type (str): The implementation type of `func`, should be one of ["akg", "tbe", "aot", "pyfunc"]. Each
             `func_type` only supports specific platforms(targets). The supported platforms of `func_type`:
 
@@ -109,17 +135,20 @@ class Custom(ops.PrimitiveWithInfer):
             - "aot": supports ["GPU", "CPU"].
             - "pyfunc": supports ["CPU"].
 
-        bprop (function): The gradient function of func. Default: None.
+        bprop (function): The back propagation function of `func`. Default: None.
         reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
             json format of type str or dict. The reg info specifies supported data types and formats of inputs and
             outputs, attributes and target of `func`. Default: None.
+
             If reg info is a list or tuple, then each item should be with json format of type str or dict, which
             represents the registration information of `func` in a specific target. You need to invoke `CustomRegOp`
             or the subclass of `RegOp` to generate the reg info for `func`. Then you can invoke
             `custom_info_register` to bind the reg info to `func` or just pass the reg info to `reg_info` parameter.
             The `reg_info` parameter takes higher priority then `custom_info_register` and the reg info in a
             specific target will be registered only once.
+
             If reg info is not set, then we will infer the data types and formats from the inputs of `Custom` operator.
+
             Please note that, if `func_type` is "tbe" or the `func` only supports some specified data types and formats,
             or it has attribute inputs, then you should set the reg info for `func`.
 
@@ -142,8 +171,8 @@ class Custom(ops.PrimitiveWithInfer):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
+        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType
         >>> from mindspore.common import dtype as mstype
-        >>> from mindspore.ops.op_info_register import CustomRegOp, custom_info_register, DataType
         >>> from mindspore.nn import Cell
         >>>
         >>> # Example, func_type = "akg"
