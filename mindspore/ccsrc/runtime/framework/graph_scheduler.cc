@@ -539,14 +539,14 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     }
   }
 
+  LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
+  LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
+
   // Link the arrow in the control flow scene.
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline &&
       graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {
     control_node_scheduler_.Link(actor_set, graph_compiler_info);
   }
-
-  LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
-  LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
 }
 
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -625,6 +625,10 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
   // the corresponding backend parameter from the map, and insert it into the host data source actor
   const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
   for (const auto &parameter : control_node_parameters) {
+    if (IsPersistentDeviceTensor(parameter)) {
+      continue;
+    }
+
     auto backend_iter = front_to_backend_parameter.find({parameter, 0});
     if (backend_iter == front_to_backend_parameter.end() || backend_iter->second.empty()) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
@@ -1198,6 +1202,9 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
       auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
       if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+        if (AnfAlgo::IsCallNode(front_output_with_index.first)) {
+          continue;
+        }
         MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
       }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
@@ -1327,7 +1334,8 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set, const std
 
   // Link the control arrows of data prepare actor, which depends on the no input kernel actors.
   if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) || (!IsSingleOpActorSet(actor_set))) {
-    LinkControlArrowForDataPrepareActor(actor_set->data_prepare_actor_.get(), actor_set);
+    LinkControlArrowForDataPrepareActor(actor_set->data_prepare_actor_.get(), actor_set,
+                                        graph_compiler_info.control_node_parser_);
   }
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
@@ -1366,9 +1374,11 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
 }
 
 void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor,
-                                                         const ActorSet *actor_set) {
+                                                         const ActorSet *actor_set,
+                                                         const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(data_prepare_actor);
   MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(parser);
 
   // Data prepare actor --> data source actor.
   for (auto &data_source_actor : actor_set->data_source_actors_) {
@@ -1376,10 +1386,13 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
     AddControlArrow(data_prepare_actor, data_source_actor.get());
   }
 
-  // Data prepare actor --> no input kernel actor.
-  for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-    AddControlArrow(data_prepare_actor, no_input_kernel_actor.get());
+  // In control flow, control arrow of no input kernel actor needs to be connected to the corresponding entrance actor.
+  if (!parser->IsInited()) {
+    // Data prepare actor --> no input kernel actor.
+    for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+      MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
+      AddControlArrow(data_prepare_actor, no_input_kernel_actor.get());
+    }
   }
 
   // Data prepare actor --> loop count actor.
@@ -1700,6 +1713,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
       const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+      device_tensor->SetNodeIndex(value_node, 0);
       AddDeviceTensorStore(front_node.get(), device_tensor);
     }
 
@@ -1726,10 +1740,8 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       if (IsPersistentDeviceTensor(input_node)) {
+        device_tensor->SetNodeIndex(input_node, 0);
         AddDeviceTensorStore(front_node.get(), device_tensor);
-        // In the control flow, the device tensor of the weight needs to be obtained according to the backend node,
-        // so insert the relationship between the backend node and the device tensor.
-        AddDeviceTensorStore(input_node.get(), device_tensor);
       }
 
       // Share the weight in the host and device, then input_node is internal parameter and front_node is weight.
@@ -1742,10 +1754,8 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
                      << ", type:" << device_context->GetDeviceAddressType();
         auto other_type_device_tensor = device_context->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id());
+        other_type_device_tensor->SetNodeIndex(input_node, 0);
         AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
-        // In the control flow, the device tensor of the weight needs to be obtained according to the backend node,
-        // so insert the relationship between the backend node and the device tensor.
-        AddDeviceTensorStore(input_node.get(), other_type_device_tensor);
       }
     }
   }

@@ -152,7 +152,8 @@ class GraphScheduler {
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                            const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
-  void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set);
+  void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
+                                           const ControlNodeParserPtr &parser);
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                          const ControlNodeParserPtr &parser);
 

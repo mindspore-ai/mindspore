@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <map>
 #include <set>
+#include <algorithm>
 #include "runtime/framework/actor/actor_set.h"
 #include "runtime/framework/graph_compiler.h"
 
@@ -63,6 +64,9 @@ class ControlNodeScheduler {
   void LinkArrowByKernel(const AnfNodePtr &kernel, ControlActor *const to_actor,
                          const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
                          const ControlNodeParserPtr &parser);
+  void LinkArrowByParameter(const AnfNodePtr &parameter, ControlActor *const to_actor,
+                            const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
+                            const ControlNodeParserPtr &parser);
 
   // Link data arrow between control actor and actor in frame, including kernel actor, output actor, data source actor.
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);
@@ -70,7 +74,7 @@ class ControlNodeScheduler {
                                   ControlActor *const entrance_actor);
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowForHostDSActor(const GraphCompilerInfo &graph_compiler_info);
-
+  void LinkControlArrowForKernelActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   // Interface tool to link arrows between actors.
   void LinkControlArrow(AbstractActor *from_actor, AbstractActor *to_actor);
   // Data arrow with branch id is only exists from gather actor to entrance actor.
@@ -86,6 +90,7 @@ class ControlNodeScheduler {
   void LinkControlArrowForExitActor(ExitActor *from_actor, AbstractActor *to_actor, int branch_id);
   void LinkDataArrowForExitActor(ExitActor *const exit_actor, AbstractActor *const to_actor, size_t from_index,
                                  size_t to_index, int branch_id);
+  bool IsNoInputActor(const ControlActor *control_actor);
 };
 }  // namespace runtime
 }  // namespace mindspore

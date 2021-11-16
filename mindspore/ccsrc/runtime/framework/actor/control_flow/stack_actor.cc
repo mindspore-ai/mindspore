@@ -34,10 +34,16 @@ void StackActor::Init() {
     ++input_parameter_data_num_;
   }
   input_datas_num_ = formal_parameters_.size() - input_parameter_data_num_;
+  if (input_parameter_data_num_ < device_tensor_store_keys_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid input parameter data num:" << input_parameter_data_num_
+                      << " device store num:" << device_tensor_store_keys_.size() << " for actor:" << GetAID();
+  }
+  input_parameter_data_num_ -= device_tensor_store_keys_.size();
 }
 
 void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   auto &sequential_num = context->sequential_num_;
   // The parameters from the inside of the subgraph need to be put into the stack.
