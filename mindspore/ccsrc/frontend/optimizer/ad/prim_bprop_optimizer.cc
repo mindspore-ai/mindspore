@@ -362,8 +362,8 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
 abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr &out,
                                                                   const abstract::AbstractBasePtrList &abs_list) {
   MS_EXCEPTION_IF_NULL(out);
-  if (!out->isa<tensor::Tensor>() && !out->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "Out value not Tensor or Tuple, please check the input arguments.";
+  if (!out->isa<tensor::Tensor>() && !out->isa<ValueTuple>() && !out->isa<None>()) {
+    MS_LOG(EXCEPTION) << "Out value not Tensor, Tuple or None, please check the input arguments.";
   }
   abstract::AbstractBasePtrList new_abs_list(abs_list);
   auto out_abs = out->ToAbstract();
