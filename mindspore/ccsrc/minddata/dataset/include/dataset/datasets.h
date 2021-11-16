@@ -2506,6 +2506,75 @@ inline std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &datase
                                               MapStringToChar(class_indexing), cache);
 }
 
+/// \class LJSpeechDataset
+/// \brief A source dataset for reading and parsing LJSpeech dataset.
+class LJSpeechDataset : public Dataset {
+ public:
+  /// \brief Constructor of LJSpeechDataset.
+  /// \param[in] dataset_file The dataset file to be read.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  LJSpeechDataset(const std::vector<char> &dataset_dir, const std::shared_ptr<Sampler> &sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LJSpeechDataset.
+  /// \param[in] dataset_file The dataset file to be read.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LJSpeechDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LJSpeechDataset.
+  /// \param[in] dataset_file The dataset file to be read.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LJSpeechDataset(const std::vector<char> &dataset_dir, const Sampler *sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of LJSpeechDataset.
+  ~LJSpeechDataset() = default;
+};
+
+/// \brief Function to create a LJSpeech Dataset.
+/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+///     "normalized_transcription"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<LJSpeechDataset> LJSpeech(
+  const std::string &dataset_dir, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LJSpeechDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
+/// \brief Function to create a LJSpeech Dataset.
+/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+///     "normalized_transcription"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<LJSpeechDataset> LJSpeech(const std::string &dataset_dir, Sampler *sampler,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LJSpeechDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
+/// \brief Function to create a LJSpeech Dataset.
+/// \notes The generated dataset has four columns ["waveform", "sample_rate", "transcription",
+///     "normalized_transcription"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<LJSpeechDataset> LJSpeech(const std::string &dataset_dir,
+                                                 const std::reference_wrapper<Sampler> sampler,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LJSpeechDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
 /// \class ManifestDataset
 /// \brief A source dataset for reading and parsing Manifest dataset.
 class ManifestDataset : public Dataset {
