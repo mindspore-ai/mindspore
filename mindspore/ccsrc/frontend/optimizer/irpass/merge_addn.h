@@ -25,6 +25,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,6 +46,7 @@ class MergeAddN : public AnfVisitor {
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
+    addn_nodes_.push_back(node);
 
     auto cnode = node->cast<CNodePtr>();
     auto addn = NewValueNode(GetValueNode(cnode->input(0)));
@@ -54,7 +56,9 @@ class MergeAddN : public AnfVisitor {
     auto fg = node->func_graph();
     auto make_node = fg->NewCNode(args_);
 
-    return fg->NewCNode({addn, make_node});
+    auto new_node = fg->NewCNode({addn, make_node});
+    UpdateDumpFlag(new_node);
+    return new_node;
   }
 
   void Visit(const CNodePtr &cnode) override {
@@ -84,6 +88,7 @@ class MergeAddN : public AnfVisitor {
           return;
         }
 
+        addn_nodes_.push_back(first_input);
         (void)Ys_.erase(Ys_.begin());
         (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args_));
         (void)std::copy(Ys_.begin(), Ys_.end(), std::back_inserter(args_));
@@ -104,6 +109,7 @@ class MergeAddN : public AnfVisitor {
           return;
         }
 
+        addn_nodes_.push_back(last_input);
         Ys_.pop_back();
         (void)std::copy(Ys_.begin(), Ys_.end(), std::back_inserter(args_));
         (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args_));
@@ -133,14 +139,27 @@ class MergeAddN : public AnfVisitor {
     Xs_.clear();
     Ys_.clear();
     args_.clear();
+    addn_nodes_.clear();
     is_inner_ = false;
     is_outer_ = false;
     is_match_ = false;
   }
 
+  void UpdateDumpFlag(const AnfNodePtr &node) {
+    if (node == nullptr) {
+      return;
+    }
+    for (const auto &addn : addn_nodes_) {
+      if (AnfUtils::GetDumpFlag(addn)) {
+        AnfUtils::SetDumpFlag(node);
+        return;
+      }
+    }
+  }
+
  private:
   FuncGraphManagerPtr mng_{nullptr};
-  std::vector<AnfNodePtr> Xs_{}, Ys_{}, args_{};
+  std::vector<AnfNodePtr> Xs_{}, Ys_{}, args_{}, addn_nodes_{};
   bool is_inner_{false}, is_outer_{false}, is_match_{false};
 };
 

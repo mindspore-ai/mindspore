@@ -29,6 +29,7 @@
 #include "utils/check_convert_utils.h"
 #include "debug/dump_proto.h"
 #include "utils/ms_utils.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -70,6 +71,8 @@ static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_bits_float_
   {32, mind_ir::TensorProto_DataType_FLOAT},
   {64, mind_ir::TensorProto_DataType_FLOAT64},
 };
+
+static std::set<std::string> g_export_attr_blacklist = {kAttrDump};
 
 // Can build different builder according to format
 class IrExportBuilder;
@@ -625,6 +628,10 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
     auto prim = GetValueNode<PrimitivePtr>(op);
     for (auto attr : prim->attrs()) {
       MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
+      auto iter = g_export_attr_blacklist.find(attr.first);
+      if (iter != g_export_attr_blacklist.end()) {
+        continue;
+      }
       mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
       attr_proto->set_name(attr.first);
       auto attr_value = attr.second;

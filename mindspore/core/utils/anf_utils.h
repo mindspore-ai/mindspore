@@ -48,6 +48,10 @@ class AnfUtils {
   static bool IsGraphKernel(const AnfNodePtr &node);
   // check whether the node is a node in GraphKernel's subgraph.
   static bool IsNodeInGraphKernel(const AnfNodePtr &node);
+  // Set dump flag to CNode's primitive.
+  static void SetDumpFlag(const AnfNodePtr &node);
+  // Get dump flag from CNode's primitive.
+  static bool GetDumpFlag(const AnfNodePtr &node);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_
