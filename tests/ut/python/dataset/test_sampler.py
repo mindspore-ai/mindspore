@@ -48,6 +48,7 @@ def test_sequential_sampler(print_res=False):
 
 
 def test_random_sampler(print_res=False):
+    ds.config.set_seed(1234)
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
