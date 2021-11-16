@@ -1138,12 +1138,10 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
   if (kernels.empty() || graph_kernel_events_map_.find(graph.graph_id()) != graph_kernel_events_map_.end()) {
     return;
   }
-  auto kernel_events =
-    std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
+  auto kernel_events = std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
+                                 std::map<AnfNodePtr, std::vector<std::function<void()>>>>();
   auto &kernel_pre_run_events = kernel_events.first;
   auto &kernel_post_run_events = kernel_events.second;
-  kernel_pre_run_events.resize(kernels.size());
-  kernel_post_run_events.resize(kernels.size());
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &kernel = kernels[i];
     if (!AnfAlgo::IsCommunicationOp(kernel)) {
@@ -1157,11 +1155,11 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
     pre_event->set_record_stream(stream_);
     post_event->set_wait_stream(stream_);
     post_event->set_record_stream(communication_stream_);
-    kernel_pre_run_events[i].emplace_back([pre_event]() {
+    kernel_pre_run_events[kernel].emplace_back([pre_event]() {
       pre_event->RecordEvent();
       pre_event->WaitEvent();
     });
-    kernel_post_run_events[i].emplace_back([post_event]() { post_event->RecordEvent(); });
+    kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
     bool found_nearest_child = false;
     for (size_t j = i + 1; j < kernels.size(); ++j) {
       auto &child = kernels[j];
@@ -1178,12 +1176,12 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
         }
       }
       if (found_nearest_child) {
-        kernel_pre_run_events[j].emplace_back([post_event]() { post_event->WaitEvent(); });
+        kernel_pre_run_events[child].emplace_back([post_event]() { post_event->WaitEvent(); });
         break;
       }
     }
     if (!found_nearest_child) {
-      kernel_post_run_events[i].emplace_back([post_event]() { post_event->WaitEvent(); });
+      kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->WaitEvent(); });
     }
   }
   graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
@@ -1243,12 +1241,13 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   }
 }
 
-void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &kernel_events,
-                                      size_t index) const {
-  if (index >= kernel_events.size()) {
+void KernelRuntime::LaunchKernelEvent(const std::map<AnfNodePtr, std::vector<std::function<void()>>> &kernel_events,
+                                      const AnfNodePtr &node) const {
+  if (kernel_events.find(node) == kernel_events.end()) {
     return;
   }
-  for (auto &event : kernel_events[index]) {
+
+  for (auto &event : kernel_events.at(node)) {
     event();
   }
 }
@@ -1511,15 +1510,15 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     MS_LOG(EXCEPTION) << "The size of dynamic kernels " << dynamic_kernel_list.size()
                       << " should be equal to the size of kernels " << kernels.size();
   }
-  std::vector<std::vector<std::function<void()>>> kernel_pre_run_events;
-  std::vector<std::vector<std::function<void()>>> kernel_post_run_events;
+  std::map<AnfNodePtr, std::vector<std::function<void()>>> kernel_pre_run_events;
+  std::map<AnfNodePtr, std::vector<std::function<void()>>> kernel_post_run_events;
   auto events_iter = graph_kernel_events_map_.find(graph.graph_id());
   if (events_iter != graph_kernel_events_map_.end()) {
     kernel_pre_run_events = events_iter->second.first;
     kernel_post_run_events = events_iter->second.second;
   }
   for (size_t i = 0; i < kernels.size(); ++i) {
-    LaunchKernelEvent(kernel_pre_run_events, i);
+    LaunchKernelEvent(kernel_pre_run_events, kernels[i]);
     if (!dynamic_kernel_list.empty() && dynamic_kernel_list[i] != nullptr &&
         dynamic_kernel_list[i]->is_dynamic_shape()) {
       dynamic_kernel_list[i]->InferShape();
@@ -1553,7 +1552,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       KernelLaunchProfiling(kernel->fullname_with_scope());
       DebugStreamSync(kernel);
     }
-    LaunchKernelEvent(kernel_post_run_events, i);
+    LaunchKernelEvent(kernel_post_run_events, kernels[i]);
   }
 
   return true;

@@ -161,7 +161,8 @@ class KernelRuntime {
 
   void AssignCommunicationMem(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
-  void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index) const;
+  void LaunchKernelEvent(const std::map<AnfNodePtr, std::vector<std::function<void()>>> &run_events,
+                         const AnfNodePtr &node) const;
   void DebugStreamSync(const CNodePtr &kernel);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs,
                                      const std::shared_ptr<MemScheduler> &mem_schedule = nullptr);
@@ -195,8 +196,8 @@ class KernelRuntime {
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
-  std::map<uint32_t,
-           std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>>
+  std::map<uint32_t, std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
+                               std::map<AnfNodePtr, std::vector<std::function<void()>>>>>
     graph_kernel_events_map_;
   MemSchedulerManager mem_scheduler_manager_;
 };

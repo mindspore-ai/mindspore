@@ -779,12 +779,10 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
   }
   std::vector<size_t> last_stream_nodes;
   SetKernelModStream(kernels, &last_stream_nodes);
-  auto kernel_events =
-    std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
+  auto kernel_events = std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
+                                 std::map<AnfNodePtr, std::vector<std::function<void()>>>>();
   auto &kernel_pre_run_events = kernel_events.first;
   auto &kernel_post_run_events = kernel_events.second;
-  kernel_pre_run_events.resize(kernels.size());
-  kernel_post_run_events.resize(kernels.size());
   auto stream_num = stream_id_map_.size();
   std::vector<std::vector<bool>> kernel_hit(kernels.size(), std::vector<bool>(stream_num, false));
   for (size_t i = 0; i < kernels.size(); ++i) {
@@ -815,8 +813,8 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
           auto event = CreateDeviceEvent();
           event->set_wait_stream(wait_stream);
           event->set_record_stream(record_stream);
-          kernel_post_run_events[IntToSize(k)].emplace_back([event]() { event->RecordEvent(); });
-          kernel_pre_run_events[i].emplace_back([event]() { event->WaitEvent(); });
+          kernel_post_run_events[pre_cnode].emplace_back([event]() { event->RecordEvent(); });
+          kernel_pre_run_events[kernel].emplace_back([event]() { event->WaitEvent(); });
         }
       }
     }
@@ -824,17 +822,17 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
       auto pre_event = CreateDeviceEvent();
       pre_event->set_wait_stream(wait_stream);
       pre_event->set_record_stream(stream_);
-      kernel_pre_run_events[i].emplace_back([pre_event]() { pre_event->RecordEvent(); });
-      kernel_pre_run_events[i].emplace_back([pre_event]() { pre_event->WaitEvent(); });
+      kernel_pre_run_events[kernel].emplace_back([pre_event]() { pre_event->RecordEvent(); });
+      kernel_pre_run_events[kernel].emplace_back([pre_event]() { pre_event->WaitEvent(); });
     }
   }
   ProcessBoundaryEvent(kernels, &kernel_post_run_events, last_stream_nodes);
   graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
 }
 
-void AscendKernelRuntime::ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
-                                               std::vector<std::vector<std::function<void()>>> *kernel_run_events,
-                                               const std::vector<size_t> &last_stream_nodes) {
+void AscendKernelRuntime::ProcessBoundaryEvent(
+  const std::vector<CNodePtr> &kernels, std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
+  const std::vector<size_t> &last_stream_nodes) {
   for (auto &i : last_stream_nodes) {
     if (i >= kernels.size()) {
       MS_LOG(ERROR) << "Node index exceed kernel size.";
@@ -865,8 +863,8 @@ void AscendKernelRuntime::ProcessBoundaryEvent(const std::vector<CNodePtr> &kern
       auto record_stream = stream_id_map_[id];
       post_event->set_wait_stream(stream_);
       post_event->set_record_stream(record_stream);
-      (*kernel_run_events)[i].emplace_back([post_event]() { post_event->RecordEvent(); });
-      (*kernel_run_events)[i].emplace_back([post_event]() { post_event->WaitEvent(); });
+      (*kernel_run_events)[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
+      (*kernel_run_events)[kernel].emplace_back([post_event]() { post_event->WaitEvent(); });
     }
   }
 }
