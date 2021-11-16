@@ -25,6 +25,8 @@
 
 namespace mindspore {
 namespace parallel {
+const int64_t TWO_INPUT_SIZE = 2;
+
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 bool IsParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
@@ -34,6 +36,10 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node);
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
+AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const NodeUsersMap &node_user_map,
+                          const TypePtr &compute_node_type);
+AnfNodePtr GetChildCastNode(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
+TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
 }  // namespace parallel
 }  // namespace mindspore
 
