@@ -70,11 +70,6 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
     total_bytes_ += bytes;
   }
 
-  handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
-  if (handle_ == HandleMgr::INVALID_HANDLE) {
-    MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
-  }
-
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);

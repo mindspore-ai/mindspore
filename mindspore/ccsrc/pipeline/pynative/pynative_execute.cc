@@ -751,6 +751,9 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
       pre_tensor->set_device_address(new_tensor->device_address());
       continue;
     }
+    if (mind_rt_backend != nullptr) {
+      mind_rt_backend->SyncLazyTasks();
+    }
     // Replace data in device address when run in CPU device.
     if (pre_tensor->device_address() != nullptr) {
       auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(pre_tensor->device_address());
@@ -810,6 +813,10 @@ py::object GetDstType(const TypeId &type_id) {
   }
   MS_EXCEPTION_IF_NULL(value);
   return py::cast(value);
+}
+
+bool IsPyObjTypeInvalid(const py::object &obj) {
+  return !py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
 }
 }  // namespace
 
@@ -1276,7 +1283,7 @@ void ForwardExecutor::DoSignatureCast(const PrimitivePyPtr &prim,
       continue;
     }
 
-    if (!py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj)) {
+    if (IsPyObjTypeInvalid(obj)) {
       MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i << "th input " << signature[i].name
                               << " is a not support implicit conversion. "
                               << "Its type is " << py::cast<std::string>(obj.attr("__class__").attr("__name__"))
@@ -2013,28 +2020,35 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   ConvertAttrToUnifyMindIR(op_exec_info);
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_exec_info, input_tensors, tensors_mask, &graph_info);
+  VectorRef outputs;
 #if defined(__APPLE__)
   session::OpRunInfo op_run_info = {op_exec_info->op_name,
-                                    op_exec_info->py_primitive,
+                                    op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
                                     op_exec_info->is_mixed_precision_cast,
                                     op_exec_info->lazy_build,
                                     op_exec_info->next_op_name,
-                                    static_cast<int>(op_exec_info->next_input_index)};
+                                    static_cast<int>(op_exec_info->next_input_index),
+                                    graph_info,
+                                    tensors_mask,
+                                    input_tensors};
 #else
   session::OpRunInfo op_run_info = {op_exec_info->op_name,
-                                    op_exec_info->py_primitive,
+                                    op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
                                     op_exec_info->is_mixed_precision_cast,
                                     op_exec_info->lazy_build,
                                     op_exec_info->next_op_name,
-                                    op_exec_info->next_input_index};
+                                    op_exec_info->next_input_index,
+                                    graph_info,
+                                    tensors_mask,
+                                    input_tensors};
 #endif
-  VectorRef outputs;
+
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    kSession->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
+    kSession->RunOp(&op_run_info, &outputs);
   } else {
     if (mind_rt_backend == nullptr) {
       const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -2043,9 +2057,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
     }
 
     mindspore::ScopedLongRunning long_running;
-    const compile::ActorInfo &actor_info =
-      mind_rt_backend->CompileGraph(op_run_info, graph_info, &tensors_mask, &input_tensors);
-    mind_rt_backend->RunGraph(actor_info, &op_run_info, &tensors_mask, &input_tensors, &outputs);
+    mind_rt_backend->RunOp(&op_run_info, &outputs);
   }
 
   if (op_exec_info->is_dynamic_shape) {
@@ -3222,6 +3234,9 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
   session::PynativeTaskManager::GetInstance().Reset();
+  if (mind_rt_backend != nullptr) {
+    mind_rt_backend->ClearOpBuilderResource();
+  }
   SetLazyBuild(false);
   cell_depth_ = 0;
 
@@ -3279,6 +3294,8 @@ void PynativeExecutor::Sync() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
+  ExecuteAllTask();
+
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     if (kSession == nullptr) {
       MS_EXCEPTION(NotExistsError) << "No session has been created!";
@@ -3312,7 +3329,12 @@ void PynativeExecutor::ExitCell() {
 
 bool PynativeExecutor::IsTopCell() const { return cell_depth_ == 0; }
 
-void PynativeExecutor::ExecuteAllTask() { session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks(); }
+void PynativeExecutor::ExecuteAllTask() {
+  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
+  if (mind_rt_backend != nullptr) {
+    mind_rt_backend->SyncLazyTasks();
+  }
+}
 
 REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                          (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
