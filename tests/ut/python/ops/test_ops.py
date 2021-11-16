@@ -56,6 +56,7 @@ from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
+from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
@@ -3557,6 +3558,14 @@ test_case_other_ops = [
     ('TruncatedNormal', {
         'block': TruncatedNormal(dtype=mstype.float32, seed=1, seed2=1),
         'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
+    ('ParameterizedTruncatedNormal', {
+        'block': ParameterizedTruncatedNormal(seed=1, seed2=2),
+        'desc_inputs': [Tensor(np.array([2, 3]), mstype.int32),
+                        Tensor(np.array([0]), mstype.float32),
+                        Tensor(np.array([1]), mstype.float32),
+                        Tensor(np.array([-100]), mstype.float32),
+                        Tensor(np.array([100]), mstype.float32)],
         'skip': ['backward']}),
     ('ScalarLog', {
         'block': F.scalar_log,

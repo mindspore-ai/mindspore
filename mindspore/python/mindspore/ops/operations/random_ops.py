@@ -356,6 +356,72 @@ class Gamma(PrimitiveWithInfer):
         return out
 
 
+class ParameterizedTruncatedNormal(Primitive):
+    """
+    Returns a tensor of the specified shape filled with truncated normal values.
+
+    When 'shape' is (batch_size, *), the shape of 'mean', 'stdevs', 'min', 'max' should be () or (batch_size, ).
+
+    Note:
+        The number in tensor minval must be strictly less than maxval at any position after broadcasting.
+
+    Args:
+        seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
+        seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
+
+    Inputs:
+        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
+          int32 and int64.
+        - **mean** (Tensor) - A Tensor. The parameter defines the mean of truncated normal distribution.
+          Its type must be one of the following types:float16, float32, float64.
+        - **stdevs** (Tensor) - A Tensor. The parameter defines the standard deviation for truncation of
+          the normal distribution. It must be greater than 0 and have the same type as means.
+        - **min** (Tensor) - The distribution parameter, a. The parameter defines the minimum of
+          truncated normal distribution. It must have the same type as means.
+        - **max** (Tensor) - The distribution parameter, b. The parameter defines the maximum of
+          truncated normal distribution. It must have the same type as means.
+
+    Outputs:
+        Tensor. Its shape is spcified by the input `shape` and it must have the same type as means.
+
+    Raises:
+        TypeError: If `shape`, `mean`, `stdevs`, `min`, `max` and input tensor type are not allowed.
+        TypeError: If `mean`, `stdevs`, `min`, `max` don't have the same type.
+        TypeError: If `mean` or `stdevs` or `minval` or `maxval` is not a Tensor.
+        ValueError: When 'shape' is (batch_size, *), if the shape of 'mean', 'stdevs', 'min', 'max'
+                    is not () or (batch_size, ).
+        ValueError: If `shape` elements are not positive.
+        ValueError: If `stdevs` elements are not positive.
+        ValueError: If `shape` has less than 2 elements.
+        ValueError: If `shape` is not a 1-D tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> shape = Tensor(np.array([2, 3]), mstype.int32)
+        >>> mean = Tensor(np.array([0], mstype.float32))
+        >>> stdevs = Tensor(np.array([1], mstype.float32))
+        >>> min = Tensor(np.array([-100], mstype.float32))
+        >>> max = Tensor(np.array([100],  mstype.float32))
+        >>> seed = 1
+        >>> seed2 = 2
+        >>> parameterized_truncated_normal = ops.ParameterizedTruncatedNormal(seed=seed, seed2=seed2)
+        >>> output = parameterized_truncated_normal(shape, mean, stdevs, min, max)
+        >>> print(output)
+        [[-0.54974616 -1.4028727   1.5827523 ]
+         [ 0.25759354 -1.9593946  -1.5078077 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0):
+        """Initialize ParameterizedTruncatedNormal"""
+        self.init_prim_io_names(inputs=['shape', 'mean', 'stdevs', 'min', 'max'], outputs=['y'])
+        Validator.check_value_type('seed', seed, [int], self.name)
+        Validator.check_value_type('seed2', seed2, [int], self.name)
+
+
 class Poisson(PrimitiveWithInfer):
     r"""
     Produces random non-negative integer values i, distributed according to discrete probability function:
