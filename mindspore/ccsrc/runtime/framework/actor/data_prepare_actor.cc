@@ -23,7 +23,6 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
-#include "common/trans.h"
 
 namespace mindspore {
 namespace runtime {

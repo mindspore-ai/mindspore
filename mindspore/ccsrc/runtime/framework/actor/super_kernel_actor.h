@@ -42,6 +42,8 @@ class SuperKernelActor : public DebugAwareActor {
 
   void Init() override;
 
+  size_t FetchInputNodePosition(const AnfNodePtr &intput_node);
+
   const KernelGraphPtr &graph() const { return graph_; }
 
  protected:
@@ -50,8 +52,7 @@ class SuperKernelActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
 
-  // Check whether the input data is valid.
-  bool CheckInputData(const OpContext<DeviceTensor> *context);
+  bool CopyInputData(const OpContext<DeviceTensor> *context);
 
   KernelGraphPtr graph_;
 };

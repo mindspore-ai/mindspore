@@ -104,8 +104,8 @@ class ControlNodeParser {
   const std::set<FuncGraphPtr> &FetchFuncGraphbyCallNode(const AnfNodePtr &control_node);
   // Fetch the branch id corresponding to funcgraph.
   int FetchBranchIDByCallNode(const AnfNodePtr &call_node);
-  // Fetch the funcgraph which the kernel belongs.
-  FuncGraphPtr FetchKernelGraphByFrontNode(const AnfNodePtr &kernel);
+  // Fetch the kernel graph which the kernel belongs.
+  KernelGraphPtr FetchKernelGraphByFrontNode(const AnfNodePtr &kernel);
   // Fetch the backend kernel of front node.
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);

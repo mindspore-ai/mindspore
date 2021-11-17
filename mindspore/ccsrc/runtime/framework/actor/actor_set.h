@@ -94,8 +94,10 @@ struct ActorSet {
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 
 // The operation of the map of kActorNameToActor.
-void InsertActor(OpActor<DeviceTensor> *actor);
-OpActor<DeviceTensor> *FetchActor(const std::string &actor_name);
+void InsertActor(AbstractActor *actor);
+AbstractActor *FetchActor(const std::string &actor_name);
+AbstractActor *FetchActor(KernelTransformType kernel_type, const std::string &actor_set_name,
+                          const AnfNodePtr &node = nullptr, const KernelGraphPtr &graph = nullptr);
 void EraseActor(const std::string &actor_name);
 void ClearAllActors();
 }  // namespace runtime

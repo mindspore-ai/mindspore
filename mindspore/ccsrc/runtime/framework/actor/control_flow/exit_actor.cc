@@ -55,21 +55,21 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // 1.Send output in base class.
   ControlActor::SendOutput(context);
 
-  // 2.Send output control in output branch.
-  const auto &control_iter = output_branch_control_arrows_.find(output_branch_id_);
-  if (control_iter != output_branch_control_arrows_.end()) {
-    auto source_aid = const_cast<AID *>(&GetAID());
-    for (const auto &control_arrow : control_iter->second) {
-      ActorDispatcher::Send(control_arrow, &OpActor::RunOpControl, source_aid, context);
-    }
-  }
-
   // 2.Send output data in output branch.
   const auto &branch_data_iter = output_branch_data_.find(output_branch_id_);
   if (branch_data_iter != output_branch_data_.end()) {
     for (const auto &output_data : branch_data_iter->second) {
       MS_EXCEPTION_IF_NULL(output_data.second);
       ActorDispatcher::Send(output_data.second->op_id_, &OpActor::RunOpData, output_data.second.get(), context);
+    }
+  }
+
+  // 3.Send output control in output branch.
+  const auto &control_iter = output_branch_control_arrows_.find(output_branch_id_);
+  if (control_iter != output_branch_control_arrows_.end()) {
+    auto source_aid = const_cast<AID *>(&GetAID());
+    for (const auto &control_arrow : control_iter->second) {
+      ActorDispatcher::Send(control_arrow, &OpActor::RunOpControl, source_aid, context);
     }
   }
 }
@@ -90,7 +90,8 @@ void ExitActor::CopyDeviceAddress() {
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
-    if (!is_need_copy_device_tensors_[i]) {
+    // If the address ptr can't be changed, does not need to copy a new device tensor.
+    if ((!is_need_copy_device_tensors_[i]) || input_device_tensor->is_ptr_persisted()) {
       new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }

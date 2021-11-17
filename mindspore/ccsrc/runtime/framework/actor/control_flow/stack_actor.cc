@@ -44,17 +44,56 @@ void StackActor::Init() {
 void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_data);
-  MS_EXCEPTION_IF_NULL(input_data->data_);
-  auto &sequential_num = context->sequential_num_;
   // The parameters from the inside of the subgraph need to be put into the stack.
   if (IntToSize(input_data->index_) < input_parameter_data_num_ + device_tensor_store_keys_.size()) {
-    input_parameter_data_[sequential_num][input_data->index_].push(input_data->data_);
+    FillStack(input_data, context);
   } else {
     // The outputs of call nodes are placed directly in the input data.
-    input_op_datas_[sequential_num].emplace_back(input_data);
+    input_op_datas_[context->sequential_num_].emplace_back(input_data);
   }
   if (CheckRunningCondition(context)) {
     Run(context);
+  }
+}
+
+void StackActor::FillStack(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(input_data);
+  auto &input_device_tensor = input_data->data_;
+  MS_EXCEPTION_IF_NULL(input_device_tensor);
+  auto &sequential_num = context->sequential_num_;
+  size_t index = IntToSize(input_data->index_);
+  if (index >= device_contexts_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "The index is out of range.");
+  }
+
+  // 1.If device context is empty, it means that the input is from a parameter and does not need copy new device tensor.
+  // 2.If the address ptr can be changed, it has been copied by exit actor and does not need copy a new device tensor.
+  if ((device_contexts_[index] == nullptr) || (!input_device_tensor->is_ptr_persisted())) {
+    input_parameter_data_[sequential_num][input_data->index_].push(input_device_tensor);
+  } else {
+    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(node_with_index.first);
+    // Create the new device tensor and copy the data from the input data.
+    auto new_device_tensor = device_contexts_[index]->CreateDeviceAddress(
+      nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id());
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+
+    if (!device_contexts_[index]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize())) {
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[index],
+                                                  GetAID().Name(), new_device_tensor->GetSize());
+    }
+    if (!new_device_tensor->SyncDeviceToDevice(
+          trans::GetRuntimePaddingShape(node_with_index.first, node_with_index.second), input_device_tensor->GetSize(),
+          input_device_tensor->type_id(), input_device_tensor->GetPtr(), input_device_tensor->format())) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
+    }
+    new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
+    new_device_tensor->set_original_ref_count(SIZE_MAX);
+    new_device_tensor->ResetRefCount();
+
+    created_device_tensors_.emplace_back(new_device_tensor);
+    input_parameter_data_[sequential_num][input_data->index_].push(new_device_tensor.get());
   }
 }
 

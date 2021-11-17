@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <map>
 #include <unordered_map>
-#include <set>
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"
@@ -70,7 +69,6 @@ class OutputActor : public AbstractActor {
   // Get the member.
   size_t loop_count() const { return loop_count_; }
   size_t outputs_num() const { return outputs_num_; }
-  const std::set<AnfNodePtr> &output_address_persisted_nodes() const { return output_address_persisted_nodes_; }
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
  private:
@@ -88,9 +86,6 @@ class OutputActor : public AbstractActor {
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
   std::vector<DeviceTensor *> output_device_tensors_;
-  // Record the output nodes whose output address must be persisted and can't be changed.
-  // For example the output address of output node in the sink graph is persisted.
-  std::set<AnfNodePtr> output_address_persisted_nodes_;
   size_t outputs_num_;
   size_t current_outputs_num_;
 
