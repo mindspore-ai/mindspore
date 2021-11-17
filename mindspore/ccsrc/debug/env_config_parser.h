@@ -23,6 +23,8 @@
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 namespace mindspore {
+enum RdrModes : int { Exceptional = 1, Normal = 2 };
+
 class EnvConfigParser {
  public:
   static EnvConfigParser &GetInstance() {
@@ -37,6 +39,7 @@ class EnvConfigParser {
 #ifdef ENABLE_DUMP_IR
   bool HasRdrSetting() const { return has_rdr_setting_; }
   bool RdrEnabled() const { return rdr_enabled_; }
+  int RdrMode() const { return rdr_mode_; }
   std::string RdrPath() const { return rdr_path_; }
 #endif
   bool GetSysMemreuse() { return sys_memreuse_; }
@@ -52,8 +55,9 @@ class EnvConfigParser {
 
 #ifdef ENABLE_DUMP_IR
   // rdr
-  bool rdr_enabled_{false};
   bool has_rdr_setting_{false};
+  bool rdr_enabled_{false};
+  int rdr_mode_{1};
   std::string rdr_path_{"./"};
 #endif
 
@@ -71,6 +75,7 @@ class EnvConfigParser {
   void ParseRdrSetting(const nlohmann::json &content);
   void ParseRdrPath(const nlohmann::json &content);
   void ParseRdrEnable(const nlohmann::json &content);
+  void ParseRdrMode(const nlohmann::json &content);
 #endif
   void ParseMemReuseSetting(const nlohmann::json &content);
   void ParseSysMemReuse(const nlohmann::json &content);

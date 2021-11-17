@@ -659,6 +659,9 @@ def set_context(**kwargs):
             - enable: controls whether the RDR is enabled to collect the key data during training and
               save key data in the fault scenario. When set to true, the RDR will be turned on.
               When set to false, the RDR will be turned off.
+            - mode: sets the mode of RDR on exporting data. When set to 1, the RDR only exports data
+              in the fault scenario. When set to 2, the RDR exports data in the fault scenario and the
+              normal end scenario. Default is 1.
             - path: sets the path where RDR saves data. The current path must be absolute.
 
             Memory reuse:
