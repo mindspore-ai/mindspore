@@ -101,7 +101,8 @@ ops::PrimitiveC *TFDivParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
-
+  std::string original_name = tf_op.op();
+  prim->AddAttr(ops::kOriginalOpName, MakeValue(original_name));
   return prim.release();
 }
 

@@ -271,6 +271,25 @@ bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, 
   return true;
 }
 
+void CheckAndConvertUtils::GetFormatStringVal(const PrimitivePtr &prim, std::string *format) {
+  if (prim == nullptr || format == nullptr) {
+    MS_LOG(DEBUG) << "Prim or format is nullptr.";
+    return;
+  }
+  auto value_ptr = prim->GetAttr(ops::kFormat);
+  if (value_ptr == nullptr) {
+    MS_LOG(DEBUG) << "Val is nullptr! op type = " << prim->name();
+    return;
+  }
+  int64_t data_format;
+  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value_ptr, &data_format);
+  if (result) {
+    if (DataFormatToStrMap.find(data_format) != DataFormatToStrMap.end()) {
+      *format = DataFormatToStrMap.at(data_format);
+    }
+  }
+}
+
 void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {
