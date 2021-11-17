@@ -59,7 +59,7 @@ int CastTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   auto type_data = static_cast<const int *>(type_tensor.Data().get());
   DataType data_type = static_cast<DataType>(type_data[0]);
-  MS_LOG(INFO) << op_name_ << " cast to data type(43 float): " << type_data[0];
+  MS_LOG(DEBUG) << op_name_ << " cast to data type(43 float): " << type_data[0];
   nvinfer1::DataType dest_datatype = ConvertDataType(data_type);
   auto plugin = std::make_shared<CastPlugin>(op_name_, tensorrt_in_tensors_[0].trt_tensor_->getType(), dest_datatype);
   nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);

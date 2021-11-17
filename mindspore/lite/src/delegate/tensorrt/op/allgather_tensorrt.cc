@@ -55,7 +55,7 @@ int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "convert failed for " << op_name_;
     return RET_ERROR;
   }
-  int rank = GetGroupSize(NCCL_WORLD_GROUP);
+  int rank = GetGPUGroupSize();
 
   auto plugin = std::make_shared<AllGatherPlugin>(op_name_, rank);
   nvinfer1::IPluginV2Layer *allgather_layer = network->addPluginV2(inputTensors, 1, *plugin);

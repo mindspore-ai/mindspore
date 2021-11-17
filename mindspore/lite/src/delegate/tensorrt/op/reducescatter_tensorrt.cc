@@ -59,7 +59,7 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   auto reduce_mode = reduce_op->mode();
 
-  auto rank = GetGroupSize(NCCL_WORLD_GROUP);
+  auto rank = GetGPUGroupSize();
 
   auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank);
   nvinfer1::IPluginV2Layer *reduce_scatter_layer = network->addPluginV2(inputTensors, 1, *plugin);
@@ -137,7 +137,7 @@ nvinfer1::DimsExprs ReduceScatterPlugin::getOutputDimensions(int outputIndex, co
   auto out_dims = new nvinfer1::DimsExprs();
   out_dims->nbDims = inputs->nbDims;
   out_dims->d[0] = exprBuilder.constant(inputs->d[0]->getConstantValue() / rank_);
-  MS_LOG(INFO) << "output of ReduceScatter: " << out_dims->d[0]->getConstantValue();
+  MS_LOG(DEBUG) << "output of ReduceScatter: " << out_dims->d[0]->getConstantValue();
   for (int i = 1; i < inputs->nbDims; i++) {
     out_dims->d[i] = exprBuilder.constant(inputs->d[i]->getConstantValue());
   }

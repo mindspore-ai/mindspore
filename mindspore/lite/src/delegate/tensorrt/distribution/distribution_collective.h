@@ -17,29 +17,22 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_COLLECTIVE_H_
 
 #include <string>
-#include "include/errorcode.h"
 #include "NvInfer.h"
 #include "schema/ops_types_generated.h"
-
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
-
-#ifndef EXPORT_WRAPPER
-#define EXPORT_WRAPPER __attribute__((visibility("default")))
-#endif
-
-extern "C" EXPORT_WRAPPER int GetGroupSize(const std::string &group_name);
-extern "C" EXPORT_WRAPPER int GetRankIDByGroup(const std::string &group_name);
+#include "src/delegate/tensorrt/distribution/distribution_base.h"
 
 namespace mindspore::lite {
-constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
 class DistributionCollective {
  public:
   DistributionCollective(DistributionCollective const &) = delete;
+
   DistributionCollective &operator=(const DistributionCollective &) = delete;
+
   static DistributionCollective &instance();
+
   int ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
                            schema::ReduceMode reduce_type, cudaStream_t stream, const std::string &group);
+
   int AllGatherWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
                        cudaStream_t stream, const std::string &group_name);
 

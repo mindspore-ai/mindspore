@@ -120,7 +120,10 @@ Status TensorRTDelegate::Init() {
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};
   unsupport_resize_op_list_ = {schema::PrimitiveType_ReduceScatter, schema::PrimitiveType_AllGather};
-  lite::SetCudaDevice(device_info_);
+  int ret = lite::SetCudaDevice(device_info_);
+  if (ret != RET_OK) {
+    return mindspore::kLiteError;
+  }
   if (runtime_ == nullptr) {
     runtime_ = new (std::nothrow) TensorRTRuntime();
   }
@@ -132,7 +135,10 @@ Status TensorRTDelegate::Init() {
 }
 
 Status TensorRTDelegate::Build(DelegateModel *model) {
-  lite::SetCudaDevice(device_info_);
+  int ret = lite::SetCudaDevice(device_info_);
+  if (ret != RET_OK) {
+    return mindspore::kLiteError;
+  }
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
