@@ -1392,12 +1392,10 @@ class Cell(Cell_):
 
     def set_broadcast_flag(self, mode=True):
         """
-        Set the cell to data_parallel mode.
-
-        The cell can be accessed as an attribute using the given name.
+        Set parameter broadcast mode for this cell.
 
         Args:
-            mode (bool): Specifies whether the model is data_parallel. Default: True.
+            mode (bool): Specifies whether the mode is parameter broadcast. Default: True.
         """
         self.add_flags_recursive(broadcast_flag=mode)
         return self
@@ -1470,7 +1468,7 @@ class Cell(Cell_):
 
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
-        Set `comm_fusion` for all the parameters in the Net. Please refer to the description of
+        Set `comm_fusion` for all the parameters in this cell. Please refer to the description of
         `mindspore.common.parameter.comm_fusion`.
 
         Note:
