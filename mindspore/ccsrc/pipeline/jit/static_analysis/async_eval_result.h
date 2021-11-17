@@ -206,10 +206,11 @@ class NormalCache {
   CacheType cache_;
 };
 
-class AsyncAbstract {
+class AsyncAbstract : public Base {
  public:
   AsyncAbstract() = default;
   ~AsyncAbstract() = default;
+  AbstractBasePtr GetResult();
   AbstractBasePtr TryGetResult() {
     std::lock_guard<std::mutex> lock(lock_);
     return result_;
@@ -281,7 +282,7 @@ class AsyncInferTask {
   void SetReady() {
     {
       std::lock_guard<std::mutex> lock(lock_);
-      ready_ = ready_ | 1;  // Set the first bit = 1
+      ready_ = ready_ | 0b001;  // Set the first bit = 1
       MS_LOG(DEBUG) << this << " notify ready: " << ready_ << " result: " << abstract_ptr_->TryGetResult().get()
                     << " threadId: " << threadId_;
     }
@@ -291,7 +292,7 @@ class AsyncInferTask {
   void SetException() {
     {
       std::lock_guard<std::mutex> lock(lock_);
-      ready_ = ready_ | 2;  // Set the second bit = 1
+      ready_ = ready_ | 0b010;  // Set the second bit = 1
       MS_LOG(DEBUG) << this << " notify ready: " << ready_;
     }
     condition_var_.notify_one();
@@ -300,7 +301,7 @@ class AsyncInferTask {
   void SetEndLessLoopException() {
     {
       std::lock_guard<std::mutex> lock(lock_);
-      ready_ = ready_ | 4;  // Set the third bit = 1
+      ready_ = ready_ | 0b100;  // Set the third bit = 1
       MS_LOG(DEBUG) << this << " notify ready: " << ready_;
     }
     condition_var_.notify_one();
@@ -309,8 +310,8 @@ class AsyncInferTask {
  private:
   void HandleEndLessLoopException() {
     // Get third bit
-    if (ready_ & 4) {
-      ready_ = ready_ & 3;  // Set the third bit = 0 , Only trigger once.
+    if (ready_ & 0b100) {
+      ready_ = ready_ & 0b011;  // Set the third bit = 0 , Only trigger once.
       MS_LOG(EXCEPTION) << "There isn't any branch that can be evaluated. \n"
                         << "Please check the code if it has the infinite recursion or loop.\n"
                         << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
@@ -396,7 +397,6 @@ class AnalysisResultCacheMgr {
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list);
 
 inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisSchedule::GetThreadID() + ":"; }
-
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_ASYNC_EVAL_RESULT_H_

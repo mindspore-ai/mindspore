@@ -857,10 +857,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
 
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString() << "...";
-  auto async_main = AsyncInferTask::MakeShared(asyncResult_main);
-  MS_LOG(DEBUG) << " add to schedule: " << async_main.get();
-  AnalysisSchedule::GetInstance().Add2Schedule(async_main);  // Third order
-  auto firstResult = async_main->GetResult();
+
+  auto firstResult = asyncResult_main->GetResult();
   MS_EXCEPTION_IF_NULL(firstResult);
   MS_LOG(DEBUG) << GetInferThread() << "async main thread result of " << out_conf->node()->ToString() << " = "
                 << firstResult->ToString();
@@ -882,19 +880,11 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       // shortcircuit end;
 
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[i]->ToString();
-      auto async_branch = AsyncInferTask::MakeShared(branchAsyncResults[i]);
-      MS_LOG(DEBUG) << " add to schedule: " << async_branch.get();
-      AnalysisSchedule::GetInstance().Add2Schedule(async_branch);
-      auto result = async_branch->GetResult();
+      auto result = branchAsyncResults[i]->GetResult();
       MS_EXCEPTION_IF_NULL(result);
       out_specs.push_back(result);
     }
   } else {
-    // Give one more chance to wait for the result of the branches.
-    auto async_tmp = AsyncInferTask::MakeShared(asyncResult_main);
-    MS_LOG(DEBUG) << " add to schedule: " << async_tmp.get();
-    AnalysisSchedule::GetInstance().Add2Schedule(async_tmp);
-    (void)async_tmp->GetResult();
     for (size_t i = 0; i < len; ++i) {
       // Not wait to get the result of branch.
       auto result = branchAsyncResults[i]->TryGetResult();
