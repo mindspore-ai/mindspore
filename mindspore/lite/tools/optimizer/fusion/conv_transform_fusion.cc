@@ -15,11 +15,14 @@
  */
 
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
+#include <algorithm>
 #include <memory>
+#include <vector>
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/quant_param_holder.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
 
@@ -74,7 +77,7 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
   MS_ASSERT(weight_tensor->data_c() != nullptr);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->data_c());
   auto cin_group = weight_tensor->shape()[0] / group;
-  int64_t area_size = weight_tensor->shape()[kInputIndexTwo] * weight_tensor->shape()[kInputIndexTwo];
+  int64_t area_size = weight_tensor->shape()[kNHWC_H] * weight_tensor->shape()[kNHWC_W];
   for (int64_t k = 0; k < cin_group; ++k) {
     for (int64_t j = 0; j < area_size; j++) {
       for (int64_t i = 0; i < kernel_num; ++i) {
@@ -102,10 +105,13 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
 
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
-  if (conv_node == nullptr || IsMultiOutputTensors(func_graph, conv_node) || IsVariableWeightConv(conv_node)) {
+  MS_CHECK_TRUE_RET(conv_node != nullptr, nullptr);
+  if (!CheckCanFused(func_graph, conv_node)) {
     return nullptr;
   }
-  if (IsMarkedTrainOp(conv_node)) {
+
+  // Check the activation type of scale.
+  if (!AdjustActivationType(conv_node, transform_node)) {
     return nullptr;
   }
   auto abstr = transform_node->abstract();
@@ -141,6 +147,27 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   delete[] trans_scale;
   pre_node->set_abstract(abstr);
   return pre_node;
+}
+
+bool ConvTransformFusion::AdjustActivationType(const CNodePtr &conv_node, const CNodePtr &transform_node) const {
+  MS_ASSERT(conv_node != nullptr && transform_node != nullptr);
+  MS_CHECK_TRUE_RET(transform_node->input(0) != nullptr, false);
+  auto trans_prim = GetValueNode<PrimitivePtr>(transform_node->input(0));
+  MS_CHECK_TRUE_RET(trans_prim != nullptr, false);
+  auto trans_act_ptr = trans_prim->GetAttr(ops::kActivationType);
+  if (trans_act_ptr == nullptr || GetValue<int64_t>(trans_act_ptr) == ActivationType::NO_ACTIVATION) {
+    return true;
+  }
+  auto trans_act = GetValue<int64_t>(trans_act_ptr);
+  // convolution only supports RELU and RELU6.
+  if (trans_act != ActivationType::RELU && trans_act != ActivationType::RELU6) {
+    return false;
+  }
+  MS_CHECK_TRUE_RET(conv_node->input(0) != nullptr, false);
+  auto conv_prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
+  MS_CHECK_TRUE_RET(conv_prim != nullptr, false);
+  conv_prim->AddAttr(ops::kActivationType, MakeValue(trans_act));
+  return true;
 }
 
 int ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
@@ -355,13 +382,34 @@ int ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool
   return lite::RET_OK;
 }
 
-bool ConvTransformFusion::IsVariableWeightConv(const CNodePtr &conv_node) const {
-  MS_ASSERT(conv_node != nullptr);
+bool ConvTransformFusion::CheckCanFused(const FuncGraphPtr &func_graph, const CNodePtr &conv_node) const {
+  MS_ASSERT(func_graph != nullptr && conv_node != nullptr);
+  if (IsMultiOutputTensors(func_graph, conv_node) || IsMarkedTrainOp(conv_node)) {
+    return false;
+  }
   MS_ASSERT(conv_node->inputs().size() >= kConvNoBiasLen);
+  auto conv_prim = GetValueNode<PrimitivePtr>(conv_node->input(kInputIndex));
+  auto quant_attr = conv_prim->GetAttr("quant_params");
+  if (quant_attr != nullptr) {
+    auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
+    auto quant_params = quant_param_holder->get_input_quant_params();
+    bool is_quant = std::any_of(quant_params.begin(), quant_params.end(), [](std::vector<schema::QuantParamT> &params) {
+      return !params.empty() && params.front().inited;
+    });
+    if (is_quant) {
+      return false;
+    }
+  }
+  auto conv_act_ptr = conv_prim->GetAttr(ops::kActivationType);
+  if (conv_act_ptr != nullptr && GetValue<int64_t>(conv_act_ptr) != ActivationType::NO_ACTIVATION) {
+    return false;
+  }
+  // Check weight is const.
   auto conv_weight_node = conv_node->input(kConvWeightIndex);
   bool is_value_node = conv_weight_node->isa<ValueNode>();
   auto conv_weight_param =
     conv_weight_node->isa<Parameter>() ? conv_weight_node->cast<ParameterPtr>()->default_param() : nullptr;
-  return !is_value_node && conv_weight_param == nullptr;
+  return is_value_node || conv_weight_param != nullptr;
 }
 }  // namespace mindspore::opt

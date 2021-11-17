@@ -34,6 +34,14 @@ bool IsBNCNode(const BaseRef &n) {
   return false;
 }
 
+bool IsSoftmaxNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimSoftmax) || CheckPrimitiveType(anf_node, prim::kPrimLogSoftmax);
+  }
+  return false;
+}
+
 VectorRef TransposeFusion::DefineBNPattern() const {
   auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
   MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
@@ -111,8 +119,17 @@ VectorRef TransposeFusion::DefineScalePattern() const {
   MS_CHECK_TRUE_RET(is_weight_param != nullptr, {});
   auto is_seq_var = std::make_shared<SeqVar>();
   MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
-  VectorRef trans_trans_ref = VectorRef({is_scale, is_transpose, is_weight_param, is_seq_var});
-  return trans_trans_ref;
+  VectorRef trans_scale_ref = VectorRef({is_scale, is_transpose, is_weight_param, is_seq_var});
+  return trans_scale_ref;
+}
+
+VectorRef TransposeFusion::DefineSoftmaxPattern() const {
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_softmax = std::make_shared<CondVar>(IsSoftmaxNode);
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  VectorRef trans_softmax_ref = VectorRef({is_softmax, is_transpose});
+  return trans_softmax_ref;
 }
 
 VectorRef TransposeFusion::DefineTransTransPattern() const {
@@ -133,6 +150,7 @@ std::unordered_map<std::string, VectorRef> TransposeFusion::DefinePatterns() con
   patterns["BiasAddPatternName"] = DefineBiasAddPattern();
   patterns["ScalePatternName"] = DefineActivationscalePattern();
   patterns["TransScalePatternName"] = DefineScalePattern();
+  patterns["TransSoftmaxPatternName"] = DefineSoftmaxPattern();
   patterns["TransTransPatternName"] = DefineTransTransPattern();
   return patterns;
 }
@@ -209,14 +227,14 @@ AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, con
   return nullptr;
 }
 
-int TransposeFusion::AdjustAxisOfScale(const mindspore::AnfNodePtr &node) const {
+int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
   MS_ASSERT(node != nullptr);
-  auto scale_cnode = node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(scale_cnode != nullptr, lite::RET_ERROR);
-  if (IsMarkedTrainOp(scale_cnode)) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_ERROR);
+  if (IsMarkedTrainOp(cnode)) {
     return lite::RET_ERROR;
   }
-  auto transpose_node = scale_cnode->input(1);
+  auto transpose_node = cnode->input(1);
   auto transpose_cnode = transpose_node->cast<CNodePtr>();
   if (transpose_cnode == nullptr) {
     return lite::RET_ERROR;
@@ -224,34 +242,41 @@ int TransposeFusion::AdjustAxisOfScale(const mindspore::AnfNodePtr &node) const 
   if (IsMarkedTrainOp(transpose_cnode)) {
     return lite::RET_ERROR;
   }
-
+  if (CheckPrimitiveType(cnode, prim::kPrimScaleFusion)) {
+    auto weight_param = cnode->input(2);
+    MS_CHECK_TRUE_RET(weight_param != nullptr, lite::RET_ERROR);
+    std::vector<int64_t> weight_shape;
+    if (FetchShapeFromAbstract(weight_param->abstract(), &weight_shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get shape from abstract failed.";
+      return lite::RET_ERROR;
+    }
+    if (weight_shape.size() != 1) {
+      MS_LOG(ERROR) << "Dot not support weight size larger than 1.";
+      return lite::RET_ERROR;
+    }
+  }
   std::vector<int> perm;
   if (GetTransposePerm(transpose_cnode, &perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "get tanspose perm failed.";
     return lite::RET_ERROR;
   }
   MS_CHECK_TRUE_RET(!perm.empty(), lite::RET_ERROR);
-  auto scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(scale_cnode->input(0));
-  MS_CHECK_TRUE_RET(scale_prim != nullptr, lite::RET_ERROR);
-  MS_CHECK_TRUE_RET(scale_prim->GetAttr(ops::kAxis) != nullptr, lite::RET_ERROR);
-  int axis = scale_prim->get_axis() < 0 ? scale_prim->get_axis() + perm.size() : scale_prim->get_axis();
-  auto weight_param = scale_cnode->input(2);
-  MS_CHECK_TRUE_RET(weight_param != nullptr, lite::RET_ERROR);
-  std::vector<int64_t> weight_shape;
-  if (FetchShapeFromAbstract(weight_param->abstract(), &weight_shape) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get shape from abstract failed.";
-    return lite::RET_ERROR;
-  }
-  if (weight_shape.size() != 1) {
-    MS_LOG(ERROR) << "Dot not support weight size larger than 1.";
-    return lite::RET_ERROR;
-  }
+
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, lite::RET_ERROR);
+  auto axis_value_ptr = prim->GetAttr(ops::kAxis);
+  MS_CHECK_TRUE_RET(axis_value_ptr != nullptr, lite::RET_ERROR);
+  int64_t axis = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? GetValue<int64_t>(axis_value_ptr)
+                                                              : GetValue<std::vector<int64_t>>(axis_value_ptr).front();
+  axis = axis < 0 ? axis + perm.size() : axis;
   MS_CHECK_TRUE_RET(axis >= 0 && static_cast<size_t>(axis) < perm.size(), lite::RET_ERROR);
-  scale_prim->set_axis(static_cast<int64_t>(perm.at(axis)));
+  auto axis_attr = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? MakeValue<int64_t>(perm.at(axis))
+                                                                : MakeValue<std::vector<int64_t>>({perm.at(axis)});
+  prim->AddAttr(ops::kAxis, axis_attr);
   if (perm == kNC2NH) {
-    scale_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
+    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
   } else if (perm == kNH2NC) {
-    scale_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   }
   return lite::RET_OK;
 }
@@ -264,8 +289,11 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
   }
   if (pattern_name == "TransTransPatternName") {
     return TransTransFusion(func_graph, node);
-  } else if (pattern_name == "TransScalePatternName" && AdjustAxisOfScale(node) != lite::RET_OK) {
-    return nullptr;
+  } else if (pattern_name == "TransScalePatternName" || pattern_name == "TransSoftmaxPatternName") {
+    if (AdjustAxis(node) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Adjust axis for node " << node->fullname_with_scope() << " failed.";
+      return nullptr;
+    }
   }
 
   if (node->cast<CNodePtr>() == nullptr) {

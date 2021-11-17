@@ -17,32 +17,40 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_MUL_ADD_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_MUL_ADD_FUSION_H_
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include "backend/optimizer/common/optimizer.h"
+#include "tools/converter/quant_param_holder.h"
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
+#include "ops/fusion/scale_fusion.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace opt {
-class MulAddFusion : public PatternProcessPass {
+class MulAddFusion : public MultiplePatternProcessPass {
  public:
-  explicit MulAddFusion(bool multigraph = true, const std::string &name = "MulAddFusion")
-      : PatternProcessPass(name, multigraph) {}
+  explicit MulAddFusion(const std::string &name = "MulAddFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {}
+
   ~MulAddFusion() override = default;
 
  private:
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  bool CheckMulNode(const FuncGraphPtr &func_graph) const;
-  bool CheckAddNode() const;
-  bool GetMulInputShape() const;
-  bool ScaleInputShapeValid() const;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+  VectorRef DefineMulFirstPattern() const;
+  VectorRef DefineMulSecondPattern() const;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
+
+  bool CheckAddNode(const mindspore::CNodePtr &cnode) const;
+  bool CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const;
+  tensor::TensorPtr GetTensorFromParamOrValueNode(const AnfNodePtr &node) const;
+  bool ScaleInputShapeValid(size_t *axis_offset) const;
+  bool AdjustScaleBiasTensorShape(size_t *axis_offset) const;
 
  private:
-  mutable AnfNodePtr mul_anode_ = nullptr;
-  mutable AnfNodePtr mul_input_anode_ = nullptr;
-  mutable AnfNodePtr mul_const_anode_ = nullptr;
   mutable ShapeVector mul_input_shape_;
-  mutable AnfNodePtr add_anode_ = nullptr;
+  mutable AnfNodePtr mul_const_anode_ = nullptr;
   mutable AnfNodePtr add_const_anode_ = nullptr;
   mutable tensor::TensorPtr scale_tensor_ = nullptr;
   mutable tensor::TensorPtr bias_tensor_ = nullptr;

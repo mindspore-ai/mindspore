@@ -1,7 +1,6 @@
 file(GLOB FUSION_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/fusion_pattern.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fusion_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mul_add_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/quant_cast_fusion_pass.cc
         )
 set_property(SOURCE ${FUSION_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)

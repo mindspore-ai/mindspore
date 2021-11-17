@@ -22,7 +22,6 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
@@ -124,22 +123,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = format_trans_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run format_trans_optimizer graphPasses Failed";
-      return status;
-    }
-  }
-
-  // node fusion
-  {
-    // init old node indices
-    auto old_nodes = GetGraphNodes(*graph_defT_);
-    Optimizer fusion_optimizer;
-    fusion_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    fusion_optimizer.AddPass(new (std::nothrow) MulAddFusionPass());
-    fusion_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    fusion_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-    status = fusion_optimizer.Run(graph_defT_);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run fusion_optimizer graphPasses Failed";
       return status;
     }
   }
