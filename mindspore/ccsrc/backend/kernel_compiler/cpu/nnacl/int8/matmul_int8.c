@@ -32,6 +32,69 @@ void RowMajor2Row2x16MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, 
   }
 }
 
+void RowMajor2Row4x4MajorInt8(const int8_t *src, int8_t *dst, int row, int col) {
+  int row_div = row / C4NUM * C4NUM;
+  int col_4 = UP_ROUND(col, C4NUM);
+  int col_div = col / C4NUM * C4NUM;
+
+  const int8_t *src_r4 = src;
+  int8_t *packed_r4 = dst;
+  const int8_t *src_c4 = NULL;
+  int8_t *packed_c4 = NULL;
+  for (int r = 0; r < row_div; r += C4NUM) {
+    src_c4 = src_r4;
+    packed_c4 = packed_r4;
+
+    for (int c = 0; c < col_div; c += C4NUM) {
+      for (int i = 0; i < C4NUM; i++) {
+        packed_c4[i * C4NUM + 0] = src_c4[i * col + 0];
+        packed_c4[i * C4NUM + 1] = src_c4[i * col + 1];
+        packed_c4[i * C4NUM + 2] = src_c4[i * col + 2];
+        packed_c4[i * C4NUM + 3] = src_c4[i * col + 3];
+      }
+      src_c4 += C4NUM;
+      packed_c4 += C16NUM;
+    }
+
+    if (col == col_div) {
+      continue;
+    }
+    memset(packed_c4, 0, C16NUM * sizeof(int8_t));
+    for (int i = 0; i < C4NUM; ++i) {
+      for (int c = 0; c < col - col_div; ++c) {
+        packed_c4[i * C4NUM + c] = src_c4[i * col + c];
+      }
+    }
+    src_r4 += C4NUM * col;
+    packed_r4 += C4NUM * col_4;
+  }
+
+  if (row == row_div) {
+    return;
+  }
+  memset(packed_r4, 0, C4NUM * col_4);
+  src_c4 = src_r4;
+  packed_c4 = packed_r4;
+  for (int c = 0; c < col_div; c += C4NUM) {
+    for (int i = 0; i < row - row_div; ++i) {
+      packed_c4[i * C4NUM + 0] = src_c4[i * col + 0];
+      packed_c4[i * C4NUM + 1] = src_c4[i * col + 1];
+      packed_c4[i * C4NUM + 2] = src_c4[i * col + 2];
+      packed_c4[i * C4NUM + 3] = src_c4[i * col + 3];
+    }
+    src_c4 += C4NUM;
+    packed_c4 += C16NUM;
+  }
+  if (col == col_div) {
+    return;
+  }
+  for (int i = 0; i < row - row_div; ++i) {
+    for (int c = 0; c < col - col_div; ++c) {
+      packed_c4[i * C4NUM + c] = src_c4[i * col + c];
+    }
+  }
+}
+
 void RowMajor2Col16x2MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int row16 = UP_ROUND(row, C16NUM);
   int stride = sizeof(int8_t) * C16NUM * C2NUM;
@@ -525,7 +588,139 @@ void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, 
   return;
 }
 
-void RowMajor2Col16x4MajorInt8(const int8_t *src, int row, int col, int8_t *dst) {
+#ifdef ENABLE_ARM64
+void PackInput2Col4x4AndInputSumPert_arm64(const int8_t *src_ic, int8_t *packed_ic, int32_t *input_sum, int row,
+                                           size_t row_stride, int32_t filter_zp) {
+  asm volatile(
+    "ld1 {v12.s}[0], [%[input_sum]]\n"
+    "mov w10, %w[row]\n"
+    "mov x11, %[src_ic]\n"
+    "mov x12, %[packed_ic]\n"
+    "sxtl v6.8h, v12.8b\n"
+    "sxtl v12.4s, v6.4h\n"
+    "cmp w10, wzr\n"
+    "beq 1f\n"
+    "2:\n"
+    "subs w10, w10, #4\n"
+    "ld1 {v0.s}[0], [x11], %[row_stride]\n"
+    "ld1 {v1.s}[0], [x11], %[row_stride]\n"
+    "ld1 {v0.s}[1], [x11], %[row_stride]\n"
+    "ld1 {v1.s}[1], [x11], %[row_stride]\n"
+    "zip1 v2.8b, v0.8b, v1.8b\n"
+    "zip2 v3.8b, v0.8b, v1.8b\n"
+    "zip1 v4.4h, v2.4h, v3.4h\n"
+    "zip2 v5.4h, v2.4h, v3.4h\n"
+    "st1 {v4.4h, v5.4h}, [x12], #16\n"
+
+    "sxtl v6.8h, v0.8b\n"
+    "sxtl v7.4s, v6.4h\n"
+    "sxtl2 v8.4s, v6.8h\n"
+    "sxtl v9.8h, v1.8b\n"
+    "sxtl v10.4s, v9.4h\n"
+    "sxtl2 v11.4s, v9.8h\n"
+    "add v10.4s, v10.4s, v7.4s\n"
+    "add v10.4s, v10.4s, v8.4s\n"
+    "add v10.4s, v10.4s, v10.4s\n"
+    "add v10.4s, v10.4s, v11.4s\n"
+    "bgt 2b\n"
+    "1:\n"
+
+    :
+    : [ src_ic ] "r"(src_ic), [ packed_ic ] "r"(packed_ic), [ input_sum ] "r"(input_sum), [ row ] "r"(row),
+      [ row_stride ] "r"(row_stride), [ filter_zp ] "r"(filter_zp)
+    : "memory", "w10", "x11", "x12", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12");
+
+  return;
+}
+#endif
+
+// For matmul input a transpose case
+void PackInput2Col4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, int row,
+                                     int col, int row_stride, int32_t filter_zp) {
+  const int row_tile = C4NUM;
+  int row_align = UP_ROUND(row, row_tile);
+  int row_div = row / row_tile * row_tile;
+  const int row_res = row - row_div;
+
+  const int col_tile = C4NUM;
+  int col_div = col / col_tile * col_tile;
+  const int col_res = col - col_div;
+
+  const int8_t *src_ic = NULL;
+  int8_t *packed_ic = NULL;
+  int32_t *tmp_sum = NULL;
+  for (int c = 0; c < col_div; c += C4NUM) {
+    int r = 0;
+    src_ic = src_input + c;
+    packed_ic = packed_input + c * row_align;
+    tmp_sum = input_sum + c;
+#ifdef ENABLE_ARM64
+    PackInput2Col4x4AndInputSumPert_arm64(src_ic, packed_ic, tmp_sum, row_div, row_stride, filter_zp);
+    packed_ic += C4NUM * row_div;
+    src_ic += row_div * row_stride;
+#else
+    for (; r < row_div; r += C4NUM) {
+      for (int i = 0; i < row_tile; i++) {
+        packed_ic[0 * row_tile + i] = src_ic[i * row_stride + 0];
+        packed_ic[1 * row_tile + i] = src_ic[i * row_stride + 1];
+        packed_ic[2 * row_tile + i] = src_ic[i * row_stride + 2];
+        packed_ic[3 * row_tile + i] = src_ic[i * row_stride + 3];
+
+        tmp_sum[0] += src_ic[i * row_stride + 0];
+        tmp_sum[1] += src_ic[i * row_stride + 1];
+        tmp_sum[2] += src_ic[i * row_stride + 2];
+        tmp_sum[3] += src_ic[i * row_stride + 3];
+      }
+      packed_ic += C16NUM;
+      src_ic += row_tile * row_stride;
+    }
+#endif
+
+    for (r = 0; r < row_res; ++r) {
+      for (int i = 0; i < C4NUM; ++i) {
+        packed_ic[i * row_tile + r] = src_ic[r * row_stride + i];
+        tmp_sum[i] += src_ic[r * row_stride + i];
+      }
+    }
+  }
+  if (col_res == 0) {
+    for (int i = 0; i < col; ++i) {
+      input_sum[i] *= filter_zp;
+    }
+    return;
+  }
+  src_ic = src_input + col_div;
+  packed_ic = packed_input + row_align * col_div;
+  tmp_sum = input_sum + col_div;
+  for (int r = 0; r < row_div; r += row_tile) {
+    for (int i = 0; i < col_res; ++i) {
+      packed_ic[i * row_tile + 0] = src_ic[0 * row_stride + i];
+      packed_ic[i * row_tile + 1] = src_ic[1 * row_stride + i];
+      packed_ic[i * row_tile + 2] = src_ic[2 * row_stride + i];
+      packed_ic[i * row_tile + 3] = src_ic[3 * row_stride + i];
+
+      tmp_sum[i] += src_ic[0 * row_stride + i];
+      tmp_sum[i] += src_ic[1 * row_stride + i];
+      tmp_sum[i] += src_ic[2 * row_stride + i];
+      tmp_sum[i] += src_ic[3 * row_stride + i];
+    }
+    src_ic += row_tile * row_stride;
+    packed_ic += row_tile * col_tile;
+  }
+
+  for (int r = 0; r < row_res; ++r) {
+    for (int c = 0; c < col_res; ++c) {
+      packed_ic[c * row_tile + r] = src_ic[r * row_stride + c];
+      tmp_sum[c] += src_ic[r * row_stride + c];
+    }
+  }
+
+  for (int i = 0; i < col; ++i) {
+    input_sum[i] *= filter_zp;
+  }
+}
+
+void RowMajor2Col16x4MajorInt8(const int8_t *src, int8_t *dst, int row, int col) {
   int row_16 = UP_ROUND(row, C16NUM);
   int stride = sizeof(int8_t) * 16 * 4;
   for (int r = 0; r < row_16; ++r) {
@@ -541,7 +736,54 @@ void RowMajor2Col16x4MajorInt8(const int8_t *src, int row, int col, int8_t *dst)
   }
 }
 
-// dst: weight_zp * input_row_sums
+void RowMajor2Col4x4MajorInt8(const int8_t *src, int row, int col, int8_t *dst) {
+  int row_4 = UP_ROUND(row, C4NUM);
+  int stride = C4NUM * C4NUM;
+  for (int r = 0; r < row_4; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int stride_idx = c / C4NUM * (row_4 / C4NUM) + r / C4NUM;
+      if (r >= row) {
+        dst[stride * stride_idx + c % C4NUM * C4NUM + r % C4NUM] = 0;
+      } else {
+        int src_idx = r * col + c;
+        dst[stride * stride_idx + c % C4NUM * C4NUM + r % C4NUM] = src[src_idx];
+      }
+    }
+  }
+}
+
+void RowMajor2Col4x16MajorPartInt8(const int8_t *src, int8_t *dst, int row, int col, int cur_oc) {
+  int row_4 = UP_ROUND(row, C4NUM);
+  int stride = C16NUM * C4NUM;
+  for (int r = 0; r < row_4; ++r) {
+    for (int c = 0; c < cur_oc; ++c) {
+      int stride_idx = c / C16NUM * (row_4 / C4NUM) + r / C4NUM;
+      if (r >= row) {
+        dst[stride * stride_idx + c % C16NUM * C4NUM + r % C4NUM] = 0;
+      } else {
+        int src_idx = r * col + c;
+        dst[stride * stride_idx + c % C16NUM * C4NUM + r % C4NUM] = src[src_idx];
+      }
+    }
+  }
+}
+
+void RowMajor2Col4x16MajorInt8(const int8_t *src, int8_t *dst, int row, int col) {
+  int row_4 = UP_ROUND(row, C4NUM);
+  int stride = C16NUM * C4NUM;
+  for (int r = 0; r < row_4; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int stride_idx = c / C16NUM * (row_4 / C4NUM) + r / C4NUM;
+      if (r >= row) {
+        dst[stride * stride_idx + c % C16NUM * C4NUM + r % C4NUM] = 0;
+      } else {
+        int src_idx = r * col + c;
+        dst[stride * stride_idx + c % C16NUM * C4NUM + r % C4NUM] = src[src_idx];
+      }
+    }
+  }
+}
+
 void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order) {
   for (int r = 0; r < row; ++r) {
     int sum = 0;
@@ -565,6 +807,26 @@ void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, co
     for (int r = 0; r < row; ++r) {
       if (order == RowMajor) {
         sum += weight[r * col + c];
+      } else {
+        sum += weight[c * row + r];
+      }
+    }
+    int weight_zp = filter_per_channel ? weight_zp_ptr[c] : weight_zp_ptr[0];
+    dst[c] = row * input_zp * weight_zp - input_zp * sum;
+    if (bias != NULL) {
+      dst[c] += bias[c];
+    }
+  }
+}
+
+void CalcPartWeightBiasSums(const int8_t *weight, int row, int stride, int cur_col, int input_zp,
+                            const int *weight_zp_ptr, const int *bias, int *dst, DataOrder order,
+                            bool filter_per_channel) {
+  for (int c = 0; c < cur_col; ++c) {
+    int sum = 0;
+    for (int r = 0; r < row; ++r) {
+      if (order == RowMajor) {
+        sum += weight[r * stride + c];
       } else {
         sum += weight[c * row + r];
       }

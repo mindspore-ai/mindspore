@@ -21,7 +21,7 @@ void InitInt8MatrixA(int8_t *src_ptr, int32_t *input_sums, int8_t *dst_ptr, int 
   for (int i = 0; i < batch; ++i) {
     int8_t *cur_a_ptr = src_ptr + i * row * deep;
     if (a_transpose) {
-      RowMajor2Col16x4MajorInt8(cur_a_ptr, deep, row, dst_ptr);
+      RowMajor2Col16x4MajorInt8(cur_a_ptr, dst_ptr, deep, row);
       CalcInputSums(cur_a_ptr, row, deep, *weight_zp, input_sums, ColMajor);
     } else {
       RowMajor2Row16x4MajorInt8(cur_a_ptr, dst_ptr, row, deep);
@@ -48,7 +48,7 @@ void InitInt8MatrixB(int8_t *weight_ptr, int32_t *weight_bias_sums_batch_, int8_
 #ifdef ENABLE_ARM32
       RowMajor2Col16x2MajorInt8(cur_b, cur_b_pack, deep, col);
 #else
-      RowMajor2Col16x4MajorInt8(cur_b, deep, col, cur_b_pack);
+      RowMajor2Col16x4MajorInt8(cur_b, cur_b_pack, deep, col);
 #endif
       CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, RowMajor, false);
     }
