@@ -775,6 +775,29 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
                        [](const std::pair<void *, size_t> &item) { return item.second; });
 }
 
+DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::KernelGraph &graph,
+                                                               const AnfNodePtr &node) {
+  auto front_node = graph.GetFrontNodeByInternalParameter(node);
+  if (front_node.first == nullptr) {
+    return nullptr;
+  }
+  auto pre_graphs = graph.get_pre_graphs();
+  for (auto pre_graph_item : pre_graphs) {
+    auto pre_graph = pre_graph_item.second.lock();
+    MS_EXCEPTION_IF_NULL(pre_graph);
+    auto graph_output = pre_graph->GetGraphOutputByFrontNode(front_node);
+    if (graph_output.first == nullptr) {
+      continue;
+    }
+    auto output_device_address = AnfAlgo::GetMutableOutputAddr(graph_output.first, 0);
+    MS_EXCEPTION_IF_NULL(output_device_address);
+    if (output_device_address->DeviceType() == DeviceAddressType::kAscend) {
+      return output_device_address;
+    }
+  }
+  return nullptr;
+}
+
 void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
   auto &kernels = graph.execution_order();
   if (kernels.empty() || graph_kernel_events_map_.find(graph.graph_id()) != graph_kernel_events_map_.end()) {

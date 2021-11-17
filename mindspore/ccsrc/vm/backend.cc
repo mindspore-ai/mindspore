@@ -516,7 +516,7 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     }
 
     // Compile graph.
-    auto graph_id = graph_compiler_->CompileGraph(segment->nodes_, outputs, device_context);
+    auto graph_id = graph_compiler_->CompileGraph(segment, outputs, device_context);
 
     if (ms_execution_mode_ != real_execution_mode_) {
       context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);

@@ -331,12 +331,15 @@ void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_wit
 
 GraphCompilerInfo::~GraphCompilerInfo() { GraphScheduler::GetInstance().Clear(name_, graphs_); }
 
-GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs,
+GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(segment);
+  auto nodes = segment->nodes_;
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  SetGraphDependency(graph, segment);
 
   // Unify the MindIR, must be before of the graph optimization.
   device_context->UnifyMindIR(graph);
@@ -655,6 +658,20 @@ void GraphCompiler::Summary(const std::vector<KernelGraphPtr> &graphs) const {
 void GraphCompiler::EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id) {
   (void)run_op_graphs_.erase(graph_info);
   (void)run_op_graph_output_nodes_.erase(graph_id);
+}
+
+void GraphCompiler::SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(segment);
+  segment->graph_id_ = graph->graph_id();
+  for (auto &pre_segment : segment->pre_segments_) {
+    MS_EXCEPTION_IF_NULL(pre_segment);
+    auto pre_graph = Fetch(pre_segment->graph_id_);
+    MS_EXCEPTION_IF_NULL(pre_graph);
+    pre_graph->AddPostGraph(graph);
+    graph->AddPreGraph(pre_graph);
+    MS_LOG(INFO) << "Link graph " << pre_segment->graph_id_ << " to " << graph->graph_id();
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore
