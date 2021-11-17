@@ -29,7 +29,7 @@ AbstractBasePtr AsyncAbstract::GetResult() {
   if (ret != nullptr) {
     return ret;
   }
-  auto async_task = AsyncInferTask::MakeShared(shared_from_base<AsyncAbstract>());
+  auto async_task = AsyncInferTask::MakeShared(shared_from_this());
   MS_LOG(DEBUG) << GetInferThread() << " is waiting for async: " << async_task.get();
   AnalysisSchedule::GetInstance().Add2Schedule(async_task);
   ret = async_task->GetResult();
@@ -172,6 +172,51 @@ thread_local std::string localThreadID = "1";
 void AnalysisSchedule::SetThreadID(const std::string &threadID) { localThreadID = threadID; }
 
 std::string &AnalysisSchedule::GetThreadID() { return localThreadID; }
+
+AbstractFunctionPtr AsyncAbstractFuncAtom::GetUnique() {
+  if (resolved_ != nullptr) {
+    return resolved_;
+  }
+  // Release GIL for C++;
+  py::gil_scoped_release infer_gil_release;
+
+  MS_LOG(DEBUG) << "Try to GetResult from async_abstract: " << async_abstract_->ToString();
+  const auto &result = async_abstract_->GetResult();
+  if (result->isa<AbstractFuncAtom>()) {
+    resolved_ = result->cast<AbstractFuncAtomPtr>();
+  } else if (result->isa<AbstractSequeue>()) {
+    const auto &abs_seq = result->cast<AbstractSequeuePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    const auto &elements = abs_seq->elements();
+    if (elements.size() < index_) {
+      MS_LOG(EXCEPTION) << "Elements of AsyncAbstract result: " << result->ToString()
+                        << " size is less than index: " << index_;
+    }
+    if (!elements[index_]->isa<AbstractFuncAtom>()) {
+      MS_LOG(EXCEPTION) << "AsyncAbstract result cannot resolve to AbstractFuncAtom, but: "
+                        << elements[index_]->ToString();
+    }
+    MS_LOG(DEBUG) << "Return Abstract: " << elements[index_]->ToString();
+    resolved_ = elements[index_]->cast<AbstractFuncAtomPtr>();
+  } else {
+    MS_LOG(EXCEPTION) << "AsyncAbstract cannot resolve to AbstractFuncAtom or AbstractSequence, but: "
+                      << result->ToString();
+  }
+  return resolved_;
+}
+
+std::string AsyncAbstractFuncAtom::ToString() const {
+  if (resolved_ == nullptr) {
+    return "AsyncAbstractFuncAtom(Not Resolved)";
+  }
+
+  std::ostringstream buffer;
+  buffer << "AsyncAbstractFuncAtom(";
+  buffer << resolved_->ToString();
+  buffer << ")";
+
+  return buffer.str();
+}
 
 void AnalysisResultCacheMgr::Clear() {
   std::lock_guard<std::mutex> lock(lock_);

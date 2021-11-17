@@ -300,7 +300,14 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   std::vector<EvaluatorPtr> evaluators;
   auto build_evaluator = [this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
-    auto evaluator = this->GetEvaluatorFor(poss);
+    auto resolved_atom = poss;
+    if (poss->isa<AsyncAbstractFuncAtom>()) {
+      const auto &async_abs_func = poss->cast<AsyncAbstractFuncAtomPtr>();
+      const auto &resolved_func = async_abs_func->GetUnique();
+      resolved_atom = resolved_func->cast<AbstractFuncAtomPtr>();
+      MS_EXCEPTION_IF_NULL(resolved_atom);
+    }
+    auto evaluator = this->GetEvaluatorFor(resolved_atom);
     evaluator->set_bound_node(cnode);
     evaluators.push_back(evaluator);
   };
@@ -809,6 +816,62 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
   }
 }
 
+namespace {
+void BuildPossibleSpecs(const AbstractBasePtr &first_result,
+                        const std::vector<AsyncAbstractPtr> &branch_async_abstract_list,
+                        AbstractBasePtrList *out_specs) {
+  std::vector<AsyncAbstractPtr> pending_async_abstract_list;
+  std::size_t len = branch_async_abstract_list.size();
+
+  for (size_t i = 0; i < len; ++i) {
+    auto result = branch_async_abstract_list[i]->TryGetResult();
+    if (result) {
+      out_specs->push_back(result);
+    } else {
+      pending_async_abstract_list.push_back(branch_async_abstract_list[i]);
+    }
+  }
+  if (first_result->isa<AbstractFunction>()) {
+    for (std::size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
+      auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], 0);
+      out_specs->push_back(async_func);
+    }
+  } else if (first_result->isa<AbstractSequeue>()) {
+    const auto &orig_abstract_seq = first_result->cast<AbstractSequeuePtr>();
+    MS_EXCEPTION_IF_NULL(orig_abstract_seq);
+    const auto &orig_elements = orig_abstract_seq->elements();
+    AbstractBasePtrList new_elements;
+    for (size_t i = 0; i < orig_elements.size(); ++i) {
+      if (orig_elements[i]->isa<AbstractFuncAtom>()) {
+        AbstractFuncAtomPtrList abs_func_list{orig_elements[i]->cast<AbstractFuncAtomPtr>()};
+        for (size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
+          auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], i);
+          abs_func_list.push_back(async_func);
+        }
+        new_elements.push_back(AbstractFunction::MakeAbstractFunction(abs_func_list));
+      } else {
+        new_elements.push_back(orig_elements[i]);
+      }
+    }
+    AbstractBasePtr new_first_result;
+    if (first_result->isa<AbstractTuple>()) {
+      new_first_result = std::make_shared<AbstractTuple>(new_elements);
+    } else if (first_result->isa<AbstractList>()) {
+      new_first_result = std::make_shared<AbstractList>(new_elements);
+    } else {
+      MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << first_result->ToString();
+    }
+    MS_LOG(DEBUG) << GetInferThread() << " Try to replace old first with new one, old: " << first_result->ToString()
+                  << ", new: " << new_first_result->ToString();
+    std::replace_if(
+      out_specs->begin(), out_specs->end(), [first_result](const auto &elem) { return elem == first_result; },
+      new_first_result);
+  } else {
+    MS_LOG(DEBUG) << GetInferThread() << " wait for normal async result";
+  }
+}
+}  // namespace
+
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
                                                                    const AnfNodeConfigPtr &out_conf,
                                                                    const ConfigPtrList &args_conf_list) {
@@ -866,24 +929,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   AbstractBasePtrList out_specs;
   size_t len = evaluators.size();
   if (NeedWaitForBranches(firstResult)) {
-    for (size_t i = 0; i < len; ++i) {
-      // shortcircuit begin;
-      if (firstResult->isa<AbstractTuple>() && branchAsyncResults[i]->TryGetResult() == nullptr) {
-        MS_LOG(DEBUG) << "Try to run shortcircuit abstract for evalator: " << evaluators[i]->ToString();
-        const auto &result = evaluators[i]->RunShortCircuit(shared_from_this(), args_conf_list, out_conf);
-        if (result != nullptr) {
-          out_specs.push_back(result->abstract());
-          MS_LOG(DEBUG) << "i: " << i << ", result: " << result->abstract()->ToString();
-          continue;
-        }
-      }
-      // shortcircuit end;
-
-      MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[i]->ToString();
-      auto result = branchAsyncResults[i]->GetResult();
-      MS_EXCEPTION_IF_NULL(result);
-      out_specs.push_back(result);
-    }
+    BuildPossibleSpecs(firstResult, branchAsyncResults, &out_specs);
   } else {
     for (size_t i = 0; i < len; ++i) {
       // Not wait to get the result of branch.

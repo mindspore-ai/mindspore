@@ -51,10 +51,6 @@ class Evaluator : public Base {
   // Run() will modify cache_ member, so it cannot marked as const;
   virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                             const AnfNodeConfigPtr &out_conf);
-  virtual EvalResultPtr RunShortCircuit(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                        const AnfNodeConfigPtr &out_conf) {
-    MS_LOG(EXCEPTION) << "Not support for this evaluator: " << ToString();
-  }
 
   virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
                              const AnfNodeConfigPtr &out_conf) = 0;
@@ -212,8 +208,6 @@ class BaseFuncGraphEvaluator : public Evaluator {
   ~BaseFuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(BaseFuncGraphEvaluator, Evaluator);
 
-  EvalResultPtr RunShortCircuit(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                const AnfNodeConfigPtr &out_conf) override;
   EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
                      const AnfNodeConfigPtr &out_conf) override;
 

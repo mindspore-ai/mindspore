@@ -206,11 +206,11 @@ class NormalCache {
   CacheType cache_;
 };
 
-class AsyncAbstract : public Base {
+class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  public:
   AsyncAbstract() = default;
   ~AsyncAbstract() = default;
-  AbstractBasePtr GetResult();
+
   AbstractBasePtr TryGetResult() {
     std::lock_guard<std::mutex> lock(lock_);
     return result_;
@@ -225,6 +225,8 @@ class AsyncAbstract : public Base {
     result_ = result;
   }
 
+  AbstractBasePtr GetResult();
+
   std::string ToString() {
     std::ostringstream buffer;
     std::lock_guard<std::mutex> lock(lock_);
@@ -236,6 +238,49 @@ class AsyncAbstract : public Base {
   std::mutex lock_;
   AbstractBasePtr result_{nullptr};
 };
+
+// Wrap AsyncAbstract, so it can work with Join method of AbstractFunction.
+class AsyncAbstractFuncAtom : public AbstractFuncAtom {
+ public:
+  AsyncAbstractFuncAtom(const AsyncAbstractPtr &async_abstract, std::size_t index)
+      : async_abstract_(async_abstract), index_(index) {}
+  ~AsyncAbstractFuncAtom() = default;
+  MS_DECLARE_PARENT(AsyncAbstractFuncAtom, AbstractFuncAtom);
+
+  static std::shared_ptr<AsyncAbstractFuncAtom> MakeShared(const AsyncAbstractPtr &async_abstract, std::size_t index) {
+    MS_EXCEPTION_IF_NULL(async_abstract);
+    auto ret = std::make_shared<AsyncAbstractFuncAtom>(async_abstract, index);
+    MS_EXCEPTION_IF_NULL(ret);
+    return ret;
+  }
+
+  AbstractFunctionPtr Copy() const override { return MakeShared(async_abstract_, index_); }
+
+  bool operator==(const AbstractFunction &other) const override {
+    if (!other.isa<AsyncAbstractFuncAtom>()) {
+      return false;
+    }
+    auto other_async = static_cast<const AsyncAbstractFuncAtom *>(&other);
+    MS_EXCEPTION_IF_NULL(other_async);
+    return (async_abstract_ == other_async->async_abstract_ && index_ == other_async->index_);
+  }
+
+  std::size_t hash() const override {
+    return hash_combine(std::hash<AsyncAbstract *>{}(async_abstract_.get()), std::hash<std::size_t>{}(index_));
+  }
+
+  AbstractFunctionPtr GetUnique() override;
+
+  std::string ToString() const;
+
+ private:
+  // Resolved AbstractFunction after fully analyzed.
+  AbstractFunctionPtr resolved_{nullptr};
+  // Before resolved, use the following two items to track.
+  const AsyncAbstractPtr async_abstract_;
+  const std::size_t index_;
+};
+using AsyncAbstractFuncAtomPtr = std::shared_ptr<AsyncAbstractFuncAtom>;
 
 class AsyncInferTask {
  public:
