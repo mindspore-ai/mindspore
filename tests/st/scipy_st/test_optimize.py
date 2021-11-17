@@ -58,7 +58,6 @@ def matyas(np):
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)),
                                      (himmelblau, onp.zeros(2)),
-                                     (himmelblau, onp.array([92, 0.001])),
                                      (matyas, onp.ones(2))])
 def test_bfgs(dtype, func_x0):
     """
