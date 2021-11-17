@@ -259,6 +259,7 @@ RankList DeviceManager::FindRankListByHashName(const std::string &hash_name) {
   }
   RankList rank_list;
   std::string rank_str = "";
+  rank_list_name = rank_list_name + "-";
   for (size_t i = 0; i < rank_list_name.size(); i++) {
     if (rank_list_name[i] == '-') {
       int64_t rank_id = std::stoi(rank_str);

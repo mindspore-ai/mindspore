@@ -1160,10 +1160,12 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
     return merged_tensor
 
 
-def ckpt_restore_group_info(group_info_file_name):
+def restore_group_info_list(group_info_file_name):
     """
     Build rank list, the checkpoint of ranks in the rank list has the same contents with the local rank
-    that saves the group_info_file_name
+    that saves the group_info_file_name.
+    To save the group info file, please export GROUP_INFO_FILE environment variables like
+    "export GROUP_INFO_FILE=/data/group_info.pb".
     Args:
         group_info_file_name (str): Name of group information file.
 
@@ -1175,7 +1177,7 @@ def ckpt_restore_group_info(group_info_file_name):
         TypeError: group_info_file_name is not str.
 
     Examples:
-        >>> restore_list = ckpt_restore_group_info("./group_info.ckpt")
+        >>> restore_list = restore_group_info_list("./group_info.pb")
     """
     if not isinstance(group_info_file_name, str):
         raise TypeError(f"The group_info_file_name should be str, but got {type(group_info_file_name)}.")

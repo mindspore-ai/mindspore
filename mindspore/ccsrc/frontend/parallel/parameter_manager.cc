@@ -374,7 +374,7 @@ void HandleNoUsedParameter(const FuncGraphPtr &root) {
   }
 }
 
-bool IsFullySplitParameter(const ParameterPtr &param_ptr) {
+bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num) {
   auto tensor_layout = param_ptr->user_data<parallel::TensorLayout>();
   if (tensor_layout == nullptr) {
     return false;
@@ -391,7 +391,7 @@ bool IsFullySplitParameter(const ParameterPtr &param_ptr) {
     return false;
   }
 
-  if (group_devices.size() == 1) {
+  if (group_devices.size() <= allow_repeat_num) {
     MS_LOG(INFO) << "The parameter: " << param_ptr->name() << " is fully split";
     return true;
   }
