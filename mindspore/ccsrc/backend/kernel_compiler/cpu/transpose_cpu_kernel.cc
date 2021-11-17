@@ -65,6 +65,7 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   launch_map_[kNumberTypeUInt32] = &TransposeCPUFwdKernel::LaunchKernel<uint32_t>;
   launch_map_[kNumberTypeUInt64] = &TransposeCPUFwdKernel::LaunchKernel<uint64_t>;
   launch_map_[kNumberTypeFloat32] = &TransposeCPUFwdKernel::LaunchKernel<float>;
+  launch_map_[kNumberTypeFloat64] = &TransposeCPUFwdKernel::LaunchKernel<double>;
   launch_map_[kNumberTypeBool] = &TransposeCPUFwdKernel::LaunchKernel<bool>;
 
   auto iter = launch_map_.find(dtype_);
@@ -116,6 +117,8 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     res = DoTransposeUInt64(input_addr, output_addr, output_shape, &transpose_param_);
   } else if constexpr (std::is_same_v<T, float>) {
     res = DoTransposeFp32(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, double>) {
+    res = DoTransposeFloat64(input_addr, output_addr, output_shape, &transpose_param_);
   } else if constexpr (std::is_same_v<T, bool>) {
     res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
   } else {
@@ -153,6 +156,8 @@ void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, con
     TransposeDims = &TransposeDimsUInt64;
   } else if constexpr (std::is_same_v<T, float>) {
     TransposeDims = &TransposeDimsFp32;
+  } else if constexpr (std::is_same_v<T, double>) {
+    TransposeDims = &TransposeDimsFloat64;
   } else if constexpr (std::is_same_v<T, bool>) {
     TransposeDims = &TransposeDimsBool;
   }

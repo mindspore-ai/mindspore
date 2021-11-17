@@ -38,6 +38,8 @@ int DoTransposeInt32(const int32_t *in_data, int32_t *out_data, const int *outpu
                      const TransposeParameter *transpose_param);
 int DoTransposeInt64(const int64_t *in_data, int64_t *out_data, const int *output_shape,
                      const TransposeParameter *transpose_param);
+int DoTransposeFloat64(const double *in_data, double *out_data, const int *output_shape,
+                       const TransposeParameter *transpose_param);
 int DoTransposeBool(const bool *in_data, bool *out_data, const int *output_shape,
                     const TransposeParameter *transpose_param);
 
@@ -55,6 +57,8 @@ void TransposeDimsInt32(const int32_t *in_data, int32_t *out_data, const int *ou
                         const TransposeParameter *transpose_param, int task_id, int thread_num);
 void TransposeDimsInt64(const int64_t *in_data, int64_t *out_data, const int *output_shape,
                         const TransposeParameter *transpose_param, int task_id, int thread_num);
+void TransposeDimsFloat64(const double *in_data, double *out_data, const int *output_shape,
+                          const TransposeParameter *transpose_param, int task_id, int thread_num);
 void TransposeDimsBool(const bool *in_data, bool *out_data, const int *output_shape,
                        const TransposeParameter *transpose_param, int task_id, int thread_num);
 
