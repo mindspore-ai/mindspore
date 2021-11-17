@@ -209,8 +209,8 @@ class Lamb(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
-          `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
-          "order_params" are the keys can be parsed.
+            `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
+            "order_params" are the keys can be parsed.
 
             - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
