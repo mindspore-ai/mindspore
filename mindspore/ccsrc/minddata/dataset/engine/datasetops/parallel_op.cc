@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 
+#include <algorithm>
 #include <iostream>
+
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/db_connector.h"
+#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {

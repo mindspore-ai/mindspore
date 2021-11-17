@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
 
 #include "minddata/dataset/kernels/image/random_affine_op.h"
+
+#include <cmath>
+#include <limits>
 
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/random.h"

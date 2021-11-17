@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/kernels/image/mixup_batch_op.h"
+
+#include <limits>
 #include <string>
 #include <utility>
+
 #include "minddata/dataset/core/cv_tensor.h"
-#include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"

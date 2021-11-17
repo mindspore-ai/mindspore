@@ -16,9 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
+#include <algorithm>
+
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 

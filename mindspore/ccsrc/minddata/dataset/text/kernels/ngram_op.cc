@@ -16,6 +16,8 @@
 
 #include "minddata/dataset/text/kernels/ngram_op.h"
 
+#include <algorithm>
+
 namespace mindspore {
 namespace dataset {
 

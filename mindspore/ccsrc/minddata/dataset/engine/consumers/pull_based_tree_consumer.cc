@@ -16,6 +16,8 @@
 
 #include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
+#include <algorithm>
+
 namespace mindspore::dataset {
 PullBasedIteratorConsumer::PullBasedIteratorConsumer() { tree_adapter_lite_ = std::make_unique<TreeAdapterLite>(); }
 
