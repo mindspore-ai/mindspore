@@ -21,15 +21,11 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
-#ifndef EXPORT_WRAPPER
-#define EXPORT_WRAPPER __attribute__((visibility("default")))
-#endif
-
 namespace mindspore::lite {
 constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
 
-int EXPORT_WRAPPER GetGPUGroupSize();
+int GetGPUGroupSize();
 
-int EXPORT_WRAPPER GetRankID();
+int GetRankID();
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_BASE_H_
