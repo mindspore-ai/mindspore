@@ -20,8 +20,24 @@
 namespace mindspore {
 namespace runtime {
 namespace {
+std::string GetActorName(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto debug_name = node->DebugString();
+  auto index = debug_name.find('{');
+  if ((index != std::string::npos) && (index > 0)) {
+    debug_name = debug_name.substr(0, index);
+  }
+
+  if (AnfAlgo::IsCallNode(node)) {
+    return "Call_" + node->UniqueName() + "_" + debug_name;
+  } else {
+    return node->UniqueName() + "_" + debug_name;
+  }
+}
+
 // Get all the real input of the frontend node, skip the virtual node like maketuple, tuplegetitem.
 std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return {};
   }
@@ -105,7 +121,7 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
     // Switch node and switch layer node will be converted to switch actor.
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
         AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
-      const auto &actor_name = control_node->DebugString();
+      const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &switch_actor = std::make_shared<SwitchActor>(actor_name, parameters, control_node);
       switch_actors.emplace_back(switch_actor);
@@ -124,7 +140,7 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
   for (const auto &control_node : control_nodes) {
     // Partial node and call node will be converted to gather actor.
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial) || AnfAlgo::IsCallNode(control_node)) {
-      const auto &actor_name = control_node->DebugString();
+      const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &gather_actor = std::make_shared<GatherActor>(actor_name, parameters, control_node);
       gather_actors.emplace_back(gather_actor);
@@ -200,7 +216,9 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
   // 1.funcgraph output, that is the output of the return node.
   for (const auto &control_node : control_nodes) {
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
-      const auto &actor_name = control_node->DebugString();
+      const auto &func_graph = control_node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &exit_actor = std::make_shared<ExitActor>(actor_name, parameters, control_node);
       exit_actors.emplace_back(exit_actor);
@@ -248,7 +266,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
         device_contexts.emplace_back(kernel_actor->device_contexts_[0]);
       }
 
-      const auto &actor_name = kernel_graph->ToString();
+      const auto &actor_name = kernel_graph->ToString() + kExitActorNameSuffix;
       const auto &exit_actor = std::make_shared<ExitActor>(actor_name, formal_parameters, nullptr);
       exit_actors.emplace_back(exit_actor);
       if (exit_actor->device_contexts_.size() != device_contexts.size()) {
@@ -403,7 +421,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
   } else if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
              AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
     // Link arrow from switch actor.
-    const auto &actor_name = from_node->DebugString();
+    const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     const auto &switch_actor = dynamic_cast<SwitchActor *>(actor);
@@ -411,7 +429,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     LinkPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
   } else if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
     // Link arrow from gather actor
-    const auto &actor_name = from_node->DebugString();
+    const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
@@ -456,9 +474,8 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
     // Link arrow from exit actor to control actor.
     const auto &func_graphs = AnfAlgo::GetFuncGraphbyCallNode(from_node);
     for (const auto &func_graph : func_graphs) {
-      const auto &return_node = func_graph->return_node();
-      MS_EXCEPTION_IF_NULL(return_node);
-      const auto &actor_name = return_node->DebugString();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto exit_actor = dynamic_cast<ExitActor *>(actor);
@@ -469,7 +486,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
     to_actor->input_datas_num_++;
   } else {
     // Link arrow from gather actor to entrance actor.
-    const auto &actor_name = from_node->DebugString();
+    const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
@@ -512,7 +529,7 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   } else {
     // Link arrow from exit actor.
     const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
-    const auto &actor_name = graph->ToString();
+    const auto &actor_name = graph->ToString() + kExitActorNameSuffix;
     auto actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     auto exit_actor = dynamic_cast<ExitActor *>(actor);
@@ -532,9 +549,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
   MS_EXCEPTION_IF_NULL(parser);
   const auto &root_graph = parser->root_func_graph_;
   MS_EXCEPTION_IF_NULL(root_graph);
-  const auto &return_node = root_graph->return_node();
-  MS_EXCEPTION_IF_NULL(return_node);
-  const auto &exit_actor_name = return_node->DebugString();
+  const auto &exit_actor_name = root_graph->ToString() + kExitActorNameSuffix;
   auto actor = FetchActor(exit_actor_name);
   MS_EXCEPTION_IF_NULL(actor);
   MS_EXCEPTION_IF_NULL(actor_set->loop_count_actor_);
@@ -560,7 +575,11 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     for (const auto &node : nodes) {
       // Fetch the source actor of control arrow.
       MS_EXCEPTION_IF_NULL(node);
-      actor_name = node->DebugString();
+      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        actor_name = func_graph->ToString() + kExitActorNameSuffix;
+      } else {
+        actor_name = GetActorName(node);
+      }
       actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto from_actor = dynamic_cast<ControlActor *>(actor);
@@ -633,7 +652,7 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       MS_EXCEPTION_IF_NULL(kernel);
       const auto &graph = kernel->func_graph();
       MS_EXCEPTION_IF_NULL(graph);
-      auto actor_name = graph->ToString();
+      auto actor_name = graph->ToString() + kExitActorNameSuffix;
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto to_actor = dynamic_cast<AbstractActor *>(actor);
@@ -764,10 +783,11 @@ void ControlNodeScheduler::LinkDataArrowForOutputActor(ActorSet *const actor_set
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
   const auto &root_graph = parser->root_func_graph_;
+  MS_EXCEPTION_IF_NULL(root_graph);
   const auto &return_node = root_graph->return_node();
   MS_EXCEPTION_IF_NULL(return_node);
 
-  const auto &exit_actor_name = return_node->DebugString();
+  const auto &exit_actor_name = root_graph->ToString() + kExitActorNameSuffix;
   auto actor = FetchActor(exit_actor_name);
   MS_EXCEPTION_IF_NULL(actor);
   auto exit_actor = dynamic_cast<ExitActor *>(actor);
