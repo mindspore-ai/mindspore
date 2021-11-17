@@ -15,6 +15,7 @@
  */
 
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
+#include <algorithm>
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/session/anf_runtime_algorithm.h"

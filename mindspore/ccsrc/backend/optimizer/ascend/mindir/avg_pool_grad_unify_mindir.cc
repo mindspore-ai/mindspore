@@ -15,7 +15,7 @@
  */
 
 #include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
-
+#include <algorithm>
 #include <vector>
 #include <memory>
 #include <functional>

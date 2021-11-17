@@ -218,9 +218,9 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
     return;
   }
   if (stream_groups_.empty()) {
-    stream_groups_.emplace_back(std::vector<uint32_t>{kDefaultStreamIndex});
-    stream_groups_.emplace_back(std::vector<uint32_t>{kIndependentStreamIndex});
-    stream_groups_.emplace_back(std::vector<uint32_t>{kWorldGroupStreamIndex});
+    (void)stream_groups_.emplace_back(std::vector<uint32_t>{kDefaultStreamIndex});
+    (void)stream_groups_.emplace_back(std::vector<uint32_t>{kIndependentStreamIndex});
+    (void)stream_groups_.emplace_back(std::vector<uint32_t>{kWorldGroupStreamIndex});
   }
   group_stream_id_map_[kHcclWorldGroup] = kWorldGroupStreamIndex;
   for (size_t i = 0; i < kernels.size(); ++i) {
@@ -232,7 +232,7 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
         auto id = SizeToUint(group_stream_id_map_.size()) + kWorldGroupStreamIndex;
         group_stream_id_map_[group] = id;
         AnfAlgo::SetStreamId(id, node.get());
-        stream_groups_.emplace_back(std::vector<uint32_t>{id});
+        (void)stream_groups_.emplace_back(std::vector<uint32_t>{id});
       } else {
         auto id = iter->second;
         AnfAlgo::SetStreamId(id, node.get());
@@ -886,18 +886,16 @@ void AscendStreamAssign::InsertStreamActiveForParallel(const NotNull<KernelGraph
   for (const auto &graph_nodes : group_hcom_graph_map_) {
     for (const auto &item : graph_nodes.second) {
       MS_LOG(INFO) << "Graph id:" << item.first;
+      auto it = other_graph.find(item.first);
       if (item.first == root_graph_id) {
         if (loop_sink_) {
           hcom_streams.insert(item.second.begin(), item.second.end());
         }
+      } else if (it == other_graph.end()) {
+        other_graph[item.first] = item.second;
       } else {
-        auto it = other_graph.find(item.first);
-        if (it == other_graph.end()) {
-          other_graph[item.first] = item.second;
-        } else {
-          for (const auto &stream : item.second) {
-            it->second.emplace(stream);
-          }
+        for (const auto &stream : item.second) {
+          it->second.emplace(stream);
         }
       }
     }
@@ -910,18 +908,16 @@ void AscendStreamAssign::InsertStreamActiveForParallel(const NotNull<KernelGraph
   MS_LOG(INFO) << "Independent graph map size:" << independent_graph_map_.size();
   for (const auto &item : independent_graph_map_) {
     MS_LOG(DEBUG) << "Graph id:" << item.first;
+    auto it = other_graph.find(item.first);
     if (item.first == root_graph_id) {
       if (loop_sink_) {
         ActiveRootGraphIndependent(graph_ptr, item.second);
       }
+    } else if (it == other_graph.end()) {
+      other_graph[item.first] = item.second;
     } else {
-      auto it = other_graph.find(item.first);
-      if (it == other_graph.end()) {
-        other_graph[item.first] = item.second;
-      } else {
-        for (const auto &stream : item.second) {
-          it->second.emplace(stream);
-        }
+      for (const auto &stream : item.second) {
+        it->second.emplace(stream);
       }
     }
   }

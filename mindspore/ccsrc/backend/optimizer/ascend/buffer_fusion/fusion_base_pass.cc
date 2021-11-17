@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/buffer_fusion/fusion_base_pass.h"
+#include <memory>
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
 #include "backend/session/anf_runtime_algorithm.h"
