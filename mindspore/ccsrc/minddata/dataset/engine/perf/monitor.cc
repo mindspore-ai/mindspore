@@ -45,7 +45,6 @@ Status Monitor::operator()() {
     RETURN_IF_NOT_OK(cv_.WaitFor(&_lock, sampling_interval_));
   }
   MS_LOG(INFO) << "Monitor Thread terminating...";
-
   return Status::OK();
 }
 

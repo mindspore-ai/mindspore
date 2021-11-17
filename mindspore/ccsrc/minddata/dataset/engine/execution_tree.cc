@@ -23,6 +23,7 @@
 #include "minddata/dataset/util/numa_interface.h"
 #endif
 #include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/service.h"
 
 namespace mindspore {
 namespace dataset {
@@ -31,6 +32,7 @@ ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
   root_ = nullptr;
   prepare_flags_ = 0;
+  unique_id_ = Services::GetUniqueID();
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();

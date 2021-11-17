@@ -181,12 +181,18 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
 Tracing::Tracing(int32_t records_per_step) : records_per_step_(records_per_step) {}
 
 // Constructor
-ProfilingManager::ProfilingManager() : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false) {}
+ProfilingManager::ProfilingManager()
+    : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false), tree_(nullptr) {}
 
-bool ProfilingManager::IsProfilingEnable() const { return enabled_; }
+bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
+  if (tree_ == nullptr) {
+    return enabled_;
+  } else {
+    return enabled_ && (tree_ == tree);
+  }
+}
 
 Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
-  Reset();
   if (IsProfilingEnable()) {
     tree_ = tree_adapter->tree_.get();
 
@@ -283,14 +289,6 @@ Status ProfilingManager::SaveProfilingData(const std::string &dir_path, const st
     RETURN_IF_NOT_OK(node.second->SaveToFile(dir_path, rank_id));
   }
   MS_LOG(INFO) << "Save profiling data end.";
-  return Status::OK();
-}
-
-Status ProfilingManager::Analyze() {
-  MS_LOG(INFO) << "Start to analyze profiling data.";
-  for (auto node : sampling_nodes_) {
-    RETURN_IF_NOT_OK(node.second->Analyze());
-  }
   return Status::OK();
 }
 
@@ -596,6 +594,7 @@ void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
   (void)epoch_end_ts_.emplace_back(ProfilingTime::GetCurMilliSecond());
   (void)epoch_end_step_.emplace_back(step_num);
 }
+
 Status ProfilingManager::Reset() {
   tracing_nodes_.clear();
   sampling_nodes_.clear();
@@ -603,10 +602,18 @@ Status ProfilingManager::Reset() {
   epoch_end_step_.clear();
   perf_monitor_.reset();
   tree_ = nullptr;
+  profiling_state_ = ProfilingState::kProfilingStateUnBegun;
   return Status::OK();
 }
 
 Status ProfilingManager::Init() {
+  // Reinitialization should only be done in case of UT with sequential pipelines and should not be used externally.
+  // Reinitialization with parallel data pipelines can have unexpected consequences.
+  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
+                               "Stop MD Profiler before reinitializing it.");
+  Reset();
+  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ == ProfilingState::kProfilingStateUnBegun,
+                               "MD Profiler is in an unexpected state.");
   if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
     profiling_state_ = ProfilingState::kProfilingStateUnBegun;
   }
@@ -692,7 +699,6 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
   }
 
   // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(Analyze());
   RETURN_IF_NOT_OK(SaveProfilingData(std::string(profile_data_path), rank_id));
   RETURN_IF_NOT_OK(ChangeFileMode(std::string(profile_data_path), rank_id));
   return Status::OK();

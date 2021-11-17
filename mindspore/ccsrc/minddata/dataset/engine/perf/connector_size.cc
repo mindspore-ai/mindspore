@@ -104,8 +104,6 @@ Status ConnectorSize::Init() {
   return Status::OK();
 }
 
-Status ConnectorSize::Analyze() { return Status::OK(); }
-
 Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time,
                                          std::vector<int32_t> *result) {
   MS_LOG(DEBUG) << "Op_id: " << op_id << " start_ts: " << start_time << " end_ts: " << end_time;
