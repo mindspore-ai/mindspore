@@ -21,6 +21,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "ops/fusion/scale_fusion.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::opt {
@@ -29,6 +30,14 @@ bool IsBNCNode(const BaseRef &n) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
     return CheckPrimitiveType(anf_node, prim::kPrimBatchNorm) ||
            CheckPrimitiveType(anf_node, prim::kPrimFusedBatchNorm);
+  }
+  return false;
+}
+
+bool IsSoftmaxNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimSoftmax) || CheckPrimitiveType(anf_node, prim::kPrimLogSoftmax);
   }
   return false;
 }
@@ -101,6 +110,28 @@ VectorRef TransposeFusion::DefineBiasAddPattern() const {
   return act_ref;
 }
 
+VectorRef TransposeFusion::DefineScalePattern() const {
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_scale = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimScaleFusion>);
+  MS_CHECK_TRUE_RET(is_scale != nullptr, {});
+  auto is_weight_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_weight_param != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  VectorRef trans_scale_ref = VectorRef({is_scale, is_transpose, is_weight_param, is_seq_var});
+  return trans_scale_ref;
+}
+
+VectorRef TransposeFusion::DefineSoftmaxPattern() const {
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto is_softmax = std::make_shared<CondVar>(IsSoftmaxNode);
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  VectorRef trans_softmax_ref = VectorRef({is_softmax, is_transpose});
+  return trans_softmax_ref;
+}
+
 VectorRef TransposeFusion::DefineTransTransPattern() const {
   auto is_transpose1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
   MS_CHECK_TRUE_RET(is_transpose1 != nullptr, {});
@@ -118,6 +149,8 @@ std::unordered_map<std::string, VectorRef> TransposeFusion::DefinePatterns() con
   patterns["ActivationPatternName"] = DefineActivationPattern();
   patterns["BiasAddPatternName"] = DefineBiasAddPattern();
   patterns["ScalePatternName"] = DefineActivationscalePattern();
+  patterns["TransScalePatternName"] = DefineScalePattern();
+  patterns["TransSoftmaxPatternName"] = DefineSoftmaxPattern();
   patterns["TransTransPatternName"] = DefineTransTransPattern();
   return patterns;
 }
@@ -138,7 +171,7 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   return cnode;
 }
 
-AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::AnfNodePtr &node) const {
+AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const {
   MS_ASSERT(node != nullptr);
   auto trans_cnode_2 = node->cast<CNodePtr>();
   if (IsMarkedTrainOp(trans_cnode_2)) {
@@ -170,7 +203,83 @@ AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::AnfNodePtr &node) 
   if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
     return pre_cnode->input(1);
   }
+  if (pre_perm.size() == post_perm.size()) {
+    std::vector<int> perm;
+    for (auto idx : post_perm) {
+      MS_CHECK_TRUE_RET(idx >= 0 && static_cast<size_t>(idx) < pre_perm.size(), nullptr);
+      perm.push_back(pre_perm[idx]);
+    }
+    std::vector<int> ori_perm = [&pre_perm]() {
+      std::vector<int> value;
+      for (int i = 0; i < static_cast<int>(pre_perm.size()); i++) value.push_back(i);
+      return value;
+    }();
+    if (perm == ori_perm) {
+      return pre_cnode->input(1);
+    }
+    auto name = trans_cnode_2->fullname_with_scope() + "_perm";
+    auto perm_node = BuildIntVecParameterNode(func_graph, perm, name);
+    MS_CHECK_TRUE_RET(perm_node != nullptr, nullptr);
+    auto manager = func_graph->manager();
+    MS_ASSERT(manager != nullptr);
+    manager->SetEdge(trans_cnode_2, 1, pre_cnode->input(1));
+    manager->SetEdge(trans_cnode_2, kInputIndexTwo, perm_node);
+  }
   return nullptr;
+}
+
+int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
+  auto cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(cnode != nullptr, lite::RET_ERROR);
+  if (IsMarkedTrainOp(cnode)) {
+    return lite::RET_ERROR;
+  }
+  auto transpose_node = cnode->input(1);
+  auto transpose_cnode = transpose_node->cast<CNodePtr>();
+  if (transpose_cnode == nullptr) {
+    return lite::RET_ERROR;
+  }
+  if (IsMarkedTrainOp(transpose_cnode)) {
+    return lite::RET_ERROR;
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimScaleFusion)) {
+    auto weight_param = cnode->input(2);
+    MS_CHECK_TRUE_RET(weight_param != nullptr, lite::RET_ERROR);
+    std::vector<int64_t> weight_shape;
+    if (FetchShapeFromAbstract(weight_param->abstract(), &weight_shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get shape from abstract failed.";
+      return lite::RET_ERROR;
+    }
+    if (weight_shape.size() != 1) {
+      MS_LOG(ERROR) << "Dot not support weight size larger than 1.";
+      return lite::RET_ERROR;
+    }
+  }
+  std::vector<int> perm;
+  if (GetTransposePerm(transpose_cnode, &perm) != lite::RET_OK) {
+    MS_LOG(ERROR) << "get tanspose perm failed.";
+    return lite::RET_ERROR;
+  }
+  MS_CHECK_TRUE_RET(!perm.empty(), lite::RET_ERROR);
+
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, lite::RET_ERROR);
+  auto axis_value_ptr = prim->GetAttr(ops::kAxis);
+  MS_CHECK_TRUE_RET(axis_value_ptr != nullptr, lite::RET_ERROR);
+  int64_t axis = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? GetValue<int64_t>(axis_value_ptr)
+                                                              : GetValue<std::vector<int64_t>>(axis_value_ptr).front();
+  axis = axis < 0 ? axis + perm.size() : axis;
+  MS_CHECK_TRUE_RET(axis >= 0 && static_cast<size_t>(axis) < perm.size(), lite::RET_ERROR);
+  auto axis_attr = !utils::isa<ValueSequeuePtr>(axis_value_ptr) ? MakeValue<int64_t>(perm.at(axis))
+                                                                : MakeValue<std::vector<int64_t>>({perm.at(axis)});
+  prim->AddAttr(ops::kAxis, axis_attr);
+  if (perm == kNC2NH) {
+    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
+  } else if (perm == kNH2NC) {
+    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+  }
+  return lite::RET_OK;
 }
 
 AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
@@ -180,8 +289,14 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return nullptr;
   }
   if (pattern_name == "TransTransPatternName") {
-    return TransTransFusion(node);
+    return TransTransFusion(func_graph, node);
+  } else if (pattern_name == "TransScalePatternName" || pattern_name == "TransSoftmaxPatternName") {
+    if (AdjustAxis(node) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Adjust axis for node " << node->fullname_with_scope() << " failed.";
+      return nullptr;
+    }
   }
+
   if (node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }

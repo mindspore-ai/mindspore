@@ -17,6 +17,9 @@
 #include "src/lite_session.h"
 #include <vector>
 #include <utility>
+#ifndef _WIN32
+#include <malloc.h>
+#endif
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/scheduler.h"
@@ -579,8 +582,10 @@ int LiteSession::CompileGraph(Model *model) {
 
   // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
   FreePackOpWeight(kernels_);
-
   is_running_.store(false);
+#if !defined(_WIN32) && !defined(ENABLE_ARM)
+  (void)malloc_trim(0);  // release memory manually.
+#endif
   return RET_OK;
 }
 
@@ -978,6 +983,9 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
   is_running_.store(false);
+#if !defined(_WIN32) && !defined(ENABLE_ARM)
+  (void)malloc_trim(0);  // release memory manually.
+#endif
   return RET_OK;
 }
 
