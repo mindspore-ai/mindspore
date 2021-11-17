@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
+
+#include <utility>
+
+#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/core/cv_tensor.h"
 
 namespace mindspore {
 namespace dataset {

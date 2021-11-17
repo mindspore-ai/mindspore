@@ -15,10 +15,13 @@
  */
 
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
-#include "minddata/dataset/kernels/image/bounding_box.h"
-#include "minddata/dataset/kernels/image/resize_op.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
+
+#include <utility>
+
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/resize_op.h"
 
 namespace mindspore {
 namespace dataset {

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
