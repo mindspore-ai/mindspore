@@ -79,6 +79,11 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int CheckInputNames();
 
+  int CompareOutputByCosineDistance(float cosine_distance_threshold);
+
+  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, tensor::MSTensor *tensor,
+                                               float *total_cosine_distance, int *total_size);
+
  private:
   session::LiteSession *session_{nullptr};
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;

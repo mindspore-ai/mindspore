@@ -28,6 +28,7 @@
 #include "src/common/common.h"
 #include "src/tensor.h"
 #include "nnacl/nnacl_common.h"
+#include "tools/common/string_util.h"
 #ifdef ENABLE_ARM64
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
@@ -374,11 +375,28 @@ int Benchmark::MarkAccuracy() {
     std::cerr << "Read calib data error " << status << std::endl;
     return status;
   }
-  status = CompareOutput();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Compare output error " << status;
-    std::cerr << "Compare output error " << status << std::endl;
-    return status;
+  auto use_cosine_distance_threshold = getenv("COSINE_DISTANCE_THRESHOLD");
+  if (use_cosine_distance_threshold != nullptr) {
+    double cosine_distance_threshold;
+    auto ret_bool = lite::ConvertDoubleNum(use_cosine_distance_threshold, &cosine_distance_threshold);
+    if (!ret_bool) {
+      MS_LOG(ERROR) << "Compare output error " << status;
+      std::cerr << "Compare output error " << status << std::endl;
+      return RET_ERROR;
+    }
+    status = CompareOutputByCosineDistance(static_cast<float>(cosine_distance_threshold));
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Compare output error by consine distance" << status;
+      std::cerr << "Compare output error by consine distance" << status << std::endl;
+      return status;
+    }
+  } else {
+    status = CompareOutput();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Compare output error " << status;
+      std::cerr << "Compare output error " << status << std::endl;
+      return status;
+    }
   }
   return RET_OK;
 }
@@ -838,6 +856,97 @@ int Benchmark::CheckInputNames() {
     MS_LOG(ERROR) << "The input names are not the same as ones of the original model.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int Benchmark::CompareOutputByCosineDistance(float cosine_distance_threshold) {
+  std::cout << "================ Comparing Output data by Cosine Distance================" << std::endl;
+  float total_cosine_distance = 0;
+  int total_size = 0;
+  for (const auto &calib_tensor : benchmark_data_) {
+    std::string tensor_name = calib_tensor.first;
+    tensor::MSTensor *tensor = session_->GetOutputByTensorName(tensor_name);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
+      return RET_ERROR;
+    }
+    int ret;
+    if (tensor->data_type() == kObjectTypeString) {
+      std::cerr << tensor->tensor_name() << " data type is kObjectTypeString, can not compared data " << std::endl;
+      return RET_ERROR;
+    } else {
+      ret = CompareDataGetTotalCosineDistanceAndSize(tensor_name, tensor, &total_cosine_distance, &total_size);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Error in CompareData";
+      std::cerr << "Error in CompareData" << std::endl;
+      std::cout << "=======================================================" << std::endl << std::endl;
+      return ret;
+    }
+  }
+  float mean_cosine_distance;
+  if (total_size != 0) {
+    mean_cosine_distance = total_cosine_distance / float_t(total_size);
+  } else {
+    mean_cosine_distance = 0;
+  }
+
+  std::cout << "Cosine distance of all nodes/tensors: " << mean_cosine_distance << std::endl;
+  std::cout << "=======================================================" << std::endl << std::endl;
+
+  if (mean_cosine_distance < cosine_distance_threshold) {
+    MS_LOG(ERROR) << "cosine distance of all nodes/tensors is too big: " << mean_cosine_distance;
+    std::cerr << "Mean cosine distance of all nodes/tensors is too big: " << mean_cosine_distance << std::endl;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Benchmark::CompareDataGetTotalCosineDistanceAndSize(const std::string &name, tensor::MSTensor *tensor,
+                                                        float *total_cosine_distance, int *total_size) {
+  float cos = 0;
+  auto mutableData = tensor->MutableData();
+  if (mutableData == nullptr) {
+    MS_LOG(ERROR) << "mutableData is nullptr.";
+    return RET_ERROR;
+  }
+  int ret = RET_ERROR;
+  switch (tensor->data_type()) {
+    case TypeId::kNumberTypeFloat:
+    case TypeId::kNumberTypeFloat32: {
+      ret = CompareDatabyCosineDistance<float>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      ret = CompareDatabyCosineDistance<int8_t>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    case TypeId::kNumberTypeUInt8: {
+      ret = CompareDatabyCosineDistance<uint8_t>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      ret = CompareDatabyCosineDistance<int32_t>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      ret = CompareDatabyCosineDistance<int16_t>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    case TypeId::kNumberTypeBool: {
+      ret = CompareDatabyCosineDistance<bool>(name, tensor->shape(), mutableData, &cos);
+      break;
+    }
+    default:
+      MS_LOG(ERROR) << "Datatype " << tensor->data_type() << " is not supported.";
+      return RET_ERROR;
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CompareData failed, name: " << name;
+    return RET_ERROR;
+  }
+  *total_cosine_distance += cos;
+  *total_size += 1;
   return RET_OK;
 }
 

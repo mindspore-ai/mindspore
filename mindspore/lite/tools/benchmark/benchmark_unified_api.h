@@ -87,6 +87,11 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int MarkAccuracy();
 
+  int CompareOutputByCosineDistance(float cosine_distance_threshold);
+
+  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
+                                               float *total_cosine_distance, int *total_size);
+
  private:
   mindspore::Model ms_model_;
   std::vector<mindspore::MSTensor> ms_inputs_for_api_;
