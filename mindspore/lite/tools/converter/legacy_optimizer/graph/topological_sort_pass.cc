@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"

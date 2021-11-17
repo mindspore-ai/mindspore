@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/fusion/affine_activation_fusion.h"
+#include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/activation.h"
 #include "ops/affine.h"
