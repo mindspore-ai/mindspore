@@ -118,8 +118,9 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
     {schema::PrimitiveType_Abs, GetTensorRTOp<UnaryTensorRT>},
   };
-  unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};
-  unsupport_resize_op_list_ = {schema::PrimitiveType_ReduceScatter, schema::PrimitiveType_AllGather};
+  unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape, schema::PrimitiveType_ReduceScatter,
+                            schema::PrimitiveType_AllGather};
+  unsupport_resize_op_list_ = {};
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return mindspore::kLiteError;
