@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
@@ -68,6 +69,59 @@ def test_auto_offload():
         np.testing.assert_array_equal(img_0, img_1)
 
 
+def test_offload_concat_dataset_1():
+    """
+    Feature: test map offload flag for concatenated dataset.
+    Description: Input is image dataset.
+    Expectation: Should raise RuntimeError.
+    """
+    # Dataset with offload activated.
+    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
+    dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
+    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+
+    # Dataset with offload not activated.
+    dataset_1 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
+    dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
+    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+
+    dataset_concat = dataset_0 + dataset_1
+
+    error_msg = "Offload module currently does not support concatenated or zipped datasets."
+    with pytest.raises(RuntimeError, match=error_msg):
+        for (_, _) in dataset_concat.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            continue
+
+
+def test_offload_concat_dataset_2():
+    """
+    Feature: test map offload flag for concatenated dataset.
+    Description: Input is image dataset.
+    Expectation: Should raise RuntimeError.
+    """
+    # Dataset with offload activated.
+    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
+    dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
+
+    # Dataset with offload not activated.
+    dataset_1 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
+    dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
+
+    dataset_concat = dataset_0 + dataset_1
+    dataset_concat = dataset_concat.batch(8, drop_remainder=True)
+
+    error_msg = "Offload module currently does not support concatenated or zipped datasets."
+    with pytest.raises(RuntimeError, match=error_msg):
+        for (_, _) in dataset_concat.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            continue
+
+
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
+    test_offload_concat_dataset_1()
+    test_offload_concat_dataset_2()
