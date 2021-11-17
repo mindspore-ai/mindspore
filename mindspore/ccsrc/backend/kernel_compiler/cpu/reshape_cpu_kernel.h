@@ -58,7 +58,11 @@ MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutpu
 MS_REG_CPU_KERNEL(
   Reshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ReshapeCPUKernel);
+  ReshapeCPUKernel)
+MS_REG_CPU_KERNEL(
+  Reshape,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ReshapeCPUKernel)
 MS_REG_CPU_KERNEL(
   Reshape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ReshapeCPUKernel);

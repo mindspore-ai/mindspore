@@ -40,7 +40,8 @@ class ConcatCPUKernel : public CPUKernel {
   int axis_{0};
 };
 
-MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, float)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, double)
 MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int8_t)
 MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int16_t)
 MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int32_t)

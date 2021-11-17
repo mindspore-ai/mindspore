@@ -24,8 +24,7 @@ import mindspore.scipy as msp
 from mindspore import context
 from mindspore.common import Tensor
 from mindspore.scipy.optimize.line_search import line_search as msp_line_search
-
-from .utils import match_array
+from tests.st.scipy_st.utils import match_array
 
 
 def rosenbrock(np):

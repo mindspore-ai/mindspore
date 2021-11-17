@@ -65,18 +65,6 @@ class ArithmeticCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel, float);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel, int64_t);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ArithmeticCPUKernel, double);
-MS_REG_CPU_KERNEL_T(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ArithmeticCPUKernel, int32_t);
 MS_REG_CPU_KERNEL_T(

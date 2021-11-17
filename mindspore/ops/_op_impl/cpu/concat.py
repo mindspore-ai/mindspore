@@ -20,6 +20,7 @@ concat_op_info = CpuRegOp("Concat") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.I16_Default, DataType.I16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \
