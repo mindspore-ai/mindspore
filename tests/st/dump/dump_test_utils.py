@@ -154,6 +154,21 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
+def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
+    """
+    Util function to generate dump configuration json file.
+    """
+    if test_key == "test_async_dump":
+        data = async_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["dump_mode"] = dump_mode
+    else:
+        raise ValueError(
+            "Failed to generate dump json file. Overflow only support in async dump")
+    with open(json_file_name, 'w') as f:
+        json.dump(data, f)
+
+
 def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration):
     """
     Util to check if the dump structure is correct.

@@ -63,11 +63,13 @@ class DumpJsonParser {
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
   std::string GetOpOverflowBinPath(uint32_t graph_id) const;
+  void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
   const std::vector<session::KernelGraph *> &graphs() const { return graphs_; }
+  enum JsonDumpMode { DUMP_ALL = 0, DUMP_KERNEL = 1, DUMP_CELL = 2 };
 
  private:
   DumpJsonParser() = default;
@@ -84,6 +86,7 @@ class DumpJsonParser {
   std::string iteration_;
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
+  std::vector<std::string> cell_dump_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
   bool trans_flag_{false};
