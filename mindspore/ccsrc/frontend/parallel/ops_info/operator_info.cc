@@ -1421,6 +1421,13 @@ StrategyPtr OperatorInfo::GetStrategyFromSWCByOutputLayout(TensorLayout output_l
   return nullptr;
 }
 
+bool OperatorInfo::IsReshape() {
+  if (name_.find(RESHAPEINFO) != std::string::npos) {
+    return true;
+  }
+  return false;
+}
+
 // Keep at most (1.0 / epsilon) number of available strategies for each operator.
 void OperatorInfo::ApproximateStrategies() {
   auto enable_approxi = CostModelContext::GetInstance()->dp_algo_enable_approxi();
