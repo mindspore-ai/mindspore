@@ -17,44 +17,36 @@ from ... import nn, Tensor, ops, ms_function
 from ... import numpy as mnp
 from ...ops import functional as F
 from ..linalg import solve_triangular
+from ..linalg import cho_factor, cho_solve
+from ..utils import _INT_ZERO, _INT_ONE, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps
 
-from ..utils import _INT_ZERO, _normalize_matvec, _INT_ONE, _safe_normalize, _SafeNormalize
+
+def gram_schmidt(Q, q):
+    """
+    do Gram–Schmidt process to normalize vector v
+    """
+    # transpose is not support float64 yet,
+    # so the following code is the same as h = mnp.dot(Q.T, q)
+    h = ops.MatMul(True, False)(Q, q.reshape((q.shape[0], 1))).flatten()
+    Qh = mnp.dot(Q, h)
+    q = q - Qh
+    return q, h
 
 
-class ArnoldiIteration(nn.Cell):
-    """ do the Arnoldi iteration"""
-
-    def __init__(self):
-        super(ArnoldiIteration, self).__init__()
-        self.safe_normalize = _SafeNormalize()
-        self.eps = ops.Eps()
-        self.sqrt_2 = F.pows(Tensor(2.0), 1/2.0)
-        self.matmul_t = ops.MatMul(True, False)
-
-    def construct(self, k, V, v, H):
-        v, h = self._gram_schmidt(V, v)
-
-        eps_v = self.eps(v[(0,) * v.ndim])
-        _, v_norm_0 = self.safe_normalize(v)
-        tol = eps_v * v_norm_0
-        unit_v, v_norm_1 = self.safe_normalize(v, tol)
-        V[..., k + 1] = unit_v
-
-        h[k + 1] = v_norm_1
-        H[k, :] = h
-        return V, H
-
-    def _gram_schmidt(self, Q, q):
-        """
-        do Gram–Schmidt process to normalize vector v
-        """
-        # transpose is not support float64 yet,
-        # so the following code is the same as h = mnp.dot(Q.T, q)
-        h = self.matmul_t(Q, q.reshape((q.shape[0], 1))).flatten()
-        Qh = mnp.dot(Q, h)
-        q = q - Qh
-
-        return q, h
+def arnoldi_iteration(k, A, M, V, H):
+    """ Performs a single (the k'th) step of the Arnoldi process."""
+    v_ = V[..., k]
+    v = M(A(v_))
+    v, h = gram_schmidt(V, v)
+    eps_v = _eps(v)
+    _, v_norm_0 = _safe_normalize(v)
+    tol = eps_v * v_norm_0
+    unit_v, v_norm_1 = _safe_normalize(v, tol)
+    V[..., k + 1] = unit_v
+    h[k + 1] = v_norm_1
+    H[k, :] = h
+    breakdown = v_norm_1 == 0
+    return V, H, breakdown
 
 
 @ms_function
@@ -110,8 +102,53 @@ class GivensRotation(nn.Cell):
         return R_row, givens
 
 
-kth_arnoldi_iteration = ArnoldiIteration()
 givens_rotation = GivensRotation()
+
+
+class BatchedGmres(nn.Cell):
+    """
+    Implements a single restart of GMRES. The ``restart``-dimensional Krylov subspace
+    This implementation solves a dense linear problem instead of building
+    a QR factorization during the Arnoldi process.
+    """
+
+    def __init__(self, A, M):
+        super(BatchedGmres, self).__init__()
+        self.A = A
+        self.M = M
+
+    def construct(self, b, x0=None, tol=1e-5, atol=0.0, restart=20, maxiter=None):
+        A = _normalize_matvec(self.A)
+        M = _normalize_matvec(self.M)
+        dtype = b.dtype
+        _, b_norm = _safe_normalize(b)
+        atol = mnp.maximum(tol * b_norm, _to_tensor(atol), dtype=dtype)
+        residual = M(b - A(x0))
+        unit_residual, residual_norm = _safe_normalize(residual)
+        k = _INT_ZERO
+        x = x0
+        while k < maxiter and residual_norm > atol:
+            pad_width = ((0, 0),) * unit_residual.ndim + ((0, restart),)
+            V = mnp.pad(unit_residual[..., None], pad_width=pad_width)
+            H = mnp.eye(restart, restart + 1, dtype=dtype)
+            k_iter = _INT_ZERO
+            breakdown = _to_tensor(False)
+            while k_iter < restart and mnp.logical_not(breakdown):
+                V, H, breakdown = arnoldi_iteration(k_iter, A, M, V, H)
+                k_iter += 1
+            beta_vec = mnp.zeros((restart + 1,), dtype=dtype)
+            beta_vec[0] = residual_norm
+            a2 = mnp.dot(H, H.T)
+            b2 = mnp.dot(H, beta_vec)
+            c, lower = cho_factor(a2, lower=False)
+            factor = (c, lower)
+            y = cho_solve(factor, b2)
+            dx = mnp.dot(V[..., :-1], y)
+            x = x + dx
+            residual = b - A(x)
+            unit_residual, residual_norm = _safe_normalize(residual)
+            k += 1
+        return x
 
 
 def gmres_iter(A_mat_func, b, x0, r, r_norm, ptol, restart, M_mat_func):
@@ -130,8 +167,7 @@ def gmres_iter(A_mat_func, b, x0, r, r_norm, ptol, restart, M_mat_func):
     k = 0
     err = r_norm
     while mnp.logical_and(mnp.less(k, restart), mnp.less(ptol, err)):
-        v = M_mat_func(A_mat_func(V[:, k]))
-        V, H = kth_arnoldi_iteration(k, V, v, R)
+        V, H, _ = arnoldi_iteration(k, A_mat_func, M_mat_func, V, R)
         R[k, :], givens = givens_rotation(H[k, :], givens, k)
         beta_vec = rotate_vectors(beta_vec, k, givens[k, 0], givens[k, 1])
         err = mnp.absolute(beta_vec[k + 1])
@@ -186,7 +222,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
             Krylov space starting from the solution found at the last iteration. If GMRES
             halts or is very slow, decreasing this parameter may help.
             Default is infinite.
-        M (Tensor): Preconditioner for A.  The preconditioner should approximate the
+        M (Tensor or function): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance.
@@ -206,67 +242,66 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.numpy as mnp
-        >>> from mindspore.scipy.sparse import csc_matrix
         >>> from mindspore.scipy.sparse.linalg import gmres
-        >>> A = csc_matrix([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=np.float32)
-        >>> b = Tensor(onp.array([2, 4, -1], dtype=np.float32))
+        >>> A = Tensor(mnp.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=mnp.float32))
+        >>> b = Tensor(onp.array([2, 4, -1], dtype=mnp.float32))
         >>> x, exitCode = gmres(A, b)
         >>> print(exitCode)            # 0 indicates successful convergence
         0
-        >>> np.allclose(A.matvec(x).asnumpy(), b.asnumpy())
+        >>> onp.allclose(mnp.dot(A,x).asnumpy(), b.asnumpy())
         True
     """
 
     if x0 is None:
         x0 = mnp.zeros_like(b)
-
-    if M is None:
-        def M_mat_func(x):
-            return x
-    elif not callable(M):
-        def M_mat_func(x):
-            return mnp.dot(M, x)
-    else:
-        M_mat_func = M
-
-    if not callable(A):
-        def A_mat_func(x):
-            return mnp.dot(A, x)
-    else:
-        A_mat_func = A
-
     size = b.size
-
     if maxiter is None:
         maxiter = 10 * size  # copied from scipy
-    restart = min(restart, size)
-
-    _, b_norm = _safe_normalize(b)
-    atol = mnp.maximum(tol * b_norm, atol)
-
-    Mb = M_mat_func(b)
-    _, Mb_norm = _safe_normalize(Mb)
-    ptol = Mb_norm * mnp.minimum(1.0, atol / b_norm)
-
+    if restart > size:
+        restart = size
+    x = x0
     if solve_method == 'incremental':
+        if M is None:
+            def M_mat_func(x):
+                return x
+        elif not callable(M):
+            def M_mat_func(x):
+                return mnp.dot(M, x)
+        else:
+            M_mat_func = M
+
+        if not callable(A):
+            def A_mat_func(x):
+                return mnp.dot(A, x)
+        else:
+            A_mat_func = A
+
+        _, b_norm = _safe_normalize(b)
+        atol = mnp.maximum(tol * b_norm, atol)
+
+        Mb = M_mat_func(b)
+        _, Mb_norm = _safe_normalize(Mb)
+        ptol = Mb_norm * mnp.minimum(1.0, atol / b_norm)
         # iterative gmres
         r = M_mat_func(b - A_mat_func(x0))
         r, r_norm = _safe_normalize(r)
-        x = x0
         k = 0
         while k < maxiter and r_norm > atol:
             x, r, r_norm = gmres_iter(
                 A_mat_func, b, x, r, r_norm, ptol, restart, M_mat_func)
             k += 1
-
-        _, x_norm = _safe_normalize(x)
-        info = mnp.where(mnp.isnan(x_norm), -1, 0)
     elif solve_method == 'batched':
-        raise NotImplementedError("batched method not implemented yet")
+        if M is None:
+            def identity(x):
+                return x
+
+            M = identity
+        x = BatchedGmres(A, M)(b, x, tol, atol, restart, maxiter)
     else:
         raise ValueError("solve_method should be in ('incremental' or 'batched'), but got {}."
                          .format(solve_method))
-
+    _, x_norm = _safe_normalize(x)
+    info = mnp.where(mnp.isnan(x_norm), _INT_NEG_ONE, _INT_ZERO)
     return x, info
 
 
@@ -344,7 +379,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None) -> (Tensor, N
             differ from SciPy unless you explicitly pass ``atol`` to SciPy's ``cg``.
         maxiter (int): Maximum number of iterations.  Iteration will stop after maxiter
             steps even if the specified tolerance has not been achieved.
-        M (Tensor): Preconditioner for A.  The preconditioner should approximate the
+        M (Tensor or function): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance.
