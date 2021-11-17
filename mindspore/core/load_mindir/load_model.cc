@@ -123,8 +123,8 @@ bool MindIRLoader::ParseGraphProto(mind_ir::GraphProto *graph, const std::string
   return true;
 }
 
-std::vector<std::shared_ptr<FuncGraph>> MindIRLoader::LoadMindIRs(std::vector<std::string> file_names) {
-  std::vector<std::shared_ptr<FuncGraph>> funcgraph_vec;
+std::vector<FuncGraphPtr> MindIRLoader::LoadMindIRs(std::vector<std::string> file_names) {
+  std::vector<FuncGraphPtr> funcgraph_vec;
   MS_LOG(DEBUG) << "Load multiple MindIR files.";
   for (const auto &file_name : file_names) {
     MS_LOG(DEBUG) << "Load " << file_name;
@@ -133,7 +133,7 @@ std::vector<std::shared_ptr<FuncGraph>> MindIRLoader::LoadMindIRs(std::vector<st
   return funcgraph_vec;
 }
 
-std::shared_ptr<FuncGraph> MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
+FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   /* mindir -> func_graph
    * only support lite */
   mind_ir::ModelProto model;
@@ -150,7 +150,7 @@ std::shared_ptr<FuncGraph> MindIRLoader::LoadMindIR(const void *buffer, const si
   return func_graph;
 }
 
-std::shared_ptr<FuncGraph> MindIRLoader::LoadMindIR(const std::string &file_name) {
+FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   if (file_name.length() > PATH_MAX) {
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
@@ -305,7 +305,7 @@ std::string LoadPreprocess(const std::string &file_name) {
   return origin_model.preprocessor();
 }
 
-std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {
+FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {
   MS_EXCEPTION_IF_NULL(buf);
   std::string str(buf, buf_size);
   mind_ir::ModelProto model_;

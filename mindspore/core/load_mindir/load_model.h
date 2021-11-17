@@ -34,9 +34,10 @@ class MindIRLoader {
 
   bool get_need_renormalize() const { return need_renormalize_; }
   void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
-  std::shared_ptr<FuncGraph> LoadMindIR(const void *buffer, const size_t &size);
-  std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name);
-  std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(const std::vector<std::string> file_names);
+
+  FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
+  FuncGraphPtr LoadMindIR(const std::string &file_name);
+  std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> file_names);
 
  private:
   bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path);
@@ -51,6 +52,6 @@ class MindIRLoader {
 
 std::string LoadPreprocess(const std::string &file_name);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
-std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
+FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_LOAD_MODEL_H

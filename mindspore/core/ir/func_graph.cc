@@ -556,6 +556,38 @@ size_t FuncGraph::GetDefaultValueCount() {
   return parameter_default_value_.size() - LongToSize(null_count);
 }
 
+std::map<std::string, ValuePtr> FuncGraph::UpdateHyperParams(
+  const std::unordered_map<std::string, tensor::TensorPtr> &params_init) {
+  std::map<std::string, ValuePtr> hyper_params;
+  for (const auto &para : parameters_) {
+    auto param_node = para->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_node);
+    const std::string &param_name = param_node->name();
+
+    if (param_node->has_default()) {
+      if (params_init.find(param_name) != params_init.end()) {
+        const auto &old_value = param_node->default_param()->cast<tensor::TensorPtr>();
+        const auto &new_value = params_init.at(param_name);
+        MS_EXCEPTION_IF_NULL(old_value);
+        MS_EXCEPTION_IF_NULL(new_value);
+        if (new_value->shape() != old_value->shape() || new_value->data_type() != old_value->data_type()) {
+          MS_EXCEPTION(ValueError) << "Only support update parameter by Tensor with same shape and dtype as it. "
+                                      "The parameter '"
+                                   << param_name << "' has shape " << old_value->shape() << " and dtype "
+                                   << TypeIdLabel(old_value->data_type()) << ", but got the update Tensor with shape "
+                                   << new_value->shape() << " and dtype " << TypeIdLabel(new_value->data_type()) << ".";
+        }
+
+        auto new_default_param = std::make_shared<tensor::Tensor>(*new_value);
+        new_default_param->set_param_info(old_value->param_info());
+        param_node->set_default_param(new_default_param);
+      }
+      hyper_params[param_name] = param_node->default_param();
+    }
+  }
+  return hyper_params;
+}
+
 AnfNodePtr FuncGraph::GetVariableArgParameter() {
   if (!has_vararg_) {
     return nullptr;
