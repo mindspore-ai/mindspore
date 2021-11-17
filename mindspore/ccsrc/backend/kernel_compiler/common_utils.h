@@ -88,9 +88,6 @@ Processor GetProcessor(const string &processor);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
 int Sign(float x);
 int GetReductionInt(const std::string &reduction);
-std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index);
-std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
-                                                                            const std::vector<AnfNodePtr> &input_list);
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);
