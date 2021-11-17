@@ -22,16 +22,8 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef MatmulBiasaddFusion::DefinePattern() const {
-  VectorRef matmul({matmul_var_, x0_, x1_});
-  VectorRef pattern({prim::kPrimBiasAdd, matmul, x2_});
-  return pattern;
-}
-
-const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                              const EquivPtr &equiv) const {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr MatmulBiasaddFusion::CreateMatmulWithBias(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                     const EquivPtr &equiv) const {
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
   if (matmul == nullptr || !matmul->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"
@@ -52,9 +44,47 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
-
   AnfAlgo::CopyNodeAttrs(matmul, new_node);
   return new_node;
+}
+
+const BaseRef MatmulBiasaddFusion::DefinePattern() const {
+  VectorRef matmul({matmul_var_, x0_, x1_});
+  VectorRef pattern({prim::kPrimBiasAdd, matmul, x2_});
+  return pattern;
+}
+
+const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                              const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+
+  return CreateMatmulWithBias(graph, node, equiv);
+}
+
+bool MatmulAddFusion::NeedFusion(const AnfNodePtr &add) const {
+  auto bias_shape = AnfAlgo::GetPrevNodeOutputInferShape(add, kIndex1);
+  if (bias_shape.size() != 1) {
+    return false;
+  }
+  return true;
+}
+
+const BaseRef MatmulAddFusion::DefinePattern() const {
+  VectorRef matmul({matmul_var_, x0_, x1_});
+  VectorRef pattern({prim::kPrimAdd, matmul, x2_});
+  return pattern;
+}
+
+const AnfNodePtr MatmulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                          const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!NeedFusion(node)) {
+    return nullptr;
+  }
+
+  return CreateMatmulWithBias(graph, node, equiv);
 }
 }  // namespace opt
 }  // namespace mindspore
