@@ -201,7 +201,7 @@ class GradExecutor {
   std::set<std::string> &forward_outputs_id() const { return top_cell()->outputs_id(); }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
-  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
+  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   // Construct grad graph for ms_function
   bool eliminate_forward() const { return eliminate_forward_; }
