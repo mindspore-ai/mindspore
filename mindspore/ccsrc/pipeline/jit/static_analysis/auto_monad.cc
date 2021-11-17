@@ -975,8 +975,8 @@ class SideEffectFinder {
     for (auto &cnode : undetected) {
       MS_EXCEPTION_IF_NULL(cnode);
       auto cnode_effect = GetEffectInfo(cnode);
-      // Side effect should be detected now.
-      if (cnode_effect.state != EffectInfo::kDetected) {
+      // Side effect should be detected now, except free variable nodes that not belong to current SCC.
+      if (cnode_effect.state != EffectInfo::kDetected && scc->find(cnode->func_graph()) != scc->end()) {
         MS_LOG(EXCEPTION) << "Side effect is undectable: " << cnode->DebugString();
       }
     }
