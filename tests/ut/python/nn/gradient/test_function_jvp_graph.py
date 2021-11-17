@@ -15,6 +15,7 @@
 """test function jvp in graph mode"""
 
 import numpy as np
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
@@ -143,3 +144,16 @@ def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph():
     v2 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = MultipleInputMultipleOutputNet()
     jvp(net, (x, y), (v1, v2))
+
+
+def test_jvp_wrong_input_type_graph():
+    """
+    Features: Function jvp
+    Description: Test jvp with wrong input type in graph mode.
+    Expectation: No exception.
+    """
+    x = 1
+    v = 1
+    net = SingleInputSingleOutputNet()
+    with pytest.raises(TypeError):
+        jvp(net, x, v)
