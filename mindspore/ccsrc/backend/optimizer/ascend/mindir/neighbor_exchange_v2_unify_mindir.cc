@@ -84,17 +84,19 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
   }
   if (is_last) {
     // middle
-    ++num_split;
     split_middle_size -= last_size;
-    size_splits->push_back(split_middle_size);
-    shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
-    shapes->push_back(shape_tmp);
+    if (split_middle_size > 0) {
+      ++num_split;
+      size_splits->push_back(split_middle_size);
+      shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
+      shapes->push_back(shape_tmp);
+    }
     // last
     ++num_split;
     size_splits->push_back(last_size);
     shape_tmp[split_dim] = static_cast<size_t>(last_size);
     shapes->push_back(shape_tmp);
-  } else {
+  } else if (split_middle_size > 0) {
     ++num_split;
     size_splits->push_back(split_middle_size);
     shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
