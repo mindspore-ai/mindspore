@@ -154,6 +154,9 @@ class AscendDeviceContext : public DeviceContext {
   // Using node to get it's atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
   void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const;
+  bool LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
+                         const std::vector<AddressPtr> &outputs) const;
+  void *compute_stream_;
 };
 }  // namespace ascend
 }  // namespace device

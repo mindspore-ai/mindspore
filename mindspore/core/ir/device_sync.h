@@ -61,6 +61,11 @@ class DeviceSync {
       original_ref_count_++;
     }
   }
+  void DecreaseOriginalRefCount() {
+    if (original_ref_count_ > 0) {
+      original_ref_count_--;
+    }
+  }
   void DecreaseRefCount() { ref_count_--; }
   void ResetRefCount() { ref_count_ = original_ref_count_; }
 

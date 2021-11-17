@@ -179,17 +179,16 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
     if (AnfAlgo::IsControlOpExecInBackend(kernel)) {
       continue;
     }
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto output_sizes = kernel_mod->GetOutputSizeList();
-    for (size_t i = 0; i < output_sizes.size(); ++i) {
+
+    auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+    for (size_t i = 0; i < output_size; ++i) {
       if (AnfAlgo::OutputAddrExist(kernel, i)) {
         continue;
       }
-
-      std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
+      auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
-      auto device_address = device_context->CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
+      auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
+      auto device_address = device_context->CreateDeviceAddress(nullptr, address_size, output_format, output_type);
       MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
@@ -256,6 +255,40 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
       // Update the reference count of device address.
       device_address->IncreaseOriginalRefCount();
       device_address->ResetRefCount();
+    }
+  }
+}
+
+void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto &kernels = graph->execution_order();
+  for (auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    if (output_num == 0) {
+      MS_LOG(DEBUG) << "This kernel has no output size.";
+      continue;
+    }
+    for (size_t i = 0; i < output_num; ++i) {
+      session::AnfWithOutIndex out_pair(kernel, i);
+      if (graph->IsInRefOutputMap(out_pair)) {
+        auto origin_pair = graph->GetRefCorrespondOutput(out_pair);
+        MS_EXCEPTION_IF_NULL(origin_pair.first);
+        auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second);
+        MS_EXCEPTION_IF_NULL(origin_node_output_addr);
+        auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i);
+        if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+          MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
+          MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
+                        << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
+          AnfAlgo::SetOutputAddr(origin_node_output_addr, i, kernel.get());
+          // Update the reference count of device address.
+          cur_node_output_addr->DecreaseOriginalRefCount();
+          cur_node_output_addr->ResetRefCount();
+          origin_node_output_addr->IncreaseOriginalRefCount();
+          origin_node_output_addr->ResetRefCount();
+        }
+      }
     }
   }
 }
@@ -495,6 +528,7 @@ void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const Devic
   CreateKernelOutputDeviceAddress(device_context, graph);
   CreateKernelWorkspaceDeviceAddress(device_context, graph);
   UpdateDeviceAddressForInplaceNode(graph);
+  UpdateDeviceAddressForRefNode(graph);
 }
 
 void GraphCompiler::GetParamAndOutputIndex(
