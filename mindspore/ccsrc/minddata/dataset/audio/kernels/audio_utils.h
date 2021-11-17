@@ -31,6 +31,7 @@
 #include "minddata/dataset/util/status.h"
 
 constexpr double PI = 3.141592653589793;
+constexpr int kMinAudioRank = 2;
 
 namespace mindspore {
 namespace dataset {
@@ -143,6 +144,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   auto itr_out = out->begin<T>();
   for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
     T temp1, temp2 = 0;
+    // PI / 2 is half of the constant PI
     temp1 = static_cast<T>(*itr_in) * (PI / 2);
     temp2 = enhancement_amount_value * std::sin(temp1 * 4);
     *itr_out = std::sin(temp1 + temp2);
@@ -261,10 +263,10 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
         m_py[m_num_order] -= a_coeffs[j] * m_py[m_num_order - j];
       }
       if (clamp) {
-        if (m_py[m_num_order] > static_cast<T>(1.))
-          out_vect[i] = static_cast<T>(1.);
-        else if (m_py[m_num_order] < static_cast<T>(-1.))
-          out_vect[i] = static_cast<T>(-1.);
+        if (m_py[m_num_order] > static_cast<T>(1))
+          out_vect[i] = static_cast<T>(1);
+        else if (m_py[m_num_order] < static_cast<T>(-1))
+          out_vect[i] = static_cast<T>(-1);
         else
           out_vect[i] = m_py[m_num_order];
       } else {
@@ -386,8 +388,10 @@ Status Overdrive(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     T temp_fp2 = temp_fp * gain_ex + color;
     // 0.5 + 2/3 * 0.75 = 1, zoom and shift the sound.
     if (temp_fp2 < -1) {
+      // -2.0 / 3.0 is -2/3 in the formula.
       temp.push_back(-2.0 / 3.0);
     } else if (temp_fp2 > 1) {
+      // 2.0 / 3.0 is 2/3 in the formula.
       temp.push_back(2.0 / 3.0);
     } else {
       temp.push_back(temp_fp2 - temp_fp2 * temp_fp2 * temp_fp2 / 3.0);
@@ -824,6 +828,7 @@ std::vector<std::vector<T>> FlangerInterpolation(const std::shared_ptr<Tensor> &
       for (int k = 0; k < n_channels; k++) {
         delayed_value_c[j][k] = delayed_value_c[j][k] - delayed_value_a[j][k];
         delayed_value_b[j][k] = delayed_value_b[j][k] - delayed_value_a[j][k];
+        // delayed_value_c[j][k] * 0.5 is half of the delayed_value_c[j][k]
         frac_delay_coefficient[j][k] = delayed_value_c[j][k] * 0.5 - delayed_value_b[j][k];
         frac_delay_value[j][k] = delayed_value_b[j][k] * 2 - delayed_value_c[j][k] * 0.5;
         // the next delay is obtained by delaying the data in the buffer
@@ -1014,6 +1019,17 @@ struct WavHeader {
 /// \param sample_rate: sample rate.
 /// \return Status code.
 Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *waveform_vec, int32_t *sample_rate);
+
+/// \brief Apply sliding-window cepstral mean and variance (optional) normalization per utterance.
+/// \param input: Tensor of shape <..., freq, time>.
+/// \param output: Tensor of shape <..., frame>.
+/// \param cmn_window: Window in frames for running average CMN computation.
+/// \param min_cmn_window: Minimum CMN window used at start of decoding.
+/// \param center: If true, use a window centered on the current frame. If false, window is to the left.
+/// \param norm_vars: If true, normalize variance to one.
+/// \return Status code.
+Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t cmn_window,
+                        int32_t min_cmn_window, bool center, bool norm_vars);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

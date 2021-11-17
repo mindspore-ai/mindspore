@@ -1502,3 +1502,65 @@ TEST_F(MindDataTestExecute, TestDBToAmplitudeWithEager) {
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_TRUE(s01.IsOk());
 }
+
+/// Feature: SlidingWindowCmn
+/// Description: test basic function of SlidingWindowCmn
+/// Expectation: get correct number of data
+TEST_F(MindDataTestExecute, TestSlidingWindowCmn) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmn.";
+
+  std::shared_ptr<Tensor> input_tensor_;
+  int32_t cmn_window = 500;
+  int32_t min_cmn_window = 50;
+  bool center = false;
+  bool norm_vars = false;
+
+  // create tensor shape
+  TensorShape s = TensorShape({2, 2, 500});
+  // init input vector
+  std::vector<float> input_vec(s.NumOfElements());
+  for (int idx = 0; idx < input_vec.size(); ++idx) {
+    input_vec[idx] = std::rand() % (1000) / (1000.0f);
+  }
+  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> sliding_window_cmn_op =
+    std::make_shared<audio::SlidingWindowCmn>(cmn_window, min_cmn_window, center, norm_vars);
+
+  // apply sliding_window_cmn
+  mindspore::dataset::Execute Transform({sliding_window_cmn_op});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+/// Feature: SlidingWindowCmn
+/// Description: test wrong input args of SlidingWindowCmn
+/// Expectation: get nullptr of iterator
+TEST_F(MindDataTestExecute, TestSlidingWindowCmnWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmnWrongArgs.";
+
+  std::shared_ptr<Tensor> input_tensor_;
+  // create tensor shape
+  TensorShape s = TensorShape({2, 2, 500});
+  // init input vector
+  std::vector<float> input_vec(s.NumOfElements());
+  for (int idx = 0; idx < input_vec.size(); ++idx) {
+    input_vec[idx] = std::rand() % (1000) / (1000.0f);
+  }
+  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+
+  // SlidingWindowCmn: cmn_window must be greater than or equal to 0.
+  std::shared_ptr<TensorTransform> sliding_window_cmn_op_1 =
+    std::make_shared<audio::SlidingWindowCmn>(-1, 100, false, false);
+  mindspore::dataset::Execute Transform_1({sliding_window_cmn_op_1});
+  Status status_1 = Transform_1(input_ms, &input_ms);
+  EXPECT_FALSE(status_1.IsOk());
+
+  // SlidingWindowCmn: min_cmn_window must be greater than or equal to 0.
+  std::shared_ptr<TensorTransform> sliding_window_cmn_op_2 =
+    std::make_shared<audio::SlidingWindowCmn>(500, -1, false, false);
+  mindspore::dataset::Execute Transform_2({sliding_window_cmn_op_2});
+  Status status_2 = Transform_2(input_ms, &input_ms);
+  EXPECT_FALSE(status_2.IsOk());
+}

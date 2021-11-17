@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
+#include <Eigen/Dense>
 #include <fstream>
 
 #include "mindspore/core/base/float16.h"
@@ -886,6 +887,180 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   }
   in.close();
   delete header;
+  return Status::OK();
+}
+
+Status ComputeCmnStartAndEnd(int32_t cmn_window, int32_t min_cmn_window, bool center, int32_t idx, int32_t num_frames,
+                             int32_t *cmn_window_start_p, int32_t *cmn_window_end_p) {
+  RETURN_UNEXPECTED_IF_NULL(cmn_window_start_p);
+  RETURN_UNEXPECTED_IF_NULL(cmn_window_end_p);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    cmn_window >= 0, "SlidingWindowCmn: cmn_window must be non negative, but got: " + std::to_string(cmn_window));
+  CHECK_FAIL_RETURN_UNEXPECTED(min_cmn_window >= 0, "SlidingWindowCmn: min_cmn_window must be non negative, but got: " +
+                                                      std::to_string(min_cmn_window));
+  int32_t cmn_window_start = 0, cmn_window_end = 0;
+  constexpr int window_center = 2;
+  if (center) {
+    cmn_window_start = idx - cmn_window / window_center;
+    cmn_window_end = cmn_window_start + cmn_window;
+  } else {
+    cmn_window_start = idx - cmn_window;
+    cmn_window_end = idx + 1;
+  }
+  if (cmn_window_start < 0) {
+    cmn_window_end -= cmn_window_start;
+    cmn_window_start = 0;
+  }
+  if (!center) {
+    if (cmn_window_end > idx) {
+      cmn_window_end = std::max(idx + 1, min_cmn_window);
+    }
+  }
+  if (cmn_window_end > num_frames) {
+    cmn_window_start -= (cmn_window_end - num_frames);
+    cmn_window_end = num_frames;
+    if (cmn_window_start < 0) {
+      cmn_window_start = 0;
+    }
+  }
+
+  *cmn_window_start_p = cmn_window_start;
+  *cmn_window_end_p = cmn_window_end;
+  return Status::OK();
+}
+
+template <typename T>
+Status ComputeCmnWaveform(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *cmn_waveform_p,
+                          int32_t num_channels, int32_t num_frames, int32_t num_feats, int32_t cmn_window,
+                          int32_t min_cmn_window, bool center, bool norm_vars) {
+  using ArrayXT = Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  constexpr int square_num = 2;
+  int32_t last_window_start = -1, last_window_end = -1;
+  ArrayXT cur_sum = ArrayXT(num_channels, num_feats);
+  ArrayXT cur_sum_sq;
+  if (norm_vars) {
+    cur_sum_sq = ArrayXT(num_channels, num_feats);
+  }
+  for (int i = 0; i < num_frames; ++i) {
+    int32_t cmn_window_start = 0, cmn_window_end = 0;
+    RETURN_IF_NOT_OK(
+      ComputeCmnStartAndEnd(cmn_window, min_cmn_window, center, i, num_frames, &cmn_window_start, &cmn_window_end));
+    int32_t row = cmn_window_end - cmn_window_start * 2;
+    int32_t cmn_window_frames = cmn_window_end - cmn_window_start;
+    for (int32_t m = 0; m < num_channels; ++m) {
+      if (last_window_start == -1) {
+        auto it = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));
+        it += (m * num_frames * num_feats + cmn_window_start * num_feats);
+        auto tmp_map = Eigen::Map<ArrayXT>(it, row, num_feats);
+        if (i > 0) {
+          cur_sum.row(m) += tmp_map.colwise().sum();
+          if (norm_vars) {
+            cur_sum_sq.row(m) += tmp_map.pow(square_num).colwise().sum();
+          }
+        } else {
+          cur_sum.row(m) = tmp_map.colwise().sum();
+          if (norm_vars) {
+            cur_sum_sq.row(m) = tmp_map.pow(square_num).colwise().sum();
+          }
+        }
+      } else {
+        if (cmn_window_start > last_window_start) {
+          auto it = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));
+          it += (m * num_frames * num_feats + last_window_start * num_feats);
+          auto tmp_map = Eigen::Map<ArrayXT>(it, 1, num_feats);
+          cur_sum.row(m) -= tmp_map;
+          if (norm_vars) {
+            cur_sum_sq.row(m) -= tmp_map.pow(square_num);
+          }
+        }
+        if (cmn_window_end > last_window_end) {
+          auto it = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));
+          it += (m * num_frames * num_feats + last_window_end * num_feats);
+          auto tmp_map = Eigen::Map<ArrayXT>(it, 1, num_feats);
+          cur_sum.row(m) += tmp_map;
+          if (norm_vars) {
+            cur_sum_sq.row(m) += tmp_map.pow(square_num);
+          }
+        }
+      }
+
+      auto it = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));
+      auto cmn_it = reinterpret_cast<T *>(const_cast<uchar *>((*cmn_waveform_p)->GetBuffer()));
+      it += (m * num_frames * num_feats + i * num_feats);
+      cmn_it += (m * num_frames * num_feats + i * num_feats);
+      Eigen::Map<ArrayXT>(cmn_it, 1, num_feats) =
+        Eigen::Map<ArrayXT>(it, 1, num_feats) - cur_sum.row(m) / cmn_window_frames;
+      if (norm_vars) {
+        if (cmn_window_frames == 1) {
+          auto cmn_it_1 = reinterpret_cast<T *>(const_cast<uchar *>((*cmn_waveform_p)->GetBuffer()));
+          cmn_it_1 += (m * num_frames * num_feats + i * num_feats);
+          Eigen::Map<ArrayXT>(cmn_it_1, 1, num_feats).setZero();
+        } else {
+          auto variance = (Eigen::Map<ArrayXT>(cur_sum_sq.data(), num_channels, num_feats) / cmn_window_frames) -
+                          (cur_sum.pow(2) / std::pow(cmn_window_frames, 2));
+          auto cmn_it_2 = reinterpret_cast<T *>(const_cast<uchar *>((*cmn_waveform_p)->GetBuffer()));
+          cmn_it_2 += (m * num_frames * num_feats + i * num_feats);
+          Eigen::Map<ArrayXT>(cmn_it_2, 1, num_feats) =
+            Eigen::Map<ArrayXT>(cmn_it_2, 1, num_feats) * (1 / variance.sqrt()).row(m);
+        }
+      }
+    }
+    last_window_start = cmn_window_start;
+    last_window_end = cmn_window_end;
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status SlidingWindowCmnHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t cmn_window,
+                              int32_t min_cmn_window, bool center, bool norm_vars) {
+  int32_t num_frames = input->shape()[Tensor::HandleNeg(-2, input->shape().Size())];
+  int32_t num_feats = input->shape()[Tensor::HandleNeg(-1, input->shape().Size())];
+
+  int32_t first_index = 1;
+  std::vector<dsize_t> input_shape = input->shape().AsVector();
+  std::for_each(input_shape.begin(), input_shape.end(), [&first_index](const dsize_t &item) { first_index *= item; });
+  RETURN_IF_NOT_OK(
+    input->Reshape(TensorShape({static_cast<int>(first_index / (num_frames * num_feats)), num_frames, num_feats})));
+
+  int32_t num_channels = static_cast<int32_t>(input->shape()[0]);
+  TensorPtr cmn_waveform;
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({num_channels, num_frames, num_feats}), input->type(), &cmn_waveform));
+  RETURN_IF_NOT_OK(ComputeCmnWaveform<T>(input, &cmn_waveform, num_channels, num_frames, num_feats, cmn_window,
+                                         min_cmn_window, center, norm_vars));
+
+  std::vector<dsize_t> re_shape = input_shape;
+  auto r_it = re_shape.rbegin();
+  *r_it++ = num_feats;
+  *r_it = num_frames;
+  RETURN_IF_NOT_OK(cmn_waveform->Reshape(TensorShape(re_shape)));
+
+  constexpr int specify_input_shape = 2;
+  constexpr int specify_first_shape = 1;
+  if (input_shape.size() == specify_input_shape && cmn_waveform->shape()[0] == specify_first_shape) {
+    cmn_waveform->Squeeze();
+  }
+  *output = cmn_waveform;
+  return Status::OK();
+}
+
+Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t cmn_window,
+                        int32_t min_cmn_window, bool center, bool norm_vars) {
+  TensorShape input_shape = input->shape();
+  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() >= kMinAudioRank,
+                               "SlidingWindowCmn: input tensor is not in shape of <..., freq, time>.");
+
+  if (input->type().IsNumeric() && input->type().value() != DataType::DE_FLOAT64) {
+    std::shared_ptr<Tensor> temp;
+    RETURN_IF_NOT_OK(TypeCast(input, &temp, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(SlidingWindowCmnHelper<float>(temp, output, cmn_window, min_cmn_window, center, norm_vars));
+  } else if (input->type().value() == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(SlidingWindowCmnHelper<double>(input, output, cmn_window, min_cmn_window, center, norm_vars));
+  } else {
+    RETURN_STATUS_UNEXPECTED("SlidingWindowCmn: input tensor type should be int, float or double, but got: " +
+                             input->type().ToString());
+  }
   return Status::OK();
 }
 }  // namespace dataset

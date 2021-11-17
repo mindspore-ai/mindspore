@@ -43,6 +43,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
@@ -494,6 +495,24 @@ RiaaBiquad::RiaaBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(sampl
 
 std::shared_ptr<TensorOperation> RiaaBiquad::Parse() {
   return std::make_shared<RiaaBiquadOperation>(data_->sample_rate_);
+}
+
+// SlidingWindowCmn Transform Operation.
+struct SlidingWindowCmn::Data {
+  Data(int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars)
+      : cmn_window_(cmn_window), min_cmn_window_(min_cmn_window), center_(center), norm_vars_(norm_vars) {}
+  int32_t cmn_window_;
+  int32_t min_cmn_window_;
+  bool center_;
+  bool norm_vars_;
+};
+
+SlidingWindowCmn::SlidingWindowCmn(int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars)
+    : data_(std::make_shared<Data>(cmn_window, min_cmn_window, center, norm_vars)) {}
+
+std::shared_ptr<TensorOperation> SlidingWindowCmn::Parse() {
+  return std::make_shared<SlidingWindowCmnOperation>(data_->cmn_window_, data_->min_cmn_window_, data_->center_,
+                                                     data_->norm_vars_);
 }
 
 // TimeMasking Transform Operation.
