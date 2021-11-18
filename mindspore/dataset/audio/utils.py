@@ -141,3 +141,23 @@ def CreateDct(n_mfcc, n_mels, norm=NormMode.NONE):
     if n_mels <= 0:
         raise ValueError("n_mels must be greater than 0, but got {0}.".format(n_mels))
     return cde.CreateDct(n_mfcc, n_mels, DE_C_NORMMODE_TYPE[norm]).as_array()
+
+
+class BorderType(str, Enum):
+    """
+    Padding Mode, BorderType Type.
+
+    Possible enumeration values are: BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BorderType.SYMMETRIC.
+
+    - BorderType.CONSTANT: means it fills the border with constant values.
+    - BorderType.EDGE: means it pads with the last value on the edge.
+    - BorderType.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+    - BorderType.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+
+    Note: This class derived from class str to support json serializable.
+    """
+    CONSTANT: str = "constant"
+    EDGE: str = "edge"
+    REFLECT: str = "reflect"
+    SYMMETRIC: str = "symmetric"
+    

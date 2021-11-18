@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/compute_deltas_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/db_to_amplitude_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
@@ -158,6 +159,17 @@ PYBIND_REGISTER(
         auto complex_norm = std::make_shared<audio::ComplexNormOperation>(power);
         THROW_IF_ERROR(complex_norm->ValidateParams());
         return complex_norm;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  ComputeDeltasOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::ComputeDeltasOperation, TensorOperation, std::shared_ptr<audio::ComputeDeltasOperation>>(
+      *m, "ComputeDeltasOperation")
+      .def(py::init([](int32_t win_length, BorderType pad_mode) {
+        auto compute_deltas = std::make_shared<audio::ComputeDeltasOperation>(win_length, pad_mode);
+        THROW_IF_ERROR(compute_deltas->ValidateParams());
+        return compute_deltas;
       }));
   }));
 

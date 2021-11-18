@@ -11,6 +11,7 @@ add_library(audio-ir-kernels OBJECT
         bass_biquad_ir.cc
         biquad_ir.cc
         complex_norm_ir.cc
+        compute_deltas_ir.cc
         contrast_ir.cc
         db_to_amplitude_ir.cc
         dc_shift_ir.cc

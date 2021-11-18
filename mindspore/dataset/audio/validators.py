@@ -20,8 +20,8 @@ from functools import wraps
 
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32,\
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
-from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
+    check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
+from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType
 
 
 def check_amplitude_to_db(method):
@@ -573,6 +573,19 @@ def check_sliding_window_cmn(method):
 
         type_check(center, (bool,), "center")
         type_check(norm_vars, (bool,), "norm_vars")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_compute_deltas(method):
+    """Wrapper method to check the parameter of ComputeDeltas."""
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [win_length, pad_mode], _ = parse_user_args(method, *args, **kwargs)
+        type_check(pad_mode, (BorderType,), "pad_mode")
+        type_check(win_length, (int,), "win_length")
+        check_value(win_length, (3, INT32_MAX), "win_length")
         return method(self, *args, **kwargs)
 
     return new_method

@@ -236,6 +236,28 @@ class ComplexNorm final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief ComputeDeltas Transform.
+/// \note Compute delta coefficients of a spectrogram.
+class ComputeDeltas final : public TensorTransform {
+ public:
+  /// \brief Construct a new Compute Deltas object.
+  /// \param[in] win_length The window length used for computing delta, must be no less than 3 (Default: 5).
+  /// \param[in] pad_mode Mode parameter passed to padding (Default: BorderType::kEdge).
+  explicit ComputeDeltas(int32_t win_length = 5, BorderType pad_mode = BorderType::kEdge);
+
+  /// \brief Destructor.
+  ~ComputeDeltas() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply contrast effect.
 class Contrast final : public TensorTransform {
  public:

@@ -177,6 +177,57 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
   EXPECT_EQ(30, image.Shape()[1]);
 }
 
+/// Feature: ComputeDeltas
+/// Description: test basic function of ComputeDeltas
+/// Expectation: get correct number of data
+TEST_F(MindDataTestExecute, TestComputeDeltas) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltas.";
+  std::shared_ptr<Tensor> input_tensor_;
+
+  int win_length = 5;
+
+  // create tensor
+  TensorShape s = TensorShape({2, 15, 7});
+  // init input vec
+  std::vector<float> input_vec(s.NumOfElements());
+  for (int ind = 0; ind < input_vec.size(); ind++) {
+    input_vec[ind] = std::rand() % (1000) / (1000.0f);
+  }
+  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> compute_deltas_op = std::make_shared<audio::ComputeDeltas>(win_length);
+
+  // apply compute_deltas
+  mindspore::dataset::Execute Transform({compute_deltas_op});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+/// Feature: ComputeDeltas
+/// Description: test wrong input args of ComputeDeltas
+/// Expectation: get nullptr of iterator
+TEST_F(MindDataTestExecute, TestComputeDeltasWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltasWrongArgs.";
+  std::shared_ptr<Tensor> input_tensor_;
+  // win_length is less than minimum of 3
+  int win_length = 2;
+
+  // create tensor
+  TensorShape s = TensorShape({2, 15, 7});
+  // init input vec
+  std::vector<float> input_vec(s.NumOfElements());
+  for (int ind = 0; ind < input_vec.size(); ind++) {
+    input_vec[ind] = std::rand() % (1000) / (1000.0f);
+  }
+  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+
+  std::shared_ptr<TensorTransform> compute_deltas_op = std::make_shared<audio::ComputeDeltas>(win_length);
+  mindspore::dataset::Execute Transform({compute_deltas_op});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_FALSE(status.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestCrop) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestCrop.";
 
@@ -937,12 +988,9 @@ TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
 /// Expectation: throw exception correctly
 TEST_F(MindDataTestExecute, TestOverdriveWrongArgWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestOverdriveWrongArgWithEager";
-  std::vector<double> labels = {
-    0.271, 1.634, 9.246, 0.108,
-    1.138, 1.156, 3.394, 1.55,
-    3.614, 1.8402, 0.718, 4.599,
-    5.64, 2.510620117187500000e-02, 1.38, 5.825,
-    4.1906, 5.28, 1.052, 9.36};
+  std::vector<double> labels = {0.271, 1.634, 9.246,  0.108, 1.138, 1.156, 3.394,
+                                1.55,  3.614, 1.8402, 0.718, 4.599, 5.64,  2.510620117187500000e-02,
+                                1.38,  5.825, 4.1906, 5.28,  1.052, 9.36};
   std::shared_ptr<Tensor> input;
   ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({4, 5}), &input));
 
