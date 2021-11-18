@@ -56,6 +56,14 @@ std::string StrategyToString(const Strategys &strategy) {
   return strategy_str;
 }
 
+Status OperatorInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
+  if (out_strategy) {
+    MS_LOG(ERROR) << name_ << ": It does not support to set output strategy now, please modify the shard set";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape) {
   if (strategy == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null.";
