@@ -269,6 +269,7 @@ from .truncate_mod_ds import _truncate_mod_ds_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
 from .unsorted_segment_sum_ds import _unsorted_segment_sum_ds_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe
+from .unsorted_segment_prod_ds import _unsorted_segment_prod_ds_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
 from .logsoftmax_grad_ds import _logsoftmax_grad_ds_tbe
 from .logsoftmax import _logsoftmax_tbe
