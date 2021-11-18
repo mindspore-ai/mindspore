@@ -675,7 +675,7 @@ TypeId Tensor::set_data_type(const TypeId data_type) {
 }
 
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
-    : indptr_(indptr), indices_(indices), values_(values), shape_(shape) {}
+    : MetaSparseTensor(values->data_type(), shape), indptr_(indptr), indices_(indices), values_(values) {}
 
 bool CSRTensor::operator==(const CSRTensor &csr_tensor) const { return (&csr_tensor == this); }
 

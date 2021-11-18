@@ -106,5 +106,19 @@ std::string MetaTensor::DumpText() const {
   oss << "]";
   return oss.str();
 }
+
+MetaSparseTensor::MetaSparseTensor() : data_type_(TypeId::kTypeUnknown) {}
+
+MetaSparseTensor::MetaSparseTensor(const TypeId data_type, const ShapeVector &shape)
+    : data_type_(data_type), shape_(shape) {}
+
+MetaSparseTensor::MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor)
+    : Value(meta_sparse_tensor), data_type_(meta_sparse_tensor.data_type()), shape_(meta_sparse_tensor.shape()) {}
+
+bool MetaSparseTensor::operator==(const MetaSparseTensor &meta_sparse_tensor) const {
+  return data_type_ == meta_sparse_tensor.data_type() && shape_ == meta_sparse_tensor.shape();
+}
+
+TypePtr MetaSparseTensor::Dtype() const { return TypeIdToType(data_type_); }
 }  // namespace tensor
 }  // namespace mindspore
