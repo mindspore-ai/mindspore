@@ -149,22 +149,15 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
 size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &grad_reduce_idx, size_t index,
                       size_t input_num) {
   std::vector<int64_t> output;
-  size_t idx_num = grad_reduce_idx[index].size();
-
-  for (size_t k = 0; k < idx_num; ++k) {
-    output.push_back(grad_reduce_idx[index][idx_num - 1 - k]);
+  size_t out_size = grad_reduce_idx[index].size();
+  for (size_t k = 0; k < out_size; ++k) {
+    output.push_back(grad_reduce_idx[index][out_size - 1 - k]);
   }
-
+  if (out_size == 0) {
+    return out_size;
+  }
   auto out_addr = AnfAlgo::GetOutputAddr(cnode, index);
   MS_EXCEPTION_IF_NULL(out_addr);
-
-  size_t out_size = idx_num;
-  if (idx_num == 0) {
-    out_size = input_num;
-    for (size_t k = 0; k < input_num; ++k) {
-      output.push_back(k);
-    }
-  }
 
   std::vector<int64_t> out_shape{SizeToLong(out_size)};
   auto output_type = TypeId::kNumberTypeInt64;
