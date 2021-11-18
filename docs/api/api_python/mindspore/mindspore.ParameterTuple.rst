@@ -17,10 +17,6 @@ mindspore.ParameterTuple
             - **prefix** (str)：参数的命名空间。
             - **init** (Union[Tensor, str, numbers.Number])：初始化参数的shape和dtype。 `init` 的定义与 `Parameter` API中的定义相同。默认值：'same'。
 
-        **异常：**
-    
-            RuntimeError：参数名称不以“embedding_table”结尾。
-
         **返回：**
 
             新的参数元组。
