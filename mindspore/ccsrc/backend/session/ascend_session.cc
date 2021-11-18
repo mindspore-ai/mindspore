@@ -121,7 +121,7 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::
 bool EnableDeviceCopy() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (common::GetEnv("EnableDeviceCopy") != "1") {
+  if (common::GetEnv("ENABLE_DEVICE_COPY") != "1") {
     return false;
   }
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
