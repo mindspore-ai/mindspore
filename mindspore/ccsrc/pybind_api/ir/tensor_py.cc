@@ -640,5 +640,34 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                return TensorPy::MakeTensor(t[0].cast<py::array>());
                              }));
                        }));
+
+py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) {
+  auto &shape = csr_tensor.shape();
+  py::tuple dims(shape.size());
+  for (size_t i = 0; i < dims.size(); ++i) {
+    dims[i] = py::int_(shape[i]);
+  }
+  return dims;
+}
+
+REGISTER_PYBIND_DEFINE(
+  CSRTensor, ([](const py::module *m) {
+    // Define python CSRTensor class.
+    (void)py::class_<CSRTensor, std::shared_ptr<CSRTensor>>(*m, "CSRTensor")
+      .def(py::init([](const Tensor &indptr, const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+             return std::make_shared<CSRTensor>(std::make_shared<Tensor>(indptr), std::make_shared<Tensor>(indices),
+                                                std::make_shared<Tensor>(values), GetShapeFromTuple(shape));
+           }),
+           py::arg("indptr"), py::arg("indices"), py::arg("values"), py::arg("shape"))
+      .def(py::init([](const CSRTensor &csr_tensor) { return std::make_shared<CSRTensor>(csr_tensor); }),
+           py::arg("input"))
+      .def_property_readonly("_shape", CSRTensorPy::GetPyTupleShape)
+      .def_property_readonly("_dtype", &CSRTensor::Dtype)
+      .def_property_readonly("_indptr", &CSRTensor::GetIndptr)
+      .def_property_readonly("_indices", &CSRTensor::GetIndices)
+      .def_property_readonly("_values", &CSRTensor::GetValues)
+      .def("__str__", &CSRTensor::ToString)
+      .def("__repr__", &CSRTensor::ToString);
+  }));
 }  // namespace tensor
 }  // namespace mindspore

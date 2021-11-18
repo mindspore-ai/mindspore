@@ -30,17 +30,23 @@
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "ir/value.h"
+#include "ir/anf.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "pybind_api/ir/base_ref_py.h"
+#include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
+#include "utils/convert_utils.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
 py::object BuiltinsToPyData(const BaseRef &value);
 py::object VectorToPyData(const Any &value);
-py::object VectorRefToPyData(const VectorRef &value);
-
+py::object VectorRefToPyData(const VectorRef &value_list);
+py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output);
+// Wrap VectorRef to CSRTensor
+py::object MakeCSRTensor(const VectorRef &value_list);
 py::object TensorToPyData(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedWait()) {
@@ -276,6 +282,19 @@ py::object AnyToPyData(const Any &value) {
   return ret;
 }
 
+py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output) {
+  py::object ret;
+  // If output value is a tuple, check if abstract is a SparseTensor in funcgraph output
+  if (utils::isa<VectorRef>(value)) {
+    MS_LOG(DEBUG) << "BaseRefToPyData, value is tuple: " << value.ToString();
+    auto vec_ref = utils::cast<VectorRef>(value);
+    ret = VectorRefToPyData(vec_ref, output);
+  } else {
+    ret = BaseRefToPyData(value);
+  }
+  return ret;
+}
+
 py::object BaseRefToPyData(const BaseRef &value) {
   py::object ret;
   MS_LOG(DEBUG) << "BaseRefToPyData " << value.ToString();
@@ -378,6 +397,29 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
   auto ref_tuple = py::tuple(value_size);
   for (size_t i = 0; i < value_size; i++) {
     ref_tuple[i] = BaseRefToPyData(value_list[i]);
+  }
+  ret = ref_tuple;
+  return ret;
+}
+
+py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output) {
+  MS_LOG(DEBUG) << "vector_ref";
+  // Current VectorRef reflects a SparseTensor type
+  if (output->isa<abstract::AbstractCSRTensor>()) {
+    return MakeCSRTensor(value_list);
+  }
+  py::object ret;
+  size_t value_size = value_list.size();
+  auto ref_tuple = py::tuple(value_size);
+  abstract::AbstractTuplePtr tuple_output = output->cast<abstract::AbstractTuplePtr>();
+  bool is_abstract_tuple = tuple_output != nullptr;
+  for (size_t i = 0; i < value_size; i++) {
+    if (!is_abstract_tuple || i >= tuple_output->size()) {
+      // Fall back to original process
+      ref_tuple[i] = BaseRefToPyData(value_list[i]);
+    } else {
+      ref_tuple[i] = BaseRefToPyData(value_list[i], (*tuple_output)[i]);
+    }
   }
   ret = ref_tuple;
   return ret;
@@ -550,5 +592,46 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
     return true;
   }
   return false;
+}
+
+py::object MakeCSRTensor(const VectorRef &value_list) {
+  constexpr size_t kCSRTensorInputSize{4};
+  if (value_list.size() != kCSRTensorInputSize) {
+    MS_LOG(EXCEPTION) << "CSRTensor must have 4 inputs.";
+  }
+  using TensorPtr = tensor::TensorPtr;
+  using CSRTensor = tensor::CSRTensor;
+  TensorPtr indptr = utils::cast<TensorPtr>(value_list[0]);
+  TensorPtr indices = utils::cast<TensorPtr>(value_list[1]);
+  TensorPtr values = utils::cast<TensorPtr>(value_list[2]);
+  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[3]);
+  ValueTuplePtr shape_tuple = shape_ptr->cast<ValueTuplePtr>();
+  ShapeVector shape{};
+  // CSRTensor shape is a tuple on GPU and CPU
+  if (shape_tuple) {
+    for (const auto &v : shape_tuple->value()) {
+      MS_EXCEPTION_IF_NULL(v);
+      ScalarPtr scalar = v->cast<ScalarPtr>();
+      MS_EXCEPTION_IF_NULL(scalar);
+      shape.push_back(GetValue<int64_t>(scalar));
+    }
+    // CSRTensor shape is a VectorRef(TensorPtr, TensorPtr) on Ascend
+  } else {
+    auto shape_ref = utils::cast<VectorRef>(value_list[3]);
+    MS_EXCEPTION_IF_NULL(shape_ref);
+    for (const auto &v : shape_ref) {
+      MS_EXCEPTION_IF_NULL(v);
+      auto tensorptr = utils::cast<TensorPtr>(v);
+      MS_EXCEPTION_IF_NULL(tensorptr);
+      if (tensorptr->DataDim() != 0) {
+        MS_LOG(EXCEPTION) << "Element in CSRTensor's shape must be scalar!";
+      }
+      shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
+    }
+  }
+  auto ref = py::tuple(1);
+  auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
+  ref[0] = csr_tensor_ptr;
+  return ref[0];
 }
 }  // namespace mindspore

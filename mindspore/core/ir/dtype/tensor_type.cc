@@ -191,4 +191,46 @@ bool SparseTensorType::operator==(const Type &other) const {
   }
   return *element_type_ == *other_elem_type;
 }
+
+TypePtr CSRTensorType::DeepCopy() const {
+  MS_EXCEPTION_IF_NULL(element_type_);
+  if (IsGeneric()) {
+    return std::make_shared<CSRTensorType>();
+  }
+  return std::make_shared<CSRTensorType>(element_type_->DeepCopy());
+}
+
+std::string CSRTensorType::ToReprString() const {
+  if (element_type_ == nullptr) {
+    return "CSRTensor";
+  }
+  return "CSRTensor[" + element_type_->ToReprString() + "]";
+}
+
+std::string CSRTensorType::ToString() const {
+  if (element_type_ == nullptr) {
+    return "CSRTensor";
+  }
+  return "CSRTensor[" + element_type_->ToString() + "]";
+}
+
+std::string CSRTensorType::DumpText() const {
+  if (element_type_ == nullptr) {
+    return "CSRTensor";
+  }
+  return "CSRTensor[" + element_type_->DumpText() + "]";
+}
+
+bool CSRTensorType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  auto other_elem_type = static_cast<const CSRTensorType &>(other).element_type_;
+  if (element_type_ == nullptr && other_elem_type == nullptr) {
+    return true;
+  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+    return false;
+  }
+  return *element_type_ == *other_elem_type;
+}
 }  // namespace mindspore

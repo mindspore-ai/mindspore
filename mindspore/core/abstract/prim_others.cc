@@ -395,6 +395,105 @@ AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, co
   return sparse_tensor->dense_shape();
 }
 
+AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // Inputs: three tensors and a tuple.
+  constexpr auto kMakeCSRInputNum = 4;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kMakeCSRInputNum);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+
+  auto indices_dtype = indices->element()->BuildType();
+  if (!indices_dtype->isa<Int>()) {
+    MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
+  }
+  auto indptr_shp = indptr->shape()->shape();
+  if (indptr_shp.size() != 1) {
+    MS_EXCEPTION(ValueError) << "Indptr must be a 1 dimension tensor, but got a " << indptr_shp.size()
+                             << " dimension tensor";
+  }
+  auto indices_shp = indices->shape()->shape();
+  if (indices_shp.size() != 1) {
+    MS_EXCEPTION(ValueError) << "Indices must be a 1 dimension tensor, but got a " << indices_shp.size()
+                             << " dimension tensor";
+  }
+  auto values_shp = values->shape()->shape();
+  if (values_shp.size() != 1) {
+    MS_EXCEPTION(ValueError) << "Values must be a 1 dimension tensor, but got a " << values_shp.size()
+                             << " dimension tensor";
+  }
+  if (indices_shp[0] != values_shp[0]) {
+    MS_EXCEPTION(ValueError) << "indices and values must have same size, but got: values length: " << values_shp[0]
+                             << ", indices length " << indices_shp[0];
+  }
+  for (const auto &elem_type : shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
+    }
+  }
+  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  auto shp = shape_value->value();
+  ShapeVector shape_vec;
+  (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(shape_vec), [](const ValuePtr &e) -> int64_t {
+    auto elem = GetValue<int64_t>(e);
+    return elem;
+  });
+
+  for (auto shape_elem : shape_vec) {
+    if (shape_elem < 0) {
+      MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << shape_value->ToString();
+    }
+  }
+  if (shape_vec[0] + 1 != indptr_shp[0]) {
+    MS_EXCEPTION(ValueError) << "indptr must have length (1 + shape[0]), but got: " << indptr_shp[0];
+  }
+  auto ret = std::make_shared<AbstractCSRTensor>(values->element()->BuildType(), shape_vec);
+  ret->set_indptr(indptr);
+  ret->set_indices(indices);
+  ret->set_values(values);
+  ret->set_dense_shape(shape);
+  return ret;
+}
+
+template <typename T>
+std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  return CheckArg<T>(op_name, args_spec_list, 0);
+}
+
+AbstractBasePtr InferImplCSRTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  auto csr_tensor = InferSparseAttr<AbstractCSRTensor>(primitive, args_spec_list);
+  MS_EXCEPTION_IF_NULL(csr_tensor->values());
+  return csr_tensor->values();
+}
+
+AbstractBasePtr InferImplCSRTensorGetIndptr(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  auto csr_tensor = InferSparseAttr<AbstractCSRTensor>(primitive, args_spec_list);
+  MS_EXCEPTION_IF_NULL(csr_tensor->indptr());
+  return csr_tensor->indptr();
+}
+
+AbstractBasePtr InferImplCSRTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_spec_list) {
+  auto csr_tensor = InferSparseAttr<AbstractCSRTensor>(primitive, args_spec_list);
+  MS_EXCEPTION_IF_NULL(csr_tensor->indices());
+  return csr_tensor->indices();
+}
+
+AbstractBasePtr InferImplCSRTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_spec_list) {
+  auto csr_tensor = InferSparseAttr<AbstractCSRTensor>(primitive, args_spec_list);
+  MS_EXCEPTION_IF_NULL(csr_tensor->dense_shape());
+  return csr_tensor->dense_shape();
+}
+
 AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();

@@ -924,8 +924,14 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(output_position);
-  // The makeTuple node need expand and recurse.
-  if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
+  const PrimitiveSet expand_prims{
+    prim::kPrimMakeTuple,
+    prim::kPrimMakeCSRTensor,
+    prim::kPrimMakeSparseTensor,
+    prim::kPrimMakeRowTensor,
+  };
+  // The MakeTuple/MakeSaprse node need expand and recurse.
+  if (IsOneOfPrimitiveCNode(output_node, expand_prims)) {
     auto make_tuple = output_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     VectorRef make_tuple_output;

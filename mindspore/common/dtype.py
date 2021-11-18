@@ -93,6 +93,7 @@ type_none = typing.TypeNone()
 tensor = typing.TensorType()
 index_slices = typing.RowTensorType()
 sparse_tensor = typing.SparseTensorType()
+csr_tensor = typing.CSRTensorType()
 undetermined = typing.UndeterminedType()
 
 function = typing.Function()

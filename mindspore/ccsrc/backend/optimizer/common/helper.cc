@@ -29,6 +29,7 @@
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_utils.h"
+#include "utils/convert_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/const_input_to_attr_registry.h"

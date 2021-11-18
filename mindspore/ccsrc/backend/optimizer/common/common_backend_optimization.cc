@@ -32,6 +32,7 @@
 #include "backend/optimizer/pass/reduce_sum_optimizer.h"
 #include "backend/optimizer/pass/add_dynamic_shape_attr.h"
 #include "backend/optimizer/pass/add_akg_kernel_attrs.h"
+#include "backend/optimizer/pass/sparse_process.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -51,6 +52,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
+  common_pm->AddPass(std::make_shared<SparseProcess>());
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());

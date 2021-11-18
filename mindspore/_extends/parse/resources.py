@@ -18,7 +18,7 @@
 import ast
 import math
 
-from mindspore import RowTensor, SparseTensor
+from mindspore import RowTensor, SparseTensor, CSRTensor
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops.composite import multitype_ops
 from mindspore._c_expression import security
@@ -140,6 +140,7 @@ convert_object_map = {
     # user defined
     RowTensor:      F.make_row_tensor,
     SparseTensor:   F.make_sparse_tensor,
+    CSRTensor:      F.make_csr_tensor
 }
 
 if not security.enable_security():

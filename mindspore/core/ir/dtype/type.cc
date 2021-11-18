@@ -50,6 +50,7 @@ static std::unordered_map<TypeId, std::string> g_type_2_lable{
   {kObjectTypeTensorType, MS_TYPE2LABLE(kObjectTypeTensorType)},
   {kObjectTypeRowTensorType, MS_TYPE2LABLE(kObjectTypeRowTensorType)},
   {kObjectTypeSparseTensorType, MS_TYPE2LABLE(kObjectTypeSparseTensorType)},
+  {kObjectTypeCSRTensorType, MS_TYPE2LABLE(kObjectTypeCSRTensorType)},
   {kObjectTypeUndeterminedType, MS_TYPE2LABLE(kObjectTypeUndeterminedType)},
   {kObjectTypeClass, MS_TYPE2LABLE(kObjectTypeClass)},
   {kObjectTypeDictionary, MS_TYPE2LABLE(kObjectTypeDictionary)},

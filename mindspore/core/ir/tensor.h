@@ -547,6 +547,63 @@ class MS_CORE_API Tensor final : public MetaTensor {
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
+
+// CSRTensor entity class
+class MS_CORE_API CSRTensor : public MetaTensor {
+ public:
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Create CSRTensor with given data type from another tensor.
+  ///
+  /// \param[in] indptr [Tensor] The indices pointer.
+  /// \param[in] indices [Tensor] The indices.
+  /// \param[in] values [Tensor] The values.
+  /// \param[in] shape The shape represented by ShapeVector of the CSRensor.
+  CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape);
+
+  /// Destructor of CSRTensor.
+  ~CSRTensor() override = default;
+
+  /// \brief Gets CSRTensor's indptr.
+  ///
+  /// \return [TensorPtr] The indices pointer.
+  TensorPtr GetIndptr() { return indptr_; }
+
+  /// \brief Gets CSRTensor's indices.
+  ///
+  /// \return [TensorPtr] The indices.
+  TensorPtr GetIndices() { return indices_; }
+
+  /// \brief Gets CSRTensor's values.
+  ///
+  /// \return [TensorPtr] The values.
+  TensorPtr GetValues() { return values_; }
+
+  /// \brief Gets CSRTensor's shape.
+  ///
+  /// \return [ShapeVector] The shape of the tensor.
+  const ShapeVector &shape() const { return shape_; }
+
+  /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
+  ///
+  /// \param[in] tensor The Tensor object to be compared.
+  /// \return True if having same type, shape and data address, otherwise false.
+  bool operator==(const CSRTensor &csr_tensor) const;
+
+  /// \brief Get display information of this Tensor.
+  ///
+  /// \return The display information of this Tensor.
+  std::string ToString() const override;
+
+  TypePtr Dtype() const { return values_->Dtype(); }
+
+ private:
+  TensorPtr indptr_;
+  TensorPtr indices_;
+  TensorPtr values_;
+  ShapeVector shape_{};
+};
+using CSRTensorPtr = std::shared_ptr<CSRTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 

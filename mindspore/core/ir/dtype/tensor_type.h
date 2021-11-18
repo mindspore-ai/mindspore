@@ -190,6 +190,45 @@ class MS_CORE_API SparseTensorType final : public Object {
   TypePtr element_type_;
 };
 using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
+
+/// \brief CSRTensorType defines interface for sparse tensor data type.
+class MS_CORE_API CSRTensorType : public Object {
+ public:
+  /// \brief Default constructor for CSRTensorType.
+  CSRTensorType() : Object(kObjectTypeCSRTensorType, kObjectTypeUndeterminedType) {}
+
+  /// \brief Constructor for CSRTensorType.
+  ///
+  /// \param[in] ele The element of CSRTensorType.
+  explicit CSRTensorType(const TypePtr &ele)
+      : Object(kObjectTypeCSRTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+
+  /// \brief Destructor of CSRTensorType.
+  ~CSRTensorType() override = default;
+  MS_DECLARE_PARENT(CSRTensorType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeCSRTensorType; }
+
+  /// \brief Get the element of CSRTensorType object.
+  ///
+  /// \return The element of CSRTensorType object.
+  const TypePtr element() const { return element_type_; }
+
+  /// \brief Set the element of CSRTensorType object.
+  ///
+  /// \param[in] element_type Define the element type to be set.
+  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
+
+  TypePtr DeepCopy() const override;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+
+ private:
+  TypePtr element_type_;
+};
+using CSRTensorTypePtr = std::shared_ptr<CSRTensorType>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TENSORTYPE_H_

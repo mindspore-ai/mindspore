@@ -334,9 +334,14 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputByCallNode(const K
 std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
   std::vector<KernelWithIndex> ret;
   std::vector<KernelWithIndex> ret_empty;
-
-  // The makeTuple node need expand and recurse.
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+  const PrimitiveSet expand_prims{
+    prim::kPrimMakeTuple,
+    prim::kPrimMakeCSRTensor,
+    prim::kPrimMakeSparseTensor,
+    prim::kPrimMakeRowTensor,
+  };
+  // The MakeTuple/MakeSparse node need expand and recurse.
+  if (IsOneOfPrimitiveCNode(node, expand_prims)) {
     auto make_tuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
@@ -385,8 +390,8 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
       AnfAlgo::VisitKernelWithReturnType(node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState});
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
-    // The makeTuple node need recurse.
-    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
+    // The MakeTuple/MakeSparse node need recurse.
+    if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
       auto output_vector = GetAllOutputWithIndex(output_with_index.first);
       (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
       continue;

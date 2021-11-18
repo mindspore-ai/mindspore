@@ -21,10 +21,11 @@ from mindspore.communication.management import get_rank, get_group_size
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 from .._c_expression import Tensor as Tensor_
+from .._c_expression import CSRTensor as CSRTensor_
 from .._c_expression import PynativeExecutor_
 from .._checkparam import Validator as validator
 
-__all__ = ['Tensor', 'RowTensor', 'SparseTensor']
+__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_, np.complex64, np.complex128)
@@ -2239,6 +2240,97 @@ class SparseTensor:
     def dense_shape(self):
         return self.__dense_shape
 
+class CSRTensor(CSRTensor_):
+    """
+    Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
+    values indicated by `values` and row and column positions indicated by `indptr`
+    and `indices`.
+
+    Alternatively, CSRTensor can be initialized by passing another CSRTensor as input.
+    Currently this constructor can only be supported in PyNative Mode.
+
+    Note:
+        This is an experimental feature and is subjected to change.
+
+    Args:
+        indptr (Tensor): 1-D Tensor of size `shape[0] + 1`, which indicates the
+            start and end point for `values` in each row. Default: None. If provided,
+            must be :class:`mindspore.int16`, :class:`mindspore.int32` or :class:`mindspore.int64`.
+        indices (Tensor): 1-D Tensor, which has the same length as `values`. `indices`
+            indicates the which column `values` should be placed. Default: None. If provided,
+            must be :class:`mindspore.int16`, :class:`mindspore.int32` or :class:`mindspore.int64`.
+        values (Tensor): 1-D Tensor, which has the same length as `indices`. `values`
+            stores the data for CSRTensor. Default: None.
+        shape (Tuple): A tuple indicates the shape of the CSRTensor, its length must
+            be `2`, as only 2-D CSRTensor is currently supported, and `shape[0]` must
+            equal to `indptr[0] - 1`, which all equal to number of rows of the CSRTensor.
+        csr_tensor (CSRTensor): A CSRTensor object.
+
+    Outputs:
+        CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, CSRTensor
+        >>> # initialize a csr_tensor with indptr, indices, values and shape
+        >>> indptr = Tensor([0, 1, 2])
+        >>> indices = Tensor([0, 1])
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> shape = (3, 4)
+        >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+        >>> # initialize a csr_tensor from another csr_tensor
+        >>> csr_tensor_2 = CSRTensor(csr_tensor=csr_tensor)
+        >>> # access a data member of CSRTensor
+        >>> print(indptr == csr_tensor.indptr)
+        >>> [ True  True  True]
+    """
+    def __init__(self, indptr=None, indices=None, values=None, shape=None, csr_tensor=None):
+        self.init_finished = False
+        # Case 1: directly init a CSRTensor from another CSRTensor
+        if indptr is None and indices is None and values is None and shape is None:
+            if not isinstance(csr_tensor, (CSRTensor, CSRTensor_)):
+                raise TypeError("If only one input provided, it must be a CSRTensor.")
+            CSRTensor_.__init__(self, csr_tensor)
+        # Case 2: init a CSRTensor from indptr, indices, values and shape
+        else:
+            if (indptr is None or indices is None or values is None or shape is None):
+                raise TypeError("Inputs must follow: CSRTensor(indptr, indices, values, shape).")
+            if not (isinstance(indptr, Tensor) and isinstance(indices, Tensor) \
+                    and isinstance(values, Tensor) and isinstance(shape, tuple)):
+                raise TypeError("Inputs must follow: CSRTensor(tensor, tensor, tensor, tuple).")
+            if len(shape) != 2 or shape[0] + 1 != indptr.shape[0] or shape[1] <= 0:
+                raise ValueError("Shape length should be 2, shape[0] should equal to indptr.shape[0] - 1")
+            if indptr.dtype not in (mstype.int16, mstype.int32, mstype.int64):
+                raise TypeError("indptr must have integer data type.")
+            if indices.dtype not in (mstype.int16, mstype.int32, mstype.int64):
+                raise TypeError("indices must have integer data type.")
+            CSRTensor_.__init__(self, indptr, indices, values, shape)
+        self.init_finished = True
+
+    def __repr__(self):
+        """Avoid PyTest Segfault when CSRTensor is not initialized."""
+        if self.init_finished:
+            return CSRTensor_.__repr__(self)
+        return ''
+
+    @property
+    def indptr(self):
+        return Tensor(self._indptr)
+
+    @property
+    def indices(self):
+        return Tensor(self._indices)
+
+    @property
+    def values(self):
+        return Tensor(self._values)
+
+    @property
+    def shape(self):
+        return self._shape
+
+    def to_tuple(self):
+        return self.indptr, self.indices, self.values, self.shape
 
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
