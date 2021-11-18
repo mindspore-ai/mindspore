@@ -216,7 +216,11 @@ class LineSearch(nn.Cell):
         else:
             old_phi0 = old_old_fval
             candidate_start_value = 1.01 * 2 * (phi_0 - old_phi0) / dphi_0
-            start_value = mnp.minimum(candidate_start_value, _FLOAT_ONE)
+            start_value = mnp.where(
+                mnp.isfinite(candidate_start_value),
+                mnp.minimum(candidate_start_value, _FLOAT_ONE),
+                _FLOAT_ONE
+            )
 
         state = {
             "done": _BOOL_FALSE,
