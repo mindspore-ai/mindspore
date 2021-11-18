@@ -422,6 +422,7 @@ class _Grad(GradOperation_):
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
+        self.grad_position = None
 
     def _pynative_forward_run(self, grad, args, kwargs, fn):
         """ Pynative forward run to build grad graph. """
@@ -446,7 +447,7 @@ class _Grad(GradOperation_):
                 fn.set_grad(False)
 
     def __call__(self, fn, weights=None, grad_position=0):
-        if self.grad_fn is not None and self.fn == fn:
+        if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position:
             return self.grad_fn
         grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
@@ -493,6 +494,7 @@ class _Grad(GradOperation_):
 
         self.grad_fn = after_grad
         self.fn = fn
+        self.grad_position = grad_position
         return self.grad_fn
 
 
