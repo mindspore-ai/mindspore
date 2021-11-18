@@ -31,7 +31,7 @@ class LiteKernelUtil {
   static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
   static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-  static bool IsSwitchCall(kernel::LiteKernel *kernel);
+  static bool IsSwitchTypeCall(kernel::LiteKernel *kernel);
 #endif
   static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                    const schema::PrimitiveType &primitive_type);

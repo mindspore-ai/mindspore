@@ -194,7 +194,7 @@ void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
+bool LiteKernelUtil::IsSwitchTypeCall(kernel::LiteKernel *kernel) {
 #ifndef DELEGATE_CLIP
   if (kernel->desc().arch == kernel::kDelegate) {
     return false;
@@ -205,7 +205,7 @@ bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
     return false;
   }
   for (auto &node : subgraph_kernel->nodes()) {
-    if (node->type() == schema::PrimitiveType_Switch &&
+    if ((node->type() == schema::PrimitiveType_Switch || node->type() == schema::PrimitiveType_SwitchLayer) &&
         InputsContainsSpecificNode(node, schema::PrimitiveType_PartialFusion) && node->out_kernels().size() == 1 &&
         node->out_kernels().front()->type() == schema::PrimitiveType_Call) {
       return true;
