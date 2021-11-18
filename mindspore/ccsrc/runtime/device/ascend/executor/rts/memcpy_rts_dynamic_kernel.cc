@@ -17,14 +17,15 @@
 #include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"
 
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 void MemcpyRtsDynamicKernel::Execute() {
-  auto status = rtMemcpyAsync(dst_, dest_max_, src_, count_, RT_MEMCPY_DEVICE_TO_DEVICE, stream_);
+  auto status = aclrtMemcpyAsync(dst_, dest_max_, src_, count_, ACL_MEMCPY_DEVICE_TO_DEVICE, stream_);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op execute rtMemcpyAsync failed!";
+    MS_LOG(EXCEPTION) << "MemCpyAsync op execute aclrtMemcpyAsync failed!";
   }
 }
 }  // namespace ascend

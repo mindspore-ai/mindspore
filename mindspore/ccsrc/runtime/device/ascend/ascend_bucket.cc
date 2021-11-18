@@ -109,13 +109,14 @@ void AscendBucket::CopyTensorToContiguousMemory() {
     MS_LOG(DEBUG) << "MemcpyAsync dst size:" << memcpy_output_addrs_[i]->size
                   << " src size:" << memcpy_input_addrs_[i]->size;
     if (memcpy_output_addrs_[i]->size < memcpy_input_addrs_[i]->size) {
-      MS_LOG(EXCEPTION) << "rtMemcpyAsync dst size < src size";
+      MS_LOG(EXCEPTION) << "aclrtMemcpyAsync dst size < src size";
     }
 
-    auto ret = rtMemcpyAsync(memcpy_output_addrs_[i]->addr, memcpy_output_addrs_[i]->size, memcpy_input_addrs_[i]->addr,
-                             memcpy_input_addrs_[i]->size, RT_MEMCPY_DEVICE_TO_DEVICE, compute_stream_);
+    auto ret =
+      aclrtMemcpyAsync(memcpy_output_addrs_[i]->addr, memcpy_output_addrs_[i]->size, memcpy_input_addrs_[i]->addr,
+                       memcpy_input_addrs_[i]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, compute_stream_);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rtMemcpyAsync failed, error code:" << ret;
+      MS_LOG(EXCEPTION) << "Call aclrtMemcpyAsync failed, error code:" << ret;
     }
   }
 }

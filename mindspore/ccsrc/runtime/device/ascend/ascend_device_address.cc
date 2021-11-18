@@ -21,6 +21,7 @@
 #include <set>
 #include <algorithm>
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
@@ -74,7 +75,7 @@ const std::set<std::string> kOpNeedTransFormat = {
   kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
   kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
 
-void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) {
+void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind) {
   if (size == 0) {
     return;
   }
@@ -86,11 +87,11 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->SetContext();
 
-  // Only apply asynchronous copy in Pynative && RT_MEMCPY_HOST_TO_DEVICE mode
-  if (execution_mode != kPynativeMode || kind != RT_MEMCPY_HOST_TO_DEVICE) {
-    auto ret_rt_memcpy = rtMemcpy(dst, size, src, size, kind);
+  // Only apply asynchronous copy in Pynative && ACL_MEMCPY_HOST_TO_DEVICE mode
+  if (execution_mode != kPynativeMode || kind != ACL_MEMCPY_HOST_TO_DEVICE) {
+    auto ret_rt_memcpy = aclrtMemcpy(dst, size, src, size, kind);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "rtMemcpy failed";
+      MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
     }
   } else {
     auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(RT_MEMCPY_HOST_TO_DEVICE_EX));
@@ -126,7 +127,7 @@ bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src,
   }
   std::vector<float16> half_data(elem_num);
   FloatToHalf(half_data.data(), src, elem_num);
-  SyncMemory(dst, half_data.data(), dst_size, RT_MEMCPY_HOST_TO_DEVICE);
+  SyncMemory(dst, half_data.data(), dst_size, ACL_MEMCPY_HOST_TO_DEVICE);
   return true;
 }
 
@@ -137,7 +138,7 @@ bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *s
   size_t elem_num = dst_size / sizeof(float);
   auto host_tmp = std::vector<float>(elem_num);
   DoubleToFloat(host_tmp.data(), src, elem_num);
-  SyncMemory(dst, host_tmp.data(), dst_size, RT_MEMCPY_HOST_TO_DEVICE);
+  SyncMemory(dst, host_tmp.data(), dst_size, ACL_MEMCPY_HOST_TO_DEVICE);
   return true;
 }
 
@@ -148,7 +149,7 @@ bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src,
                                 << dst_size << "]";
   }
   std::vector<float16> half_data(elem_num);
-  SyncMemory(half_data.data(), src, src_size, RT_MEMCPY_DEVICE_TO_HOST);
+  SyncMemory(half_data.data(), src, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
   HalfToFloat(dst, half_data.data(), elem_num);
   return true;
 }
@@ -159,7 +160,7 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
   }
   size_t elem_num = src_size / sizeof(float);
   auto host_tmp = std::vector<float>(elem_num);
-  SyncMemory(host_tmp.data(), src, src_size, RT_MEMCPY_DEVICE_TO_HOST);
+  SyncMemory(host_tmp.data(), src, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
   FloatToDouble(dst, host_tmp.data(), elem_num);
   return true;
 }
@@ -208,14 +209,14 @@ bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) co
   MS_EXCEPTION_IF_NULL(host_ptr);
   BindDevice();
   SyncStream();
-  SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
+  SyncMemory(host_ptr, ptr_, size, ACL_MEMCPY_DEVICE_TO_HOST);
   return true;
 }
 
 bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   BindDevice();
-  SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
+  SyncMemory(ptr_, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE);
   return true;
 }
 
@@ -236,14 +237,14 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   }
   if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW) {
     if (type_id_ == type) {
-      SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
+      SyncMemory(host_ptr, ptr_, size, ACL_MEMCPY_DEVICE_TO_HOST);
       sync_ok = true;
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = SyncDeviceToHostAndFloatToFloat64(host_ptr, size, ptr_, size_);
     } else {
       auto shape_size = abstract::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
-      SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+      SyncMemory(host.data(), ptr_, size_, ACL_MEMCPY_DEVICE_TO_HOST);
       const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size_};
       sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
@@ -317,10 +318,10 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     return false;
   }
   if (type_id_ == type) {
-    SyncMemory(host_ptr, output_addr_vec[0], size, RT_MEMCPY_DEVICE_TO_HOST);
+    SyncMemory(host_ptr, output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
   } else {
     auto host = std::vector<uint8_t>(size);
-    SyncMemory(host.data(), output_addr_vec[0], size, RT_MEMCPY_DEVICE_TO_HOST);
+    SyncMemory(host.data(), output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
     auto shape_size = abstract::ShapeSize(host_shape);
     const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
@@ -356,7 +357,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
     }
   }
   auto host_tmp = std::vector<uint8_t>(size_);
-  SyncMemory(host_tmp.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+  SyncMemory(host_tmp.data(), ptr_, size_, ACL_MEMCPY_DEVICE_TO_HOST);
   auto node_index = GetNodeIndex();
   if (type_id_ != type) {
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
@@ -403,7 +404,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   }
   if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW || format_ == format) {
     if (type_id_ == type) {
-      SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
+      SyncMemory(ptr_, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE);
       sync_ok = true;
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
@@ -416,7 +417,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
         MS_LOG(ERROR) << "Trans data type failed.";
         return false;
       }
-      SyncMemory(ptr_, host_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
+      SyncMemory(ptr_, host_tmp.data(), size_, ACL_MEMCPY_HOST_TO_DEVICE);
     }
   } else {
     auto iter = kOpNeedTransFormat.find(format_);
@@ -449,7 +450,7 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t si
     MS_LOG(ERROR) << "src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
     return false;
   }
-  auto ret_rt_memcpy = rtMemcpy(ptr_, size, src_ptr, size, RT_MEMCPY_DEVICE_TO_DEVICE);
+  auto ret_rt_memcpy = aclrtMemcpy(ptr_, size, src_ptr, size, ACL_MEMCPY_DEVICE_TO_DEVICE);
   if (ret_rt_memcpy != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "SyncDeviceToDevice failed, rtMemcpy mem size [" << size << "], ret [" << ret_rt_memcpy << "]";
     return false;
@@ -515,7 +516,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    SyncMemory(ptr_, dst_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
+    SyncMemory(ptr_, dst_tmp.data(), size_, ACL_MEMCPY_HOST_TO_DEVICE);
   } else {
     const trans::FormatArgs format_args{host_ptr, size_, kOpFormat_NCHW, format_, host_shape, device_shape, type_id_};
     auto host_tmp = std::vector<uint8_t>(size_);
@@ -524,7 +525,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    SyncMemory(ptr_, host_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
+    SyncMemory(ptr_, host_tmp.data(), size_, ACL_MEMCPY_HOST_TO_DEVICE);
   }
   return sync_ok;
 }
@@ -579,9 +580,9 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size, host_shape, host_type);
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
-    auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy = aclrtMemcpy(host_tmp.data(), size_, ptr_, size_, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
+      MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
     }
     std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;

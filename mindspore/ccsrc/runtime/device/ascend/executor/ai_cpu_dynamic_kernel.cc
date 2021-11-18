@@ -16,6 +16,7 @@
 
 #include "runtime/device/ascend/executor/ai_cpu_dynamic_kernel.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/kernel.h"
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -95,10 +96,10 @@ void AiCpuDynamicKernel::Initialize() {
   }
   ext_info_size_ = ext_info_data_.size();
 
-  ret = rtMemcpy(ext_info_addr_dev_, ext_info_size_, ext_info_data_.data(), ext_info_data_.size(),
-                 RT_MEMCPY_HOST_TO_DEVICE);
+  ret = aclrtMemcpy(ext_info_addr_dev_, ext_info_size_, ext_info_data_.data(), ext_info_data_.size(),
+                    ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtMemcpy ext_info_addr_dev_ failed. Op name: " << cnode->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Call aclrtMemcpy ext_info_addr_dev_ failed. Op name: " << cnode->fullname_with_scope();
   }
 
   auto aicpu_param_head = reinterpret_cast<kernel::AicpuParamHead *>(args_.data());
@@ -169,10 +170,10 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
     }
   }
 
-  auto ret = rtMemcpy(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
-                      ext_info_handler_->GetExtInfoLen(), RT_MEMCPY_HOST_TO_DEVICE);
+  auto ret = aclrtMemcpy(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
+                         ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "UpdateExtInfo rtMemcpy failed. Node info: " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << cnode->fullname_with_scope();
     return false;
   }
 
@@ -185,14 +186,14 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "UpdateOutputShapeFromExtInfo start. Op name " << cnode->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
-  auto ret = rtMemcpy(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
-                      ext_info_size_, RT_MEMCPY_DEVICE_TO_HOST);
+  auto ret = aclrtMemcpy(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
+                         ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtMemcpy output shape failed. Op name: " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << "aclrtMemcpy output shape failed. Op name: " << cnode->fullname_with_scope();
     return false;
   }
 
-  MS_LOG(INFO) << "rtMemcpy from device to host success";
+  MS_LOG(INFO) << "aclrtMemcpy from device to host success";
   std::vector<TypeId> type_ids;
   std::vector<std::vector<size_t>> shapes;
 

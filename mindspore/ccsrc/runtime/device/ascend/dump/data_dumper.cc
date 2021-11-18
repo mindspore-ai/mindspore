@@ -24,6 +24,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/convert_utils_base.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
 #include "runtime/device/ascend/ge_types_convert.h"
@@ -335,9 +336,9 @@ void DataDumper::OpDebugRegister() {
   }
 
   rt_ret =
-    rtMemcpy(op_debug_dump_args_, sizeof(void *), &op_debug_buffer_addr_, sizeof(void *), RT_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(op_debug_dump_args_, sizeof(void *), &op_debug_buffer_addr_, sizeof(void *), ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtMemcpy failed, ret = " << rt_ret;
+    MS_LOG(EXCEPTION) << "[DataDump] Call aclrtMemcpy failed, ret = " << rt_ret;
   }
 
   rt_ret = rtDebugRegister(model_handle_(), op_debug_mode, op_debug_buffer_addr_, &debug_stream_id_, &debug_task_id_);
@@ -381,9 +382,9 @@ void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, voi
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed";
   }
-  rt_ret = rtMemcpy(*ptr, proto_size, proto_str.c_str(), proto_size, RT_MEMCPY_HOST_TO_DEVICE);
+  rt_ret = aclrtMemcpy(*ptr, proto_size, proto_str.c_str(), proto_size, ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtMemcpy failed";
+    MS_LOG(EXCEPTION) << "[DataDump] Call aclrtMemcpy failed";
   }
 
   MS_LOG(INFO) << "[DataDump] rtDatadumpInfoLoad start";

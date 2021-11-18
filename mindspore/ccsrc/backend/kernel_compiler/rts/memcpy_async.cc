@@ -19,6 +19,7 @@
 #include <string>
 #include "abstract/utils.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
 #include "utils/ms_context.h"
@@ -54,16 +55,17 @@ bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
   if (outputs[0]->size < inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax " << outputs[0]->size << " is less than src size " << inputs[0]->size;
+    MS_LOG(EXCEPTION) << "aclrtMemcpyAsync destMax " << outputs[0]->size << " is less than src size "
+                      << inputs[0]->size;
   }
   // input x -> memcpy_async -> AllReduce
   if (outputs[0]->size > inputs[0]->size) {
-    MS_LOG(WARNING) << "rtMemcpyAsync destMax > src size";
+    MS_LOG(WARNING) << "aclrtMemcpyAsync destMax > src size";
   }
-  rtError_t status = rtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                   RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+  rtError_t status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
+                                      ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op rtMemcpyAsync failed!";
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed!";
     return false;
   }
   return true;
@@ -117,17 +119,17 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[0]);
   if (outputs[0]->size < inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax < src size";
+    MS_LOG(EXCEPTION) << "aclrtMemcpyAsync destMax < src size";
   }
   // input x -> memcpy_async -> AllReduce
   if (outputs[0]->size > inputs[0]->size) {
-    MS_LOG(WARNING) << "rtMemcpyAsync destMax > src size";
+    MS_LOG(WARNING) << "aclrtMemcpyAsync destMax > src size";
   }
 
   stream_id_ = stream_id;
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
     std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
-                                          inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
+                                          inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }
@@ -149,12 +151,12 @@ device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cno
   MS_EXCEPTION_IF_NULL(kernel_outputs[0]);
   MS_EXCEPTION_IF_NULL(kernel_inputs[0]);
   if (kernel_outputs[0]->size < kernel_inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax " << kernel_outputs[0]->size << " is less than src size "
+    MS_LOG(EXCEPTION) << "aclrtMemcpyAsync destMax " << kernel_outputs[0]->size << " is less than src size "
                       << kernel_inputs[0]->size;
   }
   // input x -> memcpy_async -> AllReduce
   if (kernel_outputs[0]->size > kernel_inputs[0]->size) {
-    MS_LOG(WARNING) << "Check rtMemcpyAsync destMax > src size";
+    MS_LOG(WARNING) << "Check aclrtMemcpyAsync destMax > src size";
   }
 
   return std::make_shared<MemcpyRtsDynamicKernel>(stream_ptr, cnode_ptr, kernel_outputs[0]->addr,

@@ -28,6 +28,7 @@
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
 #include "runtime/rt.h"
+#include "acl/acl_rt.h"
 
 using mindspore::kernel::Address;
 using AddressPtr = std::shared_ptr<Address>;
@@ -198,9 +199,9 @@ bool AscendPsCache::SynchronizeStream() {
 bool AscendPsCache::CopyHostMemToDevice(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
-  auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_HOST_TO_DEVICE, stream_);
+  auto ret = aclrtMemcpyAsync(dst, size, src, size, ACL_MEMCPY_HOST_TO_DEVICE, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtMemcpyAsync failed, the error num is:" << ret;
+    MS_LOG(ERROR) << "aclrtMemcpyAsync failed, the error num is:" << ret;
     return false;
   }
   return true;
@@ -209,9 +210,9 @@ bool AscendPsCache::CopyHostMemToDevice(void *dst, const void *src, size_t size)
 bool AscendPsCache::CopyDeviceMemToHost(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
-  auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_DEVICE_TO_HOST, stream_);
+  auto ret = aclrtMemcpyAsync(dst, size, src, size, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtMemcpyAsync failed, the error num is:" << ret;
+    MS_LOG(ERROR) << "aclrtMemcpyAsync failed, the error num is:" << ret;
     return false;
   }
   return true;

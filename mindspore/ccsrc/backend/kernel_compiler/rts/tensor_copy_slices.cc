@@ -24,6 +24,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "common/trans.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/device/kernel_runtime.h"
 #include "utils/ms_context.h"
 
@@ -53,16 +54,16 @@ bool TensorCopySlices::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
 
-  auto status = rtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                              RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+  auto status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
+                                 ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op rtMemcpyAsync failed!";
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed!";
     return false;
   }
-  status = rtMemcpyAsync(VoidPointerOffset(outputs[0]->addr, offset_), copy_size_, inputs[1]->addr, copy_size_,
-                         RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+  status = aclrtMemcpyAsync(VoidPointerOffset(outputs[0]->addr, offset_), copy_size_, inputs[1]->addr, copy_size_,
+                            ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op rtMemcpyAsync failed!";
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed!";
     return false;
   }
   return true;
@@ -151,10 +152,10 @@ std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr>
   stream_id_ = stream_id;
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr1 =
     std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
-                                          inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
+                                          inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr2 = std::make_shared<MemcpyAsyncTaskInfo>(
     unique_name_, stream_id, VoidPointerOffset(outputs[0]->addr, offset_), copy_size_, inputs[1]->addr, copy_size_,
-    RT_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
+    ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   return {task_info_ptr1, task_info_ptr2};
 }
 

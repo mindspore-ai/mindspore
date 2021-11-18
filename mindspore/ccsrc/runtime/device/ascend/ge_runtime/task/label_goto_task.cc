@@ -16,6 +16,7 @@
 
 #include "runtime/device/ascend/ge_runtime/task/label_goto_task.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
@@ -64,7 +65,7 @@ void LabelGotoTask::Distribute() {
     }
 
     uint64_t index = 0;
-    rt_ret = rtMemcpy(index_value_, sizeof(uint64_t), &index, sizeof(index), RT_MEMCPY_HOST_TO_DEVICE);
+    rt_ret = aclrtMemcpy(index_value_, sizeof(uint64_t), &index, sizeof(index), ACL_MEMCPY_HOST_TO_DEVICE);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
     }

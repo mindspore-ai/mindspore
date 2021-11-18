@@ -17,6 +17,7 @@
 #include "runtime/device/ascend/ge_runtime/task/tbe_task.h"
 #include <vector>
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/kernel.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
 
@@ -78,8 +79,8 @@ void TbeTask::Distribute() {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret << " mem size " << args_size;
   }
 
-  rt_ret = rtMemcpy(args_, args_size, reinterpret_cast<void *>(tensor_device_addrs.data()), args_size,
-                    RT_MEMCPY_HOST_TO_DEVICE);
+  rt_ret = aclrtMemcpy(args_, args_size, reinterpret_cast<void *>(tensor_device_addrs.data()), args_size,
+                       ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
