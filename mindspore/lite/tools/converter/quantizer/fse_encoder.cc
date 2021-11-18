@@ -21,6 +21,7 @@
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite::quant {
@@ -392,6 +393,10 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, BitStream *bs
     return RET_ERROR;
   }
   *out_size = offset;
+  if (offset <= 0) {
+    MS_LOG(ERROR) << "mixed bit out_size <= 0";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -421,6 +426,14 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
   tensor_input->weightQunatCompressType = schema::WeightQunatCompressType_FSE;
   tensor_input->dataType = TypeId::kNumberTypeFloat32;
   free(out8);
+  int total_size = sizeof(float);
+  for (auto dim : tensor_input->dims) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(total_size, dim), RET_ERROR, "Int mul overflow.");
+    total_size *= dim;
+  }
+  MS_ASSERT(out_size > 0);
+  MS_LOG(INFO) << tensor_input->name << " Origin size:" << total_size << " Compressed size:" << out_size
+               << " Compression ratio:" << 1.0 * total_size / out_size;
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

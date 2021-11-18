@@ -23,11 +23,12 @@
 
 namespace mindspore::lite::quant {
 WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(std::move(graph)) {
+  this->flags = config;
   this->bit_num_ = config.commonQuantParam.bit_num;
   if (this->bit_num_ == 0) {
     type_id_ = kNumberTypeInt16;
     this->is_mixed_bit_ = true;
-    mixed_bit_init_scale_ = flags.mixedBitWeightQuantParam.init_scale;
+    mixed_bit_init_scale_ = config.mixedBitWeightQuantParam.init_scale;
   }
   quant_strategy_ = std::make_unique<QuantStrategy>(config.commonQuantParam.min_quant_weight_size,
                                                     config.commonQuantParam.min_quant_weight_channel);

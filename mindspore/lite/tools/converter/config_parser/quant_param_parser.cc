@@ -107,6 +107,11 @@ int QuantParamParser::ParseMixedBitWeightQuant(const MixedBitWeightQuantString &
     MS_LOG(ERROR) << "INPUT ILLEGAL: init_scale should at (0,1)";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!mixed_bit_weight_quant_string.auto_tune.empty() &&
+      !ConvertBool(mixed_bit_weight_quant_string.auto_tune, &mixed_bit_weight_quant->auto_tune)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: auto_tune should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 

@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstdio>
 #include <map>
+#include "tools/converter/quantizer/quantize_util.h"
 #include "nnacl/op_base.h"
 #include "tools/common/statistic_utils.h"
 #include "src/tensor.h"
@@ -84,7 +85,7 @@ class DebugInfoManager {
   int AddComparedInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
                       int tensor_index, mindspore::lite::Tensor *compared_tensor);
 
-  void PrintInfo();
+  void PrintAllDebugInfo();
 
   int SaveInfo(const std::string &file_path);
 
@@ -120,16 +121,25 @@ class DebugInfoManager {
 
   int SaveQuantParam(const std::string &file_path, const std::vector<Tensor *> &quant_tensors);
   template <typename T>
-  void GetStatByTensor(const std::vector<T> &tensor_data, QuantDebugInfo *infos) {
+  void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
     MS_ASSERT(infos != nullptr);
-    infos->min = mindposre::lite::Quantile(tensor_data, 0.0f);
-    infos->quartile1 = mindposre::lite::Quantile(tensor_data, 0.25f);
-    infos->median = mindposre::lite::Quantile(tensor_data, 0.5f);
-    infos->quartile3 = mindposre::lite::Quantile(tensor_data, 0.75f);
-    infos->max = mindposre::lite::Quantile(tensor_data, 1.0f);
-    infos->mean = mindposre::lite::GetMeanValue(tensor_data);
-    infos->var = mindposre::lite::GetVarValue(tensor_data);
-    infos->sparsity = mindposre::lite::GetSparsity(tensor_data);
+    std::vector<T> bak_data(tensor_data, tensor_data + element_num);
+    auto size = bak_data.size();
+    auto const Q1 = static_cast<int>(0.25 * size);
+    auto const Q2 = static_cast<int>(0.50 * size);
+    auto const Q3 = static_cast<int>(0.75 * size);
+    infos->min = mindspore::lite::GetMinValue(bak_data);
+    std::nth_element(bak_data.begin() + 1, bak_data.begin() + Q1, bak_data.end());
+    infos->quartile1 = bak_data.at(Q1);
+    std::nth_element(bak_data.begin() + Q1 + 1, bak_data.begin() + Q2, bak_data.end());
+    infos->median = bak_data.at(Q2);
+    std::nth_element(bak_data.begin() + Q2 + 1, bak_data.begin() + Q3, bak_data.end());
+    infos->quartile3 = bak_data.at(Q3);
+    infos->max = mindspore::lite::GetMaxValue(bak_data);
+    auto mean_var = mindspore::lite::GetMeanVar(bak_data);
+    infos->mean = mean_var.first;
+    infos->var = mean_var.second;
+    infos->sparsity = mindspore::lite::GetSparsity(bak_data);
   }
 
  private:
