@@ -62,6 +62,22 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   }
 }
 
+Dimensions PrepareMatMulStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_graph, bool transpose_a,
+                                 bool transpose_b, size_t iter_op_inputs) {
+  Dimensions s;
+  if (transpose_a && (iter_op_inputs == 0)) {
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+  } else if (transpose_b && (iter_op_inputs == 1)) {
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+  } else {
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
+    s.push_back(static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
+  }
+  return s;
+}
+
 Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                         const size_t iter_graph, const size_t iter_ops) {
   Strategys strategies;
@@ -69,76 +85,8 @@ Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<s
   bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
   bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
 
-  // HCCL does not support multi-dimension partition, and the hardware does not support excessive
-  // number of EVENT, so we temporarily disable matmul's multi-dimension partition function.
-  const float max_cut = 1.0 / SizeToFloat(g_device_manager->DeviceNum());
-  // The rule of cut is 0.5, 0.125. To compare the result we have to use ">" so we multiply max_cut to 1.1
-  if (graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h > max_cut * 1.1 &&
-      graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w > max_cut * 1.1) {
-    graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = 1.0;
-    graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_w = 1.0;
-    graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_h = 1.0;
-    graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = 1.0;
-    graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = 1.0;
-    graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = 1.0;
-
-    auto shape_1 = ops[iter_ops]->inputs_tensor_info()[0].shape()[0];
-    if (transpose_a) {
-      shape_1 = ops[iter_ops]->inputs_tensor_info()[0].shape()[1];
-    }
-    auto shape_4 = ops[iter_ops]->inputs_tensor_info()[1].shape()[1];
-    if (transpose_b) {
-      shape_4 = ops[iter_ops]->inputs_tensor_info()[1].shape()[0];
-    }
-
-    bool already_cut = false;
-    if (shape_1 >= shape_4) {
-      if (LongToSize(shape_1) % g_device_manager->DeviceNum() == 0) {
-        graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = max_cut;
-        graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = max_cut;
-        already_cut = true;
-      }
-      if (!already_cut && LongToSize(shape_4) % g_device_manager->DeviceNum() == 0) {
-        graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = max_cut;
-        graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = max_cut;
-        already_cut = true;
-      }
-    } else {
-      if (LongToSize(shape_4) % g_device_manager->DeviceNum() == 0) {
-        graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = max_cut;
-        graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = max_cut;
-        already_cut = true;
-      }
-      if (!already_cut && LongToSize(shape_1) % g_device_manager->DeviceNum() == 0) {
-        graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = max_cut;
-        graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = max_cut;
-        already_cut = true;
-      }
-    }
-
-    if (!already_cut) {
-      MS_LOG(EXCEPTION) << "Failure: MatMul's shape is invalid.";
-    }
-  }
-
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
-    Dimensions s;
-    if (transpose_a && (iter_op_inputs == 0)) {
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
-    } else if (transpose_b && (iter_op_inputs == 1)) {
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
-    } else {
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_h));
-      s.push_back(
-        static_cast<int64_t>(1.0 / graph->nodes[iter_graph].apply.arguments[iter_op_inputs].tensor_str.str_w));
-    }
+    Dimensions s = PrepareMatMulStrategy(graph, iter_graph, transpose_a, transpose_b, iter_op_inputs);
     strategies.push_back(s);
   }
   return strategies;
