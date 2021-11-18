@@ -220,16 +220,11 @@ void ReduceInt8CPUKernel::ReduceMean4DCalQuantParam() {
 
 int ReduceInt8CPUKernel::CalculateQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  MS_CHECK_TRUE_MSG(!input->quant_params().empty(), RET_ERROR, "input quant_params is empty.");
   lite::Tensor *output = out_tensors_.at(0);
-  if (input == nullptr || input->quant_params().size() < 1) {
-    MS_LOG(ERROR) << "Reduce input tensor error.";
-    return RET_NULL_PTR;
-  }
-  if (output == nullptr || output->quant_params().size() < 1) {
-    MS_LOG(ERROR) << "Reduce output tensor error.";
-    return RET_NULL_PTR;
-  }
-
+  CHECK_NULL_RETURN(output);
+  MS_CHECK_TRUE_MSG(!output->quant_params().empty(), RET_ERROR, "output quant_params is empty.");
   quant_arg_.in_scale_ = input->quant_params().front().scale;
   quant_arg_.in_zp_ = input->quant_params().front().zeroPoint;
   quant_arg_.out_scale_ = output->quant_params().front().scale;
@@ -252,12 +247,16 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
     } else {
       for (auto i = 0; i < num_axes_; i++) {
         auto axis = axes_[i];
+        if (axis < 0) {
+          axis += in_tensors_.at(0)->shape().size();
+        }
+        if (axis < 0 || axis >= static_cast<int>(in_tensors_.at(0)->shape().size())) {
+          MS_LOG(ERROR) << axis << " axis is valid";
+          return RET_ERROR;
+        }
         double reciprocal = 1.0 / in_tensors_.at(0)->shape()[axis];
         QuantMulArg *qm = new (std::nothrow) QuantMulArg;
-        if (qm == nullptr) {
-          MS_LOG(ERROR) << "Reduce new QuantMulArg failed.";
-          return RET_NULL_PTR;
-        }
+        CHECK_NULL_RETURN(qm);
         QuantizeMultiplierSmallerThanOne(reciprocal, &qm->multiplier_, &shift);
         qm->left_shift_ = shift < 0 ? -shift : 0;
         qm->right_shift_ = shift > 0 ? shift : 0;
@@ -273,10 +272,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
     for (auto i = 0; i < num_axes_; i++) {
       int axis_size = in_tensors_.at(0)->shape()[axes_[i]];
       QuantMulArg *qm = new (std::nothrow) QuantMulArg;
-      if (qm == nullptr) {
-        MS_LOG(ERROR) << "ReduceProd new QuantMulArg failed.";
-        return RET_NULL_PTR;
-      }
+      CHECK_NULL_RETURN(qm);
       double prod_multiplier = pow(quant_arg_.in_scale_, axis_size - 1);
       QuantizeMultiplierSmallerThanOne(prod_multiplier, &qm->multiplier_, &shift);
       qm->left_shift_ = shift < 0 ? -shift : 0;

@@ -1098,8 +1098,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
       MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
     }
-  } else if (status == RET_NOT_SUPPORT) {
-    free(op_parameter);
   }
   return nullptr;
 }
@@ -1323,6 +1321,10 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
   auto ret = ScheduleSubGraphToKernels(subgraph_index, &kernels, &in_tensors, &out_tensors, prefer_data_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << subgraph_index;
+    for (auto *kernel : kernels) {
+      delete kernel;
+      kernel = nullptr;
+    }
     return nullptr;
   }
   kernel::LiteKernelUtil::FindAllInoutKernels(kernels);
