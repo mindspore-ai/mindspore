@@ -17,6 +17,7 @@
 
 #include "minddata/dataset/kernels/image/rotate_op.h"
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -102,11 +103,11 @@ Status RotateOperation::to_json(nlohmann::json *out_json) {
 
 Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
 #ifndef ENABLE_ANDROID
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degree") != op_params.end(), "Failed to find degree");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Failed to find resample");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("expand") != op_params.end(), "Failed to find expand");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("center") != op_params.end(), "Failed to find center");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("degree") != op_params.end(), "degree"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("resample") != op_params.end(), "resample"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("expand") != op_params.end(), "expand"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("center") != op_params.end(), "center"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("fill_value") != op_params.end(), "fill_value"));
   float degrees = op_params["degree"];
   InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];
