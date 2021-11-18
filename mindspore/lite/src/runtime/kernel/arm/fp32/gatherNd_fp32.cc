@@ -73,14 +73,22 @@ int GatherNdCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void GatherNdCPUKernel::InitOffset() {
+int GatherNdCPUKernel::InitOffset() {
   MS_ASSERT(in_offset_ != nullptr);
   auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
   auto in_shape = in_tensors_.front()->shape();
   int indices_rank = indices_shape.size();
   int in_rank = in_shape.size();
+  if (indices_rank < 1) {
+    MS_LOG(ERROR) << name() << " indices shape size must be greater than or equal to 1!";
+    return RET_ERROR;
+  }
   int idx_lastshape = indices_shape[indices_rank - 1];
+  if (idx_lastshape > in_rank) {
+    MS_LOG(ERROR) << name() << " indices shape error!";
+    return RET_ERROR;
+  }
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data());
   MS_ASSERT(indices_ptr != nullptr);
   area_ = 1;
@@ -97,9 +105,15 @@ void GatherNdCPUKernel::InitOffset() {
   (void)memset(in_offset_, 0, count_ * sizeof(int));
   for (int j = 0; j < count_; ++j) {
     for (int k = 0; k < idx_lastshape; ++k) {
-      in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
+      if (indices_ptr[j * idx_stride + k] < in_shape[k]) {
+        in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
+      } else {
+        MS_LOG(ERROR) << name() << " indices value invalid!";
+        return RET_ERROR;
+      }
     }
   }
+  return RET_OK;
 }
 
 int GatherNdCPUKernel::DoGatherNd(int task_id) const {
@@ -131,7 +145,10 @@ int GatherNdCPUKernel::Run() {
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(in_ptr_);
   CHECK_NULL_RETURN(out_ptr_);
-  InitOffset();
+  if (InitOffset() != RET_OK) {
+    MS_LOG(ERROR) << "InitOffset failed.";
+    return RET_ERROR;
+  }
   auto ret = ParallelLaunch(this->ms_context_, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";

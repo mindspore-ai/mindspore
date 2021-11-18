@@ -324,6 +324,7 @@ bool LiteModel::ModelVerify() const {
     MS_LOG(ERROR) << "Graph output indices is beyond tensor_size.";
     return false;
   }
+
   return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
 }
 
