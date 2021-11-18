@@ -96,6 +96,12 @@ int ConvolutionFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   UpdateOriginWeightAndBias();
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
+  col_tile_ = C8NUM;
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(filter_tensor);
@@ -106,12 +112,6 @@ int ConvolutionFP16CPUKernel::Prepare() {
     int pack_weight_size = oc8 * in_channel * kernel_plane;
     set_workspace_size(pack_weight_size * sizeof(float16_t));
   }
-#ifdef ENABLE_ARM64
-  row_tile_ = C16NUM;
-#else
-  row_tile_ = C12NUM;
-#endif
-  col_tile_ = C8NUM;
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";

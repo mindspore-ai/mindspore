@@ -59,7 +59,7 @@ export_result_file=export_result.txt
 echo ' ' > ${export_result_file}
 
 
-CLOUD_MODEL_ZOO=../../../../model_zoo/
+CLOUD_MODEL_ZOO=../../../../../models/
 
 checkopts "$@"
 
