@@ -16,6 +16,8 @@
 
 #include "tools/benchmark/run_benchmark.h"
 #include <string>
+#include <memory>
+
 namespace mindspore {
 namespace lite {
 int RunBenchmark(int argc, const char **argv) {

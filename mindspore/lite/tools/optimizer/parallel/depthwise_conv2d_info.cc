@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <utility>
 #include "nnacl/op_base.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"

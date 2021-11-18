@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "tools/optimizer/fusion/affine_fusion.h"
+#include <memory>
+#include <vector>
 #include "schema/inner/model_generated.h"
 #include "ops/affine.h"
 #include "src/common/log_adapter.h"

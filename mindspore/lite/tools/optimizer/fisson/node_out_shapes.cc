@@ -16,6 +16,7 @@
 
 #include "tools/optimizer/fisson/node_out_shapes.h"
 #include <vector>
+#include <string>
 #include "tools/optimizer/parallel/spliter.h"
 #include "nnacl/op_base.h"
 
