@@ -140,6 +140,8 @@ class Profiler:
         self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
         self._profile_communication = False
+        self._has_started = False
+        self.start_profile = True
 
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
@@ -174,7 +176,7 @@ class Profiler:
                 raise ValueError(msg)
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
             self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-            self._ascend_profiler.start(profiling_options)
+            self._ascend_profiler.init(self._output_path, int(self._dev_id), profiling_options)
             base_profiling_container_path = os.path.join(self._output_path, "container")
             container_path = os.path.join(base_profiling_container_path, self._dev_id)
             data_path = os.path.join(container_path, "data")
@@ -184,8 +186,10 @@ class Profiler:
 
             # add job id env through user input later
             self._job_id_env = 0
-            self._start_time = int(time.time() * 10000000)
-            logger.info("Profiling: profiling start time: %d", self._start_time)
+            self._init_time = int(time.time() * 10000000)
+            logger.info("Profiling: profiling init time: %d", self._init_time)
+            if self.start_profile:
+                self.start()
 
     def _construct_profiling_options(self):
         """
@@ -225,7 +229,9 @@ class Profiler:
                 logger.critical(msg)
                 raise ValueError(msg)
             self._output_path, _ = os.path.split(job_dir)
-
+        self.start_profile = kwargs.pop("start_profile", True)
+        if not isinstance(self.start_profile, bool):
+            raise TypeError("The parameter start_profile must be bool.")
         self._profile_communication = kwargs.pop("profile_communication", False)
         if not isinstance(self._profile_communication, bool):
             raise TypeError("The parameter profile_communication must be bool.")
@@ -270,6 +276,12 @@ class Profiler:
             self._rank_size = get_group_size()
 
         release()
+        if (not self.start_profile) or self._has_started:
+            self._ascend_profiler.stop()
+        else:
+            msg = "The profiler has not start, so can not stop."
+            logger.info(msg)
+        self._ascend_profiler.finalize()
 
         job_id = self._get_profiling_job_id()
         logger.info("Profiling: job id is %s ", job_id)
@@ -377,7 +389,30 @@ class Profiler:
                                    self._dev_id, self._rank_id, is_training_mode_flag)
         logger.info("Profiling: analyzing the operation FLOPs.")
         flops_parser.execute()
+
+    def start(self):
+        """Used for Ascend, start profiling."""
+        if not self._has_started:
+            self._has_started = True
+        else:
+            msg = "The profiler has already started."
+            logger.error(msg)
+            raise RuntimeError(msg)
+        self._ascend_profiler.start()
+        self._start_time = int(time.time() * 10000000)
+        logger.info("Profiling: start time: %d", self._start_time)
+
+    def stop(self):
+        """Used for Ascend, stop profiling."""
+        if self._has_started:
+            self._has_started = False
+        else:
+            msg = "The profiler has not start, so can not stop."
+            logger.error(msg)
+            raise RuntimeError(msg)
         self._ascend_profiler.stop()
+        self._stop_time = int(time.time() * 10000000)
+        logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _gpu_analyse(self):
         """Collect and analyse gpu performance data"""
@@ -573,8 +608,7 @@ class Profiler:
             if int(job_start_time) < self._start_time:
                 logger.warning("Find profiling job path %s, but start_time(%d) is earlier than this training "
                                "start_time(%d), profiler will ignore this job dir.",
-                               job_dir, job_start_time, self._start_time)
-                continue
+                               job_dir, int(job_start_time), self._start_time)
 
             job_id = dir_name
             break

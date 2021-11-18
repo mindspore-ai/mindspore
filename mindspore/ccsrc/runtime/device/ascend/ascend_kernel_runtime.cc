@@ -244,7 +244,7 @@ void AsyncDataDumpUninit() {
 void AscendKernelRuntime::ReportProfilingData() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (ProfilingManager::GetInstance().IsProfiling() &&
+  if (ProfilingManager::GetInstance().IsProfilingStart() &&
       context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     // Save Profiling Framework data
     OpNameTaskStreamReporter reporter(device_id_, "nonsink", stream_id_task_id_op_name_map_);
@@ -295,9 +295,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   }
 
   (void)ResetDevice(device_id);
-#ifndef ENABLE_SECURITY
-  (void)ProfilingManager::GetInstance().StopProfiling();
-#endif
   current_graph_ = nullptr;
   if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
       !context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
@@ -312,14 +309,6 @@ void AscendKernelRuntime::PreInit() {
   const auto error_manager_ret = ErrorManager::GetInstance().Init();
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
-  }
-  auto ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
-  if (!ret) {
-    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-    }
-    MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
   }
 }
 #endif
@@ -567,10 +556,18 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   }
 
 #ifndef ENABLE_SECURITY
-  if (ProfilingManager::GetInstance().IsProfiling()) {
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph);
+    // Report data directly if profiling is start
+    if (ProfilingUtils::ValidComputeGraph(graph)) {
+      if (ProfilingManager::GetInstance().IsProfilingStart()) {
+        ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph.graph_id());
+      } else {
+        // Cache data and save when profiling is start
+        ProfilingUtils::SetReportProfilingData(task_ids, stream_ids, graph.graph_id());
+      }
+    }
   }
   LaunchDataDump(graph.graph_id());
 #endif

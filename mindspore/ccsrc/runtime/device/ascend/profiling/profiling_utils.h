@@ -48,6 +48,12 @@ struct ProfilingContent {
   uint32_t flags;
 };
 
+struct GraphProfilingData {
+  std::vector<uint32_t> task_ids_;
+  std::vector<uint32_t> stream_ids_;
+  uint32_t graph_id_;
+};
+
 class ProfilingUtils {
  public:
   ProfilingUtils() = default;
@@ -69,7 +75,7 @@ class ProfilingUtils {
   static void SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names);
   // Save graph information to Framework file
   static void ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                  const session::KernelGraph &graph);
+                                  uint32_t graph_id);
   // Generate profiling trace
   static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
@@ -80,6 +86,11 @@ class ProfilingUtils {
                                       NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
 
   static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
+
+  static void SetReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
+                                     uint32_t graph_id);
+  static void ReportAllGraphProfilingData();
+  static bool ValidComputeGraph(const session::KernelGraph &kernel_graph);
 
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
@@ -101,7 +112,6 @@ class ProfilingUtils {
   static void GetCNodeOutputRealNode(const std::string &node_name, const session::KernelGraph &kernel_graph,
                                      NotNull<std::set<std::string> *> getnext_outputs);
 
-  static bool ValidComputeGraph(const session::KernelGraph &kernel_graph);
   static void SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id);
 
   // graph id --> (kernel name list)
@@ -109,8 +119,9 @@ class ProfilingUtils {
   inline static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
   inline static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
   inline static uint32_t custom_node_index_;
+  inline static std::vector<GraphProfilingData> report_data_;
 };
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_UTILS_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEN_D_PROFILING_PROFILING_UTILS_H_

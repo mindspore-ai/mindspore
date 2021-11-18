@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include "profiler/device/profiling.h"
+#include "acl/acl_prof.h"
 
 namespace mindspore {
 namespace profiler {
@@ -30,18 +31,24 @@ class AscendProfiler : public Profiler {
   AscendProfiler(const AscendProfiler &) = delete;
   AscendProfiler &operator=(const AscendProfiler &) = delete;
   void Init(const std::string &profileDataPath) { return; }
+  void InitProfiling(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options);
   void Stop();
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerEnd() { return; }
-  void Start(const std::string &profiling_options);
+  void Start();
   bool GetProfilingEnableFlag() const { return enable_flag_; }
   std::string GetProfilingOptions() const { return profiling_options_; }
   void SaveProfileData() { return; }
   void ClearInst() { return; }
+  uint64_t GetOptionsMask() const;
+  aclprofAicoreMetrics GetAicMetrics() const;
+  void Finalize() const;
 
  private:
   static std::shared_ptr<AscendProfiler> ascend_profiler_;
   std::string profiling_options_;
+  uint32_t device_id_;
+  aclprofConfig *acl_config_;
 };
 }  // namespace ascend
 }  // namespace profiler

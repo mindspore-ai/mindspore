@@ -28,6 +28,7 @@
 #include "toolchain/slog.h"
 #include "runtime/base.h"
 #include "profiler/device/profiling.h"
+#include "acl/acl_prof.h"
 
 using std::map;
 using std::string;
@@ -50,19 +51,16 @@ enum ProfCommandHandleType {
   kProfCommandhandleModelUnsubscribe
 };
 
+enum ProfilingState { kProfilingInvalid, kProfilingInit, kProfilingStart, kProfilingStop, kProfilingFinalize };
+
 class ProfilingManager {
  public:
   static ProfilingManager &GetInstance();
   uint64_t GetJobId() const;
   bool ProfRegisterCtrlCallback() const;
-  bool StartupProfiling(uint32_t device_id);
-  bool StopProfiling() const;
-
-  inline bool IsProfiling() const {
-    auto profiler_manager = profiler::ProfilerManager::GetInstance();
-    MS_EXCEPTION_IF_NULL(profiler_manager);
-    return profiler_manager->GetProfilingEnableFlag();
-  }
+  bool InitProfiling(const std::string &profiling_path, uint32_t device_id);
+  bool IsProfilingInitialized() const { return cur_state_ >= kProfilingInit; }
+  inline bool IsProfilingStart() const { return cur_state_ >= kProfilingStart; }
   Status PluginInit() const;
   void PluginUnInit() const;
   Status CallMsprofReport(NotNull<ReporterData *> reporter_data) const;
@@ -71,17 +69,22 @@ class ProfilingManager {
   void SetMsprofReporterCallback(MsprofReporterCallback func) { prof_cb_.msprofReporterCallback = func; }
   void SetMsprofSetDeviceCallback(MsprofSetDeviceCallback func) { prof_cb_.msprofSetDeviceCallback = func; }
   Status GetProfConf(NotNull<MsprofGeOptions *> prof);
-  void SetHcclEnabledBefProfilingEnabled() { hccl_enabled_bef_profiling_enabled_ = true; }
+  Status ProfCommandHandle(ProfCommandHandleType type);
+  Status ProfHandleInit();
+  Status ProfHandleStart();
+  Status ProfHandleStop();
+  Status ProfHandleFinalize();
 
  protected:
   ProfilingManager();
   ~ProfilingManager() {}
 
  private:
-  bool ProfStartUp(NotNull<MsprofGeOptions *> prof_conf) const;
   uint32_t device_id_;
   MsprofCallback prof_cb_;
-  bool hccl_enabled_bef_profiling_enabled_;
+  aclprofConfig *acl_config_;
+  ProfilingState cur_state_;
+  std::string profiling_path_;
 };
 
 Status ProfCommandHandle(ProfCommandHandleType type);
