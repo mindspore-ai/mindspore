@@ -30,7 +30,6 @@ const constexpr int kSwitchMaxInputKernelSize = 3;
 const constexpr int kSwitchMinInputKernelSize = 2;
 const constexpr int kSwitchTruePartialInputIndex = 1;
 const constexpr int kSwitchFalsePartialInputIndex = 2;
-const constexpr int kSwitchMinInputTensorSize = 3;
 const constexpr int kSwitchCondTensorIndex = 0;
 }  // namespace
 
@@ -483,6 +482,31 @@ int LiteSwitchOpActor::CompileBranchArrow() {
   }
   return RET_OK;
 }
+int LiteSwitchOpActor::SetSwitchPartialNodes() {
+  auto switch_op_input_kernel_size = switch_type_node_->in_kernels().size();
+  // special case, switch cond input is const, should be removed in the future.
+  if (switch_op_input_kernel_size == kSwitchMinInputKernelSize) {
+    // reverse switch node input, then false cast to 0, true cast to 1, which is same as switch layer index.
+    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchFalsePartialInputIndex - 1));
+    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchTruePartialInputIndex - 1));
+    return RET_OK;
+  }
+
+  if (switch_op_input_kernel_size == kSwitchMaxInputKernelSize) {
+    // reverse switch node input.
+    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchFalsePartialInputIndex));
+    partial_nodes_.push_back(switch_type_node_->in_kernels().at(kSwitchTruePartialInputIndex));
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "switch op input kernel size: " << switch_op_input_kernel_size << ", which is not support.";
+  return RET_ERROR;
+}
+int LiteSwitchOpActor::SetSwitchLayerPartialNodes() {
+  for (size_t i = 1; i < switch_type_node_->in_kernels().size(); ++i) {
+    partial_nodes_.push_back(switch_type_node_->in_kernels()[i]);
+  }
+  return RET_OK;
+}
 
 int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel) {
   for (auto &node : subgraph_kernel->nodes()) {
@@ -491,28 +515,18 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
     }
     call_node_ = node;
     auto switch_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_Switch);
-    if (!switch_node) {
+    auto switch_layer_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_SwitchLayer);
+    if (switch_node == nullptr && switch_layer_node == nullptr) {
       continue;
     }
 
-    if (switch_node->in_tensors().size() < kSwitchMinInputTensorSize) {
-      MS_LOG(ERROR) << "actor name: " << this->GetAID() << "'s switch node " << switch_node->name()
-                    << " input tensor size: " << switch_node->in_tensors().size() << " is less than 3.";
-      return RET_ERROR;
+    if (switch_node) {
+      switch_type_node_ = switch_node;
+      return SetSwitchPartialNodes();
+    } else {
+      switch_type_node_ = switch_layer_node;
+      return SetSwitchLayerPartialNodes();
     }
-
-    switch_type_node_ = switch_node;
-    if (switch_node->in_kernels().size() == kSwitchMaxInputKernelSize) {
-      // reverse switch node input
-      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchFalsePartialInputIndex));
-      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchTruePartialInputIndex));
-    }
-
-    if (switch_node->in_kernels().size() == kSwitchMinInputKernelSize) {
-      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchFalsePartialInputIndex - 1));
-      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchTruePartialInputIndex - 1));
-    }
-    break;
   }
   return RET_OK;
 }

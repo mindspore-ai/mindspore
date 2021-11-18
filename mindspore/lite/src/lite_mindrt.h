@@ -128,6 +128,8 @@ class LiteSwitchOpActor : public LiteOpActor {
   void AppendOutputTensors();
   int CompileBranchArrow();
   int CompileArrowThroughSwitchCall();
+  int SetSwitchPartialNodes();
+  int SetSwitchLayerPartialNodes();
 
   // each element is a set of data arrow sent to the next target actor.
   std::vector<std::vector<DataArrowPtr>> all_branch_output_data_arrows_;

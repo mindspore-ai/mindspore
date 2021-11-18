@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/control/switch.h"
+#include "src/runtime/kernel/arm/control/switch_layer.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Switch;
+using mindspore::schema::PrimitiveType_SwitchLayer;
 
 namespace mindspore::kernel {
-int SwitchCPUKernel::Prepare() { return RET_OK; }
-int SwitchCPUKernel::ReSize() { return RET_OK; }
-int SwitchCPUKernel::Run() { return RET_OK; }
+int SwitchLayerCPUKernel::Prepare() { return RET_OK; }
+int SwitchLayerCPUKernel::ReSize() { return RET_OK; }
+int SwitchLayerCPUKernel::Run() { return RET_OK; }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SwitchLayer, LiteKernelCreator<SwitchLayerCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SwitchLayer, LiteKernelCreator<SwitchLayerCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_SwitchLayer, LiteKernelCreator<SwitchLayerCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SwitchLayer, LiteKernelCreator<SwitchLayerCPUKernel>)
 }  // namespace mindspore::kernel

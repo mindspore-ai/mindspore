@@ -35,8 +35,6 @@
 
 namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
-const constexpr int kSwitchTrueBranch = 1;
-const constexpr int kSwitchFalseBranch = 2;
 class Scheduler {
  public:
   Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,
@@ -128,7 +126,7 @@ class Scheduler {
 #endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   int InferSwitchShape(const Model::Node *node);
-  Model::Node *NodeInputIsSwitch(const Model::Node *node);
+  Model::Node *NodeInputIsSwitchType(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
   void SetSubgraphForPartialNode();

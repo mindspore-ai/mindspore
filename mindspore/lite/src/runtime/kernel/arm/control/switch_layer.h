@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class SwitchCPUKernel : public InnerKernel {
+class SwitchLayerCPUKernel : public InnerKernel {
  public:
-  SwitchCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  SwitchLayerCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
-  ~SwitchCPUKernel() override = default;
+  ~SwitchLayerCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;
   int Run() override;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
