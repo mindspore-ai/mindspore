@@ -55,6 +55,10 @@ uint32_t CollectiveCommunicationLib::GetGroupSize(const std::string &group_name)
   return group->group_size();
 }
 
+uint32_t CollectiveCommunicationLib::global_rank_id() const { return global_rank_id_; }
+
 uint32_t CollectiveCommunicationLib::local_rank_id() const { return local_rank_id_; }
+
+uint32_t CollectiveCommunicationLib::global_rank_size() const { return global_rank_size_; }
 }  // namespace device
 }  // namespace mindspore

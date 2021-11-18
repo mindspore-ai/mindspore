@@ -29,9 +29,9 @@ std::shared_ptr<ClusterContext> ClusterContext::instance() {
   return cluster_instance;
 }
 
-void ClusterContext::Initialize() const { return; }
+bool ClusterContext::Initialize() const { return true; }
 
-void ClusterContext::Finalize() const { return; }
+bool ClusterContext::Finalize() const { return true; }
 
 std::string ClusterContext::node_role() const { return ""; }
 }  // namespace cluster

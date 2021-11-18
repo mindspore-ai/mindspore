@@ -61,8 +61,14 @@ class CollectiveCommunicationLib {
   // Assign the local rank id for this process. Normally used by collective communication library on the host side.
   virtual bool AssignLocalRank() { return true; }
 
-  // Returns the local rank id of this process.
+  // Returns global rank id of this process.
+  uint32_t global_rank_id() const;
+
+  // Returns local rank id of this process.
   uint32_t local_rank_id() const;
+
+  // Returns global rank size. This is used to create global communication group.
+  uint32_t global_rank_size() const;
 
  protected:
   // Whether this collective communication library is initialized.

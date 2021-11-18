@@ -44,10 +44,10 @@ class ClusterContext {
   static std::shared_ptr<ClusterContext> instance();
 
   // Initialize the cluster configuration and build network.
-  void Initialize();
+  bool Initialize();
 
   // Finalize the cluster and process exits.
-  void Finalize();
+  bool Finalize();
 
   std::string node_role() const;
 

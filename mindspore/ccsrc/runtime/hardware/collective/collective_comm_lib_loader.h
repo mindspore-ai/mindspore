@@ -68,6 +68,8 @@ ORIGIN_METHOD(DestroyCommunicationGroup, bool, const std::string &)
 ORIGIN_METHOD(GetRankId, uint32_t, const std::string &)
 ORIGIN_METHOD(GetCommunicationGroupSize, uint32_t, const std::string &)
 ORIGIN_METHOD(AssignLocalRank, bool)
+ORIGIN_METHOD(global_rank_id, uint32_t)
 ORIGIN_METHOD(local_rank_id, uint32_t)
+ORIGIN_METHOD(global_rank_size, uint32_t)
 #endif
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_LIB_LOADER_H_

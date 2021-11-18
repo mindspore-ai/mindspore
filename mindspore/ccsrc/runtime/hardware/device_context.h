@@ -145,10 +145,9 @@ class DeviceContext {
   // one bucket handles all resource to launch and sync allreduce operator.
   virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 
-  // Collective communication APIs.
-  // Initialize collecitve communication through device context.
+  // Dynamically load collecitve communication library.
   // Currently four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
-  virtual bool InitCollectiveCommLib() { return true; }
+  virtual bool LoadCollectiveCommLib() { return true; }
 
   // Return collective communication object for caller to access
   void *collective_comm_lib() const { return collective_comm_lib_ptr_; }
@@ -160,7 +159,7 @@ class DeviceContext {
  protected:
   DeviceContextKey device_context_key_;
 
-  // The dynamic loaded handle for collective communication library.
+  // The dynamically loaded handle for collective communication library by 'dlopen'.
   void *collective_comm_lib_ptr_;
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;

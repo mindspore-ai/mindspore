@@ -73,7 +73,7 @@ class GPUDeviceContext : public DeviceContext {
   // handles all resource to launch and sync allreduce operator.
   std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const override;
 
-  bool InitCollectiveCommLib() override;
+  bool LoadCollectiveCommLib() override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);

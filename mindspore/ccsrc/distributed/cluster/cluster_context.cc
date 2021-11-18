@@ -48,10 +48,10 @@ std::shared_ptr<ClusterContext> ClusterContext::instance() {
   return cluster_instance;
 }
 
-void ClusterContext::Initialize() {
+bool ClusterContext::Initialize() {
   if (inited_) {
     MS_LOG(INFO) << "The cluster has been initialized.";
-    return;
+    return true;
   }
 
   // Step 1: Initialize cluster configuration.
@@ -60,16 +60,17 @@ void ClusterContext::Initialize() {
   // Step 2: Build network for this cluster. Every process will block in this method until networking is done.
   if (!BuildCluster()) {
     MS_LOG(EXCEPTION) << "Building networking for " << node_role_ << " failed.";
-    return;
+    return false;
   }
 
   inited_ = true;
   finalized_ = false;
+  return true;
 }
 
-void ClusterContext::Finalize() {
+bool ClusterContext::Finalize() {
   if (finalized_) {
-    return;
+    return true;
   }
   // In some cases, one node calls the Finish function while other nodes don't. So timeout is acceptable.
   if (!node_->Finish()) {
@@ -77,10 +78,11 @@ void ClusterContext::Finalize() {
   }
   if (!node_->Stop()) {
     MS_LOG(ERROR) << "Failed to stop node " << node_role_;
-    return;
+    return false;
   }
   finalized_ = true;
   wait_finish_cond_.notify_all();
+  return true;
 }
 
 std::string ClusterContext::node_role() const { return node_role_; }

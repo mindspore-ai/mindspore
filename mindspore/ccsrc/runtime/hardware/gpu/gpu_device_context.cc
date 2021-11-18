@@ -525,7 +525,7 @@ std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint3
   return bucket;
 }
 
-bool GPUDeviceContext::InitCollectiveCommLib() {
+bool GPUDeviceContext::LoadCollectiveCommLib() {
 #ifdef ENABLE_MPI
   std::string nvidia_comm_lib_name = "libnvidia_collective.so";
   auto loader = std::make_shared<CollectiveCommLibLoader>(nvidia_comm_lib_name);
@@ -536,12 +536,6 @@ bool GPUDeviceContext::InitCollectiveCommLib() {
   }
   collective_comm_lib_ptr_ = loader->collective_comm_lib_ptr();
   MS_EXCEPTION_IF_NULL(collective_comm_lib_ptr_);
-
-  auto init_collecitve_lib_func = DlsymFuncObj(InitializeCollectiveLib, collective_comm_lib_ptr_);
-  if (!init_collecitve_lib_func(0, 0)) {
-    MS_LOG(EXCEPTION) << "Initializing for NCCL library failed.";
-    return false;
-  }
   return true;
 #else
   return false;
