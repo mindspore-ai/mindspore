@@ -144,7 +144,7 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   }
   ofs << GetProfilingParallelString(func_graph);
   ofs.close();
-  ChangeFileMode(file_path, S_IRUSR);
+  ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
   MS_LOG(INFO) << "Save profile parallel strategy success.";
 }
 }  // namespace ascend
