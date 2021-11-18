@@ -91,6 +91,28 @@ bool GetTensorOrScalarTypeInfo(const TypePtr &arg_type_origin, TypeId *arg_type_
   return false;
 }
 
+TypeId GetMaxTypeIdForNumber(TypeId max_type_id, bool has_int8, bool has_scalar_int64, bool has_scalar_float32) {
+  if (max_type_id == kNumberTypeUInt8 && has_int8) {
+    max_type_id = kNumberTypeInt16;
+  }
+  // if bool is the max type, see if there is scalar input
+  // if so, it means that max is bool tensor, use scalar type instead.
+  // for example: Tensor([True, True]) * 2, expect result is Tensor([2, 2])
+  if (max_type_id == kNumberTypeBool) {
+    if (has_scalar_int64) {
+      max_type_id = kNumberTypeInt64;
+    }
+    if (has_scalar_float32) {
+      max_type_id = kNumberTypeFloat32;
+    }
+  }
+  if (max_type_id != kNumberTypeFloat16 && max_type_id != kNumberTypeFloat32 && max_type_id != kNumberTypeFloat64 &&
+      max_type_id != kTypeUnknown && has_scalar_float32) {
+    max_type_id = kNumberTypeFloat32;
+  }
+  return max_type_id;
+}
+
 TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, const std::vector<size_t> &indices) {
   TypeId max_type_id = kTypeUnknown;
   size_t max_type_number = 0;
@@ -126,26 +148,7 @@ TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, const std::vector<s
       SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
     }
   }
-
-  if (max_type_id == kNumberTypeUInt8 && has_int8) {
-    max_type_id = kNumberTypeInt16;
-  }
-  // if bool is the max type, see if there is scalar input
-  // if so, it means that max is bool tensor, use scalar type instead.
-  // for example: Tensor([True, True]) * 2, expect result is Tensor([2, 2])
-  if (max_type_id == kNumberTypeBool) {
-    if (has_scalar_int64) {
-      max_type_id = kNumberTypeInt64;
-    }
-    if (has_scalar_float32) {
-      max_type_id = kNumberTypeFloat32;
-    }
-  }
-  if (max_type_id != kNumberTypeFloat16 && max_type_id != kNumberTypeFloat32 && max_type_id != kNumberTypeFloat64 &&
-      max_type_id != kTypeUnknown && has_scalar_float32) {
-    max_type_id = kNumberTypeFloat32;
-  }
-  return max_type_id;
+  return GetMaxTypeIdForNumber(max_type_id, has_int8, has_scalar_int64, has_scalar_float32);
 }
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
@@ -257,6 +260,18 @@ void CheckSigSize(const size_t &sig_size, const bool &has_var, const AbstractBas
   }
 }
 
+SignatureEnumRW GetSignatureEnumRW(size_t index, const std::vector<Signature> &signature, bool has_var) {
+  SignatureEnumRW sig = SignatureEnumRW::kRWDefault;
+  // If sig_size is 0 use default.
+  std::size_t sig_size = signature.size();
+  if (index < sig_size) {
+    sig = signature[index].rw;
+  } else if (has_var && index >= sig_size) {
+    sig = signature[sig_size - 1].rw;
+  }
+  return sig;
+}
+
 AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
   // args: original inputs
@@ -277,14 +292,8 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       op_inputs.push_back(param);
       continue;
     }
-    SignatureEnumRW sig = SignatureEnumRW::kRWDefault;
-    // If sig_size is 0 use default.
-    if (sig_size > 0 && i < sig_size) {
-      sig = signature[i].rw;
-    } else if (has_var && i >= sig_size) {
-      sig = signature[sig_size - 1].rw;
-    }
 
+    SignatureEnumRW sig = GetSignatureEnumRW(i, signature, has_var);
     TypePtr type = args_spec_list[i]->BuildType();
     if (type && type->isa<RefType>()) {
       if (sig == SignatureEnumRW::kRWRead) {

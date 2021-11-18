@@ -63,6 +63,8 @@ class MSANFModelParser {
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto);
   AnfNodePtr BuildOperatorNode(const mind_ir::NodeProto &node_proto);
+  bool CheckCNodePrim(CNodePtr cnode_ptr);
+  void SetEmptyTensorProtoCNodeAbstract(CNodePtr cnode_ptr, const std::string &node_type);
   void SetCNodeAbastract(const mind_ir::NodeProto &node_proto, CNodePtr cnode_ptr);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInTupleTensorForm(const string &value_node_name, const mind_ir::AttributeProto &attr_proto);

@@ -850,9 +850,7 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
   return std::make_shared<ValueNode>(prim);
 }
 
-// Set CNode abstract.
-void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, CNodePtr cnode_ptr) {
-  const std::string &node_type = node_proto.op_type();
+bool MSANFModelParser::CheckCNodePrim(CNodePtr cnode_ptr) {
   // Handle control flow operator.
   auto operatorPtr = cnode_ptr->input(0);
   // Set abstract of switch(c,f,t),switchLayer(c,tup) and
@@ -861,13 +859,43 @@ void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, C
   if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim) ||
       IsPrimitiveEquals(prim::kPrimPartial, prim)) {
     cnode_ptr->set_abstract(nullptr);
-    return;
+    return true;
   }
 
   // If the operator is not a primitive, the abstract will been set to null.
   // Because there are not some operators in front end, the abstract of primitive should be reserved.
   if (prim == nullptr) {
     cnode_ptr->set_abstract(nullptr);
+    return true;
+  }
+  return false;
+}
+
+void MSANFModelParser::SetEmptyTensorProtoCNodeAbstract(CNodePtr cnode_ptr, const std::string &node_type) {
+  if (node_type == "UpdateState") {
+    cnode_ptr->set_abstract(kUMonad->ToAbstract());
+  } else if (node_type == "Depend") {
+    cnode_ptr->set_abstract(kBool->ToAbstract());
+  } else {
+    AbstractBasePtrList elem;
+    for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
+      auto abs = cnode_ptr->input(index)->abstract();
+      if (abs != nullptr) {
+        if (abs->GetValueTrack() == nullptr) {
+          abs->set_value(kAnyValue);
+        }
+        elem.push_back(abs);
+      }
+    }
+    if (!elem.empty()) {
+      cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+    }
+  }
+}
+
+// Set CNode abstract.
+void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, CNodePtr cnode_ptr) {
+  if (CheckCNodePrim(cnode_ptr)) {
     return;
   }
 
@@ -885,26 +913,9 @@ void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, C
 
   // Because there is not context in unit test,
   // abstract->broaden() is replaced by abstract->set_value(kAnyValue).
+  const std::string &node_type = node_proto.op_type();
   if (kv.size() == 0) {
-    if (node_type == "UpdateState") {
-      cnode_ptr->set_abstract(kUMonad->ToAbstract());
-    } else if (node_type == "Depend") {
-      cnode_ptr->set_abstract(kBool->ToAbstract());
-    } else {
-      AbstractBasePtrList elem;
-      for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
-        auto abs = cnode_ptr->input(index)->abstract();
-        if (abs != nullptr) {
-          if (abs->GetValueTrack() == nullptr) {
-            abs->set_value(kAnyValue);
-          }
-          elem.push_back(abs);
-        }
-      }
-      if (!elem.empty()) {
-        cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
-      }
-    }
+    SetEmptyTensorProtoCNodeAbstract(cnode_ptr, node_type);
   } else if (kv.size() == 1) {
     std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
     if (iter->second != nullptr) {

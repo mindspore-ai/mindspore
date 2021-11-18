@@ -45,6 +45,7 @@ class ProtoExporter {
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr);
   void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
+  void SetNumberToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
   void SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto);
   void SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::ValueProto *value_proto);
@@ -122,6 +123,18 @@ void CheckIfValidType(const TypePtr &type) {
   }
 }
 
+void SetTensorType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
+  TypePtr elem_type = dyn_cast<TensorType>(type)->element();
+  type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
+  type_proto->set_data_type(irpb::DT_TENSOR);
+  if (shape != nullptr && shape->isa<abstract::Shape>()) {
+    abstract::ShapePtr shape_info = dyn_cast<abstract::Shape>(shape);
+    for (const auto &elem : shape_info->shape()) {
+      type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
+    }
+  }
+}
+
 void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
   if (type_proto == nullptr) {
     return;
@@ -134,15 +147,7 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
   } else if (type->isa<Number>()) {
     type_proto->set_data_type(GetNumberDataType(type));
   } else if (type->isa<TensorType>()) {
-    TypePtr elem_type = dyn_cast<TensorType>(type)->element();
-    type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
-    type_proto->set_data_type(irpb::DT_TENSOR);
-    if (shape != nullptr && shape->isa<abstract::Shape>()) {
-      abstract::ShapePtr shape_info = dyn_cast<abstract::Shape>(shape);
-      for (const auto &elem : shape_info->shape()) {
-        type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
-      }
-    }
+    SetTensorType(type, shape, type_proto);
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);
     type_proto->set_data_type(irpb::DT_TUPLE);
@@ -179,18 +184,8 @@ void ProtoExporter::SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *t
   SetNodeOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
-  if (val == nullptr || value_proto == nullptr) {
-    return;
-  }
-
-  if (val->isa<StringImm>()) {
-    const StringImmPtr &value = dyn_cast<StringImm>(val);
-    value_proto->set_dtype(irpb::DT_STRING);
-    value_proto->set_str_val(value->value());
-  } else if (val->isa<Scalar>()) {
-    SetScalarToProto(dyn_cast<Scalar>(val), value_proto);
-  } else if (val->isa<Bool>()) {
+void ProtoExporter::SetNumberToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
+  if (val->isa<Bool>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BOOL);
   } else if (val->isa<Int>()) {
@@ -202,6 +197,24 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
   } else if (val->isa<Float>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_FLOAT);
+  } else {
+    MS_LOG(DEBUG) << "Unsupported type " << val->type_name();
+  }
+}
+
+void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
+  if (val == nullptr || value_proto == nullptr) {
+    return;
+  }
+
+  if (val->isa<Number>()) {
+    SetNumberToProto(val, value_proto);
+  } else if (val->isa<StringImm>()) {
+    const StringImmPtr &value = dyn_cast<StringImm>(val);
+    value_proto->set_dtype(irpb::DT_STRING);
+    value_proto->set_str_val(value->value());
+  } else if (val->isa<Scalar>()) {
+    SetScalarToProto(dyn_cast<Scalar>(val), value_proto);
   } else if (val->isa<ValueSequeue>()) {
     SetSequenceToProto(dyn_cast<ValueSequeue>(val), value_proto);
   } else if (val->isa<None>()) {
