@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp16/reduce_fp16.h"
+#include <map>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -29,6 +29,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
+using mindspore::schema::ReduceMode_ReduceASum;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -37,134 +38,61 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
-int ReduceFp16CPUKernel::Prepare() {
-  auto ret = ReduceBaseCPUKernel::Prepare();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  switch (mode_) {
-    case static_cast<int>(ReduceMode_ReduceMean):
-      reducer_ = ReduceMeanFp16;
-      break;
-    case static_cast<int>(ReduceMode_ReduceMax):
-      reducer_ = ReduceMaxFp16;
-      break;
-    case static_cast<int>(ReduceMode_ReduceSum):
-      reducer_ = ReduceSumFp16;
-      break;
-    default:
-      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
-      return RET_ERROR;
-  }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
-}
-
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
-  CHECK_NULL_RETURN(fp16_src_data_);
-  CHECK_NULL_RETURN(fp16_dst_data_);
-  return reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id,
-                  op_parameter_->thread_num_);
+  CHECK_NULL_RETURN(src_data_);
+  CHECK_NULL_RETURN(dst_data_);
+  if (fp16_reducer_ == nullptr) {
+    MS_LOG(ERROR) << "function reducer_ is null.";
+    return RET_NULL_PTR;
+  }
+  fp16_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float16_t *>(src_data_),
+                static_cast<float16_t *>(dst_data_), task_id, op_parameter_->thread_num_);
+  return RET_OK;
 }
 
-static int ReduceFp16Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto reduce = reinterpret_cast<ReduceFp16CPUKernel *>(cdata);
-  CHECK_NULL_RETURN(reduce);
-  auto error_code = reduce->CallReduceUnit(task_id);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Reduce Run error task_id[" << task_id << "] error_code[" << error_code << "]";
-    return RET_ERROR;
+void ReduceFp16CPUKernel::InitialKernelList() {
+  std::map<schema::ReduceMode, Fp16Reducer> func_list{
+    {ReduceMode_ReduceSum, ReduceSumFp16},   {ReduceMode_ReduceMean, ReduceMeanFp16},
+    {ReduceMode_ReduceMax, ReduceMaxFp16},   {ReduceMode_ReduceMin, ReduceMinFp16},
+    {ReduceMode_ReduceProd, ReduceProdFp16}, {ReduceMode_ReduceSumSquare, ReduceSumFp16},
+    {ReduceMode_ReduceASum, ReduceSumFp16}};
+  auto iter = func_list.find(static_cast<schema::ReduceMode>(mode_));
+  if (iter != func_list.end()) {
+    fp16_reducer_ = iter->second;
+  }
+}
+
+void ReduceFp16CPUKernel::HandleASumAndSumSquare() {
+  int num = in_tensors_[kInputIndex]->ElementsNum();
+  float16_t *data = static_cast<float16_t *>(in_tensors_[kInputIndex]->data());
+  NNACL_CHECK_NULL_RETURN_VOID(data);
+
+  if (reduce_param_->mode_ == static_cast<int>(ReduceMode_ReduceASum)) {
+    for (int i = 0; i < num; ++i) {
+      if (data[i] < 0.0f) {
+        data[i] = 0.0f - data[i];
+      }
+    }
+  }
+  if (reduce_param_->mode_ == static_cast<int>(ReduceMode_ReduceSumSquare)) {
+    for (int i = 0; i < num; ++i) {
+      data[i] = data[i] * data[i];
+    }
+  }
+}
+
+int ReduceFp16CPUKernel::CalculateCoeffOutput() {
+  auto out_tensor = out_tensors_[kOutputIndex];
+  int num = out_tensor->ElementsNum();
+  auto *out_data = reinterpret_cast<float16_t *>(out_tensor->data());
+  if (out_data == nullptr) {
+    return RET_NULL_PTR;
+  }
+  for (int i = 0; i < num; ++i) {
+    out_data[i] *= reduce_param_->coeff;
   }
   return RET_OK;
 }
 
-int ReduceFp16CPUKernel::Run() {
-  auto ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    FreeTmpBuffer();
-    return ret;
-  }
-
-  auto in_tensor = in_tensors_.at(0);
-  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->data());
-  for (size_t i = 0; i < data_buffers_.size(); ++i) {
-    fp16_dst_data_ = data_buffers_.at(i);
-    outer_size_ = outer_sizes_.at(i);
-    inner_size_ = inner_sizes_.at(i);
-    axis_size_ = axis_sizes_.at(i);
-    auto error_code = ParallelLaunch(this->ms_context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
-    if (error_code != RET_OK) {
-      FreeTmpBuffer();
-      MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
-      return RET_ERROR;
-    }
-    fp16_src_data_ = fp16_dst_data_;
-  }
-
-  auto out_tensor = out_tensors_.at(0);
-  fp16_dst_data_ = reinterpret_cast<float16_t *>(out_tensor->data());
-  MS_ASSERT(fp16_dst_data_ != nullptr);
-  outer_size_ = outer_sizes_.back();
-  inner_size_ = inner_sizes_.back();
-  axis_size_ = axis_sizes_.back();
-  auto error_code = ParallelLaunch(this->ms_context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
-  if (error_code != RET_OK) {
-    FreeTmpBuffer();
-    MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
-    return RET_ERROR;
-  }
-
-  FreeTmpBuffer();
-  return RET_OK;
-}
-
-void ReduceFp16CPUKernel::FreeTmpBuffer() {
-  for (auto &buffer : data_buffers_) {
-    if (buffer != nullptr) {
-      ms_context_->allocator->Free(buffer);
-      buffer = nullptr;
-    }
-  }
-  data_buffers_.clear();
-}
-
-int ReduceFp16CPUKernel::MallocTmpBuffer() {
-  data_buffers_.clear();
-  for (auto size : buffer_sizes_) {
-    float16_t *buffer = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(size * sizeof(float16_t)));
-    if (buffer == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
-    data_buffers_.emplace_back(buffer);
-  }
-  return RET_OK;
-}
-
-/* creator func */
-kernel::InnerKernel *CpuReduceFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
-  auto reduce_param = reinterpret_cast<ReduceParameter *>(opParameter);
-  if (reduce_param->mode_ != ReduceMode_ReduceMean && reduce_param->mode_ != ReduceMode_ReduceMax &&
-      reduce_param->mode_ != ReduceMode_ReduceSum) {
-    MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << reduce_param->mode_;
-    free(opParameter);
-    return nullptr;
-  }
-
-  kernel::InnerKernel *kernel = nullptr;
-  kernel = new (std::nothrow)
-    kernel::ReduceFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
-  if (kernel == nullptr) {
-    MS_LOG(DEBUG) << "Create reduce fp16 kernel failed.";
-    free(opParameter);
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CpuReduceFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceFp16CPUKernel>)
 }  // namespace mindspore::kernel

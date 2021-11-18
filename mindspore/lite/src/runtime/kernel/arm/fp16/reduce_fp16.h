@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,34 +19,27 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/inner_kernel.h"
-#include "src/runtime/kernel/arm/base/reduce_base.h"
-
-using mindspore::schema::ReduceMode;
+#include "src/runtime/kernel/arm/fp32/reduce_fp32.h"
 
 namespace mindspore::kernel {
-class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
-  typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
-                         float16_t *dst_data, const int tid, const int thread_num);
+class ReduceFp16CPUKernel : public ReduceCPUKernel {
+  typedef int (*Fp16Reducer)(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
+                             float16_t *dst_data, const int tid, const int thread_num);
 
  public:
   ReduceFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ReduceBaseCPUKernel(param, inputs, outputs, ctx) {}
+      : ReduceCPUKernel(param, inputs, outputs, ctx) {}
   ~ReduceFp16CPUKernel() = default;
 
-  int Prepare() override;
-  int Run() override;
-  int CallReduceUnit(int task_id);
+  int CallReduceUnit(int task_id) override;
 
  private:
-  int MallocTmpBuffer();
-  void FreeTmpBuffer();
+  void InitialKernelList() override;
+  void HandleASumAndSumSquare() override;
+  int CalculateCoeffOutput() override;
 
-  Reducer reducer_ = nullptr;
-  std::vector<float16_t *> data_buffers_;
-  const float16_t *fp16_src_data_ = nullptr;
-  float16_t *fp16_dst_data_ = nullptr;
+  Fp16Reducer fp16_reducer_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

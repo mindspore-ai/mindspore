@@ -55,21 +55,22 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
   int Prepare() override;
   int Run() override;
-  int CallReduceUnit(int task_id);
+  virtual int CallReduceUnit(int task_id);
 
  protected:
-  void InitialKernelList();
+  virtual void InitialKernelList();
+  virtual void HandleASumAndSumSquare();
+  virtual int CalculateCoeffOutput();
+
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-  int CalculateCoeffOutput();
-  void HandleASumAndSumSquare();
 
   ReduceParameter *reduce_param_;
   Reducer reducer_ = nullptr;
   BoolReducer bool_reducer_ = nullptr;
   IntReducer int_reducer_ = nullptr;
   std::vector<void *> data_buffers_;
-  LiteDataType data_type_;
+  TypeId data_type_;
 
   const void *src_data_ = nullptr;
   void *dst_data_ = nullptr;

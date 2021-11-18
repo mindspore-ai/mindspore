@@ -58,22 +58,22 @@ int ReduceCPUKernel::Prepare() {
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   CHECK_NULL_RETURN(src_data_);
   CHECK_NULL_RETURN(dst_data_);
-  if (data_type_ == kDataTypeFloat) {
-    if (!reducer_) {
+  if (data_type_ == kNumberTypeFloat32) {
+    if (reducer_ == nullptr) {
       MS_LOG(ERROR) << "function reducer_ is null.";
       return RET_NULL_PTR;
     }
     reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
              static_cast<float *>(dst_data_), task_id, op_parameter_->thread_num_);
-  } else if (data_type_ == kDataTypeBool) {
-    if (!bool_reducer_) {
+  } else if (data_type_ == kNumberTypeBool) {
+    if (bool_reducer_ == nullptr) {
       MS_LOG(ERROR) << "function bool_reducer_ is null.";
       return RET_NULL_PTR;
     }
     bool_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const bool *>(src_data_),
                   static_cast<bool *>(dst_data_), task_id, op_parameter_->thread_num_);
   } else {
-    if (!int_reducer_) {
+    if (int_reducer_ == nullptr) {
       MS_LOG(ERROR) << "function int_reducer_ is null.";
       return RET_NULL_PTR;
     }
@@ -95,16 +95,7 @@ int ReduceImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ReduceCPUKernel::Run() {
-  if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
-    data_type_ = kDataTypeFloat;
-  } else if (in_tensors().at(0)->data_type() == kNumberTypeBool) {
-    data_type_ = kDataTypeBool;
-  } else if (in_tensors().at(0)->data_type() == kNumberTypeInt32 || in_tensors().at(0)->data_type() == kNumberTypeInt) {
-    data_type_ = kDataTypeInt;
-  } else {
-    MS_LOG(ERROR) << "Reduce op does not support data type " << in_tensors().at(0)->data_type();
-    return RET_ERROR;
-  }
+  data_type_ = in_tensors().at(0)->data_type();
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();
@@ -148,14 +139,13 @@ int ReduceCPUKernel::Run() {
 }
 
 void ReduceCPUKernel::HandleASumAndSumSquare() {
-  if (data_type_ == kDataTypeInt) {
+  if (data_type_ == kNumberTypeInt32 || data_type_ == kNumberTypeBool) {
     return;
   }
-  int num = in_tensors_.at(0)->ElementsNum();
-  auto *data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
-  if (data == nullptr) {
-    return;
-  }
+  int num = in_tensors_[kInputIndex]->ElementsNum();
+  float *data = static_cast<float *>(in_tensors_[kInputIndex]->data());
+  NNACL_CHECK_NULL_RETURN_VOID(data);
+
   if (reduce_param_->mode_ == static_cast<int>(ReduceMode_ReduceASum)) {
     for (int i = 0; i < num; ++i) {
       if (data[i] < 0.0f) {
@@ -173,7 +163,7 @@ void ReduceCPUKernel::HandleASumAndSumSquare() {
 int ReduceCPUKernel::CalculateCoeffOutput() {
   auto out_tensor = out_tensors_.at(0);
   int num = out_tensor->ElementsNum();
-  if (data_type_ != kDataTypeFloat) {
+  if (data_type_ != kNumberTypeFloat32) {
     return RET_ERROR;
   }
   auto *out_data = reinterpret_cast<float *>(out_tensor->data());
@@ -190,9 +180,11 @@ int ReduceCPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   for (auto size : buffer_sizes_) {
     void *buffer = nullptr;
-    if (data_type_ == kDataTypeFloat) {
+    if (data_type_ == kNumberTypeFloat32) {
       buffer = ms_context_->allocator->Malloc(size * sizeof(float));
-    } else if (data_type_ == kDataTypeBool) {
+    } else if (data_type_ == kNumberTypeFloat16) {
+      buffer = ms_context_->allocator->Malloc(size * FP16_DATA_TYPE_LEN);
+    } else if (data_type_ == kNumberTypeBool) {
       buffer = ms_context_->allocator->Malloc(size * sizeof(bool));
     } else {
       buffer = ms_context_->allocator->Malloc(size * sizeof(int));
@@ -237,7 +229,6 @@ void ReduceCPUKernel::InitialKernelList() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
 }  // namespace mindspore::kernel
