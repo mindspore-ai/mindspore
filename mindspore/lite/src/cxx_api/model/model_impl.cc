@@ -54,6 +54,14 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "The input model buffer is nullptr.";
+    return kLiteNullptr;
+  }
+  if (data_size == 0) {
+    MS_LOG(ERROR) << "The input model buffer size is 0.";
+    return kLiteInputParamInvalid;
+  }
   context_ = ms_context;
 
   auto *lite_context = new (std::nothrow) lite::InnerContext();
