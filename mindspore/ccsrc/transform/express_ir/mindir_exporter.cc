@@ -424,8 +424,8 @@ bool IrExportBuilder::SetTensorProtoForRef(const TypePtr &type, const AbstractBa
   }
   auto ref_key_value = abs_ref->ref_key_value();
   if (ref_key_value == nullptr) {
-    MS_LOG(ERROR) << "The ref_key_value of abstract ref " << abs->ToString() << " is nullptr";
-    return false;
+    MS_LOG(INFO) << "The ref_key_value of abstract ref " << abs->ToString() << " is nullptr";
+    return true;
   }
   tensor_proto->set_ref_key(ref_key_value->name());
   return true;
