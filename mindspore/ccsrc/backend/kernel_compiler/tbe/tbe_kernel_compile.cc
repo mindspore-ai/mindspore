@@ -232,7 +232,8 @@ std::string GetTbePath() {
     } else if (realpath(kBkPath, real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(WARNING) << "Can not get access to [" << kDefPath << "] or [" << kBkPath << "]";
+      MS_LOG(WARNING) << "Can not get access to [" << kDefPath << "] or [" << kBkPath
+                      << "]. Check if the path exist, or use 'chmod {level} xxx' to change the path's access.";
     }
   }
   return save_path;
