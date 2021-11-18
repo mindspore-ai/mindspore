@@ -167,6 +167,19 @@ AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
   return input_monad;
 }
 
+bool ExistEnvGetItem(FuncGraphManagerPtr manager) {
+  const FuncGraphSet &fgs = manager->func_graphs();
+  for (auto &fg : fgs) {
+    auto &nodes = fg->value_nodes();
+    bool exist = std::any_of(nodes.begin(), nodes.end(),
+                             [](const auto &node) { return IsPrimitive(node.first, prim::kPrimEnvGetItem); });
+    if (exist) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Convert:
 // cnode1 = env_setitem(EnvInstance, para1, attach1)
 // cnode2 = env_setitem(cnode1, para2, attach2)
@@ -181,17 +194,26 @@ AnfNodePtr EliminateUpdateStateMakeTupleWithUselessEnv(const CNodePtr &update_st
   std::vector<AnfNodePtr> env_nodes;
   std::vector<AnfNodePtr> new_maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
   size_t input_size = make_tuple->inputs().size();
-  bool has_env_node = false;
+  bool has_env_setitem = false;
   for (size_t i = 1; i < input_size; i++) {
     auto node = make_tuple->input(i);
     if (IsPrimitiveCNode(node, prim::kPrimEnvSetItem) && OnlyUsedByOneNode(node, make_tuple)) {
       env_nodes.emplace_back(node);
-      has_env_node = true;
+      has_env_setitem = true;
     } else if (node->isa<CNode>() && !IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
       new_maketuple_inputs.emplace_back(node);
     }
   }
-  if (!has_env_node) {
+  if (!has_env_setitem) {
+    return nullptr;
+  }
+  // Check env_setitem in MakeTuple
+  auto mgr = GetManager(update_state);
+  if (mgr == nullptr) {
+    return nullptr;
+  }
+  // If exist env_getitem, don't eliminate env_setitem.
+  if (ExistEnvGetItem(mgr)) {
     return nullptr;
   }
   const size_t first_index = 1;
@@ -231,11 +253,6 @@ AnfNodePtr EliminateUpdateStateMakeTupleWithUselessEnv(const CNodePtr &update_st
 }
 
 AnfNodePtr EliminateUpdateStateMakeTupleWithUselessNode(const CNodePtr &update_state, const CNodePtr &make_tuple) {
-  // Check env_setitem in MakeTuple
-  auto check_env = EliminateUpdateStateMakeTupleWithUselessEnv(update_state, make_tuple);
-  if (check_env != nullptr) {
-    return check_env;
-  }
   if (make_tuple->size() != kMakeTupleSize) {
     return nullptr;
   }
@@ -718,7 +735,11 @@ AnfNodePtr UpdatestateUselessNodeEliminater::operator()(const OptimizerPtr &, co
   // UpdateState(u, MakeTuple(Function, input) -> UpdateState(u, input)
   // UpdateState(u, MakeTuple(input, Function) -> UpdateState(u, input)
   if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
-    return EliminateUpdateStateMakeTupleWithUselessNode(update_state_node, attach->cast<CNodePtr>());
+    auto node = EliminateUpdateStateMakeTupleWithUselessNode(update_state_node, attach->cast<CNodePtr>());
+    if (node != nullptr) {
+      return node;
+    }
+    return EliminateUpdateStateMakeTupleWithUselessEnv(update_state_node, attach->cast<CNodePtr>());
   }
   return nullptr;
 }
