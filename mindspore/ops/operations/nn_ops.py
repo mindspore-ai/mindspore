@@ -1401,11 +1401,11 @@ class Conv2D(Primitive):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
-        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not 'pad', "
-                             f"but got 'pad': {self.pad} and 'pad_mode': {pad_mode}.")
+                             f"but got 'pad': {self.pad} and 'pad_mode': {self.pad_mode}.")
         self.add_prim_attr("pad", pad)
         self.padding = pad
         if self.pad_mode == 'pad':
