@@ -49,6 +49,7 @@ from .sparse_apply_adagrad_v2 import _sparse_apply_adagrad_v2_tbe
 from .approximate_equal import _approximate_equal_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
+from .assign_ds import _assign_ds_tbe
 from .assign_add import _assign_add_tbe
 from .assign_add_ds import _assign_add_ds_tbe
 from .assign_sub import _assign_sub_tbe
