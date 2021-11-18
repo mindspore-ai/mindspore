@@ -31,7 +31,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.1.tar.gz")
-    set(MD5 "0ec077324f27c2685635ad4cc9bdc263")
+    set(MD5 "2e6fbeb6a91310a16efe181886c59596")
 else()
     set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz")
     set(MD5 "2e6fbeb6a91310a16efe181886c59596")
