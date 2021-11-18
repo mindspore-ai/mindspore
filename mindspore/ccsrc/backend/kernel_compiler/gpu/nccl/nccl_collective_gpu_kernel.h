@@ -31,14 +31,12 @@ enum NcclKernelType {
   NCCL_ALL_GATHER,
   NCCL_REDUCE_SCATTER,
   NCCL_BROADCAST,
-  NCCL_ALLTOALLV,
   NCCL_INVALID_TYPE = 255
 };
 const std::map<std::string, NcclKernelType> kNcclTypeMap = {{"AllReduce", NCCL_ALL_REDUCE},
                                                             {"AllGather", NCCL_ALL_GATHER},
                                                             {"ReduceScatter", NCCL_REDUCE_SCATTER},
-                                                            {"Broadcast", NCCL_BROADCAST},
-                                                            {"AllToAllv", NCCL_ALLTOALLV}};
+                                                            {"Broadcast", NCCL_BROADCAST}};
 
 template <typename T>
 class NcclCollectiveGpuKernel : public NcclGpuKernel {
@@ -70,10 +68,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       }
       case NCCL_BROADCAST: {
         LaunchBroadcast(inputs, outputs, stream_ptr);
-        break;
-      }
-      case NCCL_ALLTOALLV: {
-        LaunchAllToAllv(inputs, outputs, stream_ptr);
         break;
       }
       default: {
@@ -212,37 +206,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
                                                       nccl_data_type_, root_, stream, group_name_),
                                  "ncclBroadcast failed");
     }
-  }
-
-  void LaunchAllToAllv(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                       void *stream_ptr) {
-    T *input_addr = nullptr;
-    T *output_addr = nullptr;
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
-    auto nccl_send_func = reinterpret_cast<Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
-    auto nccl_gstart_func = reinterpret_cast<GroupStart>(dlsym(const_cast<void *>(collective_handle_), "GroupStart"));
-    auto nccl_gend_func = reinterpret_cast<GroupEnd>(dlsym(const_cast<void *>(collective_handle_), "GroupEnd"));
-    MS_EXCEPTION_IF_NULL(nccl_recv_func);
-    MS_EXCEPTION_IF_NULL(nccl_send_func);
-    MS_EXCEPTION_IF_NULL(nccl_gstart_func);
-    MS_EXCEPTION_IF_NULL(nccl_gend_func);
-
-    // This implementation refers to NVIDIA NCCL 2.11 doc.
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, (*nccl_gstart_func)(), "AllToAllv: ncclGroupStart failed");
-    for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
-      input_addr = GetDeviceAddress<T>(inputs, i);
-      output_addr = GetDeviceAddress<T>(outputs, i);
-      CHECK_NCCL_RET_WITH_EXCEPT(
-        kernel_node_,
-        (*nccl_send_func)(input_addr, input_size_list_[i] / sizeof(T), nccl_data_type_, i, stream, group_name_),
-        "AllToAllv: ncclSend failed");
-      CHECK_NCCL_RET_WITH_EXCEPT(
-        kernel_node_,
-        (*nccl_recv_func)(output_addr, output_size_list_[i] / sizeof(T), nccl_data_type_, i, stream, group_name_),
-        "AllToAllv: ncclRecv failed");
-    }
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, (*nccl_gend_func)(), "AllToAllv: ncclGroupEnd failed");
   }
 
   void InferCommType(const CNodePtr &kernel_node) {

@@ -58,15 +58,5 @@ MS_REG_GPU_KERNEL_ONE(Broadcast,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                       NcclCollectiveGpuKernel, int)
 
-MS_REG_GPU_KERNEL_ONE(
-  AllToAllv, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  NcclCollectiveGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  AllToAllv, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  NcclCollectiveGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(AllToAllv,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      NcclCollectiveGpuKernel, int)
-
 }  // namespace kernel
 }  // namespace mindspore

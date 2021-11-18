@@ -658,7 +658,8 @@ OperatorAttrs Conv2DInfo::CreateNeighborExchangeAttrs(const CNodePtr &cnode) {
   Attr send_shapes = {SEND_SHAPES, MakeTupleListValue(send_shapes_)};
   Attr recv_shapes = {RECV_SHAPES, MakeTupleListValue(recv_shapes_)};
   Attr recv_type = {RECV_TYPE, dtype};
-  OperatorAttrs attrs = {send_ranks, recv_ranks, recv_shapes, send_shapes, recv_type};
+  Attr group = {GROUP, MakeValue(g_device_manager->world_group())};
+  OperatorAttrs attrs = {send_ranks, recv_ranks, recv_shapes, send_shapes, recv_type, group};
   return attrs;
 }
 
