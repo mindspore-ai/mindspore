@@ -467,6 +467,8 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   }
   Context ctx;
   ctx.thread_num_ = thread_num;
+  MS_ASSERT(!ctx.device_list_.empty());
+  ctx.device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
   auto session = session::LiteSession::CreateSession(&ctx);
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed.";

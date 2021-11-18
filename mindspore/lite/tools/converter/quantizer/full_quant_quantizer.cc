@@ -989,7 +989,9 @@ STATUS FullQuantQuantizer::DoInference() {
       }
       return true;
     };
+    fp32_session_->BindThread(true);
     auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    fp32_session_->BindThread(false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1013,7 +1015,9 @@ STATUS FullQuantQuantizer::Int8Inference() {
     KernelCallBack before_call_back = GetBeforeCallBack(true);
     // after func
     KernelCallBack after_call_back = GetAfterCallBack(true);
+    int8_session_->BindThread(true);
     auto status = int8_session_->RunGraph(before_call_back, after_call_back);
+    int8_session_->BindThread(false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1039,7 +1043,9 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
     KernelCallBack before_call_back = GetBeforeCallBack(false);
     // after func
     KernelCallBack after_call_back = GetAfterCallBack(false);
+    fp32_session_->BindThread(true);
     auto status = fp32_session_->RunGraph(before_call_back, after_call_back);
+    fp32_session_->BindThread(false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1230,7 +1236,9 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
       }
       return true;
     };
+    fp32_session_->BindThread(true);
     auto status = fp32_session_->RunGraph(before_callback, after_callBack);
+    fp32_session_->BindThread(false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1247,6 +1255,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   CHECK_NULL_RETURN(this->calibrator_);
   calibrator_->full_quant_param_ = flags.fullQuantParam;
   calibrator_->data_pre_process_param_ = flags.dataPreProcessParam;
+  calibrator_->thread_ = flags.commonQuantParam.thread_num;
   if (flags.dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;

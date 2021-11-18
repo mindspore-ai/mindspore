@@ -174,7 +174,7 @@ class Calibrator {
 
   size_t GetBatchNum() const { return data_pre_process_param_.calibrate_size; }
 
-  uint32_t GetThreadNum() const { return full_quant_param_.thread_num; }
+  uint32_t GetThreadNum() const { return thread_; }
 
   bool GetBiasCorrection() const { return full_quant_param_.bias_correction; }
 
@@ -197,6 +197,8 @@ class Calibrator {
   FullQuantParam full_quant_param_;
 
   preprocess::DataPreProcessParam data_pre_process_param_;
+
+  int thread_ = 4;
 
  private:
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> inputs_diverg_info_;
