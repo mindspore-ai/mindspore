@@ -1187,7 +1187,7 @@ class Cell(Cell_):
         Returns an iterator over immediate cells.
 
         Returns:
-            Iteration, all the child cells in the cell.
+            Iteration, the immediate child cells in the cell.
         """
         return self.name_cells().values()
 
@@ -1228,7 +1228,7 @@ class Cell(Cell_):
 
     def name_cells(self):
         """
-        Returns an iterator over all cells in the network.
+        Returns an iterator over all immediate cells in the network.
 
         Include name of the cell and cell itself.
 
@@ -1579,7 +1579,7 @@ class Cell(Cell_):
               the parameter should use add_pipeline_stage to add it's pipeline_stage information.
             - If a parameter P has been used by two operators in different stages "stageA" and "stageB",
               the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
-              to add it's stage information before use infer_param_pipeline_stage.
+              to add it's stage information before using infer_param_pipeline_stage.
 
         Returns:
             The params belong to current stage in pipeline parallel.

@@ -29,7 +29,7 @@ class Perplexity(Metric):
 
     Args:
         ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`, it will include all
-                            entries. Default: -1.
+                            entries. Default: None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -71,8 +71,8 @@ class Perplexity(Metric):
         Updates the internal evaluation result: math:preds and :math:labels.
 
         Args:
-            inputs: Input `preds` and `labels`. `preds` and `labels` are Tensor, list or numpy.ndarray.
-                    `preds` is the predicted values, `labels` is the label of the data.
+            inputs: Input `preds` and `labels`. `preds` and `labels` are a `Tensor`, list or numpy.ndarray.
+                    `preds` is the predicted values, `labels` is the labels of the data.
                     The shape of `preds` and `labels` are both :math:`(N, C)`.
 
         Raises:
@@ -115,7 +115,7 @@ class Perplexity(Metric):
         Returns the current evaluation result.
 
         Returns:
-            float, the computed result.
+            numpy.float64. The computed result.
 
         Raises:
             RuntimeError: If the sample size is 0.

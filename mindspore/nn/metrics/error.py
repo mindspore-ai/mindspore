@@ -27,7 +27,7 @@ class MAE(Metric):
     .. math::
         \text{MAE} = \frac{\sum_{i=1}^n \|y_i - x_i\|}{n}
 
-    Here :math:`y_i` is the prediction and :math:`x_i` is the true value.
+    where :math:`n` is batch size.
 
     Note:
         The method `update` must be called with the form `update(y_pred, y)`.
@@ -61,7 +61,7 @@ class MAE(Metric):
 
         Args:
             inputs: Input `y_pred` and `y` for calculating MAE where the shape of
-                `y_pred` and `y` are both N-D and the shape are the same.
+                `y_pred` and `y` are both N-D and the shape should be the same.
 
         Raises:
             ValueError: If the number of the input is not 2.
@@ -79,7 +79,7 @@ class MAE(Metric):
         Computes the mean absolute error(MAE).
 
         Returns:
-            Float, the computed result.
+            numpy.float64. The computed result.
 
         Raises:
             RuntimeError: If the total number of samples is 0.
@@ -94,7 +94,7 @@ class MSE(Metric):
     Measures the mean squared error(MSE).
 
     Creates a criterion that measures the MSE (squared L2 norm) between
-    each element in the input: :math:`x` and the target: :math:`y`.
+    each element in the predition and the ground truth: :math:`x` and: :math:`y`.
 
     .. math::
         \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
@@ -128,7 +128,7 @@ class MSE(Metric):
 
         Args:
             inputs: Input `y_pred` and `y` for calculating the MSE where the shape of
-                `y_pred` and `y` are both N-D and the shape are the same.
+                `y_pred` and `y` are both N-D and the shape should be the same.
 
         Raises:
             ValueError: If the number of inputs is not 2.
@@ -147,7 +147,7 @@ class MSE(Metric):
         Computes the mean squared error(MSE).
 
         Returns:
-            Float, the computed result.
+            numpy.float64. The computed result.
 
         Raises:
             RuntimeError: If the number of samples is 0.

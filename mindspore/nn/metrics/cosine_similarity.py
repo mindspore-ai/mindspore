@@ -20,16 +20,16 @@ from .metric import Metric, rearrange_inputs
 
 class CosineSimilarity(Metric):
     """
-    Computes representation similarity
+    Computes representation similarity.
 
     Args:
-        similarity (str): 'dot' or 'cosine'. Default: 'cosine'
-        reduction (str): 'none', 'sum', 'mean' (all along dim -1). Default: 'none'
-        zero_diagonal (bool): If true, the diagonals are set to zero. Default: True
+        similarity (str): 'dot' or 'cosine'. Default: 'cosine'.
+        reduction (str): 'none', 'sum', 'mean' (all along dim -1). Default: 'none'.
+        zero_diagonal (bool): If True,  diagonals of results will be set to zero. Default: True.
 
     Return:
-        A square matrix (input1, input1) with the similarity scores between all elements.
-        If sum or mean is used, then returns (b, 1) with the reduced value for each row.
+        numpy.ndarray. A square matrix with element-wise similarity scores. If `reduction` is set to
+        "sum" or "mean", values of the matrix will be reduced by row.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -67,10 +67,10 @@ class CosineSimilarity(Metric):
     @rearrange_inputs
     def update(self, inputs):
         """
-        Updates the internal evaluation result with 'input1'.
+        Updates the internal evaluation result with 'inputs'.
 
         Args:
-            inputs: input_data `input1`. The input_data is a `Tensor` or an array.
+            inputs (Union[Tensor, list, numpy.ndarray]): The input matrix.
         """
         input_data = self._convert_data(inputs)
 
@@ -83,14 +83,13 @@ class CosineSimilarity(Metric):
 
     def eval(self):
         """
-         Computes the Cosine_Similarity square matrix.
+         Computes the similarity matrix.
 
          Returns:
-             A square matrix.
+             numpy.ndarray. The similarity matrix.
 
          Raises:
             RuntimeError: If the update method is not called first, an error will be reported.
-
         """
         if not self._is_update:
             raise RuntimeError('Call the update method before calling eval.')

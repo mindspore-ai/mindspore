@@ -29,19 +29,17 @@ finally:
 
 class OcclusionSensitivity(Metric):
     """
-    This function is used to calculate the occlusion sensitivity of the model for a given image.
-    Occlusion sensitivity refers to how the probability of a given prediction changes with the change of the occluded
-    part of the image.
+    Calculates the occlusion sensitivity of the model for a given image. It illustrates which parts of an image are
+    most important for a network's classification.
 
-    For a given result, the output probability is the probability of a region.
-
-    The higher the value in the output image is, the greater the decline of certainty, indicating that
-    the occluded area is more important in the decision-making process.
+    Occlusion sensitivity refers to how the predicted probability changes with the change of the occluded
+    part of an image. The higher the value in the output image is, the greater the decline of certainty, indicating
+    that the occluded area is more important in the decision-making process.
 
     Args:
-        pad_val (float): What values need to be entered in the image when a part of the image is occluded. Default: 0.0.
+        pad_val (float): The padding value of the occluded part in an image. Default: 0.0.
         margin (Union[int, Sequence]): Create a cuboid / cube around the voxel you want to occlude. Default: 2.
-        n_batch (int): number of images in a batch before inference. Default: 128.
+        n_batch (int): number of images in a batch. Default: 128.
         b_box (Sequence): Bounding box on which to perform the analysis. The output image will also match in size.
                           There should be a minimum and maximum for all dimensions except batch:
                           ``[min1, max1, min2, max2,...]``. If no bounding box is supplied, this will be the same size
@@ -130,16 +128,10 @@ class OcclusionSensitivity(Metric):
         Updates input, including `model`, `y_pred` and `label`.
 
         Args:
-            inputs: Input `y_pred` and `label`. `y_pred` and `label` are Tensor, list or numpy.ndarray.
-                y_pred: image to test. It should be a tensor consisting of 1 batch, which could be 2D or 3D.
-                label: classification label to check for changes (normally the true label, but doesn't have to be.
-
-        Inputs:
-            - **model** (nn.Cell) - classification model to use for inference.
-            - **y_pred** (Union[Tensor, list, np.ndarray]) - image to test. Should be a tensor consisting of 1 batch,
-              can be 2- or 3D.
-            - **label** (Union[int, Tensor]) - classification label to check for changes (normally the true label,
-              but doesn't have to be
+            inputs: `y_pred` and `label` are a Tensor, list or numpy.ndarray.
+                `y_pred`: a batch of images to test, which could be 2D or 3D.
+                `label`: classification labels to check for changes. `label` is normally the true label, but
+                doesn't have to be.
 
         Raises:
             ValueError: If the number of inputs is not 3.
