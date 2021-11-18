@@ -49,7 +49,7 @@ class Fbeta(Metric):
         super(Fbeta, self).__init__()
         self.eps = sys.float_info.min
         if not beta > 0:
-            raise ValueError('The `beta` must be greater than zero, but got {}'.format(beta))
+            raise ValueError("For Fbeta, the argument 'beta' must be greater than 0, but got {}.".format(beta))
         self.beta = beta
         self.clear()
 
@@ -73,7 +73,8 @@ class Fbeta(Metric):
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
-            raise ValueError('The fbeta needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'Fbeta.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -82,13 +83,15 @@ class Fbeta(Metric):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError('The class number does not match, the last input data contains {} classes, '
-                             'but the current data contains {} classes'.format(self._class_num, y_pred.shape[1]))
+            raise ValueError("Class number not match, last input predicted data contain {} classes, "
+                             "but current predicted data contain {} classes, please check your "
+                             "predicted value(inputs[0]).".format(self._class_num, y_pred.shape[1]))
         class_num = self._class_num
 
         if y.max() + 1 > class_num:
-            raise ValueError('The y_pred contains {} classes is less than y contains {} classes.'.
-                             format(class_num, y.max() + 1))
+            raise ValueError("For 'Fbeta', predicted value(inputs[0]) and true value(inputs[1]) "
+                             "should contain same classes, but got predicted value contains {} classes"
+                             " and true value contains {} classes.".format(class_num, y.max() + 1))
         y = np.eye(class_num)[y.reshape(-1)]
         indices = y_pred.argmax(axis=1).reshape(-1)
         y_pred = np.eye(class_num)[indices]
@@ -113,7 +116,8 @@ class Fbeta(Metric):
         """
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         if self._class_num == 0:
-            raise RuntimeError('The input number of samples can not be 0.')
+            raise RuntimeError("The 'Fbeta' can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs(predicted value, true value) are correct.")
 
         fbeta = (1.0 + self.beta ** 2) * self._true_positives / \
                 (self.beta ** 2 * self._actual_positives + self._positives + self.eps)

@@ -147,18 +147,22 @@ class SGD(Optimizer):
         if isinstance(momentum, int):
             momentum = float(momentum)
         if not isinstance(momentum, float):
-            raise TypeError("momentum should be float number!")
+            raise TypeError("For 'SGD', the argument 'momentum' should be float type, "
+                            "but got {}.".format(type(momentum)))
 
         if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
+            raise ValueError("For 'SGD', the argument 'momentum' should be at least 0.0, "
+                             "but got {}".format(momentum))
 
         if isinstance(dampening, int):
             dampening = float(dampening)
         if not isinstance(dampening, float):
-            raise TypeError("dampening should be float number")
+            raise TypeError("For 'SGD', the argument 'dampening' should be float type, "
+                            "but got {}.".format(type(dampening)))
 
         if dampening < 0.0:
-            raise ValueError("dampening should be at least 0.0, but got dampening {}".format(dampening))
+            raise ValueError("For 'SGD', the argument 'dampening' should be at least 0.0, "
+                             "but got 'dampening' {}".format(dampening))
         self.dampening = dampening
 
         if isinstance(weight_decay, int):
@@ -167,8 +171,8 @@ class SGD(Optimizer):
         validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
 
         if nesterov and (momentum <= 0.0 or dampening != 0.0):
-            raise ValueError("If use nesterov, momentum must be positive and dampening must be equal to 0.0,"
-                             "but got momentum {}, dampening {}".format(momentum, dampening))
+            raise ValueError("For 'SGD', if 'nesterov' is true, 'momentum' must be > 0.0 and 'dampening' must "
+                             "equal to 0.0, but got 'momentum' {}, 'dampening' {}".format(momentum, dampening))
         self.nesterov = nesterov
 
         self.opt = P.SGD(dampening, weight_decay, nesterov)

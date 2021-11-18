@@ -1257,11 +1257,13 @@ class Tensor(Tensor_):
         """
         if value is None:
             if self.dtype not in (mstype.float16, mstype.float32, mstype.float64):
-                raise TypeError("If None is used as value, the original Tensor's dtype must be float.")
+                raise TypeError("For 'Tensor.fill', if the argument 'value' is None, the type of the original "
+                                "tensor must be float, but got {}.".format(self.dtype))
             value = Tensor(float('nan')).astype("float32")
             return tensor_operator_registry.get("tile")()(value, self.shape).astype(self.dtype)
         if not isinstance(value, (int, float, bool)):
-            raise TypeError("input value must be a scalar.")
+            raise TypeError("For 'Tensor.fill', the type of the argument 'value' must be int, float or bool, "
+                            "but got {}.".format(type(value)))
         return tensor_operator_registry.get("fill")(self.dtype, self.shape, value)
 
     def ptp(self, axis=None, keepdims=False):
@@ -1296,7 +1298,8 @@ class Tensor(Tensor_):
             [2. 0. 5. 2.]
         """
         if not isinstance(keepdims, bool):
-            raise TypeError('keepdims should be boolean')
+            raise TypeError("For 'Tensor.ptp', the type of the argument 'keepdims' must be bool, "
+                            "but got {}.".format(type(keepdims)))
         if axis is None:
             axis = ()
         else:
@@ -1349,7 +1352,7 @@ class Tensor(Tensor_):
             [1. 2. 2. 1. 1. 2. 2. 1.]
         """
         if xmin is None and xmax is None:
-            raise ValueError("One of max or min must be given.")
+            raise ValueError("For 'Tensor.clip', the argument 'xmin' and 'xman' cannot all be None.")
         x = self
         # F.maximum/minimum does not support when both operands are scalar
         if xmin is not None:
@@ -1576,7 +1579,8 @@ class Tensor(Tensor_):
         """
         ndim = self.ndim
         if ndim < 2:
-            raise ValueError('diagonal requires an array of at least two dimensions')
+            raise ValueError("For 'Tensor.diagonal', the original tensor requires at least two dimensions, "
+                             "but got {}.".format(ndim))
         dtype = self.dtype
 
         axes = validator.check_axis_valid((axis1, axis2), ndim)
@@ -1704,7 +1708,8 @@ class Tensor(Tensor_):
             [4 3 6]
         """
         if mode not in ('raise', 'wrap', 'clip'):
-            raise ValueError('raise should be one of "raise", "wrap", or "clip"')
+            raise ValueError(f"For 'Tensor.take', the argument 'mode' should be one of in ['raise', 'wrap', 'clip'],"
+                             f" but got {mode}.")
         if axis is None:
             a = self.ravel()
             axis = 0
@@ -1786,7 +1791,9 @@ class Tensor(Tensor_):
             choices = tensor_operator_registry.get('stack')(0)(tmp)
 
         if self.ndim == 0 or choices.ndim == 0:
-            raise ValueError('input cannot be scalars')
+            raise ValueError(f"For 'Tensor.choose', the original tensor and the argument 'choices' cannot be scalars."
+                             f" Their dimensions should all be > 0, but got the original tensor's dimension "
+                             f"{self.ndim}, 'choices' dimension {choices.ndim}.")
         a = tensor_operator_registry.get('broadcast_to')(shape_choice)(self)
         dtype = choices.dtype
         # adjusts dtype for F.tensor_mul and F.gather_nd
@@ -1836,7 +1843,8 @@ class Tensor(Tensor_):
             2
         """
         if side not in ('left', 'right'):
-            raise ValueError(f'{side} is an invalid value for keyword "side"')
+            raise ValueError(f"For 'Tensor.searchsorted', the argument 'side' should be one of in "
+                             f"['left', 'right'], but got {side}.")
         a = self.astype(mstype.float32)
         if not isinstance(v, Tensor):
             v = tensor_operator_registry.get('make_tensor')(v)
@@ -1902,9 +1910,11 @@ class Tensor(Tensor_):
         if 0 in self.shape:
             return Tensor(float('nan'), self.dtype)
         if not isinstance(ddof, int):
-            raise TypeError(f"integer argument expected, but got {type(ddof)}")
+            raise TypeError("For 'Tensor.var', the type of the argument 'ddof' must be int, but got "
+                            "{}.".format(type(ddof)))
         if not isinstance(keepdims, int):
-            raise TypeError(f"integer argument expected, but got {type(keepdims)}")
+            raise TypeError("For 'Tensor.var', the type of the argument 'keepdims' must be int, but "
+                            "got {}.".format(type(keepdims)))
 
         if axis is None:
             axis = ()
@@ -2017,9 +2027,11 @@ class Tensor(Tensor_):
         input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
         dtype = input_x.dtype if dtype is None else dtype
         if not isinstance(keepdims, int):
-            raise TypeError(f"integer argument expected, but got {type(keepdims)}")
+            raise TypeError("For 'Tensor.sum', the type of the argument 'keepdims' must be int, but "
+                            "got {}.".format(type(keepdims)))
         if initial is not None and not isinstance(initial, (int, float, bool)):
-            raise TypeError("initial argument should be a scalar.")
+            raise TypeError("For 'Tensor.sum', when the argument 'initial' is not None, it must be int, "
+                            "float or bool, but got {}.".format(type(initial)))
         if axis is None:
             axis = ()
         else:
@@ -2079,15 +2091,16 @@ class Tensor(Tensor_):
         """
         if not isinstance(repeats, (tuple, list)):
             repeats = (repeats,)
-        for element in repeats:
+        for index, element in enumerate(repeats):
             if not isinstance(element, int):
-                raise TypeError(f"Each element in {repeats} should be integer, but got {type(element)}.")
+                raise TypeError(f"For 'Tensor.repeat', each element in {repeats} should be int, but got "
+                                f"{type(element)} at index {index}.")
         input_x = self
         if axis is None:
             input_x = self.ravel()
             axis = 0
         if axis is not None and not isinstance(axis, int):
-            raise TypeError(f'axes should be integers, not {type(axis)}')
+            raise TypeError(f"For 'Tensor.repeat', the argument 'axis' should be int, but got {type(axis)}.")
         validator.check_axis_in_range(axis, input_x.ndim)
         axis = axis + input_x.ndim if axis < 0 else axis
 
@@ -2098,7 +2111,9 @@ class Tensor(Tensor_):
             return tensor_operator_registry.get('repeat_elements')(input_x, repeats, axis)
         size = input_x.shape[axis]
         if len(repeats) != size:
-            raise ValueError('operands could not be broadcast together')
+            raise ValueError(f"For 'Tensor.repeat', the length of 'repeats' must be the same as the shape of the "
+                             f"original tensor in the 'axis' dimension, but got the length of 'repeats' "
+                             f"{len(repeats)}, the shape of the original tensor in the 'axis' dimension {size}.")
         subs = tensor_operator_registry.get('split')(axis, size)(input_x)
         repeated_subs = []
         for sub, rep in zip(subs, repeats):

@@ -714,7 +714,8 @@ class Cell(Cell_):
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 params[key].set_data(new_tensor, True)
         else:
-            raise TypeError("Parameters need OrderedDict type, but got {}.".format(type(params)))
+            raise TypeError("For 'load_parameter_slice', the argument 'params' should be OrderedDict type, "
+                            "but got {}.".format(type(params)))
 
     def _load_inputs(self, *inputs):
         """
@@ -845,15 +846,17 @@ class Cell(Cell_):
             TypeError: If the type of parameter is not Parameter.
         """
         if not param_name:
-            raise KeyError("The name of parameter should not be null.")
+            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not be None.")
         if check_name_contain_dot and '.' in param_name:
-            raise KeyError("The name of parameter should not contain \".\"")
+            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain \".\"")
         if '_params' not in self.__dict__:
             raise AttributeError("You need call init() first.")
         if hasattr(self, param_name) and param_name not in self._params:
-            raise KeyError("Duplicated parameter name '{}'.".format(param_name))
+            raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
+                           "insert another parameter with the same name.".format(param_name))
         if not isinstance(param, Parameter) and param is not None:
-            raise TypeError("The type of parameter should be 'Parameter' if not None.")
+            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' should be 'Parameter' if not None, "
+                            f"but got {type(param)}.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
         self._params[param_name] = param
@@ -894,11 +897,14 @@ class Cell(Cell_):
             TypeError: Child Cell's type is incorrect.
         """
         if not child_name or '.' in child_name:
-            raise KeyError("Child cell name is incorrect.")
+            raise KeyError("For 'insert_child_to_cell', the argument 'child_name' should not be None and "
+                           "should not contain \".\"")
         if hasattr(self, child_name) and child_name not in self._cells:
-            raise KeyError("Duplicate child name '{}'.".format(child_name))
+            raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
+                           "insert another child cell with the same name.".format(child_name))
         if not isinstance(child_cell, Cell) and child_cell is not None:
-            raise TypeError("Child cell type is incorrect.")
+            raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' should be 'Cell' if not None, "
+                            f"but got type {type(child_cell)}.")
         self._cells[child_name] = child_cell
 
     def construct(self, *inputs, **kwargs):
@@ -1318,7 +1324,8 @@ class Cell(Cell_):
             >>> net.to_float(mstype.float16)
         """
         if dst_type not in (mstype.float16, mstype.float32):
-            raise ValueError("The dst_type should inside float32 or float16.")
+            raise ValueError("For 'to_float', the argument 'dst_type' should be float32 or float16, "
+                             "but got {}.".format(dst_type))
         if dst_type == mstype.float16:
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
         else:
@@ -1348,7 +1355,8 @@ class Cell(Cell_):
             ValueError: If boost_type is not in the algorithm library.
         """
         if boost_type not in ("less_bn",):
-            raise ValueError("The boost_type is not in the algorithm library.")
+            raise ValueError("For 'set_boost', the argument 'boost_type' should be 'less_bn', "
+                             "but got {}.".format(boost_type))
         flags = {"less_bn": boost_type == "less_bn"}
         self.add_flags_recursive(**flags)
         return self
@@ -1515,7 +1523,8 @@ class Cell(Cell_):
         Set the cell recomputed.
         """
         if context._get_mode() == context.PYNATIVE_MODE:
-            raise TypeError("Recompute is not supported in pynative mode currently.")
+            raise TypeError("Recompute is not supported in pynative mode currently, you can use "
+                            "'context.set_context(mode=context.GRAPH_MODE)' to set graph mode.")
         Validator.check_bool(mode)
         Validator.check_bool(output_recompute)
         if not self._has_config_recompute:
@@ -1685,7 +1694,8 @@ class GraphCell(Cell):
     def __init__(self, graph, params_init=None):
         super(GraphCell, self).__init__(auto_prefix=True)
         if not isinstance(graph, FuncGraph):
-            raise TypeError(f"The 'graph' must be a FuncGraph loaded from MindIR, but got {type(graph)}.")
+            raise TypeError(f"For 'GraphCell', the argument 'graph' must be a FuncGraph loaded from MindIR, "
+                            f"but got type {type(graph)}.")
         self.graph = graph
 
         params_init = {} if params_init is None else params_init

@@ -67,7 +67,8 @@ class MAE(Metric):
             ValueError: If the number of the input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The MAE needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'MAE.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         abs_error_sum = np.abs(y.reshape(y_pred.shape) - y_pred)
@@ -85,7 +86,8 @@ class MAE(Metric):
             RuntimeError: If the total number of samples is 0.
         """
         if self._samples_num == 0:
-            raise RuntimeError('The total number of samples must not be 0.')
+            raise RuntimeError("The 'MAE' can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs(predicted value, true value) are correct.")
         return self._abs_error_sum / self._samples_num
 
 
@@ -134,7 +136,8 @@ class MSE(Metric):
             ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The MSE needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'MSE.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
@@ -153,5 +156,6 @@ class MSE(Metric):
             RuntimeError: If the number of samples is 0.
         """
         if self._samples_num == 0:
-            raise RuntimeError('The number of input samples must not be 0.')
+            raise RuntimeError("The 'MSE' can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs(predicted value, true value) are correct.")
         return self._squared_error_sum / self._samples_num

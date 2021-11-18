@@ -120,7 +120,8 @@ def get_metric_fn(name, *args, **kwargs):
         >>> metric = nn.get_metric_fn('precision', eval_type='classification')
     """
     if name not in __factory__:
-        raise KeyError("Unknown Metric:", name)
+        raise KeyError(f"Unsupported metric {name}, please refer to official website for more details about "
+                       f"supported metrics.")
     return __factory__[name](*args, **kwargs)
 
 
@@ -141,8 +142,8 @@ def get_metrics(metrics):
     if isinstance(metrics, dict):
         for name, metric in metrics.items():
             if not isinstance(name, str) or not isinstance(metric, Metric):
-                raise TypeError("The argument `metrics` format error. Key in metrics should be str and value in \
-                                 metrics should be subclass of Metric")
+                raise TypeError(f"For 'get_metrics', if 'metrics' is dict, the key in 'metrics' must be string and "
+                                f"value in 'metrics' must be Metric, but got key:{type(name)}, value:{type(metric)}.")
         return metrics
     if isinstance(metrics, set):
         out_metrics = {}
@@ -150,4 +151,5 @@ def get_metrics(metrics):
             out_metrics[name] = get_metric_fn(name)
         return out_metrics
 
-    raise TypeError("The argument `metrics` should be None, dict or set, but got {}, ".format(type(metrics)))
+    raise TypeError("For 'get_metrics', the argument 'metrics' should be None, dict or set, "
+                    "but got {}".format(metrics))

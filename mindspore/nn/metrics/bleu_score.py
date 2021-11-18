@@ -48,7 +48,8 @@ class BleuScore(Metric):
         super().__init__()
         self.n_gram = validator.check_value_type("n_gram", n_gram, [int])
         if self.n_gram > 4 or self.n_gram < 1:
-            raise ValueError('The n_gram value ranges from 1 to 4, but got {}'.format(n_gram))
+            raise ValueError("For 'BleuScore', the argument 'n_gram' should range from 1 to 4, "
+                             "but got {}.".format(n_gram))
 
         self.smooth = validator.check_value_type("smooth", smooth, [bool])
         self.clear()
@@ -99,13 +100,14 @@ class BleuScore(Metric):
             ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The bleu_score needs 2 inputs (candidate_corpus, reference_corpus), '
-                             'but got {}'.format(len(inputs)))
+            raise ValueError("For 'BleuScore.update', it needs 2 inputs (candidate_corpus, reference_corpus), "
+                             "but got {}.".format(len(inputs)))
         candidate_corpus = inputs[0]
         reference_corpus = inputs[1]
         if len(candidate_corpus) != len(reference_corpus):
-            raise ValueError('The translate_corpus and reference_corpus should be equal in length, '
-                             'but got {} {}'.format(len(candidate_corpus), len(reference_corpus)))
+            raise ValueError("For 'BleuScore.update', 'translate_corpus' (inputs[0]) and 'reference_corpus' "
+                             "(inputs[1]) should be equal in length, but got {}, {}"
+                             .format(len(candidate_corpus), len(reference_corpus)))
 
         for (candidate, references) in zip(candidate_corpus, reference_corpus):
             self._c += len(candidate)
@@ -142,7 +144,7 @@ class BleuScore(Metric):
 
         """
         if self._is_update is False:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
         if min(self._numerator) == 0.0:
             return np.array(0.0)
 
