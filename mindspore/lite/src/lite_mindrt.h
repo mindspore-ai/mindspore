@@ -34,13 +34,6 @@
 namespace mindspore::lite {
 
 typedef enum { GRAPH, OP_BY_OP } MindRTMode;
-const constexpr int kSwitchMaxInputKernelSize = 3;
-const constexpr int kSwitchMinInputKernelSize = 2;
-const constexpr int kSwitchTruePartialInputIndex = 1;
-const constexpr int kSwitchFalsePartialInputIndex = 2;
-const constexpr int kSwitchMinInputTensorSize = 3;
-const constexpr int kSwitchCondTensorIndex = 0;
-
 class LiteOpActor : public OpActor<lite::Tensor> {
  public:
   explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {
@@ -119,36 +112,33 @@ class LiteSwitchOpActor : public LiteOpActor {
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
   ~LiteSwitchOpActor() override {
     delete call_node_;
-    delete switch_node_;
-    delete true_partial_node_;
-    delete false_partial_node_;
+    delete switch_type_node_;
+    for (auto &partial_node : partial_nodes_) {
+      delete partial_node;
+    }
   };
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int CompileArrow() override;
   int PrepareOutputData() override;
 
  private:
-  void AsyncTrueBranchOutput(OpContext<Tensor> *context);
-  void AsyncFalseBranchOutput(OpContext<Tensor> *context);
-  void DecreaseTrueBranchInputTensor();
-  void DecreaseFalseBranchInputTensor();
+  void AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context);
+  void DecreaseOtherBranchInputTensor(const size_t &index);
   int GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel);
   void AppendOutputTensors();
-  int CompileTrueBranchArrow();
-  int CompileFalseBranchArrow();
+  int CompileBranchArrow();
   int CompileArrowThroughSwitchCall();
 
-  std::vector<DataArrowPtr> true_branch_output_data_arrows_;
-  std::vector<DataArrowPtr> false_branch_output_data_arrows_;
+  // each element is a set of data arrow sent to the next target actor.
+  std::vector<std::vector<DataArrowPtr>> all_branch_output_data_arrows_;
 
-  kernel::LiteKernel *true_partial_node_ = nullptr;
-  kernel::LiteKernel *false_partial_node_ = nullptr;
-  kernel::LiteKernel *switch_node_ = nullptr;
+  std::vector<kernel::LiteKernel *> partial_nodes_{};
+  kernel::LiteKernel *switch_type_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
   std::vector<lite::Tensor *> output_tensors_{};
 
-  std::vector<OpDataPtr<Tensor>> true_branch_outputs_data_;
-  std::vector<OpDataPtr<Tensor>> false_branch_outputs_data_;
+  // each element is a set of output data which is going to be send to the next target actor.
+  std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;
 };
 #endif
 

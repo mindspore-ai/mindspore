@@ -25,6 +25,14 @@
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
+namespace {
+const constexpr int kSwitchMaxInputKernelSize = 3;
+const constexpr int kSwitchMinInputKernelSize = 2;
+const constexpr int kSwitchTruePartialInputIndex = 1;
+const constexpr int kSwitchFalsePartialInputIndex = 2;
+const constexpr int kSwitchMinInputTensorSize = 3;
+const constexpr int kSwitchCondTensorIndex = 0;
+}  // namespace
 
 namespace mindspore::lite {
 void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
@@ -447,52 +455,31 @@ int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList 
   return RET_OK;
 }
 
-int LiteSwitchOpActor::CompileTrueBranchArrow() {
-  if (true_partial_node_ == nullptr) {
-    MS_LOG(ERROR) << "true_partial_node_ is nullptr.";
-    return RET_NULL_PTR;
-  }
-  auto subgraph = static_cast<kernel::PartialFusionKernel *>(true_partial_node_->kernel())->subgraph_kernel();
-  auto true_branch_actor_id = subgraph_to_actor_.at(subgraph);
-
-  for (size_t i = 0; i < true_partial_node_->in_tensors().size(); ++i) {
-    int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
-    for (int j = 0; j < out_tensor_size; ++j) {
-      if (true_partial_node_->in_tensors()[i] != kernel_->out_tensors()[j]) {
-        continue;
-      }
-      auto arrow = std::make_shared<DataArrow>(j, true_branch_actor_id, i);
-      if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create DataArrow failed";
-        return RET_ERROR;
-      }
-      true_branch_output_data_arrows_.emplace_back(std::move(arrow));
+int LiteSwitchOpActor::CompileBranchArrow() {
+  for (auto &partial_node : partial_nodes_) {
+    if (partial_node == nullptr) {
+      MS_LOG(ERROR) << "partial_node_ is nullptr.";
+      return RET_NULL_PTR;
     }
-  }
-  return RET_OK;
-}
+    auto subgraph = static_cast<kernel::PartialFusionKernel *>(partial_node->kernel())->subgraph_kernel();
+    auto branch_actor_id = subgraph_to_actor_.at(subgraph);
 
-int LiteSwitchOpActor::CompileFalseBranchArrow() {
-  if (false_partial_node_ == nullptr) {
-    MS_LOG(ERROR) << "false_partial_node_ is nullptr.";
-    return RET_NULL_PTR;
-  }
-  auto subgraph = static_cast<kernel::PartialFusionKernel *>(false_partial_node_->kernel())->subgraph_kernel();
-  auto false_branch_actor_id = subgraph_to_actor_.at(subgraph);
-
-  for (size_t i = 0; i < false_partial_node_->in_tensors().size(); ++i) {
-    int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
-    for (int j = 0; j < out_tensor_size; ++j) {
-      if (false_partial_node_->in_tensors()[i] != kernel_->out_tensors()[j]) {
-        continue;
+    std::vector<DataArrowPtr> branch_output_data_arrows_;
+    for (size_t i = 0; i < partial_node->in_tensors().size(); ++i) {
+      int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
+      for (int j = 0; j < out_tensor_size; ++j) {
+        if (partial_node->in_tensors()[i] != kernel_->out_tensors()[j]) {
+          continue;
+        }
+        auto arrow = std::make_shared<DataArrow>(j, branch_actor_id, i);
+        if (arrow == nullptr) {
+          MS_LOG(ERROR) << "create DataArrow failed";
+          return RET_ERROR;
+        }
+        branch_output_data_arrows_.emplace_back(std::move(arrow));
       }
-      auto arrow = std::make_shared<DataArrow>(j, false_branch_actor_id, i);
-      if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create DataArrow failed";
-        return RET_ERROR;
-      }
-      false_branch_output_data_arrows_.emplace_back(std::move(arrow));
     }
+    all_branch_output_data_arrows_.push_back(branch_output_data_arrows_);
   }
   return RET_OK;
 }
@@ -514,15 +501,16 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
       return RET_ERROR;
     }
 
-    switch_node_ = switch_node;
+    switch_type_node_ = switch_node;
     if (switch_node->in_kernels().size() == kSwitchMaxInputKernelSize) {
-      true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex);
-      false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex);
+      // reverse switch node input
+      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchFalsePartialInputIndex));
+      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchTruePartialInputIndex));
     }
 
     if (switch_node->in_kernels().size() == kSwitchMinInputKernelSize) {
-      true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex - 1);
-      false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex - 1);
+      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchFalsePartialInputIndex - 1));
+      partial_nodes_.push_back(switch_node->in_kernels().at(kSwitchTruePartialInputIndex - 1));
     }
     break;
   }
@@ -530,14 +518,11 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
 }
 
 void LiteSwitchOpActor::AppendOutputTensors() {
-  for (auto &tensor : true_partial_node_->in_tensors()) {
-    if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
-      output_tensors_.push_back(tensor);
-    }
-  }
-  for (auto &tensor : false_partial_node_->in_tensors()) {
-    if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
-      output_tensors_.push_back(tensor);
+  for (auto &partial_node : partial_nodes_) {
+    for (auto &tensor : partial_node->in_tensors()) {
+      if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
+        output_tensors_.push_back(tensor);
+      }
     }
   }
   kernel_->set_out_tensors(output_tensors_);
@@ -558,25 +543,17 @@ int LiteSwitchOpActor::CompileArrowThroughSwitchCall() {
 
   AppendOutputTensors();
 
-  ret = CompileTrueBranchArrow();
+  ret = CompileBranchArrow();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileTrueBranchArrow failed.";
-    true_branch_output_data_arrows_.clear();
-    return ret;
-  }
-
-  ret = CompileFalseBranchArrow();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileFalseBranchArrow failed.";
-    false_branch_output_data_arrows_.clear();
-    true_branch_output_data_arrows_.clear();
+    MS_LOG(ERROR) << "CompileBranchArrow failed.";
     return ret;
   }
 
   subgraph_kernel->DropNode(call_node_);
-  subgraph_kernel->DropNode(switch_node_);
-  subgraph_kernel->DropNode(true_partial_node_);
-  subgraph_kernel->DropNode(false_partial_node_);
+  subgraph_kernel->DropNode(switch_type_node_);
+  for (auto &partial_node : partial_nodes_) {
+    subgraph_kernel->DropNode(partial_node);
+  }
 
   return ret;
 }
@@ -584,14 +561,8 @@ int LiteSwitchOpActor::CompileArrowThroughSwitchCall() {
 int LiteSwitchOpActor::CompileArrow() {
   int ret = CompileArrowThroughSwitchCall();
   if (ret != RET_OK) {
-    true_branch_output_data_arrows_.clear();
-    false_branch_output_data_arrows_.clear();
     MS_LOG(ERROR) << "CompileArrowThroughSwitchCall failed.";
     return ret;
-  }
-  if (!true_branch_output_data_arrows_.empty() && !false_branch_output_data_arrows_.empty()) {
-    MS_LOG(INFO) << "CompileArrowThroughSwitchCall done.";
-    return RET_OK;
   }
   ret = CompileArrowThroughOutputKernels();
   if (ret != RET_OK) {
@@ -603,61 +574,61 @@ int LiteSwitchOpActor::CompileArrow() {
 }
 
 int LiteSwitchOpActor::PrepareOutputData() {
-  true_branch_outputs_data_.resize(true_branch_output_data_arrows_.size());
-  for (size_t i = 0; i < true_branch_output_data_arrows_.size(); i++) {
-    auto &arrow = true_branch_output_data_arrows_[i];
-    auto data =
-      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
-                                       static_cast<int>(arrow->to_input_index_));
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "new true_branch_output_data failed.";
-      return RET_NULL_PTR;
+  for (auto &branch_output_data_arrows : all_branch_output_data_arrows_) {
+    std::vector<OpDataPtr<Tensor>> branch_outputs_data{};
+    branch_outputs_data.resize(branch_output_data_arrows.size());
+    for (size_t i = 0; i < branch_output_data_arrows.size(); i++) {
+      auto &arrow = branch_output_data_arrows[i];
+      auto data =
+        std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
+                                         static_cast<int>(arrow->to_input_index_));
+      if (data == nullptr) {
+        MS_LOG(ERROR) << "new branch_output_data failed.";
+        return RET_NULL_PTR;
+      }
+      branch_outputs_data.at(i) = data;
     }
-    true_branch_outputs_data_.at(i) = data;
-  }
-
-  false_branch_outputs_data_.resize(false_branch_output_data_arrows_.size());
-  for (size_t i = 0; i < false_branch_output_data_arrows_.size(); i++) {
-    auto &arrow = false_branch_output_data_arrows_[i];
-    auto data =
-      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
-                                       static_cast<int>(arrow->to_input_index_));
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "new false_branch_output_data failed.";
-      return RET_NULL_PTR;
-    }
-    false_branch_outputs_data_.at(i) = data;
+    all_branchs_output_data_.push_back(branch_outputs_data);
   }
   return RET_OK;
 }
 
-void LiteSwitchOpActor::DecreaseTrueBranchInputTensor() {
-  switch_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
-  for (auto input : true_partial_node_->in_tensors()) {
-    input->DecRefCount();
+void LiteSwitchOpActor::DecreaseOtherBranchInputTensor(const size_t &index) {
+  switch_type_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
+  for (size_t i = 0; i < partial_nodes_.size(); ++i) {
+    if (i == index) {
+      continue;
+    }
+    for (auto input : partial_nodes_[i]->in_tensors()) {
+      input->DecRefCount();
+    }
   }
 }
 
-void LiteSwitchOpActor::DecreaseFalseBranchInputTensor() {
-  switch_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
-  for (auto input : false_partial_node_->in_tensors()) {
-    input->DecRefCount();
+void LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context) {
+  if (index >= all_branch_output_data_arrows_.size()) {
+    MS_LOG(ERROR) << "index " << index
+                  << " extend all_branch_output_data_arrows_.size(): " << all_branch_output_data_arrows_.size();
+    context->SetFailed(RET_ERROR);
+    return;
   }
-}
-
-void LiteSwitchOpActor::AsyncTrueBranchOutput(OpContext<Tensor> *context) {
-  MS_ASSERT(true_branch_output_data_arrows_.size() == true_branch_outputs_data_.size());
-  for (size_t i = 0; i < true_branch_output_data_arrows_.size(); ++i) {
-    auto &data = true_branch_outputs_data_.at(i);
-    Async(true_branch_output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+  if (index >= all_branchs_output_data_.size()) {
+    MS_LOG(ERROR) << "index " << index
+                  << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
+    context->SetFailed(RET_ERROR);
+    return;
   }
-}
-
-void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
-  MS_ASSERT(false_branch_output_data_arrows_.size() == false_branch_outputs_data_.size());
-  for (size_t i = 0; i < false_branch_output_data_arrows_.size(); ++i) {
-    auto &data = false_branch_outputs_data_.at(i);
-    Async(false_branch_output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+  auto branch_output_data_arrows = all_branch_output_data_arrows_.at(index);
+  auto branch_outputs_data = all_branchs_output_data_.at(index);
+  if (branch_output_data_arrows.size() != branch_outputs_data.size()) {
+    MS_LOG(ERROR) << "index " << index
+                  << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
+    context->SetFailed(RET_ERROR);
+    return;
+  }
+  for (size_t i = 0; i < branch_output_data_arrows.size(); ++i) {
+    auto &data = branch_outputs_data.at(i);
+    Async(branch_output_data_arrows[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 
@@ -685,19 +656,15 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
   }
   input_op_datas_.erase(op_uuid);
 
-  auto cond_ptr = reinterpret_cast<bool *>(switch_node_->in_tensors()[kSwitchCondTensorIndex]->data());
+  auto cond_ptr = reinterpret_cast<bool *>(switch_type_node_->in_tensors()[kSwitchCondTensorIndex]->data());
   if (cond_ptr == nullptr) {
     MS_LOG(ERROR) << "switch cond input data is nullptr.";
     context->SetFailed(RET_NULL_PTR);
     return;
   }
-  if (*cond_ptr) {
-    DecreaseFalseBranchInputTensor();
-    AsyncTrueBranchOutput(context);
-  } else {
-    DecreaseTrueBranchInputTensor();
-    AsyncFalseBranchOutput(context);
-  }
+  size_t index = static_cast<size_t>(*cond_ptr);
+  DecreaseOtherBranchInputTensor(index);
+  AsyncBranchOutput(index, context);
 }
 
 #endif
@@ -802,7 +769,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
     /* make subgraph name (actor name) unique */
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-    if ((kernel::LiteKernelUtil::IsSwitchCall(kernel))) {
+    if ((kernel::LiteKernelUtil::IsSwitchTypeCall(kernel))) {
       auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);
       if (switch_actor == nullptr) {
         MS_LOG(ERROR) << "create LiteSwitchOpActor failed: " << kernel->name();
