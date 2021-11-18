@@ -292,6 +292,20 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
+
+  if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0) {
+    for (const auto &input : func_graph->get_inputs()) {
+      MS_ASSERT(input->isa<Parameter>());
+      auto name = input->cast<ParameterPtr>()->name();
+      std::vector<int64_t> shape = ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(name);
+      if (shape.empty()) {
+        MS_LOG(WARNING) << "Can not find name in map. name is " << name;
+      } else {
+        input->abstract()->set_shape(std::make_shared<mindspore::abstract::Shape>(shape));
+      }
+    }
+  }
+
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
   RemoveUnusedGraphInput(func_graph);
