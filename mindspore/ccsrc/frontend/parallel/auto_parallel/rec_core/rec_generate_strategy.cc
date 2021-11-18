@@ -38,7 +38,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   MS_EXCEPTION_IF_NULL(index_list);
   GeneratePartitionedOperatorStrategy(graph, ops, index_list);
 
-  std::shared_ptr<std::vector<size_t>> no_stra_op_list(new std::vector<size_t>);
+  std::shared_ptr<std::vector<size_t>> no_stra_op_list = std::make_shared<std::vector<size_t>>();
   for (size_t i = 0; i < eli_list->size(); i++) {
     no_stra_op_list->push_back(eli_list->at(i)[0]);
   }
