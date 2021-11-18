@@ -215,6 +215,73 @@ class MS_API BenchmarkBase {
                       const std::map<std::string, std::pair<int, struct PerfCount>> &result);
 #endif
 
+  void GetCosError(double sum_a, double sum_b, double dot_sum, float *cos_sim) {
+    if (sum_a < DBL_EPSILON && sum_b < DBL_EPSILON) {
+      *cos_sim = 1;
+    } else if (sum_a * sum_b < DBL_EPSILON) {
+      *cos_sim = 0;
+    } else {
+      *cos_sim = dot_sum / (sqrt(sum_a) * sqrt(sum_b));
+    }
+  }
+  // tensorData need to be converter first
+  template <typename T, typename ST>
+  float CompareDatabyCosineDistance(const std::string &nodeName, const std::vector<ST> &msShape,
+                                    const void *tensor_data, float *cos_sim) {
+    const T *msTensorData = static_cast<const T *>(tensor_data);
+    auto iter = this->benchmark_data_.find(nodeName);
+    if (iter != this->benchmark_data_.end()) {
+      std::vector<size_t> castedMSShape;
+      size_t shapeSize = 1;
+      for (int64_t dim : msShape) {
+        castedMSShape.push_back(size_t(dim));
+        shapeSize *= dim;
+      }
+
+      CheckTensor *calibTensor = iter->second;
+      if (calibTensor->shape != castedMSShape) {
+        std::ostringstream oss;
+        oss << "Shape of mslite output(";
+        for (auto dim : castedMSShape) {
+          oss << dim << ",";
+        }
+        oss << ") and shape source model output(";
+        for (auto dim : calibTensor->shape) {
+          oss << dim << ",";
+        }
+        oss << ") are different";
+        std::cerr << oss.str() << std::endl;
+        MS_LOG(ERROR) << oss.str().c_str();
+        return RET_ERROR;
+      }
+      double dot_sum = 0;
+      double sum_a = 0;
+      double sum_b = 0;
+      std::cout << "Data of node " << nodeName << " : ";
+      for (size_t j = 0; j < shapeSize; j++) {
+        if (j < 50) {
+          std::cout << static_cast<float>(msTensorData[j]) << " ";
+        }
+
+        if (std::is_same<T, float>::value && (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j]))) {
+          std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
+          MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
+          return RET_ERROR;
+        }
+
+        dot_sum += static_cast<double>(msTensorData[j]) * static_cast<double>(calibTensor->data.at(j));
+        sum_a += static_cast<double>(msTensorData[j]) * static_cast<double>(msTensorData[j]);
+        sum_b += static_cast<double>(calibTensor->data.at(j)) * static_cast<double>(calibTensor->data.at(j));
+      }
+      GetCosError(sum_a, sum_b, dot_sum, cos_sim);
+      std::cout << "Mean cosine distance of node/tensor " << nodeName << " : " << *cos_sim * 100 << "%" << std::endl;
+      return RET_OK;
+    } else {
+      MS_LOG(INFO) << "%s is not in Source Model output", nodeName.c_str();
+      return RET_ERROR;
+    }
+  }
+
   // tensorData need to be converter first
   template <typename T, typename ST>
   float CompareData(const std::string &nodeName, const std::vector<ST> &msShape, const void *tensor_data) {
