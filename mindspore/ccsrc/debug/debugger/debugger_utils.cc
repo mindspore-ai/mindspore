@@ -52,7 +52,8 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
   return real_outputs;
 }
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_) {
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+                uint32_t root_graph_id) {
   // get inputs
   auto kernel_inputs = launch_info_->inputs_;
   auto input_size = AnfAlgo::GetInputTensorNum(cnode);
@@ -70,7 +71,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
     auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order_, format, int_shapes, type, 0, true);
+    auto ret =
+      gpu_addr->LoadMemToHost(input_tensor_name, exec_order_, format, int_shapes, type, 0, true, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -79,7 +81,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
   }
 }
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_) {
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+                 uint32_t root_graph_id) {
   // get outputs
   auto kernel_outputs = launch_info_->outputs_;
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
@@ -99,7 +102,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
     auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order_, format, int_shapes, type, j, false);
+    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order_, format, int_shapes, type, j, false, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -136,15 +139,17 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   }
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   bool dump_enabled = debugger->DumpDataEnabledIteration();
+  auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto root_graph_id = kernel_graph->root_graph_id();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info_, exec_order_);
+    LoadInputs(cnode, launch_info_, exec_order_, root_graph_id);
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info_, exec_order_);
+    LoadOutputs(cnode, launch_info_, exec_order_, root_graph_id);
   }
   // Dump kernel
   if (dump_enabled) {
-    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
     debugger->DumpSingleNode(cnode, graph_id);

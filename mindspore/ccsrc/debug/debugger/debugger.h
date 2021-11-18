@@ -80,6 +80,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // do nothing if graph is set already
   void PreExecute(const KernelGraphPtr &graph_ptr);
 
+  void SetCurrentAndPrevRootGraph(uint32_t root_graph_id);
+
+  void StoreRunGraphIdList(uint32_t graph_id);
+
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
@@ -131,6 +135,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // version_check should be true if you want the function to do backend compatibility check with Mindinsight
   bool SendMetadata(bool version_check);
 
+  bool CheckSendMetadata();
+
   void LoadParametersAndConst();
 
   void LoadParametersAndConst(const KernelGraphPtr &graph);
@@ -148,6 +154,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void LoadGraphs(const KernelGraphPtr &graph_ptr);
 
   uint32_t GetFirstRunGraphId() const;
+
+  uint32_t GetCurrentRootGraphId() const { return cur_root_graph_id_; }
+
+  uint32_t GetPrevRootGraphId() const { return prev_root_graph_id_; }
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
@@ -246,7 +256,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // Check if the IP is valid
   bool CheckIp(const std::string &host) const;
 
-  void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
+  void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, uint32_t root_graph_id);
 
   // class members
 
@@ -263,9 +273,13 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::string node_name_;
   std::string cur_name_;
   bool training_done_;
+  bool send_metadata_done_;
+  bool received_new_graph_;
   bool is_dataset_graph_;
   bool partial_memory_;
   std::mutex access_lock_;
+  uint32_t cur_root_graph_id_ = UINT32_MAX;
+  uint32_t prev_root_graph_id_ = UINT32_MAX;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
   bool enable_heartbeat_;

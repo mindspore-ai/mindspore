@@ -260,6 +260,8 @@ class DebugServices {
     const std::vector<parameter_t> &parameter_list);
 #endif
 
+  const void *PreparePrevTensor(uint32_t *prev_num_elements, const std::string &tensor_name);
+
   void CheckHistoryErrorCode(int *error_code, bool history_not_found);
 
   void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
@@ -411,6 +413,8 @@ class DebugServices {
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
+
+  bool CompareCurrentRootGraph(uint32_t id);
 #endif
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() const;

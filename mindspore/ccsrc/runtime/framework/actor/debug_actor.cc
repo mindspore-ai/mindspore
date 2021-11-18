@@ -114,10 +114,10 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr) {
-    debugger->Debugger::UpdateStepNumGPU();
     // Reset exec_order for the next step
     exec_order_ = 0;
     debugger->Debugger::PostExecuteGraphDebugger();
+    debugger->Debugger::UpdateStepNumGPU();
   }
 #else
 #ifndef ENABLE_SECURITY
