@@ -271,8 +271,10 @@ if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         set(ASCEND_DRIVER_BACK_PATH ${ASCEND_PATH}/driver/lib64/driver)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
+        set(ASCEND_RUNTIME_NEW_PATH ${ASCEND_PATH}/lib64)
         set(ASCEND_OPP_PATH ${ASCEND_PATH}/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
+        set(ASCEND_TOOLKIT_RUNTIME_NEW_PATH ${ASCEND_PATH}/ascend-toolkit/latest/lib64)
         set(ASCEND_TOOLKIT_OPP_PATH ${ASCEND_PATH}/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     endif()
 endif()
@@ -286,18 +288,25 @@ endif()
 
 if(MODE_ASCEND_ALL)
     MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
-    find_library(ERROR_MANAGER error_manager ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(ERROR_MANAGER error_manager ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
+    find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_DRIVER_BACK_PATH})
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH} ${ASCEND_DRIVER_BACK_PATH})
     find_library(DATATRANSFER datatransfer HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_DRIVER_BACK_PATH})
-    find_library(PROFILING msprofiler ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ACL ascendcl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ACL_TDT_CHANNEL acl_tdt_channel ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(PLATFORM platform ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH} ${ASCEND_DRIVER_BACK_PATH})
+    find_library(PROFILING msprofiler ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
+    find_library(ACL ascendcl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
+    find_library(ACL_TDT_CHANNEL acl_tdt_channel ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
+    find_library(PLATFORM platform ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
     find_library(OPTILING optiling ${ASCEND_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
-    find_library(OPT_FEATURE opt_feature ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(OPT_FEATURE opt_feature ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
 
     target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER} -Wl,--no-as-needed
       ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
@@ -332,8 +341,11 @@ endif()
 
 if(MODE_ASCEND_ALL)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64)
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH
@@ -408,7 +420,8 @@ if(ENABLE_MINDDATA)
 endif()
 
 if(MODE_ASCEND_ALL)
-    find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
     target_link_libraries(_c_expression PRIVATE ${adump_server})
 endif()
 
