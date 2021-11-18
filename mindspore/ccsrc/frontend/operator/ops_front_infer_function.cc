@@ -758,6 +758,29 @@ AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &pr
   return AbstractFunction::MakeAbstractFunction(shard_v);
 }
 
+AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  // args: An object of AbstractFunction.
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  auto fn_arg = args_spec_list[0];
+  MS_LOG(DEBUG) << "Evaluate Vmap: " << fn_arg->ToString() << ".";
+
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(fn_arg);
+  MS_EXCEPTION_IF_NULL(x);
+
+  ValuePtr in_axes = primitive->GetAttr("in_axes");
+  ValuePtr out_axes = primitive->GetAttr("out_axes");
+
+  AbstractFuncAtomPtrList vmap_v;
+  auto build_vmap_v = [&vmap_v, &in_axes, &out_axes](const AbstractFuncAtomPtr &func) {
+    auto vmap_closure = std::make_shared<VmapTransformedAbstractClosure>(func, in_axes, out_axes);
+    vmap_v.push_back(vmap_closure);
+  };
+  x->Visit(build_vmap_v);
+
+  return AbstractFunction::MakeAbstractFunction(vmap_v);
+}
+
 AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
@@ -824,6 +847,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                    InferImplBroadcastGradientArgs, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeSlice, prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);

@@ -130,16 +130,16 @@ class GetItemTransformACrossGraph {
   mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<int64_t, FuncGraphPtr>> cache_;
 };
 
-bool HasMoreJ(const OptimizerPtr &optimizer) {
-  bool more_j = false;
+bool HasMoreMetaFgPrim(const OptimizerPtr &optimizer) {
+  bool more_meta_fg_prim = false;
   auto res = optimizer->resource();
   auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(res);
   if (resource_ptr != nullptr) {
     const auto &manager = optimizer->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    more_j = manager->func_graph_j_total(resource_ptr->func_graph());
+    more_meta_fg_prim = manager->func_graph_meta_fg_prim_total(resource_ptr->func_graph());
   }
-  return more_j;
+  return more_meta_fg_prim;
 }
 
 bool IsOutputShrinkable(const AnfNodePtr &output) {
@@ -350,8 +350,8 @@ class IncorporateGetitem : public AnfVisitor {
     auto fg_call_cnode_users_counter = MultipleUse(fg_call_cnode_, fg_, &tp_cnodes_and_index);
     bool multiple_use = (tp_cnodes_and_index.size() > 1);
     if (output_is_shrinkable && multiple_use && (tp_cnodes_and_index.size() == fg_call_cnode_users_counter)) {
-      if (!internal::ShouldTransform(fg_call_cnode_, tp_cnodes_and_index) && !internal::HasMoreJ(optimizer)) {
-        MS_LOG(DEBUG) << "No more j and multiple use, will shrink, node: " << node->DebugString()
+      if (!internal::ShouldTransform(fg_call_cnode_, tp_cnodes_and_index) && !internal::HasMoreMetaFgPrim(optimizer)) {
+        MS_LOG(DEBUG) << "No more j or vmap and multiple use, will shrink, node: " << node->DebugString()
                       << ", fg_call: " << fg_call_cnode_->DebugString();
         const auto output_size = internal::GetOutputSize(fg_->output());
         if (fg_call_cnode_users_counter == output_size) {
@@ -655,9 +655,9 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     bool multiple_use = (tp_cnodes_and_index.size() > 1);
     if (g1_output_is_shrinkable && g2_output_is_shrinkable && multiple_use &&
         (tp_cnodes_and_index.size() == switch_call_users_counter)) {
-      if (!internal::HasMoreJ(optimizer) && !ExistEnvironNode(fg) && !ExistEnvironNodeInTupleItem(g1_) &&
+      if (!internal::HasMoreMetaFgPrim(optimizer) && !ExistEnvironNode(fg) && !ExistEnvironNodeInTupleItem(g1_) &&
           !ExistEnvironNodeInTupleItem(g2_) && !internal::ShouldTransform(switch_call, tp_cnodes_and_index)) {
-        MS_LOG(DEBUG) << "No more j, will shrink. Node: " << node->DebugString()
+        MS_LOG(DEBUG) << "No more j or vmap, will shrink. Node: " << node->DebugString()
                       << ", switch: " << switch_->DebugString();
         const auto g1_output_size = internal::GetOutputSize(g1_->output());
         const auto g2_output_size = internal::GetOutputSize(g2_->output());

@@ -252,6 +252,14 @@ class TraceGradOperation : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceGradOperation>(*this); }
 };
 
+class TraceVmapOperation : public TraceInfo {
+ public:
+  explicit TraceVmapOperation(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceVmapOperation() override = default;
+  std::string name() const override { return "vmap_ops"; }
+  TraceInfoPtr clone() override { return std::make_shared<TraceVmapOperation>(*this); }
+};
+
 class TraceForceBool : public TraceInfo {
  public:
   explicit TraceForceBool(const DebugInfoPtr &info) : TraceInfo(info) {}

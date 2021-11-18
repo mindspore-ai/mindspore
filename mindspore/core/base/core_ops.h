@@ -170,6 +170,7 @@ constexpr auto kCOO2CSR = "COO2CSR";
 
 // Meta Function Graph
 constexpr auto kJ = "J";
+constexpr auto kVmap = "Vmap";
 
 // Others
 constexpr auto kMakeTuple = "MakeTuple";
@@ -825,6 +826,7 @@ GVAR_DEF(PrimitivePtr, kPrimPyInterpret, std::make_shared<Primitive>("PyInterpre
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJ, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmap, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimShard, std::make_shared<Primitive>("Shard", kSideEffectPropagate));
 
 // Used to build graph which have keyword arguments

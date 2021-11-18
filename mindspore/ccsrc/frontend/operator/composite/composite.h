@@ -252,6 +252,18 @@ class Shard : public MetaFuncGraph {
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 };
+
+class VmapOperation : public MetaFuncGraph {
+ public:
+  explicit VmapOperation(const std::string &name);
+  ~VmapOperation() override = default;
+  MS_DECLARE_PARENT(VmapOperation, MetaFuncGraph)
+
+  FuncGraphPtr GetVmap(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params);
+
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+};
+using VmapOperationPtr = std::shared_ptr<VmapOperation>;
 }  // namespace prim
 }  // namespace mindspore
 

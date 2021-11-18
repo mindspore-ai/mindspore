@@ -98,4 +98,28 @@ BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args) {
   py::object obj = func(*py_args);
   return std::make_shared<PyObjectRef>(obj);
 }
+
+py::function GetVmapRuleFunctionByObj(const py::object &obj, int axis_size) {
+  constexpr char get_vmap_rule_fn[] = "get_vmap_rule";
+  constexpr char vmap_module[] = "mindspore.ops._vmap";
+  py::function fn = python_adapter::GetPyFn(vmap_module, get_vmap_rule_fn)(obj, axis_size);
+  return fn;
+}
+
+py::function GetVmapRuleFunction(const std::string &name, int axis_size) {
+  auto fn = GetVmapRuleFunctionByObj(py::str(name), axis_size);
+  return fn;
+}
+
+py::function GetVmapGeneralRuleFunction(const std::string &name, const bool is_side_effect, int axis_size) {
+  auto fn = GetVmapGeneralRuleByObj(py::str(name), is_side_effect, axis_size);
+  return fn;
+}
+
+py::function GetVmapGeneralRuleByObj(const py::object &obj, const bool is_side_effect, int axis_size) {
+  std::string get_vmap_rule_fn = is_side_effect ? "vmap_monad_rule" : "vmap_general_rule";
+  constexpr char vmap_module[] = "mindspore.ops._vmap";
+  py::function fn = python_adapter::GetPyFn(vmap_module, get_vmap_rule_fn)(obj, axis_size);
+  return fn;
+}
 }  // namespace mindspore

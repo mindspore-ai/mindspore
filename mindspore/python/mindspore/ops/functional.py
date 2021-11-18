@@ -31,7 +31,7 @@ from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
-from .composite import _Grad, Shard
+from .composite import _Grad, Shard, _Vmap
 from .._c_expression import security
 
 typeof = Primitive('typeof')
@@ -522,6 +522,71 @@ def select(cond, x, y):
         else:
             input_y = cast(input_y, mstype.float32)
     return _select(cond, input_x, input_y)
+
+
+vmap_instance = _Vmap()
+
+def vmap(fn, in_axes=0, out_axes=0):
+    r"""
+    Vectorizing map (vmap) is a higher-order function to map `fn` over argument axes, which is pioneered by Jax.
+    Vmap allows users to map functions along the array axis, it removes the restriction of batch dimension on the
+    operator, and provides a more convenient and unified operator expression, moreover, it allows users to composite
+    with other functional modules such as `grad`, to improve the development efficiency. In addition, the vectorizing
+    map does not execute loops outside the function,but sinks loops into the primitive operations of the function
+    for better performance. When combined with `Graph Kernel Fusion`, operational efficiency would further improved.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Note:
+        1. The power of Vmap comes from the implementation of VmapRules of primitives. Although we have designed a
+        generalized rule, we do not guarantee that it can work well for all operators, please use at your own risk.
+        If you want to achieve a better performance, please refer to the tutorial to implement the specific VmapRule
+        for the custom operator, which won't take too much time.
+        2. When calling the random number generation methods within the scope of vmap, the same random number is
+        generated among vector elements each time. If you expect each vector branch to use different random numbers,
+        you need to generate batch random numbers externally in advance and then transfer them to vmap.
+
+    Args:
+        fn (Function or Cell): Function to be mapped over batch axes, which takes at least one argument and returns
+            one or more Tensors or the type of data supported by the MindSpore Tensor.
+        in_axes (int or nested structure): Specifies which dimensions (axes) of the inputs should be mapped over.
+            If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis. If `in_axes`
+            is a tuple or list, which composed of integers or Nones and the length should equal to the number of
+            positional arguments to `fn`, indicates which axis to map for each corresponding positional argument.
+            Note that, axis integers must be in range [-ndim, ndim) for each argument, where `ndim` is the number
+            of dimensions of the corresponding argument. `None` indicationg not to map any axis, at least one
+            positional argument must have `in_axes` not None. The sizes of the mapped axes (`axis_size`) for all
+            arguments must all be equal. Default: 0.
+        out_axes (int or nested structure): Specifies where the mapped dimensions (axes) should appear in the outputs.
+            If `out_axes` is an integer, all outputs of `fn` are specified according to this axis. If `out_axes`
+            is a tuple or list, which composed of integers or Nones and the length also should equal to the number of
+            outputs of `fn`. Note that, axis integers must be in range [-ndim, ndim) for each output, where `ndim` is
+            the number of dimensions of the output returned by `vmap`-ed function. All outputs with a non-None mapped
+            axis must have a non-None `out_axes` specification, and if outputs with none mapped axis specifies a
+            non-None `out_axes`, the result is broadcast across the mapped axis. Default: 0.
+
+    Returns:
+        Vectorized/Batched version function of `fn`. The arguments and outputs of this function correspond to those of
+        'fn', but it adds a extra batch dimension at positions specified by `in_axes` and `out_axes`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.functional import vmap
+        >>> def test_vmap(x, y, z):                                              # ([a],[a],[a]) -> [a]
+        ...     return x + y + z
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32))    # [b, a]
+        >>> y = Tensor(np.array([[-3, -2, -1], [3, 2, 1]]).astype(np.float32))   # [a, b]
+        >>> z = Tensor(np.array([0, 3]).astype(np.float32))                      # [a]
+        >>> output = vmap(test_vmap, in_axes=(0, 1, None), out_axes=1)(x, y, z)  # ([b, a],[a, b],[a]) -> [a, b]
+        >>> print(output)
+        [[-2  1  4]
+         [ 8  9 10]]
+    """
+    return vmap_instance(fn, in_axes, out_axes)
 
 
 tuple_setitem = Primitive('tuple_setitem')

@@ -21,7 +21,8 @@ from types import FunctionType
 
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
-    TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, ListSlice_
+    TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
+    ListSlice_, VmapOperation_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
@@ -498,6 +499,29 @@ class _Grad(GradOperation_):
         self.fn = fn
         self.grad_position = grad_position
         return self.grad_fn
+
+
+class _Vmap(VmapOperation_):
+    """
+    A higher-order function which is used to generate the vectorizing map function.
+    """
+
+    def __init__(self):
+        """Initialize _Vmap."""
+        VmapOperation_.__init__(self, 'vmap')
+        self.vmap_fn = None
+        self.fn = None
+
+    def __call__(self, fn, in_axes=0, out_axes=0):
+        vmap_ = self
+
+        @ms_function
+        def after_vmap(*args):
+            return vmap_(fn, in_axes, out_axes)(*args)
+
+        self.vmap_fn = after_vmap
+        self.fn = fn
+        return self.vmap_fn
 
 
 class MultitypeFuncGraph(MultitypeFuncGraph_):

@@ -790,6 +790,160 @@ REGISTER_PYBIND_DEFINE(GradOperation_, ([](const py::module *m) {
                                 py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"));
                        }));
 
+// Generate the vmap_graph.
+VmapOperation::VmapOperation(const std::string &name) : MetaFuncGraph(name) {
+  auto default_zero = std::make_shared<Int64Imm>(static_cast<int64_t>(0));
+  signatures_ =
+    // def vmap(func:read, in_axes:ref, out_axes:ref):
+    std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
+                            {"in_axes", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault, default_zero,
+                             SignatureEnumDType::kDTypeEmptyDefaultValue},
+                            {"out_axes", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindDefault, default_zero,
+                             SignatureEnumDType::kDTypeEmptyDefaultValue}});
+}
+
+FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) {
+  FuncGraphPtr vmap_child = std::make_shared<FuncGraph>();
+  vmap_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(vmap);
+  for (size_t i = 0; i < forward_graph_params.size(); ++i) {
+    inputs.push_back(vmap_child->add_parameter());
+  }
+  auto vmap_app = vmap_child->NewCNodeInOrder(inputs);
+  vmap_child->set_output(vmap_app);
+
+  return vmap_child;
+}
+
+namespace {
+bool IsAxesAllNone(const ValuePtr &axes) {
+  MS_EXCEPTION_IF_NULL(axes);
+  ValueSequencePtr axes_seq = dyn_cast<ValueSequence>(axes);
+  auto axes_seq_value = axes_seq->value();
+  if (std::all_of(axes_seq_value.begin(), axes_seq_value.end(), [](const ValuePtr &axes_value_ptr) {
+        if (axes_value_ptr->isa<ValueSequence>()) {
+          return IsAxesAllNone(axes_value_ptr);
+        }
+        if (!axes_value_ptr->isa<None>()) {
+          return false;
+        }
+        return true;
+      })) {
+    return true;
+  }
+  return false;
+}
+
+ValuePtr CheckAxes(const AbstractBasePtr &axes_abs, const bool &is_in_axes = false, int nparam = 0) {
+  ValuePtr axes_value = nullptr;
+  auto axes_name = is_in_axes ? "in_axes" : "out_axes";
+
+  auto axes_abs_sequence = dyn_cast<abstract::AbstractSequence>(axes_abs);
+  if (axes_abs_sequence != nullptr) {
+    axes_value = axes_abs->cast<abstract::AbstractSequencePtr>()->ElementsBuildValue<ValueTuple>();
+    MS_EXCEPTION_IF_NULL(axes_value);
+    if (is_in_axes) {
+      ValueSequencePtr in_axes_seq = dyn_cast<ValueSequence>(axes_value);
+      int in_axes_size = SizeToInt(in_axes_seq->size());
+      if (nparam != in_axes_size) {
+        MS_LOG(EXCEPTION) << "When vmap`s `" << axes_name
+                          << "` is a tuple or list, and its size must be equal to the number of arguments of `fn`: "
+                          << nparam << ", but got size: " << in_axes_size << ".";
+      }
+    }
+    bool elem_all_none = IsAxesAllNone(axes_value);
+    if (elem_all_none) {
+      MS_LOG(EXCEPTION) << "The `" << axes_name << "` of `vmap` cannot be all None, but got " << axes_value->ToString()
+                        << ".";
+    }
+  } else {
+    axes_value = axes_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(axes_value);
+    if (axes_value->isa<None>()) {
+      MS_LOG(EXCEPTION) << "The `" << axes_name << "` of `vmap` cannot be a single None.";
+    } else if (!axes_value->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << "The axis in vmap`s `" << axes_name << "` can only be of type Int or None, but got "
+                        << axes_abs->ToString() << ".";
+    }
+  }
+  return axes_value;
+}
+}  // namespace
+
+FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "'VmapOperation' requires a network or function as an input, while the input is empty.";
+  }
+
+  constexpr auto kVmapOperationInputNum = 3;
+  const std::string op_name = "vmap";
+  CheckArgsSize(op_name, args_spec_list, kVmapOperationInputNum);
+
+  auto fn_arg = args_spec_list[0];
+  auto in_axes_arg = args_spec_list[1];
+  auto out_axes_arg = args_spec_list[2];
+
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_arg);
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString() << ".";
+  }
+
+  auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
+  if (real_fn == nullptr) {
+    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to `FuncGraphAbstractClosure` failed.";
+  }
+
+  FuncGraphPtr orig_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(orig_graph);
+  orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  FuncGraphPtr vmap_fg = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceVmapOperation>(orig_graph->debug_info()));
+    vmap_fg = std::make_shared<FuncGraph>();
+  }
+  int nparam = SizeToInt(orig_graph->parameters().size());
+
+  std::ostringstream ss;
+  ss << "vmap{" << nparam << "}";
+  vmap_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  vmap_fg->debug_info()->set_name(ss.str());
+
+  // add parameter for `fn`, `in_axes` and `out_axes` respectively.
+  ParameterPtr param_graph = vmap_fg->add_parameter();
+  (void)vmap_fg->add_parameter();
+  (void)vmap_fg->add_parameter();
+
+  // Validity verification of in_axes and out_axes
+  ValuePtr in_axes = CheckAxes(in_axes_arg, true, nparam);
+  ValuePtr out_axes = CheckAxes(out_axes_arg);
+
+  PrimitivePtr kPrimVmap = std::make_shared<Primitive>(prim::kVmap, kSideEffectPropagate);
+  kPrimVmap->set_attr("in_axes", in_axes);
+  kPrimVmap->set_attr("out_axes", out_axes);
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(kPrimVmap));
+  inputs.push_back(param_graph);
+  auto vmap = vmap_fg->NewCNodeInOrder(inputs);
+
+  FuncGraphPtr vmap_child = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceVmapOperation>(orig_graph->debug_info()));
+    vmap_child = GetVmap(vmap, orig_graph->parameters());
+  }
+
+  vmap_fg->set_output(NewValueNode(vmap_child));
+  return vmap_fg;
+}
+
+REGISTER_PYBIND_DEFINE(VmapOperation_, ([](const py::module *m) {
+                         (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(
+                           *m, "VmapOperation_")
+                           .def(py::init<std::string &>(), py::arg("fn"));
+                       }));
+
 // Generate the ListMap func graph.
 FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   size_t args_num = args_spec_list.size();

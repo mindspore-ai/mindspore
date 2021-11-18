@@ -707,8 +707,8 @@ ValuePtr AbstractSequence::ElementsBuildValue() const {
   }
   return std::make_shared<T>(element_value_list);
 }
-template ValuePtr AbstractSequence::ElementsBuildValue<ValueTuple>() const;
-template ValuePtr AbstractSequence::ElementsBuildValue<ValueList>() const;
+template MS_CORE_API ValuePtr AbstractSequence::ElementsBuildValue<ValueTuple>() const;
+template MS_CORE_API ValuePtr AbstractSequence::ElementsBuildValue<ValueList>() const;
 
 template <typename T>
 AbstractBasePtr AbstractSequence::ElementsJoin(const AbstractBasePtr &other) {

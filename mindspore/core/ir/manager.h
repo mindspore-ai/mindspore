@@ -259,22 +259,23 @@ class RecursiveComputer final : public DepComputer {
   void RealRecompute(FuncGraphPtr fg) override;
 };
 
-class FuncGraphJTotalComputer final : public DepComputer {
+class FuncGraphMetaFgPrimTotalComputer final : public DepComputer {
  public:
-  explicit FuncGraphJTotalComputer(const FuncGraphManager *m) : DepComputer(m) {}
-  ~FuncGraphJTotalComputer() override = default;
+  explicit FuncGraphMetaFgPrimTotalComputer(const FuncGraphManager *m) : DepComputer(m) {}
+  ~FuncGraphMetaFgPrimTotalComputer() override = default;
 
-  FuncGraphToBoolMap &j_total_analysis() { return j_total_analysis_; }
+  FuncGraphToBoolMap &meta_fg_prim_total_analysis() { return meta_fg_prim_total_analysis_; }
 
-  size_t size() const override { return j_total_analysis_.size(); }
+  size_t size() const override { return meta_fg_prim_total_analysis_.size(); }
 
-  FuncGraphToBoolMap j_total_analysis_;
+  FuncGraphToBoolMap meta_fg_prim_total_analysis_;
 
  protected:
-  void ExtraReset() override { j_total_analysis_.clear(); }
+  void ExtraReset() override { meta_fg_prim_total_analysis_.clear(); }
 
   void RealRecompute(FuncGraphPtr fg) override;
-  bool SeekJ(const FuncGraphPtr &fg, SeenNum seen_num);
+
+  bool SeekMetaFgPrim(const FuncGraphPtr &fg, SeenNum seen_num);
 };
 
 class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
@@ -334,7 +335,7 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   bool recursive(const FuncGraphPtr &fg) const;
   std::shared_ptr<std::list<FuncGraphPtr>> recursive_graphs(const FuncGraphPtr &fg) const;
 
-  bool func_graph_j_total(const FuncGraphPtr &fg) const;
+  bool func_graph_meta_fg_prim_total(const FuncGraphPtr &fg) const;
 
   std::shared_ptr<Signals> signals() const { return signals_; }
 
@@ -371,7 +372,7 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   std::shared_ptr<FVTotalComputer> free_variables_total_;
   std::shared_ptr<FuncGraphsUsedTotalComputer> func_graphs_used_total_;
   std::shared_ptr<RecursiveComputer> recursive_;
-  std::shared_ptr<FuncGraphJTotalComputer> j_total_;
+  std::shared_ptr<FuncGraphMetaFgPrimTotalComputer> meta_fg_prim_total_;
 
   bool is_manage_;
 };
