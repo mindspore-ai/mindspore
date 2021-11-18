@@ -47,7 +47,7 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
   MS_EXCEPTION_IF_NULL(input_data->data_);
   auto &sequential_num = context->sequential_num_;
   // The parameters from the inside of the subgraph need to be put into the stack.
-  if (IntToSize(input_data->index_) < input_parameter_data_num_) {
+  if (IntToSize(input_data->index_) < input_parameter_data_num_ + device_tensor_store_keys_.size()) {
     input_parameter_data_[sequential_num][input_data->index_].push(input_data->data_);
   } else {
     // The outputs of call nodes are placed directly in the input data.
@@ -94,7 +94,7 @@ void StackActor::FetchInput(OpContext<DeviceTensor> *const context) {
       MS_LOG(ERROR) << "Invalid input for actor:" << GetAID();
     }
     for (const auto &one_stack : data_iter->second) {
-      if (one_stack.first >= input_parameter_data_num_) {
+      if (one_stack.first >= input_parameter_data_num_ + device_tensor_store_keys_.size()) {
         MS_LOG(ERROR) << "Invalid input index:" << one_stack.first << " need:" << input_parameter_data_num_
                       << " for actor:" << GetAID();
       }

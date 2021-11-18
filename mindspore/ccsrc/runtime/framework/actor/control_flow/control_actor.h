@@ -104,7 +104,7 @@ class ControlActor : public AbstractActor {
   // The branch id is the unique identifier of the control actor. In the control flow, there are multiple control
   // actors calling the same subgraph at the same time. At this time, the output of the subgraph needs to be returned
   // to the calling place according to the branch id.
-  int output_branch_id_;
+  int output_branch_id_{0};
 
   // Partial data in local. When partial is only funcgraph without real parameter, it is stored inside the actor.
   std::unordered_map<size_t, OpPartial> local_partials_;

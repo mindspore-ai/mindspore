@@ -68,7 +68,9 @@ class ExitActor : public ControlActor {
   // The exit actor needs to create a new device address and take out the ptr from the device tensor come from
   // the kernel actor. These new created device tensors are stored in the created device tensors.
   std::vector<DeviceTensorPtr> created_device_tensors_;
-
+  // In exit actor, we need to copy a new device tensor for the output of the kernel actor, but parameter is not
+  // needed. This mark is used to record whether it need to be copied.
+  std::vector<bool> is_need_copy_device_tensors_;
   // Output data.
   //  The output branch data corresponds to the output_data_arrows_ one by one.
   std::unordered_map<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;

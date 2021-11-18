@@ -226,57 +226,52 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     }
   }
 
+  if (graph_compiler_info.graphs_.size() != graph_compiler_info.device_contexts_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid graphs num:" << graph_compiler_info.graphs_.size()
+                      << " and contexts num:" << graph_compiler_info.device_contexts_.size();
+  }
+
   // 2. Replace the device address in the kernel actor when calling funcgraph, that is to say in the data exchange
   // between kernel graph and the control node, in fact, it is the output of the kernel graph.
-  for (const auto func_graph_to_kernel_graphs : parser->func_graph_to_kernel_graphs_) {
-    for (const auto &kernel_graph : func_graph_to_kernel_graphs.second) {
-      MS_EXCEPTION_IF_NULL(kernel_graph);
-      // If the graph does not have kernel, it means there is no internal calculation in it, the output is parameter,
-      // and no exit actor is needed.
-      if (kernel_graph->execution_order().empty()) {
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &kernel_graph = graph_compiler_info.graphs_[i];
+    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    MS_EXCEPTION_IF_NULL(device_context);
+    if (kernel_graph->execution_order().empty()) {
+      continue;
+    }
+
+    std::vector<bool> is_need_copy_device_tensors;
+    std::vector<KernelWithIndex> formal_parameters;
+    const auto &graph_outputs = kernel_graph->graph_output_map();
+
+    for (const auto &backend_to_front : graph_outputs) {
+      if (HasAbstractMonad(backend_to_front.second.first)) {
         continue;
       }
-      std::vector<KernelWithIndex> formal_parameters;
-      const auto &graph_outputs = kernel_graph->graph_output_map();
-      std::vector<const DeviceContext *> device_contexts;
+      // Collect inputs of exit actor.
+      formal_parameters.emplace_back(backend_to_front.second);
 
-      for (const auto &backend_to_front : graph_outputs) {
-        if (HasAbstractMonad(backend_to_front.second.first)) {
-          continue;
-        }
-        // Collect inputs of exit actor.
-        formal_parameters.emplace_back(backend_to_front.second);
-
-        // Get the device contexts of the exit actor's cnode inputs.
-        const AnfNodePtr &backend_node = backend_to_front.first.first;
-        MS_EXCEPTION_IF_NULL(backend_node);
-        if ((!backend_node->isa<CNode>())) {
-          device_contexts.emplace_back(nullptr);
-          continue;
-        }
-
-        const auto &actor_name = backend_node->fullname_with_scope();
-        const auto &actor = FetchActor(actor_name);
-        MS_EXCEPTION_IF_NULL(actor);
-        const auto &kernel_actor = dynamic_cast<KernelActor *>(actor);
-        MS_EXCEPTION_IF_NULL(kernel_actor);
-        if (kernel_actor->device_contexts_.empty() || kernel_actor->device_contexts_[0] == nullptr) {
-          MS_LOG(EXCEPTION) << "Failed to get device context for kernel:" << backend_node->DebugString();
-        }
-        device_contexts.emplace_back(kernel_actor->device_contexts_[0]);
+      // Get the device contexts of the exit actor's cnode inputs.
+      const AnfNodePtr &backend_node = backend_to_front.first.first;
+      MS_EXCEPTION_IF_NULL(backend_node);
+      if ((!backend_node->isa<CNode>())) {
+        is_need_copy_device_tensors.emplace_back(false);
+        continue;
       }
-
-      const auto &actor_name = kernel_graph->ToString() + kExitActorNameSuffix;
-      const auto &exit_actor = std::make_shared<ExitActor>(actor_name, formal_parameters, nullptr);
-      exit_actors.emplace_back(exit_actor);
-      if (exit_actor->device_contexts_.size() != device_contexts.size()) {
-        MS_LOG(EXCEPTION) << "Invalid device context size:" << device_contexts.size()
-                          << " need:" << exit_actor->device_contexts_.size() << " for actor:" << exit_actor->GetAID();
-      }
-      exit_actor->device_contexts_.swap(device_contexts);
-      InsertActor(exit_actor.get());
+      is_need_copy_device_tensors.emplace_back(true);
     }
+
+    const auto &actor_name = kernel_graph->ToString() + kExitActorNameSuffix;
+    const auto &exit_actor = std::make_shared<ExitActor>(actor_name, formal_parameters, nullptr);
+    exit_actor->is_need_copy_device_tensors_ = is_need_copy_device_tensors;
+    std::vector<const DeviceContext *> device_contexts(formal_parameters.size(), device_context);
+    exit_actor->device_contexts_.swap(device_contexts);
+    exit_actors.emplace_back(exit_actor);
+    InsertActor(exit_actor.get());
   }
+
   return exit_actors;
 }
 
