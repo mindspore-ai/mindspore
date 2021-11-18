@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_with_decay_rule.h"
+#include <utility>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/trace_base.h"

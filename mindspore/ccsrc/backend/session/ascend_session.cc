@@ -1091,26 +1091,26 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
       const auto &value_ptr = GetValueNode(real_input);
       MS_EXCEPTION_IF_NULL(value_ptr);
-      input_tensor_info->input_tensors_mask.emplace_back(value_ptr->isa<StringImm>() ? kValueNodeTensorMask
-                                                                                     : kParameterDataTensorMask);
+      (void)input_tensor_info->input_tensors_mask.emplace_back(value_ptr->isa<StringImm>() ? kValueNodeTensorMask
+                                                                                           : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       auto parameter = real_input->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(parameter);
-      input_tensor_info->input_tensors_mask.emplace_back(parameter->has_default() ? kParameterWeightTensorMask
-                                                                                  : kParameterDataTensorMask);
+      (void)input_tensor_info->input_tensors_mask.emplace_back(parameter->has_default() ? kParameterWeightTensorMask
+                                                                                        : kParameterDataTensorMask);
     } else if (real_input->isa<CNode>()) {
       bool output_is_weight = false;
       tensor = GetCNodeOutputStubTensor(kernel_with_index, node_output_info, &output_is_weight);
-      input_tensor_info->input_tensors_mask.emplace_back(output_is_weight ? kParameterWeightTensorMask
-                                                                          : kParameterDataTensorMask);
+      (void)input_tensor_info->input_tensors_mask.emplace_back(output_is_weight ? kParameterWeightTensorMask
+                                                                                : kParameterDataTensorMask);
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
     }
     MS_EXCEPTION_IF_NULL(tensor);
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
-    input_tensor_info->input_tensors.emplace_back(tensor);
+    (void)input_tensor_info->input_tensors.emplace_back(tensor);
   }
 }
 

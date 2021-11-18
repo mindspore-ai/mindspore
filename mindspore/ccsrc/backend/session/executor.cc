@@ -228,7 +228,7 @@ void Executor::WorkerLoop() {
     }
     {
       std::lock_guard<std::mutex> lock(done_task_mutex_);
-      done_tasks_.emplace_back(std::move(task));
+      (void)done_tasks_.emplace_back(std::move(task));
     }
     if (task_type != kRunGraph || task_sync_flag) {
       std::lock_guard<std::mutex> lock(task_mutex_);

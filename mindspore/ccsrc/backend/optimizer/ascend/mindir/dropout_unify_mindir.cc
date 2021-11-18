@@ -15,6 +15,7 @@
  */
 
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <memory>

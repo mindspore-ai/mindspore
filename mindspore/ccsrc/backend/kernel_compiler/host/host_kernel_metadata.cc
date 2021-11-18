@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/host/host_kernel_metadata.h"
+#include <set>
 #include <memory>
 #include <string>
 #include "backend/kernel_compiler/oplib/oplib.h"

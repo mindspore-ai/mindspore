@@ -117,6 +117,7 @@ bool CanConvertDefaultShapeToNZ(const std::vector<size_t> &shape) {
 std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, const std::vector<int64_t> &axis) {
   std::vector<int64_t> frac_nz_axis = axis;
   auto shape_len = SizeToLong(ori_shape.size());
+  MS_EXCEPTION_IF_ZERO("shape_len", shape_len);
   for (size_t i = 0; i < axis.size(); ++i) {
     auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
     if (axis_idx == shape_len - SizeToLong(kIndex1)) {

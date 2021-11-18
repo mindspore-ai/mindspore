@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fission/splitv_fission.h"
+#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore::opt {

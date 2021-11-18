@@ -15,7 +15,8 @@
  */
 
 #include "backend/optimizer/trt_pass/trt_converter_context.h"
-
+#include <utility>
+#include <algorithm>
 #include "runtime/device/gpu/trt_loader.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"

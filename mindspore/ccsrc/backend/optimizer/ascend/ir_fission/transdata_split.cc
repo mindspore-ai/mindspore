@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fission/transdata_split.h"
+#include <set>
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"

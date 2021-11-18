@@ -15,6 +15,8 @@
  */
 
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
+#include <vector>
+#include <memory>
 
 namespace mindspore {
 namespace device {

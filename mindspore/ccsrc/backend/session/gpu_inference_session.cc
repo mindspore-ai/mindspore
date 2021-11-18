@@ -15,6 +15,7 @@
  */
 
 #include "backend/session/gpu_inference_session.h"
+#include <algorithm>
 #include "ir/tensor.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"

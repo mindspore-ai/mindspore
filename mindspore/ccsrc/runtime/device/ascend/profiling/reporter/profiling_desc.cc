@@ -15,6 +15,7 @@
  */
 
 #include "runtime/device/ascend/profiling/reporter/profiling_desc.h"
+#include <algorithm>
 #include <iterator>
 #include <sstream>
 

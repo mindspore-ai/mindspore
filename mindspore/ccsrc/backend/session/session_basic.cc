@@ -1452,7 +1452,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-      input_tensor_info->input_tensors_mask.emplace_back(
+      (void)input_tensor_info->input_tensors_mask.emplace_back(
         GetValueNode(real_input)->isa<StringImm>() ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
