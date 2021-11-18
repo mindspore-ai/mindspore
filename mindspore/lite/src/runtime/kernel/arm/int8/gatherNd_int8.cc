@@ -89,10 +89,14 @@ int GatherNdInt8CPUKernel::InitOffset() {
   auto in_shape = in_tensors_.front()->shape();
   int in_rank = static_cast<size_t>(in_shape.size());
   if (indices_rank < 1) {
-    MS_LOG(ERROR) << "inex out of bounds";
+    MS_LOG(ERROR) << "index out of bounds";
     return RET_ERROR;
   }
   int idx_lastshape = indices_shape.at(indices_rank - 1);
+  if (idx_lastshape > in_rank) {
+    MS_LOG(ERROR) << name() << " indices shape error!";
+    return RET_ERROR;
+  }
   auto indices_ptr = reinterpret_cast<int8_t *>(indices_tensor->data());
   CHECK_NULL_RETURN(indices_ptr);
   area_ = 1;
@@ -110,7 +114,12 @@ int GatherNdInt8CPUKernel::InitOffset() {
     for (int k = 0; k < idx_lastshape; ++k) {
       int tmp = static_cast<int>(
         round((indices_ptr[j * idx_stride + k] - ind_quant_args.front().zeroPoint) * ind_quant_args.front().scale));
-      in_offset_[j] += tmp * in_stride[k];
+      if (tmp < in_shape[k]) {
+        in_offset_[j] += tmp * in_stride[k];
+      } else {
+        MS_LOG(ERROR) << name() << " indices value invalid!";
+        return RET_ERROR;
+      }
     }
   }
   return RET_OK;
@@ -147,6 +156,7 @@ int GatherNdInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(out_ptr_);
   auto ret = InitOffset();
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitOffset failed.";
     return ret;
   }
   ret = ParallelLaunch(this->ms_context_, GatherNdInt8Run, this, thread_sz_count_);
