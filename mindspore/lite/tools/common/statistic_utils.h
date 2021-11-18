@@ -21,16 +21,13 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include "tools/converter/quantizer/quantize_util.h"
+#include <cfloat>
+#include <utility>
 #include "include/errorcode.h"
-#include "include/ms_tensor.h"
-#include "src/tensor.h"
 #include "src/common/log_adapter.h"
-#include "mindspore/core/ir/anf.h"
 #include "nnacl/op_base.h"
-#include "src/weight_decoder.h"
 
-namespace mindposre::lite {
+namespace mindspore::lite {
 template <typename T>
 T GetMinValue(const std::vector<T> &data_vector) {
   MS_ASSERT(!data_vector.empty());
@@ -66,13 +63,24 @@ float GetMeanValue(const std::vector<T> &data_vector) {
 }
 
 template <typename T>
+std::pair<float, float> GetMeanVar(const std::vector<T> &data_vector) {
+  MS_ASSERT(!data_vector.empty());
+  float mean = GetMeanValue(data_vector);
+  float accumulate = 0.0;
+  std::for_each(std::begin(data_vector), std::end(data_vector),
+                [&](const float data) { accumulate += (data - mean) * (data - mean); });
+  float var = sqrt(accumulate / data_vector.size());
+  return {mean, var};
+}
+
+template <typename T>
 float GetVarValue(const std::vector<T> &data_vector) {
   MS_ASSERT(!data_vector.empty());
   float mean = GetMeanValue(data_vector);
   float accumulate = 0.0;
   std::for_each(std::begin(data_vector), std::end(data_vector),
                 [&](const float data) { accumulate += (data - mean) * (data - mean); });
-  float var = sqrt(accumulate / (data_vector.size() - 1));
+  float var = sqrt(accumulate / data_vector.size());
   return var;
 }
 
@@ -103,10 +111,10 @@ inline float GetClipRate(const void *vector_a, const void *vector_b, size_t size
   MS_ASSERT(vector_a != nullptr);
   MS_ASSERT(vector_b != nullptr);
   if (type_id == mindspore::kNumberTypeFloat32) {
-    return mindposre::lite::GetClipRate<float>(static_cast<const float *>(vector_a),
+    return mindspore::lite::GetClipRate<float>(static_cast<const float *>(vector_a),
                                                static_cast<const float *>(vector_b), size);
   } else if (type_id == mindspore::kNumberTypeInt32) {
-    return mindposre::lite::GetClipRate(static_cast<const int *>(vector_a), static_cast<const int *>(vector_b), size);
+    return mindspore::lite::GetClipRate(static_cast<const int *>(vector_a), static_cast<const int *>(vector_b), size);
   } else {
     MS_LOG(ERROR) << "Unsupported data type:" << type_id;
     return 0;
@@ -118,24 +126,22 @@ float GetCosSimilarity(const T *vector_a, const T *vector_b, size_t size) {
   MS_ASSERT(vector_a != nullptr);
   MS_ASSERT(vector_b != nullptr);
   MS_ASSERT(vector_a.size() == vector_b.size());
-  float dot_sum = 0;
-  float sum_a = 0;
-  float sum_b = 0;
+  double dot_sum = 0;
+  double sum_a = 0;
+  double sum_b = 0;
   for (size_t i = 0; i < size; i++) {
     if (std::is_same<T, float>::value && ((std::isnan(vector_a[i]) || std::isinf(vector_a[i])) ||
                                           (std::isnan(vector_b[i]) || std::isinf(vector_b[i])))) {
       MS_LOG(ERROR) << "tensor has nan or inf data, compare fail";
       return 0;
     }
-    dot_sum += vector_a[i] * vector_b[i];
-    sum_a += vector_a[i] * vector_a[i];
-    sum_b += vector_b[i] * vector_b[i];
+    dot_sum += static_cast<double>(vector_a[i]) * static_cast<double>(vector_b[i]);
+    sum_a += static_cast<double>(vector_a[i]) * static_cast<double>(vector_a[i]);
+    sum_b += static_cast<double>(vector_b[i]) * static_cast<double>(vector_b[i]);
   }
-  constexpr float kCosMinValue = 0.0000001;
-  if (std::fabs(sum_a) < kCosMinValue && std::fabs(sum_b) < kCosMinValue) {
+  if (sum_a < DBL_EPSILON && sum_b < DBL_EPSILON) {
     return 1;
-  }
-  if (std::fabs(sum_a) * std::fabs(sum_b) < kCosMinValue) {
+  } else if (sum_a * sum_b < DBL_EPSILON) {
     return 0;
   }
   return dot_sum / (std::sqrt(sum_a) * std::sqrt(sum_b));
@@ -145,15 +151,15 @@ inline float GetCosSimilarity(const void *vector_a, const void *vector_b, size_t
   MS_ASSERT(vector_a != nullptr);
   MS_ASSERT(vector_b != nullptr);
   if (type_id == mindspore::kNumberTypeFloat32) {
-    return mindposre::lite::GetCosSimilarity<float>(static_cast<const float *>(vector_a),
+    return mindspore::lite::GetCosSimilarity<float>(static_cast<const float *>(vector_a),
                                                     static_cast<const float *>(vector_b), size);
   } else if (type_id == mindspore::kNumberTypeInt32) {
-    return mindposre::lite::GetCosSimilarity(static_cast<const int *>(vector_a), static_cast<const int *>(vector_b),
+    return mindspore::lite::GetCosSimilarity(static_cast<const int *>(vector_a), static_cast<const int *>(vector_b),
                                              size);
   } else {
     MS_LOG(ERROR) << "Unsupported data type:" << type_id;
     return 0;
   }
 }
-}  // namespace mindposre::lite
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_STATISTIC_UTILS_H_

@@ -125,6 +125,7 @@ int ConfigFileParser::ParseMixedBitQuantString(const std::map<std::string, std::
     const auto &map = maps.at(kMixedBitWeightQuantParam);
     std::map<std::string, std::string &> parse_map{
       {"init_scale", mixed_bit_quant_string_.init_scale},
+      {"auto_tune", mixed_bit_quant_string_.auto_tune},
     };
     return SetMapData(map, parse_map, kMixedBitWeightQuantParam);
   }

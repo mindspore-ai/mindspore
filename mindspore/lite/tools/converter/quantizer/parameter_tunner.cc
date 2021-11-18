@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "tools/converter/preprocess/image_preprocess.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/export_model.h"
@@ -88,8 +89,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     quantizer->flags = *flags;
     auto status = quantizer->DoQuantize(func_graph_bak, scale);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "DoQuantization failed " << status;
-      //        return RET_ERROR;
+      MS_LOG(WARNING) << "DoQuantization failed " << status;
       continue;
     }
 
@@ -99,8 +99,8 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     auto weight_quant_session = weight_quant_sm.session;
     auto weight_quant_model = weight_quant_sm.model;
     if (weight_quant_session == nullptr || weight_quant_model == nullptr) {
-      MS_LOG(ERROR) << "create session failed!";
-      return RET_ERROR;
+      MS_LOG(WARNING) << "create session failed!";
+      continue;
     }
     auto weight_quant_inputs = weight_quant_session->GetInputs();
     for (auto input : weight_quant_inputs) {
@@ -185,7 +185,11 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, con
   }
   auto origin_inputs = origin_session->GetInputs();
   for (auto input : origin_inputs) {
-    ret = GenerateRandomData(input);
+    if (flags->dataPreProcessParam.calibrate_size > 0) {
+      ret = preprocess::PreProcess(flags->dataPreProcessParam, input->tensor_name(), 0, input);
+    } else {
+      ret = GenerateRandomData(input);
+    }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << input->tensor_name() << ":"
                     << "Generate random data failed.";

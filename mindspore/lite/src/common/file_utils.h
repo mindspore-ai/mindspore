@@ -30,7 +30,11 @@
 namespace mindspore {
 namespace lite {
 constexpr const char MINDIR_POSTFIX[] = ".mindir";
-
+#ifdef _WIN32
+constexpr const char FILE_SEPARATOR[] = "\\";
+#else
+constexpr const char FILE_SEPARATOR[] = "/";
+#endif
 bool IsCharEndWith(const char *src, const char *end);
 
 std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode = std::ios::in | std::ios::out);

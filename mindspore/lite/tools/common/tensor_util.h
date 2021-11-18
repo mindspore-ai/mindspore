@@ -31,6 +31,7 @@
 #include "ir/dtype/type_id.h"
 #include "ir/tensor.h"
 #include "src/common/utils.h"
+#include "tools/common/statistic_utils.h"
 #include "src/tensor.h"
 
 namespace mindspore {
@@ -110,7 +111,7 @@ float CompareDataByCosineDistance(const std::unordered_map<String, mindspore::te
     MS_LOG(ERROR) << "calib or out tenor is empty.";
     return RET_ERROR;
   }
-  float total_meam_error = 0;
+  float total_cos = 0;
   for (const auto &calib : calib_tensors) {
     size_t error_count = 0;
     float mean_error = 0;
@@ -123,30 +124,12 @@ float CompareDataByCosineDistance(const std::unordered_map<String, mindspore::te
     }
     auto out_tensor = out_tensor_iter->second;
     auto out_data = static_cast<const T *>(out_tensor->data());
-    float dot_sum = 0;
-    float sum_a = 0;
-    float sum_b = 0;
-    for (int j = 0; j < calib_tensor->ElementsNum(); j++) {
-      if (std::is_same<T, float>::value && (std::isnan(out_data[j]) || std::isinf(out_data[j]))) {
-        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
-        return RET_ERROR;
-      }
-      dot_sum += out_data[j] * calib_data[j];
-      sum_a += out_data[j] * out_data[j];
-      sum_b += calib_data[j] * calib_data[j];
-    }
-    if (fabs(sum_a) < 0.0000001 && fabs(sum_b) < 0.0000001) {
-      return 1;
-    }
-    if (fabs(sum_a) * fabs(sum_b) < 0.0000001) {
-      return 0;
-    }
-    mean_error = dot_sum / (sqrt(sum_a) * sqrt(sum_b));
-    total_meam_error += std::abs(mean_error);
+    auto cos = mindspore::lite::GetCosSimilarity<T>(calib_data, out_data, out_tensor->ElementsNum());
+    total_cos += cos;
     MS_LOG(INFO) << "tensor_name:" << calib_tensor->tensor_name() << " cos_sim: " << mean_error
                  << " error_count:" << error_count;
   }
-  return total_meam_error / calib_tensors.size();
+  return total_cos / calib_tensors.size();
 }
 
 template <typename T>
