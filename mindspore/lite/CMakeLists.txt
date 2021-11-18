@@ -34,6 +34,7 @@ option(MSLITE_ENABLE_SPARSE_COMPUTE "enable sparse kernel" off)
 option(MSLITE_ENABLE_RUNTIME_CONVERT "enable runtime convert" off)
 option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
 option(MSLITE_ENABLE_COVERAGE "enable code coverage" off)
+option(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL "enable sharing memory with OpenGL" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -119,6 +120,9 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_COVERAGE})
     set(MSLITE_ENABLE_COVERAGE $ENV{MSLITE_ENABLE_COVERAGE})
+endif()
+if(DEFINED ENV{MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL})
+    set(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL $ENV{MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL})
 endif()
 
 if(TOOLCHAIN_NAME STREQUAL "himix200")
@@ -246,6 +250,7 @@ message(STATUS "\tMSLITE_ENABLE_SPARSE_COMPUTE      = \t${MSLITE_ENABLE_SPARSE_C
 message(STATUS "\tMSLITE_ENABLE_RUNTIME_CONVERT     = \t${MSLITE_ENABLE_RUNTIME_CONVERT}")
 message(STATUS "\tMSLITE_ENABLE_RUNTIME_GLOG        = \t${MSLITE_ENABLE_RUNTIME_GLOG}")
 message(STATUS "\tMSLITE_ENABLE_COVERAGE            = \t${MSLITE_ENABLE_COVERAGE}")
+message(STATUS "\tMSLITE_ENABLE_SHARING_MEM_WITH_OPENGL      = \t${MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -409,6 +414,9 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     add_compile_definitions(SUPPORT_GPU)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-headers-src/)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-clhpp-src/include)
+    if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
+        add_definitions(-DENABLE_OPENGL_TEXTURE)
+    endif()
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL cuda)

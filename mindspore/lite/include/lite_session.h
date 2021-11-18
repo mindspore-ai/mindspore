@@ -22,11 +22,17 @@
 #endif  // NOT_USE_STL
 #include <vector>
 #include <string>
+#include <map>
 #include "include/ms_tensor.h"
 #include "include/model.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "include/lite_types.h"
+#ifdef ENABLE_OPENGL_TEXTURE
+#include <EGL/egl.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl32.h>
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -119,6 +125,17 @@ class MS_API LiteSession {
   ///
   /// \return Pointer of MindSpore Lite MSTensor.
   virtual mindspore::tensor::MSTensor *GetOutputByTensorName(const String &tensor_name) const = 0;
+
+#ifdef ENABLE_OPENGL_TEXTURE
+  /// \brief Bind GLTexture2D object to cl Memory.
+  ///
+  /// \param[in] inputGlTexture The input GLTexture id for Model.
+  /// \param[in] outputGLTexture The output GLTexture id for Model.
+  ///
+  /// \return Status of operation.
+  virtual int BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGlTexture,
+                                    std::map<std::string, GLuint> *outputGLTexture) = 0;
+#endif
 
   /// \brief Resize inputs shape.
   ///

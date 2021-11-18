@@ -31,6 +31,9 @@
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
+#ifdef ENABLE_OPENGL_TEXTURE
+constexpr auto kModelOptionGPUEnableEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
+#endif
 constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
 constexpr auto kModelOptionGPURankID = "mindspore.option.gpu.rank_id";
 constexpr auto kModelOptionGPUGroupSize = "mindspore.option.gpu.group_size";
@@ -255,6 +258,17 @@ void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   }
   data_->params[kModelOptionGPUEnableFP16] = is_fp16;
 }
+
+#ifdef ENABLE_OPENGL_TEXTURE
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionGPUEnableEnableGLTexture] = is_enable_gl_texture;
+}
+#endif
+
 bool GPUDeviceInfo::GetEnableFP16() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -262,6 +276,16 @@ bool GPUDeviceInfo::GetEnableFP16() const {
   }
   return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
 }
+
+#ifdef ENABLE_OPENGL_TEXTURE
+bool GPUDeviceInfo::GetEnableGLTexture() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return false;
+  }
+  return GetValue<bool>(data_, kModelOptionGPUEnableEnableGLTexture);
+}
+#endif
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {
   if (data_ == nullptr) {

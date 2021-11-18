@@ -78,6 +78,10 @@ class LiteSession : public session::LiteSession {
 
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
 
+#ifdef ENABLE_OPENGL_TEXTURE
+  int BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
+                            std::map<std::string, GLuint> *outputGLTexture) override;
+#endif
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;
 

@@ -124,17 +124,11 @@ int InnerContext::Init() {
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
     if (this->affinity_core_list_.empty()) {
       thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
-      if (thread_pool_ == nullptr) {
-        MS_LOG(ERROR) << "Create ThreadPool failed";
-        return RET_NULL_PTR;
-      }
+      CHECK_NULL_RETURN(thread_pool_);
     } else {
       thread_pool_ =
         ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, this->affinity_core_list_);
-      if (thread_pool_ == nullptr) {
-        MS_LOG(ERROR) << "Create ThreadPool failed";
-        return RET_NULL_PTR;
-      }
+      CHECK_NULL_RETURN(thread_pool_);
     }
 #else
     thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
@@ -144,10 +138,7 @@ int InnerContext::Init() {
 
   if (this->allocator == nullptr) {
     this->allocator = mindspore::Allocator::Create();
-    if (this->allocator == nullptr) {
-      MS_LOG(ERROR) << "Create Allocator failed";
-      return RET_NULL_PTR;
-    }
+    CHECK_NULL_RETURN(this->allocator);
   }
   if (IsNpuEnabled()) {
     MS_LOG(DEBUG) << "NPU enabled.";
@@ -240,6 +231,10 @@ bool InnerContext::IsGpuFloat16Enabled() const {
   return false;
 #endif
 }
+
+#ifdef ENABLE_OPENGL_TEXTURE
+bool InnerContext::IsGLTextureEnabled() const { return GetGpuInfo().enable_gl_texture_; }
+#endif
 
 bool InnerContext::IsCpuEnabled() const { return IsUserSetCpu(); }
 

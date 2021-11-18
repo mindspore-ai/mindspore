@@ -68,6 +68,11 @@ class OpenCLRuntime {
   GpuInfo GetGpuInfo();
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
+#ifdef ENABLE_OPENGL_TEXTURE
+  bool GetGLTextureEnable() const;
+  bool SetGLTextureEnable(bool enable);
+  int InitGLQueue() { return InitQueue(nullptr); }
+#endif
   bool GetSVMEnable() const { return svm_enable_; }
   void SetSVMEnable(bool enable) { svm_enable_ = enable; }
   const std::vector<size_t> &GetWorkItemSize() const { return max_work_item_sizes_; }
@@ -190,6 +195,9 @@ class OpenCLRuntime {
   cl_uint image_pitch_align_{0};
   std::vector<size_t> max_work_item_sizes_;
   void *handle_{nullptr};
+#ifdef ENABLE_OPENGL_TEXTURE
+  bool enable_gl_texture_{false};
+#endif
   TuningMode tuning_mode_{TuningMode::DEFAULT};
 #if MS_OPENCL_PROFILE
   bool profiling_{true};

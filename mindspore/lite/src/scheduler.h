@@ -141,6 +141,10 @@ class Scheduler {
   int InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
 #endif
 
+#ifdef ENABLE_OPENGL_TEXTURE
+  bool GetEnableGLTexture() { return context_->GetGpuInfo().enable_gl_texture_; }
+#endif
+
  protected:
   const InnerContext *context_ = nullptr;
   const mindspore::Context *ms_context_ = nullptr;

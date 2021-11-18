@@ -146,6 +146,9 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clReleaseDevice);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueFillImage);
+#ifdef ENABLE_OPENGL_TEXTURE
+  LOAD_OPENCL_FUNCTION_PTR(clCreateFromGLTexture);
+#endif
 #endif
 #if CL_TARGET_OPENCL_VERSION >= 200
   LOAD_OPENCL_FUNCTION_PTR(clCreateCommandQueueWithProperties);
@@ -238,6 +241,9 @@ CL_DEFINE_FUNC_PTR(clEnqueueFillImage);
 #if CL_TARGET_OPENCL_VERSION >= 200
 CL_DEFINE_FUNC_PTR(clGetKernelSubGroupInfoKHR);
 CL_DEFINE_FUNC_PTR(clCreateCommandQueueWithProperties);
+#ifdef ENABLE_OPENGL_TEXTURE
+CL_DEFINE_FUNC_PTR(clCreateFromGLTexture);
+#endif
 CL_DEFINE_FUNC_PTR(clGetExtensionFunctionAddress);
 CL_DEFINE_FUNC_PTR(clCreateProgramWithIL);
 CL_DEFINE_FUNC_PTR(clSVMAlloc);
@@ -680,6 +686,14 @@ cl_int clEnqueueFillImage(cl_command_queue command_queue, cl_mem image, const vo
   return func(command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event);
 }
 
+#ifdef ENABLE_OPENGL_TEXTURE
+cl_mem clCreateFromGLTexture(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
+                             cl_GLuint texture, cl_int *errcode_ret) {
+  auto func = mindspore::lite::opencl::clCreateFromGLTexture;
+  MS_ASSERT(func != nullptr);
+  return func(context, flags, target, miplevel, texture, errcode_ret);
+}
+#endif
 #endif
 
 #if CL_TARGET_OPENCL_VERSION >= 200
