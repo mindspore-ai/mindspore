@@ -563,6 +563,11 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
   if (trans_flag) {
     std::string path = filepath + '.' + host_fmt;
     MS_LOG(INFO) << "E2E Dump path is " << path;
+    if (host_type > TypeId::kNumberTypeEnd || host_type < TypeId::kNumberTypeBegin ||
+        host_type == kNumberTypeComplex64) {
+      MS_LOG(INFO) << "Cannot create tensor with type: " << TypeIdLabel(host_type);
+      return false;
+    }
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     MS_EXCEPTION_IF_NULL(out_tensor);
     size_t host_size = out_tensor->data().nbytes();
@@ -605,6 +610,10 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetExecutionOrder(execution_order);
   tensor_data->SetSlot(slot);
 
+  if (host_type > TypeId::kNumberTypeEnd || host_type < TypeId::kNumberTypeBegin || host_type == kNumberTypeComplex64) {
+    MS_LOG(INFO) << "Cannot create tensor with type: " << TypeIdLabel(host_type);
+    return false;
+  }
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   MS_EXCEPTION_IF_NULL(out_tensor);
   size_t host_size = out_tensor->data().nbytes();

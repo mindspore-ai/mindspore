@@ -69,7 +69,7 @@ class DumpJsonParser {
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
   const std::vector<session::KernelGraph *> &graphs() const { return graphs_; }
-  enum JsonDumpMode { DUMP_ALL = 0, DUMP_KERNEL = 1, DUMP_CELL = 2 };
+  enum JsonDumpMode { DUMP_ALL = 0, DUMP_KERNEL = 1, DUMP_KERNELS_WITH_FLAG = 2 };
 
  private:
   DumpJsonParser() = default;

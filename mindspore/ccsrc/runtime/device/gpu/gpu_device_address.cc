@@ -154,6 +154,10 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
     return true;
   }
 
+  if (host_type > TypeId::kNumberTypeEnd || host_type < TypeId::kNumberTypeBegin || host_type == kNumberTypeComplex64) {
+    MS_LOG(INFO) << "Cannot create tensor with type: " << TypeIdLabel(host_type);
+    return false;
+  }
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   size_t host_size = out_tensor->data().nbytes();
   auto ret_rt_memcpy = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
