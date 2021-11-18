@@ -44,7 +44,6 @@ def load_kmnist(path):
         imgpath.read(16)
         images = np.fromfile(imgpath, dtype=np.uint8)
         images = images.reshape(-1, 28, 28, 1)
-        images[images > 0] = 255  # Perform binarization to maintain consistency with our API
     return images, labels
 
 
