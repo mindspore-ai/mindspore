@@ -27,8 +27,9 @@ from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
-from ..operations._inner_ops import DynamicStitch
+from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs
 from ...common import Tensor
+from .._utils.utils import is_shape_unknown
 
 shape_op = P.Shape()
 dyn_shape_op = P.DynamicShape()
@@ -40,6 +41,23 @@ is_sub_class = P.IsSubClass()
 to_array = P.TupleToArray()
 real_div = P.RealDiv()
 
+
+def dyn_binop_grad_common(x, y, dx, dy):
+    """
+    Common grad definition for binary operations when the input is dynamic shape.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = dyn_shape_op(x)
+    shape_of_y = dyn_shape_op(y)
+    rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
+    dx = reduce_sum(dx, rx)
+    dy = reduce_sum(dy, ry)
+    reduce_dx = reshape(dx, shape_of_x)
+    reduce_dy = reshape(dy, shape_of_y)
+    return reduce_dx, reduce_dy
+
+
 def binop_grad_common(x, y, dx, dy):
     """
     Common grad definition for binary operations.
@@ -48,21 +66,31 @@ def binop_grad_common(x, y, dx, dy):
     """
     shape_of_x = shape_op(x)
     shape_of_y = shape_op(y)
-    rx = broadcast_gradient_args(shape_of_x, shape_of_y)
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
-    if rx[0]:
-        # if dx is scalar whose shape is (), do not need reduce
-        if shape_op(dx):
-            dx = reduce_sum(dx, rx[0])
-        reduce_dx = reshape(dx, shape_of_x)
-    if rx[1]:
-        # if dy is scalar whose shape is (), do not need reduce
-        if shape_op(dy):
-            dy = reduce_sum(dy, rx[1])
-        reduce_dy = reshape(dy, shape_of_y)
-    return reduce_dx, reduce_dy
+    if not (is_shape_unknown(shape_of_x) or is_shape_unknown(shape_of_y)):
+        rx = broadcast_gradient_args(shape_of_x, shape_of_y)
+        if rx[0]:
+            # if dx is scalar whose shape is (), do not need reduce
+            if shape_op(dx):
+                dx = reduce_sum(dx, rx[0])
+            reduce_dx = reshape(dx, shape_of_x)
+        if rx[1]:
+            # if dy is scalar whose shape is (), do not need reduce
+            if shape_op(dy):
+                dy = reduce_sum(dy, rx[1])
+            reduce_dy = reshape(dy, shape_of_y)
+        return reduce_dx, reduce_dy
+    if not shape_of_x or not shape_of_y:
+        # x or y is scalar
+        if not shape_of_x:
+            reduce_dx = reduce_sum(dx, ())
+        if not shape_of_y:
+            reduce_dy = reduce_sum(dy, ())
+        return reduce_dx, reduce_dy
+
+    return dyn_binop_grad_common(x, y, dx, dy)
 
 
 def _dyn_reduced_shape(input_shape, axis):
@@ -89,7 +117,7 @@ def _dyn_reduced_shape(input_shape, axis):
 def _sum_grad(x, axis, dout):
     """Grad definition for `Sum` operation."""
     input_shape = shape_op(x)
-    if -1 in input_shape:
+    if is_shape_unknown(input_shape):
         input_shape = dyn_shape_op(x)
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
         tile_scaling = real_div(input_shape, output_shape_kept_dims)

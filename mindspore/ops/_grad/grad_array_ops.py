@@ -29,7 +29,7 @@ from ..primitive import constexpr
 from ... import context
 from ...common import dtype as mstype
 from ...common.tensor import RowTensor
-from .._utils.utils import range_op, get_1d_shape, generate_shape_index
+from .._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -195,6 +195,8 @@ def get_bprop_expand_dims(self):
 
     def bprop(x, axis, out, dout):
         shapex = shape_op(x)
+        if is_shape_unknown(shapex):
+            shapex = dyn_shape_op(x)
         return reshape(dout, shapex), zeros_like(axis)
 
     return bprop
