@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
+#include <vector>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 
