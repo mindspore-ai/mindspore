@@ -39,6 +39,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   void SetNodeDef(const std::string &nodeDef);
   void SetExtInfo(const std::string &ext_info);
   void SetNodeName(const std::string &node_name);
+  void SetCustSo(const std::string &cust_so);
 
   /**
    *  @brief Build AICPU Engine kernel structure, and allocate device memory for offline task generate
@@ -56,6 +57,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
 
  private:
+  bool cust_kernel_{false};
   std::string args_;
   std::string node_def_str_;
   std::string node_name_;

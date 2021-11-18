@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/aicpu/aicpu_kernel_load.h"
 
 namespace mindspore {
 namespace kernel {
@@ -22,5 +23,8 @@ namespace kernel {
  * @brief build op and return a callable mod
  */
 KernelModPtr AicpuOpBuild(const AnfNodePtr &anf_node) { return nullptr; }
+
+bool AicpuOpKernelLoad::LaunchAicpuKernelSo() { return true; }
+void AicpuOpKernelLoad::FreeDeviceMemory() {}
 }  // namespace kernel
 }  // namespace mindspore

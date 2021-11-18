@@ -119,14 +119,15 @@ class AicpuTaskInfo : public TaskInfo {
   AicpuTaskInfo(const std::string &op_name, uint32_t stream_id, const std::string &so_name,
                 const std::string &kernel_name, const std::string &node_def, const std::string &ext_info,
                 const std::vector<void *> &input_data_addrs, const std::vector<void *> &output_data_addrs,
-                bool dump_flag)
+                bool dump_flag, bool cust_aicpu = false)
       : TaskInfo(op_name, stream_id, TaskInfoType::AICPU, dump_flag),
         so_name_(so_name),
         kernel_name_(kernel_name),
         node_def_(node_def),
         ext_info_(ext_info),
         input_data_addrs_(input_data_addrs),
-        output_data_addrs_(output_data_addrs) {}
+        output_data_addrs_(output_data_addrs),
+        cust_aicpu_(cust_aicpu) {}
   ~AicpuTaskInfo() override {}
 
   const std::string &so_name() const { return so_name_; }
@@ -135,6 +136,7 @@ class AicpuTaskInfo : public TaskInfo {
   const std::vector<void *> &input_data_addrs() const { return input_data_addrs_; }
   const std::vector<void *> &output_data_addrs() const { return output_data_addrs_; }
   const std::string &ext_info() const { return ext_info_; }
+  const bool &cust_aicpu() const { return cust_aicpu_; }
 
  private:
   std::string so_name_;
@@ -143,6 +145,7 @@ class AicpuTaskInfo : public TaskInfo {
   std::string ext_info_;
   std::vector<void *> input_data_addrs_;
   std::vector<void *> output_data_addrs_;
+  bool cust_aicpu_;
 };
 
 class LabelSetTaskInfo : public TaskInfo {

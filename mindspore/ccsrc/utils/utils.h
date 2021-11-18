@@ -493,6 +493,7 @@ constexpr auto kAttrDstType = "dst_type";
 constexpr auto kAttrDump = "dump";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
 constexpr auto kAttrFuncType = "func_type";
+constexpr auto kAttrCustAicpu = "cust_aicpu";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";
