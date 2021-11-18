@@ -368,47 +368,6 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::NormalMatmulRun() {
-  for (int i = 0; i < params_->batch; ++i) {
-    batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
-    batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-#ifdef ENABLE_AVX
-    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
-#else
-    // need not aligned
-    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
-#endif
-
-    auto ret = ParallelLaunch(this->ms_context_, MatmulBaseFloatRun, this, thread_count_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
-    }
-  }
-  return RET_OK;
-}
-
-int MatmulFp32BaseCPUKernel::BroadcastMatmulRun() {
-  for (int i = 0; i < params_->batch; ++i) {
-    batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
-    batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
-
-#ifdef ENABLE_AVX
-    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
-#else
-    // need not aligned
-    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
-#endif
-
-    auto ret = ParallelLaunch(this->ms_context_, MatmulBaseFloatRun, this, thread_count_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
-      return RET_ERROR;
-    }
-  }
-
-  return RET_OK;
-}
-
 int MatmulFp32BaseCPUKernel::Run() {
   if (!params_->a_const_) {
     auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
@@ -444,15 +403,20 @@ int MatmulFp32BaseCPUKernel::Run() {
     return ret;
   }
 
-  if (!a_broadcast_ && !b_broadcast_) {
-    ret = NormalMatmulRun();
+  for (int i = 0; i < params_->batch; ++i) {
+    batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
+    batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
+#ifdef ENABLE_AVX
+    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
+#else
+    // need not aligned
+    batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
+#endif
+
+    ret = ParallelLaunch(this->ms_context_, MatmulBaseFloatRun, this, thread_count_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "NormalMatmulRun failed";
-    }
-  } else {
-    ret = BroadcastMatmulRun();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "BroadcastMatmulRun failed";
+      MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
+      return ret;
     }
   }
 

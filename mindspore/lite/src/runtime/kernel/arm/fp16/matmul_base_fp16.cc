@@ -316,8 +316,23 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int MatmulBaseFP16CPUKernel::BroadcastMatmulRun() {
+int MatmulBaseFP16CPUKernel::Run() {
   auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_[0]->data());
+  if ((params_->a_const_ == false) || IsRepack()) {
+    if (RET_OK != InitBufferA()) {
+      return RET_ERROR;
+    }
+    InitMatrixA(in_tensors_[0]->data());
+  }
+  if ((params_->b_const_ == false) || IsRepack()) {
+    if (RET_OK != InitBufferB()) {
+      FreeResizeBufA();
+      return RET_ERROR;
+    }
+    InitMatrixB(in_tensors_[1]->data(), in_tensors_[1]->data_type());
+    InitBias();
+  }
+
   CHECK_NULL_RETURN(c_ptr);
   for (int i = 0; i < params_->batch; ++i) {
     if (vec_matmul_) {
@@ -340,64 +355,6 @@ int MatmulBaseFP16CPUKernel::BroadcastMatmulRun() {
     }
     InitMatrixB(in_tensors_.at(1)->data(), in_tensors_.at(1)->data_type());
     InitBias();
-  }
-
-  return RET_OK;
-}
-
-int MatmulBaseFP16CPUKernel::NormalMatmulRun() {
-  auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
-  CHECK_NULL_RETURN(c_ptr);
-  for (int i = 0; i < params_->batch; ++i) {
-    if (vec_matmul_) {
-      batch_a_ptr_ = a_pack_ptr_ + i * params_->deep_;
-#ifdef ENABLE_ARM64
-      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-#else
-      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_;
-#endif
-      batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
-    } else {
-      batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
-      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-      batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
-    }
-    auto ret = ParallelLaunch(this->ms_context_, MatmulBaseFP16Run, this, thread_count_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
-      return ret;
-    }
-  }
-
-  return RET_OK;
-}
-
-int MatmulBaseFP16CPUKernel::Run() {
-  if ((params_->a_const_ == false) || IsRepack()) {
-    if (RET_OK != InitBufferA()) {
-      return RET_ERROR;
-    }
-    InitMatrixA(in_tensors_[0]->data());
-  }
-  if ((params_->b_const_ == false) || IsRepack()) {
-    if (RET_OK != InitBufferB()) {
-      FreeResizeBufA();
-      return RET_ERROR;
-    }
-    InitMatrixB(in_tensors_[1]->data(), in_tensors_[1]->data_type());
-    InitBias();
-  }
-
-  if (!a_broadcast_ && !b_broadcast_) {
-    auto ret = NormalMatmulRun();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "NormalMatmulRun failed";
-    }
-  } else {
-    auto ret = BroadcastMatmulRun();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "BroadcastMatmulRun failed";
-    }
   }
 
   if (params_->a_const_ == false) {

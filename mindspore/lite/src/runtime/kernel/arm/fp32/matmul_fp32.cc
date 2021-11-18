@@ -93,56 +93,46 @@ int MatmulCPUKernel::InitBroadcastParams() {
     }
   }
 
+  int batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int a_batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int b_batch_sizes[MAX_SHAPE_SIZE] = {0};
   for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
     if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
-      batch_sizes_[i] = std::max(a_shape[i], b_shape[i]);
-      a_batch_sizes_[i] = a_shape[i];
-      b_batch_sizes_[i] = b_shape[i];
+      batch_sizes[i] = std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_shape[i];
+      b_batch_sizes[i] = b_shape[i];
     } else {
-      batch_sizes_[i] = batch_sizes_[i + 1] * std::max(a_shape[i], b_shape[i]);
-      a_batch_sizes_[i] = a_batch_sizes_[i + 1] * a_shape[i];
-      b_batch_sizes_[i] = b_batch_sizes_[i + 1] * b_shape[i];
+      batch_sizes[i] = batch_sizes[i + 1] * std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_batch_sizes[i + 1] * a_shape[i];
+      b_batch_sizes[i] = b_batch_sizes[i + 1] * b_shape[i];
     }
   }
 
   int out_batch = 1;
   for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
-    out_batch *= MSMAX(a_shape[i], b_shape[i]);
-    if (a_shape[i] < b_shape[i] && b_shape[i] % a_shape[i] == 0) {
-      a_broadcast_ = true;
-    } else if (a_shape[i] > b_shape[i] && a_shape[i] % b_shape[i] == 0) {
-      b_broadcast_ = true;
-    } else if (a_shape[i] != b_shape[i]) {
+    int max_v = MSMAX(a_shape[i], b_shape[i]);
+    int min_v = MSMIN(a_shape[i], b_shape[i]) > 0 ? MSMIN(a_shape[i], b_shape[i]) : 1;
+    out_batch *= max_v;
+    if (max_v != min_v && max_v % min_v != 0) {
       MS_LOG(ERROR) << "matmul don't support broadcast for dimension " << a_shape << " and " << b_shape;
       return RET_ERROR;
     }
   }
   params_->batch = out_batch;
-  return RET_OK;
-}
-
-int MatmulCPUKernel::ReSize() {
-  InitShapeA();
-  InitShapeB();
-  InitBroadcastParams();
 
   a_offset_.resize(params_->batch, 0);
   b_offset_.resize(params_->batch, 0);
-  auto a_shape = in_tensors_[kInputIndex]->shape();
-  auto b_shape = in_tensors_[kWeightIndex]->shape();
   for (int i = 0; i < params_->batch; ++i) {
     int delta = i;
     int a_offset = 0;
     int b_offset = 0;
     for (size_t j = 0; j < a_shape.size() - kHWDimNumber; ++j) {
       if (j > 0) {
-        delta = delta % batch_sizes_[j];
+        delta = delta % batch_sizes[j];
       }
       if (j < (a_shape.size() - kCHWDimNumber)) {
-        a_offset +=
-          (delta / batch_sizes_[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes_[j + 1];
-        b_offset +=
-          (delta / batch_sizes_[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes_[j + 1];
+        a_offset += (delta / batch_sizes[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
+        b_offset += (delta / batch_sizes[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes[j + 1];
       } else {
         a_offset += (delta * a_shape[j] / std::max(a_shape[j], b_shape[j]));
         b_offset += (delta * b_shape[j] / std::max(a_shape[j], b_shape[j]));
@@ -151,6 +141,14 @@ int MatmulCPUKernel::ReSize() {
     a_offset_[i] = a_offset;
     b_offset_[i] = b_offset;
   }
+
+  return RET_OK;
+}
+
+int MatmulCPUKernel::ReSize() {
+  InitShapeA();
+  InitShapeB();
+  InitBroadcastParams();
 
   return MatmulFp32BaseCPUKernel::ReSize();
 }

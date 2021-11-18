@@ -58,6 +58,8 @@ int FullconnectionFP16CPUKernel::Prepare() {
   params_->batch = 1;
   a_batch_ = 1;
   b_batch_ = 1;
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 
