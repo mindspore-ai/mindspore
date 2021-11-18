@@ -23,6 +23,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -59,8 +60,8 @@ Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status BoundingBoxAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transform") != op_params.end(), "Failed to find transform");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Failed to find ratio");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "transform", kBoundingBoxAugmentOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ratio", kBoundingBoxAugmentOperation));
   std::vector<std::shared_ptr<TensorOperation>> transforms;
   std::vector<nlohmann::json> json_operations = {};
   json_operations.push_back(op_params["transform"]);

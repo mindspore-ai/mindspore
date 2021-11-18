@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -64,7 +65,7 @@ Status RandomResizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomResizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomResizeOperation));
   std::vector<int32_t> size = op_params["size"];
   *operation = std::make_shared<vision::RandomResizeOperation>(size);
   return Status::OK();

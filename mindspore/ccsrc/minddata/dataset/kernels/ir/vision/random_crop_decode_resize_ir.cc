@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -79,11 +80,11 @@ Status RandomCropDecodeResizeOperation::to_json(nlohmann::json *out_json) {
 
 Status RandomCropDecodeResizeOperation::from_json(nlohmann::json op_params,
                                                   std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Failed to find scale");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Failed to find ratio");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("interpolation") != op_params.end(), "Failed to find interpolation");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("max_attempts") != op_params.end(), "Failed to find max_attempts");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomCropDecodeResizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "scale", kRandomCropDecodeResizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ratio", kRandomCropDecodeResizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kRandomCropDecodeResizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "max_attempts", kRandomCropDecodeResizeOperation));
   std::vector<int32_t> size = op_params["size"];
   std::vector<float> scale = op_params["scale"];
   std::vector<float> ratio = op_params["ratio"];

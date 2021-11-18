@@ -16,12 +16,13 @@
 #include <algorithm>
 
 #include "minddata/dataset/kernels/ir/vision/random_crop_ir.h"
+#include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #endif
 
-#include "minddata/dataset/kernels/ir/validators.h"
 namespace mindspore {
 namespace dataset {
 namespace vision {
@@ -125,11 +126,11 @@ Status RandomCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding") != op_params.end(), "Failed to find padding");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("pad_if_needed") != op_params.end(), "Failed to find pad_if_needed");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding_mode") != op_params.end(), "Failed to find padding_mode");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kRandomCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding", kRandomCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "pad_if_needed", kRandomCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kRandomCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding_mode", kRandomCropOperation));
   std::vector<int32_t> size = op_params["size"];
   std::vector<int32_t> padding = op_params["padding"];
   bool pad_if_needed = op_params["pad_if_needed"];

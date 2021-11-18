@@ -17,10 +17,13 @@
 
 #include "minddata/dataset/kernels/image/gaussian_blur_op.h"
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
 namespace vision {
+constexpr int sigma_size = 2;
+
 GaussianBlurOperation::GaussianBlurOperation(const std::vector<int32_t> kernel_size, const std::vector<float> sigma)
     : kernel_size_(kernel_size), sigma_(sigma) {}
 
@@ -47,7 +50,7 @@ std::shared_ptr<TensorOp> GaussianBlurOperation::Build() {
   float sigma_y = sigma_x;
 
   // User has specified sigma_y.
-  if (sigma_.size() == 2) {
+  if (sigma_.size() == sigma_size) {
     sigma_y = sigma_[1] <= 0 ? kernel_y * 0.15 + 0.35 : sigma_[1];
   }
   std::shared_ptr<GaussianBlurOp> tensor_op = std::make_shared<GaussianBlurOp>(kernel_x, kernel_y, sigma_x, sigma_y);
@@ -63,8 +66,8 @@ Status GaussianBlurOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status GaussianBlurOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("kernel_size") != op_params.end(), "Failed to find kernel_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("sigma") != op_params.end(), "Failed to find sigma");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "kernel_size", kGaussianBlurOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "sigma", kGaussianBlurOperation));
   std::vector<int32_t> kernel_size = op_params["kernel_size"];
   std::vector<float> sigma = op_params["sigma"];
   *operation = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);

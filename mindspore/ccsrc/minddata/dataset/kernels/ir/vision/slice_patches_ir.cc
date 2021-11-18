@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/image/slice_patches_op.h"
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -57,10 +58,10 @@ Status SlicePatchesOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status SlicePatchesOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_height") != op_params.end(), "Failed to find num_height");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_width") != op_params.end(), "Failed to find num_width");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("slice_mode") != op_params.end(), "Failed to find slice_mode");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_height", kSlicePatchesOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_width", kSlicePatchesOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "slice_mode", kSlicePatchesOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kSlicePatchesOperation));
   int32_t num_height = op_params["num_height"];
   int32_t num_width = op_params["num_width"];
   SliceMode slice_mode = static_cast<SliceMode>(op_params["slice_mode"]);

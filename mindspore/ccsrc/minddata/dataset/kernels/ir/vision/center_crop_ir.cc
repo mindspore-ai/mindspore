@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -53,7 +54,7 @@ Status CenterCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CenterCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kCenterCropOperation));
   std::vector<int32_t> size = op_params["size"];
   *operation = std::make_shared<CenterCropOperation>(size);
   return Status::OK();

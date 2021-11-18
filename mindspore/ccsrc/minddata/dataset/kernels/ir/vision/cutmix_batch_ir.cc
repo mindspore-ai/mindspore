@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -60,10 +61,9 @@ Status CutMixBatchOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CutMixBatchOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("image_batch_format") != op_params.end(),
-                               "Failed to find image_batch_format");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("alpha") != op_params.end(), "Failed to find alpha");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("prob") != op_params.end(), "Failed to find prob");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "image_batch_format", kCutMixBatchOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "alpha", kCutMixBatchOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "prob", kCutMixBatchOperation));
   ImageBatchFormat image_batch = static_cast<ImageBatchFormat>(op_params["image_batch_format"]);
   float alpha = op_params["alpha"];
   float prob = op_params["prob"];

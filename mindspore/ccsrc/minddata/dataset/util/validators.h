@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_VALIDATORS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_VALIDATORS_H_
 
+#include <nlohmann/json.hpp>
 #include <string>
 
 #include "minddata/dataset/util/status.h"
@@ -24,9 +25,11 @@
 namespace mindspore {
 namespace dataset {
 // validator Parameter in json file
-inline Status ValidateParamInJson(const bool cond, const std::string &param_name) {
-  if (!cond) {
-    std::string err_msg = "Failed to find param '" + param_name + "' in json file for deserialize.";
+inline Status ValidateParamInJson(nlohmann::json op_params, const std::string &param_name,
+                                  const std::string &operator_name) {
+  if (op_params.find(param_name) == op_params.end()) {
+    std::string err_msg = "Failed to find parameter '" + param_name + "' of '" + operator_name +
+                          "' operator in input json file or input dict, check input parameter of API 'deserialize.";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();

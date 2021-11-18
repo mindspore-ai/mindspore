@@ -23,6 +23,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -77,8 +78,8 @@ Status UniformAugOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status UniformAugOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transforms") != op_params.end(), "Failed to find transforms");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_ops") != op_params.end(), "Failed to find num_ops");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "transforms", kUniformAugOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_ops", kUniformAugOperation));
   std::vector<std::shared_ptr<TensorOperation>> transforms = {};
   RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(op_params["transforms"], &transforms));
   int32_t num_ops = op_params["num_ops"];

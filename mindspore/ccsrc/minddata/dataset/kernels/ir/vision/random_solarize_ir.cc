@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -71,7 +72,7 @@ Status RandomSolarizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomSolarizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("threshold") != op_params.end(), "Failed to find threshold");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "threshold", kRandomSolarizeOperation));
   std::vector<uint8_t> threshold = op_params["threshold"];
   *operation = std::make_shared<vision::RandomSolarizeOperation>(threshold);
   return Status::OK();

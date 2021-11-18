@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -55,7 +56,7 @@ Status ConvertColorOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ConvertColorOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("convert_mode") != op_params.end(), "Failed to find convert_mode");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "convert_mode", kConvertColorOperation));
   ConvertMode convert_mode = static_cast<ConvertMode>(op_params["convert_mode"]);
   *operation = std::make_shared<vision::ConvertColorOperation>(convert_mode);
   return Status::OK();

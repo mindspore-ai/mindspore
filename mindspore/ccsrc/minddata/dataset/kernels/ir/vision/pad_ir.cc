@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -105,9 +106,9 @@ Status PadOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status PadOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding") != op_params.end(), "Failed to find padding");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding_mode") != op_params.end(), "Failed to find padding_mode");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding", kPadOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kPadOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "padding_mode", kPadOperation));
   std::vector<int32_t> padding = op_params["padding"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
   BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);

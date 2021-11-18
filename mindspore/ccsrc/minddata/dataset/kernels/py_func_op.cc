@@ -22,6 +22,7 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -134,8 +135,8 @@ Status PyFuncOp::to_json(nlohmann::json *out_json) {
 
 Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<TensorOperation>> *result) {
   std::vector<std::shared_ptr<TensorOperation>> output;
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("tensor_op_name") != json_obj.end(), "Failed to find tensor_op_name");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("tensor_op_params") != json_obj.end(), "Failed to find tensor_op_params");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "tensor_op_name", kPyFuncOp));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "tensor_op_params", kPyFuncOp));
   std::string op_name = json_obj["tensor_op_name"];
   nlohmann::json op_params = json_obj["tensor_op_params"];
   std::string python_module = json_obj["python_module"];
