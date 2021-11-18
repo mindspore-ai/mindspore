@@ -57,7 +57,7 @@ tensor::TensorPtr CreateTensor() {
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()),
                            reinterpret_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
-    MS_LOG(ERROR) << "Failed to copy data into Tensor.";
+    MS_LOG(ERROR) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
     return nullptr;
   }
   return indices_tensor;
