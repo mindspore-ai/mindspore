@@ -16,6 +16,7 @@
 from typing import Optional
 from typing import NamedTuple
 
+from ... import numpy as mnp
 from ...common import Tensor
 
 from ._bfgs import minimize_bfgs
@@ -118,7 +119,7 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None) -> OptimizeRe
 
     if method.lower() == 'bfgs':
         results = minimize_bfgs(fun_with_args(args), x0, **options)
-        success = results.converged and results.failed
+        success = results.converged and mnp.logical_not(results.failed)
         return OptimizeResults(x=results.x_k,
                                success=success,
                                status=results.status,
