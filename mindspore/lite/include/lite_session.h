@@ -29,9 +29,7 @@
 #include "include/errorcode.h"
 #include "include/lite_types.h"
 #ifdef ENABLE_OPENGL_TEXTURE
-#include <EGL/egl.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl32.h>
+#include "EGL/egl.h"
 #endif
 
 namespace mindspore {

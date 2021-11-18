@@ -124,11 +124,11 @@ int InnerContext::Init() {
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
     if (this->affinity_core_list_.empty()) {
       thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
-      CHECK_NULL_RETURN(thread_pool_);
+      MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
     } else {
       thread_pool_ =
         ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, this->affinity_core_list_);
-      CHECK_NULL_RETURN(thread_pool_);
+      MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
     }
 #else
     thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);

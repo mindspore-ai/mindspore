@@ -21,6 +21,7 @@
 #include "include/context.h"
 #include "src/runtime/inner_allocator.h"
 #include "thread/threadpool.h"
+#include "nnacl/op_base.h"
 #ifdef ENABLE_ARM
 #include "src/cpu_info.h"
 #endif

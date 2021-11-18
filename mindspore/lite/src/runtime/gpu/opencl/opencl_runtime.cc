@@ -17,9 +17,7 @@
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include <dlfcn.h>
 #ifdef ENABLE_OPENGL_TEXTURE
-#include <EGL/egl.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl32.h>
+#include "EGL/egl.h"
 #endif
 
 #include <vector>
@@ -186,7 +184,8 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
                                             CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
     context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
     if (context_ == nullptr || ret != CL_SUCCESS) {
-      MS_LOG(ERROR) << "Create special OpenCL context failed, The device unspport Sharing";
+      MS_LOG(ERROR)
+        << "Create special OpenCL context failed, The device unspport Sharing or OpenGL Context is not Init";
       this->enable_gl_texture_ = false;
       if (context_ != nullptr) {
         delete context_;

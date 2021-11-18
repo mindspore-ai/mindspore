@@ -17,9 +17,7 @@
 #include "include/registry/opencl_runtime_wrapper.h"
 #include <dlfcn.h>
 #ifdef ENABLE_OPENGL_TEXTURE
-#include <EGL/egl.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl32.h>
+#include "EGL/egl.h"
 #endif
 #include <vector>
 #include <numeric>

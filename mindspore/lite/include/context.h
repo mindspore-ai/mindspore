@@ -34,9 +34,7 @@ typedef struct GpuDeviceInfo {
   uint32_t gpu_device_id_ = 0;
   int rank_id_ = 0;
   int group_size_ = 0;
-#ifdef ENABLE_OPENGL_TEXTURE
   bool enable_gl_texture_ = false; /**<enable sharing OpenGL texture with OpenCL */
-#endif
 } GpuDeviceInfo;
 
 /// \brief NpuDeviceInfo defined for NPU's configuration information.
