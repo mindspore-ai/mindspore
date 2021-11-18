@@ -3,6 +3,7 @@ project(Lite)
 
 set(BUILD_LITE "on")
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_requirements_lite.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/secure_option.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_link_option.cmake)
 
