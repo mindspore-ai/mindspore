@@ -24,6 +24,19 @@
 namespace mindspore {
 namespace abstract {
 
+AbstractBasePtr AsyncAbstract::GetResult() {
+  auto ret = TryGetResult();
+  if (ret != nullptr) {
+    return ret;
+  }
+  auto async_task = AsyncInferTask::MakeShared(shared_from_base<AsyncAbstract>());
+  MS_LOG(DEBUG) << GetInferThread() << " is waiting for async: " << async_task.get();
+  AnalysisSchedule::GetInstance().Add2Schedule(async_task);
+  ret = async_task->GetResult();
+  MS_LOG(DEBUG) << GetInferThread() << " success to get async result: " << async_task.get() << " " << ret->ToString();
+  return ret;
+}
+
 void AnalysisSchedule::Schedule() {
   const auto checkPeriod = std::chrono::seconds(3);
   while (notExit_ || infer_thread_count_.load() > 0) {
@@ -198,18 +211,7 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   if (async_eval_result == nullptr) {
     return nullptr;
   }
-  // Conf has been visited and set value.
-  auto result = async_eval_result->TryGetResult();
-  if (result != nullptr) {
-    return result;
-  }
-
-  // Add to schedule
-  auto async_infer_task = AsyncInferTask::MakeShared(async_eval_result);
-  MS_LOG(DEBUG) << " add to schedule: " << async_infer_task.get();
-  AnalysisSchedule::GetInstance().Add2Schedule(async_infer_task);
-  // Maybe blocked for waiting.
-  return async_infer_task->GetResult();
+  return async_eval_result->GetResult();
 }
 
 void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg,
