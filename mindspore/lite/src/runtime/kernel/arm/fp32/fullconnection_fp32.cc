@@ -45,6 +45,8 @@ int FullconnectionCPUKernel::Prepare() {
   }
 
   params_->batch = 1;
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
   a_batch_ = 1;
   b_batch_ = 1;
   params_->a_transpose_ = false;
