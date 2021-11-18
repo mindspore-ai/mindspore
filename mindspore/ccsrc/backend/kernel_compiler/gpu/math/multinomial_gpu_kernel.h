@@ -102,11 +102,10 @@ class MultinomialGpuKernel : public GpuKernel {
     }
 
     output_size_ = sizeof(int);
-    workspace_size_ = sizeof(int);
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
     }
-    workspace_size_ = output_size_;
+    workspace_size_ = output_size_ / sizeof(int) * sizeof(curandState);
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
