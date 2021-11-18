@@ -472,13 +472,8 @@ int MatmulFp32BaseCPUKernel::Run() {
   }
 
   for (int i = 0; i < params_->batch; ++i) {
-    if (!a_broadcast_ && !b_broadcast_) {
-      batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
-      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-    } else {
-      batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
-      batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
-    }
+    batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
+    batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
     if (vec_matmul_) {
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
     } else {

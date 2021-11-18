@@ -105,15 +105,18 @@ int MatmulFP16CPUKernel::InitBroadcastParams() {
     }
   }
 
+  int batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int a_batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int b_batch_sizes[MAX_SHAPE_SIZE] = {0};
   for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
     if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
-      batch_sizes_[i] = std::max(a_shape[i], b_shape[i]);
-      a_batch_sizes_[i] = a_shape[i];
-      b_batch_sizes_[i] = b_shape[i];
+      batch_sizes[i] = std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_shape[i];
+      b_batch_sizes[i] = b_shape[i];
     } else {
-      batch_sizes_[i] = batch_sizes_[i + 1] * std::max(a_shape[i], b_shape[i]);
-      a_batch_sizes_[i] = a_batch_sizes_[i + 1] * a_shape[i];
-      b_batch_sizes_[i] = b_batch_sizes_[i + 1] * b_shape[i];
+      batch_sizes[i] = batch_sizes[i + 1] * std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_batch_sizes[i + 1] * a_shape[i];
+      b_batch_sizes[i] = b_batch_sizes[i + 1] * b_shape[i];
     }
   }
 
@@ -139,13 +142,11 @@ int MatmulFP16CPUKernel::InitBroadcastParams() {
     int b_offset = 0;
     for (size_t j = 0; j < a_shape.size() - kHWDimNumber; ++j) {
       if (j > 0) {
-        delta = delta % batch_sizes_[j];
+        delta = delta % batch_sizes[j];
       }
       if (j < (a_shape.size() - kCHWDimNumber)) {
-        a_offset +=
-          (delta / batch_sizes_[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes_[j + 1];
-        b_offset +=
-          (delta / batch_sizes_[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes_[j + 1];
+        a_offset += (delta / batch_sizes[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
+        b_offset += (delta / batch_sizes[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes[j + 1];
       } else {
         a_offset += (delta * a_shape[j] / std::max(a_shape[j], b_shape[j]));
         b_offset += (delta * b_shape[j] / std::max(a_shape[j], b_shape[j]));
