@@ -33,6 +33,7 @@ from mindspore.train.summary.enums import PluginEnum, ModeEnum
 from mindspore.train.callback import Callback, ModelCheckpoint
 from mindspore.train import lineage_pb2
 from mindspore.train.callback._dataset_graph import DatasetGraph
+from mindspore.train.callback._landscape import SummaryLandscape
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
@@ -111,6 +112,26 @@ class SummaryCollector(Callback):
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
               Default: None, it means only the first five parameters are collected.
+            - collect_landscape (Union[dict,None]): Collect the parameters needed to create the loss landscape.
+
+                - landscape_size (int): Specify the image resolution of the generated loss landscape.
+                  For example, if it is set to 128, the resolution of the landscape is 128 * 128.
+                  The calculation time increases with the increase of resolution.
+                  Default: 40. Optional values: between 3 and 256.
+                - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
+                - create_landscape (List[bool, bool]): Select how to create loss landscape.
+                  Training process loss landscape(train) and Training result loss landscape(result).
+                  Default: {"train": True, "result": True}. Optional: True/False.
+                - num_samples (int): The size of the dataset used to create the loss landscape.
+                  For example, in image dataset, You can set num_samples is 128,
+                  which means that 128 images are used to create loss landscape.
+                  Default: 128.
+                - intervals (List[List[int]]): Specifies the interval
+                  in which the loss landscape. For example: If the user wants to
+                  crate loss landscape of two training processes, they are 1-5 epoch
+                  and 6-10 epoch respectively. They anc set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
+                  Note: Each interval have at least three epochs.
+
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
             True: it means that after specified data is set, non-specified data is collected as the default behavior.
             False: it means that after specified data is set, only the specified data is collected,
@@ -183,7 +204,14 @@ class SummaryCollector(Callback):
         'collect_eval_lineage': True,
         'collect_input_data': True,
         'collect_dataset_graph': True,
-        'histogram_regular': None
+        'histogram_regular': None,
+        'collect_landscape': {'landscape_size': 40,
+                              'unit': 'step',
+                              'num_samples': 2048,
+                              'create_landscape': {'train': True,
+                                                   'result': True},
+                              'intervals': [[1, 2, 3, 4, 5, 6, 7, 8, 9],
+                                            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]}
     }
 
     def __init__(self,
@@ -221,6 +249,14 @@ class SummaryCollector(Callback):
         self._collect_specified_data = self._process_specified_data(collect_specified_data, keep_default_action)
         msg = f"For 'collect_specified_data' the value after processing is: {self._collect_specified_data}."
         logger.info(msg)
+
+        landscape = self._collect_specified_data.get('collect_landscape', None)
+        check_value_type('collect_landscape', landscape, [dict, type(None)])
+        self._is_collect_landscape = bool(landscape)
+        if self._is_collect_landscape:
+            self._check_collect_landscape_data(landscape)
+            intervals = landscape.get('intervals')
+            self._landscape = SummaryLandscape(summary_dir=summary_dir, intervals=intervals)
 
         self._custom_lineage_data = self._process_custom_lineage_data(custom_lineage_data)
 
@@ -283,7 +319,7 @@ class SummaryCollector(Callback):
 
     @staticmethod
     def _collect_optimizer_custom_lineage_data():
-        """Collect custom lineage data if mindoptimizer has set the hyper config"""
+        """Collect custom lineage data if mindoptimizer has set the hyper config."""
         auto_custom_lineage_data = {}
 
         hyper_config = os.environ.get(HYPER_CONFIG_ENV_NAME)
@@ -314,6 +350,68 @@ class SummaryCollector(Callback):
         """Check action type."""
         check_value_type('keep_default_action', action, bool)
 
+    @staticmethod
+    def _check_landscape_size(landscape_size):
+        """Check landscape size type and value."""
+        check_value_type('landscape_size', landscape_size, int)
+        # landscape size should be between 3 and 256.
+        if landscape_size < 3 or landscape_size > 256:
+            raise ValueError(f'Landscape size should be less than 256 and more than 3, '
+                             f'but got the: {landscape_size}')
+
+    @staticmethod
+    def _check_unit(unit):
+        """Check unit type and value."""
+        check_value_type('unit', unit, str)
+        if "step" not in unit and "epoch" not in unit:
+            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
+
+    @staticmethod
+    def _check_create_landscape(create_landscape):
+        """Check create landscape type and value."""
+        check_value_type('create_landscape', create_landscape, dict)
+        for param, value in create_landscape.items():
+            if param not in ["train", "result"]:
+                raise ValueError(f'The key to create landscape should be in ["train", "result"], '
+                                 f'but got the: {param}')
+            check_value_type(param, value, bool)
+
+    @staticmethod
+    def _check_intervals(intervals):
+        """Check intervals type and value."""
+        check_value_type('intervals', intervals, list)
+        for _, interval in enumerate(intervals):
+            check_value_type('each interval inintervals', interval, list)
+            if len(interval) < 3:
+                raise ValueError(f'Each landscape interval should not be less than three, '
+                                 f'but got the: {interval}')
+            for j in interval:
+                if not isinstance(j, int):
+                    raise TypeError(f'Landscape interval value type should be int, '
+                                    f'but got the: {type(j)}')
+
+    def _check_collect_landscape_data(self, collect_landscape):
+        """Check collect landscape data type and value."""
+        unexpected_params = set(collect_landscape) - set(self._DEFAULT_SPECIFIED_DATA["collect_landscape"])
+        if unexpected_params:
+            raise ValueError(f'For `collect_landscape` the keys {unexpected_params} are unsupported, expect'
+                             f'the follow keys: {list(self._DEFAULT_SPECIFIED_DATA["collect_landscape"].keys())}')
+        if "landscape_size" in collect_landscape:
+            landscape_size = collect_landscape.get("landscape_size")
+            self._check_landscape_size(landscape_size)
+        if "unit" in collect_landscape:
+            unit = collect_landscape.get("unit")
+            self._check_unit(unit)
+        if "num_samples" in collect_landscape:
+            num_samples = collect_landscape.get("num_samples")
+            check_value_type("num_samples", num_samples, int)
+        if "create_landscape" in collect_landscape:
+            create_landscape = collect_landscape.get("create_landscape")
+            self._check_create_landscape(create_landscape)
+        if "intervals" in collect_landscape:
+            intervals = collect_landscape.get("intervals")
+            self._check_intervals(intervals)
+
     def _process_specified_data(self, specified_data, action):
         """Check specified data type and value."""
         check_value_type('collect_specified_data', specified_data, [dict, type(None)])
@@ -341,7 +439,7 @@ class SummaryCollector(Callback):
                     raise ValueError(f'For `collect_specified_data`, the value of `histogram_regular` '
                                      f'is not a valid regular expression. Detail: {str(exc)}.')
 
-        bool_items = set(self._DEFAULT_SPECIFIED_DATA) - {'histogram_regular'}
+        bool_items = set(self._DEFAULT_SPECIFIED_DATA) - {'histogram_regular', 'collect_landscape'}
         for item in bool_items:
             if item in specified_data:
                 check_value_type(item, specified_data.get(item), bool)
@@ -395,6 +493,18 @@ class SummaryCollector(Callback):
             elif current % self._collect_freq == 0:
                 self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
 
+        collect_landscape = self._collect_specified_data.get('collect_landscape')
+        intervals = collect_landscape.get('intervals')
+        collect_interval = False
+        for interval in intervals:
+            if "cur_step_num" in cb_params:
+                if cb_params.cur_step_num in interval:
+                    collect_interval = True
+                    break
+                break
+        if collect_landscape and collect_landscape.get('unit', 'step') == 'step' and collect_interval:
+            self._save_model_params_for_landscape(cb_params)
+
     def _get_tensor_collect_range(self, cb_params, dataset_sink_mode):
         """Get tensor collect range."""
         total_step = cb_params.epoch_num
@@ -420,6 +530,18 @@ class SummaryCollector(Callback):
         self._record.record(cb_params.cur_step_num, plugin_filter=plugin_filter)
 
     def epoch_end(self, run_context):
+        cb_params = run_context.original_args()
+        collect_landscape = self._collect_specified_data.get('collect_landscape')
+        intervals = collect_landscape.get('intervals')
+        collect_interval = False
+        for interval in intervals:
+            if "cur_epoch_num" in cb_params:
+                if cb_params.cur_epoch_num in interval:
+                    collect_interval = True
+                    break
+                break
+        if collect_landscape and collect_landscape.get('unit', 'step') == 'epoch' and collect_interval:
+            self._save_model_params_for_landscape(cb_params)
         self._record.flush()
 
     def end(self, run_context):
@@ -433,6 +555,35 @@ class SummaryCollector(Callback):
         self._record.set_mode('eval')
         # There's nothing special about setting step to 0 here, just to satisfy the interface call
         self._record.record(step=0)
+
+        collect_landscape = self._collect_specified_data.get('collect_landscape')
+        if cb_params.mode == ModeEnum.TRAIN.value and collect_landscape:
+            unit = collect_landscape.get('unit', 'step')
+            num_samples = collect_landscape.get('num_samples', 2048)
+            landscape_size = collect_landscape.get('landscape_size', 40)
+            create_landscape = collect_landscape.get('create_landscape', {'train': True, 'result': True})
+            self._landscape.save_metadata(cb_params.batch_num, unit, num_samples, landscape_size, create_landscape)
+
+    def _save_model_params_for_landscape(self, cb_params):
+        """Save model params and loss for landscape."""
+        if cb_params.mode == ModeEnum.TRAIN.value:
+            backbone = self._get_backbone(cb_params.train_network)
+            while True:
+                if 'optimizer' in backbone.name_cells() and 'network' in backbone.name_cells():
+                    backbone = backbone.network
+                    break
+                if 'optimizer' not in backbone.name_cells() and 'network' in backbone.name_cells():
+                    backbone = backbone.network
+                else:
+                    break
+            collect_landscape = self._collect_specified_data.get('collect_landscape')
+            precision = 4
+            loss = round(np.mean(self._get_loss(cb_params).asnumpy()), precision)
+            loss = loss.item()
+            unit = collect_landscape.get('unit', 'step')
+            cur_num = cb_params.cur_epoch_num if collect_landscape and unit == 'epoch' else cb_params.cur_step_num
+            logger.info("Save loss and model params, %s: %s." % (unit, cur_num))
+            self._landscape.save_loss_and_model_params(cur_num, unit, backbone, loss)
 
     def _check_callbacks(self, cb_params):
         """Check there if there are duplicate instances of SummaryCollector."""
@@ -674,7 +825,7 @@ class SummaryCollector(Callback):
     @staticmethod
     def _get_learning_rate(optimizer):
         """
-        parse the learning rate from optimizer.
+        Parse the learning rate from optimizer.
 
         Args:
             optimizer (Optimizer): A optimizer which inherit the MindSpore Optimizer class.
@@ -875,6 +1026,28 @@ class SummaryCollector(Callback):
             ckpt_file_path = os.path.realpath(ckpt_file_path)
 
         return ckpt_file_path
+
+    @classmethod
+    def _get_backbone(cls, network):
+        """
+        Get the backbone network.
+
+        Args:
+            network (Cell): The train network.
+
+        Returns:
+            Union[Cell, None], backbone network, if parse failed, will return None.
+        """
+        backbone = None
+        backbone_key = '_backbone'
+
+        for _, cell in network.cells_and_names():
+            if hasattr(cell, backbone_key):
+                backbone = getattr(cell, backbone_key)
+                break
+
+        backbone = network if backbone is None else backbone
+        return backbone
 
     @staticmethod
     def _get_loss_fn(cb_params):

@@ -46,7 +46,7 @@ def _pack_data(datadict, wall_time):
                             PluginEnum.CUSTOM_LINEAGE_DATA.value, PluginEnum.DATASET_GRAPH.value):
                 result.append([plugin, serialize_to_lineage_event(plugin, data.get('value'))])
             elif plugin in (PluginEnum.SCALAR.value, PluginEnum.TENSOR.value, PluginEnum.HISTOGRAM.value,
-                            PluginEnum.IMAGE.value):
+                            PluginEnum.IMAGE.value, PluginEnum.LANDSCAPE.value):
                 summaries.append({'_type': plugin.title(), 'name': data.get('tag'), 'data': data.get('value')})
                 step = data.get('step')
 

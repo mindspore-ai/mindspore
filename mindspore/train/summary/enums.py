@@ -37,6 +37,7 @@ class PluginEnum(BaseEnum):
     CUSTOM_LINEAGE_DATA = 'custom_lineage_data'
     DATASET_GRAPH = 'dataset_graph'
     EXPLAINER = 'explainer'
+    LANDSCAPE = 'landscape'
 
 
 class WriterPluginEnum(Enum):

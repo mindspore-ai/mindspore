@@ -45,6 +45,31 @@ message Event {
   }
 }
 
+message LossLandscape{
+    message Point {
+        optional TensorProto x=1;
+        optional TensorProto y=2;
+        optional TensorProto z=3;
+    }
+
+    message LossPath {
+        repeated int32 intervals = 1; // step intervals or epoch intervals
+        optional Point points =2;
+    }
+
+    message Metadata {
+        optional string decomposition = 1;
+        optional string unit = 2; // step or epoch
+        optional int32 step_per_epoch = 3;
+    }
+
+    optional Point landscape = 1;
+    optional LossPath loss_path = 2;
+    optional Metadata metadata = 3; // maybe only record by the first value
+    optional Point convergence_point = 4;
+
+}
+
 // A Summary is a set of named values that be produced regularly during training
 message Summary {
     message Image {
@@ -97,6 +122,7 @@ message Summary {
             Image image = 4;
             TensorProto tensor = 8;
             Histogram histogram = 9;
+            LossLandscape loss_landscape = 10;
         }
     }
 
