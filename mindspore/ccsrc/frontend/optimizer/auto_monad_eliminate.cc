@@ -31,7 +31,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-
 using ParamUserMap = std::unordered_map<std::string, std::vector<size_t>>;
 using LoadGraphMap = OrderedMap<std::string, std::vector<size_t>>;
 

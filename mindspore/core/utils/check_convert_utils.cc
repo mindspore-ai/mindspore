@@ -571,7 +571,8 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
 }
 
 TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const TypePtr &type,
-                                                  const std::set<TypePtr> &template_types, const string &prim_name) {
+                                                  const std::set<TypePtr> &template_types, const string &prim_name,
+                                                  bool is_mix) {
   if (CheckType(type, template_types)) {
     return type;
   }
@@ -583,6 +584,11 @@ TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const
       continue;
     }
     buffer << " Tensor[" << item->ToString() << "],";
+  }
+  if (is_mix) {
+    for (const auto &item : template_types) {
+      buffer << " " << item->ToString() << "],";
+    }
   }
   buffer << "}, but got " << type->ToString();
   buffer << ".";
@@ -613,7 +619,7 @@ TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::s
     (void)input_names.append(item.first);
     (void)input_names.append(", ");
   }
-  return CheckMixSubClass(input_names, arg_, valid_values, prim_name);
+  return CheckTensorSubClass(input_names, arg_, valid_values, prim_name, true);
 }
 
 TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
@@ -808,27 +814,5 @@ bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_l
     }
   }
   return false;
-}
-
-TypePtr CheckAndConvertUtils::CheckMixSubClass(const string &type_name, const TypePtr &type,
-                                               const std::set<TypePtr> &template_types, const string &prim_name) {
-  if (CheckType(type, template_types)) {
-    return type;
-  }
-  std::ostringstream buffer;
-  buffer << "Primitive[" << prim_name << "]'s input argument[" << type_name << "] must be a type of {";
-  for (const auto &item : template_types) {
-    if (item->isa<TensorType>()) {
-      buffer << item->ToString();
-      continue;
-    }
-    buffer << " Tensor[" << item->ToString() << "],";
-  }
-  for (const auto &item : template_types) {
-    buffer << " " << item->ToString() << "],";
-  }
-  buffer << "}, but got " << type->ToString();
-  buffer << ".";
-  MS_EXCEPTION(TypeError) << buffer.str();
 }
 }  // namespace mindspore
