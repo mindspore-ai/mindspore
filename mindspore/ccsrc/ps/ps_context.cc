@@ -199,9 +199,10 @@ void PSContext::set_server_mode(const std::string &server_mode) {
 const std::string &PSContext::server_mode() const { return server_mode_; }
 
 void PSContext::set_encrypt_type(const std::string &encrypt_type) {
-  if (encrypt_type != kNotEncryptType && encrypt_type != kDPEncryptType && encrypt_type != kPWEncryptType) {
+  if (encrypt_type != kNotEncryptType && encrypt_type != kDPEncryptType && encrypt_type != kPWEncryptType &&
+      encrypt_type != kStablePWEncryptType) {
     MS_LOG(EXCEPTION) << encrypt_type << " is invalid. Encrypt type must be " << kNotEncryptType << " or "
-                      << kDPEncryptType << " or " << kPWEncryptType;
+                      << kDPEncryptType << " or " << kPWEncryptType << " or " << kStablePWEncryptType;
     return;
   }
   encrypt_type_ = encrypt_type;

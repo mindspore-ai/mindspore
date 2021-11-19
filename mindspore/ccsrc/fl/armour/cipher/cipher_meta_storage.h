@@ -74,6 +74,7 @@ class CipherMetaStorage {
  public:
   // Register the shared value involved in the security aggregation.
   void RegisterClass();
+  void RegisterStablePWClass();
 
   // Register Prime.
   void RegisterPrime(const char *list_name, const std::string &prime);
@@ -87,17 +88,19 @@ class CipherMetaStorage {
   // Get client keys from shared server.
   void GetClientKeysFromServer(const char *list_name,
                                std::map<std::string, std::vector<std::vector<uint8_t>>> *clients_keys_list);
+  // Get stable secure aggregation's client key from shared server.
+  void GetStableClientKeysFromServer(const char *list_name,
+                                     std::map<std::string, std::vector<std::vector<uint8_t>>> *clients_keys_list);
   void GetClientIVsFromServer(const char *list_name,
                               std::map<std::string, std::vector<std::vector<uint8_t>>> *clients_ivs_list);
   // Get client noises from shared server.
   bool GetClientNoisesFromServer(const char *list_name, std::vector<float> *cur_public_noise);
   // Update client fl_id to shared server.
   bool UpdateClientToServer(const char *list_name, const std::string &fl_id);
-  // Update client key to shared server.
-  bool UpdateClientKeyToServer(const char *list_name, const std::string &fl_id,
-                               const std::vector<std::vector<uint8_t>> &cur_public_key);
   // Update client key with signature to shared server.
   bool UpdateClientKeyToServer(const char *list_name, const schema::RequestExchangeKeys *exchange_keys_req);
+  // Update stable secure aggregation's client key to shared server.
+  bool UpdateStableClientKeyToServer(const char *list_name, const schema::RequestExchangeKeys *exchange_keys_req);
   // Update client noise to shared server.
   bool UpdateClientNoiseToServer(const char *list_name, const std::vector<float> &cur_public_noise);
   // Update client share to shared server.

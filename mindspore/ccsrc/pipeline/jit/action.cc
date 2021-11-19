@@ -890,6 +890,11 @@ bool StartServerAction(const ResourcePtr &res) {
     rounds_config.push_back({"getClientList", true, cipher_time_window, true, client_list_threshold});
     rounds_config.push_back({"reconstructSecrets", true, cipher_time_window, true, reconstruct_secrets_threshold});
   }
+  if (encrypt_type == ps::kStablePWEncryptType) {
+    MS_LOG(INFO) << "Add stable secure aggregation rounds.";
+    rounds_config.push_back({"exchangeKeys", true, cipher_time_window, true, exchange_keys_threshold});
+    rounds_config.push_back({"getKeys", true, cipher_time_window, true, get_keys_threshold});
+  }
 #endif
   fl::server::CipherConfig cipher_config = {
     share_secrets_ratio,     cipher_time_window,    exchange_keys_threshold, get_keys_threshold,
