@@ -114,6 +114,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_scheduler.cc"
+        "../../../mindspore/ccsrc/runtime/device/memory_offload_strategy.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_info.cc"
         "../../../mindspore/ccsrc/runtime/device/bucket.cc"

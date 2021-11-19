@@ -104,6 +104,7 @@ TEST_F(TestMemScheduler, test_mem_scheduler) {
   std::vector<size_t> init_tensors = {0, 2, 4};
   std::vector<std::vector<size_t>> step_tensors = {{0, 1}, {1, 2, 3}, {3, 4, 5}, {5, 6}, {6, 7}, {2, 7, 8}, {4, 8, 9}};
   void *stream = nullptr;
+  scheduler->SetTotalStep(kTimeSlice);
   // record
   for (auto index : init_tensors) {
     scheduler->Init(tensor_keys.data() + index, tensor_datas.data() + index, 1, kMemPriorityHigh);
@@ -118,11 +119,10 @@ TEST_F(TestMemScheduler, test_mem_scheduler) {
   scheduler->set_need_record_event(false);
 
   // optimize
-  scheduler->OptMemUsage();
-  scheduler->set_optimized(true);
+  scheduler->Optimize();
 
   // run
-  scheduler->Reset();
+  scheduler->ResetCurrentStep();
   for (auto index : init_tensors) {
     scheduler->Init(tensor_keys.data() + index, tensor_datas.data() + index, 1, kMemPriorityHigh);
   }

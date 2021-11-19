@@ -42,9 +42,6 @@ using mindspore::kernel::AddressPtr;
 
 namespace mindspore {
 namespace device {
-constexpr float kMaxMemReuseFactor = 0.8;
-constexpr float kMinMemReuseFactor = 0.5;
-constexpr float kRetryFactor = 0.1;
 constexpr size_t kAtomicCleanInputSize = 2;
 namespace {
 std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph &graph) {
@@ -1493,13 +1490,15 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::shared_ptr<MemScheduler> mem_scheduler = nullptr;
+
   if (UseMemScheduler()) {
     mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     MS_EXCEPTION_IF_NULL(mem_scheduler);
-    mem_scheduler->SetMemHandler(mem_manager_);
-    mem_scheduler->Reset();
+    mem_scheduler->ResetCurrentStep();
+    mem_scheduler->Update();
     InitGraphInputTensors(mem_scheduler, graph);
   }
+
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
   auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
@@ -1554,7 +1553,6 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     }
     LaunchKernelEvent(kernel_post_run_events, kernels[i]);
   }
-
   return true;
 }
 
@@ -1565,21 +1563,15 @@ void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
     return;
   }
   auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
+  MS_EXCEPTION_IF_NULL(mem_scheduler);
+  mem_scheduler->SetMemHandler(mem_manager_);
+  mem_scheduler->SetTotalStep(graph.execution_order().size());
+
   if (mem_scheduler->need_record_event()) {
     (void)LaunchKernelMod(graph, true);
     mem_scheduler->set_need_record_event(false);
   }
-  float mem_used_factor = kMaxMemReuseFactor;
-  while (!mem_scheduler->optimized() && mem_used_factor >= kMinMemReuseFactor) {
-    mem_scheduler->SetMemUsedFactor(mem_used_factor);
-    mem_scheduler->OptMemUsage();
-    bool ret = LaunchKernelMod(graph, true);
-    if (ret) {
-      mem_scheduler->set_optimized(true);
-    } else {
-      mem_used_factor -= kRetryFactor;
-    }
-  }
+  mem_scheduler->Optimize();
   if (!mem_scheduler->optimized()) {
     MS_LOG_EXCEPTION << "Can't run graph " << graph.graph_id() << " for memory limit.";
   }
