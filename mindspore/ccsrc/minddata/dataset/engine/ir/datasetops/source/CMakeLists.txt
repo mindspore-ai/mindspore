@@ -32,6 +32,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         tf_record_node.cc
         usps_node.cc
         voc_node.cc
+        yes_no_node.cc
         )
 
 if(ENABLE_PYTHON)

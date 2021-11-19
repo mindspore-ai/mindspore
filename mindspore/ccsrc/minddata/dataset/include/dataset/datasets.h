@@ -3919,6 +3919,72 @@ inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std
                                       MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
+/// \class YesNoDataset.
+/// \brief A source dataset for reading and parsing YesNo dataset.
+class YesNoDataset : public Dataset {
+ public:
+  /// \brief Constructor of YesNoDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  YesNoDataset(const std::vector<char> &dataset_dir, const std::shared_ptr<Sampler> &sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of YesNoDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  YesNoDataset(const std::vector<char> &dataset_dir, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of YesNoDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  YesNoDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of YesNoDataset.
+  ~YesNoDataset() = default;
+};
+
+/// \brief Function to create a YesNo Dataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///    given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<YesNoDataset> YesNo(const std::string &dataset_dir,
+                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<YesNoDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
+/// \brief Function to create a YesNo Dataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<YesNoDataset> YesNo(const std::string &dataset_dir, Sampler *sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<YesNoDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
+/// \brief Function to create a YesNo Dataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current Dataset.
+inline std::shared_ptr<YesNoDataset> YesNo(const std::string &dataset_dir,
+                                           const std::reference_wrapper<Sampler> sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<YesNoDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
 /// \brief Function to create a cache to be attached to a dataset.
 /// \note The reason for providing this API is that std::string will be constrained by the
 ///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
