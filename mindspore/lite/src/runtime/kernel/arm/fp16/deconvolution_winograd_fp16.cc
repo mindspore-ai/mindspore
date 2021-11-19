@@ -192,6 +192,7 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
 }
 
 int DeConvWinogradFp16CPUKernel::DoDeconv(int task_id) {
+  // It is better than continuous cutting because it uses locks to merge after fully paralleling.
   for (int tile_index = task_id; tile_index < deconv_param_->in_tile_count_; tile_index += deconv_param_->thread_num_) {
     float16_t *tile_in = tile_input_ + task_id * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
                                          DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up_;
@@ -206,8 +207,12 @@ int DeConvWinogradFp16CPUKernel::DoDeconv(int task_id) {
 
     DeconvWgFp16(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
 
-    std::unique_lock<std::mutex> merge_lock(lock_);
+    std::unique_lock<std::mutex> merge_lock(nc4hw4_mutex_);
+    nc4hw4_cond_var_.wait(merge_lock, [&] { return tile_index == completed_index_ + 1; });
+
     DeconvWgPostFp16(tile_out, nc4hw4_output_, conv_param_, deconv_param_, calculate_count, tile_index);
+    completed_index_++;
+    nc4hw4_cond_var_.notify_all();
   }
   return RET_OK;
 }
@@ -461,6 +466,7 @@ int DeConvWinogradFp16CPUKernel::Run() {
     nhwc_output_ = output_ptr + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div_ * C4NUM * sizeof(float16_t));
+    completed_index_ = -1;
     auto ret = ParallelLaunch(this->ms_context_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeConvWgFp16Run failed!";
