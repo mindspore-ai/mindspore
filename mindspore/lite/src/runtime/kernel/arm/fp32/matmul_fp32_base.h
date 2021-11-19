@@ -43,7 +43,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int Run() override;
 
  public:
-  int FloatRun(int task_id) const;
+  int ParallelRunByOC(int task_id) const;
+  int ParallelRunByBatch(int task_id) const;
+  using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
+  ParallelRun parallel_fun_ = nullptr;
 
  protected:
   int InitBufferA();
@@ -61,6 +64,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeResizeBufB();
   int CalBroadCastBiasDataElements();
   int InitTmpOutBuffer();
+  void GetThreadCuttingPolicy();
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -75,7 +79,8 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int col_tile_ = 0;
   int row_tile_ = 0;
   int oc_res_ = 0;
-  int thread_stride_ = 0;
+  int batch_stride_ = 0;
+  int oc_stride_ = 0;
   int thread_count_ = 0;
   bool vec_matmul_ = false;
   float *bias_ptr_ = nullptr;
@@ -87,6 +92,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int matrix_b_pack_size_ = -1;
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
+  bool batch_split_ = false;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
