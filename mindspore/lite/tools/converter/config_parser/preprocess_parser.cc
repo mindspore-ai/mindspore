@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <map>
 #include <vector>
+#include <algorithm>
 #include "tools/converter/preprocess/opencv_utils.h"
 #include "src/common/log_adapter.h"
 #include "mindspore/lite/tools/common/string_util.h"

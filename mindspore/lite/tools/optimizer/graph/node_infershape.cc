@@ -17,6 +17,7 @@
 #include "tools/optimizer/graph/node_infershape.h"
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/utils.h"
