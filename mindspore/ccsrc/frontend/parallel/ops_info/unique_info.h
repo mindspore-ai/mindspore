@@ -47,7 +47,7 @@ class UniqueInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferAsLossDivisor() override { return SUCCESS; }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 #endif
 

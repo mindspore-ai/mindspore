@@ -80,6 +80,11 @@ struct LocationInfo {
   const char *func_;
 };
 
+template <class T, typename std::enable_if<std::is_enum<T>::value, int>::type = 0>
+constexpr std::ostream &operator<<(std::ostream &stream, const T &value) {
+  return stream << static_cast<typename std::underlying_type<T>::type>(value);
+}
+
 class LogStream {
  public:
   LogStream() { sstream_ = std::make_shared<std::stringstream>(); }
@@ -101,11 +106,6 @@ class LogStream {
  private:
   std::shared_ptr<std::stringstream> sstream_;
 };
-
-template <class T, typename std::enable_if<std::is_enum<T>::value, int>::type = 0>
-constexpr std::ostream &operator<<(std::ostream &stream, const T &value) {
-  return stream << static_cast<typename std::underlying_type<T>::type>(value);
-}
 
 enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 

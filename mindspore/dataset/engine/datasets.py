@@ -82,6 +82,8 @@ try:
 except ModuleNotFoundError:
     context = None
 
+if platform.system().lower() == "darwin":
+    multiprocessing.set_start_method("fork")
 
 class Shuffle(str, Enum):
     GLOBAL: str = "global"
@@ -4457,7 +4459,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
     when training in parallel mode.
     """
     threshold_ratio = 0.8
-    if platform.system() != "Windows":
+    if platform.system().lower() not in {"windows", "darwin"}:
         shm_estimate_usage = _get_device_num() * num_worker * num_queues * \
             (queue_size + 2) * max_rowsize * 1024 * 1024
         try:

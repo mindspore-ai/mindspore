@@ -3,9 +3,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations
-                                            -Wno-delete-non-abstract-non-virtual-dtor
-                                            -Wno-constant-conversion -Wno-unknown-warning-option")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations \
+                                            -Wno-delete-non-abstract-non-virtual-dtor       \
+                                            -Wno-unused-comparison -Wno-constant-conversion \
+                                            -Wno-unknown-warning-option -Wno-macro-redefined")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
 endif()
@@ -73,7 +74,9 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
-add_subdirectory(audio)
+if(NOT APPLE)
+    add_subdirectory(audio)
+endif()
 add_subdirectory(text)
 add_subdirectory(callback)
 add_subdirectory(plugin)
@@ -88,12 +91,16 @@ add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
 add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
-add_dependencies(engine-gnn core)
+if(NOT APPLE)
+    add_dependencies(engine-gnn core)
+endif()
 add_dependencies(engine core)
 add_dependencies(callback core)
-add_dependencies(audio-kernels core)
-add_dependencies(audio-ir core)
-add_dependencies(audio-ir-kernels core)
+if(NOT APPLE)
+    add_dependencies(audio-kernels core)
+    add_dependencies(audio-ir core)
+    add_dependencies(audio-ir-kernels core)
+endif()
 add_dependencies(text core)
 add_dependencies(text-kernels core)
 add_dependencies(text-ir core)
@@ -154,14 +161,10 @@ set(submodules
         $<TARGET_OBJECTS:engine-datasetops-source>
         $<TARGET_OBJECTS:engine-datasetops-source-sampler>
         $<TARGET_OBJECTS:engine-datasetops-mapop>
-        $<TARGET_OBJECTS:engine-gnn>
         $<TARGET_OBJECTS:engine-datasetops>
         $<TARGET_OBJECTS:engine-opt>
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
-        $<TARGET_OBJECTS:audio-kernels>
-        $<TARGET_OBJECTS:audio-ir>
-        $<TARGET_OBJECTS:audio-ir-kernels>
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>
         $<TARGET_OBJECTS:text-ir>
@@ -172,6 +175,14 @@ set(submodules
         $<TARGET_OBJECTS:md_plugin>
         )
 
+if(NOT APPLE)
+    set(submodules
+            ${submodules}
+            $<TARGET_OBJECTS:engine-gnn>
+            $<TARGET_OBJECTS:audio-kernels>
+            $<TARGET_OBJECTS:audio-ir>
+            $<TARGET_OBJECTS:audio-ir-kernels>)
+endif()
 
 if(ENABLE_ACL)
     set(submodules
@@ -211,12 +222,6 @@ endif()
 
 ################# Link with external libraries ########################
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
-
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(CMAKE_MACOSX_RPATH 1)
-    set(CMAKE_INSTALL_RPATH "@loader_path/lib;@loader_path")
-    set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
-endif()
 
 set(targetso $<TARGET_FILE:_c_dataengine>)
 set(target_tiny "libtinyxml")
@@ -315,7 +320,9 @@ else()
         if(${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(_c_dataengine PRIVATE ibverbs rdmacm)
         endif()
-        target_link_libraries(_c_dataengine PRIVATE ps_cache)
+        if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+            target_link_libraries(_c_dataengine PRIVATE ps_cache)
+        endif()
     endif()
 endif()
 
@@ -332,7 +339,13 @@ else()
 endif()
 
 if(MS_BUILD_GRPC)
-    target_link_libraries(_c_dataengine PRIVATE -Wl,--no-as-needed mindspore::grpc++)
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        target_link_libraries(_c_dataengine PRIVATE -Wl,--no-as-needed mindspore::grpc++)
+    else()
+        target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
+    endif()
 endif()
 
-set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+endif()

@@ -46,7 +46,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "utils/ms_context.h"
 #include "vm/transform.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
@@ -623,7 +623,7 @@ bool OptInlineAction(const ResourcePtr &res) {
 bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePasses); }
 
 bool VmOptimizeAction(const ResourcePtr &res) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
   if (ps::PSContext::instance()->is_ps_mode()) {
     kVmPasses.push_back({"server_communication_op_fusion", ps::Util::FuseServerCommOps});
   }
@@ -823,7 +823,7 @@ bool ExecuteAction(const ResourcePtr &res) {
   return true;
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
 bool StartPSWorkerAction(const ResourcePtr &) {
   ps::Worker::GetInstance().Run();
   return true;
@@ -1156,7 +1156,7 @@ std::vector<ActionItem> VmPipeline() {
   (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_worker()) {
     std::string server_mode = ps::PSContext::instance()->server_mode();
     if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
@@ -1194,7 +1194,7 @@ std::vector<ActionItem> MindIRPipeline() {
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 std::vector<ActionItem> ServerPipeline() {
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));

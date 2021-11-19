@@ -12,7 +12,7 @@ else()
   set(OPENSSL_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/openssl)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
   mindspore_add_pkg(openssl
     VER 1.1.1k
     LIBS ssl crypto

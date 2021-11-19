@@ -55,7 +55,7 @@
 namespace mindspore {
 namespace parallel {
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
   }

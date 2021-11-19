@@ -17,6 +17,8 @@ if(ENABLE_CPU)
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(PLATFORM_ARM64 "on")
         set(X86_64_SIMD "off")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(X86_64_SIMD "off")
     elseif("${X86_64_SIMD}" STREQUAL "off" AND NOT ${ENABLE_ASAN})
         set(X86_64_SIMD "avx")
     endif()
@@ -24,10 +26,13 @@ if(ENABLE_CPU)
     add_subdirectory(backend/kernel_compiler/cpu/nnacl)
 endif()
 
-if(NOT(CMAKE_SYSTEM_NAME MATCHES "Darwin"))
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
     link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 \
+        -Wno-delete-non-abstract-non-virtual-dtor -Wno-unused-private-field -Wno-overloaded-virtual \
+        -Wno-unused-const-variable -Wno-pessimizing-move -Wno-range-loop-analysis -Wno-mismatched-tags \
+        -Wno-c++11-narrowing")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -240,7 +245,11 @@ target_link_libraries(mindspore mindspore_core)
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
-    target_link_libraries(mindspore -Wl,--no-as-needed mindspore::grpc++)
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        target_link_libraries(mindspore mindspore::grpc++)
+    else()
+        target_link_libraries(mindspore -Wl,--no-as-needed mindspore::grpc++)
+    endif()
 endif()
 
 target_link_libraries(mindspore securec mindspore::flatbuffers)
@@ -351,7 +360,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore mindspore::pybind11_module)
     target_link_libraries(mindspore mindspore_gvar)
-    target_link_libraries(_c_expression PRIVATE -Wl,-force_load mindspore mindspore_core -Wl,-noall_load)
+    target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore mindspore_core -Wl,-noall_load)
 else()
     if(ENABLE_CPU AND NOT WIN32)
         target_link_libraries(mindspore proto_input mindspore::protobuf

@@ -89,3 +89,19 @@ diff -Npur sentencepiece-0.1.92/src/CMakeLists.txt sentencepiece-0.1.92_bak/src/
    DESTINATION ${CMAKE_INSTALL_INCDIR})
  
  file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" data_dir)
+diff -Npur sentencepiece-0.1.92/src/VERSION sentencepiece-0.1.92_bak/src/VERSION
+--- a/VERSION    2021-10-29 14:48:06.343250100 +0800
++++ b/VERSION    1970-01-01 08:00:00.000000000 +0800
+@@ -1 +0,0 @@
+-0.1.92
+diff -Npur sentencepiece-0.1.92/src/VERSION.txt sentencepiece-0.1.92_bak/src/VERSION.txt
+--- a/VERSION.txt    1970-01-01 08:00:00.000000000 +0800
++++ b/VERSION.txt    2021-10-29 14:48:09.481862200 +0800
+@@ -0,0 +1 @@
++0.1.92
+diff -Npur sentencepiece-0.1.92/CMakeLists.txt sentencepiece-0.1.92_bak/CMakeLists.txt
+--- sentencepiece-0.1.92/CMakeLists.txt    2020-06-08 16:25:01.000000000 +0800
++++ sentencepiece-0.1.92_bak/CMakeLists.txt    2020-07-02 17:42:33.306933546 +0800
+@@ -16,1 +16,1 @@
+-file(STRINGS "VERSION" SPM_VERSION)
++file(STRINGS "VERSION.txt" SPM_VERSION)

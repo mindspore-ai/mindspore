@@ -15,7 +15,7 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual -Wno-delete-abstract-non-virtual-dtor")
 endif()
 
 if(ENABLE_GPU)

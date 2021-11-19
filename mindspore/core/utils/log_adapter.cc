@@ -422,7 +422,7 @@ void InitSubModulesLogLevel() {
 }  // namespace mindspore
 
 extern "C" {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
 #ifdef _MSC_VER
 void common_log_init(void) {
 #else
@@ -483,7 +483,7 @@ MS_CORE_API void common_log_init(void) {
 }
 
 // shared lib init hook
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
 #ifdef _MSC_VER
 void mindspore_log_init(void) {
 #else
@@ -496,7 +496,7 @@ void mindspore_log_init(void) {
 #define google mindspore_private
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
     google::InitGoogleLogging("mindspore");
 #endif
     is_glog_initialzed = true;

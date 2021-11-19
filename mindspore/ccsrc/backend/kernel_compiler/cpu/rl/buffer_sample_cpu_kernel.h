@@ -81,7 +81,11 @@ class BufferCPUSampleKernel : public CPUKernel {
       for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
         (void)indexes.emplace_back(i);
       }
+#if !defined(__APPLE__)
       random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
+#else
+      std::shuffle(indexes.begin(), indexes.end(), generator_);
+#endif
     } else {
       std::uniform_int_distribution<> distrib(0, count_addr[0]);
       for (size_t i = 0; i < batch_size_; ++i) {

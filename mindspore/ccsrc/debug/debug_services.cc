@@ -1758,7 +1758,11 @@ std::string DebugServices::RealPath(const std::string &input_path) {
 }
 
 uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) {
+#if defined(__APPLE__)
+  return *reinterpret_cast<const uint64_t *>(buffer.data());
+#else
   return le64toh(*reinterpret_cast<const uint64_t *>(buffer.data()));
+#endif
 }
 
 bool DebugServices::TensorExistsInCurrent(const std::string &tensor_name) {

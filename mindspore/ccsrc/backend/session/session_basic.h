@@ -309,7 +309,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph);
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);

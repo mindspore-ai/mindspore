@@ -28,7 +28,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
@@ -101,7 +101,7 @@ std::vector<StrategyPtr> UniqueInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
 Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
@@ -138,7 +138,7 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 #endif
 
 ReplaceGraphPtr UniqueInfo::replace_graph(const CNodePtr &cnode) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     auto inputs = cnode->inputs();
     if (inputs.empty()) {

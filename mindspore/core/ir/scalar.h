@@ -435,6 +435,12 @@ class MS_CORE_API UInt64Imm final : public IntergerImm {
 };
 using UInt64ImmPtr = std::shared_ptr<UInt64Imm>;
 IMM_TRAITS(UInt64ImmPtr, uint64_t);
+
+#if defined(__APPLE__)
+using SizetImmPtr = std::shared_ptr<UInt64Imm>;
+IMM_TRAITS(SizetImmPtr, size_t);
+#endif
+
 /// \beief FloatImm defines interface for float data.
 class MS_CORE_API FloatImm : public Scalar {
  public:

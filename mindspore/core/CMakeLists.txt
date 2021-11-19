@@ -42,7 +42,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT MSVC)
   add_compile_definitions(BUILDING_DLL)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-    -Wuser-defined-warnings -Winconsistent-missing-override -Wno-delete-non-abstract-non-virtual-dtor")
+    -Wno-overloaded-virtual -Wno-user-defined-warnings -Winconsistent-missing-override -Wno-delete-non-virtual-dtor \
+    -Wno-unused-private-field")
 endif()
 
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)

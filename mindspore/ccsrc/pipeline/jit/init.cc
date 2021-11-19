@@ -36,7 +36,7 @@
 #else
 #include "runtime/device/gpu/distribution/collective_fake_init.h"
 #endif
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"

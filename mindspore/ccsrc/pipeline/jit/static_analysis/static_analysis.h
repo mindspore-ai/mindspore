@@ -136,11 +136,14 @@ class AnfNodeConfig : public Config {
   bool operator==(const AnfNodeConfig &other) const {
     // compare node with pointer, context with pointer except DummyContext as it's created by make_shared;
     // context should not be nullptr;
+    if (node_ != other.node_) {
+      return false;
+    }
     if (context_->IsDummyContext() && other.context_->IsDummyContext()) {
       return true;
     }
     // Don't check `func_graph_` equality.
-    return (node_ == other.node_) && (context_ == other.context_);
+    return context_ == other.context_;
   }
 
   std::string ToString() const override {

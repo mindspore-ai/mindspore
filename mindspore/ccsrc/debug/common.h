@@ -69,7 +69,11 @@ inline std::string GetSaveGraphsPathName(const std::string &file_name, const std
 inline std::string ErrnoToString(const int error_number) {
   std::ostringstream ret_info;
   ret_info << " Errno: " << error_number;
-#if defined(SYSTEM_ENV_POSIX)
+#if defined(__APPLE__)
+  char err_info[MAX_FILENAME_LENGTH];
+  (void)strerror_r(error_number, err_info, sizeof(err_info));
+  ret_info << ", ErrInfo: " << err_info;
+#elif defined(SYSTEM_ENV_POSIX)
   char err_info[MAX_FILENAME_LENGTH];
   char *ret = strerror_r(error_number, err_info, sizeof(err_info));
   if (ret != nullptr) {

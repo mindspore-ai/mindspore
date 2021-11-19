@@ -39,7 +39,7 @@ void Task::operator()() {
   id_ = this_thread::get_id();
   std::stringstream ss;
   ss << id_;
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(__ANDROID__) || defined(ANDROID) || defined(__APPLE__)
   // The thread id in Linux may be duplicate
   ss << Services::GetUniqueID();
 #endif
