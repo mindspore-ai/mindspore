@@ -112,7 +112,7 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
   MS_EXCEPTION_IF_NULL(data_ptr);
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), &value, data_length);
   if (ret_code != 0) {
-    MS_LOG(EXCEPTION) << "Failed to copy data into scalar tensor.";
+    MS_LOG(EXCEPTION) << "Failed to copy data into scalar tensor, memcpy_s errorno: " << ret_code;
   }
 
   // Create value node.
