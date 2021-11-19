@@ -77,7 +77,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   }
   auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (stage_num <= 1) {
-    MS_LOG(INFO) << "stage num is: " << stage_num << ". No need Pipeline split.";
+    MS_LOG(INFO) << "The parameter 'stage_num' is: " << stage_num << ". No need Pipeline split.";
     return true;
   }
   auto manager = res->manager();
@@ -96,10 +96,14 @@ bool PipelineSplit(const ResourcePtr &res) {
     device_num = parallel::ParallelContext::GetInstance()->device_num();
   }
   if (device_num < 1) {
-    MS_LOG(EXCEPTION) << "Invalid device num: " << device_num;
+    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
+                     "but got the value of device_num: "
+                  << device_num;
   }
   if (global_rank < 0) {
-    MS_LOG(EXCEPTION) << "Invalid global rank: " << global_rank;
+    MS_LOG(ERROR) << "The context configuration parameter 'global_rank' must be nonnegative, "
+                     "but got the value of global_rank: "
+                  << global_rank;
   }
   auto stage = InferStage(global_rank, stage_num, device_num);
   auto per_stage_rank_num = device_num / stage_num;

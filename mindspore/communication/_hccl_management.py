@@ -35,9 +35,10 @@ def check_group(group):
     if isinstance(group, (str)):
         group_len = len(group)
         if group_len > MAX_GROUP_NAME_LEN or group_len == 0:
-            raise ValueError('Group name is invalid.')
+            raise ValueError("The length of parameter 'group' should in range [1, {}], but got the value : {}"
+                             .format(MAX_GROUP_NAME_LEN, group_len))
     else:
-        raise TypeError('Group must be a python str.')
+        raise TypeError("The context configuration parameter 'group' must be a string, but got {}".format(type(group)))
 
 
 def check_rank_num(rank_num):
@@ -49,9 +50,10 @@ def check_rank_num(rank_num):
     """
     if isinstance(rank_num, (int)):
         if rank_num > MAX_RANK_NUM or rank_num <= 0:
-            raise ValueError('Rank number is out of range.')
+            raise ValueError("The parameter 'rank_num' should in range [1, {}], but got the value : {}"
+                             .format(MAX_RANK_NUM, rank_num))
     else:
-        raise TypeError('Rank number must be a python int.')
+        raise TypeError("The parameter 'rank_num' must be a python int, but got {}".format(type(rank_num)))
 
 
 def check_rank_id(rank_id):
@@ -63,9 +65,10 @@ def check_rank_id(rank_id):
     """
     if isinstance(rank_id, (int)):
         if rank_id >= MAX_RANK_NUM or rank_id < 0:
-            raise ValueError('Rank id is out of range.')
+            raise ValueError("The parameter 'rank_id' should in range [1, {}], but got the value : {}"
+                             .format(MAX_RANK_NUM, rank_id))
     else:
-        raise TypeError('Rank id must be a python int.')
+        raise TypeError("The parameter 'rank_id' must be a python int, but got {}".format(type(rank_id)))
 
 
 def load_lib():
@@ -110,10 +113,11 @@ def create_group(group, rank_num, rank_ids):
     check_rank_num(rank_num)
     if isinstance(rank_ids, (list)):
         if rank_num != len(rank_ids):
-            raise ValueError('Rank number is not equal to the length of rank_ids.')
+            raise ValueError("The parameter 'rank_num' number is not equal to the length of rank_ids, "
+                             "but got 'rank_num' : {} and 'rank_ids' : {}.".format(rank_num, rank_ids))
         for rank_id in rank_ids:
             if not isinstance(rank_id, (int)) or rank_id < 0:
-                raise ValueError('Rank id must be unsigned integer!')
+                raise ValueError("The parameter 'rank_id' must be unsigned integer, but got {}".format(type(rank_id)))
         c_array_rank_ids = c_array(ctypes.c_uint, rank_ids)
         c_rank_num = ctypes.c_uint(rank_num)
         c_group = c_str(group)
@@ -121,7 +125,7 @@ def create_group(group, rank_num, rank_ids):
         if ret != 0:
             raise RuntimeError('Create group error, the error code is ' + str(ret))
     else:
-        raise TypeError('Rank ids must be a python list.')
+        raise TypeError("The parameter 'rank_id' must be a python list, but got {}".format(type(rank_ids)))
 
 
 def destroy_group(group):
@@ -198,7 +202,8 @@ def get_local_rank_size(group="hccl_world_group"):
         An integer scalar with the num of local ranks.
     """
     if context.get_context("mode") is context.PYNATIVE_MODE:
-        raise RuntimeError("get_local_rank_size is not supported in PYNATIVE_MODE.")
+        raise RuntimeError("The function 'get_local_rank_size' is not supported in PYNATIVE_MODE, "
+                           "'get_local_rank_size' only support GRAPH_MODE")
     check_group(group)
     c_group = c_str(group)
     c_local_rank_size = ctypes.c_uint()
@@ -220,7 +225,8 @@ def get_local_rank_id(group="hccl_world_group"):
     """
 
     if context.get_context("mode") is context.PYNATIVE_MODE:
-        raise RuntimeError("get_local_rank_id is not supported in PYNATIVE_MODE.")
+        raise RuntimeError("The function 'get_local_rank_id' is not supported in PYNATIVE_MODE, "
+                           "'get_local_rank_id' only support GRAPH_MODE")
     check_group(group)
     c_group = c_str(group)
     c_local_rank_id = ctypes.c_uint()
@@ -242,7 +248,8 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         An integer scalar with the rank id in the world group.
     """
     if context.get_context("mode") is context.PYNATIVE_MODE:
-        raise RuntimeError("get_world_rank_from_group_rank is not supported in PYNATIVE_MODE.")
+        raise RuntimeError("The function 'get_world_rank_from_group_rank' is not supported in PYNATIVE_MODE, "
+                           "'get_world_rank_from_group_rank' only support GRAPH_MODE")
     check_group(group)
     check_rank_id(group_rank_id)
     c_group = c_str(group)
@@ -266,7 +273,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         An integer scalar with the rank id in the user group.
     """
     if context.get_context("mode") is context.PYNATIVE_MODE:
-        raise RuntimeError("get_group_rank_from_world_rank is not supported in PYNATIVE_MODE.")
+        raise RuntimeError("The function 'get_group_rank_from_world_rank' is not supported in PYNATIVE_MODE, "
+                           "'get_group_rank_from_world_rank' only support GRAPH_MODE")
     check_group(group)
     check_rank_id(world_rank_id)
     c_group = c_str(group)
