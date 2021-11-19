@@ -1267,9 +1267,89 @@ vector<CNodePtr>::iterator AscendStreamAssign::FindGraphEnd(vector<CNodePtr>::it
 void AscendStreamAssign::InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr) {
   MS_LOG(INFO) << "Start";
   InsertEventCommonDependHcom(graph_ptr);
+  InsertEventForIndependentHcom(graph_ptr);
   InsertEventHcomDependCommonBak(graph_ptr);
   InsertEventHcomDependHcom(graph_ptr);
   MS_LOG(INFO) << "End";
+}
+
+bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id) {
+  auto cnodes = graph_ptr->execution_order();
+  for (int64_t i = cnodes.size() - 1; i >= 0; i--) {
+    if (AnfAlgo::GetGraphId(cnodes[i].get()) == graph_id && IsHcom(cnodes[i])) {
+      return AnfAlgo::GetCNodeName(cnodes[i]) == kSendOpName;
+    }
+  }
+  MS_LOG(WARNING) << "There is no hcom nodes of graph " << graph_id << " in the root graph " << graph_ptr->graph_id();
+  return true;
+}
+
+void AscendStreamAssign::GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id) {
+  if (ExistStreamSendAfterLastHcomNode(root_graph, graph_id)) {
+    return;
+  }
+  MS_LOG(WARNING) << "There is no event between computing stream and hcom stream in graph " << graph_id
+                  << " need insert event.";
+
+  auto cnodes = root_graph->execution_order();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+  uint32_t cur_event_id = resource_manager.ApplyNewEvent();
+
+  // insert StreamSend node after the last hcom node
+  for (auto iter = cnodes.end() - 1; iter >= cnodes.begin(); iter--) {
+    if (IsHcom(*iter) && AnfAlgo::GetGraphId((*iter).get()) == graph_id) {
+      CNodePtr send_cnode = CreateSendApplyKernel(root_graph, cur_event_id, AnfAlgo::GetStreamId((*iter)));
+      MS_LOG(INFO) << "Insert StreamSend " << cur_event_id << " after node: " << (*iter)->fullname_with_scope();
+      cnodes.insert(iter + 1, send_cnode);
+      break;
+    }
+  }
+
+  std::set<std::string> ending_nodes = {kStreamActiveOpName, kLabelGotoOpName, kLabelSetOpName};
+  // insert StreamRecv node before the last node: active, labelgoto, labelset.
+  for (auto iter = cnodes.end() - 1; iter >= cnodes.begin(); iter--) {
+    if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
+      continue;
+    }
+    auto node_name = AnfAlgo::GetCNodeName(*iter);
+    if (ending_nodes.find(node_name) != ending_nodes.end()) {
+      auto cnode = (*iter)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      CNodePtr recv_cnode = CreateRecvApplyKernel(root_graph, cur_event_id, AnfAlgo::GetStreamId(cnode));
+      MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " before node: " << (*iter)->fullname_with_scope();
+      iter = cnodes.insert(iter, recv_cnode);
+      break;
+    } else {
+      MS_LOG(EXCEPTION) << "The last node of graph " << graph_id
+                        << " is not in the set <StreamActive, LabelGoto, LabelSet>, whereas is "
+                        << (*iter)->fullname_with_scope();
+    }
+  }
+  root_graph->set_execution_order(cnodes);
+}
+
+void AscendStreamAssign::GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id) {
+  if (std::find(graphs_id->begin(), graphs_id->end(), graph_ptr->graph_id()) != graphs_id->end()) {
+    return;
+  }
+  graphs_id->push_back(graph_ptr->graph_id());
+  for (auto child_graph : graph_ptr->child_graph_order()) {
+    GetAllGraphID(NOT_NULL(child_graph.lock()), graphs_id);
+  }
+}
+// Application scenario: In the loop sink mode, the last communication operator did not send 'send' to the calculation
+// stream, causing the next loop to start without waiting for the end of the communication stream.
+// Solution: In the above scenario, insert 'send' after the last communication operator, and insert 'recv' before the
+//  `active` operator in the calculation stream to ensure loop synchronization.
+void AscendStreamAssign::InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
+  if (!KernelAdjust::NeedLoopSink()) {
+    return;
+  }
+  std::vector<uint32_t> graphs_id;
+  GetAllGraphID(graph_ptr, &graphs_id);
+  for (auto graph_id : graphs_id) {
+    GraphLoopSync(graph_ptr, graph_id);
+  }
 }
 
 void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr) {

@@ -93,6 +93,7 @@ class AscendStreamAssign {
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -150,6 +151,10 @@ class AscendStreamAssign {
   void FindEventRelations(const NotNull<KernelGraphPtr> &graph_ptr);
   bool IsSatisfiedEvent(uint32_t send_stream_id, uint32_t recv_stream_id) const;
   vector<CNodePtr> GetInputKernels(const CNodePtr &cnode);
+
+  bool ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id);
+  void GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id);
+  void GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id);
 
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
