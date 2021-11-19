@@ -8,6 +8,7 @@ endif()
 add_library(kernels-image OBJECT
     adjust_gamma_op.cc
     affine_op.cc
+    auto_augment_op.cc
     auto_contrast_op.cc
     bounding_box.cc
     center_crop_op.cc

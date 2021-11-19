@@ -47,12 +47,12 @@ import numpy as np
 from PIL import Image
 import mindspore._c_dataengine as cde
 
-from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
+from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, check_alpha, \
     check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
-    check_random_adjust_sharpness, \
+    check_random_adjust_sharpness, check_auto_augment, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
@@ -75,6 +75,10 @@ class ImageTensorOperation(TensorOperation):
         raise NotImplementedError(
             "ImageTensorOperation has to implement parse() method.")
 
+
+DE_C_AUTO_AUGMENT_POLICY = {AutoAugmentPolicy.IMAGENET: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_IMAGENET,
+                            AutoAugmentPolicy.CIFAR10: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_CIFAR10,
+                            AutoAugmentPolicy.SVHN: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_SVHN}
 
 DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
                     Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
@@ -159,6 +163,62 @@ class AdjustGamma(ImageTensorOperation):
 
     def parse(self):
         return cde.AdjustGammaOperation(self.gamma, self.gain)
+
+
+class AutoAugment(ImageTensorOperation):
+    """
+    Apply AutoAugment data augmentation method based on
+    `AutoAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1805.09501.pdf>`_.
+    This operation works only with 3-channel RGB images.
+
+    Args:
+        policy (AutoAugmentPolicy, optional): AutoAugment policies learned on different datasets
+            (default=AutoAugmentPolicy.IMAGENET).
+            It can be any of [AutoAugmentPolicy.IMAGENET, AutoAugmentPolicy.CIFAR10, AutoAugmentPolicy.SVHN].
+            Randomly apply 2 operations from a candidate set. See auto augmentation details in AutoAugmentPolicy.
+
+            - AutoAugmentPolicy.IMAGENET, means to apply AutoAugment learned on ImageNet dataset.
+
+            - AutoAugmentPolicy.CIFAR10, means to apply AutoAugment learned on Cifar10 dataset.
+
+            - AutoAugmentPolicy.SVHN, means to apply AutoAugment learned on SVHN dataset.
+
+        interpolation (Inter, optional): Image interpolation mode for Resize operator (default=Inter.NEAREST).
+            It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
+
+            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+
+            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+
+            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+
+            - Inter.AREA: means the interpolation method is area interpolation.
+
+        fill_value (Union[int, tuple], optional): Pixel fill value for the area outside the transformed image.
+            It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255]
+            (default=0).
+
+    Examples:
+        >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
+        >>> transforms_list = [c_vision.Decode(), c_vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
+        ...                                                            interpolation=Inter.NEAREST,
+        ...                                                            fill_value=0)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_auto_augment
+    def __init__(self, policy=AutoAugmentPolicy.IMAGENET, interpolation=Inter.NEAREST, fill_value=0):
+        self.policy = policy
+        self.interpolation = interpolation
+        if isinstance(fill_value, int):
+            fill_value = tuple([fill_value] * 3)
+        self.fill_value = fill_value
+
+    def parse(self):
+        return cde.AutoAugmentOperation(DE_C_AUTO_AUGMENT_POLICY[self.policy], DE_C_INTER_MODE[self.interpolation],
+                                        self.fill_value)
 
 
 class AutoContrast(ImageTensorOperation):

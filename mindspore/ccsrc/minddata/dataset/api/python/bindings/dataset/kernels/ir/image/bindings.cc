@@ -19,6 +19,7 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
+#include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
@@ -73,7 +74,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 PYBIND_REGISTER(
   AdjustGammaOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AdjustGammaOperation, TensorOperation, std::shared_ptr<vision::AdjustGammaOperation>>(
@@ -83,6 +83,18 @@ PYBIND_REGISTER(
         THROW_IF_ERROR(ajust_gamma->ValidateParams());
         return ajust_gamma;
       }));
+  }));
+
+PYBIND_REGISTER(
+  AutoAugmentOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::AutoAugmentOperation, TensorOperation, std::shared_ptr<vision::AutoAugmentOperation>>(
+      *m, "AutoAugmentOperation")
+      .def(
+        py::init([](AutoAugmentPolicy policy, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
+          auto auto_augment = std::make_shared<vision::AutoAugmentOperation>(policy, interpolation, fill_value);
+          THROW_IF_ERROR(auto_augment->ValidateParams());
+          return auto_augment;
+        }));
   }));
 
 PYBIND_REGISTER(

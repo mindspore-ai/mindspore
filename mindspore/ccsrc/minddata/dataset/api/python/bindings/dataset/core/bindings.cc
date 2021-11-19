@@ -104,6 +104,14 @@ PYBIND_REGISTER(DataType, 0, ([](const py::module *m) {
                     .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
                 }));
 
+PYBIND_REGISTER(AutoAugmentPolicy, 0, ([](const py::module *m) {
+                  (void)py::enum_<AutoAugmentPolicy>(*m, "AutoAugmentPolicy", py::arithmetic())
+                    .value("DE_AUTO_AUGMENT_POLICY_IMAGENET", AutoAugmentPolicy::kImageNet)
+                    .value("DE_AUTO_AUGMENT_POLICY_CIFAR10", AutoAugmentPolicy::kCifar10)
+                    .value("DE_AUTO_AUGMENT_POLICY_SVHN", AutoAugmentPolicy::kSVHN)
+                    .export_values();
+                }));
+
 PYBIND_REGISTER(BorderType, 0, ([](const py::module *m) {
                   (void)py::enum_<BorderType>(*m, "BorderType", py::arithmetic())
                     .value("DE_BORDER_CONSTANT", BorderType::kConstant)

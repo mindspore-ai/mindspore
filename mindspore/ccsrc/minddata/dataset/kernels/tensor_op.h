@@ -55,6 +55,7 @@ constexpr char kTensorOp[] = "TensorOp";
 // image
 constexpr char kAdjustGammaOp[] = "AdjustGammaOp";
 constexpr char kAffineOp[] = "AffineOp";
+constexpr char kAutoAugmentOp[] = "AutoAugmentOp";
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";

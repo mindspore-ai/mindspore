@@ -23,6 +23,7 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
+#include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
@@ -136,6 +137,23 @@ AdjustGamma::AdjustGamma(float gamma, float gain) : data_(std::make_shared<Data>
 
 std::shared_ptr<TensorOperation> AdjustGamma::Parse() {
   return std::make_shared<AdjustGammaOperation>(data_->gamma_, data_->gain_);
+}
+
+// AutoAugment Transform Operation.
+struct AutoAugment::Data {
+  Data(AutoAugmentPolicy policy, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+      : policy_(policy), interpolation_(interpolation), fill_value_(fill_value) {}
+  AutoAugmentPolicy policy_;
+  InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
+};
+
+AutoAugment::AutoAugment(AutoAugmentPolicy policy, InterpolationMode interpolation,
+                         const std::vector<uint8_t> &fill_value)
+    : data_(std::make_shared<Data>(policy, interpolation, fill_value)) {}
+
+std::shared_ptr<TensorOperation> AutoAugment::Parse() {
+  return std::make_shared<AutoAugmentOperation>(data_->policy_, data_->interpolation_, data_->fill_value_);
 }
 
 // AutoContrast Transform Operation.

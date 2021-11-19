@@ -70,6 +70,46 @@ class AdjustGamma final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply AutoAugment data augmentation method.
+class AutoAugment final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] policy An enum for the data auto augmentation policy (default=AutoAugmentPolicy::kImageNet).
+  ///     - AutoAugmentPolicy::kIMAGENET, AutoAugment policy learned on the ImageNet dataset.
+  ///     - AutoAugmentPolicy::kCIFAR10, AutoAugment policy learned on the Cifar10 dataset.
+  ///     - AutoAugmentPolicy::kSVHN, AutoAugment policy learned on the SVHN dataset.
+  /// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kNearestNeighbour).
+  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
+  ///     - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///     - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders (default={0, 0, 0}).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet,
+  ///                                                InterpolationMode::kNearestNeighbour, {0, 0, 0});
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, auto_augment_op}, // operations
+  ///                            {"image"});                   // input columns
+  /// \endcode
+  AutoAugment(AutoAugmentPolicy policy = AutoAugmentPolicy::kImageNet,
+              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+              const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  /// \brief Destructor.
+  ~AutoAugment() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply automatic contrast on the input image.
 class AutoContrast final : public TensorTransform {
  public:
