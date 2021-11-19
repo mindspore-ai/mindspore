@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ namespace mindspore::dataset {
 class TreeAdapter;
 class DatasetNode;
 #ifndef ENABLE_SECURITY
+class AutoTune;
 class ProfilingManager;
 #endif
 /// A base class for tree consumers which would fetch rows from the tree pipeline
@@ -62,6 +63,8 @@ class TreeConsumer {
 
   /// \brief Return profiling manager pointer
   std::shared_ptr<ProfilingManager> GetProfilingManagerPtr() { return profiling_manager_; }
+
+  Status InitAutoTune();
 #endif
 
  protected:
@@ -71,6 +74,7 @@ class TreeConsumer {
 #ifndef ENABLE_SECURITY
   /// Profiling Manager
   std::shared_ptr<ProfilingManager> profiling_manager_;
+  std::shared_ptr<AutoTune> autotune_;
 #endif
 
   /// Method to return the name of the consumer

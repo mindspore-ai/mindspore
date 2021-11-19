@@ -6,4 +6,5 @@ add_library(
         connector_size.cc
         dataset_iterator_tracing.cc
         cpu_sampler.cc
+        auto_tune.cc
 )

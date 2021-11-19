@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,6 +230,22 @@ class ConfigManager {
   // @return - Flag to indicate whether automatic offloading is enabled for the dataset
   bool get_auto_offload() { return auto_offload_; }
 
+  // setter function
+  // @param enable - To enable autotune
+  void set_enable_autotune(bool enable) { enable_autotune_ = enable; }
+
+  // getter function
+  // @return - Flag to indicate whether autotune is enabled
+  bool enable_autotune() { return enable_autotune_; }
+
+  // getter function
+  // @return - autotune interval in millisecods
+  int64_t autotune_interval() { return autotune_interval_; }
+
+  // setter function
+  // @param interval - autotune interval in millisecods
+  void set_autotune_interval(int64_t interval) { autotune_interval_ = interval; }
+
  private:
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
@@ -253,6 +269,8 @@ class ConfigManager {
   uint8_t auto_worker_config_;
   bool enable_shared_mem_;
   bool auto_offload_;
+  bool enable_autotune_;
+  int64_t autotune_interval_;
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);

@@ -432,7 +432,31 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status Save(const std::string &profile_data_path);
 
- private:
+  /// Get number of epochs that have been already profiled
+  /// \return number of epochs
+  int32_t GetNumOfProfiledEpochs() { return epoch_end_step_.size() - 1; }
+
+  /// Determine if the Profiler is being used for autotuning_
+  /// \return boolean
+  bool IsAutotuning() { return autotuning_; }
+
+  /// \brief Setter for autotuning_ bool flag
+  void EnableAutotuneFlag() { autotuning_ = true; }
+
+  // Registration state for the profiler
+  enum ProfilingRegistrationState {
+    kNotEnabled,
+    kEnabledTreeNotRegistered,
+    kEnabledTreeRegistered,
+    kEnabledDifferentTreeRegistered,
+  };
+
+  /// \brief Getter for the profiling and tree registration state
+  /// \param tree Execution Tree pointer
+  /// \return ProfilingRegistrationState
+  ProfilingRegistrationState GetProfilerTreeState(const ExecutionTree *tree) const;
+
+ protected:
   std::unique_ptr<Monitor> perf_monitor_;
 
   // State flags for profiling
@@ -448,6 +472,7 @@ class ProfilingManager {
   ExecutionTree *tree_;                   // ExecutionTree pointer
   std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp
   std::vector<uint32_t> epoch_end_step_;  // End of epoch step number
+  bool autotuning_;                       // flag to indicate if Profiler is being used for autotuning_
 
   // Register profile node to tree
   // @param node - Profiling node

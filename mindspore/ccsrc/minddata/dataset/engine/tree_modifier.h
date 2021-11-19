@@ -116,13 +116,13 @@ class AutotuneCallback : public DSCallback {
 
 /// Main class to handle modification of the ExecutionTree used by AutoTune
 class TreeModifier {
-  // friend with TreeAdapter to access the ExeecutionTree
+  // friend with TreeAdapter to access the ExecutionTree
   friend TreeAdapter;
 
  public:
   /// Constructor to create a TreeModifier given a TreeAdapter
   /// \param adapter TreeAdapter
-  explicit TreeModifier(TreeAdapter *adapter) : TreeModifier(adapter->tree_.get()) {}
+  explicit TreeModifier(TreeAdapter *adapter);
 
   /// Constructor to create a TreeModifier given an ExecutionTree
   /// \param tree ExecutionTree

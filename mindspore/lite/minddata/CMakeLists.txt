@@ -133,6 +133,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/core/global_context.cc
         ${MINDDATA_DIR}/core/client.cc
         ${MINDDATA_DIR}/engine/tree_adapter_lite.cc
+        ${MINDDATA_DIR}/engine/tree_modifier.cc
         ${MINDDATA_DIR}/engine/consumers/pull_based_tree_consumer.cc
         ${MINDDATA_DIR}/engine/consumers/tree_consumer.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/dataset_node.cc
@@ -177,6 +178,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/opt/pre/deep_copy_pass.cc
         ${MINDDATA_DIR}/engine/opt/post/auto_worker_pass.cc
         ${MINDDATA_DIR}/engine/opt/pass.cc
+        ${MINDDATA_DIR}/engine/perf/auto_tune.cc
         ${MINDDATA_DIR}/engine/perf/profiling.cc
         ${MINDDATA_DIR}/engine/perf/monitor.cc
         ${MINDDATA_DIR}/engine/perf/device_queue_tracing.cc

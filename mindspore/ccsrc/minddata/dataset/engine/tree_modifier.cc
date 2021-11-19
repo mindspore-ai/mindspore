@@ -65,5 +65,7 @@ Status ChangeNumWorkersRequest::ApplyChange(DatasetOp *op) {
   }
   return Status::OK();
 }
+
+TreeModifier::TreeModifier(TreeAdapter *adapter) : TreeModifier(adapter->tree_.get()) {}
 }  // namespace dataset
 }  // namespace mindspore

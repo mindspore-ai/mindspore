@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ class Queue {
     std::unique_lock<std::mutex> _lock(mux_);
     CHECK_FAIL_RETURN_UNEXPECTED(new_capacity > 0,
                                  "New capacity: " + std::to_string(new_capacity) + ", should be larger than 0");
-    RETURN_OK_IF_TRUE(new_capacity == capacity());
+    RETURN_OK_IF_TRUE(new_capacity == static_cast<int32_t>(capacity()));
     std::vector<T> queue;
     // pop from the original queue until the new_capacity is full
     for (int32_t i = 0; i < new_capacity; ++i) {
@@ -176,7 +176,7 @@ class Queue {
     this->ResetQue();
     RETURN_IF_NOT_OK(arr_.allocate(new_capacity));
     sz_ = new_capacity;
-    for (int32_t i = 0; i < queue.size(); ++i) {
+    for (int32_t i = 0; i < static_cast<int32_t>(queue.size()); ++i) {
       RETURN_IF_NOT_OK(this->AddWhileHoldingLock(queue[i]));
     }
     queue.clear();

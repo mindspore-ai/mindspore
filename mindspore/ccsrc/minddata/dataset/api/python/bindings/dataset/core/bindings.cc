@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,10 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_enable_shared_mem", &ConfigManager::enable_shared_mem)
                     .def("set_auto_offload", &ConfigManager::set_auto_offload)
                     .def("get_auto_offload", &ConfigManager::get_auto_offload)
+                    .def("set_enable_autotune", &ConfigManager::set_enable_autotune)
+                    .def("get_enable_autotune", &ConfigManager::enable_autotune)
+                    .def("set_autotune_interval", &ConfigManager::set_autotune_interval)
+                    .def("get_autotune_interval", &ConfigManager::autotune_interval)
                     .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 

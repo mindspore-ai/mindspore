@@ -451,7 +451,7 @@ Status DeviceQueueOp::PushDataToGPU() {
       RETURN_IF_NOT_OK(RetryPushData(handle, items));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
-                        gpu_connector_->size(), gpu_connector_->capacity());
+                        gpu_connector_->capacity(), gpu_connector_->size());
 #endif
       send_batch++;
 #ifdef ENABLE_DUMP_IR
