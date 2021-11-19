@@ -281,6 +281,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
 
     def wrap_mindspore(func):
         ms_create_time = int(time.time() * 1e9)
+
         @wraps(func)
         def staging_specialize(*args):
             if obj is not None:
