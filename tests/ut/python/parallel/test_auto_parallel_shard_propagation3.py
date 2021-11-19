@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
@@ -59,8 +58,7 @@ def test_auto_parallel_activation1():
     strategy2 = ((8, 1),)
     strategy3 = ((1, 8), (1, 1))
     net = Net(_w1, strategy1, strategy2, strategy3)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 def test_auto_parallel_activation2():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,

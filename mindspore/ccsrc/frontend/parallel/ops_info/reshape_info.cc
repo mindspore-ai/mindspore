@@ -523,25 +523,25 @@ int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &o
   return index_computation[0].first;
 }
 
-int64_t ReshapeInfo::GetSWCIndexByOutputLayout(const TensorLayout &output_layout) {
-  std::vector<std::pair<int64_t, double>> index_computation;
+int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &output_layout) {
+  std::vector<std::pair<int64_t, double>> index_comm;
   for (size_t i = 0; i < strategy_cost_.size(); ++i) {
     const auto &swc = strategy_cost_[i];
     if (swc->outputs_ptr[0].tensor_layout() == output_layout) {
-      (void)index_computation.emplace_back(SizeToLong(i), swc->cost_list[0]->computation_cost_);
+      (void)index_comm.emplace_back(SizeToLong(i), swc->cost_list[0]->communication_without_parameter_);
     }
   }
-  if (index_computation.empty()) {
+  if (index_comm.empty()) {
     MS_LOG(ERROR) << "There in no available strategy for zero communication cost for reshape: " << name();
     return -1;
   }
-  if (index_computation.size() > 1) {
+  if (index_comm.size() > 1) {
     MS_LOG(INFO) << "There are multiple strategies available for reshape: " << name();
   }
   std::sort(
-    index_computation.begin(), index_computation.end(),
+    index_comm.begin(), index_comm.end(),
     [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
-  return index_computation[0].first;
+  return index_comm[0].first;
 }
 
 int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &input_layout) {
@@ -566,25 +566,25 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &in
   return index_computation[0].first;
 }
 
-int64_t ReshapeInfo::GetSWCIndexByInputLayout(const TensorLayout &input_layout) {
-  std::vector<std::pair<int64_t, double>> index_computation;
+int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &input_layout) {
+  std::vector<std::pair<int64_t, double>> index_comm;
   for (size_t i = 0; i < strategy_cost_.size(); ++i) {
     const auto &swc = strategy_cost_[i];
     if (swc->inputs_ptr[0].tensor_layout() == input_layout) {
-      (void)index_computation.emplace_back(SizeToLong(i), swc->cost_list[0]->computation_cost_);
+      (void)index_comm.emplace_back(SizeToLong(i), swc->cost_list[0]->communication_without_parameter_);
     }
   }
-  if (index_computation.empty()) {
+  if (index_comm.empty()) {
     MS_LOG(ERROR) << "There in no available strategy for zero communication cost for reshape: " << name();
     return -1;
   }
-  if (index_computation.size() > 1) {
+  if (index_comm.size() > 1) {
     MS_LOG(INFO) << "There are multiple strategies available for reshape: " << name();
   }
   std::sort(
-    index_computation.begin(), index_computation.end(),
+    index_comm.begin(), index_comm.end(),
     [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
-  return index_computation[0].first;
+  return index_comm[0].first;
 }
 
 bool ReshapeInfo::CheckStrategyConsistencyByOutputLayout(int64_t swc_index, const TensorLayout &output_layout) {
@@ -593,7 +593,13 @@ bool ReshapeInfo::CheckStrategyConsistencyByOutputLayout(int64_t swc_index, cons
     return false;
   }
   const auto &swc = strategy_cost_[swc_index];
-  return swc->outputs_ptr[0].tensor_layout() == output_layout;
+  if (swc->outputs_ptr[0].tensor_layout() == output_layout) {
+    return true;
+  }
+  MS_LOG(WARNING) << name_ << "'s desired output layout is: " << output_layout.ToString() << ", while the selected "
+                  << "output layout is: " << swc->outputs_ptr[0].tensor_layout().ToString()
+                  << " and the input layout is: " << swc->inputs_ptr[0].tensor_layout().ToString();
+  return false;
 }
 
 bool ReshapeInfo::CheckStrategyConsistencyByInputLayout(int64_t swc_index, const TensorLayout &input_layout) {
@@ -602,7 +608,13 @@ bool ReshapeInfo::CheckStrategyConsistencyByInputLayout(int64_t swc_index, const
     return false;
   }
   const auto &swc = strategy_cost_[swc_index];
-  return swc->inputs_ptr[0].tensor_layout() == input_layout;
+  if (swc->inputs_ptr[0].tensor_layout() == input_layout) {
+    return true;
+  }
+  MS_LOG(WARNING) << name_ << "'s desired input layout is:" << input_layout.ToString() << ", while the selected "
+                  << "input layout is: " << swc->inputs_ptr[0].tensor_layout().ToString()
+                  << " and the output layout is: " << swc->outputs_ptr[0].tensor_layout().ToString();
+  return false;
 }
 
 TensorLayout ReshapeInfo::GetInputLayoutBySWCIndex(int64_t swc_index) {

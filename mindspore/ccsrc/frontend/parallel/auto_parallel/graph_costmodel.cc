@@ -101,82 +101,71 @@ void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr> &
   }
 }
 
-void CheckVisitedEdgeConsistency(const EdgePtr &edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops) {
+void CheckVisitedEdgeConsistency(const EdgePtr &edge) {
   auto prev_op = edge->prev_operator();
   auto next_op = edge->next_operator();
-  if (prev_op->name().find(RESHAPEINFO) != std::string::npos) {
+  if (prev_op->IsReshape()) {
     const auto &reshape_output_lyt =
       next_op->GetInputLayoutFromSWCByStrategy(next_op->selected_strategy(), edge->next_op_input_index());
     auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(prev_op);
     auto consistency =
       reshape_ptr->CheckStrategyConsistencyByOutputLayout(reshape_ptr->swc_index(), reshape_output_lyt);
     if (!consistency) {
-      MS_LOG(EXCEPTION) << "Inconsistency occurred at edge: " << edge->edge_name();
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
-  } else if (next_op->name().find(RESHAPEINFO) != std::string::npos) {
+  } else if (next_op->IsReshape()) {
     const auto &reshape_input_lyt =
       prev_op->GetOutputLayoutFromSWCByStrategy(prev_op->selected_strategy(), edge->prev_op_output_index());
     auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(next_op);
     auto consistency = reshape_ptr->CheckStrategyConsistencyByInputLayout(reshape_ptr->swc_index(), reshape_input_lyt);
     if (!consistency) {
-      MS_LOG(EXCEPTION) << "Inconsistency occurred at edge: " << edge->edge_name();
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
   } else {
-    auto consistency = edge->CheckStrategyConsistency(configured_ops);
+    auto consistency = edge->CheckStrategyConsistency(prev_op->selected_strategy(), next_op->selected_strategy());
     if (!consistency) {
-      MS_LOG(EXCEPTION) << "Inconsistency occurred at edge: " << edge->edge_name();
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
   }
 }
 
-void CheckConfiguredSuccEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops,
-                                        int64_t curr_depth) {
+void CheckConfiguredSuccEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops) {
   auto curr_op = edge->prev_operator();
   auto next_op = edge->next_operator();
-  if ((curr_op->name().find(RESHAPEINFO) != std::string::npos) && curr_depth > 1) {
-    auto next_op_conf_stra = configured_ops[next_op];
+  auto next_op_conf_stra = configured_ops[next_op];
+  if (curr_op->IsReshape()) {
     const auto &reshape_output_lyt =
       next_op->GetInputLayoutFromSWCByStrategy(next_op_conf_stra, edge->next_op_input_index());
     auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(curr_op);
     auto consistency =
       reshape_ptr->CheckStrategyConsistencyByOutputLayout(reshape_ptr->swc_index(), reshape_output_lyt);
     if (!consistency) {
-      MS_LOG(EXCEPTION) << "Inconsistency occurred at edge: " << edge->edge_name();
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
-  } else if (curr_op->name().find(RESHAPEINFO) == std::string::npos) {
-    const auto &next_op_conf_stra = configured_ops[next_op];
-    const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithZeroComm(curr_op->selected_strategy());
-    if ((next_op_conf_stra == nullptr) || (!next_op_conf_stra->IsEqual(next_op_stra))) {
-      MS_LOG(EXCEPTION) << "Sharding strategies should be configured on the boundary operators. "
-                        << "Currently reaching " << curr_op->name() << " and " << next_op->name() << "."
-                        << " The full name of these two operators are: " << curr_op->cnode()->fullname_with_scope()
-                        << " and " << next_op->cnode()->fullname_with_scope();
+  } else {
+    auto consistency = edge->CheckStrategyConsistency(curr_op->selected_strategy(), next_op_conf_stra);
+    if (!consistency) {
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
   }
 }
 
-void CheckConfiguredPrevEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops,
-                                        int64_t curr_depth) {
+void CheckConfiguredPrevEdgeConsistency(const EdgePtr edge, std::map<OperatorInfoPtr, StrategyPtr> configured_ops) {
   auto curr_op = edge->next_operator();
   auto prev_op = edge->prev_operator();
-  if (curr_op->name().find(RESHAPEINFO) != std::string::npos && curr_depth > 1) {
-    auto prev_op_conf_stra = configured_ops[prev_op];
+  auto prev_op_conf_stra = configured_ops[prev_op];
+  if (curr_op->IsReshape()) {
     const auto &reshape_input_lyt =
       prev_op->GetOutputLayoutFromSWCByStrategy(prev_op_conf_stra, edge->prev_op_output_index());
     auto reshape_ptr = std::dynamic_pointer_cast<ReshapeInfo>(curr_op);
     auto consistency = reshape_ptr->CheckStrategyConsistencyByInputLayout(reshape_ptr->swc_index(), reshape_input_lyt);
     if (!consistency) {
-      MS_LOG(EXCEPTION) << "Inconsistency occurred at edge: " << edge->edge_name();
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
-  } else if (curr_op->name().find(RESHAPEINFO) == std::string::npos) {
-    const auto &prev_op_conf_stra = configured_ops[prev_op];
-    const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithZeroComm(curr_op->selected_strategy());
-    if ((prev_op_conf_stra == nullptr) || (!prev_op_conf_stra->IsEqual(prev_op_stra))) {
-      MS_LOG(ERROR) << "curr_depth: " << curr_depth;
-      MS_LOG(EXCEPTION) << "Sharding strategies should be configured on the boundary operators. "
-                        << "Currently reaching " << prev_op->name() << " and " << curr_op->name() << "."
-                        << " The full name of these two operators are: " << prev_op->cnode()->fullname_with_scope()
-                        << " and " << curr_op->cnode()->fullname_with_scope();
+  } else {
+    auto consistency = edge->CheckStrategyConsistency(prev_op_conf_stra, curr_op->selected_strategy());
+    if (!consistency) {
+      MS_LOG(WARNING) << "Inconsistency occurred at edge: " << edge->edge_name();
     }
   }
 }
@@ -192,7 +181,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     auto curr_depth = next_level.front().second;
     visited->at(curr_op) = true;
     MS_LOG(INFO) << "curr_depth: " << curr_depth;
-    if (curr_op->name().find(RESHAPEINFO) != std::string::npos) {
+    if (curr_op->IsReshape()) {
       curr_op->set_swc_index(configured_stra_index, curr_depth);
     } else {
       curr_op->SetSelectedStrategy(configured_stra, curr_depth);
@@ -200,24 +189,23 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     for (auto &edge : curr_op->succ_edges()) {
       const auto &next_op = edge->next_operator();
       if (visited->at(next_op)) {
-        CheckVisitedEdgeConsistency(edge, configured_ops);
+        CheckVisitedEdgeConsistency(edge);
         continue;
       }
       if ((curr_depth > 0) && (configured_ops.find(next_op) != configured_ops.end())) {
-        CheckConfiguredSuccEdgeConsistency(edge, configured_ops, curr_depth);
+        CheckConfiguredSuccEdgeConsistency(edge, configured_ops);
       }
       if (configured_ops.find(next_op) != configured_ops.end()) {
         continue;
       }
-      if (curr_op->name().find(RESHAPEINFO) != std::string::npos) {
+      if (curr_op->IsReshape()) {
         auto stra = edge->GetNextOpStrategyByReshapeSWCIndex(curr_op->swc_index());
         (void)next_level.emplace(std::make_pair(next_op, std::make_pair(stra, -1)), curr_depth + 1);
-      } else if (next_op->name().find(RESHAPEINFO) != std::string::npos) {
-        auto swc_index =
-          edge->GetReshapeSWCIndexByPrevOpStrategy(curr_op->selected_strategy(), curr_depth, configured_ops);
+      } else if (next_op->IsReshape()) {
+        auto swc_index = edge->GetReshapeSWCIndexByPrevOpStrategy(curr_op->selected_strategy());
         (void)next_level.emplace(std::make_pair(next_op, std::make_pair(nullptr, swc_index)), curr_depth + 1);
       } else {
-        const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithZeroComm(curr_op->selected_strategy());
+        const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithMiniComm(curr_op->selected_strategy());
         if (next_op_stra == nullptr) {
           PrintStrategy(curr_op->selected_strategy());
           MS_LOG(EXCEPTION) << next_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
@@ -228,24 +216,23 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
     for (auto &edge : curr_op->prev_edges()) {
       const auto &prev_op = edge->prev_operator();
       if (visited->at(prev_op)) {
-        CheckVisitedEdgeConsistency(edge, configured_ops);
+        CheckVisitedEdgeConsistency(edge);
         continue;
       }
       if ((curr_depth > 0) && (configured_ops.find(prev_op) != configured_ops.end())) {
-        CheckConfiguredPrevEdgeConsistency(edge, configured_ops, curr_depth);
+        CheckConfiguredPrevEdgeConsistency(edge, configured_ops);
       }
       if (configured_ops.find(prev_op) != configured_ops.end()) {
         continue;
       }
-      if (prev_op->name().find(RESHAPEINFO) != std::string::npos) {
-        auto swc_index =
-          edge->GetReshapeSWCIndexByNextOpStrategy(curr_op->selected_strategy(), curr_depth, configured_ops);
+      if (prev_op->IsReshape()) {
+        auto swc_index = edge->GetReshapeSWCIndexByNextOpStrategy(curr_op->selected_strategy());
         (void)next_level.emplace(std::make_pair(prev_op, std::make_pair(nullptr, swc_index)), curr_depth + 1);
-      } else if (curr_op->name().find(RESHAPEINFO) != std::string::npos) {
+      } else if (curr_op->IsReshape()) {
         auto prev_stra = edge->GetPrevOpStrategyByReshapeSWCIndex(curr_op->swc_index());
         (void)next_level.emplace(std::make_pair(prev_op, std::make_pair(prev_stra, -1)), curr_depth + 1);
       } else {
-        const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithZeroComm(curr_op->selected_strategy());
+        const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithMiniComm(curr_op->selected_strategy());
         if (prev_op_stra == nullptr) {
           PrintStrategy(curr_op->selected_strategy());
           MS_LOG(EXCEPTION) << prev_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
@@ -1644,7 +1631,7 @@ size_t CostGraph::GetNumEdges() const {
 Status CostGraph::InitReshapeStrategy() {
   // reshape init should be apply after the init of it's previous node and next node.
   for (size_t i = 0; i < ops_.size(); ++i) {
-    if (ops_[i]->name().find(RESHAPEINFO) != std::string::npos) {
+    if (ops_[i]->IsReshape()) {
       auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(ops_[i]);
       auto in_edges = GetOriginalPrevEdges(ops_[i]);
       auto pre_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
@@ -1699,7 +1686,7 @@ Status CostGraph::InitReshapeStrategy() {
 Status CostGraph::InitSelectedStrategy() {
   for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
-    if (op->name().find(RESHAPEINFO) != std::string::npos) {
+    if (op->IsReshape()) {
       continue;
     }
     auto result_op = op->InitSelectedStrategy(op->selected_strategy());

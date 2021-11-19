@@ -83,15 +83,13 @@ class Edge {
   std::map<CostPtrKey, CostPtrList> GetCostMap() { return cost_map_; }
   CostPtr GetCostByStrategyPair(const CostPtrKey &);
 
-  StrategyPtr GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPtr &);
-  StrategyPtr GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPtr &);
-  int64_t GetReshapeSWCIndexByNextOpStrategy(const StrategyPtr &next_op_stra, int64_t curr_depth,
-                                             const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops);
-  int64_t GetReshapeSWCIndexByPrevOpStrategy(const StrategyPtr &prev_op_stra, int64_t curr_depth,
-                                             const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops);
+  StrategyPtr GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPtr &);
+  StrategyPtr GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPtr &);
+  int64_t GetReshapeSWCIndexByNextOpStrategy(const StrategyPtr &next_op_stra);
+  int64_t GetReshapeSWCIndexByPrevOpStrategy(const StrategyPtr &prev_op_stra);
   StrategyPtr GetPrevOpStrategyByReshapeSWCIndex(int64_t swc_index);
   StrategyPtr GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index);
-  bool CheckStrategyConsistency(const std::map<OperatorInfoPtr, StrategyPtr> &configured_ops);
+  bool CheckStrategyConsistency(StrategyPtr, StrategyPtr);
 
   void SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &);
   // For two operators u--->v, given the output tensor layout of u,

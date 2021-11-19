@@ -70,9 +70,9 @@ class ReshapeInfo : public OperatorInfo {
   int64_t next_operator_index() const { return next_operator_index_; }
 
   int64_t GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &);
-  int64_t GetSWCIndexByOutputLayout(const TensorLayout &);
+  int64_t GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &);
   int64_t GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &);
-  int64_t GetSWCIndexByInputLayout(const TensorLayout &);
+  int64_t GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &);
   bool CheckStrategyConsistencyByOutputLayout(int64_t, const TensorLayout &);
   bool CheckStrategyConsistencyByInputLayout(int64_t, const TensorLayout &);
 
