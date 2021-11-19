@@ -26,6 +26,7 @@
 #include "runtime/device/device_address.h"
 #include "register/op_tiling.h"
 #include "mindspore/ccsrc/runtime/device/executor/dynamic_kernel.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -74,9 +75,12 @@ class AiCoreDynamicKernel : public DynamicKernel {
   std::string op_compile_info_;
   uint32_t tiling_key_{0};
   const std::string origin_key_{""};
+  AddressPtrList kernel_inputs_;
+  AddressPtrList kernel_outputs_;
 
   void ComputeTiling();
   bool CopyTilingToDevice();
+  bool NeedSkipExecute(const CNodePtr &cnode);
 };
 }  // namespace ascend
 }  // namespace device

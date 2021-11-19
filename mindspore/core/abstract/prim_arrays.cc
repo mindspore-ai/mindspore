@@ -1331,11 +1331,16 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   for (size_t i = indices0_shape.size(); i < data0_shape.size(); ++i) {
     out_shape.push_back(data0_shape[i]);
   }
-  const int64_t EXPAND_MAX = 10;
   ShapeVector min_shape = out_shape;
   ShapeVector max_shape = out_shape;
-  min_shape[0] = 1;
-  max_shape[0] = indices_total_size * EXPAND_MAX;
+  if (output_shape_unknow) {
+    // delete after dynamic alloc is support
+    const int64_t EXPAND_MAX = 10;
+    min_shape = out_shape;
+    max_shape = out_shape;
+    min_shape[0] = 1;
+    max_shape[0] = indices_total_size * EXPAND_MAX;
+  }
   return std::make_shared<AbstractTensor>(infer_type,
                                           std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape));
 }

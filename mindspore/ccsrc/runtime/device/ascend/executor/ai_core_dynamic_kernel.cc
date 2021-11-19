@@ -16,6 +16,7 @@
 
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
 
+#include <algorithm>
 #include "framework/common/debug/log.h"
 #include "utils/log_adapter.h"
 #include "register/op_tiling.h"
@@ -41,6 +42,30 @@ AiCoreDynamicKernel::~AiCoreDynamicKernel() {
   }
 }
 
+bool AiCoreDynamicKernel::NeedSkipExecute(const CNodePtr &cnode) {
+  // Skip run ReduceSum when axis is a Empty Tensor
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  if (op_name != "ReduceSum") {
+    return false;
+  }
+
+  const size_t axes_index = 1;
+  if (cnode->inputs().size() <= axes_index + 1) {
+    return false;
+  }
+  auto input_axes = cnode->input(axes_index + 1);
+  auto axes_abs = input_axes->abstract();
+  MS_EXCEPTION_IF_NULL(axes_abs);
+  auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
+  if (axes_abs->isa<abstract::AbstractTensor>()) {
+    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](ssize_t shape) { return shape == 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void AiCoreDynamicKernel::Execute() {
   if (stream_ == nullptr) {
     MS_LOG(EXCEPTION) << "stream_ptr should not be nullptr.";
@@ -49,6 +74,22 @@ void AiCoreDynamicKernel::Execute() {
   MS_EXCEPTION_IF_NULL(cnode);
   auto node_info = cnode->fullname_with_scope();
   MS_LOG(INFO) << "Start Execute node:" << node_info;
+
+  if (NeedSkipExecute(cnode)) {
+    // Skip reduce if axis is a empty Tensor (shape = 0)
+    MS_LOG(INFO) << "The node " << node_info << "Need Skip.";
+    rtError_t status = rtMemcpyAsync(kernel_outputs_[0]->addr, kernel_inputs_[0]->size, kernel_inputs_[0]->addr,
+                                     kernel_inputs_[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE, stream_);
+    if (status != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtMemcpyAsync failed for " << node_info;
+    }
+    std::vector<TypeId> dtypes{AnfAlgo::GetOutputInferDataType(cnode, 0)};
+    AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
+
+    MS_LOG(INFO) << "Execute node:" << cnode->fullname_with_scope() << " success.";
+    return;
+  }
+
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtime_args_.size());
   if (handle_ != nullptr) {
@@ -103,12 +144,12 @@ void AiCoreDynamicKernel::UpdateArgs() {
   KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_launch_info);
 
   runtime_args_.clear();
+  kernel_inputs_ = kernel_launch_info.inputs_;
+  kernel_outputs_ = kernel_launch_info.outputs_;
 
-  const auto &kernel_inputs = kernel_launch_info.inputs_;
-  (void)std::transform(std::begin(kernel_inputs), std::end(kernel_inputs), std::back_inserter(runtime_args_),
+  (void)std::transform(std::begin(kernel_inputs_), std::end(kernel_inputs_), std::back_inserter(runtime_args_),
                        [](const AddressPtr &input) { return input->addr; });
-  const auto &kernel_outputs = kernel_launch_info.outputs_;
-  (void)std::transform(std::begin(kernel_outputs), std::end(kernel_outputs), std::back_inserter(runtime_args_),
+  (void)std::transform(std::begin(kernel_outputs_), std::end(kernel_outputs_), std::back_inserter(runtime_args_),
                        [](const AddressPtr &output) { return output->addr; });
   // Update workspace
   if (!workspace_addr_.empty()) {

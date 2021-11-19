@@ -417,11 +417,6 @@ void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const st
     auto json_name = task_info.json_name;
     TbeUtils::UpdateCache(json_name);
     if (task_info.is_dynamic) {
-      if (compile_info.empty() || compile_info.find("vars") == std::string::npos) {
-        MS_LOG(EXCEPTION) << "The build result of dynamic shape op [" << task_info.full_name
-                          << "] should not be empty, or can not find key ['vars'] in the result. compile_info:["
-                          << compile_info << "].";
-      }
       bool save_flag = true;
       MS_LOG(INFO) << "Save compile info to json file for op: " << json_name << ", compile_info:" << compile_info;
       TbeUtils::SaveCompileInfo(json_name, compile_info, &save_flag);
