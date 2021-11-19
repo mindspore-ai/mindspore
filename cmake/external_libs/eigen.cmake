@@ -3,7 +3,7 @@ set(Eigen3_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/eigen-git-mirrorsource/repository/archive/3.3.7.tar.gz")
-    set(MD5 "cf6552a5d90c1aca4b5e0b011f65ea93")
+    set(MD5 "4caffd68ea975d2a10a477e3db57dd18")
 else()
     set(REQ_URL "https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz")
     set(MD5 "9e30f67e8531477de4117506fe44669b")
