@@ -3,33 +3,34 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
-    io_block.cc
-    image_folder_op.cc
-    mnist_op.cc
-    coco_op.cc
-    cifar_op.cc
-    random_data_op.cc
-    celeba_op.cc
-    sbu_op.cc
-    text_file_op.cc
-    clue_op.cc
-    csv_op.cc
+    ag_news_op.cc
     album_op.cc
-    usps_op.cc
-    mappable_leaf_op.cc
-    nonmappable_leaf_op.cc
+    celeba_op.cc
+    cifar_op.cc
     cityscapes_op.cc
+    clue_op.cc
+    coco_op.cc
+    csv_op.cc
+    dbpedia_op.cc
     div2k_op.cc
-    flickr_op.cc
-    qmnist_op.cc
     emnist_op.cc
     fake_image_op.cc
-    lj_speech_op.cc
-    places365_op.cc
-    photo_tour_op.cc
     fashion_mnist_op.cc
-    ag_news_op.cc
-    dbpedia_op.cc
+    flickr_op.cc
+    image_folder_op.cc
+    io_block.cc
+    lj_speech_op.cc
+    mappable_leaf_op.cc
+    mnist_op.cc
+    nonmappable_leaf_op.cc
+    photo_tour_op.cc
+    places365_op.cc
+    qmnist_op.cc
+    random_data_op.cc
+    sbu_op.cc
+    text_file_op.cc
+    usps_op.cc
+    yes_no_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

@@ -44,6 +44,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
@@ -445,6 +446,16 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                                                   toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
+                    }));
+                }));
+
+PYBIND_REGISTER(YesNoNode, 2, ([](const py::module *m) {
+                  (void)py::class_<YesNoNode, DatasetNode, std::shared_ptr<YesNoNode>>(*m, "YesNoNode",
+                                                                                       "to create a YesNoNode")
+                    .def(py::init([](std::string dataset_dir, py::handle sampler) {
+                      auto yes_no = std::make_shared<YesNoNode>(dataset_dir, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(yes_no->ValidateParams());
+                      return yes_no;
                     }));
                 }));
 

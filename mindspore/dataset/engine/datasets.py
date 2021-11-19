@@ -68,7 +68,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
-    check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset
+    check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
+    check_yes_no_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -8362,3 +8363,116 @@ class DIV2KDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.DIV2KNode(self.dataset_dir, self.usage, self.downgrade, self.scale, self.decode, self.sampler)
+
+
+class YesNoDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the YesNo dataset.
+
+    The generated dataset has three columns :py:obj:`[waveform, sample_rate, labels]`.
+    The tensor of column :py:obj:`waveform` is a vector of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
+    The tensor of column :py:obj:`labels` is a scalar of the int32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only
+            be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> yes_no_dataset_dir = "/path/to/yes_no_dataset_directory"
+        >>>
+        >>> # Read 3 samples from YesNo dataset
+        >>> dataset = ds.YesNoDataset(dataset_dir=yes_no_dataset_dir, num_samples=3)
+        >>>
+        >>> # Note: In YesNo dataset, each dictionary has keys "waveform", "sample_rate", "label"
+
+    About YesNo dataset:
+
+    Yesno is an audio dataset consisting of 60 recordings of one individual saying yes or no in Hebrew; each
+    recording is eight words long. It was created for the Kaldi audio project by an author who wishes to
+    remain anonymous.
+
+    Here is the original YesNo dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── yes_no_dataset_dir
+             ├── 1_1_0_0_1_1_0_0.wav
+             ├── 1_0_0_0_1_1_0_0.wav
+             ├── 1_1_0_0_1_1_0_0.wav
+             └──....
+
+    Citation:
+
+    .. code-block::
+
+        @NetworkResource{Kaldi_audio_project,
+        author    = {anonymous},
+        url       = "http://wwww.openslr.org/1/"
+        }
+    """
+
+    @check_yes_no_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+
+    def parse(self, children=None):
+        return cde.YesNoNode(self.dataset_dir, self.sampler)

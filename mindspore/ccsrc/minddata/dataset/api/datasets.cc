@@ -115,6 +115,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 #endif
 
 namespace mindspore {
@@ -1540,6 +1541,27 @@ TFRecordDataset::TFRecordDataset(const std::vector<std::vector<char>> &dataset_f
                                  std::shared_ptr<DatasetCache> cache) {
   auto ds = std::make_shared<TFRecordNode>(VectorCharToString(dataset_files), schema, VectorCharToString(columns_list),
                                            num_samples, shuffle, num_shards, shard_id, shard_equal_rows, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+YesNoDataset::YesNoDataset(const std::vector<char> &dataset_dir, const std::shared_ptr<Sampler> &sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<YesNoNode>(CharToString(dataset_dir), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+YesNoDataset::YesNoDataset(const std::vector<char> &dataset_dir, const Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<YesNoNode>(CharToString(dataset_dir), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+YesNoDataset::YesNoDataset(const std::vector<char> &dataset_dir, const std::reference_wrapper<Sampler> sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<YesNoNode>(CharToString(dataset_dir), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
