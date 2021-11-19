@@ -808,7 +808,8 @@ def check_map(method):
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
         check_cache_option(cache)
         type_check(max_rowsize, (int,), "max_rowsize")
-        type_check(offload, (bool,), "offload")
+        if offload is not None:
+            type_check(offload, (bool,), "offload")
 
         if callbacks is not None:
             if isinstance(callbacks, (list, tuple)):

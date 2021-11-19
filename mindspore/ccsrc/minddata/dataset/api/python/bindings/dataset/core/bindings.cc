@@ -57,6 +57,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("set_worker_connector_size", &ConfigManager::set_worker_connector_size)
                     .def("set_enable_shared_mem", &ConfigManager::set_enable_shared_mem)
                     .def("get_enable_shared_mem", &ConfigManager::enable_shared_mem)
+                    .def("set_auto_offload", &ConfigManager::set_auto_offload)
+                    .def("get_auto_offload", &ConfigManager::get_auto_offload)
                     .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 

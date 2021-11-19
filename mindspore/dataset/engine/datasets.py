@@ -70,7 +70,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_prefetch_size
+    get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -95,7 +95,7 @@ ShuffleToShuffleMode = {Shuffle.FILES: cde.ShuffleMode.FILES,
 
 def get_offloadable_ops(operations):
     """
-    Check if operations are supported by offload hardware accelarator.
+    Check if operations are supported by offload hardware accelerator.
 
     Args:
         operations: list of operations.
@@ -114,6 +114,72 @@ def get_offloadable_ops(operations):
             is_offloadable[name] = False
 
     return is_offloadable
+
+
+def check_offload_map(operations, output_columns):
+    """
+    Check if operations are supported by offload hardware accelerator. If not, see if list of operations can be split
+    into two: not offload supported and offload supported
+
+    Args:
+        operations: list of operations.
+        output_columns: list of names assigned to the columns outputted by the last operation.
+
+    Returns:
+        bool, indicates whether to use offload hardware accelarator.
+        bool, indicates whether list of map operations can be split.
+        list, first group of non-offload supported operations.
+        list, second group of offload supported operations.
+    """
+    offloadable_ops = get_offloadable_ops(operations)
+    offload = True
+    can_split = False
+    offload_ops = []
+    non_offload_ops = []
+    invalid_ops = []
+    for op in offloadable_ops:
+        if offloadable_ops[op] is not True:
+            offload = False
+            invalid_ops.append(op)
+    if not offload:
+        logger.warning(("In map(), offload is set to True, but offload is not supported for the following "
+                        "operation(s): {}").format(*invalid_ops))
+
+        if output_columns:
+            # Cannot split (currently), unsure which side of operations would alter the output columns
+            logger.warning("Since output_columns is specified, the list of operations cannot be split. "
+                           "Unsure which operation(s) alter the columns. Setting offload to False.")
+
+        else:
+            # See if the map operator can be split and then offloaded
+            size = len(offloadable_ops)
+            idx = size
+            split_idx = size
+            op_names = list(offloadable_ops.keys())
+            for op_name in reversed(op_names):
+                if not offloadable_ops[op_name]:
+                    # From reverse order, this op cannot be offloaded, therefore split here.
+                    split_idx = idx
+                    break
+                idx = idx - 1
+
+            if split_idx == size:
+                # The last op in the list cannot be offloaded, therefore nothing can be offloaded.
+                # Nothing to split.
+                logger.warning(("The last operation, {}, is not supported by offload, setting offload"
+                                " to False").format(op_names[split_idx - 1]))
+
+            elif split_idx != 0:
+                # There are at least 1 offloadable ops at the end of the list.
+                # Split map() after the last non-offloadable op and only offload the second list of operations.
+                can_split = True
+                non_offload_ops = operations[:split_idx]
+                offload_ops = operations[split_idx:]
+                logger.warning(("The list of operations in map() can be split into two: {}, {}\n"
+                                "The second list of operations will be run with offload=True"
+                                ).format(op_names[:split_idx], op_names[split_idx:]))
+
+    return offload, can_split, non_offload_ops, offload_ops
 
 
 def shuffle_to_shuffle_mode(shuffle):
@@ -675,7 +741,7 @@ class Dataset:
     @check_map
     def map(self, operations, input_columns=None, output_columns=None, column_order=None,
             num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None,
-            max_rowsize=16, offload=False):
+            max_rowsize=16, offload=None):
         """
         Apply each operation in operations to this dataset.
 
@@ -717,7 +783,7 @@ class Dataset:
             callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
             max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
                data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
-            offload (bool, optional): Flag to indicate whether offload is used (Default=False).
+            offload (bool, optional): Flag to indicate whether offload is used (Default=None).
 
 
         Returns:
@@ -809,9 +875,28 @@ class Dataset:
             ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
             ...                       column_order=["mod7", "mod3", "col2"])
         """
+        can_split = False
+        non_offload_ops = []
+        offload_ops = []
+        if offload is not None:
+            offload_flag = offload
+        else:
+            offload_flag = get_auto_offload()
+
+        if offload_flag:
+            offload_flag, can_split, non_offload_ops, offload_ops = check_offload_map(operations, output_columns)
+
+            if can_split:
+                non_offload_map_ds = MapDataset(self, non_offload_ops, input_columns, output_columns, column_order,
+                                                num_parallel_workers, python_multiprocessing, cache, callbacks,
+                                                max_rowsize, offload=False)
+
+                return MapDataset(non_offload_map_ds, offload_ops, input_columns, output_columns, column_order,
+                                  num_parallel_workers, python_multiprocessing, cache, callbacks, max_rowsize,
+                                  offload=True)
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
-                          python_multiprocessing, cache, callbacks, max_rowsize, offload)
+                          python_multiprocessing, cache, callbacks, max_rowsize, offload_flag)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
@@ -2586,8 +2671,8 @@ def _watch_dog(eot, pids):
                     return
                 # Sometimes subprocess may be zombie, so in 30s we can wait and do some useful tasks(waitpid).
                 wait_pid()
-            ## multiprocessing.queue may hang in .get() forever when put() process was killed.
-            ## We have to exit main process otherwise main process will hang.
+            # multiprocessing.queue may hang in .get() forever when put() process was killed.
+            # We have to exit main process otherwise main process will hang.
             logger.critical("The subprocess of dataset may exit unexpected or be killed, "
                             "main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
@@ -2828,19 +2913,6 @@ class MapDataset(Dataset):
         self.callbacks = to_list(callbacks)
         self.max_rowsize = max_rowsize
         self.offload = offload
-
-        if self.offload is True:
-            offloadable_ops = get_offloadable_ops(operations)
-            cannot_offload = False
-            invalid_ops = []
-            for op in offloadable_ops:
-                if offloadable_ops[op] is not True:
-                    cannot_offload = True
-                    invalid_ops.append(op)
-            if cannot_offload is True:
-                logger.warning(("In map(), offload is set to True, but offload is not supported for the following "
-                                "operation(s): {} \nSetting offload to False").format(*invalid_ops))
-                self.offload = False
 
     def parse(self, children=None):
         operations = []
