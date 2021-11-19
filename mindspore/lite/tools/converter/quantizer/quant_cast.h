@@ -27,7 +27,7 @@ class QuantCast {
  public:
   QuantCast() = default;
   virtual ~QuantCast() = default;
-  STATUS Run(const FuncGraphPtr &graph);
+  int Run(const FuncGraphPtr &graph);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H

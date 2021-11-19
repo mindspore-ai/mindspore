@@ -32,9 +32,6 @@
 
 namespace mindspore {
 namespace lite {
-
-using STATUS = int;
-
 const int PSEUDO_EOF = 128;
 
 struct HuffmanNode {
@@ -57,21 +54,21 @@ class HuffmanEncode {
 
   ~HuffmanEncode();
 
-  STATUS DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
-                         const size_t &bit_num);
+  int DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+                      const size_t &bit_num);
 
  private:
   std::map<int, std::string> huffman_table_;
   std::string huffman_encoded_str_;
   std::vector<HuffmanNodePtr> huffman_nodes_;
 
-  STATUS GetHuffmanPriorityQueue(const int8_t *input_datas, size_t input_data_size, HuffmanPriorityQueue *pq);
+  int GetHuffmanPriorityQueue(const int8_t *input_datas, size_t input_data_size, HuffmanPriorityQueue *pq);
 
   void GenerateHuffmanTable(HuffmanNodePtr node, bool is_left_node);
 
-  STATUS BuildHuffmanTree(HuffmanPriorityQueue *pq);
+  int BuildHuffmanTree(HuffmanPriorityQueue *pq);
 
-  STATUS DoHuffmanCompress(const int8_t *input_datas, size_t data_size);
+  int DoHuffmanCompress(const int8_t *input_datas, size_t data_size);
 };
 
 }  // namespace lite

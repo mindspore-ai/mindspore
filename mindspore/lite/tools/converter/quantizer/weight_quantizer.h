@@ -42,9 +42,9 @@ class WeightQuantizer : public Quantizer {
   WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config);
   ~WeightQuantizer() override;
 
-  STATUS DoQuantize(FuncGraphPtr func_graph) override;
-  STATUS DoQuantize(FuncGraphPtr func_graph, double init_scale);
-  STATUS DoWeightQuantize(const CNodePtr &cnode);
+  int DoQuantize(FuncGraphPtr func_graph) override;
+  int DoQuantize(FuncGraphPtr func_graph, double init_scale);
+  int DoWeightQuantize(const CNodePtr &cnode);
 
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
@@ -54,8 +54,8 @@ class WeightQuantizer : public Quantizer {
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
   double mixed_bit_init_scale_ = 0.02;
-  STATUS MarkWeightQuantizationInNodes(const FuncGraphPtr &);
-  STATUS DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
+  int MarkWeightQuantizationInNodes(const FuncGraphPtr &);
+  int DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
 
   int quant_max_{127};
   int quant_min_{-128};

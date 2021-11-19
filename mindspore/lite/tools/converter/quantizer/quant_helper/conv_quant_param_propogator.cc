@@ -21,8 +21,8 @@
 namespace mindspore::lite {
 static constexpr size_t kBiasAdd = 3;
 
-STATUS ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
-                                                      const mindspore::schema::CNodeT &node) {
+int ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
+                                                   const mindspore::schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   if (node.inputIndex.size() == kBiasAdd) {
     MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(kBiasAdd - 1));

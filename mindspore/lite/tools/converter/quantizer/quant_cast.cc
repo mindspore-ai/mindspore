@@ -40,7 +40,7 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
   return NewValueNode(prim_c);
 }
 
-STATUS InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input) {
+int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input) {
   auto curr_cnode_primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
   if (curr_cnode_primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
@@ -107,7 +107,7 @@ STATUS InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t i
   return RET_OK;
 }
 
-STATUS CheckDataType(const AnfNodePtr &input_node, bool is_graph_input) {
+int CheckDataType(const AnfNodePtr &input_node, bool is_graph_input) {
   if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
     return RET_NO_CHANGE;
   }
@@ -127,7 +127,7 @@ STATUS CheckDataType(const AnfNodePtr &input_node, bool is_graph_input) {
   return RET_OK;
 }
 
-STATUS QuantCast::Run(const FuncGraphPtr &graph) {
+int QuantCast::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {

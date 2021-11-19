@@ -29,14 +29,13 @@
 #include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite::quant {
-using STATUS = int;
 class Quantizer {
  public:
   explicit Quantizer(FuncGraphPtr graph) : funcGraph(std::move(graph)) {}
 
   virtual ~Quantizer() = default;
 
-  virtual STATUS DoQuantize(FuncGraphPtr func_graph) = 0;
+  virtual int DoQuantize(FuncGraphPtr func_graph) = 0;
 
   converter::Flags flags;
 
