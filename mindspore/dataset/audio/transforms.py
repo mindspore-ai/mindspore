@@ -23,13 +23,13 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
+from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, \
-    check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, \
-    check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, \
-    check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
-    check_time_stretch, check_treble_biquad, check_vol
+    check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
+    check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
+    check_equalizer_biquad, check_fade, check_flanger, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
+    check_magphase, check_masking, check_mu_law_coding, check_overdrive, check_phaser, check_riaa_biquad, \
+    check_sliding_window_cmn, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -303,6 +303,51 @@ class ComplexNorm(AudioTensorOperation):
 
     def parse(self):
         return cde.ComplexNormOperation(self.power)
+
+
+DE_C_BORDER_TYPE = {
+    BorderType.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
+    BorderType.EDGE: cde.BorderType.DE_BORDER_EDGE,
+    BorderType.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
+    BorderType.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC,
+}
+
+
+class ComputeDeltas(AudioTensorOperation):
+    """
+    Compute delta coefficients of a spectrogram.
+
+    Args:
+        win_length (int): The window length used for computing delta, must be no less than 3 (default=5).
+        mode (BorderType): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
+            [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC].
+
+            - BorderType.CONSTANT, means it fills the border with constant values.
+
+            - BorderType.EDGE, means it pads with the last value on the edge.
+
+            - BorderType.REFLECT, means it reflects the values on the edge omitting the last
+              value of edge.
+
+            - BorderType.SYMMETRIC, means it reflects the values on the edge repeating the last
+              value of edge.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 400//2+1, 30])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode = BorderType.EDGE)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_compute_deltas
+    def __init__(self, win_length=5, pad_mode=BorderType.EDGE):
+        self.win_len = win_length
+        self.pad_mode = pad_mode
+
+    def parse(self):
+        return cde.ComputeDeltasOperation(self.win_len, DE_C_BORDER_TYPE[self.pad_mode])
 
 
 class Contrast(AudioTensorOperation):

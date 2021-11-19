@@ -1063,5 +1063,147 @@ Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   }
   return Status::OK();
 }
+
+template <typename T>
+Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t pad_left, int32_t pad_right,
+           BorderType padding_mode, T value = 0) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "Pad: input tensor is not in shape of <..., time>.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->type().IsNumeric(),
+    "Pad: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(pad_left >= 0 && pad_right >= 0,
+                               "Pad: left and right padding values must be non negative, but got pad_left: " +
+                                 std::to_string(pad_left) + " and pad_right: " + std::to_string(pad_right));
+  TensorShape input_shape = input->shape();
+  int32_t wave_length = input_shape[-1];
+  int32_t num_wavs = static_cast<int32_t>(input->Size() / wave_length);
+  TensorShape to_shape = TensorShape({num_wavs, wave_length});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  int32_t pad_length = wave_length + pad_left + pad_right;
+  TensorShape new_shape = TensorShape({num_wavs, pad_length});
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), output));
+  using MatrixXT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using Eigen::Map;
+  constexpr int pad_mul = 2;
+  T *input_data = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));
+  T *output_data = reinterpret_cast<T *>(const_cast<uchar *>((*output)->GetBuffer()));
+  auto input_map = Map<MatrixXT>(input_data, num_wavs, wave_length);
+  auto output_map = Map<MatrixXT>(output_data, num_wavs, pad_length);
+  output_map.block(0, pad_left, num_wavs, wave_length) = input_map;
+  if (padding_mode == BorderType::kConstant) {
+    output_map.block(0, 0, num_wavs, pad_left).setConstant(value);
+    output_map.block(0, pad_left + wave_length, num_wavs, pad_right).setConstant(value);
+  } else if (padding_mode == BorderType::kEdge) {
+    output_map.block(0, 0, num_wavs, pad_left).colwise() = input_map.col(0);
+    output_map.block(0, pad_left + wave_length, num_wavs, pad_right).colwise() = input_map.col(wave_length - 1);
+  } else if (padding_mode == BorderType::kReflect) {
+    // First, deal with the pad operation on the right.
+    int32_t current_pad = wave_length - 1;
+    while (pad_right >= current_pad) {
+      // current_pad: the length of pad required for current loop.
+      // pad_right: the length of the remaining pad on the right.
+      output_map.block(0, pad_left + current_pad + 1, num_wavs, current_pad) =
+        output_map.block(0, pad_left, num_wavs, current_pad).rowwise().reverse();
+      pad_right -= current_pad;
+      current_pad += current_pad;
+    }
+    output_map.block(0, pad_length - pad_right, num_wavs, pad_right) =
+      output_map.block(0, pad_length - pad_right * pad_mul - 1, num_wavs, pad_right).rowwise().reverse();
+    // Next, deal with the pad operation on the left.
+    current_pad = wave_length - 1;
+    while (pad_left >= current_pad) {
+      // current_pad: the length of pad required for current loop.
+      // pad_left: the length of the remaining pad on the left.
+      output_map.block(0, pad_left - current_pad, num_wavs, current_pad) =
+        output_map.block(0, pad_left + 1, num_wavs, current_pad).rowwise().reverse();
+      pad_left -= current_pad;
+      current_pad += current_pad;
+    }
+    output_map.block(0, 0, num_wavs, pad_left) =
+      output_map.block(0, pad_left + 1, num_wavs, pad_left).rowwise().reverse();
+  } else if (padding_mode == BorderType::kSymmetric) {
+    // First, deal with the pad operation on the right.
+    int32_t current_pad = wave_length;
+    while (pad_right >= current_pad) {
+      // current_pad: the length of pad required for current loop.
+      // pad_right: the length of the remaining pad on the right.
+      output_map.block(0, pad_left + current_pad, num_wavs, current_pad) =
+        output_map.block(0, pad_left, num_wavs, current_pad).rowwise().reverse();
+      pad_right -= current_pad;
+      current_pad += current_pad;
+    }
+    output_map.block(0, pad_length - pad_right, num_wavs, pad_right) =
+      output_map.block(0, pad_length - pad_right * pad_mul, num_wavs, pad_right).rowwise().reverse();
+    // Next, deal with the pad operation on the left.
+    current_pad = wave_length;
+    while (pad_left >= current_pad) {
+      // current_pad: the length of pad required for current loop.
+      // pad_left: the length of the remaining pad on the left.
+      output_map.block(0, pad_left - current_pad, num_wavs, current_pad) =
+        output_map.block(0, pad_left, num_wavs, current_pad).rowwise().reverse();
+      pad_left -= current_pad;
+      current_pad += current_pad;
+    }
+    output_map.block(0, 0, num_wavs, pad_left) = output_map.block(0, pad_left, num_wavs, pad_left).rowwise().reverse();
+  } else {
+    RETURN_STATUS_UNEXPECTED("Pad: unsupported border type.");
+  }
+  std::vector<dsize_t> shape_vec = input_shape.AsVector();
+  shape_vec[shape_vec.size() - 1] = static_cast<dsize_t>(pad_length);
+  TensorShape output_shape(shape_vec);
+  RETURN_IF_NOT_OK((*output)->Reshape(output_shape));
+  return Status::OK();
+}
+
+template <typename T>
+Status ComputeDeltasImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int all_freqs,
+                         int n_frame, int n) {
+  using VectorXT = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+  using MatrixXT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using Eigen::Map;
+  int32_t denom = n * (n + 1) * (n * 2 + 1) / 3;
+  // twice sum of integer squared
+  VectorXT kernel = VectorXT::LinSpaced(2 * n + 1, -n, n);                         // 2n+1
+  T *input_data = reinterpret_cast<T *>(const_cast<uchar *>(input->GetBuffer()));  // [all_freq,n_fram+2n]
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape{all_freqs, n_frame}, input->type(), output));
+  T *output_data = reinterpret_cast<T *>(const_cast<uchar *>((*output)->GetBuffer()));
+  for (int freq = 0; freq < all_freqs; ++freq) {  // conv with im2col
+    auto input_map = Map<MatrixXT, 0, Eigen::OuterStride<1>>(input_data + freq * (n_frame + 2 * n), n_frame,
+                                                             2 * n + 1);  // n_frmae,2n+1
+    Map<VectorXT>(output_data + freq * n_frame, n_frame) = (input_map * kernel).array() / T(denom);
+  }
+  return Status::OK();
+}
+
+Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
+                     const BorderType &mode) {
+  constexpr int min_shape_dim = 2;
+  auto raw_shape = input->shape();
+  CHECK_FAIL_RETURN_UNEXPECTED(raw_shape.Size() >= min_shape_dim,
+                               "ComputeDeltas: input tensor is not in shape of <..., freq, time>.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->type().IsNumeric(),
+    "ComputeDeltas: input tensor type should be int, float or double, but got: " + input->type().ToString());
+
+  // reshape Tensor from <..., freq, time> to <-1, time>
+  int32_t n_frames = raw_shape[-1];
+  int32_t all_freqs = raw_shape.NumOfElements() / n_frames;
+  RETURN_IF_NOT_OK(input->Reshape(TensorShape{all_freqs, n_frames}));
+
+  int32_t n = (win_length - 1) / 2;
+
+  std::shared_ptr<Tensor> specgram_local_pad;
+  if (input->type() == DataType(DataType::DE_FLOAT64)) {
+    RETURN_IF_NOT_OK(Pad<double>(input, &specgram_local_pad, n, n, mode));
+    RETURN_IF_NOT_OK(ComputeDeltasImpl<double>(specgram_local_pad, output, all_freqs, n_frames, n));
+  } else {
+    std::shared_ptr<Tensor> float_tensor;
+    RETURN_IF_NOT_OK(TypeCast(input, &float_tensor, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(Pad<float>(float_tensor, &specgram_local_pad, n, n, mode));
+    RETURN_IF_NOT_OK(ComputeDeltasImpl<float>(specgram_local_pad, output, all_freqs, n_frames, n));
+  }
+  RETURN_IF_NOT_OK((*output)->Reshape(raw_shape));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

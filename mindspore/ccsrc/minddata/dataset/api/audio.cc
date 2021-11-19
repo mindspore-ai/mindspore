@@ -25,6 +25,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/compute_deltas_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/db_to_amplitude_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
@@ -186,6 +187,20 @@ struct ComplexNorm::Data {
 ComplexNorm::ComplexNorm(float power) : data_(std::make_shared<Data>(power)) {}
 
 std::shared_ptr<TensorOperation> ComplexNorm::Parse() { return std::make_shared<ComplexNormOperation>(data_->power_); }
+
+// ComputeDeltas Transform Operation.
+struct ComputeDeltas::Data {
+  Data(int32_t win_length, BorderType pad_mode) : win_length_(win_length), pad_mode_(pad_mode) {}
+  int32_t win_length_;
+  BorderType pad_mode_;
+};
+
+ComputeDeltas::ComputeDeltas(int32_t win_length, BorderType pad_mode)
+    : data_(std::make_shared<Data>(win_length, pad_mode)) {}
+
+std::shared_ptr<TensorOperation> ComputeDeltas::Parse() {
+  return std::make_shared<ComputeDeltasOperation>(data_->win_length_, data_->pad_mode_);
+}
 
 // Contrast Transform Operation.
 struct Contrast::Data {

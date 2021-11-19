@@ -1030,6 +1030,14 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
 /// \return Status code.
 Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t cmn_window,
                         int32_t min_cmn_window, bool center, bool norm_vars);
+/// \brief Compute delta coefficients of a tensor, usually a spectrogram.
+/// \param input: Tensor of shape <...,freq,time>.
+/// \param output: Tensor of shape <...,freq,time>.
+/// \param win_length: The window length used for computing delta.
+/// \param mode: Padding mode.
+/// \return Status code.
+Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
+                     const BorderType &mode);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

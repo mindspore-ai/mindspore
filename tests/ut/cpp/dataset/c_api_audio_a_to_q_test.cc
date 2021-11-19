@@ -1957,3 +1957,66 @@ TEST_F(MindDataTestPipeline, TestDBToAmplitudePipeline) {
 
   iter->Stop();
 }
+
+/// Feature: ComputeDeltas
+/// Description: test basic function of ComputeDeltas
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestComputeDeltas) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComputeDeltas.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto compute_deltas_op = audio::ComputeDeltas();
+
+  ds = ds->Map({compute_deltas_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+/// Feature: ComputeDeltas
+/// Description: test wrong input args of ComputeDeltas
+/// Expectation: get nullptr of iterator
+TEST_F(MindDataTestPipeline, TestComputeDeltasWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComputeDeltasWrongArgs.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto compute_deltas_op = audio::ComputeDeltas(2, mindspore::dataset::BorderType::kEdge);
+  ds = ds->Map({compute_deltas_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+}
