@@ -4505,6 +4505,8 @@ class SamplerFn:
         self.need_join = False
         self.ppid = os.getpid()
         self.pids = []
+        self.check_interval = 300  # the interval of check queue's size
+
         # Event for end of epoch
         if multi_process is True:
             try:
@@ -4574,6 +4576,17 @@ class SamplerFn:
                 return
             # Fetch result and put index
             try:
+                # To avoid get timeout from queue, check the res_queue size.
+                start_time = int(time.time())
+                wait_count = 1
+                while self.workers[i % self.num_worker].res_queue.empty():
+                    time.sleep(0.1)
+                    cost_time = int(time.time()) - start_time
+                    if cost_time / self.check_interval >= wait_count:
+                        wait_count += 1
+                        logger.warning("It has been waiting for " + str(cost_time) + "s because the multi "
+                                       "thread/process of the generator generates data had been hung by gil lock.")
+
                 result = self.workers[i % self.num_worker].get()
                 if isinstance(result, ExceptionHandler):
                     result.reraise()
@@ -4926,34 +4939,7 @@ class GeneratorDataset(MappableDataset):
                 raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
             try:
                 if new_op.num_parallel_workers > 1:
-                    # if use num_parallel_workers is to large when python_multiprocessing=True which would cause OOM error
-                    # get the num_shards
-                    valid_num_shards = 1
-                    if isinstance(self.sampler, samplers.DistributedSampler):
-                        valid_num_shards = self.sampler.num_shards
-                    elif self.num_shards is not None:
-                        valid_num_shards = self.num_shards
-
-                    # get process memory usage
-                    process = psutil.Process(os.getpid())
-                    process_memory = process.memory_info().rss
-                    sys_memory = psutil.virtual_memory().total
-
-                    total_memory_maybe_used = process_memory * (new_op.num_parallel_workers + 1) * valid_num_shards
-                    if total_memory_maybe_used / sys_memory > 0.85:
-                        valid_num_worker = math.floor(sys_memory * 0.85 / valid_num_shards / process_memory - 1)
-                        valid_num_worker = 1 if valid_num_worker <= 0 else valid_num_worker
-                        if total_memory_maybe_used / sys_memory > 1.0:
-                            info = "GeneratorDataset num_parallel_workers: " + str(new_op.num_parallel_workers) + \
-                                   " is too large which maybe cause a lot of memory occupation (>100%) during multi " \
-                                   "process running. Therefore, it is recommended to reduce num_parallel_workers to " \
-                                   + str(valid_num_worker) + " or smaller."
-                            raise RuntimeError(info)
-                        info = "GeneratorDataset num_parallel_workers: " + str(new_op.num_parallel_workers) + \
-                               " is too large which maybe cause a lot of memory occupation (>85%) during multi " \
-                               "process running. Therefore, it is recommended to reduce num_parallel_workers to " \
-                               + str(valid_num_worker) + " or smaller."
-                        logger.warning(info)
+                    self.__validate_memory_usage()
 
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
                                           self.max_rowsize)
@@ -4995,6 +4981,40 @@ class GeneratorDataset(MappableDataset):
             schema = self.schema.cpp_schema
         return cde.GeneratorNode(self.prepared_source, schema, self.source_len, self.sampler,
                                  self.num_parallel_workers)
+
+    def __validate_memory_usage(self):
+        """
+        Check memory usage when mulit-processing mode, when 85% prompt warning and 100% raise error.
+        """
+        if self.python_multiprocessing:
+            # if use num_parallel_workers is to large when python_multiprocessing=True which would cause
+            # OOM error get the num_shards
+            valid_num_shards = 1
+            if isinstance(self.sampler, samplers.DistributedSampler):
+                valid_num_shards = self.sampler.num_shards
+            elif self.num_shards is not None:
+                valid_num_shards = self.num_shards
+
+            # get process memory usage
+            process = psutil.Process(os.getpid())
+            process_memory = process.memory_info().rss
+            sys_memory = psutil.virtual_memory().total
+
+            total_memory_maybe_used = process_memory * (self.num_parallel_workers + 1) * valid_num_shards
+            if total_memory_maybe_used / sys_memory > 0.85:
+                valid_num_worker = math.floor(sys_memory * 0.85 / valid_num_shards / process_memory - 1)
+                valid_num_worker = 1 if valid_num_worker <= 0 else valid_num_worker
+                if total_memory_maybe_used / sys_memory > 1.0:
+                    info = "GeneratorDataset num_parallel_workers: " + str(self.num_parallel_workers) + \
+                           " is too large which maybe cause a lot of memory occupation (>100%) during" \
+                           " multi process running. Therefore, it is recommended to" \
+                           " reduce num_parallel_workers to " + str(valid_num_worker) + " or smaller."
+                    raise RuntimeError(info)
+                info = "GeneratorDataset num_parallel_workers: " + str(self.num_parallel_workers) + \
+                       " is too large which maybe cause a lot of memory occupation (>85%) during multi " \
+                       "process running. Therefore, it is recommended to reduce num_parallel_workers to " \
+                       + str(valid_num_worker) + " or smaller."
+                logger.warning(info)
 
 
 class TFRecordDataset(SourceDataset):
