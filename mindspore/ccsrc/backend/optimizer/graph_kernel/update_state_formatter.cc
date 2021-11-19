@@ -23,6 +23,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 
 namespace mindspore::graphkernel {
@@ -31,21 +32,6 @@ AnfNodePtrList GetUpdateStateList(const FuncGraphPtr &func_graph) {
   AnfNodePtrList result;
   std::copy_if(todos.begin(), todos.end(), std::back_inserter(result),
                [](const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimUpdateState); });
-  return result;
-}
-
-AnfNodePtrList SpreadTuples(const AnfNodePtrList &nodes, size_t begin_index) {
-  AnfNodePtrList result;
-  for (size_t i = begin_index; i < nodes.size(); i++) {
-    if (IsPrimitiveCNode(nodes[i], prim::kPrimMakeTuple)) {
-      auto mt = nodes[i]->cast<CNodePtr>();
-      // recursively spread all inner tuples.
-      auto mt_inputs = SpreadTuples(mt->inputs(), 1);
-      result.insert(result.end(), mt_inputs.begin(), mt_inputs.end());
-    } else {
-      result.push_back(nodes[i]);
-    }
-  }
   return result;
 }
 
@@ -85,7 +71,7 @@ bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() <= kUpdateStateRealInput) continue;
-    auto inputs = SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
+    auto inputs = GkUtils::SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
     // extend inputs of UpdateState if which have multiple outputs
     inputs = ExtendInputsOfUpdateState(inputs, func_graph);
     if (inputs.size() + kUpdateStateRealInput != cnode->size() || inputs[0] != cnode->input(kUpdateStateRealInput)) {
@@ -110,7 +96,7 @@ bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() <= kUpdateStateRealInput + 1) continue;
-    AnfNodePtrList mt_inputs = SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
+    AnfNodePtrList mt_inputs = GkUtils::SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
     AbstractBasePtrList abs_list;
     std::transform(mt_inputs.begin(), mt_inputs.end(), std::back_inserter(abs_list),
                    [](const AnfNodePtr &inp) { return inp->abstract(); });

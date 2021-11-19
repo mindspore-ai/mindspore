@@ -28,6 +28,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -746,8 +747,7 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
     }
     changed = true;
     SetFusedParallelOpAttrToReturnNode(parallel_infos[i]);
-    AnfNodePtr sg_node;
-    std::tie(sg_node, std::ignore) = FuseNodesToSubGraph(fuse_nodes, kernel_graph, "parallel");
+    auto sg_node = ReplaceNodesWithGraphKernelNode(fuse_nodes, kernel_graph, "parallel");
     AnfAlgo::SetNodeAttr(kAttrCompositeType, MakeValue("parallel_fusion"), sg_node);
     DumpParallelFusionDetail(fuse_nodes, sg_node);
   }

@@ -17,7 +17,9 @@
 #include "backend/optimizer/graph_kernel/adapter/callback_impl.h"
 
 #include <algorithm>
-#include <string>
+#include <vector>
+#include <utility>
+#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 
@@ -76,4 +78,62 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return kernel::GetProcessorStr(node); }
 
 std::string CallbackImpl::GetProcessorFromContext() { return kernel::GetStrProcessorFromContext(); }
+
+void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
+  std::vector<std::string> graph_input_format;
+  std::vector<TypeId> graph_input_type;
+  std::vector<std::string> graph_output_format;
+  std::vector<TypeId> graph_output_type;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = GetCNodeFuncGraph(node);
+  MS_EXCEPTION_IF_NULL(fg);
+  auto &inputs = cnode->inputs();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto kernel_with_index = AnfUtils::VisitKernel(inputs[i], 0);
+    if (kernel_with_index.first->isa<ValueNode>()) {
+      auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
+      MS_EXCEPTION_IF_NULL(tensor);
+      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
+      (void)graph_input_type.emplace_back(tensor->data_type());
+    } else {
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      (void)graph_input_format.emplace_back(std::move(input_format));
+      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+      (void)graph_input_type.emplace_back(input_type);
+    }
+    fg->parameters()[i - 1]->set_kernel_info(std::make_shared<device::KernelInfo>());
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder para_info_builder;
+    para_info_builder.SetOutputsFormat({graph_input_format.back()});
+    para_info_builder.SetOutputsDeviceType({graph_input_type.back()});
+    para_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+    para_info_builder.SetProcessor(kernel::GetProcessorFromContext());
+    AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), fg->parameters()[i - 1].get());
+  }
+  AnfNodePtrList outputs;
+  if (IsPrimitiveCNode(fg->output(), prim::kPrimMakeTuple)) {
+    auto fg_output = fg->output()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(fg_output);
+    outputs.assign(fg_output->inputs().begin() + 1, fg_output->inputs().end());
+  } else {
+    outputs.push_back(fg->output());
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto kernel_with_index = AnfAlgo::VisitKernel(outputs[i], 0);
+    auto output_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+    graph_output_format.push_back(output_format);
+    graph_output_type.push_back(output_type);
+  }
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
+  graph_info_builder.SetInputsFormat(graph_input_format);
+  graph_info_builder.SetInputsDeviceType(graph_input_type);
+  graph_info_builder.SetOutputsFormat(graph_output_format);
+  graph_info_builder.SetOutputsDeviceType(graph_output_type);
+  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
+  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto graph_selected_info = graph_info_builder.Build();
+  AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, node.get());
+}
 }  // namespace mindspore::graphkernel

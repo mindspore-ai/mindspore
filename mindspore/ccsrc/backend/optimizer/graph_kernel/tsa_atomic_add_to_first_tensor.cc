@@ -35,6 +35,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 class TsaChecker : public AtomicAddChecker {
@@ -133,7 +134,7 @@ AnfNodePtr TsaAtomicAddToFirstTensor::ProcessTsaFirstNode(const KernelGraphPtr &
   auto new_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph), tsa_first_input});
   new_composite_node->set_abstract(identity_node->abstract());
   SetNewKernelInfo(new_composite_node, new_sub_graph, {tsa_first_input}, {identity_node});
-  auto graph_attr = ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "tsa_identity");
+  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "tsa_identity");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
   new_sub_graph->set_attr("composite_type", MakeValue("tsa_identity"));
 
@@ -198,7 +199,8 @@ void TsaAtomicAddToFirstTensor::ProcessOriginCNode(const AnfNodePtr &composite_n
   CorrectKernelBuildInfo(composite_node, outter_node);
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-  auto new_graph_name = ExtractGraphKernelName(TopoSort(sub_graph->get_return()), "", "tensor_scatter_add_modified");
+  auto new_graph_name =
+    GkUtils::ExtractGraphKernelName(TopoSort(sub_graph->get_return()), "", "tensor_scatter_add_modified");
   sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(new_graph_name));
   MS_LOG(INFO) << "Convert " << old_graph_name << " to tensor scatter add graph " << new_graph_name;
 }

@@ -33,6 +33,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
@@ -404,10 +405,9 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
 
 void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id) {
   AnfNodePtrList old_nodes;
-  AnfNodePtr new_node;
   (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
                        [this](size_t id) { return this->nodes_[id]; });
-  std::tie(new_node, std::ignore) = FuseNodesToSubGraph(old_nodes, func_graph, "fusion");
+  auto new_node = ReplaceNodesWithGraphKernelNode(old_nodes, func_graph, "fusion");
   std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<opt::GetitemTuple>();
   (void)eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(new_node));
   if (GraphKernelFlags::GetInstance().dump_as_text) {

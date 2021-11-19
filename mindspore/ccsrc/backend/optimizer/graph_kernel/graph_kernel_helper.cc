@@ -67,37 +67,6 @@ bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
   return false;
 }
 
-AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr &fg, const FuncGraphManagerPtr &mng) {
-  AnfNodePtrList outs;
-  auto out_node = fg->output();
-  if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
-    std::vector<AnfNodePtr> output_args;
-    auto out_cnode = out_node->cast<CNodePtr>();
-    for (auto out : out_cnode->inputs()) {
-      if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
-        auto inputs = out->cast<CNodePtr>()->inputs();
-        for (size_t i = 1; i < inputs.size(); ++i) {
-          output_args.push_back(inputs[i]);
-        }
-      } else {
-        output_args.push_back(out);
-      }
-    }
-    if (output_args.size() != out_cnode->inputs().size()) {
-      auto new_out = fg->NewCNode(output_args);
-      mng->Replace(out_node, new_out);
-    }
-
-    for (size_t i = 1; i < output_args.size(); ++i) {
-      outs.push_back(output_args[i]);
-    }
-    return outs;
-  }
-
-  outs.push_back(out_node);
-  return outs;
-}
-
 bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, AnfNodePtrList> &in_and_out,
              const DumpOption &dump_option, nlohmann::json *op_desc,
              std::map<std::string, AnfNodePtr> *address_node_map = nullptr) {
@@ -126,100 +95,6 @@ AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx) {
     return out_spec->cast<abstract::AbstractTuplePtr>()->elements()[output_idx];
   }
   return out_spec;
-}
-
-bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
-  MS_EXCEPTION_IF_NULL(inputs_ptr);
-  auto nodes = TopoSort(fg->get_return());
-
-  std::vector<std::pair<tensor::TensorPtr, AnfNodePtrList>> v_replace;
-  for (const auto &node : nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      const auto &tnode = inputs[i];
-      auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
-      if (tensor == nullptr || tensor->DataSize() == 1) {
-        continue;
-      }
-      auto tensor_iter = std::find_if(
-        v_replace.begin(), v_replace.end(),
-        [&tensor](const std::pair<tensor::TensorPtr, AnfNodePtrList> &vl) { return vl.first->ValueEqual(*tensor); });
-      if (tensor_iter == v_replace.end()) {
-        (void)v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
-      } else {
-        tensor_iter->second.push_back(tnode);
-      }
-    }
-  }
-
-  if (v_replace.empty()) {
-    return false;
-  }
-
-  auto mng = fg->manager();
-  if (mng == nullptr) {
-    mng = Manage(fg, false);
-    fg->set_manager(mng);
-  }
-
-  auto &inputs = *inputs_ptr;
-  for (auto iter : v_replace) {
-    auto value_nodes = iter.second;
-    if (value_nodes.empty()) {
-      MS_LOG(EXCEPTION) << "Invalid value in map!";
-    }
-
-    auto vnode = value_nodes[0];
-    auto parameter = fg->add_parameter();
-    parameter->set_abstract(vnode->abstract());
-    parameter->set_kernel_info(vnode->kernel_info_ptr());
-    for (const auto &value_node : value_nodes) {
-      mng->Replace(value_node, parameter);
-    }
-
-    inputs.push_back(vnode);
-  }
-
-  return true;
-}
-
-// Transform nodes(including basic and composite node) to a new graph, and collect their inputs and outputs.
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(const AnfNodePtrList &fuse_nodes,
-                                                                                AnfNodePtrList *src_outputs) {
-  FuncGraphPtr fg;
-  AnfNodePtrList inputs;
-  AnfNodePtrList outputs;
-  AnfNodePtrList *soutputs = (src_outputs != nullptr) ? src_outputs : &outputs;
-  std::tie(fg, inputs, *soutputs) = BuildGraphFromNodes(fuse_nodes);
-
-  FuncGraphManagerPtr mng = fg->manager();
-  if (mng == nullptr) {
-    mng = Manage(fg, false);
-    fg->set_manager(mng);
-  }
-
-  // Inline origin graphkernel
-  auto cnodes = fg->GetOrderedCnodes();
-  for (const auto &n : cnodes) {
-    if (!AnfAlgo::IsGraphKernel(n)) {
-      continue;
-    }
-    auto graph_kernel_g = GetValueNode<FuncGraphPtr>(n->input(0));
-    AnfNodePtrList ins;
-    ins.insert(ins.end(), n->inputs().begin() + 1, n->inputs().end());
-    auto out = InlineClone(graph_kernel_g, fg, ins, n->input(0)->scope());
-    mng->Replace(n, out);
-  }
-
-  EliminateMakeTuple(fg, mng);
-  ConvertNonscalarTensorToParameter(fg, &inputs);
-
-  outputs.clear();
-  kernel::GetFuncGraphOutputNodes(fg, &outputs);
-  return std::make_tuple(fg, inputs, outputs);
 }
 
 // Rebuild as node inputs or outputs have changed, processor comes from node itself
@@ -254,6 +129,7 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
   return graph_info_builder.Build();
 }
 
+// Deprecated. use Callback->SetGraphKernelNodeKernelInfo.
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                       const AnfNodePtrList &outputs) {
   std::vector<std::string> graph_input_format;
@@ -309,127 +185,6 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, new_node.get());
 }
 
-AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &func_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                              const AnfNodePtrList &outputs) {
-  auto func_node = NewValueNode(fg);
-  std::vector<AnfNodePtr> fn_inputs;
-  fn_inputs.push_back(func_node);
-  fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
-  auto fuse_cnode = func_graph->NewCNode(fn_inputs);
-  // Set output abstract
-  if (outputs.size() > 1) {
-    std::vector<AbstractBasePtr> out_specs;
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      out_specs.push_back(outputs[i]->abstract());
-    }
-    auto out_spec = std::make_shared<abstract::AbstractTuple>(out_specs);
-    fuse_cnode->set_abstract(out_spec);
-  } else {
-    fuse_cnode->set_abstract(outputs[0]->abstract());
-  }
-  // Set parameter abstract.
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
-    auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
-    fg->parameters()[i]->set_abstract(input_abs);
-  }
-  return fuse_cnode;
-}
-
-void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_fuse_cnode,
-                         const AnfNodePtrList &outputs) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  // single out
-  if (outputs.size() == 1) {
-    mng->Replace(outputs[0], new_fuse_cnode);
-    return;
-  }
-
-  std::vector<AnfNodePtr> fn_inputs;
-  size_t offset = 0;
-  for (size_t out_idx = 0; out_idx < outputs.size(); out_idx++) {
-    AnfNodePtrList real_outs;
-    // not make tuple out, replace
-    if (!IsMakeTupleOut(outputs[out_idx], &real_outs)) {
-      fn_inputs.clear();
-      fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
-      fn_inputs.push_back(new_fuse_cnode);
-      fn_inputs.push_back(NewValueNode(MakeValue(SizeToLong(out_idx + offset))));
-      auto new_out = func_graph->NewCNode(fn_inputs);
-      new_out->set_abstract(outputs[out_idx]->abstract());
-      mng->Replace(outputs[out_idx], new_out);
-      continue;
-    }
-
-    // the out is make tuple , modify the get_item node's value
-    auto users = mng->node_users()[outputs[out_idx]];
-    for (auto &user : users) {
-      auto use_node = user.first;
-      if (!use_node->isa<CNode>() || !IsPrimitiveCNode(use_node, prim::kPrimTupleGetItem)) {
-        continue;
-      }
-      auto get_item_cnode = use_node->cast<CNodePtr>();
-      auto value_input = get_item_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-      MS_EXCEPTION_IF_NULL(value_input);
-      auto value_node = value_input->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto item_idx = GetValue<int64_t>(value_node->value());
-      int64_t new_item_idx = SizeToLong(out_idx + offset) + item_idx;
-      fn_inputs.clear();
-      fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
-      fn_inputs.push_back(new_fuse_cnode);
-      fn_inputs.push_back(NewValueNode(new_item_idx));
-      auto new_out = func_graph->NewCNode(fn_inputs);
-      new_out->set_abstract(get_item_cnode->abstract());
-      mng->Replace(get_item_cnode, new_out);
-    }
-
-    offset += real_outs.size() - 1;
-  }
-}
-
-std::tuple<AnfNodePtr, AnfNodePtrList> FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                                                           const FuncGraphPtr &kernel_graph,
-                                                           const std::string &postfix) {
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
-  }
-
-  FuncGraphPtr fg;
-  AnfNodePtrList inputs;
-  AnfNodePtrList src_outputs;
-  AnfNodePtrList outputs;
-
-  std::tie(fg, inputs, outputs) = MixedNodesTransToGraph(fuse_nodes, &src_outputs);
-  auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs);
-  SetNewKernelInfo(fuse_new_node, fg, inputs, outputs);
-  // Handle get-item probleam.
-  ReplaceNewFuseCNode(kernel_graph, fuse_new_node, src_outputs);
-
-  // set graphKernel attr
-  std::string fuse_op_name = "";
-  for (auto &fuse_node : fuse_nodes) {
-    if (IsPrimitiveCNode(fuse_node)) {
-      fuse_op_name += AnfAlgo::GetCNodePrimitive(fuse_node)->name() + "_";
-    } else if (AnfAlgo::IsGraphKernel(fuse_node)) {
-      auto fuse_cnode = fuse_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(fuse_cnode);
-      auto graph_kernel_fg = GetValueNode<FuncGraphPtr>(fuse_cnode->input(kAnfPrimitiveIndex));
-      auto fg_flag_val = graph_kernel_fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-      auto fuse_fg_name = GetValue<std::string>(fg_flag_val);
-      fuse_op_name += fuse_fg_name + "_";
-    }
-  }
-  fuse_op_name += postfix;
-  fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
-
-  return std::make_tuple(fuse_new_node, src_outputs);
-}
-
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map) {
   MS_EXCEPTION_IF_NULL(op_desc);
@@ -466,15 +221,14 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
   }
 
   FuncGraphPtr fg;
-  AnfNodePtrList op_nodes, inputs, outputs;
+
   if (nodes.size() == 1 && AnfAlgo::IsGraphKernel(nodes[0])) {
     fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
   } else {
-    std::tie(fg, inputs, outputs) = MixedNodesTransToGraph(nodes);
-    inputs.clear();
-    outputs.clear();
+    std::tie(fg, std::ignore, std::ignore) = BuildSingleGraphFromNodes(nodes);
   }
 
+  AnfNodePtrList op_nodes, inputs, outputs;
   kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
 
   auto mng = fg->manager();
@@ -522,22 +276,6 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc) {
     return nullptr;
   }
   return fg;
-}
-
-std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix, const string &postfix) {
-  std::stringstream name;
-  if (prefix != "") {
-    name << prefix << "_";
-  }
-  for (const auto &node : cnodes) {
-    if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-      name << AnfAlgo::GetCNodeName(node) << "_";
-    }
-  }
-  if (postfix != "") {
-    name << postfix;
-  }
-  return name.str();
 }
 
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {

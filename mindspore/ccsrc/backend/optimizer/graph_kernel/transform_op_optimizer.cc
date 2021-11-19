@@ -31,6 +31,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 #include "backend/optimizer/graph_kernel/model/op_register.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -438,13 +439,11 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
     auto litegraph = AnfGraph2LiteGraph(sub_func_graph);
     if (Process(litegraph)) {
       changed = true;
-      AnfNodePtrList outputs;
-      auto new_funcgraph = LiteGraph2AnfGraph(litegraph, &outputs);
+      auto new_funcgraph = LiteGraph2AnfGraph(litegraph);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-      auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs, outputs);
-      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+      auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs);
       (void)mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
     }

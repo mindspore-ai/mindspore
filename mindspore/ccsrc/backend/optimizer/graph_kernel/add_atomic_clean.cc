@@ -29,6 +29,7 @@
 #include "utils/log_adapter.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "debug/anf_ir_dump.h"
@@ -360,7 +361,7 @@ void AtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, 
   CorrectKernelBuildInfo(composite_node, new_input);
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-  auto new_graph_name = ExtractGraphKernelName(TopoSort(sub_graph->get_return()), "", "atomic_add");
+  auto new_graph_name = GkUtils::ExtractGraphKernelName(TopoSort(sub_graph->get_return()), "", "atomic_add");
   sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(new_graph_name));
   MS_LOG(INFO) << "Convert " << old_graph_name << " to atomic add graph " << new_graph_name;
 }
@@ -435,7 +436,7 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
   auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
   SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
-  auto graph_attr = ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
+  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
   new_sub_graph->set_attr("composite_type", MakeValue("atomic_clean"));
 

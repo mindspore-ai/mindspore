@@ -120,6 +120,13 @@ class Callback {
    */
   virtual std::string GetProcessorFromContext() = 0;
 
+  /**
+   * @brief Set KernelInfo for a GraphKernel node, the info is extract from its inputs/outputs.
+   *
+   * @param[in] node the GraphKernel CNode.
+   */
+  virtual void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) = 0;
+
  private:
   friend class CallbackImplRegister;
   static void RegImpl(Callback *cb) { instance_.reset(cb); }
