@@ -21,14 +21,12 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Eigh,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex64)
-                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeComplex64)
                         .AddOutputAttr(kNumberTypeComplex64),
                       EighcGpuKernel, Complex<float>)
 MS_REG_GPU_KERNEL_ONE(Eigh,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex128)
-                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
                       EighcGpuKernel, Complex<double>);

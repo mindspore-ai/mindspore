@@ -194,42 +194,21 @@ class Eigh(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, compute_eigenvectors):
+    def __init__(self, compute_eigenvectors=True, lower=True):
         super().__init__(name="Eigh")
-        self.init_prim_io_names(inputs=['A', 's'], outputs=['output', 'output_v'])
+        self.init_prim_io_names(inputs=['A'], outputs=['output_w', 'output_v'])
         self.compute_eigenvectors = validator.check_value_type(
             "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
+        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.add_prim_attr('lower', self.lower)
+        self.add_prim_attr('compute_eigenvectors', self.compute_eigenvectors)
 
-    def __infer__(self, A, s):
+    def __infer__(self, A):
         shape = {
             'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
             'dtype': (A['dtype'], A['dtype']),
             'value': None
         }
-        if A['dtype'] == mstype.tensor_type(mstype.float32):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (mstype.float32, mstype.float32),
-                'value': None
-            }
-        elif A['dtype'] == mstype.tensor_type(mstype.float64):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (mstype.float64, mstype.float64),
-                'value': None
-            }
-        elif A['dtype'] == mstype.tensor_type(mstype.complex64):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (A['dtype'], A['dtype']),
-                'value': None
-            }
-        elif A['dtype'] == mstype.tensor_type(mstype.complex128):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (mstype.complex128, mstype.complex128),
-                'value': None
-            }
         return shape
 
 
@@ -238,16 +217,17 @@ class EighNet(nn.Cell):
     EigenValue /eigenvector solver for symmetric/Hermitian matrix
     Ax = lambda * x
     """
-    def __init__(self, b):
-        super(EighNet, self).__init__()
-        self.b = b
-        self.eigh = Eigh(b)
 
-    def construct(self, A, s=True):
-        r = self.eigh(A, s)
-        if self.b:
+    def __init__(self, bv=True, lower=True):
+        super(EighNet, self).__init__()
+        self.bv = bv
+        self.eigh = Eigh(bv, lower)
+
+    def construct(self, A):
+        r = self.eigh(A)
+        if self.bv:
             return (r[0], r[1])
-        return (r[0],)
+        return r[0]
 
 
 class Eig(PrimitiveWithInfer):
@@ -257,7 +237,7 @@ class Eig(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, compute_eigenvectors):
+    def __init__(self, compute_eigenvectors=True):
         super().__init__(name="Eig")
         self.init_prim_io_names(inputs=['A'], outputs=['output', 'output_v'])
         self.compute_eigenvectors = validator.check_value_type(
@@ -285,13 +265,14 @@ class EigNet(nn.Cell):
     EigenValue /eigenvector solver for generic matrix
     Ax = lambda * x
     """
-    def __init__(self, b):
+
+    def __init__(self, bv=True):
         super(EigNet, self).__init__()
-        self.b = b
-        self.eig = Eig(b)
+        self.bv = bv
+        self.eig = Eig(bv)
 
     def construct(self, A):
         r = self.eig(A)
-        if self.b:
+        if self.bv:
             return (r[0], r[1])
-        return (r[0],)
+        return r[0]

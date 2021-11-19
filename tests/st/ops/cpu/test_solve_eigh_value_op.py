@@ -47,10 +47,12 @@ def test_eigh_net(n: int):
     # test for real scalar float 32
     rtol = 1e-3
     atol = 1e-4
-    msp_eigh = EighNet(True)
+
     A = create_sym_pos_matrix(n, n, np.float32)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float32)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float32)), False)
+    msp_eigh = EighNet(True, True)
+    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float32)))
+    msp_eigh = EighNet(True, False)
+    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float32)))
     sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).T)
     sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).T)
     assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
@@ -62,19 +64,23 @@ def test_eigh_net(n: int):
     A = np.random.rand(n, n)
     rtol = 1e-5
     atol = 1e-8
-    msp_eigh = EighNet(True)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float64)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float64)), False)
-
-    # Compare with scipy
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.float64), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.float64), lower=False, eigvals_only=False)
+    msp_eigh = EighNet(True, True)
+    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.float64)))
+    msp_eigh = EighNet(True, False)
+    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.float64)))
     sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).T)
     sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).T)
     assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
     assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
+    # test for real scalar float64 no vector
+    msp_eigh = EighNet(False, True)
+    msp_wl0 = msp_eigh(Tensor(np.array(A).astype(np.float64)))
+    msp_eigh = EighNet(False, False)
+    msp_wu0 = msp_eigh(Tensor(np.array(A).astype(np.float64)))
+    assert np.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), np.zeros((n, n)), rtol, atol)
+    assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)
 
     # test case for complex64
     rtol = 1e-3
@@ -86,18 +92,12 @@ def test_eigh_net(n: int):
                 A[i][j] = complex(np.random.rand(1, 1), 0)
             else:
                 A[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eigh = EighNet(True)
     sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).conj().T)
     sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).conj().T)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex64)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex64)), False)
-    # Compare with scipy, scipy passed
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.complex128), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.complex128), lower=False, eigvals_only=False)
-    # assert np.allclose(sym_Al @ sp_vl - sp_vl @ np.diag(sp_wl), np.zeros((n, n)), rtol, atol)
-    # assert np.allclose(sym_Au @ sp_vu - sp_vu @ np.diag(sp_wu), np.zeros((n, n)), rtol, atol)
-
-    # print(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()))
+    msp_eigh = EighNet(True, True)
+    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex64)))
+    msp_eigh = EighNet(True, False)
+    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex64)))
     assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
     assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
@@ -113,19 +113,21 @@ def test_eigh_net(n: int):
                 A[i][j] = complex(np.random.rand(1, 1), 0)
             else:
                 A[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eigh = EighNet(True)
     sym_Al = (np.tril((np.tril(A) - np.tril(A).T)) + np.tril(A).conj().T)
     sym_Au = (np.triu((np.triu(A) - np.triu(A).T)) + np.triu(A).conj().T)
-    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex128)), True)
-    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex128)), False)
-    # Compare with scipy, scipy passed
-    # sp_wl, sp_vl = sp.linalg.eigh(np.tril(A).astype(np.complex128), lower=True, eigvals_only=False)
-    # sp_wu, sp_vu = sp.linalg.eigh(A.astype(np.complex128), lower=False, eigvals_only=False)
-    # assert np.allclose(sym_Al @ sp_vl - sp_vl @ np.diag(sp_wl), np.zeros((n, n)), rtol, atol)
-    # assert np.allclose(sym_Au @ sp_vu - sp_vu @ np.diag(sp_wu), np.zeros((n, n)), rtol, atol)
-
-    # print(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()))
+    msp_eigh = EighNet(True, True)
+    msp_wl, msp_vl = msp_eigh(Tensor(np.array(A).astype(np.complex128)))
+    msp_eigh = EighNet(True, False)
+    msp_wu, msp_vu = msp_eigh(Tensor(np.array(A).astype(np.complex128)))
     assert np.allclose(sym_Al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
     assert np.allclose(sym_Au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
+
+    # test for real scalar complex128 no vector
+    msp_eigh = EighNet(False, True)
+    msp_wl0 = msp_eigh(Tensor(np.array(A).astype(np.complex128)))
+    msp_eigh = EighNet(False, False)
+    msp_wu0 = msp_eigh(Tensor(np.array(A).astype(np.complex128)))
+    assert np.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), np.zeros((n, n)), rtol, atol)
+    assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)

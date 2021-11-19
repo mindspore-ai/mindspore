@@ -31,11 +31,6 @@ def match(v, v_, error=0):
         np.testing.assert_equal(v, v_)
 
 
-def create_sym_pos_matrix(m, n, dtype):
-    a = (np.random.random((m, n)) + np.eye(m, n)).astype(dtype)
-    return np.dot(a, a.T)
-
-
 @pytest.mark.parametrize('n', [4, 6, 9, 10])
 @pytest.mark.platform_x86_cpu
 def test_eig_net(n: int):
@@ -48,13 +43,13 @@ def test_eig_net(n: int):
     rtol = 1e-3
     atol = 1e-4
     msp_eig = EigNet(True)
-    A = create_sym_pos_matrix(n, n, np.float32)
+    A = np.array(np.random.rand(n, n), dtype=np.float32)
     tensor_a = Tensor(np.array(A).astype(np.float32))
     msp_w, msp_v = msp_eig(tensor_a)
     assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
 
     # test case for real scalar double 64
-    A = np.random.rand(n, n)
+    A = np.array(np.random.rand(n, n), dtype=np.float64)
     rtol = 1e-5
     atol = 1e-8
     msp_eig = EigNet(True)
@@ -98,6 +93,7 @@ def test_eig_net(n: int):
     # Com`pare with scipy, scipy passed
     # sp_w, sp_v = sp.linalg.eig(A.astype(np.complex128))
     # assert np.allclose(A @ sp_v - sp_v @ np.diag(sp_w), np.zeros((n, n)), rtol, atol)
-
-    # print(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()))
     assert np.allclose(A @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
+    msp_eig = EigNet(False)
+    msp_w0 = msp_eig(Tensor(np.array(A).astype(np.complex128)))
+    assert np.allclose(msp_w0.asnumpy() - msp_w.asnumpy(), np.zeros((n, n)), rtol, atol)

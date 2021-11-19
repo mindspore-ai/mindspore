@@ -46,36 +46,29 @@ class EighCPUKernel : public CPUKernel {
 
  private:
   size_t m_{1};
-  bool compute_eigen_vectors{false};
+  bool compute_eigen_vectors_{false};
+  bool lower_{true};
   TypeId dtype_{kNumberTypeFloat32};
 };
 
-MS_REG_CPU_KERNEL_T(Eigh,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddOutputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    EighCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Eigh,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddOutputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64),
-                    EighCPUKernel, double);
+MS_REG_CPU_KERNEL_T(
+  Eigh,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  EighCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  Eigh,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EighCPUKernel, double);
 
 MS_REG_CPU_KERNEL_T(Eigh,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeComplex64)
-                      .AddInputAttr(kNumberTypeBool)
                       .AddOutputAttr(kNumberTypeComplex64)
                       .AddOutputAttr(kNumberTypeComplex64),
                     EighCPUKernel, float_complex);
 MS_REG_CPU_KERNEL_T(Eigh,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeComplex128)
-                      .AddInputAttr(kNumberTypeBool)
                       .AddOutputAttr(kNumberTypeComplex128)
                       .AddOutputAttr(kNumberTypeComplex128),
                     EighCPUKernel, double_complex);

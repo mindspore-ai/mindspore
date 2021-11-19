@@ -24,8 +24,6 @@ namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
-constexpr size_t kDefaultShape = 1;
-constexpr auto kAMatrixDimNum = 2;
 
 }  // namespace
 using Eigen::Dynamic;
@@ -45,12 +43,8 @@ using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, Row
 template <typename T, typename C>
 void EigCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-
   compute_eigen_vectors = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
-
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  CHECK_KERNEL_INPUTS_NUM(A_shape.size(), kAMatrixDimNum, AnfAlgo::GetCNodeName(kernel_node));
-
   if (A_shape.size() != kShape2dDims || A_shape[0] != A_shape[1]) {
     MS_LOG(EXCEPTION) << "wrong array shape, A should be a  matrix, but got [" << A_shape[0] << " X " << A_shape[1]
                       << "]";

@@ -18,9 +18,10 @@ from .. import ops
 from .ops import SolveTriangular
 from .ops import CholeskySolver
 from .ops import Cholesky
+from .ops import EighNet
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve']
+__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh']
 
 
 def block_diag(*arrs):
@@ -318,3 +319,84 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     cholesky_solver_net = CholeskySolver(lower=lower)
     x = cholesky_solver_net(c, b)
     return x
+
+
+def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
+         overwrite_b=False, turbo=True, eigvals=None, _type=1,
+         check_finite=True):
+    """
+    Solve a standard or generalized eigenvalue problem for a complex
+    Hermitian or real symmetric matrix.
+
+    Find eigenvalues Tensor ``w`` and optionally eigenvectors Tensor ``v`` of
+    Tensor ``a``, where ``b`` is positive definite such that for every
+    eigenvalue λ (i-th entry of w) and its eigenvector ``vi`` (i-th column of
+    ``v``) satisfies::
+
+                      a @ vi = λ * b @ vi
+        vi.conj().T @ a @ vi = λ
+        vi.conj().T @ b @ vi = 1
+
+    In the standard problem, ``b`` is assumed to be the identity matrix.
+
+    Args:
+        a (Tensor): (M, M) Tensor
+            A complex Hermitian or real symmetric matrix whose eigenvalues and
+            eigenvectors will be computed.
+        b (Tensor, optional): (M, M) Tensor
+            A complex Hermitian or real symmetric definite positive matrix in.
+            If omitted, identity matrix is assumed.
+        lower (bool, optional): Whether the pertinent Tensor data is taken from
+            the lower or upper triangle of ``a`` and, if applicable, ``b``. (Default: lower)
+        eigvals_only (bool, optional): Whether to calculate only eigenvalues
+            and no eigenvectors. (Default: both are calculated)
+        _type (int, optional): For the generalized problems, this keyword specifies
+            the problem type to be solved for ``w`` and ``v`` (only takes 1, 2, 3 as possible
+            inputs)::
+
+                1 =>     a @ v = w @ b @ v
+                2 => a @ b @ v = w @ v
+                3 => b @ a @ v = w @ v
+
+            This keyword is ignored for standard problems.
+        overwrite_a (bool, optional): Whether to overwrite data in ``a``
+            (may improve performance). Default is False.
+        overwrite_b (bool, optional): Whether to overwrite data in ``b``
+            (may improve performance). Default is False.
+        check_finite (bool, optional): Whether to check that the input matrices
+            contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+        turbo (bool, optional): use divide and conquer algorithm (faster but
+            expensive in memory, only for generalized eigenvalue problem and
+            if full set of eigenvalues are requested.). Has no significant
+            effect if eigenvectors are not requested.
+        eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order)
+            eigenvalues and corresponding eigenvectors to be returned: 0 <= lo <= hi <= M-1.
+            If omitted, all eigenvalues and eigenvectors are returned.
+
+    Returns:
+        w (Tensor): (N,) Tensor, The N (1<=N<=M) selected eigenvalues, in ascending order,
+            each repeated according to its multiplicity.
+        v (Tensor): (M, N) Tensor, (if ``eigvals_only == False``)
+
+    Raises:
+        LinAlgError: If eigenvalue computation does not converge, an error occurred, or
+            b matrix is not definite positive. Note that if input matrices are
+            not symmetric or Hermitian, no error will be reported but results will
+            be wrong.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import eigh
+        >>> A = Tensor(onp.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]]))
+        >>> w, v = eigh(A)
+        >>> onp.allclose(A @ v - v @ onp.diag(w), onp.zeros((4, 4)))
+        True
+    """
+    eigh_net = EighNet(not eigvals_only, lower=True)
+    return eigh_net(a)

@@ -30,10 +30,12 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "utils/convert_utils.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
+constexpr char LOWER[] = "lower";
 template <typename T>
 class EighGpuKernel : public GpuKernel {
  public:
@@ -47,6 +49,7 @@ class EighGpuKernel : public GpuKernel {
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
+    lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, LOWER));
     if (compute_eigen_vectors_) {
       jobz_ = CUSOLVER_EIG_MODE_VECTOR;
     } else {
@@ -69,26 +72,23 @@ class EighGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     // matrix A, input or output(eigenvector)
-    auto inout_A_addr = GetDeviceAddress<T>(inputs, 0);
-    auto lower = GetDeviceAddress<bool>(inputs, 1);
-    bool h_lower{true};
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&h_lower, lower, sizeof(bool), cudaMemcpyDeviceToHost,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "copy to lower to device failed");
-    if (h_lower) {
-      uplo_ = CUBLAS_FILL_MODE_LOWER;
-    } else {
+    auto inout_A_addr = GetDeviceAddress<T>(inputs, kDim0);
+    // Notice :this is important
+    // a col or row major is different to cpu, so a lower triangle is a upper triangle, a upper is a lower in gpu mem
+    // so the upper is positive to it from var, but for real scalar matrix, upper eq lower, it's different from complex
+    if (lower_) {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
+    } else {
+      uplo_ = CUBLAS_FILL_MODE_LOWER;
     }
-    auto output_addr = GetDeviceAddress<T>(outputs, 0);    // output eigenvalues
-    auto output_v_addr = GetDeviceAddress<T>(outputs, 1);  // output eigenvalues
+    auto output_addr = GetDeviceAddress<T>(outputs, kDim0);    // output eigenvalues
+    auto output_v_addr = GetDeviceAddress<T>(outputs, kDim1);  // output eigenvalues
+    auto w_v_addr = GetDeviceAddress<T>(workspace, kDim0);     // temp eigenvector before transpose
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_v_addr, inout_A_addr, m_ * m_ * sizeof(T),
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               cudaMemcpyAsync(w_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "copy to input matrix failed");
     size_t lda_ = m_;
-
     int lwork = 0;
     if constexpr (std::is_same_v<T, float>) {
       cusolverDnSsyevd_bufferSize(cusolver_handle_, jobz_, uplo_, m_, inout_A_addr, lda_, output_addr, &lwork);
@@ -100,10 +100,22 @@ class EighGpuKernel : public GpuKernel {
     T *d_work = nullptr;
     cudaMalloc(reinterpret_cast<void **>(&d_work), sizeof(T) * lwork);
     if constexpr (std::is_same_v<T, float>) {
-      cusolverDnSsyevd(cusolver_handle_, jobz_, uplo_, m_, output_v_addr, lda_, output_addr, d_work, lwork, devInfo);
+      cusolverDnSsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, d_work, lwork, devInfo);
     } else if constexpr (std::is_same_v<T, double>) {
-      cusolverDnDsyevd(cusolver_handle_, jobz_, uplo_, m_, output_v_addr, lda_, output_addr, d_work, lwork, devInfo);
+      cusolverDnDsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, d_work, lwork, devInfo);
     }
+    size_t input_shape[kShape2dDims] = {m_, m_};
+    size_t input_axis[kShape2dDims] = {1, 0};
+    size_t *dev_input_shape = nullptr;
+    cudaMalloc(reinterpret_cast<void **>(&dev_input_shape), kShape2dDims * sizeof(size_t));
+    size_t *dev_input_axis = nullptr;
+    cudaMalloc(reinterpret_cast<void **>(&dev_input_axis), kShape2dDims * sizeof(size_t));
+    cudaMemcpyAsync(dev_input_shape, input_shape, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    cudaMemcpyAsync(dev_input_axis, input_axis, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalTranspose(m_ * m_, w_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, output_v_addr,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
     if (d_work) {
       cudaFree(d_work);
     }
@@ -125,12 +137,11 @@ class EighGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     // in/out matrix, eigenvector
     input_size_list_.push_back(m_ * m_ * sizeof(T));
-    // uplo
-    input_size_list_.push_back(sizeof(bool));
     // eigenvalues
     output_size_list_.push_back(m_ * sizeof(T));
     // eigenvector
     output_size_list_.push_back(m_ * m_ * sizeof(T));
+    workspace_size_list_.push_back(m_ * m_ * sizeof(T));
   }
 
   size_t m_{1};
@@ -139,6 +150,7 @@ class EighGpuKernel : public GpuKernel {
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   cusolverEigMode_t jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
   bool compute_eigen_vectors_{false};
+  bool lower_{true};
   std::vector<T *> h_array_{};
   std::vector<size_t> input_size_list_{};
   std::vector<size_t> output_size_list_{};
