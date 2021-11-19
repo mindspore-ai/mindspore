@@ -281,7 +281,7 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
   }
   if (flag) {
     auto node_name = AnfAlgo::GetCNodeName(cnode);
-    MS_LOG(WARNING) << "Node:[" << node_name << "] reduce precision from int64 to int32";
+    MS_LOG(WARNING) << "Node:[" << node_name << "] don't support int64, reduce precision from int64 to int32.";
   }
   return true;
 }
