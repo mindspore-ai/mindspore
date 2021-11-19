@@ -1007,6 +1007,7 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
+    model->buf = nullptr;
     delete model;
     delete session;
     return nullptr;
@@ -1030,12 +1031,15 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
   }
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
+    delete session;
     MS_LOG(ERROR) << "Import model failed";
     return nullptr;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
+    delete model;
+    delete session;
     MS_LOG(ERROR) << "Compile model failed";
     return nullptr;
   }
