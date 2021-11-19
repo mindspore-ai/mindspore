@@ -30,19 +30,29 @@ namespace mindspore::kernel {
 int RankCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[kInputIndex]);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
   return RET_OK;
 }
 
 int RankCPUKernel::ReSize() { return RET_OK; }
 
 int RankCPUKernel::Run() {
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
-  CHECK_NULL_RETURN(output_ptr);
-  auto in_shape = in_tensors_.at(0)->shape();
-  auto rank = in_shape.size();
-  Rank(output_ptr, rank);
+  auto output_data = out_tensors_[kOutputIndex]->data();
+  CHECK_NULL_RETURN(output_data);
+  size_t rank = in_tensors_[kInputIndex]->shape().size();
+  if (in_tensors_[kInputIndex]->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    *static_cast<float16_t *>(output_data) = static_cast<float16_t>(rank);
+#endif
+  } else {
+    *static_cast<float *>(output_data) = static_cast<float>(rank);
+  }
   return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Rank, LiteKernelCreator<RankCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Rank, LiteKernelCreator<RankCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

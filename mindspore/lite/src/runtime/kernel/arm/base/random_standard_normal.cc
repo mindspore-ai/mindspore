@@ -42,15 +42,27 @@ int RandomStandardNormalCPUKernel::Run() {
     random_seed = static_cast<size_t>(clock());
   }
   std::default_random_engine engine{static_cast<unsigned int>(random_seed)};
-  std::normal_distribution<double> nums(0, 1.0);
-  auto all_data_nums = out_tensors_[0]->ElementsNum();
+  std::normal_distribution<float> nums(0, 1.0);
+  CHECK_NULL_RETURN(out_tensors_.front());
+  auto all_data_nums = out_tensors_[kOutputIndex]->ElementsNum();
   MS_CHECK_GT(all_data_nums, 0, RET_ERROR);
-  auto out_data = out_tensors_[0]->data();
+  auto out_data = out_tensors_[kOutputIndex]->data();
   MS_ASSERT(out_data != nullptr);
-  auto output = reinterpret_cast<float *>(out_data);
-
-  std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
+  if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    auto output = static_cast<float16_t *>(out_data);
+    std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
+#endif
+  } else {
+    auto output = static_cast<float *>(out_data);
+    std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
+  }
   return RET_OK;
 }
+
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_RandomStandardNormal, LiteKernelCreator<RandomStandardNormalCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_RandomStandardNormal,
+           LiteKernelCreator<RandomStandardNormalCPUKernel>)
+#endif
 }  // namespace mindspore::kernel
