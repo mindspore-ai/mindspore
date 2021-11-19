@@ -24,26 +24,40 @@ import mindspore.ops.composite as C
 from mindspore.ops import operations as P
 
 
+def check_concat_zip_dataset(dataset):
+    """
+    Check if dataset is concatenated or zipped.
+    """
+    while dataset:
+        if len(dataset.children) > 1:
+            return True
+        if dataset.children:
+            dataset = dataset.children[0]
+            continue
+        dataset = dataset.children
+    return False
+
+
 def check_map_offload(dataset):
     """
     Check if offload flag is set in data pipeline map ops.
     """
-    offload_ckeck = False
-    dataset_tmp = dataset
-    while dataset_tmp:
-        if hasattr(dataset_tmp, 'offload'):
-            if dataset_tmp.offload is True:
-                offload_ckeck = True
-        if dataset_tmp.children:
-            dataset_tmp = dataset_tmp.children[0]
-            continue
-        dataset_tmp = dataset_tmp.children
+    offload_check = False
+    concat_zip_check = check_concat_zip_dataset(dataset)
+    while dataset:
+        if hasattr(dataset, 'offload'):
+            if dataset.offload is True:
+                offload_check = True
+                break
+        if dataset.children:
+            dataset = dataset.children[0]
+        else:
+            dataset = []
 
-    if offload_ckeck is True:
-        if len(dataset.children) > 1:
-            raise RuntimeError("Offload currently does not support concatenated datasets.")
+    if offload_check and concat_zip_check:
+        raise RuntimeError("Offload module currently does not support concatenated or zipped datasets.")
 
-    return offload_ckeck
+    return offload_check
 
 
 def apply_offload_iterators(data, offload_model):
