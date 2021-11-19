@@ -136,7 +136,6 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
 int Convolution1x1FP16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  UpdateOriginWeightAndBias();
 #ifdef ENABLE_ARM64
   if (out_tensors_.front()->format() == NC4HW4) {
     row_tile_ = C16NUM;
