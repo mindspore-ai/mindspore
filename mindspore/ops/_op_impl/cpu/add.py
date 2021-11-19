@@ -23,6 +23,7 @@ add_op_info = CpuRegOp("Add") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
 

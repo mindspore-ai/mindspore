@@ -22,7 +22,7 @@ import scipy as osp
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
-from .utils import match_array, create_full_rank_matrix, create_sym_pos_matrix
+from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix
 
 onp.random.seed(0)
 context.set_context(mode=context.PYNATIVE_MODE)

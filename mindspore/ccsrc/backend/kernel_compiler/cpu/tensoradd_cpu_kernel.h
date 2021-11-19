@@ -44,6 +44,7 @@ class TensorAddCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(Add, KernelAttr(), TensorAddCPUKernel, int32_t);
 MS_REG_CPU_KERNEL_T(Add, KernelAttr(), TensorAddCPUKernel, uint32_t);
 MS_REG_CPU_KERNEL_T(Add, KernelAttr(), TensorAddCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Add, KernelAttr(), TensorAddCPUKernel, double);
 }  // namespace kernel
 }  // namespace mindspore
 
