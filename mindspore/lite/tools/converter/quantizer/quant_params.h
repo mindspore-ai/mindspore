@@ -36,6 +36,7 @@ struct CommonQuantParam {
   bool is_debug = false;
   std::string debug_info_save_path;
   std::set<std::string> skip_node;
+  int thread_num = 4;
 };
 
 struct MixedBitWeightQuantParam {
@@ -46,7 +47,6 @@ struct MixedBitWeightQuantParam {
 struct FullQuantParam {
   ActivationQuantizedMethod activation_quant_method = MAX_MIN;
   bool bias_correction = true;
-  int thread_num = 1;
 };
 }  // namespace mindspore::lite::quant
 

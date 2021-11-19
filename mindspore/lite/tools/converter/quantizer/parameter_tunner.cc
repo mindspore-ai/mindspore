@@ -113,7 +113,9 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
         return RET_ERROR;
       }
     }
+    weight_quant_session->BindThread(true);
     ret = weight_quant_session->RunGraph();
+    weight_quant_session->BindThread(false);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run origin session failed.";
       delete weight_quant_session;
@@ -142,8 +144,6 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     }
 
     auto compress_ratio = 1.0 * origin_model_size / weight_quant_size;
-    MS_LOG(INFO) << " round:" << round << " scale:" << scale << " cos_sim:" << cos_sim << " mean_error:" << mean_error
-                 << " ratio:" << compress_ratio;
     std::cout << " round:" << round << " scale:" << scale << " cos_sim:" << cos_sim << " mean_error:" << mean_error
               << " ratio:" << compress_ratio << std::endl;
     if (cos_sim >= threshold && compress_ratio > best_compress_ratio) {
@@ -155,9 +155,6 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     }
   }
   if (is_run_all) {
-    MS_LOG(INFO) << " best compress ratio:" << best_compress_ratio << " model size:" << best_compress_model_size
-                 << " cos sim:" << best_compress_cos_sim << " mean error:" << best_compress_mean_error
-                 << " init scale:" << *init_scale;
     std::cout << " best compress ratio:" << best_compress_ratio << " compressed model size:" << best_compress_model_size
               << " cos sim:" << best_compress_cos_sim << " mean error:" << best_compress_mean_error
               << " init scale:" << *init_scale << std::endl;
@@ -174,9 +171,8 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, con
     return RET_ERROR;
   }
   flags->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-  int thread_num = 1;
   *origin_model_size = 0;
-  *sm = CreateSessionByFuncGraph(func_graph_bak, *flags, thread_num, origin_model_size);
+  *sm = CreateSessionByFuncGraph(func_graph_bak, *flags, flags->commonQuantParam.thread_num, origin_model_size);
   auto origin_session = sm->session;
   auto origin_model = sm->model;
   if (origin_session == nullptr || origin_model == nullptr) {
@@ -196,7 +192,9 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, con
       return ret;
     }
   }
+  origin_session->BindThread(true);
   ret = origin_session->RunGraph();
+  origin_session->BindThread(false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run origin session failed.";
     return ret;
@@ -222,7 +220,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   auto origin_model = sm.model;
 
   float start_scale = 0.005f;
-  int giant_rounds = 10;
+  const int giant_rounds = 10;
   float step = 0.005f;
   std::vector<float> candidate_scales;
 
@@ -230,7 +228,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   param.rounds = giant_rounds;
   param.start_scale = start_scale;
   param.step = step;
-  param.thread_num = 1;
+  param.thread_num = flags->commonQuantParam.thread_num;
 
   std::cout << "==========Search with giant step==============\n";
   ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, init_scale,
@@ -258,7 +256,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   param.rounds = babysitting_rounds;
   param.start_scale = start_scale;
   param.step = step;
-  param.thread_num = 1;
+  param.thread_num = flags->commonQuantParam.thread_num;
   std::cout << "==========Search with babysitting step==============\n";
   ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, init_scale,
                                   &candidate_scales, true);

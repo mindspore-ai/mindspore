@@ -183,6 +183,9 @@ int Flags::InitInTensorShape() {
     auto string_split = lite::StrSplit(shape_str, std::string(":"));
     CHECK_LESS_RETURN(string_split.size(), kMinShapeSizeInStr);
     auto name = string_split[0];
+    for (size_t i = 0; i < string_split.size() - 1; ++i) {
+      name += ":" + string_split[i];
+    }
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
       return lite::RET_ERROR;

@@ -168,6 +168,8 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
     GetStatByTensor<float>(static_cast<float *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
   } else if (tensor.data_type() == kNumberTypeInt32) {
     GetStatByTensor<int>(static_cast<int *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
+  } else if (tensor.data_type() == kNumberTypeInt8) {
+    GetStatByTensor<int8_t>(static_cast<int8_t *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
   } else {
     MS_LOG(ERROR) << tensor.tensor_name() << " unsupported data type " << tensor.data_type();
     return RET_ERROR;
@@ -551,7 +553,9 @@ int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, 
     std::cout << "round:" << round << " origin session run graph.\n";
     auto origin_before_callBack = GetBeforeCallBack(origin_input_tensor_map, op_parameters, true);
     auto origin_after_callBack = GetAfterCallBack(op_parameters, true);
+    origin.session->BindThread(true);
     ret = origin.session->RunGraph(origin_before_callBack, origin_after_callBack);
+    origin.session->BindThread(false);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "round:" << round << " origin session run graph failed.";
       FreeBuffer();
@@ -570,7 +574,9 @@ int DebugInfoManager::CompareOriginWithQuant(const quant::SessionModel &origin, 
         return RET_ERROR;
       }
     }
+    quant.session->BindThread(true);
     ret = quant.session->RunGraph(quant_before_callBack, quant_after_callBack);
+    quant.session->BindThread(false);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "round:" << round << " quant session run graph failed.";
       FreeBuffer();
