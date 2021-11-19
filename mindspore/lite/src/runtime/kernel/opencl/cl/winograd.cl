@@ -231,20 +231,18 @@ constant FLT At[24] = {1.0000000000f, 1.0000000000f, 1.0000000000f,  1.000000000
                        0.0000000000f, 0.4999999702f, 0.4999999702f,  1.9999998808f, 1.9999998808f,  0.0000000000f,
                        0.0000000000f, 0.3535533845f, -0.3535533845f, 2.8284270763f, -2.8284270763f, 1.0000000000f};
 
-#define UpdateAcc()                                   \
-  if (bias != 0) acc += bias[co_slice];               \
-  if (act_type == ActivationType_RELU) {              \
-    acc = max(acc, (FLT4)(0.0f));                     \
-  } else if (act_type == ActivationType_RELU6) {      \
-    acc = clamp(acc, (FLT4)(0.0f), (FLT4)(6.0f));     \
-  } else if (act_type == ActivationType_TANH) {       \
-    FLT4 exp0 = exp(acc);                             \
-    FLT4 exp1 = exp(-acc);                            \
-    acc = (exp0 - exp1) / (exp0 + exp1);              \
-  } else if (act_type == ActivationType_LEAKY_RELU) { \
-    DO_LEAKY_RELU(acc, alpha);                        \
-  } else if (act_type == ActivationType_SIGMOID) {    \
-    acc = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-acc));    \
+#define UpdateAcc()                                      \
+  if (bias != 0) acc += bias[co_slice];                  \
+  if (act_type == ActivationType_RELU) {                 \
+    acc = max(acc, (FLT4)(0.0f));                        \
+  } else if (act_type == ActivationType_RELU6) {         \
+    acc = clamp(acc, (FLT4)(0.0f), (FLT4)(6.0f));        \
+  } else if (act_type == ActivationType_TANH) {          \
+    acc = tanh(clamp(acc, (FLT)(-10.0f), (FLT)(10.0f))); \
+  } else if (act_type == ActivationType_LEAKY_RELU) {    \
+    DO_LEAKY_RELU(acc, alpha);                           \
+  } else if (act_type == ActivationType_SIGMOID) {       \
+    acc = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-acc));       \
   }
 
 __kernel void Winograd36To4x4(__read_only image2d_t input,    // height=CO_SLICES*36    width=TILE_HW

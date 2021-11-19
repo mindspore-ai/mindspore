@@ -90,35 +90,32 @@ bool ReduceOpenCLKernel::IsCReduce() {
   return !reduce_axes_[0] && !reduce_axes_[1] && !reduce_axes_[2] && reduce_axes_[3];
 }
 
-int ReduceOpenCLKernel::SetAxes() {
+int ReduceOpenCLKernel::SetShapeSizeIs0Axes() {
   // axes is input tensor
-  // get num_axes
-  int num_axes = 0;
   auto *axes_tensor = in_tensors_.at(1);
 
-  if (axes_tensor->shape().size() == 0) {
-    CHECK_NULL_RETURN(axes_tensor->data());
-    auto reduction_indices = reinterpret_cast<int *>(axes_tensor->data())[0];
+  CHECK_NULL_RETURN(axes_tensor->data());
+  auto reduction_indices = reinterpret_cast<int *>(axes_tensor->data())[0];
 
-    if (reduction_indices == -1) {
-      reduce_axes_[1] = true;
-      reduce_axes_[2] = true;
-      reduce_axes_[3] = true;
-    } else if (reduction_indices == 1 || reduction_indices == 2 || reduction_indices == 3) {
-      reduce_axes_[reduction_indices] = true;
-    } else {
-      MS_LOG(ERROR) << "in Reduce: axes tensor's reduction_indices should be -1, 1, 2, 3";
-      return RET_ERROR;
-    }
-    return RET_OK;
-  }
-
-  if (axes_tensor->shape().size() != 1) {
-    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 0 or 1.";
-    return RET_ERROR;
+  if (reduction_indices == -1) {
+    reduce_axes_[1] = true;
+    reduce_axes_[2] = true;
+    reduce_axes_[3] = true;
+  } else if (reduction_indices == 1 || reduction_indices == 2 || reduction_indices == 3) {
+    reduce_axes_[reduction_indices] = true;
   } else {
-    num_axes = axes_tensor->shape().front();
+    MS_LOG(ERROR) << "in Reduce: axes tensor's reduction_indices should be -1, 1, 2, 3";
+    return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int ReduceOpenCLKernel::SetShapeSizeIs1Axes() {
+  // axes is input tensor
+  // get num_axes
+  auto *axes_tensor = in_tensors_.at(1);
+  int num_axes = axes_tensor->shape().front();
+
   // check axes tensor
   if (CheckParamLikeTensor("Reduce", "axes", axes_tensor, kNumberTypeInt32, {num_axes}) != RET_OK) {
     return RET_ERROR;
@@ -154,6 +151,29 @@ int ReduceOpenCLKernel::SetAxes() {
   return RET_OK;
 }
 
+int ReduceOpenCLKernel::SetAxes() {
+  auto *axes_tensor = in_tensors_.at(1);
+
+  if (axes_tensor->shape().size() == 0) {
+    return SetShapeSizeIs0Axes();
+  } else if (axes_tensor->shape().size() == 1) {
+    return SetShapeSizeIs1Axes();
+  } else {
+    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 0 or 1.";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+int ReduceOpenCLKernel::IsReduceAxesSupport() {
+  if (!IsHWReduce() && !IsWCReduce() && !IsHReduce() && !IsWReduce() && !IsCReduce() && !IsHWCReduce()) {
+    MS_LOG(WARNING) << "Unsupported reduce axes";
+    return RET_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int ReduceOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
@@ -177,11 +197,10 @@ int ReduceOpenCLKernel::CheckSpecs() {
     return ret;
   }
 
-  if (!IsHWReduce() && !IsWCReduce() && !IsHReduce() && !IsWReduce() && !IsCReduce() && !IsHWCReduce()) {
-    MS_LOG(WARNING) << "Unsupported reduce axes";
+  if (IsReduceAxesSupport() != RET_OK) {
     return RET_PARAM_INVALID;
   }
-  if ((IsCReduce() || IsWCReduce() || IsWReduce()) && !reduce_param->keep_dims_) {
+  if ((IsWCReduce() || IsWReduce()) && !reduce_param->keep_dims_) {
     MS_LOG(WARNING) << "reduce axis (2,3) should keep dims";
     return RET_PARAM_INVALID;
   }

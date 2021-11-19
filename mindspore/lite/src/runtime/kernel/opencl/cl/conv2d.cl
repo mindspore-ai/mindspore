@@ -24,10 +24,7 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
     return;                                                                 \
   }
 
-#define DO_TANH(data) \
-  exp0 = exp(data);   \
-  exp1 = exp(-data);  \
-  data = (exp0 - exp1) / (exp0 + exp1);
+#define DO_TANH(data) data = tanh(clamp(data, (FLT)(-10.0f), (FLT)(10.0f)));
 
 #define DO_LEAKY_RELU(data, alpha)               \
   data.x = data.x > 0 ? data.x : data.x * alpha; \
@@ -81,7 +78,6 @@ __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t 
   } else if (act_type == ActivationType_RELU6) {
     out_h0_w0_c0 = clamp(out_h0_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
   } else if (act_type == ActivationType_LEAKY_RELU) {
     DO_LEAKY_RELU(out_h0_w0_c0, alpha);
@@ -157,7 +153,6 @@ __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t 
     out_h0_w0_c0 = clamp(out_h0_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w0_c0 = clamp(out_h1_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h1_w0_c0);
   } else if (act_type == ActivationType_LEAKY_RELU) {
@@ -260,7 +255,6 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
     out_h0_w0_c1 = clamp(out_h0_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h1_w0_c0);
     DO_TANH(out_h0_w0_c1);
@@ -387,7 +381,6 @@ __kernel void Conv2D_H2W2C1(__read_only image2d_t input, __write_only image2d_t 
     out_h1_w1_c0 = clamp(out_h1_w1_c0, (FLT4)(0.0f), (FLT4)(6.0f));
 
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
@@ -540,7 +533,6 @@ __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t 
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w1_c1 = clamp(out_h1_w1_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
@@ -726,7 +718,6 @@ __kernel void Conv2D_H2W2C2_Img(__read_only image2d_t input, __write_only image2
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w1_c1 = clamp(out_h1_w1_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
@@ -830,7 +821,6 @@ __kernel void Conv2D_H1W1C1_1x1(__read_only image2d_t input, __write_only image2
   } else if (act_type == ActivationType_RELU6) {
     out_h0_w0_c0 = clamp(out_h0_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
   } else if (act_type == ActivationType_LEAKY_RELU) {
     DO_LEAKY_RELU(out_h0_w0_c0, alpha);
@@ -902,7 +892,6 @@ __kernel void Conv2D_H2W1C1_1x1(__read_only image2d_t input, __write_only image2
     out_h0_w0_c0 = clamp(out_h0_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w0_c0 = clamp(out_h1_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h1_w0_c0);
   } else if (act_type == ActivationType_LEAKY_RELU) {
@@ -1001,7 +990,6 @@ __kernel void Conv2D_H2W1C2_1x1(__read_only image2d_t input, __write_only image2
     out_h0_w0_c1 = clamp(out_h0_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h1_w0_c0);
     DO_TANH(out_h0_w0_c1);
@@ -1122,7 +1110,6 @@ __kernel void Conv2D_H2W2C1_1x1(__read_only image2d_t input, __write_only image2
     out_h1_w0_c0 = clamp(out_h1_w0_c0, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w1_c0 = clamp(out_h1_w1_c0, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
@@ -1269,7 +1256,6 @@ __kernel void Conv2D_H2W2C2_1x1(__read_only image2d_t input, __write_only image2
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w1_c1 = clamp(out_h1_w1_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
@@ -1452,7 +1438,6 @@ __kernel void Conv2D_H2W2C2_Img_1x1(__read_only image2d_t input, __write_only im
     out_h1_w0_c1 = clamp(out_h1_w0_c1, (FLT4)(0.0f), (FLT4)(6.0f));
     out_h1_w1_c1 = clamp(out_h1_w1_c1, (FLT4)(0.0f), (FLT4)(6.0f));
   } else if (act_type == ActivationType_TANH) {
-    FLT4 exp0, exp1;
     DO_TANH(out_h0_w0_c0);
     DO_TANH(out_h0_w1_c0);
     DO_TANH(out_h1_w0_c0);
