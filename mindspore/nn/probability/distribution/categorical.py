@@ -14,6 +14,7 @@
 # ============================================================================
 """Categorical Distribution"""
 import numpy as np
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
@@ -22,7 +23,7 @@ import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_prob, check_sum_equal_one, check_rank,\
-                          check_distribution_name, raise_not_implemented_util
+    check_distribution_name, raise_not_implemented_util
 from ._utils.custom_ops import exp_generic, log_generic, broadcast_to
 
 
@@ -115,7 +116,8 @@ class Categorical(Distribution):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.uint_type + mstype.int_type + mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Categorical, self).__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')
@@ -144,7 +146,10 @@ class Categorical(Distribution):
         self.greater = P.Greater()
         self.issubclass = P.IsSubClass()
         self.less = P.Less()
-        self.log = log_generic
+        # when the graph kernel mode is enable
+        # use Log directly as akg will handle the corner cases
+        self.log = P.Log() if context.get_context(
+            "enable_graph_kernel") else log_generic
         self.log_softmax = P.LogSoftmax()
         self.logicor = P.LogicalOr()
         self.logicand = P.LogicalAnd()
@@ -213,7 +218,7 @@ class Categorical(Distribution):
         num_classes = self.shape(probs)[-1]
         index = nn.Range(0., num_classes, 1.)()
         return self.reduce_sum(self.square(index) * probs, -1) -\
-               self.square(self.reduce_sum(index * probs, -1))
+            self.square(self.reduce_sum(index * probs, -1))
 
     def _entropy(self, probs=None):
         r"""
@@ -303,8 +308,8 @@ class Categorical(Distribution):
         # flatten value to shape (number of labels, 1)
         # clip value to be in range from 0 to num_classes -1 and cast into int32
         value = self.reshape(value, (-1, 1))
-        out_of_bound = self.squeeze_last_axis(self.logicor(\
-                        self.less(value, 0.0), self.less(num_classes-1, value)))
+        out_of_bound = self.squeeze_last_axis(self.logicor(
+            self.less(value, 0.0), self.less(num_classes-1, value)))
         # deal with the case the there is only one class.
         value_clipped = self.clip_by_value(value, 0.0, num_classes - 1)
         value_clipped = self.cast(value_clipped, self.index_type)
@@ -314,8 +319,10 @@ class Categorical(Distribution):
 
         # index into logit_pmf, fill in out_of_bound places with -inf
         # reshape into label shape N
-        logits_pmf = self.gather(self.reshape(logits, (-1, num_classes)), index)
-        nan = self.fill(self.dtypeop(logits_pmf), self.shape(logits_pmf), self.nan)
+        logits_pmf = self.gather(self.reshape(
+            logits, (-1, num_classes)), index)
+        nan = self.fill(self.dtypeop(logits_pmf),
+                        self.shape(logits_pmf), self.nan)
         logits_pmf = self.select(out_of_bound, nan, logits_pmf)
         ans = self.reshape(logits_pmf, label_shape)
         if drop_dim:
@@ -336,7 +343,8 @@ class Categorical(Distribution):
         value = self.cast(value, self.dtypeop(probs))
 
         zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
-        between_zero_neone = self.logicand(self.less(value, 0,), self.greater(value, -1.))
+        between_zero_neone = self.logicand(
+            self.less(value, 0,), self.greater(value, -1.))
         value = self.select(between_zero_neone, zeros, P.Floor()(value))
 
         drop_dim = False

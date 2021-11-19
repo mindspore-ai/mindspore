@@ -20,7 +20,7 @@ from mindspore.common import dtype as mstype
 
 def exp_generic(input_x):
     """
-    Log op on Ascend doesn't support int types.
+    Exp op on Ascend doesn't support int types.
     Fix this with casting the type.
     """
     exp = P.Exp()
@@ -57,7 +57,8 @@ def log_generic(input_x):
     neg_x = less(input_x, 0.0)
     nonpos_x = lessequal(input_x, 0.0)
     log_x = log(input_x)
-    result = select(nonpos_x, -inf, log_x)
+    result = select(
+        nonpos_x, (-1.0) * inf, log_x)
     return select(neg_x, nan, result)
 
 
