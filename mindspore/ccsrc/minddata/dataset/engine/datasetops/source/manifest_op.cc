@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 
 #include <algorithm>
 #include <fstream>
+#include <set>
 #include <nlohmann/json.hpp>
 
 #include "utils/file_utils.h"

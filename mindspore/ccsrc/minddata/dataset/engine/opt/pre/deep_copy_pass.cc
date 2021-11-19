@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
+
+#include <string>
+
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 namespace mindspore {
 namespace dataset {

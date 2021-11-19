@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
+
+#include <algorithm>
+
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
 
 namespace mindspore {
 namespace dataset {

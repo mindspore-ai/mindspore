@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
+
+#include <utility>
+
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {

@@ -16,9 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 
-#include "minddata/dataset/engine/datasetops/source/csv_op.h"
+#include <algorithm>
+#include <utility>
 
+#include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 

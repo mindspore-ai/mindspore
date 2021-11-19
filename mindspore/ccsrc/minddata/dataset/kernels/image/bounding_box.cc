@@ -17,6 +17,7 @@
 #include "minddata/dataset/kernels/image/bounding_box.h"
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 namespace mindspore {

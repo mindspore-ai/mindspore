@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
+
 #include <memory>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "cppjieba/Unicode.hpp"
