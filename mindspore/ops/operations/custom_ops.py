@@ -39,72 +39,63 @@ class Custom(ops.PrimitiveWithInfer):
     Args:
         func (Union[function, str]):
 
-            - function:
+            - function: If func is of function type, then func should be a Python function which describes the
+              computation logic of a user defined operator. The function can be one of the following:
 
-                If func is of function type, then func should be a Python function which describes
-                the computation logic of a user defined operator. The function can be one of the following:
+              1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
+              2. A TBE operator implementation function.
+              3. A pure python function
 
-                1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
-                2. A TBE operator implementation function.
-                3. A pure python function
+            - str: If func is of str type, then str should be a path of binary file along with a function name.
+              This could only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
+              "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
+              operator. Users need compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time, and offer
+              the path of the file along with a function name.
 
-            - str:
+              - "xxx.so" file generation:
 
-                If func is of str type, then str should be a path of binary file along with a function name. This could
-                only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
-                "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as
-                an operator. Users need compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time, and
-                offer the path of the file along with a function name.
+                1) GPU Platform: Given user defined "xxx.cu" file (ex. "{path}/add.cu"), use nvcc command to compile
+                it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
 
-                - "xxx.so" file generation:
+                2) CPU Platform: Given user defined "xxx.cc" file (ex. "{path}/add.cc"), use g++/gcc command to compile
+                it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
 
-                    1) GPU Platform:
-                        Given user defined "xxx.cu" file (ex. "{path}/add.cu"),
-                        use nvcc command to compile it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
+              - Define a "xxx.cc"/"xxx.cu" file:
 
-                    2) CPU Platform:
-                        Given user defined "xxx.cc" file (ex. "{path}/add.cc"),
-                        use g++/gcc command to compile it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
+                "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same args.
+                Typically, the function should be as:
 
-                - Define a "xxx.cc"/"xxx.cu" file:
+                .. code-block::
 
-                    "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same
-                    args. Typically, the function should be as:
+                    int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
+                             void *stream, void *extra)
 
-                    .. code-block::
+                Parameters:
 
-                        int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
-                                 void *stream, void *extra)
+                - nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3 outputs,
+                  then nparam=5
+                - params(void \*\*): a pointer to the array of inputs and outputs' pointer; the pointer type of inputs
+                  and outputs is void \* ; suppose the operator has 2 inputs and 3 outputs, then the first input's
+                  pointer is nparam[0] and the second output's pointer is nparam[4]
+                - ndims(int \*): a pointer to the array of inputs and outputs' dimension num; suppose params[i] is a
+                  1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
+                - shapes(int64_t \*\*): a pointer to the array of inputs and outputs' shapes(int64_t \*); the ith
+                  input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i] is a 2x3 tensor and
+                  params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
+                - dtypes(const char \*\*): a pointer to the array of inputs and outputs' types(const char \*);
+                  (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64", "uint",
+                  "uint8", "uint16", "uint32", "uint64", "bool")
+                - stream(void \*): stream pointer, only used in cuda file
+                - extra(void \*): used for further extension
 
-                    Parameters:
+                Return Value(int):
 
-                        - nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3
-                          outputs, then nparam=5
-                        - params(void **): a pointer to the array of inputs and outputs' pointer; the pointer type of
-                          inputs and outputs is void * ; suppose the operator has 2 inputs and 3 outputs, then the first
-                          input's pointer is nparam[0] and the second output's pointer is nparam[4]
-                        - ndims(int *): a pointer to the array of inputs and outputs' dimension num; suppose params[i]
-                          is a 1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
-                        - shapes(int64_t **): a pointer to the array of inputs and outputs' shapes(int64_t *); the ith
-                          input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i]
-                          is a 2x3 tensor and params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
-                        - dtypes(const char **): a pointer to the array of inputs and outputs' types(const char *);
-                          (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64",
-                          "uint", "uint8", "uint16", "uint32", "uint64", "bool")
-                        - stream(void *): stream pointer, only used in cuda file
-                        - extra(void *): used for further extension
+                - 0: raise no Exception
+                - larger than 0: will raise Exception
 
-                    Return Value(int):
+                Examples: see details tests/st/ops/graph_kernel/custom/aot_test_files/
 
-                        0: raise no Exception
-
-                        larger than 0: will raise Exception
-
-                    Examples:
-
-                        see details tests/st/ops/graph_kernel/custom/aot_test_files/
-
-                - Use it in Custom:
+              - Use it in Custom:
 
                 .. code-block::
 
@@ -157,7 +148,7 @@ class Custom(ops.PrimitiveWithInfer):
           value(optional).
 
     Outputs:
-        tuple[Tensor], execution results.
+        Tensor or tuple[Tensor], execution results.
 
     Raises:
         TypeError: If the type of `func` is invalid or the type of register information for `func` is invalid.
@@ -273,8 +264,8 @@ class Custom(ops.PrimitiveWithInfer):
         self.uniq_name = ""
         self.imply_path = ""
         self.func_source_str = ""
-        self.check_func()
-        self.update_func_info()
+        self._check_func()
+        self._update_func_info()
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
         self.add_prim_attr("imply_path", self.imply_path)
@@ -296,7 +287,7 @@ class Custom(ops.PrimitiveWithInfer):
         self.add_prim_attr("single_scalar_output", self.single_scalar_output)
 
         # Register info
-        self.register_info(reg_info)
+        self._register_info(reg_info)
 
         if func_type == "akg":
             self.add_prim_attr('func_source_str', self.func_source_str)
@@ -307,7 +298,7 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 self.func_type = "hybrid"
         self.add_prim_attr("func_type", self.func_type)
-        self.update_attr()
+        self._update_attr()
 
     def infer_shape(self, *args):
         if callable(self.out_shape):
@@ -330,7 +321,7 @@ class Custom(ops.PrimitiveWithInfer):
     def get_bprop(self):
         return self.bprop
 
-    def check_func(self):
+    def _check_func(self):
         """Check the validity of func_type and type of func"""
         if self.func_type not in self.supported_func_type:
             raise ValueError("func_type should be one of {}, but got {}"
@@ -343,7 +334,7 @@ class Custom(ops.PrimitiveWithInfer):
                 raise TypeError("{} func should be of type function, but got {}"
                                 .format(self.func_type, type(self.func)))
 
-    def update_func_info(self):
+    def _update_func_info(self):
         """Update information of func"""
         if callable(self.func):
             # Get the original function if func is decorated
@@ -372,12 +363,12 @@ class Custom(ops.PrimitiveWithInfer):
         else:
             raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
 
-    def register_info(self, info):
+    def _register_info(self, info):
         """Register reg_info."""
         reg_info = info
         if reg_info is None and hasattr(self.func, "reg_info"):
             reg_info = getattr(self.func, "reg_info")
-        reg_info_list = self.get_expanded_list(reg_info)
+        reg_info_list = self._get_expanded_list(reg_info)
         for reg_info in reg_info_list:
             if not isinstance(reg_info, (str, dict)):
                 continue
@@ -389,32 +380,32 @@ class Custom(ops.PrimitiveWithInfer):
                 for i in reg_info["dtype_format"]:
                     new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
-            target = self.get_target(reg_info)
+            target = self._get_target(reg_info)
             # Reg info for func is only registered once for a certain target
-            if self.has_registered(target):
+            if self._has_registered(target):
                 continue
             # Register
-            reg_info = self.reformat_reg_info(reg_info, target)
+            reg_info = self._reformat_reg_info(reg_info, target)
             reg_info_str = json.dumps(reg_info)
             op_lib = Oplib()
             if not op_lib.reg_op(reg_info_str, self.imply_path):
                 raise ValueError('Invalid reg info {}: {}\n'.format(self.imply_path, reg_info_str))
-            self.save_attr(reg_info)
-            self.save_register_status(target)
+            self._save_attr(reg_info)
+            self._save_register_status(target)
 
-    def get_expanded_list(self, data):
+    def _get_expanded_list(self, data):
         """Recursive function to parse elements in list or tuple."""
         data_list = []
         if isinstance(data, (list, tuple)):
             for i in data:
-                tmp_list = self.get_expanded_list(i)
+                tmp_list = self._get_expanded_list(i)
                 for ii in tmp_list:
                     data_list.append(ii)
         else:
             data_list.append(data)
         return data_list
 
-    def get_registered_targets(self):
+    def _get_registered_targets(self):
         """Get the registered targets of func."""
         targets = []
         if callable(self.func):
@@ -425,12 +416,12 @@ class Custom(ops.PrimitiveWithInfer):
             targets = [targets]
         return targets
 
-    def has_registered(self, target):
+    def _has_registered(self, target):
         """Check if registration information is registered in target."""
-        registered_targets = self.get_registered_targets()
+        registered_targets = self._get_registered_targets()
         return target in registered_targets
 
-    def save_register_status(self, target):
+    def _save_register_status(self, target):
         """Save registration status for target."""
         if callable(self.func):
             registered_targets = getattr(self.func, "registered_targets", [])
@@ -442,12 +433,12 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 Custom.registered_func[self.func] = [target]
 
-    def reformat_reg_info(self, reg_info, target):
+    def _reformat_reg_info(self, reg_info, target):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
             raise TypeError("reg_info should be of type dict, but got {}".format(type(reg_info)))
         reg_info["op_name"] = self.uniq_name
-        reg_info["imply_type"] = self.get_imply_type(reg_info, target)
+        reg_info["imply_type"] = self._get_imply_type(reg_info, target)
         if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
             reg_info["fusion_type"] = "OPAQUE"
         # Supplement necessary info for TBE if these information is missing in reg_info
@@ -468,7 +459,7 @@ class Custom(ops.PrimitiveWithInfer):
             reg_info["processor"] = reg_info.get("processor", target_to_processor.get(target))
         return reg_info
 
-    def get_target(self, reg_info):
+    def _get_target(self, reg_info):
         """Get target information."""
         target = None
         if isinstance(reg_info, dict):
@@ -491,7 +482,7 @@ class Custom(ops.PrimitiveWithInfer):
             raise ValueError("target should be one of {}, but got {}".format(self.supported_targets, target))
         return target
 
-    def get_imply_type(self, reg_info, target):
+    def _get_imply_type(self, reg_info, target):
         """Get imply_typ information."""
         # Get imply_type from reg_info["imply_type"]
         if isinstance(reg_info, dict) and isinstance(reg_info.get("imply_type"), str) and \
@@ -501,7 +492,7 @@ class Custom(ops.PrimitiveWithInfer):
         func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "pyfunc": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
-    def save_attr(self, reg_info):
+    def _save_attr(self, reg_info):
         """Save input_names and attr_names of current func."""
         if not isinstance(reg_info, dict):
             return
@@ -551,7 +542,7 @@ class Custom(ops.PrimitiveWithInfer):
             raise ValueError("func {}: attr_names {} is different from previous saved one: {}"
                              .format(self.func, attr_names, prev_attr_names))
 
-    def update_attr(self):
+    def _update_attr(self):
         """Add input_names, attr_names, primitive_target to primitive's attr."""
         # add input_names, attr_names
         func_attr = {}
@@ -567,7 +558,7 @@ class Custom(ops.PrimitiveWithInfer):
             if attr_names:
                 self.add_prim_attr("attr_names", attr_names)
         # add primitive_target
-        registered_targets = self.get_registered_targets()
+        registered_targets = self._get_registered_targets()
         if self.func_type == "pyfunc":
             self.add_prim_attr("primitive_target", "CPU")
             if registered_targets and registered_targets != ["CPU"]:

@@ -43,7 +43,7 @@ def estimate_ops(json_str):
         return None
 
 
-def estimate_calulation_amount(json_str):
+def estimate_calculation_amount(json_str):
     """Call cost model to estimate calculation amount of op."""
     try:
         graph_desc = json.loads(json_str)
