@@ -279,6 +279,17 @@ void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphMan
     AddGraphToManager(NOT_NULL(child_graph.lock()), manager, memo);
   }
 }
+void CheckControlFlowDynamicShape(std::vector<KernelGraphPtr> all_graphs) {
+  if (all_graphs.size() <= 1) {
+    return;
+  }
+  for (auto &graph : all_graphs) {
+    if (graph->is_dynamic_shape()) {
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with control flow(loop control statements and conditions "
+                           "control statements).";
+    }
+  }
+}
 }  // namespace
 
 void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
@@ -387,6 +398,8 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   }
   UnifyMindIR(root_graph);
   opt::BackendCommonOptimization(root_graph);
+  CheckControlFlowDynamicShape(all_graphs);
+
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
