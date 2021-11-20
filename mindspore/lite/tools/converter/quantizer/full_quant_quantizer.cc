@@ -125,10 +125,9 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
 }
 }  // namespace
 
-FullQuantQuantizer::FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type, bool per_channel)
+FullQuantQuantizer::FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type)
     : Quantizer(std::move(graph)) {
   MS_ASSERT(graph != nullptr);
-  this->per_channel_ = per_channel;
   this->bit_num = bit_num;
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
@@ -176,7 +175,7 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
     quant_param.max = info->GetMax();
     quant_param.min = info->GetMin();
     quant_param.numBits = bit_num;
-    quant_param.narrowRange = false;
+    quant_param.narrowRange = true;
     quant_param.inited = true;
     quant_param.roundType = 1;
     quant_param.multiplier = 1;

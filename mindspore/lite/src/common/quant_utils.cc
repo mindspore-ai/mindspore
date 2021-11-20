@@ -20,9 +20,15 @@
 
 namespace mindspore {
 namespace lite {
-// It can be expanded to support both symmetric and asymmetrical in the future.
-STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
-                             int quant_max, int quant_min, int num_bits) {
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          bool narrow_range) {
+  int quant_max = QuantMax(num_bits);
+  int quant_min = QuantMin(num_bits, false, narrow_range);
+  return CalQuantizationParams(quant_param, real_min, real_max, num_bits, narrow_range, quant_min, quant_max);
+}
+
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          bool narrow_range, int quant_min, int quant_max) {
   CHECK_NULL_RETURN(quant_param);
   // Handling 0
   // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
@@ -94,9 +100,9 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
   return (data_index / stride) % bucket_count;
 }
 
-STATUS GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                            std::map<int, MinMax> *per_channel_min_max) {
-  // the key is bucket_index the value
+int GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                         std::map<int, MinMax> *per_channel_min_max) {
+  // the key is bucket_index
   std::map<int, std::vector<float>> sorted_data;
   for (int i = 0; i < elem_count; ++i) {
     auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
@@ -117,7 +123,7 @@ STATUS GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::v
   return RET_OK;
 }
 
-STATUS CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim) {
+int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim) {
   auto elem_count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
   static const int quant_param_size = 32 * 8;
   int channels = dims.at(preferred_dim);
@@ -132,9 +138,9 @@ STATUS CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int prefe
   }
 }
 
-STATUS CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
-                          std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims,
-                          int preferred_dim) {
+int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
+                       std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims,
+                       int preferred_dim) {
   CHECK_NULL_RETURN(raw_datas);
   CHECK_NULL_RETURN(quant_params);
   std::map<int, double> total_raws;

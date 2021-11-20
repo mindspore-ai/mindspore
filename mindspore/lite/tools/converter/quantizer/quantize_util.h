@@ -92,9 +92,6 @@ constexpr int percent = 10;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
-int CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
-                          int numBits = kUint8Quantization);
-
 std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);

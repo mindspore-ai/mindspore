@@ -33,20 +33,17 @@
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
-
 namespace schema {
 struct QuantParamT;
 }
 
 namespace lite {
-
 typedef struct {
   float min;
   float max;
 } MinMax;
 
 static constexpr double SCALE_THREASHOLD = 1e-38;
-
 static constexpr int kPerTensor = 1;
 
 inline int QuantMax(int bits, bool is_unsigned = false) {
@@ -57,72 +54,55 @@ inline int QuantMax(int bits, bool is_unsigned = false) {
   }
 }
 
-inline int QuantMin(int bits, bool is_unsigned = false) {
+inline int QuantMin(int bits, bool is_unsigned = false, bool is_narrow = true) {
   if (!is_unsigned) {
-    return -(1 << static_cast<unsigned int>(bits - 1));
+    return -(1 << static_cast<unsigned int>(bits - 1)) + (is_narrow ? 1 : 0);
   } else {
-    return -(1 << static_cast<unsigned int>(bits));
+    return 0;
   }
 }
 
-STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
-                             int quant_max, int quant_min, int num_bits);
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          bool narrow_range, int quant_min, int quant_max);
+
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          bool narrow_range);
 
 template <typename T>
-T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
+T QuantizeData(float origin_data, const schema::QuantParamT *quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
   const auto scale = quantParam->scale;
-  const auto zeroPoint = quantParam->zeroPoint;
-  const auto numBit = quantParam->numBits;
-  const auto narrowRange = quantParam->narrowRange;
-  const int32_t quantMax = (1 << (unsigned int)(numBit - 1)) - 1;
-  const int32_t quantMin = -1 * (1 << (unsigned int)(numBit - 1)) + (narrowRange ? 1 : 0);
-  const double maxLimit = static_cast<float>(quantMax - zeroPoint) * scale;
-  const double minLimit = static_cast<float>(quantMin - zeroPoint) * scale;
-
-  return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    double tmp;
-    if (originData > maxLimit) {
-      tmp = maxLimit;
-    } else if (originData < minLimit) {
-      tmp = minLimit;
-    } else {
-      tmp = originData;
-    }
-    auto quantData = static_cast<T>(std::round(zeroPoint + tmp / scale));
-    return quantData;
-  }();
-}
-
-template <typename T>
-T QuantizeData(float originData, const schema::QuantParamT *quantParam, int quant_max, int quant_min) {
-  MS_ASSERT(quantParam != nullptr);
-  MS_ASSERT(quantParam->inited);
-  const auto scale = quantParam->scale;
-  const int zeroPoint = quantParam->zeroPoint;
-  const int maxLimit = quant_max;
-  const int minLimit = quant_min;
-
+  const int zero_point = quantParam->zeroPoint;
   if (scale <= SCALE_THREASHOLD) {
     return 0;
   }
-
-  return [maxLimit, minLimit, zeroPoint, scale, originData] {
-    auto quant_data = std::round(originData / scale + zeroPoint);
-    if (quant_data > maxLimit) {
-      quant_data = maxLimit;
-    } else if (quant_data < minLimit) {
-      quant_data = minLimit;
+  return [quant_max, quant_min, zero_point, scale, origin_data] {
+    auto quant_data = std::round(origin_data / scale + zero_point);
+    if (quant_data > quant_max) {
+      quant_data = quant_max;
+    } else if (quant_data < quant_min) {
+      quant_data = quant_min;
     }
     return static_cast<T>(quant_data);
   }();
 }
 
 template <typename T>
-STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
-                       const int &quant_max, const int &quant_min, const size_t &bit_num, const bool &k_means,
-                       std::vector<T> *quant_datas) {
+T QuantizeData(const float origin_data, const schema::QuantParamT *quant_param) {
+  MS_ASSERT(quant_param != nullptr);
+  MS_ASSERT(quant_param->inited);
+  const auto num_bit = quant_param->numBits;
+  const auto narrow_range = quant_param->narrowRange;
+  const int32_t quant_max = QuantMax(num_bit, false);
+  const int32_t quant_min = QuantMin(num_bit, false, narrow_range);
+  return QuantizeData<T>(origin_data, quant_param, quant_max, quant_min);
+}
+
+template <typename T>
+int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
+                    const int &quant_max, const int &quant_min, const size_t &bit_num, const bool &k_means,
+                    std::vector<T> *quant_datas) {
   if (k_means) {
     MS_LOG(ERROR) << "Unsupported K-means.";
     return RET_ERROR;
@@ -135,7 +115,7 @@ STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<sc
   }
 
   schema::QuantParamT quant_param;
-  STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
+  int status = CalQuantizationParams(&quant_param, min, max, bit_num, false, quant_min, quant_max);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
     return status;
@@ -154,23 +134,22 @@ STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<sc
 int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_index);
 
 // Calculate the Compression effect of per-channel
-STATUS CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
+int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
 
 // Get the min max of each channel
-STATUS GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                            std::map<int, MinMax> *per_channel_min_max);
+int GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                         std::map<int, MinMax> *per_channel_min_max);
 
 // Calculate the distribution difference between quant and origin
-STATUS CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
-                          std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims,
-                          int preferred_dim);
+int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
+                       std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims, int preferred_dim);
 
 template <typename T>
-STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
-                         std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                         const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                         const std::vector<int> &dims, int preferred_dim) {
-  STATUS ret;
+int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
+                      std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
+                      const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
+                      const std::vector<int> &dims, int preferred_dim) {
+  int ret;
   auto count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
   if (static_cast<size_t>(count) != elem_count) {
     MS_LOG(ERROR) << " element != count";
@@ -199,7 +178,7 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
     float min = min_max_map.second.min;
     float max = min_max_map.second.max;
     schema::QuantParamT quant_param;
-    ret = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
+    ret = CalQuantizationParams(&quant_param, min, max, bit_num, false, quant_min, quant_max);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Cal quantization params failed.";
       return ret;
@@ -226,7 +205,6 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   }
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore
 
