@@ -76,7 +76,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_stl10_dataset, check_yelp_review_dataset, check_penn_treebank_dataset, check_iwslt2016_dataset, \
     check_iwslt2017_dataset, check_sogou_news_dataset, check_yahoo_answers_dataset, check_udpos_dataset, \
     check_conll2000_dataset, check_amazon_review_dataset, check_semeion_dataset, check_caltech101_dataset, \
-    check_caltech256_dataset, check_wiki_text_dataset
+    check_caltech256_dataset, check_wiki_text_dataset, check_imdb_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3668,6 +3668,147 @@ class ImageFolderDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
+
+
+class IMDBDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Internet Movie Database (IMDb).
+
+    The generated dataset has two columns: :py:obj:`[text, label]`.
+    The tensor of column :py:obj:`text` is of the string type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`
+            (default=None, will read all samples).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - The shape of the test column.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> imdb_dataset_dir = "/path/to/imdb_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (text files) in imdb_dataset_dir with 8 threads
+        >>> dataset = ds.IMDBDataset(dataset_dir=imdb_dataset_dir, num_parallel_workers=8)
+        >>>
+        >>> # 2) Read train samples (text files).
+        >>> dataset = ds.IMDBDataset(dataset_dir=imdb_dataset_dir, usage="train")
+
+    About IMDBDataset:
+
+    The IMDB dataset contains 50, 000 highly polarized reviews from the Internet Movie Database (IMDB). The data set
+    was divided into 25 000 comments for training and 25 000 comments for testing, with both the training set and test
+    set containing 50% positive and 50% negative comments. Train labels and test labels are all lists of 0 and 1, where
+    0 stands for negative and 1 for positive.
+
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── imdb_dataset_directory
+             ├── train
+             │    ├── pos
+             │    │    ├── 0_9.txt
+             │    │    ├── 1_7.txt
+             │    │    ├── ...
+             │    ├── neg
+             │    │    ├── 0_3.txt
+             │    │    ├── 1_1.txt
+             │    │    ├── ...
+             ├── test
+             │    ├── pos
+             │    │    ├── 0_10.txt
+             │    │    ├── 1_10.txt
+             │    │    ├── ...
+             │    ├── neg
+             │    │    ├── 0_2.txt
+             │    │    ├── 1_3.txt
+             │    │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @InProceedings{maas-EtAl:2011:ACL-HLT2011,
+          author    = {Maas, Andrew L.  and  Daly, Raymond E.  and  Pham, Peter T.  and  Huang, Dan
+                        and  Ng, Andrew Y.  and  Potts, Christopher},
+          title     = {Learning Word Vectors for Sentiment Analysis},
+          booktitle = {Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics:
+                        Human Language Technologies},
+          month     = {June},
+          year      = {2011},
+          address   = {Portland, Oregon, USA},
+          publisher = {Association for Computational Linguistics},
+          pages     = {142--150},
+          url       = {http://www.aclweb.org/anthology/P11-1015}
+        }
+    """
+
+    @check_imdb_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.IMDBNode(self.dataset_dir, self.usage, self.sampler)
 
 
 class IWSLT2016Dataset(SourceDataset, TextBaseDataset):

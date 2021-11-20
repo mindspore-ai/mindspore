@@ -22,6 +22,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         fashion_mnist_node.cc
         flickr_node.cc
         image_folder_node.cc
+        imdb_node.cc
         iwslt2016_node.cc
         iwslt2017_node.cc
         kmnist_node.cc
