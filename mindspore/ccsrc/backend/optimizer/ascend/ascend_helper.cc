@@ -38,13 +38,13 @@ bool NeedInsertTransData(const std::vector<size_t> &origin_shape, const std::str
   return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
 }
 
-AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const AnfNodePtr &orig_node,
                              const KernelSelectPtr &kernel_select, const std::vector<size_t> &dst_shape) {
   std::vector<AnfNodePtr> trans_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimReshape->name());
   trans_inputs.emplace_back(NewValueNode(prim));
   trans_inputs.emplace_back(input_node);
-  auto reshape = func_graph->NewCNode(trans_inputs);
+  auto reshape = NewCNode(trans_inputs, func_graph, {orig_node});
   MS_EXCEPTION_IF_NULL(reshape);
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {dst_shape}, reshape.get());
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape);
@@ -213,22 +213,22 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                : prim::kPrimTransData->name();
   if (!need_padding) {
     // don't need padding insert transdata only
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, trans_opname);
+    trans_data = NewTransOpNode(func_graph, input_node, node, kernel_select, need_padding, trans_opname);
     trans_node = trans_data;
   } else if (is_insert_input) {
     // if need padding & is input need insert a transdata
     // reshape[padding shape] -> transdata[padding shape] -> node
     auto padding_shape = trans::PaddingShape(input_node_out_shape, AnfAlgo::GetInputFormat(node, insert_index),
                                              AnfAlgo::GetInputReshapeType(node, insert_index));
-    auto reshape_node = CreateReshapeNode(func_graph, input_node, kernel_select, padding_shape);
-    trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, trans_opname);
+    auto reshape_node = CreateReshapeNode(func_graph, input_node, node, kernel_select, padding_shape);
+    trans_data = NewTransOpNode(func_graph, reshape_node, node, kernel_select, need_padding, trans_opname);
     trans_node = trans_data;
     trans_data->set_abstract(input_node->abstract());
   } else {
     // if need padding & is output need insert a transdata
     // node -> transdata[padding shape] -> reshape[ori_shape]
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, trans_opname);
-    auto reshape_node = CreateReshapeNode(func_graph, trans_data, kernel_select, input_node_out_shape);
+    trans_data = NewTransOpNode(func_graph, input_node, node, kernel_select, need_padding, trans_opname);
+    auto reshape_node = CreateReshapeNode(func_graph, trans_data, node, kernel_select, input_node_out_shape);
     trans_node = reshape_node;
   }
   if (trans_opname == prim::kPrimTransDataRNN->name()) {
@@ -262,12 +262,13 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
   SetTransNodeAttr(trans_data->cast<CNodePtr>());
 }
 
-CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
-                        const bool need_padding, const std::string &op_name, const std::vector<int64_t> &perm) {
+CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
+                        const KernelSelectPtr &kernel_select, const bool need_padding, const std::string &op_name,
+                        const std::vector<int64_t> &perm) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(kernel_select);
-  CNodePtr trans_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(op_name)), input});
+  CNodePtr trans_node = NewCNode({NewValueNode(std::make_shared<Primitive>(op_name)), input}, func_graph, {orig_node});
   MS_EXCEPTION_IF_NULL(trans_node);
   auto infer_type = AnfAlgo::GetOutputInferDataType(input, 0);
 
@@ -325,15 +326,16 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   return trans_node;
 }
 
-CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
-                              const TypeId &input_type, const TypeId &output_type,
+CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
+                              const std::string &format, const TypeId &input_type, const TypeId &output_type,
                               const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
                               const std::string &reshape_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_shape);
   std::string input_format = format;
   std::string output_format = format;
-  CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
+  CNodePtr cast =
+    NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input}, func_graph, {orig_node});
   MS_EXCEPTION_IF_NULL(cast);
   // set kernel build info
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
@@ -449,7 +451,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
       auto cast =
-        AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, infer_type);
+        AddCastOpNodeToGraph(func_graph, cur_input, cnode, dev_fmt, origin_type, device_type, origin_shape, infer_type);
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(cnode->scope());
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);

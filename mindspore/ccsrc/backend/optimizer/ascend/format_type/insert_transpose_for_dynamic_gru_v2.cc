@@ -56,14 +56,14 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       KernelSelectPtr kernel_select = std::make_shared<KernelSelect>();
       // trans default to hwcn
       new_transpose_node =
-        NewTransOpNode(func_graph, AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0), kernel_select, false,
-                       prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
+        NewTransOpNode(func_graph, AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0), cnode, kernel_select,
+                       false, prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
       MS_EXCEPTION_IF_NULL(new_transpose_node);
       AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
       RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
       // trans hwcn to output_format
       new_transdata_node =
-        NewTransOpNode(func_graph, new_transpose_node, kernel_select, false, prim::kPrimTransData->name());
+        NewTransOpNode(func_graph, new_transpose_node, cnode, kernel_select, false, prim::kPrimTransData->name());
       MS_EXCEPTION_IF_NULL(new_transdata_node);
       RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node, padding_axis);
       new_transdata_node->set_abstract(transdata_node->abstract());

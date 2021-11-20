@@ -73,18 +73,19 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
   // if output_format=default transdata need split transdata->transpose else transpose->transdata
   if (output_format == kOpFormat_DEFAULT || output_format == kOpFormat_NCHW) {
     // trans input_format to hwcn
-    new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
-                                        false, prim::kPrimTransData->name());
+    new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node,
+                                        kernel_select_, false, prim::kPrimTransData->name());
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node, padding_axis);
     // trans hwcn to default_format
-    new_transpose_node = NewTransOpNode(func_graph, new_transdata_node, kernel_select_, false,
+    new_transpose_node = NewTransOpNode(func_graph, new_transdata_node, node, kernel_select_, false,
                                         prim::kPrimTranspose->name(), std::vector<int64_t>{3, 2, 0, 1});
     RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transpose_node);
     new_replace_node = new_transpose_node;
   } else {
     // trans default to hwcn
-    new_transpose_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
-                                        false, prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
+    new_transpose_node =
+      NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node, kernel_select_, false,
+                     prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
     if (output_format == kOpFormat_FRACTAL_ZN_LSTM) {
       AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
     }
@@ -92,7 +93,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
 
     // trans hwcn to output_format
     new_transdata_node =
-      NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::kPrimTransData->name());
+      NewTransOpNode(func_graph, new_transpose_node, node, kernel_select_, false, prim::kPrimTransData->name());
     RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node, padding_axis);
     new_transdata_node->set_abstract(node->abstract());
     new_replace_node = new_transdata_node;
