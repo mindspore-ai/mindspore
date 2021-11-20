@@ -28,6 +28,7 @@ namespace parallel {
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 bool IsParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
+RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,

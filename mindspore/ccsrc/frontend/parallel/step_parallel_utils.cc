@@ -35,6 +35,7 @@
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/node_check.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
@@ -147,6 +148,61 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     shapes.push_back(shape_ptr->shape());
   }
   return shapes;
+}
+
+RankList FindCommonMirrorGroup(const FuncGraphPtr &root) {
+  auto parameters = root->parameters();
+  for (auto &parameter : parameters) {
+    auto param_ptr = parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (!(param_ptr->has_default() && ParameterRequireGrad(param_ptr))) {
+      continue;
+    }
+    size_t allow_repeat_num = 1;
+    if (ParallelContext::GetInstance()->enable_parallel_optimizer() &&
+        (!param_ptr->param_info() || !param_ptr->param_info()->parallel_optimizer())) {
+      if (ParallelContext::GetInstance()->optimizer_weight_shard_size() == -1) {
+        MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
+                        << " is fully shard by optimizer parallel,"
+                           " thus cannot find common data parallel group for this rank";
+        return {g_device_manager->global_rank()};
+      }
+      allow_repeat_num = size_t(ParallelContext::GetInstance()->optimizer_weight_shard_size());
+    }
+    if (IsFullySplitParameter(param_ptr, allow_repeat_num)) {
+      MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
+                      << " is fully shard, thus cannot find common data parallel group for this rank";
+      return {g_device_manager->global_rank()};
+    }
+  }
+  AnfNodePtr ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<int64_t> common_group_list;
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  bool is_first_group = true;
+  for (auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimMirror) && !IsPrimitiveCNode(node, prim::kPrimMirrorMicroStep) &&
+        !IsPrimitiveCNode(node, prim::kPrimMirrorMiniStep)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(node);
+    if (!prim->HasAttr(GROUP)) {
+      MS_LOG(EXCEPTION) << "The mirror operator dose not have group attr : " << node->DebugString();
+    }
+    std::string group_name = GetValue<std::string>(prim->GetAttr(GROUP));
+    std::vector<int64_t> group_list = g_device_manager->FindRankListByHashName(group_name);
+    if (is_first_group) {
+      common_group_list = group_list;
+      is_first_group = false;
+    } else {
+      std::vector<int64_t> new_comm_group_list;
+      std::set_intersection(common_group_list.begin(), common_group_list.end(), group_list.begin(), group_list.end(),
+                            std::back_inserter(new_comm_group_list));
+      common_group_list = new_comm_group_list;
+    }
+  }
+  MS_LOG(INFO) << "The common mirror group is:" << common_group_list;
+  return common_group_list;
 }
 
 std::string CreateInstanceName(const CNodePtr &node, size_t index) {

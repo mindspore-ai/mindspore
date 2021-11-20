@@ -45,7 +45,7 @@ void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
 bool ParameterIsCloned(const AnfNodePtr &parameter_node);
-bool IsFullySplitParameter(const ParameterPtr &param_ptr);
+bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num = 1);
 }  // namespace parallel
 }  // namespace mindspore
 
