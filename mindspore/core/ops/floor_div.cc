@@ -32,8 +32,6 @@ namespace {
 abstract::ShapePtr FloorDivInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -50,26 +48,33 @@ abstract::ShapePtr FloorDivInferShape(const PrimitivePtr &primitive, const std::
 TypePtr FloorDivInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  (void)abstract::CheckDtypeSame(prim_name, x, y);
-  auto input_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt32, kInt64, kUInt8};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);
-  return input_type;
+  auto input_type01 = input_args[0]->BuildType();
+  auto input_type02 = input_args[1]->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type01);
+  MS_EXCEPTION_IF_NULL(input_type02);
+  if (!input_type01->isa<TensorType>() && !input_type02->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ","
+                            << " one of the inputs must be tensor type but got " << input_type01->ToString() << " and "
+                            << input_type02->ToString();
+  }
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,
+                                         kInt32,   kInt64,   kUInt8,   kUInt16, kBool};
+  (void)CheckAndConvertUtils::CheckTypeValid("x", input_type01, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("y", input_type02, valid_types, prim_name);
+  return input_type01;
 }
 }  // namespace
 
 AbstractBasePtr FloorDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  auto shape = FloorDivInferShape(primitive, input_args);
-  auto type = FloorDivInferType(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto infer_type = FloorDivInferType(primitive, input_args);
+  auto infer_shape = FloorDivInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(FloorDiv, prim::kPrimFloorDiv, FloorDivInfer, nullptr, true);
 }  // namespace ops

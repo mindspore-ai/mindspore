@@ -131,8 +131,18 @@ MS_REG_CPU_KERNEL_T(
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   ArithmeticCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
+  FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  ArithmeticCpuKernelMod, int8_t);
+MS_REG_CPU_KERNEL_T(
   FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ArithmeticCpuKernelMod, int);
+MS_REG_CPU_KERNEL_T(
+  FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(
+  FloorDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  ArithmeticCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(
   FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -144,6 +154,13 @@ MS_REG_CPU_KERNEL_T(
   FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   ArithmeticCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(
+  FloorDiv, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  ArithmeticCpuKernelMod, uint8_t);
+MS_REG_CPU_KERNEL_T(
+  FloorDiv,
+  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+  ArithmeticCpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(
   Mod, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ArithmeticCpuKernelMod, int);
