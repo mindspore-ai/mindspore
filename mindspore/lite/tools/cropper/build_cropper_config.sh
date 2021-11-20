@@ -278,7 +278,6 @@ chmod 444 ${CPU_MAPPING_OUTPUT_FILE}
 # support for gpu
 opencl_files=()
 while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/kernel/opencl/*.cc)
-while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/gpu/*.cc)
 while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/gpu/opencl/*.cc)
 opencl_others_files=(
   "mindspore/lite/src/runtime/kernel/opencl/kernel/fusion_eltwise.cc"

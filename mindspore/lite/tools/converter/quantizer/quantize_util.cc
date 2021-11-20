@@ -182,7 +182,7 @@ bool TensorQuantParamsInited(const schema::TensorT &tensor) {
   return true;
 }
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int numBits) {
+int CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int numBits) {
   MS_ASSERT(quantParam != nullptr);
   if (mMin > 0.0f) {
     MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
@@ -526,8 +526,8 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::
   }
 }
 
-STATUS UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
-                               int new_size, TypeId new_data_type) {
+int UpdateTensorDataAndSize(const ParameterPtr &parameter, const tensor::TensorPtr &weight, void *quant_datas,
+                            int new_size, TypeId new_data_type) {
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
   weight->set_data_type(new_data_type);
@@ -649,9 +649,9 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-STATUS MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight,
-                           const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
-                           TypeId quant_data_type, double init_scale, int index) {
+int MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
+                        QuantType quant_type, WeightQuantType weight_quant_type, TypeId quant_data_type,
+                        double init_scale, int index) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();

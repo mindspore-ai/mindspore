@@ -23,8 +23,8 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {
-STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
-                                                        const mindspore::schema::CNodeT &node) {
+int ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
+                                                     const mindspore::schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   UpdateQuantParamsNum(*graph, node);
 

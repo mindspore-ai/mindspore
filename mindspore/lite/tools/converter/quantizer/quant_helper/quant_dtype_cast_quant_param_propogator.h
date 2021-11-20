@@ -20,7 +20,7 @@
 namespace mindspore::lite {
 class QuantDtypeCastQuantParamPropogator : public QuantParamPropogator {
  public:
-  STATUS PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) override;
+  int PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) override;
 };
 }  // namespace mindspore::lite
 

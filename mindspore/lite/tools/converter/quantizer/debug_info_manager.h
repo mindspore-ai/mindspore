@@ -71,6 +71,15 @@ struct QuantDebugInfo {
   TensorData tensor_data;
 };
 
+struct QuantParamExtend {
+  std::string node_name;
+  std::string node_type;
+  std::string tensor_name;
+  int64_t element_num;
+  std::vector<int> dims;
+  Vector<lite::LiteQuantParam> quant_params;
+};
+
 class DebugInfoManager {
  public:
   int CompareOriginWithQuant(const quant::SessionModel &origin, const quant::SessionModel &quant,
@@ -113,13 +122,22 @@ class DebugInfoManager {
   KernelCallBack GetBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
                                    const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
 
+  KernelCallBack GetOriginBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                                         const std::map<std::string, OpParameter *> &op_parameters);
+
+  KernelCallBack GetQuantBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                                        const std::map<std::string, OpParameter *> &op_parameters);
+
   KernelCallBack GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
+
+  int GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                     mindspore::tensor::MSTensor *tensor, mindspore::lite::Tensor *new_tensor);
 
   void FreeBuffer();
 
-  void PrintQuantParam(const std::vector<Tensor *> &quant_tensors);
+  void PrintQuantParam();
 
-  int SaveQuantParam(const std::string &file_path, const std::vector<Tensor *> &quant_tensors);
+  int SaveQuantParam(const std::string &file_path);
   template <typename T>
   void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
     MS_ASSERT(infos != nullptr);
@@ -147,6 +165,9 @@ class DebugInfoManager {
   std::map<PrimaryKey, QuantDebugInfo> origin_info_;
   // Use vector to preserve ordert, There may be more nodes, such as QuantCast, bias etc.
   std::vector<QuantDebugInfo> compared_info_;
+  std::vector<QuantParamExtend> quant_params_;
+  // Mark whether to save quantization parameters. only save 1 round.
+  bool save_flag_ = true;
 };
 }  // namespace mindspore::lite
 

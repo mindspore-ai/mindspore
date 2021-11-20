@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
-                                      const size_t &bit_num) {
+int HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+                                   const size_t &bit_num) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   if (quant_datas == nullptr) {
@@ -67,7 +67,7 @@ STATUS HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Pri
   return RET_SUCCESS;
 }
 
-STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
+int HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
   MS_ASSERT(data != nullptr);
   std::map<int8_t, size_t> freq_map;
   for (size_t i = 0; i < data_size; i++) {
@@ -130,7 +130,7 @@ void HuffmanEncode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_left
   }
 }
 
-STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
+int HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
   MS_ASSERT(pq != nullptr);
   HuffmanNodePtr root = nullptr;
   while (!pq->empty()) {
@@ -169,7 +169,7 @@ STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
   return RET_OK;
 }
 
-STATUS HuffmanEncode::DoHuffmanCompress(const int8_t *input_datas, const size_t data_size) {
+int HuffmanEncode::DoHuffmanCompress(const int8_t *input_datas, const size_t data_size) {
   MS_ASSERT(input_datas != nullptr);
   unsigned char out_c;
   string code_str;

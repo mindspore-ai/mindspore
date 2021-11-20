@@ -21,7 +21,7 @@
 #include "src//common/log_util.h"
 #include "nnacl/op_base.h"
 namespace mindspore::lite {
-STATUS CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
+int CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "Graph is nullptr.");
   UpdateQuantParamsNum(*graph, node);
 

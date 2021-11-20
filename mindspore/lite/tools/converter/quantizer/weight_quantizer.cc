@@ -55,7 +55,7 @@ WeightQuantizer::~WeightQuantizer() {
   }
 }
 
-STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
+int WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
@@ -80,13 +80,6 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   }
   for (auto idx : weight_indices) {
     auto input = cnode->input(idx);
-    // support for shared weight
-    auto node_map = manager->node_users();
-    auto node_user = node_map[input];
-    if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
-      MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
-      weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
-    }
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
@@ -99,17 +92,24 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
       MS_LOG(INFO) << "Input " << idx << "of Optimizer is not quantizable";
       continue;
     }
-
+    // support for shared weight
+    auto node_map = manager->node_users();
+    auto node_user = node_map[input];
+    auto tmp_weight_quant_type = weight_quant_type;
+    if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
+      MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
+      tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
+    }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
       status = MixedBitQuantFilter(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT,
                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
       status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
-                                           quant_min_, bit_num_, weight_quant_type, type_id_, idx - 1);
+                                           quant_min_, bit_num_, tmp_weight_quant_type, type_id_, idx - 1);
     } else if (type_id_ == kNumberTypeInt16) {
       status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
-                                            quant_min_, bit_num_, weight_quant_type, type_id_, idx - 1);
+                                            quant_min_, bit_num_, tmp_weight_quant_type, type_id_, idx - 1);
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -122,7 +122,7 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
+int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
@@ -152,7 +152,7 @@ STATUS WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_graph) {
+int WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
@@ -169,12 +169,12 @@ STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_g
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph, double init_scale) {
+int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph, double init_scale) {
   mixed_bit_init_scale_ = init_scale;
   return DoQuantize(std::move(func_graph));
 }
 
-STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
+int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
 
