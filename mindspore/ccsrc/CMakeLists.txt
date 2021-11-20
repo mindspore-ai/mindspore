@@ -13,6 +13,11 @@ set(FBS_FILES
         )
 ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
 
+if(ENABLE_D)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/backend/kernel_compiler/aicpu/aicpu_ops)
+    add_subdirectory(backend/kernel_compiler/aicpu/aicpu_ops)
+endif()
+
 if(ENABLE_CPU)
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(PLATFORM_ARM64 "on")
