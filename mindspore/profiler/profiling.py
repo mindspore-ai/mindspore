@@ -276,7 +276,7 @@ class Profiler:
             self._rank_size = get_group_size()
 
         release()
-        if (not self.start_profile) or self._has_started:
+        if self._has_started:
             self._ascend_profiler.stop()
         else:
             msg = "The profiler has not start, so can not stop."
