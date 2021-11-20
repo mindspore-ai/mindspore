@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Controlling dump behavior."""
+from warnings import warn
 
+import mindspore.context as context
 from mindspore._c_expression import security
 
 
@@ -74,6 +76,25 @@ def set_dump(target, enabled=True):
     if not isinstance(enabled, bool):
         raise ValueError("The \"enabled\" parameter must be bool.")
 
+    # Checking for device target and mode.
+    current_target = context.get_context("device_target")
+    if current_target != "Ascend":
+        # We will not return here in case user changed device_target later.
+        warn("Current device_target is {}, which is not supported by set_dump. "
+             "Only Ascend device target is supported currently. "
+             "If you have Ascend device, consider set device_target to Ascend "
+             "before calling set_dump.".format(current_target))
+
+    current_mode = context.get_context("mode")
+    if current_mode != context.GRAPH_MODE:
+        # We will not return here in case user changed mode later.
+        warn(
+            "Current mode is PYNATIVE_MODE, which is not supported by set_dump. "
+            "Only GRAPH_MODE is supported currently. "
+            "Consider set mode to GRAPH_MODE "
+            "before calling set_dump.")
+
+    # The actual set dump logic.
     mode = "true" if enabled else "false"
     if isinstance(target, nn.Cell):
         primitives = getattr(target, "_primitives", {})
