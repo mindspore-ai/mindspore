@@ -170,7 +170,7 @@ void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<
 void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                const std::vector<tensor::TensorPtr> &inputs_const) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto &input_nodes = kernel_graph->inputs();
+  auto &input_nodes = kernel_graph->input_nodes();
   if (input_nodes.size() != inputs_const.size()) {
     MS_LOG(EXCEPTION) << "Input size " << inputs_const.size() << " is not equal to input node size "
                       << input_nodes.size();

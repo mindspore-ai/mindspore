@@ -130,7 +130,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
 
 void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  for (auto &item : kernel_graph->inputs()) {
+  for (auto &item : kernel_graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(item);
     if (item->isa<Parameter>()) {
       auto output_num = AnfAlgo::GetOutputTensorNum(item);
@@ -281,7 +281,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
-  auto &input_nodes = kernel_graph->inputs();
+  auto &input_nodes = kernel_graph->input_nodes();
   if (input_nodes.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Input size " << inputs.size() << " is not equal to input node size " << input_nodes.size();
   }
@@ -305,7 +305,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
 
 void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &kernel_graph,
                                                  const std::vector<tensor::TensorPtr> &inputs) {
-  auto &input_nodes = kernel_graph.inputs();
+  auto &input_nodes = kernel_graph.input_nodes();
   if (input_nodes.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Input size" << inputs.size() << " is not equal to input node size " << input_nodes.size();
   }
