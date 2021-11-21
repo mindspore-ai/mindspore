@@ -2705,6 +2705,11 @@ test_case_nn_ops = [
         'desc_inputs': [[2, 16], [2, 16], [2, 16], [2, 16], [16]],
         'desc_bprop': [[2, 16], [16], [16]],
         'skip': ['backward']}),
+    ('LayerNormGradGrad', {
+        'block': G.LayerNormGradGrad(),
+        'desc_inputs': [[2, 16], [2, 16], [2], [2], [16], [2, 16], [16], [16]],
+        'desc_bprop': [[2, 16], [2, 16], [16]],
+        'skip': ['backward']}),
     ('BatchNorm', {
         'block': P.BatchNorm(),
         'desc_inputs': [[128, 64, 32, 32], [64], [64], [64], [64]],

@@ -1395,6 +1395,8 @@ class LayerNormGradGrad(Primitive):
         """init"""
         self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
+        self.init_prim_io_names(inputs=['x', 'dy', 'variance', 'mean', 'gamma', 'd_dx', 'd_dg', 'd_db'],
+                                outputs=['sopd_x', 'sopd_dy', 'sopd_gamma'])
 
 
 class LogSoftmaxGrad(Primitive):
