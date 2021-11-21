@@ -720,9 +720,6 @@ void IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
 }
 
 void IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
-  if (value == nullptr || attr_proto == nullptr) {
-    MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
-  }
   if (value->isa<Int>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();

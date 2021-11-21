@@ -736,7 +736,7 @@ def set_context(**kwargs):
         >>> context.set_context(precompile_only=True)
         >>> context.set_context(device_target="Ascend")
         >>> context.set_context(device_id=0)
-        >>> context.set_context(save_graphs=True, save_graphs_path="./model.ms")
+        >>> context.set_context(save_graphs=True, save_graphs_path="./graph")
         >>> context.set_context(enable_reduce_precision=True)
         >>> context.set_context(enable_dump=True, save_dump_path=".")
         >>> context.set_context(enable_graph_kernel=True)
