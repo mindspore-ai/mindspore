@@ -238,6 +238,9 @@ void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void
     }
   } else if (events & BEV_EVENT_EOF) {
     MS_LOG(WARNING) << "Client connected end of file";
+    if (tcp_client->disconnected_callback_) {
+      tcp_client->disconnected_callback_();
+    }
   }
 }
 

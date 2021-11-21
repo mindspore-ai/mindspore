@@ -43,6 +43,7 @@ class PServerKernel {
   virtual const std::vector<size_t> &input_sizes() const = 0;
   virtual const std::vector<size_t> &output_sizes() const = 0;
   virtual const std::vector<size_t> &workspace_sizes() const = 0;
+  virtual int64_t offset() const { return 0; }
 
  protected:
   virtual void ReInit(const std::vector<AddressPtr> &) {}

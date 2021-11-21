@@ -71,6 +71,9 @@ class PersistentData : public Data<T> {
   ~PersistentData() override = default;
 
   // Initialize storage module.
+  // Custom storage config, you can choose different configurations according to different storage forms,
+  // such as using file storage by configuring the file storage path,
+  // and config can be like this: std::map<std::string, std::string> config = {{kFileStoragePath, "real_path_of_dir"}};
   void Initialize(const std::map<std::string, std::string> &storage_config);
 
   // In disaster recovery mode, memory of tensor need to be saved into disk file periodically.
@@ -96,13 +99,13 @@ void PersistentData<T>::Initialize(const std::map<std::string, std::string> &sto
 template <typename T>
 void PersistentData<T>::Persist(const storage::DirtyInfo &dirty_info) const {
   MS_EXCEPTION_IF_NULL(storage_);
-  storage::InputData input = std::make_tuple(*shape_, data(), size() * sizeof(T));
+  storage::InputData input = std::make_tuple(*Data<T>::shape_, Data<T>::data(), Data<T>::size() * sizeof(T));
   storage_->Write(input, dirty_info);
 }
 
 template <typename T>
 void PersistentData<T>::Restore() const {
-  storage::OutputData output = std::make_pair(data(), size() * sizeof(T));
+  storage::OutputData output = std::make_pair(Data<T>::data(), Data<T>::size() * sizeof(T));
   MS_EXCEPTION_IF_NULL(storage_);
   storage_->Read(output);
 }

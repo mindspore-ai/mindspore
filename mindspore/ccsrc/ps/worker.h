@@ -70,7 +70,7 @@ class Worker {
   void AddEmbeddingTable(const Key &key, const size_t &row_count);
   bool InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
                             const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape,
-                            const ParamInitInfoMessage &info);
+                            const ParamInitInfoMessage &info, uint32_t timeout = core::kCommTimeoutInSeconds);
   void InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor);
   bool DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_ids, std::vector<float> *lookup_result,
                            int64_t cmd);

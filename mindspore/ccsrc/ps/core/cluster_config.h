@@ -37,6 +37,7 @@ struct ClusterConfig {
       : initial_worker_num(worker_num),
         initial_server_num(server_num),
         heartbeat_interval(3),
+        persistent_interval(300),
         scheduler_host(host),
         scheduler_port(port),
         heartbeat_timeout(30),
@@ -53,6 +54,9 @@ struct ClusterConfig {
 
   // The interval for sending heartbeat packets between worker node,server node and scheduler node is 3 seconds.
   uint32_t heartbeat_interval;
+  // Persistent storage time interval, sent by the scheduler to each node that needs persistence at equal intervals of
+  // 300 seconds.
+  uint32_t persistent_interval;
   std::string scheduler_host;
   uint16_t scheduler_port;
   // The timeout for worker node and server node sending heartbeat packets to scheduler node is 30 seconds.

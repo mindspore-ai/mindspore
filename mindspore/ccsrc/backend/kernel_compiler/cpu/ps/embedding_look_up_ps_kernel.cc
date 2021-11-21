@@ -109,6 +109,8 @@ const std::vector<size_t> &EmbeddingLookUpPSKernel::input_sizes() const { return
 const std::vector<size_t> &EmbeddingLookUpPSKernel::output_sizes() const { return GetOutputSizeList(); }
 
 const std::vector<size_t> &EmbeddingLookUpPSKernel::workspace_sizes() const { return GetWorkspaceSizeList(); }
+
+int64_t EmbeddingLookUpPSKernel::offset() const { return offset_; }
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

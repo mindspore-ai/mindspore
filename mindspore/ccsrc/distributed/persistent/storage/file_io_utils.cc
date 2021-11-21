@@ -16,8 +16,11 @@
 
 #include "distributed/persistent/storage/file_io_utils.h"
 
+#include <dirent.h>
+#include <unistd.h>
 #include <fstream>
 
+#include "utils/utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -114,11 +117,40 @@ bool FileIOUtils::Read(const std::string &file_name, const std::vector<std::pair
   return true;
 }
 
-bool FileIOUtils::IsFileExist(const std::string &file) {
-  std::ifstream fs(file.c_str());
-  bool file_exist = fs.good();
-  fs.close();
-  return file_exist;
+bool FileIOUtils::IsFileOrDirExist(const std::string &path) {
+  if (path.empty()) {
+    MS_LOG(EXCEPTION) << "The path name is empty";
+  }
+
+  return access(path.c_str(), F_OK) == 0;
+}
+
+void FileIOUtils::CreateFile(const std::string &file_path, mode_t mode) {
+  if (IsFileOrDirExist(file_path)) {
+    return;
+  }
+
+  std::ofstream output_file(file_path);
+  output_file.close();
+  ChangeFileMode(file_path, mode);
+}
+
+void FileIOUtils::CreateDir(const std::string &dir_path, mode_t mode) {
+  if (IsFileOrDirExist(dir_path)) {
+    return;
+  }
+
+#if defined(_WIN32) || defined(_WIN64)
+  int ret = mkdir(dir_path.c_str());
+#else
+  int ret = mkdir(dir_path.c_str(), mode);
+  if (ret == 0) {
+    ChangeFileMode(dir_path, mode);
+  }
+#endif
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Failed to create directory " << dir_path << ". Errno = " << errno;
+  }
 }
 }  // namespace storage
 }  // namespace distributed

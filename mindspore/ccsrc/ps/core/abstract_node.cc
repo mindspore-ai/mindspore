@@ -433,6 +433,9 @@ void AbstractNode::RegisterFollowerScalerHandlerAfterScaleIn(const std::string &
   follower_scaler_->RegisterHandlerAfterScaleIn(module, handler);
 }
 
+PersistentState AbstractNode::persistent_state() const { return persistent_state_; }
+void AbstractNode::set_persistent_state(PersistentState persistent_state) { persistent_state_ = persistent_state; }
+
 int32_t AbstractNode::worker_num() const { return worker_num_; }
 
 int32_t AbstractNode::server_num() const { return server_num_; }
@@ -535,6 +538,12 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
 
   HeartbeatMessage heartbeat_message;
   heartbeat_message.set_node_id(node_info_.node_id_);
+  heartbeat_message.set_persistent_state(PersistentState::NOT_ENABLE_PERSIST);
+
+  // The worker role does not support disaster recovery currently.
+  if (EnableRecovery() && role() == NodeRole::SERVER) {
+    heartbeat_message.set_persistent_state(persistent_state_);
+  }
 
   MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " Send heartbeat!";
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
@@ -598,10 +607,15 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
                   << ", the node role:" << CommUtil::NodeRoleToString(info.node_role_) << " is alive:" << info.is_alive;
   }
 
-  bool is_worker_or_server0 = heartbeat_resp_message.is_worker_or_server0();
+  bool is_worker = heartbeat_resp_message.is_worker();
+  bool is_server0 = heartbeat_resp_message.is_server0();
+
+  bool is_fl_mode = PSContext::instance()->server_mode() == ps::kServerModeFL ||
+                    PSContext::instance()->server_mode() == ps::kServerModeHybrid;
+  bool not_enable_recover_node_timeout = ((is_worker || is_server0) && is_fl_mode) || (is_worker && !is_fl_mode);
 
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    if (node_recovery_ == nullptr || is_worker_or_server0) {
+    if (node_recovery_ == nullptr || not_enable_recover_node_timeout) {
       MS_LOG(INFO) << "The recovery is disabled. Trigger NODE_TIMEOUT event.";
       // Avoid other methods blocking endlessly when NODE_TIMEOUT event is triggered.
       is_ready_ = true;
@@ -613,6 +627,17 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
       MS_LOG(INFO) << "The nodes:" << timeoutNodeId
                    << "is support recovery, users can pull up this node to restore the cluster.";
     }
+  }
+
+  if (!EnableRecovery()) {
+    return;
+  }
+
+  PersistentCommand persistent_cmd = heartbeat_resp_message.persistent_cmd();
+  // The worker role does not support disaster recovery for the time being.
+  if (role() == NodeRole::SERVER && persistent_cmd == PersistentCommand::BEGIN_PERSIST &&
+      persistent_state_ != PersistentState::PERSISTING) {
+    OnEventCallback(ClusterEvent::ON_BEGIN_PERSIST);
   }
 }
 
@@ -916,11 +941,11 @@ bool AbstractNode::InitClientToScheduler() {
   client_to_scheduler_->set_connected_callback([&]() { is_connected_to_scheduler_ = true; });
 
   client_to_scheduler_->set_disconnected_callback([&]() {
+    is_connected_to_scheduler_ = false;
     std::this_thread::sleep_for(std::chrono::milliseconds(PSContext::instance()->cluster_config().connect_interval));
     if (is_ready_.load() == false) {
       client_to_scheduler_->Init();
     }
-    is_connected_to_scheduler_ = false;
   });
   bool wait_res = client_to_scheduler_->WaitConnected();
   if (!wait_res) {
@@ -1185,7 +1210,7 @@ bool AbstractNode::Recover() {
 
 void AbstractNode::OnEventCallback(const ClusterEvent &event) {
   if (!event_to_callback_.count(event)) {
-    MS_LOG(ERROR) << "[Event]:The event callback of " << event << " is not set.";
+    MS_LOG(INFO) << "[Event]:The event callback of " << event << " is not set.";
   } else {
     MS_LOG(INFO) << "[Event]:Trigger the event:" << event;
     if (event_to_callback_[event]) {

@@ -85,6 +85,11 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::
   return Wait(request_id, timeout);
 }
 
+bool Node::EnableRecovery() const {
+  MS_EXCEPTION_IF_NULL(config_);
+  return config_->Exists(kKeyRecovery);
+}
+
 bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
   std::unique_lock<std::mutex> tracker_lock(message_tracker_mutex_);
   bool res = message_tracker_cond_.wait_for(tracker_lock, std::chrono::seconds(timeout), [&] {

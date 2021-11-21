@@ -26,6 +26,7 @@
 #include <thread>
 #include <mutex>
 #include <unordered_map>
+#include <condition_variable>
 
 #include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
@@ -51,12 +52,14 @@ class SchedulerNode : public Node {
       : server_(nullptr),
         scheduler_thread_(nullptr),
         update_state_thread_(nullptr),
+        update_persistent_cmd_thread_(nullptr),
         restful_thread_(nullptr),
         http_server_(nullptr),
         client_thread_(nullptr),
         is_client_started_(false),
         leader_scaler_(nullptr),
         scheduler_recovery_(nullptr),
+        persistent_cmd_(PersistentCommand::DEFAULT),
         is_worker_timeout_(false) {}
   ~SchedulerNode() override;
 
@@ -75,6 +78,9 @@ class SchedulerNode : public Node {
   void InitCommandHandler();
   void CreateTcpServer();
   void StartUpdateClusterStateTimer();
+  // Persistent timer, periodically trigger persistent behavior.
+  void StartUpdatePersistentCommandTimer();
+
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
   void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
@@ -167,7 +173,11 @@ class SchedulerNode : public Node {
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
-  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
+  std::unique_ptr<std::thread> update_persistent_cmd_thread_;
+  std::condition_variable persistent_cmd_cv_;
+  std::mutex persistent_cmd_mutex_;
+
+  mindspore::HashMap<NodeCommand, ResponseHandler> handlers_;
 
   NodeManager node_manager_;
 
@@ -187,6 +197,8 @@ class SchedulerNode : public Node {
 
   // Used to persist and obtain metadata information for scheduler.
   std::unique_ptr<RecoveryBase> scheduler_recovery_;
+  // persistent command need to be sent.
+  std::atomic<PersistentCommand> persistent_cmd_;
 
   // The node id of scale in nodes.
   std::vector<std::string> scale_in_node_ids_;

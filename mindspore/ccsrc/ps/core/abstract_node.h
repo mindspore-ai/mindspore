@@ -53,6 +53,7 @@ class AbstractNode : public Node {
         is_current_node_scale_in_(false),
         follower_scaler_(nullptr),
         node_recovery_(nullptr),
+        persistent_state_(PersistentState::NOT_ENABLE_PERSIST),
         scheduler_ip_(""),
         scheduler_port_(0) {}
   ~AbstractNode() override = default;
@@ -120,6 +121,9 @@ class AbstractNode : public Node {
   // Register handlers after scaling operations for server.
   void RegisterFollowerScalerHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler);
   void RegisterFollowerScalerHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler);
+
+  PersistentState persistent_state() const;
+  void set_persistent_state(PersistentState persistent_state);
 
   int32_t worker_num() const;
   int32_t server_num() const;
@@ -277,6 +281,10 @@ class AbstractNode : public Node {
 
   // Recovery for worker/server node.
   std::unique_ptr<RecoveryBase> node_recovery_;
+
+  // The state of the persistent storage, such as ready to be persisted, in the process of being persisted, has
+  // completed the persistence, etc.
+  std::atomic<PersistentState> persistent_state_;
 
   // The ip of scheduler.
   std::string scheduler_ip_;

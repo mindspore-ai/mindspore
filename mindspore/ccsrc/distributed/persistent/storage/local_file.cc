@@ -24,6 +24,7 @@
 #include <utility>
 
 #include "utils/convert_utils_base.h"
+#include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
 #include "distributed/persistent/storage/constants.h"
@@ -57,6 +58,7 @@ void LocalFile::Write(const std::vector<InputData> &inputs, const DirtyInfo &dir
 }
 
 void LocalFile::TransformDirtyInfoToBlockIndices(const DirtyInfo &dirty_info, std::vector<int> *block_indices) const {
+  MS_EXCEPTION_IF_NULL(block_indices);
   if (block_meta_list_.empty()) {
     MS_LOG(EXCEPTION) << "The block meta list is empty";
   }
@@ -87,7 +89,9 @@ void LocalFile::TransformDirtyInfoToBlockIndices(const DirtyInfo &dirty_info, st
       cur_upper_bound = block_meta_ptr->Get<int>(kShardRangeUpperBound);
     }
 
-    block_indices->push_back(block_index);
+    if (block_index < block_meta_list_.size()) {
+      block_indices->push_back(block_index);
+    }
   }
 }
 
@@ -167,11 +171,11 @@ void LocalFile::WriteOneBlockFile(size_t block_index, const std::vector<InputDat
   const auto &block_ptr = block_list_.at(block_index);
   MS_EXCEPTION_IF_NULL(block_ptr);
   // Rewrite the current block file.
-  if (FileIOUtils::Write(block_ptr->block_file_name(), block_inputs_data)) {
+  if (!FileIOUtils::Write(block_ptr->block_file_name(), block_inputs_data)) {
     MS_LOG(EXCEPTION) << "Write to block file[" << block_ptr->block_file_name() << "] failed.";
   }
 
-  ChangeFileMode(block_ptr->block_file_name(), S_IRUSR | S_IWUSR);
+  ChangeFileMode(block_ptr->block_file_name(), S_IRWXU | S_IRWXG | S_IRWXO);
 
   // Generate sha256 hash sequence.
   block_ptr->GenSha256Seq();
@@ -199,14 +203,14 @@ void LocalFile::Read(const std::vector<OutputData> &outputs) {
     size_t offset = block_meta_ptr->Get<size_t>(kOffset);
 
     for (size_t output_index = 0; output_index < outputs.size(); ++output_index) {
-      void *data_ptr = reinterpret_cast<char *>(std::get<1>(outputs[output_index])) + offset;
+      void *data_ptr = reinterpret_cast<char *>(std::get<0>(outputs[output_index])) + offset;
       size_t data_size = field_size;
       block_output_data.emplace_back(data_ptr, data_size);
     }
 
     const auto &block_ptr = block_list_[block_index];
     MS_EXCEPTION_IF_NULL(block_ptr);
-    if (block_ptr->CheckSha256Seq()) {
+    if (!block_ptr->CheckSha256Seq()) {
       MS_LOG(EXCEPTION) << "CheckSha256 failed, file name [" << block_ptr->block_file_name() << "]";
     }
     FileIOUtils::Read(block_ptr->block_file_name(), block_output_data);
@@ -230,11 +234,12 @@ bool LocalFile::LoadBlocksInfo() {
       continue;
     }
 
+    std::string real_storage_file_path = file_path_ + "/" + file_name;
     auto suffix = file_name.substr(file_name.length() - JSON_SUFFIX_LENS);
     if (suffix == kJsonSuffix) {
-      block_meta_file_name_list.push_back(file_name);
+      block_meta_file_name_list.push_back(real_storage_file_path);
     } else {
-      block_file_name_list.push_back(file_name);
+      block_file_name_list.push_back(real_storage_file_path);
     }
   }
   (void)closedir(dir);
@@ -246,6 +251,7 @@ bool LocalFile::LoadBlocksInfo() {
   }
 
   sort(block_file_name_list.begin(), block_file_name_list.end());
+  sort(block_meta_file_name_list.begin(), block_meta_file_name_list.end());
   for (size_t i = 0; i < block_file_name_list.size(); i++) {
     auto block_meta_ptr = std::make_shared<BlockMeta>(block_meta_file_name_list[i]);
     block_meta_ptr->Initialize();

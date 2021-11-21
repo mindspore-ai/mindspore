@@ -18,9 +18,11 @@
 #define MINDSPORE_CCSRC_PS_UTIL_H_
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
 #include "utils/hash_map.h"
+#include "ps/constants.h"
 #include "frontend/optimizer/optimizer.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -55,6 +57,8 @@ class Util {
                                    const size_t first_dim_size, const size_t outer_dim_size,
                                    mindspore::kernel::SparseGradient<int> *unique_sparse_grad);
   static bool FuseServerCommOps(const pipeline::ResourcePtr &res);
+  static WeightPtr MakeWeightPtr(const std::shared_ptr<std::vector<float>> &data, bool enable_recovery,
+                                 const std::shared_ptr<std::vector<int>> &shape = nullptr);
 
  private:
   static void DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,

@@ -17,6 +17,9 @@
 #include "ps/parameter_server.h"
 #include <algorithm>
 #include <thread>
+#include <set>
+
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace ps {
@@ -35,6 +38,14 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   }
   Init(func_graph);
   server_node_->Start();
+
+  if (EnableRecovery()) {
+    MS_EXCEPTION_IF_NULL(recover_handler_);
+    recover_handler_->Init();
+    recover_handler_->Recover();
+    finish_recovery_ = true;
+  }
+
   PSContext::instance()->SetPSRankId(server_node_->rank_id());
   thread_->join();
   SyncEmbeddingTables();
@@ -53,6 +64,8 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
   handler_.reset(new ServerHandler(this));
   handler_->Init();
 
+  recover_handler_.reset(new RecoverHandler(this));
+
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
   server_node_->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
@@ -63,6 +76,7 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Trigger timeout event: NODE_TIMEOUT begin to exit the system!";
     this->Finalize();
   });
+  server_node_->RegisterEventCallback(core::ClusterEvent::ON_BEGIN_PERSIST, [this]() { this->PersistParameters(); });
   thread_.reset(new std::thread(&ParameterServer::UpdateWeights, this));
   GetEmbeddingTableParamPtr();
   return true;
@@ -213,9 +227,104 @@ void CopyTensorData(void *dest_ptr, size_t tensor_size, const void *src_ptr) {
 }
 }  // namespace
 
+void ParameterServer::PersistKernels(const Key &key,
+                                     const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
+                                     const ParamInitInfo &param_init_info) const {
+  if (!EnableRecovery()) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(shapes);
+  MS_EXCEPTION_IF_NULL(recover_handler_);
+  auto *config_storage = recover_handler_->config_storage();
+  MS_EXCEPTION_IF_NULL(config_storage);
+  std::vector<std::string> recover_funcs;
+  if (config_storage->Exists(kRecoverFunc)) {
+    recover_funcs = config_storage->GetValue<std::vector<std::string>>(kRecoverFunc);
+  }
+  std::string recover_embedding = kRecoverEmbedding;
+  if (!std::any_of(recover_funcs.begin(), recover_funcs.end(),
+                   [&](const std::string &func_name) { return func_name == recover_embedding; })) {
+    recover_funcs.push_back(recover_embedding);
+    config_storage->PutValue(kRecoverFunc, recover_funcs);
+  }
+
+  // Persist key.
+  std::vector<Key> keys;
+  if (config_storage->Exists(kKeys)) {
+    keys = config_storage->GetValue<std::vector<Key>>(kKeys);
+  }
+  if (!std::any_of(keys.begin(), keys.end(), [&](const Key &key_value) { return key_value == key; })) {
+    keys.push_back(key);
+    config_storage->PutValue(kKeys, keys);
+  }
+
+  // Persist kernel input shape
+  std::vector<std::vector<std::vector<size_t>>> shapes_list;
+  if (config_storage->Exists(kShapes)) {
+    shapes_list = config_storage->GetValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes);
+  }
+  if (shapes_list.size() < keys.size()) {
+    std::vector<std::vector<size_t>> shape_tmp;
+    std::transform(shapes->begin(), shapes->end(), std::back_inserter(shape_tmp),
+                   [](const std::shared_ptr<std::vector<size_t>> &shape_ptr) { return *shape_ptr; });
+    shapes_list.push_back(shape_tmp);
+    config_storage->PutValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes, shapes_list);
+  }
+
+  // Persist parameter name of kernel.
+  std::vector<std::string> param_names;
+  if (config_storage->Exists(kParamNames)) {
+    param_names = config_storage->GetValue<std::vector<std::string>>(kParamNames);
+  }
+  const std::string &param_name = param_init_info.param_name_;
+  if (param_names.size() < keys.size()) {
+    param_names.push_back(param_name);
+    config_storage->PutValue<std::vector<std::string>>(kParamNames, param_names);
+  }
+}
+
+void ParameterServer::PersistInitParameters(const Key &key, const WeightPtr &param) {
+  if (!EnableRecovery()) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(server_node_);
+  std::string storage_file_path = std::string(kCurrentDirOfServer) + std::to_string(server_node_->rank_id()) +
+                                  std::string(kParamWithKey) + std::to_string(key);
+  if (!distributed::storage::FileIOUtils::IsFileOrDirExist(storage_file_path)) {
+    distributed::storage::FileIOUtils::CreateDir(storage_file_path);
+  }
+
+  auto ret = FileUtils::GetRealPath(storage_file_path.c_str());
+  if (!ret.has_value()) {
+    MS_LOG(EXCEPTION) << "Cannot get real path of persistent storage file for parameter, key: " << key;
+  }
+
+  std::string real_storage_file_path = ret.value();
+  auto persistent_weight = std::dynamic_pointer_cast<PersistentWeight>(param);
+  MS_EXCEPTION_IF_NULL(persistent_weight);
+  std::map<std::string, std::string> config_map;
+  config_map[distributed::storage::kFileStoragePath] = real_storage_file_path;
+  persistent_weight->Initialize(config_map);
+
+  weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
+  persistent_weight->Persist(distributed::storage::DirtyInfo());
+
+  MS_LOG(INFO) << "Finish persist initialized parameter, key: " << key;
+}
+
 void ParameterServer::InitEmbeddingTable(
   const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
   const ParamInitInfo &param_init_info) {
+  if (EnableRecovery()) {
+    while (!finish_recovery_) {
+      std::this_thread::yield();
+    }
+  }
+
+  std::unique_lock<std::mutex> locker(access_weight_mutex_);
+
   MS_EXCEPTION_IF_NULL(shapes);
   if (weights_.count(key) == 0) {
     std::shared_ptr<PServerKernel> lookup =
@@ -223,15 +332,22 @@ void ParameterServer::InitEmbeddingTable(
     lookup->InitKernel(shapes);
     embedding_lookup_ops_[key] = lookup;
 
+    PersistKernels(key, shapes, param_init_info);
+
     // Init embedding weight
     const std::vector<size_t> &input_shapes = lookup->input_sizes();
     size_t total_dims =
       std::accumulate(input_shapes.begin(), input_shapes.end(), IntToSize(1), std::multiplies<size_t>());
-    WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
+
+    std::shared_ptr<std::vector<int>> embedding_shape = std::make_shared<std::vector<int>>();
+    std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
+                   [](size_t dim) { return static_cast<int>(dim); });
+
+    WeightPtr embedding =
+      Util::MakeWeightPtr(std::make_shared<std::vector<float>>(total_dims, 0), EnableRecovery(), embedding_shape);
     MS_EXCEPTION_IF_NULL(embedding);
     float *embedding_data = embedding->data();
-    std::default_random_engine engine;
-    std::normal_distribution<float> random(0, kStdDev);
+
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       CacheEmbeddingTableParamPtr();
       if (param_init_info.param_type_ == kWeight) {
@@ -249,12 +365,17 @@ void ParameterServer::InitEmbeddingTable(
         InitAccumParallel(param_init_info.init_val_, total_dims, embedding_data);
       }
     } else {
+      std::default_random_engine engine;
+      std::normal_distribution<float> random(0, kStdDev);
       for (size_t i = 0; i < total_dims; i++) {
         embedding_data[i] = random(engine);
       }
     }
+
+    PersistInitParameters(key, embedding);
+
     weights_[key] = embedding;
-    MS_LOG(DEBUG) << "The key:" << key << " the embedding:" << *embedding;
+    MS_LOG(DEBUG) << "The key:" << key << " the embedding:" << *(embedding->MutableData());
     tokens_[key] = 0;
     is_embedding_[key] = true;
 
@@ -267,6 +388,10 @@ bool ParameterServer::HasWeight(const Key &key) { return (weights_.count(key) > 
 void ParameterServer::Finalize() {
   running_ = false;
   apply_grads_cv_.notify_one();
+
+  if (persist_thread_ != nullptr && persist_thread_->joinable()) {
+    persist_thread_->join();
+  }
 }
 
 void ParameterServer::UpdateWeights() {
@@ -360,14 +485,17 @@ WeightPtr ParameterServer::weight(const Key &key) {
   }
   WeightPtr weight_ptr = weights_[key];
   MS_EXCEPTION_IF_NULL(weight_ptr);
-  WeightPtr copy_weight_ptr = std::make_shared<std::vector<float>>(weight_ptr->size(), 0);
-  MS_EXCEPTION_IF_NULL(copy_weight_ptr);
-  copy_weight_ptr = weight_ptr;
   tokens_[key] -= 1;
-  return copy_weight_ptr;
+  return weight_ptr;
 }
 
 void ParameterServer::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KVMessage *res) {
+  if (EnableRecovery()) {
+    while (!finish_recovery_) {
+      std::this_thread::yield();
+    }
+  }
+
   std::unique_lock<std::mutex> lock(mutex_);
   MS_EXCEPTION_IF_NULL(res);
   if (weights_.count(key) == 0) {
@@ -426,6 +554,14 @@ void ParameterServer::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KV
 }
 
 void ParameterServer::UpdateEmbeddings(const Key &key, const LookupIds &lookup_ids, const Values &vals) {
+  if (EnableRecovery()) {
+    while (!finish_recovery_) {
+      std::this_thread::yield();
+    }
+  }
+
+  std::unique_lock<std::mutex> locker(access_weight_mutex_);
+
   if (weights_.count(key) == 0) {
     MS_LOG(ERROR) << "Invalid embedding table key " << key;
     return;
@@ -436,9 +572,28 @@ void ParameterServer::UpdateEmbeddings(const Key &key, const LookupIds &lookup_i
   }
   WeightPtr table_ptr = weights_[key];
   MS_EXCEPTION_IF_NULL(table_ptr);
-  std::shared_ptr<PServerKernel> table_lookup_op = embedding_lookup_ops_[key];
-  MS_EXCEPTION_IF_NULL(table_lookup_op);
-  table_lookup_op->UpdateEmbeddings(table_ptr->data(), lookup_ids.data(), vals.data(), lookup_ids.size());
+  std::shared_ptr<PServerKernel> lookup_op = embedding_lookup_ops_[key];
+  MS_EXCEPTION_IF_NULL(lookup_op);
+  lookup_op->UpdateEmbeddings(table_ptr->data(), lookup_ids.data(), vals.data(), lookup_ids.size());
+
+  UpdateDirtyInfo(key, lookup_ids, lookup_op->offset());
+}
+
+void ParameterServer::UpdateDirtyInfo(const Key &key, const LookupIds &lookup_ids, int64_t offset) {
+  if (EnableRecovery()) {
+    std::set<int> sorted_ids;
+    std::for_each(lookup_ids.begin(), lookup_ids.end(), [&](uint64_t id) {
+      int index = SizeToInt(id) - LongToInt(offset);
+      sorted_ids.insert(index);
+    });
+
+    auto iter = weights_dirty_info_.find(key);
+    if (iter == weights_dirty_info_.end()) {
+      MS_LOG(EXCEPTION) << "Cannot find dirty info for embedding table, key: " << key;
+    }
+    distributed::storage::DirtyInfo &dirty_info = iter->second;
+    std::for_each(sorted_ids.begin(), sorted_ids.end(), [&](int id) { dirty_info.push_back(id); });
+  }
 }
 
 inline bool ParameterServer::ReadyForUpdateWeights() const {
@@ -539,6 +694,146 @@ void ParameterServer::CacheEmbeddingTableParamPtr() {
   }
 
   embedding_param_ptr_cached_ = true;
+}
+
+void ParameterServer::RecoverKernels(const std::vector<Key> &keys,
+                                     const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+                                     const std::vector<std::string> &param_names) {
+  for (size_t i = 0; i < keys.size(); i++) {
+    size_t key = keys.at(i);
+    if (weights_.count(key) == 0) {
+      // Recover embedding lookup kernels.
+      std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes_ptr =
+        std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+
+      const auto &shapes = shapes_list[i];
+      for (const auto &shape : shapes) {
+        std::shared_ptr<std::vector<size_t>> shape_ptr =
+          std::make_shared<std::vector<size_t>>(shape.begin(), shape.end());
+        shapes_ptr->push_back(shape_ptr);
+      }
+
+      std::shared_ptr<PServerKernel> lookup =
+        std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(server_node_->rank_id(), pserver_num_, worker_num_);
+      lookup->InitKernel(shapes_ptr);
+      embedding_lookup_ops_[key] = lookup;
+
+      // Recover embedding table parameter node address in graph.
+      const auto &param_name = param_names.at(i);
+      auto iter = embedding_parameter_tables_.find(param_name);
+      if (iter != embedding_parameter_tables_.end()) {
+        // Cache embedding table parameter by weight key to parameter node pointer.
+        (void)embedding_tables_.emplace(key, iter->second);
+      }
+    }
+  }
+}
+
+void ParameterServer::RecoverParameters(const std::vector<Key> &keys) {
+  for (size_t i = 0; i < keys.size(); i++) {
+    size_t key = keys.at(i);
+    if (weights_.count(key) == 0) {
+      auto iter = embedding_lookup_ops_.find(key);
+      if (iter == embedding_lookup_ops_.end()) {
+        MS_LOG(EXCEPTION) << "Cannot find embedding lookup kernel for key: " << key;
+      }
+      std::shared_ptr<PServerKernel> lookup = iter->second;
+      MS_EXCEPTION_IF_NULL(lookup);
+      const std::vector<size_t> &input_shapes = lookup->input_sizes();
+      size_t total_dims =
+        std::accumulate(input_shapes.begin(), input_shapes.end(), IntToSize(1), std::multiplies<size_t>());
+
+      std::shared_ptr<std::vector<int>> embedding_shape = std::make_shared<std::vector<int>>();
+      std::transform(input_shapes.begin(), input_shapes.end(), std::back_inserter(*embedding_shape),
+                     [](size_t dim) { return static_cast<int>(dim); });
+
+      PersistentWeightPtr embedding =
+        std::make_shared<PersistentWeight>(std::make_shared<std::vector<float>>(total_dims, 0), embedding_shape);
+      MS_EXCEPTION_IF_NULL(server_node_);
+      std::string storage_file_path = std::string(kCurrentDirOfServer) + std::to_string(server_node_->rank_id()) +
+                                      std::string(kParamWithKey) + std::to_string(key);
+      if (!distributed::storage::FileIOUtils::IsFileOrDirExist(storage_file_path)) {
+        MS_LOG(EXCEPTION) << "The storage file does not exist, file path: " << storage_file_path;
+      }
+
+      auto ret = FileUtils::GetRealPath(storage_file_path.c_str());
+      if (!ret.has_value()) {
+        MS_LOG(EXCEPTION) << "Cannot get real path of persistent storage file for parameter, key: " << key;
+      }
+      std::string real_storage_file_path = ret.value();
+
+      std::map<std::string, std::string> config_map;
+      config_map[distributed::storage::kFileStoragePath] = real_storage_file_path;
+      embedding->Initialize(config_map);
+      embedding->Restore();
+      weights_[key] = embedding;
+      weights_dirty_info_.emplace(key, distributed::storage::DirtyInfo());
+    }
+  }
+}
+
+void ParameterServer::RecoverEmbedding(const std::vector<Key> &keys,
+                                       const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+                                       const std::vector<std::string> &param_names) {
+  CacheEmbeddingTableParamPtr();
+  size_t keys_size = keys.size();
+  size_t shapes_size = shapes_list.size();
+  size_t params_size = param_names.size();
+  if (keys_size != shapes_size || keys_size != params_size) {
+    MS_LOG(EXCEPTION) << "Bad input parameter number, keys_size: " << keys_size << ", shapes_size: " << shapes_size
+                      << ", params_size: " << params_size;
+  }
+
+  RecoverKernels(keys, shapes_list, param_names);
+  RecoverParameters(keys);
+}
+
+void ParameterServer::set_persistent_state(core::PersistentState persistent_state) const {
+  MS_EXCEPTION_IF_NULL(server_node_);
+  server_node_->set_persistent_state(persistent_state);
+}
+
+bool ParameterServer::EnableRecovery() const {
+  MS_EXCEPTION_IF_NULL(server_node_);
+  return server_node_->EnableRecovery();
+}
+
+void ParameterServer::PersistParameters() {
+  if (!EnableRecovery() || !finish_recovery_) {
+    return;
+  }
+
+  if (persist_thread_ != nullptr && persist_thread_->joinable()) {
+    persist_thread_->join();
+  }
+
+  auto do_persist_task = [this]() {
+    std::unique_lock<std::mutex> locker(access_weight_mutex_);
+
+    set_persistent_state(core::PersistentState::PERSISTING);
+
+    for (const auto &weight_key_pair : weights_) {
+      const WeightPtr &weight = weight_key_pair.second;
+      auto persistent_weight = std::dynamic_pointer_cast<PersistentWeight>(weight);
+      MS_EXCEPTION_IF_NULL(persistent_weight);
+
+      Key key = weight_key_pair.first;
+      auto iter = weights_dirty_info_.find(key);
+      if (iter == weights_dirty_info_.end()) {
+        MS_LOG(EXCEPTION) << "Cannot find dirty info for weight, key: " << key;
+      }
+
+      distributed::storage::DirtyInfo &dirty_info = iter->second;
+      persistent_weight->Persist(dirty_info);
+
+      dirty_info.clear();
+    }
+
+    set_persistent_state(core::PersistentState::FINISH_PERSIST);
+    MS_LOG(INFO) << "Finish persist weights in parameter server";
+  };
+
+  persist_thread_ = std::make_unique<std::thread>(do_persist_task);
 }
 
 void ParameterServer::SyncEmbeddingTables() {
@@ -643,7 +938,9 @@ void ParameterServer::ServerHandler::HandlePullReq(const DataPtr &data, size_t s
   *res_data.mutable_keys() = input.keys();
   Key key = input.keys()[0];
   auto weight = ps_->weight(key);
-  *res_data.mutable_values() = {weight->begin(), weight->end()};
+  auto weight_data = weight->MutableData();
+  MS_EXCEPTION_IF_NULL(weight_data);
+  *res_data.mutable_values() = {weight_data->begin(), weight_data->end()};
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
   size_t src_size = res_data.ByteSizeLong();
@@ -666,7 +963,8 @@ void ParameterServer::ServerHandler::HandleInitWeights(const DataPtr &data, size
     size_t data_len = input.len_size() != key_num ? input.values_size() / key_num : input.len()[i];
 
     if (!ps_->HasWeight(key)) {
-      WeightPtr weight_ptr = std::make_shared<std::vector<float>>(data_ptr + pos, data_ptr + (pos + data_len));
+      WeightPtr weight_ptr = Util::MakeWeightPtr(
+        std::make_shared<std::vector<float>>(data_ptr + pos, data_ptr + (pos + data_len)), ps_->EnableRecovery());
       MS_EXCEPTION_IF_NULL(weight_ptr);
       ps_->InitWeight(key, weight_ptr);
 
@@ -822,6 +1120,61 @@ void ParameterServer::ServerHandler::HandleUpdateEmbeddings(const DataPtr &data,
 void ParameterServer::ServerHandler::HandleFinalize(const DataPtr &, size_t, const VectorPtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
+}
+
+void ParameterServer::RecoverHandler::Init() {
+  handlers_[kRecoverEmbedding] = &RecoverHandler::RecoverEmbedding;
+
+  MS_EXCEPTION_IF_NULL(ps_);
+  MS_EXCEPTION_IF_NULL(ps_->server_node_);
+  std::string persistent_storage_file_path =
+    std::string(kCurrentDirOfServer) + std::to_string(ps_->server_node_->rank_id()) + "_persistent_storage.json";
+  if (!distributed::storage::FileIOUtils::IsFileOrDirExist(persistent_storage_file_path)) {
+    distributed::storage::FileIOUtils::CreateFile(persistent_storage_file_path);
+  }
+
+  auto ret = FileUtils::GetRealPath(persistent_storage_file_path.c_str());
+  if (!ret.has_value()) {
+    MS_LOG(EXCEPTION) << "Cannot get real path for persistent storage file";
+  }
+
+  storage_ = std::make_unique<core::FileConfiguration>(ret.value());
+  if (!storage_->Initialize()) {
+    MS_LOG(EXCEPTION) << "Initialize file storage module failed, file path: " << ret.value();
+  }
+}
+
+void ParameterServer::RecoverHandler::Recover() {
+  MS_EXCEPTION_IF_NULL(storage_);
+  if (!storage_->Exists(kRecoverFunc)) {
+    return;
+  }
+
+  std::vector<std::string> func_names = storage_->GetValue<std::vector<std::string>>(kRecoverFunc);
+  for (const auto &func_name : func_names) {
+    if (func_name.empty()) {
+      MS_LOG(EXCEPTION) << "The recover function name is empty";
+    }
+
+    auto iter = handlers_.find(func_name);
+    if (iter == handlers_.end()) {
+      MS_LOG(EXCEPTION) << "Can not find func: [" << func_name << "]";
+    }
+    auto &fun_ptr = iter->second;
+    MS_EXCEPTION_IF_NULL(fun_ptr);
+    (this->*fun_ptr)();
+  }
+}
+
+void ParameterServer::RecoverHandler::RecoverEmbedding() {
+  MS_EXCEPTION_IF_NULL(storage_);
+  std::vector<Key> keys = storage_->GetValue<std::vector<Key>>(kKeys);
+  std::vector<std::vector<std::vector<size_t>>> shapes_list =
+    storage_->GetValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes);
+  std::vector<std::string> param_names = storage_->GetValue<std::vector<std::string>>(kParamNames);
+
+  MS_EXCEPTION_IF_NULL(ps_);
+  ps_->RecoverEmbedding(keys, shapes_list, param_names);
 }
 }  // namespace ps
 }  // namespace mindspore

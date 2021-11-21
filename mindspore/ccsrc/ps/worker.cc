@@ -19,6 +19,8 @@
 
 namespace mindspore {
 namespace ps {
+constexpr int kRetryDuration = 2000;
+
 void Worker::Run() {
   std::lock_guard<std::mutex> lock(running_mutex_);
 
@@ -211,7 +213,7 @@ void Worker::AddEmbeddingTable(const Key &key, const size_t &row_count) {
 
 bool Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
                                   const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape,
-                                  const ParamInitInfoMessage &info) {
+                                  const ParamInitInfoMessage &info, uint32_t timeout) {
   bool has_init = IsKeyInit(key);
   if (has_init) {
     MS_LOG(DEBUG) << "The key embedding table of key " << key << " is initialized.";
@@ -239,7 +241,16 @@ bool Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
     return false;
   }
 
-  return worker_node_.Broadcast(core::NodeRole::SERVER, res, kv_data.length(), kInitEmbeddingsCmd);
+  while (!worker_node_.Broadcast(core::NodeRole::SERVER, res, kv_data.length(), kInitEmbeddingsCmd, timeout)) {
+    MS_LOG(INFO) << "Worker Broadcast failed!, retrying.";
+    if (!running_) {
+      MS_LOG(ERROR) << "Worker Broadcast failed!";
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDuration));
+  }
+
+  return true;
 }
 
 void Worker::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor) {
@@ -314,10 +325,15 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   }
 
   std::vector<VectorPtr> resp;
-  if (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp)) {
-    MS_LOG(ERROR) << "Worker send failed!";
-    return false;
+  while (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp)) {
+    MS_LOG(INFO) << "Worker send failed!, retrying.";
+    if (!running_) {
+      MS_LOG(ERROR) << "Worker send failed!";
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDuration));
   }
+
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
   mindspore::HashMap<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
   std::shared_ptr<std::vector<float>> values = std::make_shared<std::vector<float>>();
@@ -404,7 +420,17 @@ bool Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       sizes.push_back(kv_data.length());
     }
   }
-  return worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(kUpdateEmbeddingsCmd));
+
+  while (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(kUpdateEmbeddingsCmd))) {
+    MS_LOG(INFO) << "Worker send failed!, retrying.";
+    if (!running_) {
+      MS_LOG(ERROR) << "Worker send failed!";
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDuration));
+  }
+
+  return true;
 }
 
 void Worker::Finalize() {

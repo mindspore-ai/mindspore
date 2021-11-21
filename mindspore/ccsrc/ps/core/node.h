@@ -73,6 +73,9 @@ class Node {
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &, const Protos &,
                        const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
 
+  // Whether to enable disaster recovery.
+  bool EnableRecovery() const;
+
  protected:
   bool WaitForStart(const uint32_t &timeout);
 

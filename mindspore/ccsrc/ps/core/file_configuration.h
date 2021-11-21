@@ -27,6 +27,8 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "utils/hash_map.h"
+#include "utils/json_operation_utils.h"
 #include "ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
@@ -61,7 +63,24 @@ class FileConfiguration : public Configuration {
 
   int64_t GetInt(const std::string &key, int64_t default_value) const override;
 
+  template <typename T>
+  T GetValue(const std::string &key) const {
+    if (!js.contains(key)) {
+      MS_LOG(EXCEPTION) << "The key:" << key << " is not exist.";
+    }
+
+    return GetJsonValue<T>(js, key);
+  }
+
   void Put(const std::string &key, const std::string &value) override;
+
+  template <typename T>
+  void PutValue(const std::string &key, const T &value) {
+    std::ofstream output_file(file_path_);
+    js[key] = value;
+    output_file << js.dump();
+    output_file.close();
+  }
 
   bool Exists(const std::string &key) const override;
 
