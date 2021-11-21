@@ -172,7 +172,7 @@ int32_t DbgServices::RemoveWatchpoint(unsigned int id) {
   return 0;
 }
 
-std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iteration) {
+std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iteration, bool error_on_no_value) {
   MS_EXCEPTION_IF_NULL(debug_services_);
   MS_LOG(INFO) << "cpp DbgServices CheckWatchpoint iteration " << iteration;
 
@@ -190,10 +190,11 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
 
-  tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths);
+  tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
 
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id);
+                                    file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
+                                    error_on_no_value);
 
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {

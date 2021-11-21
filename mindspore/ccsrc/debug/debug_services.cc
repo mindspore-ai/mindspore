@@ -298,9 +298,9 @@ void DebugServices::SetCheckWatchpointsResult(
 }
 
 #ifdef OFFLINE_DBG_MODE
-void DebugServices::ProcessCheckpointsOutofMemory(
-  const bool no_mem_to_read, const std::vector<watchpoint_t> watchpoints_to_check, int chunk_id,
-  partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+void DebugServices::CheckOutofMemoryandNoValue(
+  const bool no_mem_to_read, const bool error_on_no_value, const std::vector<watchpoint_t> watchpoints_to_check,
+  int chunk_id, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
   partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
   partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
   partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
@@ -309,15 +309,21 @@ void DebugServices::ProcessCheckpointsOutofMemory(
   const std::string time_stamp, const std::string &qualified_tensor_name, const std::string &tensor_slot,
   const unsigned int device_id_val, const unsigned int root_graph_id_val,
   const std::vector<parameter_t> &parameter_list) {
+  bool set_is_needed = no_mem_to_read || error_on_no_value;
+  int32_t error_code_to_set = 0;
   if (no_mem_to_read) {
     // bit 3 denotes failed to load tensor because tensor is oversized and no enough memory to fit in
-    int32_t oversize_error_code = ITensorSummary::OUT_OF_MEMORY;
+    error_code_to_set = ITensorSummary::OUT_OF_MEMORY;
+  } else if (error_on_no_value) {
+    error_code_to_set = ITensorSummary::NO_VALUE;
+  }
+  if (set_is_needed) {
     for (auto &wp : watchpoints_to_check) {
       SetCheckWatchpointsResult(chunk_id, chunk_names, chunk_slots, chunk_conditions, chunk_watchpoint_id,
                                 chunk_parameters, chunk_error_codes, chunk_exec_orders, chunk_time_stamp,
                                 chunk_device_id, chunk_root_graph_id, device_id, root_graph_id, exec_order, time_stamp,
                                 qualified_tensor_name, tensor_slot, wp, device_id_val, root_graph_id_val,
-                                parameter_list, oversize_error_code);
+                                parameter_list, error_code_to_set);
     }
   }
 }
@@ -383,7 +389,7 @@ void DebugServices::CheckWatchpointsForTensor(
   int end, int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
   partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
   std::vector<uint64_t> *const chunk_tensor_byte_size, partitioned_names *const chunk_time_stamp,
-  std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id) {
+  std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
   int list_size = tensor_list->size();
   if (end > list_size) {
     end = list_size;
@@ -413,11 +419,12 @@ void DebugServices::CheckWatchpointsForTensor(
                      async_file_pool, &result_list, &no_mem_to_read);
     tensor = result_list[0];
     if (!tensor->GetByteSize()) {
-      ProcessCheckpointsOutofMemory(
-        no_mem_to_read, watchpoints_to_check, chunk_id, chunk_names, chunk_slots, chunk_conditions, chunk_watchpoint_id,
-        chunk_parameters, chunk_error_codes, chunk_exec_orders, chunk_time_stamp, chunk_device_id, chunk_root_graph_id,
-        device_id, root_graph_id, tensor->GetExecutionOrder(), tensor->GetTimeStamp(), qualified_tensor_name,
-        tensor_slot, tensor->GetDeviceId(), tensor->GetRootGraphId(), std::vector<parameter_t>());
+      CheckOutofMemoryandNoValue(no_mem_to_read, error_on_no_value, watchpoints_to_check, chunk_id, chunk_names,
+                                 chunk_slots, chunk_conditions, chunk_watchpoint_id, chunk_parameters,
+                                 chunk_error_codes, chunk_exec_orders, chunk_time_stamp, chunk_device_id,
+                                 chunk_root_graph_id, device_id, root_graph_id, tensor->GetExecutionOrder(),
+                                 tensor->GetTimeStamp(), qualified_tensor_name, tensor_slot, tensor->GetDeviceId(),
+                                 tensor->GetRootGraphId(), std::vector<parameter_t>());
       tensor.reset();
       continue;
     }
@@ -489,7 +496,7 @@ void DebugServices::CheckWatchpoints(
   std::vector<int32_t> *const error_codes, const std::vector<std::string> &op_overflows,
   const std::vector<std::string> &async_file_pool, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
   const bool init_dbg_suspend, const bool step_end, const bool recheck, std::vector<unsigned int> *const device_id,
-  std::vector<unsigned int> *const root_graph_id) {
+  std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
   if (watchpoint_table_.empty()) {
@@ -538,7 +545,7 @@ void DebugServices::CheckWatchpoints(
       std::launch::async, &DebugServices::CheckWatchpointsForTensor, this, &chunk_names, &chunk_slots,
       &chunk_conditions, &chunk_watchpoint_id, &chunk_parameters, &chunk_error_codes, op_overflows, async_file_pool,
       &chunk_exec_orders, tensor_list, begin, end, i, init_dbg_suspend, step_end, recheck, &chunk_device_id,
-      &chunk_root_graph_id, &chunk_tensor_byte_size, &chunk_time_stamp, device_id, root_graph_id));
+      &chunk_root_graph_id, &chunk_tensor_byte_size, &chunk_time_stamp, device_id, root_graph_id, error_on_no_value));
     begin = end;
   }
 
@@ -1285,12 +1292,11 @@ std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
 }
 
 std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
-  unsigned int iteration, std::vector<std::string> *const async_file_pool) {
+  unsigned int iteration, std::vector<std::string> *const async_file_pool, bool error_on_no_value) {
   // get a list of nodes and the devices they are on to monitor
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> rank_and_graph_to_nodes =
     GetAllWpNodes();
-
   // scan each device/iteration dir for the watched nodes for each device, and add to tensor_list
   // as they are found
   for (auto const &rank_and_graph_item : rank_and_graph_to_nodes) {
@@ -1324,7 +1330,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     if (is_sync_mode_) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
       std::string abspath = RealPath(specific_dump_dir);
-      ProcessTensorDataSync(proto_to_dump, abspath, specific_dump_dir, iteration, rank_id, root_graph_id, &tensor_list);
+      ProcessTensorDataSync(proto_to_dump, abspath, specific_dump_dir, iteration, rank_id, root_graph_id, &tensor_list,
+                            error_on_no_value);
     } else {
       // convert all files in proto_to_dump to npy and add to pool of async file names
       ConvertWatchPointNodes(proto_to_dump, specific_dump_dir, async_file_pool);
@@ -1339,7 +1346,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
 void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
                                           const std::string &abspath, const std::string &specific_dump_dir,
                                           unsigned int iteration, unsigned int device_id, unsigned int root_graph_id,
-                                          std::vector<std::shared_ptr<TensorData>> *const tensor_list) {
+                                          std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+                                          bool error_on_no_value) {
   DIR *d = opendir(abspath.c_str());
   if (d == nullptr) {
     MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";

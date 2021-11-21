@@ -197,12 +197,14 @@ class DbgServices:
 
     @check_initialize_done
     @check_check_watchpoints
-    def check_watchpoints(self, iteration):
+    def check_watchpoints(self, iteration, error_on_no_value=False):
         """
         Checking watchpoint at given iteration.
 
         Args:
             iteration (int): Watchpoint check iteration.
+            error_on_no_value (bool): Whether report error when the tensor has
+                no value. Default: False.
 
         Returns:
             Watchpoint hit list.
@@ -224,7 +226,7 @@ class DbgServices:
         """
         logger.info("in Python CheckWatchpoints iteration %d", iteration)
         iteration = replace_minus_one(iteration)
-        watchpoint_list = self.dbg_instance.CheckWatchpoints(iteration)
+        watchpoint_list = self.dbg_instance.CheckWatchpoints(iteration, error_on_no_value)
         watchpoint_hit_list = []
         for watchpoint in watchpoint_list:
             name = watchpoint.get_name()
