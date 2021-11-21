@@ -35,6 +35,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
   set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
+  set_param<std::string>(MS_CTX_COMPILE_CACHE_PATH, "");
 #else
   // Need set a default value for arrays even if running in the security mode.
   bool_params_[MS_CTX_SAVE_GRAPHS_FLAG - MS_CTX_TYPE_BOOL_BEGIN] = false;
@@ -91,8 +92,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
   set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
   set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
-  set_param<bool>(MS_CTX_SAVE_COMPILE_CACHE, false);
-  set_param<bool>(MS_CTX_LOAD_COMPILE_CACHE, false);
   set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
   set_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);

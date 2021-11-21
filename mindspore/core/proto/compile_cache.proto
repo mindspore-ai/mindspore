@@ -1,0 +1,6 @@
+syntax = "proto2";
+package compile_cache;
+
+message CompileCacheProto {
+  optional string dep_files_hash = 1;
+}
