@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,31 +20,37 @@ from .. import nn
 
 class LossScaleManager:
     """
-    Loss scale manager abstract class.
+    Loss scale (Magnification factor of gradients when mix precision is used) manager abstract class.
 
-    Derive FixedLossScaleManager and DynamicLossScaleManager that override all LossScaleManager's method.
+    Derived class needs to implement all of its methods. `get_loss_scale` is used to get current loss scale value.
+    `update_loss_scale` is used to update loss scale value, `update_loss_scale` will be called during the training.
+    `get_update_cell` is used to get the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale,
+    the instance will be called during the training. When using sink mode, only the `get_update_cell` works, otherwise
+    both `update_loss_scale` and `get_update_cell` works.
+    For example, :class:`mindspore.FixedLossScaleManager` and :class:`mindspore.DynamicLossScaleManager`.
     """
     def get_loss_scale(self):
-        """Get loss scale value."""
+        """Get the value of loss scale, which is the amplification factor of the gradients."""
 
     def update_loss_scale(self, overflow):
         """
-        Update loss scale value.
+        Update the loss scale value according to the status of `overflow`.
 
         Args:
-            overflow (bool): Whether it overflows.
+            overflow (bool): Whether the overflow occurs during the training.
         """
     def get_update_cell(self):
-        """Get the loss scaling update logic cell."""
+        """Get the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale."""
 
 
 class FixedLossScaleManager(LossScaleManager):
     """
-    Loss scale with a fixed value, inherits from LossScaleManager.
+    Loss scale(Magnification factor of gradients when mix precision is used) manager with a fixed loss scale value,
+    inherits from :class:`mindspore.LossScaleManager`.
 
     Args:
-        loss_scale (float): Loss scale. Note that if `drop_overflow_update` is set to False, the value of `loss_scale`
-            in optimizer that you used need to be set to the same value as here. Default: 128.0.
+        loss_scale (float): Magnification factor of gradients. Note that if `drop_overflow_update` is set to False,
+            the value of `loss_scale` in optimizer should be set to the same as here. Default: 128.0.
         drop_overflow_update (bool): Whether to execute optimizer if there is an overflow. If True, the optimizer will
             not executed when overflow occurs. Default: True.
 
@@ -81,7 +87,7 @@ class FixedLossScaleManager(LossScaleManager):
 
     def get_drop_overflow_update(self):
         """
-        Get the flag whether to drop optimizer update when there is an overflow.
+        Get `drop_overflow_update`, whether to drop optimizer update for current step when there is an overflow.
 
         Returns:
             bool, `drop_overflow_update` value.
@@ -98,10 +104,12 @@ class FixedLossScaleManager(LossScaleManager):
 
     def get_update_cell(self):
         """
-        Returns the update cell for `TrainOneStepWithLossScaleCell`.
+        Returns the instance of :class:`mindspore.nn.Cell` that used to update the loss scale which will be called at
+        :class:`mindspore.nn.TrainOneStepWithLossScaleCell`.
 
         Returns:
-            None or Cell. Cell object, used to update `loss_scale`, when `drop_overflow_update` is True. None when
+            None or :class:`mindspore.FixedLossScaleUpdateCell`. Instance of
+            :class:`mindspore.FixedLossScaleUpdateCell` when `drop_overflow_update` is True. None when
             `drop_overflow_update` is False.
         """
         if not self._drop_overflow_update:
@@ -111,7 +119,8 @@ class FixedLossScaleManager(LossScaleManager):
 
 class DynamicLossScaleManager(LossScaleManager):
     """
-    Loss scale that dynamically adjusts itself, inherits from LossScaleManager.
+    Loss scale(Magnification factor of gradients when mix precision is used) manager with loss scale dynamically
+    adjusted, inherits from :class:`mindspore.LossScaleManager`.
 
     Args:
         init_loss_scale (float): Initialize loss scale. Default: 2**24.
@@ -147,16 +156,17 @@ class DynamicLossScaleManager(LossScaleManager):
 
     def get_loss_scale(self):
         """
-        Get loss scale value.
+        Get the current loss scale value.
 
         Returns:
-            bool, `loss_scale` value.
+            float, `loss_scale` value.
         """
         return self.loss_scale
 
     def update_loss_scale(self, overflow):
         """
-        Update loss scale value.
+        Update the loss scale value according to the status of `overflow`. If overflow occurs, decrease loss scale per
+        `scale_window`, otherwise, increase the loss scale.
 
         Args:
             overflow (bool): Whether it overflows.
@@ -178,18 +188,19 @@ class DynamicLossScaleManager(LossScaleManager):
 
     def get_drop_overflow_update(self):
         """
-        Get the flag whether to drop optimizer update when there is an overflow.
+        Whether to drop optimizer update for current step when there is an overflow.
 
         Returns:
-            bool, always return True at `DynamicLossScaleManager`.
+            bool, always True.
         """
         return True
 
     def get_update_cell(self):
         """
-        Returns the update cell for `TrainOneStepWithLossScaleCell`.
+        Returns the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale which will be called at
+        :class:`mindspore.nn.TrainOneStepWithLossScaleCell`.
 
         Returns:
-            Cell, cell object used to update `loss_scale`.
+            :class:`mindspore.DynamicLossScaleUpdateCell`.
         """
         return nn.DynamicLossScaleUpdateCell(self.loss_scale, self.scale_factor, self.scale_window)

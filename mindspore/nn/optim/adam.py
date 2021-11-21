@@ -211,13 +211,14 @@ class Adam(Optimizer):
     :math:`\epsilon` represents `eps`.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network.
-        The sparse feature is under continuous development. If the sparse strategy wants to be executed on the host,
-        set the target to the CPU.
+        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
+        strategy wants to be executed on the host, set the target to the CPU.
+        The sparse feature is under continuous development.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -263,7 +264,7 @@ class Adam(Optimizer):
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
@@ -408,9 +409,10 @@ class AdamWeightDecay(Optimizer):
         document `LossScale <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/lossscale.html>`_ to process
         `loss_scale` correctly.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -547,9 +549,10 @@ class AdamOffload(Optimizer):
     Note:
         This optimizer only supports `GRAPH_MODE` currently.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -591,7 +594,7 @@ class AdamOffload(Optimizer):
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.

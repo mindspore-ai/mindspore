@@ -128,16 +128,18 @@ class LazyAdam(Optimizer):
     :math:`\epsilon` represents `eps`.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
-        The sparse behavior, to be notice, is not equivalent to the
-        original Adam algorithm, as only the current indices parames will be updated. The sparse feature is under
-        continuous development. If the sparse strategy wants to be executed on the host, set the target to the CPU.
+        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
+        strategy wants to be executed on the host, set the target to the CPU.
+        Please note, the sparse behavior is not equivalent to the original Adam algorithm, as only the current
+        indices parames will be updated.
+        The sparse feature is under continuous development.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
-    Args:
+   Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
             "order_params" are the keys can be parsed.
@@ -181,7 +183,7 @@ class LazyAdam(Optimizer):
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
