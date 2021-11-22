@@ -38,7 +38,19 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IShapeLayer *shape_layer = network->addShape(*tensorrt_in_tensors_[0].trt_tensor_);
+  nvinfer1::ITensor *shape_input = tensorrt_in_tensors_[0].trt_tensor_;
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    // transpose: NCHW->NHWC
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    if (transpose_layer_in == nullptr) {
+      MS_LOG(ERROR) << "transpose: NCHW->NHWC failed for " << op_name_;
+      return RET_ERROR;
+    }
+    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
+    shape_input = transpose_layer_in->getOutput(0);
+  }
+  nvinfer1::IShapeLayer *shape_layer = network->addShape(*shape_input);
 
   if (shape_layer == nullptr) {
     MS_LOG(DEBUG) << "add shape op failed for TensorRT.";
@@ -46,7 +58,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   shape_layer->setName(op_name_.c_str());
   shape_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), tensorrt_in_tensors_[0].format_});
+  this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), Format::NHWC});
   return RET_OK;
 }
 }  // namespace mindspore::lite

@@ -21,7 +21,8 @@
 
 namespace mindspore::lite {
 constexpr int BEGIN_INDEX = 1;
-constexpr int STRIDE_INDEX = 3;
+constexpr int HAS_AXIS = 5;
+constexpr int AXIS_INDEX = 3;
 class SliceTensorRT : public TensorRTOp {
  public:
   SliceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -34,6 +35,14 @@ class SliceTensorRT : public TensorRTOp {
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
+
+ private:
+  int ConvertParamsDims();
+  nvinfer1::Dims start_dims_;
+  nvinfer1::Dims size_dims_;
+  nvinfer1::Dims stride_dims_;
+  int strides_index_{0};
+  int axis_index_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_

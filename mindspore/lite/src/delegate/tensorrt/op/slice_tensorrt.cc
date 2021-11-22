@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/op/slice_tensorrt.h"
+#include <algorithm>
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
@@ -25,7 +26,7 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() < STRIDE_INDEX + 1) {
+  if (in_tensors.size() < HAS_AXIS - 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -33,7 +34,7 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors_[BEGIN_INDEX].Data() == nullptr || in_tensors_[STRIDE_INDEX].Data() == nullptr) {
+  if (in_tensors_[BEGIN_INDEX].Data() == nullptr) {
     MS_LOG(ERROR) << "invalid pad or stride tensor for: " << op_name_;
     return RET_ERROR;
   }
@@ -46,12 +47,8 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "convert StridedSlice failed: " << op_name_;
     return RET_ERROR;
   }
-  const mindspore::MSTensor &begin = in_tensors_[BEGIN_INDEX];
-  const mindspore::MSTensor &stride = in_tensors_[STRIDE_INDEX];
-
-  nvinfer1::Dims start_dims = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
-  nvinfer1::Dims size_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());
-  nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
+  strides_index_ = in_tensors_.size() - 1;
+  axis_index_ = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
 
   nvinfer1::ITensor *slice_input = tensorrt_in_tensors_[0].trt_tensor_;
   Format out_format = tensorrt_in_tensors_[0].format_;
@@ -67,8 +64,13 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     slice_input = transpose_layer_in->getOutput(0);
     out_format = Format::NHWC;
   }
+  int ret = ConvertParamsDims();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvertParamsDims failed for " << op_name_;
+    return ret;
+  }
 
-  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*slice_input, start_dims, size_dims, stride_dims);
+  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*slice_input, start_dims_, size_dims_, stride_dims_);
   if (slice_layer == nullptr) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
@@ -81,6 +83,36 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
+  return RET_OK;
+}
+
+int SliceTensorRT::ConvertParamsDims() {
+  const mindspore::MSTensor &begin = in_tensors_[BEGIN_INDEX];
+  const mindspore::MSTensor &stride = in_tensors_[strides_index_];
+  if (static_cast<size_t>(begin.ElementNum()) == in_tensors_[0].Shape().size()) {
+    start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
+    size_dims_ = lite::ConvertCudaDims(out_tensors_[0].Shape());
+    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
+  } else {
+    if (axis_index_ == -1 || in_tensors_[axis_index_].ElementNum() != 1) {
+      MS_LOG(ERROR) << "invalid input params for " << op_name_;
+      return RET_ERROR;
+    }
+    int axis_value = *(static_cast<int *>(in_tensors_[axis_index_].MutableData()));
+    int start_value = *(static_cast<int *>(in_tensors_[BEGIN_INDEX].MutableData()));
+    start_dims_.nbDims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
+    for (int i = 0; i < start_dims_.nbDims; i++) {
+      start_dims_.d[i] = (i == axis_value) ? start_value : 0;
+    }
+
+    size_dims_ = lite::ConvertCudaDims(out_tensors_[0].Shape());
+
+    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), out_tensors_[0].Shape().size());
+  }
+  if (start_dims_.nbDims == -1 || size_dims_.nbDims == -1 || stride_dims_.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::lite

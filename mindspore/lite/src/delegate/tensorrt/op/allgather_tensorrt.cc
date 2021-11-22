@@ -123,14 +123,14 @@ nvinfer1::IPluginV2DynamicExt *AllGatherPlugin::clone() const noexcept {
 }
 nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs,
                                                          int nbInputs, nvinfer1::IExprBuilder &exprBuilder) noexcept {
-  auto out_dims = new nvinfer1::DimsExprs();
-  out_dims->nbDims = inputs->nbDims;
+  nvinfer1::DimsExprs out_dims{};
+  out_dims.nbDims = inputs->nbDims;
   auto rank_dim = exprBuilder.constant(rank_);
-  out_dims->d[0] = exprBuilder.operation(nvinfer1::DimensionOperation::kPROD, *inputs->d[0], *rank_dim);
+  out_dims.d[0] = exprBuilder.operation(nvinfer1::DimensionOperation::kPROD, *inputs->d[0], *rank_dim);
   for (int i = 1; i < inputs->nbDims; i++) {
-    out_dims->d[i] = inputs->d[i];
+    out_dims.d[i] = inputs->d[i];
   }
-  return *out_dims;
+  return out_dims;
 }
 bool AllGatherPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                                 int nbOutputs) noexcept {

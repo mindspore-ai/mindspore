@@ -41,7 +41,7 @@ TensorRTSubGraph::~TensorRTSubGraph() {
     engine_ = nullptr;
   }
   if (tensor_bindings_ != nullptr) {
-    delete tensor_bindings_;
+    delete[] tensor_bindings_;
     tensor_bindings_ = nullptr;
   }
   for (auto op : all_ops_) {

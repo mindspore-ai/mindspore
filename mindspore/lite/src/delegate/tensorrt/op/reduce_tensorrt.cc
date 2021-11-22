@@ -102,6 +102,10 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     squeeze_layer->setName((op_name_ + "_squeeze").c_str());
     nvinfer1::Dims squeeze_dims = ConvertCudaDims(out_tensors_[0].Shape());
+    if (squeeze_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
     for (int i = 0; i < squeeze_dims.nbDims; i++) {
       if (layer->getOutput(0)->getDimensions().d[i] == -1) {
         squeeze_dims.d[i] = 0;

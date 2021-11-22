@@ -183,7 +183,10 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
 
   nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(new_shape);
-
+  if (squeeze_dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return RET_ERROR;
+  }
   shuffle_layer->setReshapeDimensions(squeeze_dims);
   shuffler_output_ = shuffle_layer->getOutput(0);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
@@ -209,6 +212,10 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
 
   nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(new_shape);
+  if (unsqueeze_dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return RET_ERROR;
+  }
 
   shuffle_layer->setReshapeDimensions(unsqueeze_dims);
   shuffler_output_ = shuffle_layer->getOutput(0);
@@ -245,7 +252,7 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     } else if (perm.order[kNHWC_H] == kNCHW_H && perm.order[kNHWC_W] == kNCHW_W && perm.order[kNHWC_C] == kNCHW_C) {
       out_format_ = Format::NHWC;
     } else {
-      MS_LOG(WARNING) << "input format and perm order is invalid: " << op_name_;
+      MS_LOG(WARNING) << "input format and perm order is not NHWC or NCHW: " << op_name_;
     }
   }
   shuffler_output_ = shuffle_layer->getOutput(0);
@@ -256,13 +263,8 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   mindspore::MSTensor &shape_tensor = in_tensors_[1];
   if (shape_tensor.Data() != nullptr) {
     // static shuffle layer
-    nvinfer1::Dims reshape_dims = lite::ConvertCudaDims(shape_tensor.Data().get(), shape_tensor.ElementNum());
-    for (int i = 0; i < reshape_dims.nbDims; i++) {
-      if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[i] == -1) {
-        reshape_dims.d[i] = 0;
-      }
-    }
-    shuffle_layer->setReshapeDimensions(reshape_dims);
+    shuffle_layer->setReshapeDimensions(
+      InferReshapeDims(shuffler_input_->getDimensions(), in_tensors_[0].Shape(), out_tensors_[0].Shape()));
   } else {
     if (tensorrt_in_tensors_.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid shape tensor for reshape " << op_name_;
@@ -311,6 +313,10 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     }
     new_shape.push_back(1);
     nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
     shuffle_layer->setReshapeDimensions(new_dims);
     // transpose
     nvinfer1::Permutation perm{};
@@ -342,43 +348,34 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
       new_shape.push_back(1);
     }
     nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
     shuffle_layer->setReshapeDimensions(new_dims);
     shuffler_output_ = shuffle_layer->getOutput(0);
   }
   return RET_OK;
 }
 
-int ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims *reshape_dims) {
+nvinfer1::Dims ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, std::vector<int64_t> ms_input_shape,
+                                                 std::vector<int64_t> ms_output_shape) {
   // tensorrt support infer shape of 0 and -1
-  int infer_index = -1;
-  int known_cnt = 1;
-  for (int i = 0; i < reshape_dims->nbDims; i++) {
-    if (reshape_dims->d[i] == 0) {
-      reshape_dims->d[i] = input_dims.d[i];
-      known_cnt *= (input_dims.d[i] == -1 ? 1 : input_dims.d[i]);
-    } else if (reshape_dims->d[i] == -1) {
-      if (infer_index != -1) {
-        MS_LOG(ERROR) << "invalid dims (more than one infer dim) for reshape " << op_name_;
-        return RET_ERROR;
+  nvinfer1::Dims reshape_dims = ConvertCudaDims(ms_output_shape);
+  if (reshape_dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return reshape_dims;
+  }
+  for (int i = 0; i < reshape_dims.nbDims; i++) {
+    if (input_dims.d[i] == -1) {
+      if (ms_input_shape[i] == ms_output_shape[i]) {
+        reshape_dims.d[i] = 0;
+      } else {
+        reshape_dims.d[i] = -1;
       }
-      infer_index = i;
-    } else {
-      known_cnt *= input_dims.d[i];
     }
+    MS_LOG(DEBUG) << "reshape infer_index " << i << " value: " << reshape_dims.d[i];
   }
-  if (infer_index != -1) {
-    size_t tot_cnt = 1;
-    for (int i = 0; i < input_dims.nbDims; i++) {
-      tot_cnt *= (input_dims.d[i] == -1 ? 1 : input_dims.d[i]);
-    }
-    if (known_cnt == 0) {
-      MS_LOG(ERROR) << "invalid known cnt for " << op_name_;
-      return RET_ERROR;
-    }
-    reshape_dims->d[infer_index] = tot_cnt / known_cnt;
-    MS_LOG(DEBUG) << "reshape infer_index: " << infer_index
-                  << ", reshape infer value: " << reshape_dims->d[infer_index];
-  }
-  return RET_OK;
+  return reshape_dims;
 }
 }  // namespace mindspore::lite

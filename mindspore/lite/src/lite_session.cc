@@ -705,17 +705,17 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
 }
 
 int LiteSession::Init(InnerContext *context) {
-  bool expected = false;
-  if (!is_running_.compare_exchange_strong(expected, true)) {
-    MS_LOG(ERROR) << "Not support multi-threading";
-    return RET_ERROR;
-  }
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
     is_running_.store(false);
     return RET_NULL_PTR;
   }
   this->context_ = context;
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
 
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
