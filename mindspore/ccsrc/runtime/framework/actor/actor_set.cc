@@ -18,10 +18,10 @@
 
 namespace mindspore {
 namespace runtime {
-std::unordered_map<std::string, OpActor<DeviceTensor> *> kActorNameToActor;
+std::unordered_map<std::string, AbstractActor *> kActorNameToActor;
 
 // The operation of the map of kActorNameToActor.
-void InsertActor(OpActor<DeviceTensor> *actor) {
+void InsertActor(AbstractActor *actor) {
   MS_EXCEPTION_IF_NULL(actor);
   if (kActorNameToActor.count(actor->GetAID().Name()) > 0) {
     MS_LOG(EXCEPTION) << "The actor already exists: " << actor->GetAID().Name();
@@ -29,12 +29,18 @@ void InsertActor(OpActor<DeviceTensor> *actor) {
   kActorNameToActor[actor->GetAID().Name()] = actor;
 }
 
-OpActor<DeviceTensor> *FetchActor(const std::string &actor_name) {
+AbstractActor *FetchActor(const std::string &actor_name) {
   const auto &iter = kActorNameToActor.find(actor_name);
   if (iter == kActorNameToActor.end()) {
     return nullptr;
   }
   return iter->second;
+}
+
+AbstractActor *FetchActor(KernelTransformType kernel_type, const std::string &actor_set_name, const AnfNodePtr &node,
+                          const KernelGraphPtr &graph) {
+  std::string actor_name = FetchActorName(kernel_type, actor_set_name, node, graph);
+  return FetchActor(actor_name);
 }
 
 void EraseActor(const std::string &actor_name) { (void)kActorNameToActor.erase(actor_name); }

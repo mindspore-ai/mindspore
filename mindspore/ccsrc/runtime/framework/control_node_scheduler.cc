@@ -502,17 +502,16 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
+  const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
+  MS_EXCEPTION_IF_NULL(graph);
 
   if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr) {
-    // Link arrow from kernel actor to exit actor.
+    // Link arrow from actor of output node to exit actor of kernel graph.
     const auto &kernel_with_index = parser->FetchBackendNodeByFrontNode(from_node_with_index);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-    const auto &actor_name = kernel_with_index.first->fullname_with_scope();
-    auto actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
-    auto kernel_actor = dynamic_cast<KernelActor *>(actor);
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-
+    auto type = FetchKernelTransformType(kernel_with_index.first, graph, {});
+    auto from_actor = FetchActor(type, "", kernel_with_index.first, graph);
+    MS_EXCEPTION_IF_NULL(from_actor);
     if (!AnfAlgo::OutputAddrExist(kernel_with_index.first, kernel_with_index.second, false)) {
       MS_LOG(EXCEPTION) << "Invalid output index:" << kernel_with_index.second
                         << " for parameter:" << kernel_with_index.first->DebugString();
@@ -520,10 +519,9 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
     auto device_tensor = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, false);
     UpdateRefCount(device_tensor.get(), true);
     device_tensor->SetNodeIndex(kernel_with_index.first, kernel_with_index.second);
-    LinkDataArrow(kernel_actor, to_actor, kernel_with_index.second, to_node_with_index.second);
+    LinkDataArrow(from_actor, to_actor, kernel_with_index.second, to_node_with_index.second, kernel_with_index.first);
   } else {
-    // Link arrow from exit actor.
-    const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
+    // Link arrow from exit actor of kernel graph to exit actor of function graph.
     const auto &actor_name = graph->ToString() + kExitActorNameSuffix;
     auto actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
@@ -615,27 +613,27 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
 
   // Link control arrow from entrance actors or stack actors to no input kernel actors.
   for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
-    const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
-    if (kernel_actor == nullptr) {
+    KernelGraphPtr kernel_graph = nullptr;
+    if (no_input_kernel_actor->type_ == KernelTransformType::kSuperKernelActor) {
+      const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(super_kernel_actor);
+      kernel_graph = super_kernel_actor->graph();
+    } else if (no_input_kernel_actor->type_ == KernelTransformType::kKernelActor) {
+      const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(kernel_actor);
+      kernel_graph = FetchKernelGraph(kernel_actor->kernel());
+    } else {
       continue;
     }
-
-    const auto &kernel = kernel_actor->kernel();
-    MS_EXCEPTION_IF_NULL(kernel);
-    const auto &graph = kernel->func_graph();
-    MS_EXCEPTION_IF_NULL(graph);
-    const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto actor_name = kernel_graph->ToString() + kStackActorNameSuffix;
-    if (!parser->IsCallInputKernelGraph(kernel_graph)) {
-      const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph);
+    if (!parser->IsCallInputKernelGraph(kernel_graph.get())) {
+      const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph.get());
       MS_EXCEPTION_IF_NULL(func_graph);
       actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
     }
 
-    auto actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
-    auto from_actor = dynamic_cast<AbstractActor *>(actor);
+    auto from_actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(from_actor);
     LinkControlArrow(from_actor, no_input_kernel_actor.get());
   }
@@ -648,9 +646,7 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       const auto &graph = kernel->func_graph();
       MS_EXCEPTION_IF_NULL(graph);
       auto actor_name = graph->ToString() + kExitActorNameSuffix;
-      auto actor = FetchActor(actor_name);
-      MS_EXCEPTION_IF_NULL(actor);
-      auto to_actor = dynamic_cast<AbstractActor *>(actor);
+      auto to_actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(to_actor);
       LinkControlArrow(kernel_actor.get(), to_actor);
     }
@@ -725,47 +721,56 @@ void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &
 void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, bool is_call_input_graph,
                                                       ControlActor *const entrance_actor) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto &execution_order = graph->execution_order();
+  auto from_actor = entrance_actor;
+  // If there is a call node in the input of the graph, the parameter of the graph needs to be sent by the
+  // corresponding stack actor, otherwise it is sent by the entrance actor.
+  if (is_call_input_graph) {
+    auto actor = FetchActor(graph->ToString() + kStackActorNameSuffix);
+    from_actor = dynamic_cast<ControlActor *>(actor);
+  }
 
+  std::set<AnfNodePtr> sink_input_node_linked;
+  auto &execution_order = graph->execution_order();
   for (const auto &kernel : execution_order) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel))) {
+    if ((!graph->is_executing_sink()) && (IsSkippedKernelActor(kernel) || !IsKernelActor(kernel))) {
       continue;
     }
 
     for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = AnfAlgo::GetInputNode(kernel, i);
       MS_EXCEPTION_IF_NULL(input_node);
-      auto input_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0);
+      auto input_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       auto input = input_with_index.first;
       MS_EXCEPTION_IF_NULL(input);
+      if (sink_input_node_linked.count(input) > 0) {
+        continue;
+      }
       if ((!input->isa<Parameter>()) || HasAbstractMonad(input) || IsPersistentDeviceTensor(input)) {
         continue;
       }
       auto front_node = graph->GetFrontAnfByBackendAnf(input);
-      auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(input);
-      auto from_actor = entrance_actor;
-      KernelWithIndex from_node_with_index =
-        (front_node == nullptr ? internal_node_with_index : KernelWithIndex(front_node, 0));
-
-      // If there is a call node in the input of the graph, the parameter of the graph needs to be sent by the
-      // corresponding stack actor, otherwise it is sent by the entrance actor.
-      if (is_call_input_graph) {
-        auto actor = FetchActor(graph->ToString() + kStackActorNameSuffix);
-        MS_EXCEPTION_IF_NULL(actor);
-        from_actor = dynamic_cast<ControlActor *>(actor);
-        MS_EXCEPTION_IF_NULL(from_actor);
-      } else if (front_node == nullptr) {
+      if ((!is_call_input_graph) && (front_node == nullptr)) {
         continue;
       }
+      auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(input);
+      KernelWithIndex from_node_with_index =
+        (front_node == nullptr) ? internal_node_with_index : KernelWithIndex(front_node, 0);
 
-      // fetch the destine kernel actor.
-      auto actor = FetchActor(kernel->fullname_with_scope());
-      MS_EXCEPTION_IF_NULL(actor);
-      auto kernel_actor = dynamic_cast<KernelActor *>(actor);
-      MS_EXCEPTION_IF_NULL(kernel_actor);
-      auto position = from_actor->FetchNodePosition(from_node_with_index);
-      LinkDataArrow(from_actor, kernel_actor, position, i);
+      // Fetch actor and link.
+      auto type = FetchKernelTransformType(kernel, graph, {});
+      auto to_actor = FetchActor(type, "", kernel, graph);
+      MS_EXCEPTION_IF_NULL(to_actor);
+      MS_EXCEPTION_IF_NULL(from_actor);
+      auto from_index = from_actor->FetchNodePosition(from_node_with_index);
+      auto to_index = i;
+      if (type == KernelTransformType::kSuperKernelActor) {
+        auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(to_actor);
+        MS_EXCEPTION_IF_NULL(super_kernel_actor);
+        to_index = super_kernel_actor->FetchInputNodePosition(input);
+        (void)sink_input_node_linked.insert(input);
+      }
+      LinkDataArrow(from_actor, to_actor, from_index, to_index);
     }
   }
 }

@@ -32,7 +32,7 @@ namespace runtime {
 // 1. Accept a copy of all direct parameters and push them to the stack
 // 2. Notify gather actor can be executed
 // 3. Receive the output of exit actor
-// 4. send output.
+// 4. Send output.
 class StackActor : public ControlActor {
  public:
   StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters);
@@ -50,6 +50,11 @@ class StackActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
+
+  void FillStack(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context);
+
+  // The device tensors created and stored by the stack.
+  std::vector<DeviceTensorPtr> created_device_tensors_;
 
   // The input data records that the stack actor is copied from the input nodes and needs to be stored in the
   // device tensor in the stack.

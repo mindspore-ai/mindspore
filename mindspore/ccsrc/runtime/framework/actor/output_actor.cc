@@ -16,7 +16,6 @@
 
 #include "runtime/framework/actor/output_actor.h"
 #include "utils/log_adapter.h"
-#include "common/trans.h"
 
 namespace mindspore {
 namespace runtime {
@@ -170,7 +169,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
 
     // If the output node whose output address ptr can't be changed, then alloc the new device memory and copy the data.
-    if (output_address_persisted_nodes_.count(output_node) > 0) {
+    if (device_tensor->is_ptr_persisted()) {
       auto device_context = device_contexts_[i];
       MS_EXCEPTION_IF_NULL(device_context);
       if (!device_context->AllocateMemory(tensor_device_address.get(), tensor_device_address->GetSize())) {

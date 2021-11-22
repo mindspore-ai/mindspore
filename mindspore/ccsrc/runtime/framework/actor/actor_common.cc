@@ -207,5 +207,90 @@ KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &outp
   }
   return front_node_with_index;
 }
+
+KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &func_graph = node->func_graph();
+  if (func_graph == nullptr) {
+    return nullptr;
+  } else {
+    return func_graph->cast<KernelGraphPtr>();
+  }
+}
+
+KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const KernelGraphPtr &graph,
+                                             const std::vector<AnfNodePtr> &host_parameters,
+                                             GraphExecutionStrategy strategy) {
+  // Fetch kernel graph.
+  KernelGraphPtr kernel_graph = nullptr;
+  if (graph == nullptr) {
+    kernel_graph = FetchKernelGraph(node);
+  } else {
+    kernel_graph = graph;
+  }
+  if (kernel_graph == nullptr) {
+    return KernelTransformType::kUnknown;
+  }
+
+  // In sink mode, the data exchange between child graphs is expressed as parameters. These parameters are stored
+  // in the graph and should be obtained from the super kernel actor.
+  if (kernel_graph->is_executing_sink() &&
+      ((node == nullptr) || node->isa<CNode>() || kernel_graph->IsChildGraphResult(node))) {
+    return KernelTransformType::kSuperKernelActor;
+  }
+
+  KernelTransformType type = KernelTransformType::kUnknown;
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsDeviceQueueDSActor(node, strategy)) {
+    type = KernelTransformType::kDeviceDataSourceActor;
+  } else if (IsHostQueueDSActor(node, kernel_graph, host_parameters, strategy)) {
+    type = KernelTransformType::kHostDataSourceActor;
+  } else if (IsKernelActor(node, strategy)) {
+    type = KernelTransformType::kKernelActor;
+  } else if (IsInternalParameter(node, kernel_graph)) {
+    type = KernelTransformType::kInternalParameter;
+  } else if (IsPersistentDeviceTensor(node)) {
+    type = KernelTransformType::kDeviceTensorStore;
+  } else {
+    // May exist the from kernel that no need link in the pynative mode.
+    MS_LOG(DEBUG) << "Invalid from kernel: " << node->DebugString();
+  }
+
+  return type;
+}
+
+std::string FetchActorName(KernelTransformType kernel_type, const std::string &actor_set_name, const AnfNodePtr &node,
+                           const KernelGraphPtr &graph) {
+  // Fetch kernel graph.
+  KernelGraphPtr kernel_graph = nullptr;
+  if (graph == nullptr) {
+    kernel_graph = FetchKernelGraph(node);
+  } else {
+    kernel_graph = graph;
+  }
+  if (kernel_graph == nullptr) {
+    return "";
+  }
+
+  std::string actor_name = "";
+  switch (kernel_type) {
+    case KernelTransformType::kSuperKernelActor:
+      actor_name = kernel_graph->ToString() + "_SuperKernelActor";
+      break;
+    case KernelTransformType::kDeviceDataSourceActor:
+      actor_name = actor_set_name + "_DeviceDSActor" + "_" + std::to_string(kernel_graph->graph_id());
+      break;
+    case KernelTransformType::kHostDataSourceActor:
+      actor_name = actor_set_name + "_HostDSActor";
+      break;
+    case KernelTransformType::kKernelActor:
+      MS_EXCEPTION_IF_NULL(node);
+      actor_name = node->fullname_with_scope();
+      break;
+    default:
+      break;
+  }
+  return actor_name;
+}
 }  // namespace runtime
 }  // namespace mindspore

@@ -21,7 +21,6 @@
 #include "runtime/framework/actor/recorder_actor.h"
 #include "runtime/framework/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
-#include "common/trans.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

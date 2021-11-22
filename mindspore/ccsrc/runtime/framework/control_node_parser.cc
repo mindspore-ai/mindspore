@@ -334,16 +334,26 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
 bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
-  if ((!IsInited()) || (!node->isa<Parameter>()) || (AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+  // Has no control flow node.
+  if (!IsInited()) {
     return false;
   }
 
-  // If the graph has a call input, all of its inputs in the graph should be Linked to its stack actor.
+  if (graph->is_executing_sink()) {
+    return true;
+  }
+
+  MS_EXCEPTION_IF_NULL(node);
+  if ((!node->isa<Parameter>()) || (AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+    return false;
+  }
+
+  // If the graph has a call input, all of its inputs in the graph should be linked to its stack actor.
   if (IsCallInputKernelGraph(graph.get())) {
     return true;
   }
 
-  // Parameter input should be Linked to its entrance actor.
+  // Parameter input should be linked to its entrance actor.
   const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
   return (front_node != nullptr && front_node->isa<Parameter>());
 }
@@ -610,7 +620,7 @@ int ControlNodeParser::FetchBranchIDByCallNode(const AnfNodePtr &call_node) {
   return call_node_to_branch_id_[call_node];
 }
 
-FuncGraphPtr ControlNodeParser::FetchKernelGraphByFrontNode(const AnfNodePtr &kernel) {
+KernelGraphPtr ControlNodeParser::FetchKernelGraphByFrontNode(const AnfNodePtr &kernel) {
   const auto &iter = front_node_to_kernel_graph_.find(kernel);
   if (iter == front_node_to_kernel_graph_.end()) {
     return nullptr;

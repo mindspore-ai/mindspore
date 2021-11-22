@@ -388,12 +388,6 @@ void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {
       << "\toutputs_num:" << actor->outputs_num() << "\n";
 
   DumpAbstractActor(actor.get(), ofs);
-
-  ofs << "\t\toutput_address_persisted_nodes:" << actor->output_address_persisted_nodes().size() << "\n ";
-  for (const auto &output_address_persisted_node : actor->output_address_persisted_nodes()) {
-    MS_EXCEPTION_IF_NULL(output_address_persisted_node);
-    ofs << "\t\t\toutput_address_persisted_node_name:" << output_address_persisted_node->fullname_with_scope() << "\n";
-  }
 }
 
 void DumpDSActors(const std::vector<DataSourceActorPtr> &actors, std::ofstream &ofs) {

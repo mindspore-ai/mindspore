@@ -108,12 +108,13 @@ class GraphScheduler {
 
   // The processing of actors linking.
   // 1. The processing of linking data arrows.
-  void LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info);
+  void LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
+                               std::vector<AbstractActor *> *const auto_monad_actors);
   void LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
-                                  std::vector<KernelActor *> *const auto_monad_actors,
+                                  std::vector<AbstractActor *> *const auto_monad_actors,
                                   std::vector<CNodePtr> *const communication_nodes);
   // The gather of linking data arrows of kernel, it will call following functions by the different from actor type.
-  void LinkDataArrow(KernelActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
+  void LinkDataArrow(AbstractActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
                      const KernelGraphPtr &graph, const KernelWithIndex &from_kernel_with_output_idx,
                      const KernelWithIndex &to_kernel_with_input_idx);
   void LinkDataArrowForBaseActor(AbstractActor *const from_actor, AbstractActor *const to_actor,
@@ -146,12 +147,12 @@ class GraphScheduler {
 
   // The gather of linking the global control arrows, it will call following functions:
   void LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
-                              const std::vector<KernelActor *> &auto_monad_actors,
+                              const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                            const GraphCompilerInfo &graph_compiler_info);
-  void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
+  void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<AbstractActor *> &auto_monad_actors);
   void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
                                            const ControlNodeParserPtr &parser);
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
@@ -173,11 +174,6 @@ class GraphScheduler {
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
-
-  // The fetch results are kernel_type and kernel_name.
-  void FetchKernelTransformTypeAndName(const AnfNodePtr &node, const KernelGraphPtr &graph,
-                                       const GraphCompilerInfo &graph_compiler_info,
-                                       KernelTransformType *const kernel_type, std::string *const kernel_name);
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;

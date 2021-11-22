@@ -29,6 +29,7 @@
 #include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
+#include "common/trans.h"
 
 namespace mindspore {
 namespace runtime {
@@ -202,6 +203,13 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
 KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
                                                      const KernelGraphPtr &graph);
+
+KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node);
+KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const KernelGraphPtr &graph,
+                                             const std::vector<AnfNodePtr> &host_parameters = {},
+                                             GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
+std::string FetchActorName(KernelTransformType kernel_type, const std::string &actor_set_name,
+                           const AnfNodePtr &node = nullptr, const KernelGraphPtr &graph = nullptr);
 }  // namespace runtime
 }  // namespace mindspore
 
