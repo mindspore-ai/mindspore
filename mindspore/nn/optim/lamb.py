@@ -203,9 +203,10 @@ class Lamb(Optimizer):
         document `LossScale <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/lossscale.html>`_ to process
         `loss_scale` correctly.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the

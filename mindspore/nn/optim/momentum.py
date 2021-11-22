@@ -40,12 +40,13 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, 
 
 class Momentum(Optimizer):
     r"""
-    Implements the Momentum algorithm.
+    An optimizer that implements the Momentum algorithm.
 
-    Refer to the paper on the importance of initialization and momentum in deep learning for more details.
+    Refer to the paper `On the importance of initialization and momentum in deep
+    learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
 
     .. math::
-            v_{t+1} = v_{t} \ast u + gradients
+            v_{t+1} = v_{t} \ast u + grad
 
     If use_nesterov is True:
 
@@ -60,9 +61,10 @@ class Momentum(Optimizer):
     Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
     Note:
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the

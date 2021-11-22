@@ -63,9 +63,10 @@ class Optimizer(Cell):
     and `grad_centralization` can be applied to each group.
 
     Note:
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the parameters without 'beta'
-        or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When parameters
-        are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be applied.
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        applied.
 
     Args:
         learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
@@ -236,12 +237,17 @@ class Optimizer(Cell):
 
     @property
     def unique(self):
-        """The property is to see whether to make unique. The input type is bool. The method is read-only."""
+        """
+        Whether to make the gradients unique in optimizer. Generally, it is used in sparse networks. Set to True if the
+        the gradients of the optimizer are sparse. Set to False if the forward network has made the parameters unique,
+        that is, the gradients of the optimizer is no longer sparse.
+        The default value is True when it is not set.
+        """
         return self._unique
 
     @unique.setter
     def unique(self, value):
-        """Set whether the input value is unique."""
+        """Set the `unique` attribute."""
         if not isinstance(value, bool):
             raise TypeError("The value type must be bool, but got value type is {}".format(type(value)))
         self._unique = value
@@ -293,8 +299,7 @@ class Optimizer(Cell):
         on :class:`mindspore.nn.Optimizer` can also call this interface to apply weight decay.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
-                `self.parameters`.
+            gradients (tuple[Tensor]):The gradients of network parameters, and have the same shape as the parameters.
 
         Returns:
             tuple[Tensor], The gradients after weight decay.
@@ -319,7 +324,7 @@ class Optimizer(Cell):
         centralize gradients.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters` with the same shape as `self.parameters`.
+            gradients (tuple[Tensor]): The gradients of network parameters, and have the same shape as the parameters.
 
         Returns:
             tuple[Tensor], The gradients after gradients centralization.
@@ -333,13 +338,11 @@ class Optimizer(Cell):
         """
         Restore gradients for mixed precision.
 
-        An approach of mixed precision training to improve the speed and energy efficiency of training deep neural
-        network. User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface to
-        restore gradients.
+        User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface to restore
+        gradients.
 
         Args:
-            gradients (tuple[Tensor]): The gradients of `self.parameters`, and have the same shape as
-                `self.parameters`.
+            gradients (tuple[Tensor]): The gradients of network parameters, and have the same shape as the parameters.
 
         Returns:
             tuple[Tensor], The gradients after loss scale.
@@ -581,7 +584,8 @@ class Optimizer(Cell):
 
         Returns:
             Parameter, single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
-            `Cell` or `list[Cell]` that used to calculate the learning rate will be returned.
+            `LearningRateSchedule` or `list[LearningRateSchedule]` that used to calculate the learning rate will be
+            returned.
 
         Examples:
             >>> from mindspore import nn
