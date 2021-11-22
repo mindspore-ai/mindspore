@@ -52,10 +52,9 @@ class RankCpuKernel : public CPUKernel {
 
   void SetFunc();
 
-  void Launch1DInt(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
-                   float *output_addr) const;
-  void Launch1DFloat(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan, const AxisIterator &iter,
-                     float *output_addr) const;
+  void Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter, float *output_addr) const;
+  void Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan, const AxisIterator &iter,
+                float *output_addr) const;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -71,13 +70,15 @@ class RankCpuKernel : public CPUKernel {
                        [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
     }
   }
-  inline T get_padding_value() const {
+  inline T GetPaddingValue() const {
     if (ascending_ != (option_ == rank::NaOption::Top)) {
       return std::numeric_limits<T>::max();
     } else {
       return std::numeric_limits<T>::min();
     }
   }
+  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank, int nans_count) const;
+  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const;
   // shape info
   AxisIterator axisIterator_{};
   // parameters

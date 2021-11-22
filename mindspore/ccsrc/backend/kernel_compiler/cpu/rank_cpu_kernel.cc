@@ -15,9 +15,9 @@
  */
 #include "backend/kernel_compiler/cpu/rank_cpu_kernel.h"
 #include <math.h>
-#include <type_traits>
 #include <functional>
 #include <map>
+#include <type_traits>
 #include "common/thread_pool.h"
 
 namespace mindspore {
@@ -55,7 +55,8 @@ void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis_ = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_ >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "the evaluated axis should be smaller than the dimension of input tensor "
+    MS_LOG(EXCEPTION) << "the evaluated axis should be smaller than the "
+                         "dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_;
   }
 
@@ -100,8 +101,9 @@ void RankCpuKernel<T>::SetFunc() {
       // how avg is computed directly:
       // sum = (i - duplicate_count + 1) + (i - duplicate_count + 2) +... + i
       //     = duplicate_count * (2 * i - duplicate_count + 1) / 2
-      // rank_sum = sum + duplicate_count = duplicate_count * (2 * i - duplicate_count + 3) / 2
-      // avg = rank_sum / duplicate_count = (2 * i - duplicate_count + 3) / 2
+      // rank_sum = sum + duplicate_count = duplicate_count * (2 * i -
+      // duplicate_count + 3) / 2 avg = rank_sum / duplicate_count = (2 * i -
+      // duplicate_count + 3) / 2
       func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         float avg = (2 * i - duplicate_count + 3) / 2.0;
@@ -133,8 +135,8 @@ void RankCpuKernel<T>::SetFunc() {
 }
 
 template <typename T>
-void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
-                                   float *output_addr) const {
+void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
+                                float *output_addr) const {
   const size_t n = axisIterator_.AxisSize();
   for (size_t i = 0; i < n; ++i) {
     values[i] = input_addr[iter.GetPos(i)];
@@ -153,7 +155,12 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
       duplicate_count = 0;
     }
   }
+  PctConvert(output_addr, iter, culmutive_rank);
+}
 
+template <typename T>
+void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const {
+  const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
     if (method_ == Method::Dense) {
@@ -171,10 +178,10 @@ void RankCpuKernel<T>::Launch1DInt(const T *input_addr, size_t *sort_idx, T *val
 }
 
 template <typename T>
-void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
-                                     const AxisIterator &iter, float *output_addr) const {
-  const size_t n = axisIterator_.AxisSize();
-  T nan_padding_value = get_padding_value();
+void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
+                                const AxisIterator &iter, float *output_addr) const {
+  const size_t n = iter.AxisSize();
+  T nan_padding_value = GetPaddingValue();
 
   for (size_t i = 0; i < n; ++i) {
     const T value = input_addr[iter.GetPos(i)];
@@ -211,7 +218,13 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
       duplicate_count = 0;
     }
   }
+  PctConvert(output_addr, iter, culmutive_rank, nans_count);
+}
 
+template <typename T>
+void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
+                                  int nans_count) const {
+  const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
     if (method_ == Method::Dense) {
@@ -267,11 +280,11 @@ bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
         T *values = values_addr + offset;
 
         if constexpr (std::is_integral_v<T>) {
-          Launch1DInt(input_addr, sort_idx, values, iter, output_addr);
+          Launch1D(input_addr, sort_idx, values, iter, output_addr);
         } else {
           auto flags_addr = reinterpret_cast<bool *>(workspace[2]->addr);
           bool *is_nan = flags_addr + offset;
-          Launch1DFloat(input_addr, sort_idx, values, is_nan, iter, output_addr);
+          Launch1D(input_addr, sort_idx, values, is_nan, iter, output_addr);
         }
         return common::SUCCESS;
       });
