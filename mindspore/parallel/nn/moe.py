@@ -19,6 +19,7 @@ import math
 import numpy as np
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
+from mindspore._checkparam import Validator
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
@@ -40,18 +41,35 @@ class MoEConfig:
                 which is >=1.0. Default: 1.1.
             aux_loss_factor (float): The factor is used to indicate how much the load balance loss (produced by the
                 router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
-            num_experts_chosen (int): The number of experts is chosen by each token. Default: 1.
-            noisy_policy (string): The noisy policy is used in routing tokens to experts. Default: None.
-            noisy_epsilon (float): The parameter is used in adding noises in routing tokens to experts. Default: 1e-2.
+            num_experts_chosen (int): The number of experts is chosen by each token. This value should be less
+                than or equal to 'expert_num'. Default: 1.
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> from mindspore.parallel.nn import MoEConfig
+            >>> moe_config = MoEConfig(expert_num=4, capacity_factor=5.0, aux_loss_factor=0.05, num_experts_chosen=1)
     """
     def __init__(self, expert_num=1, capacity_factor=1.1, aux_loss_factor=0.05,
-                 num_experts_chosen=1, noisy_policy=None, noisy_epsilon=1e-2):
+                 num_experts_chosen=1):
+        Validator.check_positive_int(expert_num, "expert_num")
+        Validator.check_positive_float(capacity_factor, "capacity_factor")
+        Validator.check_positive_float(aux_loss_factor, "aux_loss_factor")
+        Validator.check_positive_int(num_experts_chosen, "num_experts_chosen")
+        if capacity_factor < 1.0:
+            raise ValueError(f"'capacity_factor' should be equal to or greater than 1.0, "
+                             f"but got {capacity_factor}.")
+        if aux_loss_factor >= 1.0:
+            raise ValueError(f"'aux_loss_factor' should be less than 1.0, "
+                             f"but got {aux_loss_factor}.")
+        if num_experts_chosen > expert_num:
+            raise ValueError(f"'num_experts_chosen' should be less than or equal to 'expert_num', "
+                             f"but got {num_experts_chosen} for 'num_experts_chosen', "
+                             f"and {expert_num} for 'expert_num'.")
         self.expert_num = expert_num
         self.capacity_factor = capacity_factor
         self.aux_loss_factor = aux_loss_factor
         self.num_experts_chosen = num_experts_chosen
-        self.noisy_policy = noisy_policy
-        self.noisy_epsilon = noisy_epsilon
 
 default_moe_config = MoEConfig()
 
@@ -265,8 +283,8 @@ class Router(Cell):
         self.capacity_factor = moe_config.capacity_factor
         self.training = training
         self.routing_policy = routing_policy
-        self.noisy_policy = moe_config.noisy_policy  # candidate: ["jitter", "rsample", "None"]
-        self.noisy_epsilon = moe_config.noisy_epsilon
+        self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
+        self.noisy_epsilon = 1e-2
         self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
 
         self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
@@ -323,7 +341,7 @@ class SwitchRouter(Cell):
         self.capacity_factor = moe_config.capacity_factor
         self.training = training
         self.expert_parallel = dp
-        self.noisy_policy = moe_config.noisy_policy
+        self.noisy_policy = None
         self.cast = P.Cast()
         self.reshape = P.Reshape()
         self.shape = P.Shape()
