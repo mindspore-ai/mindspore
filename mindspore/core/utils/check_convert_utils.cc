@@ -730,8 +730,9 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
   std::vector<int64_t> result;
   bool is_correct = false;
   MS_EXCEPTION_IF_NULL(attr);
-  if (attr->isa<ValueTuple>()) {
-    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+  if (attr->isa<ValueTuple>() || attr->isa<ValueList>()) {
+    auto attr_vec =
+      attr->isa<ValueTuple>() ? attr->cast<ValueTuplePtr>()->value() : attr->cast<ValueListPtr>()->value();
     is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
       MS_EXCEPTION_IF_NULL(e);
       if (e->isa<Int64Imm>()) {

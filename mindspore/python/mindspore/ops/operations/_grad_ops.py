@@ -1718,7 +1718,7 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
         return orig_type
 
 
-class ResizeNearestNeighborGrad(PrimitiveWithInfer):
+class ResizeNearestNeighborGrad(Primitive):
     """
     Compute gradient of `ResizeNearestNeighbor` operator.
 
@@ -1734,12 +1734,6 @@ class ResizeNearestNeighborGrad(PrimitiveWithInfer):
     def __init__(self, align_corners=False):
         """Initialize ResizeNearestNeighborGrad"""
         self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
-
-    def __infer__(self, grads, size):
-        shp = (grads['shape'][0],) + (grads['shape'][1],) + size['value']
-        return {'shape': shp,
-                'dtype': grads['dtype'],
-                'value': None}
 
 
 class ROIAlignGrad(PrimitiveWithInfer):

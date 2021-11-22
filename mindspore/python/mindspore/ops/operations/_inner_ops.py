@@ -1555,3 +1555,34 @@ class ClipGradNorm(PrimitiveWithInfer):
                                            [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid("scaling_factor_type", scaling_factor_type, [mstype.float32], self.name)
         return mstype.float32
+
+
+class DynamicResizeNearestNeighbor(Primitive):
+    r"""
+    Resizes the input tensor by using the nearest neighbor algorithm.
+
+    Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
+    neighbor algorithm selects the value of the nearest point and does not consider the
+    values of neighboring points at all, yielding a piecewise-constant interpolant.
+
+    Note:
+        The operator supports dynamic shape.
+
+    Args:
+        align_corners (bool): Whether the centers of the 4 corner pixels of the input
+                              and output tensors are aligned. Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
+        - **size** (Union[tuple, list]): The target size. The dimension of size must be 2.
+
+    Outputs:
+        Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
+        The data type is the same as the `input_x`.
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False):
+        """Initialize ResizeNearestNeighbor"""
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
