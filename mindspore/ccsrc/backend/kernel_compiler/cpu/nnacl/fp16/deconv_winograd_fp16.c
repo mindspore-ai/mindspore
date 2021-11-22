@@ -274,6 +274,7 @@ int PackDeConvWgDataFp16(const float16_t *nhwc_weight, DeConvComputeUnit *unit, 
                              DECONV_WINOGRAD_DEFAULT_UNIT, unit->h_size_);
     if (ret != NNACL_OK) {
       free(current_unit_weight);
+      current_unit_weight = NULL;
       return NNACL_ERRCODE_WINOGRAD_GENERATOR_ERROR;
     }
 
@@ -343,6 +344,9 @@ int PackDeConvWgDataFp16(const float16_t *nhwc_weight, DeConvComputeUnit *unit, 
 
 void DeconvWgFp16(const float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_out, int start_index,
                   int calculate_count, const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
+  if (deconv_param->in_tile_w_count_ == 0) {
+    return;
+  }
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
   float16x4_t zero = vdup_n_f16(0.0f);
@@ -382,6 +386,9 @@ void DeconvWgFp16(const float16_t *nhwc_input_, float16_t *tile_in, float16_t *t
                                                               deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
 
       /* winograd a buffer */
+      if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
+        return;
+      }
       DeConvWgABuffer *tmp_a = &deconv_param->a_buffer_[unit->winograd_.kh_];
       float16_t *mid_a = (float16_t *)tmp_a->middle_buffer_ + task_id * unit->winograd_.kw_ * unit->winograd_.kh_ *
                                                                 DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up_;

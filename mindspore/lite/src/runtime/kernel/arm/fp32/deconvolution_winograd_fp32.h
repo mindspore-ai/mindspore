@@ -39,7 +39,6 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int ReSize() override;
 
- public:
   int DoDeconv(int task_id);
   int DeDeconvPost(int task_id);
 
@@ -52,7 +51,6 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int InitRunBuf();
   void FreeRunBuf();
 
- private:
   DeConvParam *deconv_param_ = nullptr;
   float *nhwc_input_ = nullptr;
   float *nhwc_output_ = nullptr;

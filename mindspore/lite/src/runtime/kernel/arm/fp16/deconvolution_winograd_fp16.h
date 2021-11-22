@@ -36,7 +36,6 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int ReSize() override;
 
- public:
   int DoDeconv(int task_id);
   int DeDeconvPost(int task_id);
 
@@ -46,8 +45,9 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int InitParameter();
   void FreeDeconvParam();
   void FreeResizeBuf();
+  int InitRunBuf();
+  void FreeRunBuf();
 
- private:
   DeConvParam *deconv_param_ = nullptr;
   std::mutex nc4hw4_mutex_;
   std::condition_variable nc4hw4_cond_var_;
