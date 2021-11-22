@@ -322,9 +322,8 @@ class CheckAndConvertUtils {
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
                                 const bool allow_mix);
   static TypePtr CheckTensorSubClass(const std::string &type_name, const TypePtr &type,
-                                     const std::set<TypePtr> &template_types, const std::string &prim_name);
-  static TypePtr CheckMixSubClass(const std::string &type_name, const TypePtr &type,
-                                  const std::set<TypePtr> &template_types, const std::string &prim_name);
+                                     const std::set<TypePtr> &template_types, const std::string &prim_name,
+                                     bool is_mix = false);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_

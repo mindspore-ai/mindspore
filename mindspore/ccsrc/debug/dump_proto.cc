@@ -124,6 +124,18 @@ void CheckIfValidType(const TypePtr &type) {
   }
 }
 
+void SetTensorType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
+  TypePtr elem_type = dyn_cast<TensorType>(type)->element();
+  type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
+  type_proto->set_data_type(irpb::DT_TENSOR);
+  if (shape != nullptr && shape->isa<abstract::Shape>()) {
+    abstract::ShapePtr shape_info = dyn_cast<abstract::Shape>(shape);
+    for (const auto &elem : shape_info->shape()) {
+      type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
+    }
+  }
+}
+
 void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
   if (type_proto == nullptr) {
     return;
@@ -136,15 +148,7 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
   if (type->isa<Number>()) {
     type_proto->set_data_type(GetNumberDataType(type));
   } else if (type->isa<TensorType>()) {
-    TypePtr elem_type = dyn_cast<TensorType>(type)->element();
-    type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
-    type_proto->set_data_type(irpb::DT_TENSOR);
-    if (shape != nullptr && shape->isa<abstract::Shape>()) {
-      abstract::ShapePtr shape_info = dyn_cast<abstract::Shape>(shape);
-      for (const auto &elem : shape_info->shape()) {
-        type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
-      }
-    }
+    SetTensorType(type, shape, type_proto);
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);
     type_proto->set_data_type(irpb::DT_TUPLE);
