@@ -43,7 +43,7 @@ void MemOffloadStrategy::Execute() {
   CheckMemSize();
   if (need_swap_) {
     GenEventSpan();
-    GenNoSwapEventSet();
+    GenSwapEventSet();
   }
   GenComputeMemEvents();
 }
@@ -57,37 +57,41 @@ void MemOffloadStrategy::CountMemUsage() {
   }
   min_mem_used_.resize(total_step_, 0);
   std::vector<size_t> total_mem_used(total_step_, 0);
+  size_t high_priority_mem_size = 0;
   for (auto &item : mem_events_) {
     auto &mem_events = item.second;
     if (mem_events.empty()) {
       continue;
     }
     auto first_event = mem_events[0];
-    size_t cur_index = 0;
-    if (first_event != nullptr && first_event->type == kInit && mem_events.size() > 1) {
-      first_event = mem_events[1];
-      cur_index = 1;
-    }
-    auto last_event = mem_events[mem_events.size() - 1];
-    for (size_t start_index = first_event->index; start_index <= last_event->index; ++start_index) {
-      if (start_index < total_step_) {
+    const bool is_high_priority = IsHighPriorityMem(first_event->key);
+    if (is_high_priority) {
+      high_priority_mem_size += first_event->mem_size;
+    } else {
+      auto last_event = mem_events[mem_events.size() - 1];
+      for (size_t start_index = first_event->index; start_index <= last_event->index; ++start_index) {
         total_mem_used[start_index] += first_event->mem_size;
-      } else {
-        MS_LOG(ERROR) << "Error mem event index " << start_index;
       }
     }
-    for (; cur_index < mem_events.size(); ++cur_index) {
-      auto &event = mem_events[cur_index];
+    // Calculate the minimum memory size for kernel execution.
+    for (const auto &event : mem_events) {
       MS_EXCEPTION_IF_NULL(event);
-      if (event->index < total_step_) {
-        min_mem_used_[event->index] += first_event->mem_size;
-      } else {
-        MS_LOG(ERROR) << "Error mem event index " << event->index;
+      if (event->type != kGet) {
+        continue;
       }
+      min_mem_used_[event->index] += first_event->mem_size;
     }
   }
   min_mem_needed_ = *(std::max_element(min_mem_used_.begin(), min_mem_used_.end()));
-  mem_used_without_swap_ = *(std::max_element(total_mem_used.begin(), total_mem_used.end()));
+  mem_used_without_swap_ = *(std::max_element(total_mem_used.begin(), total_mem_used.end())) + high_priority_mem_size;
+}
+
+bool MemOffloadStrategy::IsHighPriorityMem(const void *key) {
+  auto iter = mem_priority_.find(key);
+  if (iter != mem_priority_.end()) {
+    return iter->second == kMemPriorityHigh;
+  }
+  return false;
 }
 
 void MemOffloadStrategy::CheckMemSize() {
@@ -110,48 +114,60 @@ void MemOffloadStrategy::GenEventSpan() {
   }
   for (auto &item : mem_events_) {
     auto &tensor_events = item.second;
-    if (tensor_events.empty()) {
+    if (tensor_events.size() <= 1) {
       continue;
     }
-    auto first_event = tensor_events[0];
-    size_t cur_index = 0;
-    if (first_event != nullptr && first_event->type == kInit && tensor_events.size() > 1) {
-      first_event = tensor_events[1];
-      cur_index = 1;
-    }
-    size_t last_index = first_event->index;
-    for (; cur_index < tensor_events.size(); ++cur_index) {
-      auto &event = tensor_events[cur_index];
+    const bool is_high_priority = IsHighPriorityMem(tensor_events[0]->key);
+    for (size_t event_index = 1; event_index < tensor_events.size(); ++event_index) {
+      auto &event = tensor_events[event_index];
       MS_EXCEPTION_IF_NULL(event);
-      auto span = event->index - last_index;
-      if (span > 1) {
-        (void)event_span_.emplace(span, event);
+      if (event->type != kGet) {
+        MS_LOG(EXCEPTION) << "Event should be Get except fist event.";
       }
-      last_index = event->index;
+      size_t span = 0;
+      if (event_index == 1 && is_high_priority) {
+        const auto &last_event = tensor_events[tensor_events.size() - 1];
+        span = event->index + total_step_ - last_event->index;
+      } else {
+        span = event->index - tensor_events[event_index - 1]->index;
+      }
+      if (span > 1) {
+        const size_t span_mul_size = (span - 1) * event->mem_size;
+        (void)event_span_.emplace(std::make_pair(span_mul_size, std::make_pair(event, span)));
+      }
     }
   }
 }
 
-void MemOffloadStrategy::GenNoSwapEventSet() {
-  no_swap_events_.clear();
+void MemOffloadStrategy::GenSwapEventSet() {
+  swap_events_.clear();
   std::vector<size_t> cur_mem_used(min_mem_used_.begin(), min_mem_used_.end());
-  for (auto iter = event_span_.begin(); iter != event_span_.end(); ++iter) {
-    auto span = iter->first;
-    auto &event = iter->second;
-    auto start_index = event->index - span + 1;
+  for (const auto &iter : event_span_) {
+    auto span = iter.second.second;
+    auto &event = iter.second.first;
+    auto start_index = ((total_step_ + event->index - span) % total_step_) + 1;
     bool revert = false;
-    for (size_t i = start_index; i < event->index; ++i) {
-      cur_mem_used[i] += event->mem_size;
-      if (cur_mem_used[i] > mem_size_) {
+    size_t cur_index = start_index;
+    while (cur_index != event->index) {
+      cur_mem_used[cur_index] += event->mem_size;
+      if (cur_mem_used[cur_index] > mem_size_) {
         revert = true;
+      }
+      cur_index += 1;
+      if (cur_index >= total_step_) {
+        cur_index = 0;
       }
     }
     if (revert) {
-      for (size_t i = start_index; i < event->index; ++i) {
-        cur_mem_used[i] -= event->mem_size;
+      cur_index = start_index;
+      while (cur_index != event->index) {
+        cur_mem_used[cur_index] -= event->mem_size;
+        cur_index += 1;
+        if (cur_index >= total_step_) {
+          cur_index = 0;
+        }
       }
-    } else {
-      (void)no_swap_events_.emplace(event);
+      (void)swap_events_.emplace(event);
     }
   }
 }
@@ -166,34 +182,31 @@ void MemOffloadStrategy::GenComputeMemEvents() {
     if (mem_events.empty()) {
       continue;
     }
+    // No need to generate events for memory that has only one event, which means it is never used by any kernel.
+    if (mem_events.size() <= 1) {
+      continue;
+    }
+
+    const bool is_high_priority = IsHighPriorityMem(item.first);
     auto first_event = mem_events[0];
     MS_EXCEPTION_IF_NULL(first_event);
-    if (first_event->type == kInit) {
-      if (mem_events.size() > 1) {
-        auto &second_event = mem_events[1];
-        MS_EXCEPTION_IF_NULL(second_event);
-        first_event->index = second_event->index;
-      } else {
-        continue;
-      }
+    const auto &second_event = mem_events[1];
+    MS_EXCEPTION_IF_NULL(second_event);
+    if (is_high_priority && swap_events_.find(second_event) != swap_events_.end()) {
+      first_event->index = second_event->index;
     }
-    if ((first_event->type == kInit || first_event->type == kMalloc) &&
-        first_event->index < pre_compute_events_.size()) {
+    if ((first_event->type == kInit || first_event->type == kMalloc) && first_event->index < total_step_) {
       pre_compute_events_[first_event->index].emplace_back(first_event);
     } else {
       MS_LOG_EXCEPTION << "First event should be init or malloc!";
     }
-    MemPriority priority = kMemPriorityLow;
-    auto iter = mem_priority_.find(first_event->key);
-    if (iter != mem_priority_.end()) {
-      priority = iter->second;
-    }
-    size_t pre_index = first_event->index;
+
+    const auto &last_event = mem_events[mem_events.size() - 1];
+    size_t pre_index = is_high_priority ? last_event->index : first_event->index;
     for (size_t i = 1; i < mem_events.size(); ++i) {
       auto &event = mem_events[i];
       MS_EXCEPTION_IF_NULL(event);
-      if (need_swap_ && event->index - pre_index > 1 && priority == kMemPriorityLow &&
-          no_swap_events_.find(event) == no_swap_events_.end()) {
+      if (need_swap_ && swap_events_.find(event) != swap_events_.end()) {
         auto swap_out_event = std::make_shared<MemEvent>(kSwapOut, pre_index);
         swap_out_event->key = item.first;
         swap_out_event->mem_size = first_event->mem_size;
@@ -208,16 +221,18 @@ void MemOffloadStrategy::GenComputeMemEvents() {
       }
       pre_index = event->index;
     }
-    if (priority != kMemPriorityLow) {
-      continue;
+    if (!is_high_priority) {
+      GenFreeEvent(last_event);
     }
-    auto &last_event = mem_events[mem_events.size() - 1];
-    MS_EXCEPTION_IF_NULL(last_event);
-    auto free_event = std::make_shared<MemEvent>(kFree, last_event->index);
-    free_event->key = item.first;
-    if (last_event->index < post_compute_events_.size()) {
-      (void)post_compute_events_[last_event->index].emplace_back(free_event);
-    }
+  }
+}
+
+void MemOffloadStrategy::GenFreeEvent(const std::shared_ptr<MemEvent> &last_event) {
+  MS_EXCEPTION_IF_NULL(last_event);
+  auto free_event = std::make_shared<MemEvent>(kFree, last_event->index);
+  free_event->key = last_event->key;
+  if (last_event->index < post_compute_events_.size()) {
+    (void)post_compute_events_[last_event->index].emplace_back(free_event);
   }
 }
 }  // namespace device

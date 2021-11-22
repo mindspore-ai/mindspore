@@ -58,12 +58,15 @@ class MemOffloadStrategy {
 
   bool need_swap() const { return need_swap_; }
 
+  bool IsHighPriorityMem(const void *key);
+
  private:
   void CountMemUsage();
   void CheckMemSize();
   void GenEventSpan();
-  void GenNoSwapEventSet();
+  void GenSwapEventSet();
   void GenComputeMemEvents();
+  void GenFreeEvent(const std::shared_ptr<MemEvent> &last_event);
 
   const std::map<const void *, MemPriority> &mem_priority_;
   const std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> &mem_events_;
@@ -74,8 +77,8 @@ class MemOffloadStrategy {
   size_t mem_size_{0};
   std::vector<double> compute_time_;
   bool need_swap_{false};
-  std::multimap<size_t, std::shared_ptr<MemEvent>> event_span_;
-  std::set<std::shared_ptr<MemEvent>> no_swap_events_;
+  std::multimap<size_t, std::pair<std::shared_ptr<MemEvent>, size_t>> event_span_;
+  std::set<std::shared_ptr<MemEvent>> swap_events_;
   std::vector<size_t> min_mem_used_;
   size_t mem_used_without_swap_{0};
   size_t min_mem_needed_{0};
