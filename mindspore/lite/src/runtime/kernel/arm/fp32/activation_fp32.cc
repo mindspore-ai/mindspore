@@ -56,7 +56,7 @@ int ActivationCPUKernel::DoActivation(int task_id) {
   MS_ASSERT(input_addr != nullptr);
   MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
-
+  MS_CHECK_GT(length, 0, RET_ERROR);
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {

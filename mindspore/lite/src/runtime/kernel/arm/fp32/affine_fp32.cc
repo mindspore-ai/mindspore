@@ -38,6 +38,7 @@ constexpr auto kInputCol = 2;
 int AffineFp32CPUKernel::DoActivation(lite::Tensor *tensor) {
   auto data = static_cast<float *>(tensor->MutableData());
   int length = tensor->ElementsNum();
+  MS_CHECK_GT(length, 0, RET_ERROR);
   switch (schema::ActivationType(affine_parameter_->activation_type_)) {
     case schema::ActivationType_RELU:
       return Fp32Relu(data, length, data);

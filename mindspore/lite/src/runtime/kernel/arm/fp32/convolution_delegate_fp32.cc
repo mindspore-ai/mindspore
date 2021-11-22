@@ -50,12 +50,13 @@ constexpr int kMaxDwConvSWSize = 32;
 }  // namespace
 
 float *ConvolutionDelegateCPUKernel::CopyData(const lite::Tensor *tensor) {
+  MS_CHECK_GT(tensor->Size(), 0, nullptr);
+  MS_CHECK_FALSE_MSG(tensor->data() == nullptr, nullptr, "tensor->data() is nullptr");
   auto data = reinterpret_cast<float *>(malloc(tensor->Size()));
   if (data == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed.";
     return nullptr;
   }
-  MS_ASSERT(tensor->data() != nullptr);
   memcpy(data, tensor->data(), tensor->Size());
   return data;
 }

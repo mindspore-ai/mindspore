@@ -169,6 +169,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   }
 
   if (!need_align_) {
+    MS_CHECK_GT(output_tensor->ElementsNum(), 0, RET_ERROR);
     memset(output_addr, 0, output_tensor->ElementsNum() * sizeof(float));
     packed_output_ = output_addr;
   }

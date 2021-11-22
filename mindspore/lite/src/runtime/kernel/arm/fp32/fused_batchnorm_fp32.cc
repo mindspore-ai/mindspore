@@ -49,6 +49,10 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   auto mean = in_tensors_.at(FOURTH_INPUT);
   auto variance = in_tensors_.at(FIFTH_INPUT);
 
+  MS_CHECK_GT(scale->Size(), 0, RET_ERROR);
+  MS_CHECK_GT(offset->Size(), 0, RET_ERROR);
+  MS_CHECK_GT(mean->Size(), 0, RET_ERROR);
+  MS_CHECK_GT(variance->Size(), 0, RET_ERROR);
   scale_ = malloc(scale->Size());
   offset_ = malloc(offset->Size());
   mean_ = malloc(mean->Size());
@@ -87,6 +91,8 @@ int FusedBatchnormCPUKernel::Run() {
       MS_LOG(ERROR) << "The input data is nullptr.";
       return RET_ERROR;
     }
+    MS_CHECK_GT(in_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0, RET_ERROR);
     std::fill(current_mean, current_mean + in_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0.f);
     std::fill(current_var, current_var + in_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0.f);
     FusedBatchNormFp32MeanVar(in, current_mean, current_var, param, static_cast<float *>(save_mean),
@@ -96,12 +102,18 @@ int FusedBatchnormCPUKernel::Run() {
     CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT)->data());
     CHECK_NULL_RETURN(out_tensors_.at(FOURTH_INPUT)->data());
     CHECK_NULL_RETURN(out_tensors_.at(FIFTH_INPUT)->data());
+    MS_CHECK_GT(out_tensors_.at(SECOND_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(out_tensors_.at(THIRD_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(out_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(out_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0, RET_ERROR);
     memcpy(out_tensors_.at(SECOND_INPUT)->data(), scale, out_tensors_.at(SECOND_INPUT)->Size());
     memcpy(out_tensors_.at(THIRD_INPUT)->data(), offset, out_tensors_.at(THIRD_INPUT)->Size());
     memcpy(out_tensors_.at(FOURTH_INPUT)->data(), current_mean, out_tensors_.at(FOURTH_INPUT)->Size());
     memcpy(out_tensors_.at(FIFTH_INPUT)->data(), current_var, out_tensors_.at(FIFTH_INPUT)->Size());
 
     // Copy to local variables
+    MS_CHECK_GT(in_tensors_.at(SECOND_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(THIRD_INPUT)->ElementsNum(), 0, RET_ERROR);
     memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
     memcpy(offset_, offset, in_tensors_.at(THIRD_INPUT)->Size());
 
@@ -127,6 +139,10 @@ int FusedBatchnormCPUKernel::Eval() {
     CHECK_NULL_RETURN(bias);
 
     // Copy to local variables
+    MS_CHECK_GT(in_tensors_.at(SECOND_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(THIRD_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0, RET_ERROR);
+    MS_CHECK_GT(in_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0, RET_ERROR);
     memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
     memcpy(offset_, bias, in_tensors_.at(THIRD_INPUT)->Size());
     memcpy(mean_, save_mean, in_tensors_.at(FOURTH_INPUT)->Size());

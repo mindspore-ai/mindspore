@@ -79,6 +79,8 @@ int BatchnormCPUKernel::FillParam() {
 int BatchnormCPUKernel::InitConstTensor() {
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(1)->Size());
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(kNumInput2)->Size());
+  MS_CHECK_GT(in_tensors_.at(SECOND_INPUT)->Size(), 0, RET_ERROR);
+  MS_CHECK_GT(in_tensors_.at(THIRD_INPUT)->Size(), 0, RET_ERROR);
   mean_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
   variance_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {

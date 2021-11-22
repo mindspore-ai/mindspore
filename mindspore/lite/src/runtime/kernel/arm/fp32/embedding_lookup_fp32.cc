@@ -36,6 +36,7 @@ int EmbeddingLookupCPUKernel::Init() {
 
 int EmbeddingLookupCPUKernel::ReSize() {
   param_->ids_size_ = in_tensors_.back()->ElementsNum();
+  MS_CHECK_GT(param_->ids_size_, 0, RET_ERROR);
   param_->layer_size_ = 1;
   auto in_shape = in_tensors_.front()->shape();
   for (size_t i = 1; i < in_shape.size(); ++i) {
@@ -94,6 +95,7 @@ int EmbeddingLookupCPUKernel::Run() {
       FreeRunBuff();
       return RET_ERROR;
     }
+    MS_CHECK_GT(in_tensors_.at(i)->ElementsNum(), 0, RET_ERROR);
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();
   }
