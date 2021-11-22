@@ -31,6 +31,8 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+        ${TEST_DIR}/ut/src/api/context_c_test.cc
+        ${TEST_DIR}/ut/src/api/tensor_c_test.cc
         )
 
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
