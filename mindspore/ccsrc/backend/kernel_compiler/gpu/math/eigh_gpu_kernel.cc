@@ -18,19 +18,13 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      EighGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(Eigh,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      EighGpuKernel, double);
+MS_REG_GPU_KERNEL_ONE(
+  Eigh,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  EighGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  Eigh,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EighGpuKernel, double);
 }  // namespace kernel
 }  // namespace mindspore

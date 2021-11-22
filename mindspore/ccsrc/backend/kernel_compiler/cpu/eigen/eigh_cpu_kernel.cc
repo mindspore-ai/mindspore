@@ -22,10 +22,8 @@ namespace mindspore {
 namespace kernel {
 
 namespace {
-constexpr size_t kInputsNum = 2;
+constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
-constexpr size_t kDefaultShape = 1;
-constexpr auto kAMatrixDimNum = 2;
 
 }  // namespace
 using Eigen::Dynamic;
@@ -45,12 +43,9 @@ using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, Row
 template <typename T>
 void EighCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-
-  compute_eigen_vectors = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
-
+  compute_eigen_vectors_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
+  lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  CHECK_KERNEL_INPUTS_NUM(A_shape.size(), kAMatrixDimNum, AnfAlgo::GetCNodeName(kernel_node));
-
   if (A_shape.size() != kShape2dDims || A_shape[0] != A_shape[1]) {
     MS_LOG(EXCEPTION) << "wrong array shape, A should be a matrix, but got [" << A_shape[0] << " X " << A_shape[1]
                       << "]";
@@ -91,10 +86,8 @@ bool EighCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
                               const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-
   auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  // is the Matrix a symmetric matrix(0, all, general matxi, -1 lower triangle, 1 upper triangle)
-  auto symmetric_type = reinterpret_cast<bool *>(inputs[1]->addr);
+  // is the Matrix a symmetric matrix(true lower triangle, false upper triangle)
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_v_addr = reinterpret_cast<T *>(outputs[1]->addr);
   Map<MatrixSquare<T>> A(A_addr, m_, m_);
@@ -102,19 +95,19 @@ bool EighCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
   Map<MatrixSquare<T>> output(output_addr, m_, 1);
   Map<MatrixSquare<T>> outputv(output_v_addr, m_, m_);
   // selfadjoint matrix
-  if (*symmetric_type) {
+  if (lower_) {
     A_ = A.template selfadjointView<Lower>();
   } else {
     A_ = A.template selfadjointView<Upper>();
   }
   // Real scalar eigen solver
   if constexpr (std::is_same_v<T, float>) {
-    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors);
+    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors_);
   } else if constexpr (std::is_same_v<T, double>) {
-    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors);
+    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors_);
   } else {
     // complex eigen solver
-    SolveComplexMatrix(A_, &output, &outputv, compute_eigen_vectors);
+    SolveComplexMatrix(A_, &output, &outputv, compute_eigen_vectors_);
   }
   return true;
 }
