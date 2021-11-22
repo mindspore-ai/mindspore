@@ -753,7 +753,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
 }
 
-void ApplyApproximationForParaNode(OperatorInfoPtr target_op_info) {
+void ApplyApproximationForParaNode(const OperatorInfoPtr &target_op_info) {
   // If 'approximation' is enabled, the edges need to be checked have effective costs.
   auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
   if (approximation) {
