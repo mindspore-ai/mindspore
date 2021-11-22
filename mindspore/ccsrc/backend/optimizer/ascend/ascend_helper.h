@@ -103,12 +103,12 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
                             const AnfNodePtr &trans_data, const std::string &reshape_type = {""},
                             const TypeId &type_id = kTypeUnknown);
 
-CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
-                        const bool need_padding, const std::string &op_name,
+CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
+                        const KernelSelectPtr &kernel_select, const bool need_padding, const std::string &op_name,
                         const std::vector<int64_t> &perm = std::vector<int64_t>{});
 
-CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
-                              const TypeId &input_type, const TypeId &output_type,
+CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
+                              const std::string &format, const TypeId &input_type, const TypeId &output_type,
                               const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
                               const std::string &reshape_type = std::string{});
 
