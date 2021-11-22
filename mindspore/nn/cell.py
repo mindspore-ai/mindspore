@@ -1243,6 +1243,20 @@ class Cell(Cell_):
                 cells[name] = cell
         return cells
 
+    def _add_mixed_precision_flag(self, **flags):
+        """Add mixed precision flag to current cell"""
+        if "fp16" in flags and flags["fp16"]:
+            Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP16)
+        if "fp32" in flags and flags["fp32"]:
+            Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP32)
+
+    def _add_mixed_precision_flag_recursive(self, **flags):
+        """Add mixed precision flag to each cell"""
+        if "fp16" in flags and flags["fp16"]:
+            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
+        if "fp32" in flags and flags["fp32"]:
+            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
+
     def add_flags(self, **flags):
         """
         Add customized attributes for cell.
@@ -1257,6 +1271,7 @@ class Cell(Cell_):
             self._mindspore_flags = {}
         self._mindspore_flags.update({**flags})
         self.__dict__.update({**flags})
+        self._add_mixed_precision_flag(**flags)
         return self
 
     def add_flags_recursive(self, **flags):
@@ -1268,6 +1283,7 @@ class Cell(Cell_):
                 dataset. Users can also customize network attributes by this parameter. Default: None.
         """
         self.add_flags(**flags)
+        self._add_mixed_precision_flag_recursive(**flags)
         for cell in self.cells():
             cell.add_flags_recursive(**flags)
         return self
