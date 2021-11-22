@@ -236,6 +236,76 @@ class MS_CORE_API MetaTensor : public Value {
 
 using MetaTensorPtr = std::shared_ptr<MetaTensor>;
 
+// brief Metadata of SparseTensor
+//
+// Includes the metadata information of a SparseTensor, such as data type, shape
+// and so on. But it does not contain values of a SparseTensor.
+class MS_CORE_API MetaSparseTensor : public Value {
+ public:
+  /// \brief Construction
+  MetaSparseTensor();
+
+  /// \brief Constructs a meta SparseTensor having data_type data and shape.
+  /// The constructed MetaSparseTensor contains the data type and shape information of
+  /// a SparseTensor.
+  ///
+  /// \param[in] data_type The data type of the SparseTensor.
+  /// \param[in] shape The shape of the SparseTensor.
+  MetaSparseTensor(const TypeId data_type, const ShapeVector &shape);
+
+  /// \brief Copy constructor.
+  /// The constructed MetaSparseTensor object will have the same data type and shape as the
+  /// meta_sparse_tensor.
+  ///
+  /// \param[in] meta_tensor An existing MetaSparseTensor object.
+  MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor);
+
+  /// \brief Destrustor of MetaSparseTensor.
+  ~MetaSparseTensor() override = default;
+  MS_DECLARE_PARENT(MetaSparseTensor, Value)
+
+  /// \brief Compares two MetaSparseTensor objects.
+  /// The constructed MetaSparseTensor object has the same type and shape with meta_sparse_tensor.
+  ///
+  /// \param[in] meta_sparse_tensor The MetaSparseTensor object to be compared.
+  /// \return Return true if having same type and shape, otherwise return false.
+  virtual bool operator==(const MetaSparseTensor &meta_sparse_tensor) const;
+
+  /// \brief Get the data type of the sparse tensor.
+  /// All the types are defined in "ir/dtype.h".
+  ///
+  /// \return The data type of the sparse tensor.
+  TypePtr Dtype() const;
+
+  /// \brief Get the data type of a sparse tensor.
+  ///
+  /// \return The data type.
+  TypeId data_type() const { return data_type_; }
+
+  /// \brief Set the data type of a sparse tensor.
+  ///
+  /// \param[in] data_type The data type of the tensor to be set.
+  void set_data_type(const TypeId data_type) { data_type_ = data_type; }
+
+  /// \brief Get sparsetensor's shape.
+  ///
+  /// \return A const vector<int> which represents the shape of the tensor.
+  const ShapeVector &shape() const { return shape_; }
+
+  /// \brief Sets the shape of a sparsetensor.
+  ///
+  /// \param[in] shape The shape of the tensor.
+  void set_shape(const ShapeVector &shape) { this->shape_ = shape; }
+
+ protected:
+  // Data type of the sparsetensor.
+  TypeId data_type_;
+
+  // Shape of the sparsetensor.
+  ShapeVector shape_;
+};
+
+using MetaSparseTensorPtr = std::shared_ptr<MetaSparseTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 

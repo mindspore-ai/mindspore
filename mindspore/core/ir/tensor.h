@@ -549,7 +549,7 @@ using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
 // CSRTensor entity class
-class MS_CORE_API CSRTensor : public MetaTensor {
+class MS_CORE_API CSRTensor : public MetaSparseTensor {
  public:
   abstract::AbstractBasePtr ToAbstract() override;
 
@@ -579,29 +579,29 @@ class MS_CORE_API CSRTensor : public MetaTensor {
   /// \return [TensorPtr] The values.
   TensorPtr GetValues() { return values_; }
 
-  /// \brief Gets CSRTensor's shape.
-  ///
-  /// \return [ShapeVector] The shape of the tensor.
-  const ShapeVector &shape() const { return shape_; }
-
   /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
   ///
   /// \param[in] tensor The Tensor object to be compared.
   /// \return True if having same type, shape and data address, otherwise false.
   bool operator==(const CSRTensor &csr_tensor) const;
 
+  bool operator==(const Value &other) const override {
+    if (other.isa<CSRTensor>()) {
+      auto &other_ = static_cast<const CSRTensor &>(other);
+      return *this == other_;
+    }
+    return false;
+  }
+
   /// \brief Get display information of this Tensor.
   ///
   /// \return The display information of this Tensor.
   std::string ToString() const override;
 
-  TypePtr Dtype() const { return values_->Dtype(); }
-
  private:
   TensorPtr indptr_;
   TensorPtr indices_;
   TensorPtr values_;
-  ShapeVector shape_{};
 };
 using CSRTensorPtr = std::shared_ptr<CSRTensor>;
 }  // namespace tensor
