@@ -142,6 +142,18 @@ build_lite() {
       CMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake
     fi
 
+    BRANCH_NAME=nnie_3516_master_dev
+    if [[ ("${MSLITE_REGISTRY_DEVICE}" == "Hi3516D" || "${TOOLCHAIN_NAME}" == "himix200") && "${local_lite_platform}" == "arm32" ]]; then
+      TOOLCHAIN_NAME="himix200"
+      MSLITE_REGISTRY_DEVICE=Hi3516D
+    elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3559A" && "${local_lite_platform}" == "arm64" ]]; then
+      TOOLCHAIN_NAME="himix100"
+    elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3519A" && "${local_lite_platform}" == "arm32" ]]; then
+      TOOLCHAIN_NAME="himix200"
+    elif [[ ("${MSLITE_ENABLE_NNIE}" == "on" || "${MSLITE_REGISTRY_DEVICE}" == "Hi3516D") && "${local_lite_platform}" == "x86_64" ]]; then
+      MSLITE_REGISTRY_DEVICE=Hi3516D
+    fi
+
     if [[ "${local_lite_platform}" == "arm32" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_ARM32=on -DENABLE_NEON=on"
       if [ "$(uname)" == "Darwin" ]; then
@@ -200,6 +212,9 @@ build_lite() {
     if [[ "X$CMAKE_TOOLCHAIN_FILE" != "X" ]]; then
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     fi
+    if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]]; then
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_REGISTRY_DEVICE=${MSLITE_REGISTRY_DEVICE}"
+    fi
 
     if [[ "${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
@@ -252,20 +267,16 @@ build_lite() {
         fi
 
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
-        local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
-        if [[ "${MSLITE_ENABLE_NNIE}" == "on" && "${local_lite_platform}" == "x86_64" ]]; then
+        if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]]; then
+          local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
           cd ${BASEPATH}/../
-          sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master -j $THREAD_NUM
-          if [[ $? -ne 0 ]]; then
-            echo "compile x86_64 for nnie failed."
-            exit 1
+          if [[ "${local_lite_platform}" == "x86_64" ]]; then
+            bash ${compile_nnie_script} -I ${local_lite_platform} -b ${BRANCH_NAME} -j $THREAD_NUM
+          else
+            bash ${compile_nnie_script} -I ${local_lite_platform} -b ${BRANCH_NAME} -t ${TOOLCHAIN_NAME} -d ${MSLITE_REGISTRY_DEVICE} -j $THREAD_NUM
           fi
-        fi
-        if [[ "${TOOLCHAIN_NAME}" == "himix200" && "${local_lite_platform}" == "arm32" ]]; then
-          cd ${BASEPATH}/../
-          sh ${compile_nnie_script} -I arm32 -b nnie_3516_master -j $THREAD_NUM
           if [[ $? -ne 0 ]]; then
-            echo "compile arm32 for nnie failed."
+            echo "compile ${local_lite_platform} for nnie failed."
             exit 1
           fi
         fi

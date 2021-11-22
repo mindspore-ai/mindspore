@@ -33,7 +33,7 @@ int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
   return RET_OK;
 }
 
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE)
 int Arm64SdotPreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
@@ -452,7 +452,7 @@ int MatmulBaseInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE)
 int MatmulBaseInt8CPUKernel::RunArm64Sdot() {
   int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
   int8_t *b_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
@@ -485,7 +485,7 @@ int MatmulBaseInt8CPUKernel::RunArm64Sdot() {
 #endif
 
 int MatmulBaseInt8CPUKernel::Run() {
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE)
   if (support_sdot_) {
     return RunArm64Sdot();
   }

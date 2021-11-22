@@ -9,6 +9,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_link_option.cmake)
 #Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
     opencl only support arm64 and x86_64 , tensorrt only support x86_64, opencl/cuda/tensorrt/off")
+set(MSLITE_REGISTRY_DEVICE "" CACHE STRING "Compile Mindspore Lite that supports specific devices, \
+    currently supported devices: Hi3516D/Hi3519A/Hi3559A")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
@@ -44,6 +46,9 @@ set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
 
 if(DEFINED ENV{MSLITE_GPU_BACKEND})
     set(MSLITE_GPU_BACKEND $ENV{MSLITE_GPU_BACKEND})
+endif()
+if(DEFINED ENV{MSLITE_REGISTRY_DEVICE})
+    set(MSLITE_REGISTRY_DEVICE $ENV{MSLITE_REGISTRY_DEVICE})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_NPU})
     set(MSLITE_ENABLE_NPU $ENV{MSLITE_ENABLE_NPU})
@@ -229,6 +234,7 @@ endif()
 
 message(STATUS "************MindSpore Lite Build Option:************")
 message(STATUS "\tMSLITE_GPU_BACKEND                = \t${MSLITE_GPU_BACKEND}")
+message(STATUS "\tMSLITE_REGISTRY_DEVICE            = \t${MSLITE_REGISTRY_DEVICE}")
 message(STATUS "\tMSLITE_ENABLE_NPU                 = \t${MSLITE_ENABLE_NPU}")
 message(STATUS "\tMSLITE_ENABLE_TRAIN               = \t${MSLITE_ENABLE_TRAIN}")
 message(STATUS "\tMSLITE_ENABLE_SSE                 = \t${MSLITE_ENABLE_SSE}")
