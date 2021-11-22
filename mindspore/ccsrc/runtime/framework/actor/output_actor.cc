@@ -107,7 +107,8 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
 
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
-  if (IsPersistentDeviceTensor(output_node)) {
+  // In the input as output scenario, use the device tensor of node.
+  if (output_node->isa<ValueNode>() || output_node->isa<Parameter>()) {
     tensor->set_device_address(device_tensor);
     return tensor;
   }
@@ -145,7 +146,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
     auto &output_node = output_nodes_[i].first;
     auto output_index = output_nodes_[i].second;
     auto &tensor = outputs_[i];
-    if ((output_node == nullptr) || (IsPersistentDeviceTensor(output_node))) {
+    // In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
+    if ((output_node == nullptr) || output_node->isa<ValueNode>() || output_node->isa<Parameter>()) {
       continue;
     }
 
