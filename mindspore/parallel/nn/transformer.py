@@ -14,7 +14,7 @@
 # ============================================================================
 """
 Note:
-    Transformer Networks. This is an experimental interface that is subject to change and/or deletion.
+    Transformer Networks. This is interface that is subject to change or deletion.
 """
 import math
 import numpy as np
@@ -57,14 +57,20 @@ class EmbeddingOpParallelConfig(_Config):
         EmbeddingOpParallelConfig for the setting data parallel or row slice for the embedding table.
 
         Args:
-            data_parallel (int): The data parallel way. Default: 1
-            model_parallel (int): The model parallel way. Default: 1
-            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True
+            data_parallel(int): The data parallel way. The input data will be sliced into n parts for embedding layer
+                according to this value. Default 1.
+            model_parallel(int): The model parallel way. The embedding table parameters
+                will be sliced according to the model parallel way. Default: 1.
+            vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If true, the embedding lookup
+                will be a data parallel style training and model_parallel value will be ignored.  If false, the
+                embedding table will be sharded into n parts at the 0-th dimension row slice of the embedding table,
+                where the n is the model parallel way determinined by this parameter. Default: True
 
         Supported Platforms:
             ``Ascend`` ``GPU``
 
         Examples:
+            >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
             >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
     """
 
@@ -107,6 +113,7 @@ class EmbeddingOpParallelConfig(_Config):
                 ``Ascend`` ``GPU``
 
             Examples:
+                >>> from mindspore.parallel.nn import EmbeddingOpParallelConfig
                 >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
                 >>> parallel_config = config.dp_mp_config
         """
@@ -126,10 +133,12 @@ class TransformerRecomputeConfig(_Config):
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
                 in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
             recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: False.
+
         Supported Platforms:
             ``Ascend`` ``GPU``
 
         Examples:
+            >>> from mindspore.parallel.nn import TransformerRecomputeConfig
             >>> config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
             >>> mp_comm_recompute=True, recompute_slice_activation=True)
     """
@@ -181,7 +190,9 @@ class TransformerRecomputeConfig(_Config):
         Validator.check_bool(value, "recompute_slice_activation")
         self._recompute_slice_activation = value
 
+
 _DEFALUT_TRANSFORMER_RECOMPUTE_CONFIG = TransformerRecomputeConfig()
+
 
 class TransformerOpParallelConfig(_Config):
     r"""
@@ -189,17 +200,20 @@ class TransformerOpParallelConfig(_Config):
         The parallel configure setting.
 
         Note:
-            Except the recompute argument, other arguments will not be effective when the user doesn't set
+            Except the recompute argument, other arguments will **not** be effective when the user doesn't set
             auto_parallel_context to `SEMI_AUTO_PARALLEL` or `AUTO_PARALLEL`.
-            The micro_batch_num must be greater than or equal to pipeline_stage. The data_parallel\*model_parallel
-            \*pipeline_stage must be equal or less equal to the device. When setting the pipeline stage and
-            optimizer_shard, the config will overwrite the auto_parallel_context.
+            The micro_batch_num must be greater than or equal to pipeline_stage when training.
+            The data_parallel\*model_parallel \*pipeline_stage must be equal or less equal to the device. When setting
+            the pipeline stage and optimizer_shard, the config will overwrite the auto_parallel_context. When given the
+            8 devices and the data_parallel is 1 and model_parallel is 1, the calculation will be repeated on each
+            device.
 
-        Args:
-            data_parallel (int): The data parallel way. Default: 1.
-            model_parallel (int): The model parallel way. Default: 1.
+       Args:
+            data_parallel (int): The data parallel way. The input data will be sliced for each layer. Default: 1.
+            model_parallel (int): The model parallel way. The parameters of dense layers in MultiheadAttention and
+                FeedForward layer will be sliced according to the model parallel way. Default: 1.
             pipeline_stage (int): The number of the pipeline stage. Should be a positive value. Default: 1.
-            micro_batch_num (int): The microe size of the batches for the pipeline training. Default: 1.
+            micro_batch_num (int): The micro size of the batches for the pipeline training. Default: 1.
             optimizer_shard (bool): Whether to enable optimizer shard. Default False.
             gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
             recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
@@ -210,6 +224,7 @@ class TransformerOpParallelConfig(_Config):
             ``Ascend`` ``GPU``
 
         Examples:
+            >>> from mindspore.parallel.nn import TransformerRecomputeConfig
             >>> recompute_config=TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True,
             >>> mp_comm_recompute=True, recompute_slice_activation=True)
             >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
@@ -321,6 +336,7 @@ class TransformerOpParallelConfig(_Config):
                 ``Ascend`` ``GPU``
 
             Examples:
+                >>> from mindspore.parallel.nn import TransformerOpParallelConfig
                 >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
                 >>> parallel_config = config.dp_mp_config
         """
@@ -344,19 +360,19 @@ class FeedForward(Cell):
     where the :math:`W_1, W_2, b_1` and :math:`b_2` are trainable parameters.
 
     Args:
-        hidden_size (int): The dimension of the inputs.
-        ffn_hidden_size (int): The intermediate hidden size.
-        dropout_rate (float): The dropout rate for the second linear's output.
-        hidden_act (str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
-        expert_num (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
+        hidden_size: (int): The dimension of the inputs.
+        ffn_hidden_size: (int): The intermediate hidden size.
+        dropout_rate: (float): The dropout rate for the second linear's output.
+        hidden_act: (str): The activation of the internal feedforward layer. Supports 'relu',
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+        expert_num: (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
             and the first dimension in BatchMatMul indicate expert_num. Default: 1.
-        param_init_type (dtype.Number): The parameter initialization type. Should be dtype.float32 or dtype.float16.
-                                        Default: dtype.float32.
+        param_init_type: (dtype.Number): The parameter initialization type. Should be dtype.float32 or dtype.float16.
+            Default: dtype.float32.
         parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
-                                           Default `default_dpmp_config`, an instance of `OpParallelConfig` with
-                                           default args.
+            Default `default_dpmp_config`, an instance of `OpParallelConfig` with
+            default args.
 
     Inputs:
         - **x** (Tensor) - should be `[batch, seq_length, hidden_size] or [batch * seq_length, hidden_size]`.
@@ -474,7 +490,7 @@ class FeedForward(Cell):
 class AttentionMask(Cell):
     r"""
     Get the Lower triangular matrix from the input mask. The input mask is a 2D tensor (batch_size, seq_length)
-    with 1 and 0. 1 indicates the current position is a valid token, otherwise not.
+    with 1 and 0, where 1 indicates the current position is a valid token, otherwise not.
 
     Args:
         seq_length(int): The sequence length of the input tensor.
@@ -548,18 +564,23 @@ class AttentionMask(Cell):
 class VocabEmbedding(Cell):
     """
     The embedding lookup table from the 0-th dim of the parameter table. When the parallel_config.vocab_emb_dp is
-    True and in the `AUTO_PARALLEL_MODE`, the embedding lookup will be a `parallel_config.data_parallel`
-    data parallel way, or will shard the parameter at the 0-th dimension in `parallel_config.model_parallel`, so-called
-    row slice of the embedding table.
+    True and in the `AUTO_PARALLEL` mode, the embedding lookup will be trained by the data parallel way, as the
+    parameters will be repeated on each device. If false, the embedding table will be sharded into n parts at the 0-th
+    dimension of the embedding table, where the n is the model parallel way determinined by the
+    parallel_config(EmbeddingOpParallelConfig).
+
+    Note:
+        When `AUTO_PARALLEL` mode is enabled, this layer support only 2-d dimension inputs, as the shard is designed
+        for 2d inputs.
 
     Args:
-        vocab_size (int): Size of the dictionary of embeddings.
-        embedding_size (int): The size of each embedding vector.
-        param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
-            Refer to class `initializer` for the values of string when a string
-            is specified. Default: 'normal'.
+        vocab_size: (int): Size of the dictionary of embeddings.
+        embedding_size: (int): The size of each embedding vector.
         parallel_config(EmbeddingOpParallelConfig): The parallel config of network. Default
             `default_embedding_parallel_config`, an instance of `EmbeddingOpParallelConfig` with default args.
+        param_init: (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+            Refer to class `initializer` for the values of string when a string
+            is specified. Default: 'normal'.
 
     Inputs:
         **input_ids** (Tensor) - The tokenized inputs with datatype int32 with shape (batch_size, seq_length)
@@ -642,13 +663,13 @@ class MultiHeadAttention(Cell):
         tgt_seq_length(int): The sequence length of the key and value vector.
         hidden_size(int): The hidden size of the input.
         num_heads(int): The number of the heads.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
-        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
+        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
         compute_dtype(dtype.Number): The computation type of dense. Default dtype.float16.
             Should be dtype.float32 or dtype.float16.
-        param_init_type(dtype.Number): The parameter initialization type of the module. Default dtype.float32.
-            Should be dtype.float32 or dtype.float16.
         softmax_compute_type(dtype.Number): The type of softmax computation module. Default dtype.float32.
+            Should be dtype.float32 or dtype.float16.
+        param_init_type(dtype.Number): The parameter initialization type of the module. Default dtype.float32.
             Should be dtype.float32 or dtype.float16.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
             words and want to generate the ten more words. We just need to compute the two words's state only once,
@@ -658,7 +679,7 @@ class MultiHeadAttention(Cell):
             is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
             pass the single step's input tensor, and loop it. Default False.
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
-                                           an instance of `OpParallelConfig` with default args.
+            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **query_tensor** (Tensor) - the query vector with shape (batch_size, src_seq_length, hidden_size) or
@@ -1117,21 +1138,21 @@ class TransformerEncoderLayer(Cell):
     Args:
         batch_size(int): The batch size of the input tensor.
         hidden_size(int): The hidden size of the input.
-        seq_length(int): The input sequence length.
         ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
         num_heads(int): The number of the heads.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
-        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
+        seq_length(int): The input sequence length.
+        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
         softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
             words and want to generate the ten more words. We just need to compute the two words's state only once,
             and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
@@ -1139,9 +1160,10 @@ class TransformerEncoderLayer(Cell):
             `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
             is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
             pass the single step's input tensor, and loop it. Default False.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
-                                           an instance of `OpParallelConfig` with default args.
+            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **x** (Tensor) - Float Tensor, shape should be [batch_size, seq_length, hidden_size] or
@@ -1433,28 +1455,29 @@ class TransformerDecoderLayer(Cell):
     the cross attention will not be effective.
 
     Args:
-        batch_size(int): The batch size of the input tensor.
         hidden_size(int): The hidden size of the input.
-        src_seq_length(int): The input source sequence length.
-        tgt_seq_length(int): The input target sequence length.
         ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
         num_heads(int): The number of the heads.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
+        batch_size(int): The batch size of the input tensor.
+        src_seq_length(int): The input source sequence length.
+        tgt_seq_length(int): The input target sequence length.
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
         softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
-                                           an instance of `OpParallelConfig` with default args.
+            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, tgt_seq_length, hidden_size] or
@@ -1837,25 +1860,18 @@ class TransformerEncoder(Cell):
         ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
         seq_length(int): The seq_length of the input tensor.
         num_heads(int): The number of the heads.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
-        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
-        post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
+        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
+        post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
         softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
-            words and want to generate the ten more words. We just need to compute the two words's state only once,
-            and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
-            The first step, set the is_first_iteration to be True by
-            `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
-            is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
-            pass the single step's input tensor, and loop it. Default False.
         lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the user
             wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a function
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
@@ -1864,9 +1880,17 @@ class TransformerEncoder(Cell):
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
         offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
             overlap with the encoder layer.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+        use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
+            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
+            The first step, set the is_first_iteration to be True by
+            `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
+            is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
+            pass the single step's input tensor, and loop it. Default False.
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
-                                           an instance of `TransformerOpParallelConfig` with default args.
+            an instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
         - **hidden_states** (Tensor) - Tensor, shape should be [batch_size, seq_length, hidden_size] or
@@ -1874,7 +1898,7 @@ class TransformerEncoder(Cell):
           should be [batch_size, 1, hidden_size].
         - **attention_mask** (Tensor) - Tensor, attention mask with shape [batch_size, seq_length, seq_length]
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
-          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index. Used
           for incremental prediction when the use_past is True. Default None.
 
@@ -2041,27 +2065,25 @@ class TransformerDecoder(Cell):
     attention, cross attention and feedforward layer.
 
     Args:
-        batch_size(int): The batch size of the input tensor.
         num_layers(int): The layers of the `TransformerDecoderLayer`.
+        batch_size(int): The batch size of the input tensor.
         hidden_size(int): The hidden size of the input.
         ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
         src_seq_length(int): The input source sequence length.
         tgt_seq_length(int): The input target sequence length.
         num_heads(int): The number of the heads.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
         softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
-            overlap with the encoder layer.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the user
             wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a function
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
@@ -2070,9 +2092,12 @@ class TransformerDecoder(Cell):
             default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
             Default: None.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+        offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
+            overlap with the encoder layer.
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
-                                           an instance of `TransformerOpParallelConfig` with default args.
+            an instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
         - **hidden_stats** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size] or
@@ -2085,7 +2110,7 @@ class TransformerDecoder(Cell):
           src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
           None when the net is in outermost layer. Default None.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
-          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
           Used for incremental prediction when the use_past is True. Default None.
 
@@ -2243,19 +2268,22 @@ class Transformer(Cell):
     The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
     Note:
-        This is an experimental interface that is subject to change and/or deletion.
+        This is an experimental interface that is subject to change or deletion.
 
     Args:
-        batch_size(int): The batch size of the input tensor.
-        encoder_layers(int): The layers of the `TransformerEncoderLayer`.
-        decoder_layers(int): The layers of the `TransformerDecoderLayer`.
         hidden_size(int): The hidden size of the input.
+        batch_size(int): The batch size of the input tensor.
         ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
         src_seq_length(int): The seq_length of the encoder's input tensor.
         tgt_seq_length(int): The seq_length of the decoder's input tensor.
+        encoder_layers(int): The layers of the `TransformerEncoderLayer`. Default 3.
+        decoder_layers(int): The layers of the `TransformerDecoderLayer`. Default 3.
         num_heads(int): The number of the heads. Default: 2.
-        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
-        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
+        attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
+        hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+            'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+            'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
@@ -2263,20 +2291,18 @@ class Transformer(Cell):
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
-        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
         lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the user
             wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a function
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
             represents the transformer block, `layer_id(int)` means the layer index for the current module, counts from
             zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net. The
-            default setting for the pipeline is: `(layer_id + offset) // ((encoder_layers + decoder_length)
+            default setting for the pipeline is: `(layer_id + offset) // ((encoder_layers + decoder_layers)
             / pipeline_stage)`.
+        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
-                                           an instance of `TransformerOpParallelConfig` with default args.
+            an instance of `TransformerOpParallelConfig` with default args.
 
     Inputs:
         - **encoder_inputs** (Tensor) - the input tensor with shape [batch_size, seq_length, hidden_size] or
@@ -2291,12 +2317,12 @@ class Transformer(Cell):
           where tgt_seq_length is the length of the decoder. the output of the encoder with shape [batch_size,
           seq_length, hidden_size], this should be none if the decoder layer is 0.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
-          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
+          past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index. Used
           for incremental prediction when the use_past is True. Default None.
 
     Outputs:
-        Tuple, a tuple contains(`output`, `encoder_layer_present`, `encoder_layer_present`)
+        Tuple, a tuple contains(`output`, `encoder_layer_present`, `decoder_layer_present`)
 
         - **output** (Tensor) - If there is only encoder, the output logit of the encoder layer. The shape is
           [batch, src_seq_length, hidden_size] or [batch * src_seq_length, hidden_size], if there are encoder and

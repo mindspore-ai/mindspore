@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change and/or deletion.
+Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
 import math
 import numpy as np
@@ -93,7 +93,8 @@ class MoE(Cell):
                          'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                          'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
+        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
+            default values. Please see `MoEConfig`.
         parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
                                            Default `default_dpmp_config`, an instance of `OpParallelConfig` with default
                                            args.
