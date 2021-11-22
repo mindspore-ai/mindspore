@@ -21,6 +21,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
+#include "src/common/quant_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "nnacl/op_base.h"
@@ -48,8 +49,7 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
     auto *max_buf = static_cast<float *>(input_max_ptr->data_c());
     quant_param.min = *min_buf;
     quant_param.max = *max_buf;
-    auto ret = lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, input_narrow_range,
-                                                  act_numbits);
+    auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, act_numbits, input_narrow_range);
     MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
     quants.emplace_back(quant_param);
     quant_param_holder->set_input_quant_param(0, quants);
@@ -73,8 +73,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
       schema::QuantParamT tmp_quant_param;
       tmp_quant_param.min = *min_buf;
       tmp_quant_param.max = *max_buf;
-      auto ret = lite::quant::CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max,
-                                                    weight_narrow_range, weight_numbits);
+      auto ret = CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max, weight_numbits,
+                                       weight_narrow_range);
       MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
       quants.emplace_back(tmp_quant_param);
       min_buf++;
@@ -104,8 +104,7 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
     auto *maxBuf = static_cast<float *>(outputMaxPtr->data_c());
     quant_param.min = *minBuf;
     quant_param.max = *maxBuf;
-    auto ret =
-      lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, narrow_range, numbits);
+    auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, numbits, narrow_range);
     MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
     quants.emplace_back(quant_param);
     quant_param_holder->set_output_quant_param(0, quants);

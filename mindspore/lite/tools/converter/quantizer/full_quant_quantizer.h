@@ -43,7 +43,7 @@ enum OperationType {
 };
 class FullQuantQuantizer : public Quantizer {
  public:
-  FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8, bool per_channel = true);
+  FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8);
   ~FullQuantQuantizer() override;
 
   int DoQuantize(FuncGraphPtr func_graph) override;
@@ -87,7 +87,6 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetFloatAfterCallBack();
 
  private:
-  bool per_channel_{true};
   TypeId target_type_{kNumberTypeInt8};
   std::unique_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};

@@ -32,7 +32,6 @@ int ReadImage(const std::string &image_path, cv::Mat *image) {
     MS_LOG(ERROR) << "missing file, improper permissions, unsupported or invalid format.";
     return RET_ERROR;
   }
-  image->convertTo(*image, CV_32FC3);
   return RET_OK;
 }
 

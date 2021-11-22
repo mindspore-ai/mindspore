@@ -74,7 +74,7 @@ int ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGrap
     auto out_quant_param = std::make_unique<QuantParamT>();
     MS_CHECK_TRUE_MSG(out_quant_param != nullptr, RET_NULL_PTR, "out_quant_param is nullptr.");
 
-    auto status = quant::CalQuantizationParams(out_quant_param.get(), min_min, max_max, narrow_range, num_bits);
+    auto status = CalQuantizationParams(out_quant_param.get(), min_min, max_max, num_bits, narrow_range);
     if (status != RET_OK) {
       MS_LOG(DEBUG) << "in aware quantization run CalQuantizationParams failed!";
       return RET_ERROR;
