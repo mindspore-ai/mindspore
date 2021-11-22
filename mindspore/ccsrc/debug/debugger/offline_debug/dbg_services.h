@@ -201,7 +201,7 @@ class DbgServices {
 
   int32_t RemoveWatchpoint(unsigned int id);
 
-  std::vector<watchpoint_hit_t> CheckWatchpoints(unsigned int iteration);
+  std::vector<watchpoint_hit_t> CheckWatchpoints(unsigned int iteration, bool error_on_no_value = false);
 
   std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info);
 

@@ -247,9 +247,9 @@ class DebugServices {
   void RemoveWatchpoint(unsigned int id);
 
 #ifdef OFFLINE_DBG_MODE
-  void ProcessCheckpointsOutofMemory(
-    const bool no_mem_to_read, const std::vector<watchpoint_t> watchpoints_to_check, const int chunk_id,
-    partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+  void CheckOutofMemoryandNoValue(
+    const bool no_mem_to_read, const bool error_on_no_value, const std::vector<watchpoint_t> watchpoints_to_check,
+    const int chunk_id, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
     partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
     partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
     partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
@@ -274,7 +274,8 @@ class DebugServices {
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
                                  partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
                                  std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_names *chunk_time_stamp,
-                                 std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id);
+                                 std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
+                                 bool error_on_no_value = false);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
@@ -282,7 +283,7 @@ class DebugServices {
                         const std::vector<std::string> &op_overflows, const std::vector<std::string> &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
-                        std::vector<unsigned int> *root_graph_id = nullptr);
+                        std::vector<unsigned int> *root_graph_id = nullptr, bool error_on_no_value = false);
 
   void SortWatchpointsInfo(std::vector<std::future<void>> *tensor_future_vec, std::vector<int> *exec_order,
                            std::vector<std::string> *time_stamps, uint64_t *tensor_list_byte_size,
@@ -334,7 +335,8 @@ class DebugServices {
   void ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
                              const std::string &abspath, const std::string &specific_dump_dir, unsigned int iteration,
                              unsigned int device_id, unsigned int root_graph_id,
-                             std::vector<std::shared_ptr<TensorData>> *const tensor_list);
+                             std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+                             bool error_on_no_value = false);
 
   void ReadFileAndAddToTensor(const bool found, const std::vector<std::string> &matched_paths,
                               const std::string &backend_name, const unsigned int device_id,
@@ -354,7 +356,8 @@ class DebugServices {
                              std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
-                                                                   std::vector<std::string> *const async_file_pool);
+                                                                   std::vector<std::string> *const async_file_pool,
+                                                                   bool error_on_no_value = false);
 
   const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
                             uint32_t *prev_num_elements, bool *history_not_found);

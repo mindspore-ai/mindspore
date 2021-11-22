@@ -103,9 +103,10 @@ def check_check_watchpoints(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [iteration], _ = parse_user_args(method, *args, **kwargs)
+        [iteration, error_on_no_value], _ = parse_user_args(method, *args, **kwargs)
 
         check_iteration(iteration, "iteration")
+        type_check(error_on_no_value, (bool,), "error_on_no_value")
 
         return method(self, *args, **kwargs)
 

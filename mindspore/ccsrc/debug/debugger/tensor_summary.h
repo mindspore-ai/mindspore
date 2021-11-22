@@ -88,7 +88,14 @@ class VarianceAndMeanCalculator {
 class ITensorSummary {
  public:
   enum WatchpointPos { eHitPos = 0, eErrorCodePos = 1, eParamListPos = 2 };
-  enum ErrorCode { NAN_TENSOR = 0, INF_TENSOR = 2, NULL_PREV_TENSOR = 4, OUT_OF_MEMORY = 8, HISTORY_NOT_FOUND = 16 };
+  enum ErrorCode {
+    NAN_TENSOR = 0,
+    INF_TENSOR = 2,
+    NULL_PREV_TENSOR = 4,
+    OUT_OF_MEMORY = 8,
+    HISTORY_NOT_FOUND = 16,
+    NO_VALUE = 32
+  };
   virtual ~ITensorSummary() = default;
   virtual void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) = 0;
   virtual std::tuple<bool, int32_t, std::vector<DebugServices::parameter_t>> IsWatchpointHit(
