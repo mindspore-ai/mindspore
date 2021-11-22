@@ -746,7 +746,7 @@ class Cell(Cell_):
 
     def set_parallel_input_with_inputs(self, *inputs):
         """
-        Slice inputs tensors by parallel strategies, and set the sliced inputs to `_parallel_input_run`
+        Slice inputs tensors by parallel strategies.
 
         Args:
             inputs (tuple): inputs of construct method.
@@ -817,7 +817,7 @@ class Cell(Cell_):
 
     def auto_parallel_compile_and_run(self):
         """
-        Whether or not to execute compile and run.
+        Whether or not to execute compile and run in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
 
         Returns:
             bool, `_auto_parallel_compile_and_run` value.

@@ -976,7 +976,7 @@ class Model:
 
     def infer_train_layout(self, train_dataset, dataset_sink_mode=True, sink_size=-1):
         """
-        Generate parameter layout for the train network in auto or semi auto parallel mode.
+        Generate parameter layout for the train network in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
         Only dataset sink mode is supported for now.
 
         .. warning::
@@ -1042,7 +1042,7 @@ class Model:
 
     def infer_predict_layout(self, *predict_data):
         """
-        Generate parameter layout for the predict network in auto or semi auto parallel mode.
+        Generate parameter layout for the predict network in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
 
         Data could be a single tensor or multiple tensors.
 
@@ -1057,7 +1057,7 @@ class Model:
             Using as one of input parameters of load_distributed_checkpoint, always.
 
         Raises:
-            RuntimeError: If get_context is not GRAPH_MODE.
+            RuntimeError: If not in GRAPH_MODE.
 
         Examples:
             >>> # This example should be run with multiple devices. Refer to the tutorial > Distributed Training on
