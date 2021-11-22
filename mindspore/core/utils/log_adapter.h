@@ -291,6 +291,21 @@ class LogWriter {
     }                                                            \
   } while (0)
 
+#define RETURN_IF_FALSE(condition) \
+  do {                             \
+    if (!(condition)) {            \
+      return false;                \
+    }                              \
+  } while (false)
+
+#define RETURN_IF_FALSE_WITH_LOG(condition, message) \
+  do {                                               \
+    if (!(condition)) {                              \
+      MS_LOG(ERROR) << message;                      \
+      return false;                                  \
+    }                                                \
+  } while (false)
+
 #ifdef DEBUG
 #include <cassert>
 #define MS_ASSERT(f) assert(f)

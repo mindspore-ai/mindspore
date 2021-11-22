@@ -166,6 +166,7 @@ constexpr auto kDivisorOverride = "divisor_override";
 constexpr auto kPostNmsTopn = "post_nms_topn";
 constexpr auto kPower = "power";
 constexpr auto kPreNmsTopn = "pre_nms_topn";
+constexpr auto kRankSize = "rank_size";
 constexpr auto kRatio = "ratio";
 constexpr auto kReduction = "reduction";
 constexpr auto kRootRank = "root_rank";

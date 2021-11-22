@@ -352,12 +352,18 @@ int TensorRTSubGraph::Prepare() {
   }
 
   // malloc for cache weight tensor
-  for (auto cache_tensor : cache_inputs_) {
+  for (auto cache_tensor : cache_const_inputs_) {
+    auto data_size = cache_tensor.DataSize();
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(cache_tensor, cache_tensor.DataSize());
     runtime_->GetAllocator()->SyncMemInHostAndDevice(cache_tensor, cache_tensor.Name().c_str(), true);
     runtime_->GetAllocator()->MarkMemValid(cache_tensor.Name().c_str(), true);
     int index = this->engine_->getBindingIndex(cache_tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
+    auto cache_ret = cache_mgr_->SetDeviceCacheAddr(cache_tensor.Name(), device_ptr, data_size);
+    if (cache_ret != kSuccess) {
+      MS_LOG(ERROR) << "SetDeviceCacheAddr failed, cache tensor: " << cache_tensor.Name();
+      return RET_ERROR;
+    }
   }
 
   if (!this->trt_context_->allInputDimensionsSpecified()) {
@@ -466,6 +472,22 @@ int TensorRTSubGraph::Execute() {
       MS_LOG(INFO) << "no need memcpy to cuda for input tensor: " << trt_in_tensor_name_[i];
       continue;
     }
+
+    auto iter = model_input_to_cache_tensors_.find(trt_in_tensor_name_[i]);
+    if (iter != model_input_to_cache_tensors_.end()) {
+      for (auto &cache_tensor : iter->second) {
+        ret = cache_mgr_->CacheHandle(cache_tensor.Name(), inputs_[i],
+                                      runtime_->GetAllocator()->GetDevicePtr(trt_in_tensor_name_[i]));
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "handle cache failed " << trt_in_tensor_name_[i];
+          return RET_ERROR;
+        }
+        runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], true);
+        MS_LOG(DEBUG) << cache_tensor.Name() << " CacheHandle succ " << trt_in_tensor_name_[i];
+      }
+      continue;
+    }
+
     ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_in_tensor_name_[i];
@@ -525,9 +547,11 @@ ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const min
   }
   return ITensorHelper{};
 }
-bool TensorRTSubGraph::IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) { return false; }
+bool TensorRTSubGraph::IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
+  return cache_mgr_ != nullptr && cache_mgr_->IsCacheTensor(in_tensor);
+}
 
-void TensorRTSubGraph::FindCacheTensorInfo(TensorRTOp *cur_op) {
+void TensorRTSubGraph::FindCacheTensorInfo(TensorRTOp *cur_op, mindspore::MSTensor device_cache_tensor) {
   auto iter = network_cache_tensor_info_.find(cur_op->GetOpName());
   if (iter != network_cache_tensor_info_.end()) {
     return;
@@ -542,6 +566,7 @@ void TensorRTSubGraph::FindCacheTensorInfo(TensorRTOp *cur_op) {
     for (auto in_tensor : front_op->inputs()) {
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
         iter->second.network_input_tensor_.push_back(in_tensor);
+        model_input_to_cache_tensors_[in_tensor.Name()].push_back(device_cache_tensor);
         MS_LOG(DEBUG) << cur_op->GetOpName() << "'s network input tensor name is " << in_tensor.Name()
                       << ", can cache: " << iter->second.front_op_can_cache_;
       }
@@ -556,9 +581,9 @@ void TensorRTSubGraph::FindCacheTensorInfo(TensorRTOp *cur_op) {
 bool TensorRTSubGraph::CanOpCache(TensorRTOp *cur_op) { return true; }
 
 int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
-  FindCacheTensorInfo(cur_op);
+  FindCacheTensorInfo(cur_op, in_tensor);
   // cache kernel weight tensor
-  cache_inputs_.push_back(in_tensor);
+  cache_const_inputs_.push_back(in_tensor);
   MS_LOG(INFO) << "auto add cache constant tensor for: " << in_tensor.Name();
   auto cuda_dtype = ConvertDataType(in_tensor.DataType());
   nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());

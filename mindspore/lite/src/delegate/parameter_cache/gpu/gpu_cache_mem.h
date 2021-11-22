@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_
-#define MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_
+#ifndef MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_CACHE_MEM_H_
+#define MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_CACHE_MEM_H_
 
 #include <cuda_runtime_api.h>
 #include <memory>
 #include "ps/ps_cache/ps_cache_basic.h"
 
 namespace mindspore {
-namespace ps {
 namespace gpu {
-class GPUPsCache : public PsCacheBasic {
+class GPUCacheMem : public ps::PsCacheBasic {
  public:
-  GPUPsCache() = default;
-  ~GPUPsCache() override = default;
+  GPUCacheMem() = default;
+  ~GPUCacheMem() override = default;
   bool InitDevice(uint32_t device_id, const void *context) override;
   void *MallocMemory(size_t size) override;
-  void FreeMemory(void *device_addr) override;
+  void FreeMemory(void *buf) override;
   bool RecordEvent() override;
   bool SynchronizeEvent() override;
   bool SynchronizeStream() override;
@@ -42,9 +41,8 @@ class GPUPsCache : public PsCacheBasic {
                   size_t embedding_size, size_t swap_in_size) override;
 
  private:
-  std::unique_ptr<cudaEvent_t> event_;
+  std::unique_ptr<cudaEvent_t> event_{nullptr};
 };
 }  // namespace gpu
-}  // namespace ps
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_

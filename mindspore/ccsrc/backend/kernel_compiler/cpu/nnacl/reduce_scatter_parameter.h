@@ -18,7 +18,6 @@
 #define MINDSPORE_NNACL_REDUCE_SCATTER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/communication_func.h"
 
 typedef struct ReduceScatterParameter {
   // primitive parameter
@@ -27,6 +26,6 @@ typedef struct ReduceScatterParameter {
   int mode_;
 
   // other parameter
-  int rank_;
+  int rank_size_;
 } ReduceScatterParameter;
 #endif  // MINDSPORE_NNACL_REDUCE_SCATTER_PARAMETER_H_

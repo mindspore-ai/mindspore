@@ -46,9 +46,10 @@ OpParameter *PopulateAllGatherParameter(const void *prim) {
     return nullptr;
   }
   memset(param, 0, sizeof(AllGatherParameter));
-
-  memcpy(param->group_, group->c_str(), group->size());
+  memcpy(param->group_, value->group()->c_str(), value->group()->size());
+  param->rank_size_ = value->rank_size();
   param->op_parameter_.type_ = primitive->value_type();
+
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_AllGather, PopulateAllGatherParameter, SCHEMA_CUR)

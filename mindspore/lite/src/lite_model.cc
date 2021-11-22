@@ -483,7 +483,7 @@ SchemaTensorWrapper *LiteModel::GetSchemaTensor(const size_t &tensor_index) cons
   return this->inner_all_tensors_.at(tensor_index);
 }
 
-Model *ImportFromPath(const char *model_path) {
+LiteModel *LiteImportFromPath(const char *model_path) {
   if (model_path == nullptr) {
     MS_LOG(ERROR) << "The model path is nullptr";
     return nullptr;
@@ -507,6 +507,8 @@ Model *ImportFromPath(const char *model_path) {
   }
   return model;
 }
+
+Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   auto *model = new (std::nothrow) LiteModel();

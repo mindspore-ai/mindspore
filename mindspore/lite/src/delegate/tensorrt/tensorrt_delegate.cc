@@ -132,6 +132,18 @@ Status TensorRTDelegate::Init() {
     MS_LOG(ERROR) << "TensorRTRuntime init failed.";
     return mindspore::kLiteError;
   }
+
+  cache_mgr_ = std::make_shared<cache::EmbeddingCacheManager>();
+  if (cache_mgr_ == nullptr) {
+    MS_LOG(ERROR) << "malloc EmbeddingCacheManager failed.";
+    return kLiteMemoryFailed;
+  }
+  auto cache_ret = cache_mgr_->Init("");
+  if (cache_ret != mindspore::kSuccess) {
+    MS_LOG(ERROR) << "cache_mgr_ init failed.";
+    return cache_ret;
+  }
+
   return mindspore::kSuccess;
 }
 
@@ -165,6 +177,14 @@ Status TensorRTDelegate::Build(DelegateModel *model) {
     }
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
     if (tensorrt_op != nullptr) {
+      if (cache_mgr_->CheckIsCacheKernel(kernel)) {
+        auto cache_ret = cache_mgr_->InitCacheKernel(kernel);
+        if (cache_ret != kSuccess) {
+          MS_LOG(INFO) << "InitCacheKernel failed " << kernel->name();
+          return cache_ret;
+        }
+      }
+
       // If tensorrt_ops does not equal nullptr, this kernel can be supported by delegate
       if (tensorrt_ops.size() == 0) {
         from = iter;
@@ -219,6 +239,8 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
     MS_LOG(ERROR) << "new tensorrt_graph failed.";
     return nullptr;
   }
+  tensorrt_graph->SetCacheManager(cache_mgr_);
+
   // 1. For every op, find pre and next ops
   FindPreNextOps<TensorRTOp>(ops);
 

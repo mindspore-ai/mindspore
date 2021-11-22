@@ -57,7 +57,7 @@ int ReduceScatterCPUKernel::DoReduceScatter(void *in_data, void *reduce_data, si
     if (param_->mode_ == schema::ReduceMode_ReduceSum) {
       for (size_t i = 0; i < data_size; i++) out[i] += in[i];
     } else if (param_->mode_ == schema::ReduceMode_ReduceMean) {
-      for (size_t i = 0; i < data_size; i++) out[i] += (in[i] / static_cast<float>(param_->rank_));
+      for (size_t i = 0; i < data_size; i++) out[i] += (in[i] / static_cast<float>(param_->rank_size_));
     } else if (param_->mode_ == schema::ReduceMode_ReduceMax) {
       for (size_t i = 0; i < data_size; i++) out[i] = in[i] > out[i] ? in[i] : out[i];
     } else if (param_->mode_ == schema::ReduceMode_ReduceMin) {
@@ -74,11 +74,7 @@ int ReduceScatterCPUKernel::DoReduceScatter(void *in_data, void *reduce_data, si
 }
 
 int ReduceScatterCPUKernel::Run() {
-  int rank = get_rank(param_->group_);
-  if (param_->rank_ != rank) {
-    return lite::RET_ERROR;
-  }
-
+  int rank = param_->rank_size_;
   size_t in_data_size = in_tensors().front()->Size();
   size_t in_ele_size = in_tensors().front()->ElementsNum();
   size_t out_data_size = out_tensors().front()->Size();

@@ -22,6 +22,7 @@
 #include <memory>
 #include "include/api/delegate.h"
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
+#include "src/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -63,6 +64,7 @@ class TensorRTDelegate : public Delegate {
   bool support_hw_resize_{true};
 
   bool support_resize_{true};
+  std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

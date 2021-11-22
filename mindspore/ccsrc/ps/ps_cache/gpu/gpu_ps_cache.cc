@@ -41,6 +41,10 @@ void *GPUPsCache::MallocMemory(size_t size) {
   return device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
 }
 
+void GPUPsCache::FreeMemory(void *device_addr) {
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(device_addr);
+}
+
 bool GPUPsCache::RecordEvent() {
   event_.reset(new cudaEvent_t());
   MS_ERROR_IF_NULL_W_RET_VAL(event_, false);

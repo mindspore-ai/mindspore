@@ -35,6 +35,8 @@ class MS_CORE_API AllGather : public PrimitiveC {
   void Init() {}
   void set_group(const std::string &format);
   std::string get_group() const;
+  void set_rank_size(int rank_size);
+  int get_rank_size() const;
 };
 }  // namespace ops
 }  // namespace mindspore

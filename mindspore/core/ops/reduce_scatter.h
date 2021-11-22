@@ -37,6 +37,8 @@ class MS_CORE_API ReduceScatter : public PrimitiveC {
   std::string get_group() const;
   void set_mode(const ReduceMode &mode);
   ReduceMode get_mode() const;
+  void set_rank_size(int rank_size);
+  int get_rank_size() const;
 };
 }  // namespace ops
 }  // namespace mindspore
