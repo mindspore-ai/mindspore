@@ -62,7 +62,8 @@ class TimeMonitor(Callback):
                 step_size = cb_params.batch_num
 
         if not isinstance(step_size, int) or step_size < 1:
-            raise ValueError("data_size must be positive int.")
+            raise ValueError("For 'TimeMonitor', step size must be positive integer, "
+                             "but got {}.".format(step_size))
 
         step_seconds = epoch_seconds / step_size
         print("epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(epoch_seconds, step_seconds), flush=True)

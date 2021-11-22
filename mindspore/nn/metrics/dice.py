@@ -76,15 +76,17 @@ class Dice(Metric):
             RuntimeError: If y_pred and y do not have the same shape.
         """
         if len(inputs) != 2:
-            raise ValueError('The Dice needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'Dice.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         self._samples_num += y.shape[0]
 
         if y_pred.shape != y.shape:
-            raise RuntimeError('The y_pred and y should have the same shape, but the shape of y_pred is {}, '
-                               'the shape of y is {}.'.format(y_pred.shape, y.shape))
+            raise ValueError(f"For 'Dice.update', predicted value (input[0]) and true value (input[1]) "
+                             f"should have same shape, but got predicted value shape: {y_pred.shape}, "
+                             f"true value shape: {y.shape}.")
 
         intersection = np.dot(y_pred.flatten(), y.flatten())
         unionset = np.dot(y_pred.flatten(), y_pred.flatten()) + np.dot(y.flatten(), y.flatten())
@@ -103,6 +105,7 @@ class Dice(Metric):
             RuntimeError: If the total number of samples is 0.
         """
         if self._samples_num == 0:
-            raise RuntimeError('The total number of samples can not be 0.')
+            raise RuntimeError("The 'Dice coefficient' can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs(predicted value, true value) are correct.")
 
         return self._dice_coeff_sum / float(self._samples_num)

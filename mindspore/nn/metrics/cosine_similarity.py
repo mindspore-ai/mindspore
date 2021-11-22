@@ -93,7 +93,7 @@ class CosineSimilarity(Metric):
 
         """
         if not self._is_update:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
 
         if self.zero_diagonal:
             np.fill_diagonal(self.sqr_mtx_res, 0)

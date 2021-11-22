@@ -366,7 +366,8 @@ class Optimizer(Cell):
 
     def _preprocess_grad_centralization(self, grad_centralization):
         if not isinstance(grad_centralization, bool):
-            raise TypeError("The gradients centralization should be bool")
+            raise TypeError("For 'Optimizer', the 'gradients_centralization' should be bool type, "
+                            "but got {}.".format(type(grad_centralization)))
         return grad_centralization
 
     def _preprocess_single_lr(self, learning_rate):
@@ -383,7 +384,7 @@ class Optimizer(Cell):
             return Tensor(np.array(list(learning_rate)).astype(np.float32))
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim > 1:
-                raise ValueError("The dim of `Tensor` type Learning rate should be a 0 or 1,"
+                raise ValueError(f"For 'Optimizer', the dim of Tensor type 'learning_rate' should be a 0 or 1, "
                                  f"but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
                 logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number"
@@ -391,7 +392,8 @@ class Optimizer(Cell):
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
-        raise TypeError("Learning rate should be int, float, Tensor, Iterable or LearningRateSchedule.")
+        raise TypeError("For 'Optimizer', 'learning_rate' should be int, float, Tensor, Iterable or "
+                        "LearningRateSchedule, but got {}.".format(type(learning_rate)))
 
     def _build_single_lr(self, learning_rate, name):
         """Build learning rate value, convert learning rate to a Parameter or a LearningRateSchedule."""
@@ -604,14 +606,16 @@ class Optimizer(Cell):
         elif isinstance(param, list):
             param_list = param
         else:
-            raise TypeError(f"The parameter only support 'Parameter' or 'list' type.")
+            raise TypeError(f"For 'get_lr_parameter', the 'param' must be 'Parameter' or 'list' type, "
+                            f"but got {type(param)}.")
 
         lr = []
         ids = [id(p) for p in self.parameters]
         for p in param_list:
             validator.check_value_type("parameter", p, [Parameter], self.cls_name)
             if id(p) not in ids:
-                raise ValueError(f"The parameter {p.name} is not in optimizer.")
+                raise ValueError(f"The parameter {p.name} is not in optimizer, please check whether the "
+                                 f"argument 'param' is correct.")
             if self.is_group_lr:
                 index = ids.index(id(p))
                 lr.append(get_lr_value(self.learning_rate[index]))

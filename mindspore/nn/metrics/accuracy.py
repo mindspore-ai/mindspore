@@ -78,7 +78,8 @@ class Accuracy(EvaluationBase):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The accuracy needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'Accuracy.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -89,8 +90,8 @@ class Accuracy(EvaluationBase):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError('The y_pred shape does not match the class number, the last input data contains '
-                             '{} classes, but the current data contains {} classes'
+            raise ValueError("Class number not match, last input predicted data contain {} classes, but current "
+                             "predicted data contain {} classes, please check your predicted value(inputs[0])."
                              .format(self._class_num, y_pred.shape[1]))
 
         if self._type == 'classification':
@@ -116,5 +117,6 @@ class Accuracy(EvaluationBase):
             RuntimeError: If the sample size is 0.
         """
         if self._total_num == 0:
-            raise RuntimeError('The accuracy can not be calculated, because the number of samples is 0.')
+            raise RuntimeError("The 'Accuracy' can not be calculated, because the number of samples is 0, please "
+                               "check whether your inputs(predicted value, true value) are correct.")
         return self._correct_num / self._total_num

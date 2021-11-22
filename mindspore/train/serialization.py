@@ -96,8 +96,11 @@ def _update_param(param, new_param, strict_load):
         if param.data.shape != new_param.data.shape:
             if not _special_process_par(param, new_param):
                 logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
-                msg = ("Net parameters {} shape({}) are different from parameter_dict's({})"
-                       .format(param.name, param.data.shape, new_param.data.shape))
+                msg = (f"For 'load_param_into_net', {param.name} in the argument 'net' should have the same shape "
+                       f"as {param.name} in the argument 'parameter_dict'. But got its shape {param.data.shape} in"
+                       f" the argument 'net' and shape {new_param.data.shape} in the argument 'parameter_dict'."
+                       f"May you need to check whether the checkpoint you loaded is correct or the batch size and "
+                       f"so on in the 'net' and 'parameter_dict' are same.")
                 raise RuntimeError(msg)
 
         if param.data.dtype != new_param.data.dtype:
@@ -107,8 +110,10 @@ def _update_param(param, new_param, strict_load):
                 return
 
             logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
-            msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
-                   .format(param.name, param.data.dtype, new_param.data.dtype))
+            msg = (f"For 'load_param_into_net', {param.name} in the argument 'net' should have the same type as "
+                   f"{param.name} in the argument 'parameter_dict'. but got its type {param.data.dtype} in the "
+                   f"argument 'net' and type {new_param.data.dtype} in the argument 'parameter_dict'."
+                   f"May you need to check whether the checkpoint you loaded is correct.")
             raise RuntimeError(msg)
 
         param.set_data(new_param.data, param.sliced)
@@ -117,15 +122,18 @@ def _update_param(param, new_param, strict_load):
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
         if param.data.shape != (1,) and param.data.shape != ():
             logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
-            msg = ("Net parameters {} shape({}) is not (1,), inconsistent with parameter_dict's(scalar)."
-                   .format(param.name, param.data.shape))
+            msg = (f"For 'load_param_into_net', {param.name} in the argument 'parameter_dict' is "
+                   f"scalar, then the shape of {param.name} in the argument 'net' should be "
+                   f"(1,) or (), but got shape {param.data.shape}."
+                   f"May you need to check whether the checkpoint you loaded is correct.")
             raise RuntimeError(msg)
         param.set_data(initializer(new_param.data, param.data.shape, param.data.dtype))
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
         logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
-        msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
-               .format(param.name, type(param.data), type(new_param.data)))
+        msg = (f"For 'load_param_into_net', {param.name} in the argument 'parameter_dict' is Tensor, "
+               f"then {param.name} in the argument 'net' also should be Tensor, but got {type(param.data)}."
+               f"May you need to check whether the checkpoint you loaded is correct.")
         raise RuntimeError(msg)
 
     else:
@@ -138,8 +146,9 @@ def _type_convert(param, new_param, strict_load):
     int_type = (mstype.int8, mstype.int16, mstype.int32, mstype.int64)
     if not strict_load and ({param.data.dtype, new_param.data.dtype}.issubset(float_type) or
                             {param.data.dtype, new_param.data.dtype}.issubset(int_type)):
-        logger.warning("ckpt_dict parameter: {}'s type is {}, convert to {} in the network."
-                       .format(new_param.name, new_param.data.dtype, param.data.dtype))
+        logger.warning(f"The type of {new_param.name}:{new_param.data.dtype} in 'parameter_dict' is different from "
+                       f"the type of it in 'net':{param.data.dtype}, then the type convert from "
+                       f"{new_param.data.dtype} to {param.data.dtype} in the network.")
         return True
     return False
 
@@ -191,7 +200,8 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
-        logger.critical("Failed to save the checkpoint file %s.", ckpt_file_name)
+        logger.critical("Failed to save the checkpoint file %s. May don't have the permission to write files, "
+                        "or the disk space is insufficient and so on.", ckpt_file_name)
         raise e
 
 
@@ -227,7 +237,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     """
 
     if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
-        raise TypeError("The parameter save_obj should be nn.Cell or list, but got {}".format(type(save_obj)))
+        raise TypeError("For 'save_checkpoint', the argument 'save_obj' should be nn.Cell or list, "
+                        "but got {}.".format(type(save_obj)))
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
     append_dict = _check_append_dict(append_dict)
@@ -300,13 +311,16 @@ def _check_param_prefix(filter_prefix, param_name):
 
 
 def _check_append_dict(append_dict):
+    """Check the argument append_dict for save_checkpoint."""
     if append_dict is None:
         return append_dict
     if not isinstance(append_dict, dict):
-        raise TypeError(f"The type of append_dict must dict, but got {str(type(append_dict))}.")
-    if not all(isinstance(ele, str) for ele in append_dict.keys()) or \
-            not all(isinstance(ele, (int, float, bool)) for ele in append_dict.values()):
-        raise TypeError(f"The type of element in append_dict must be key: str, value: int or float.")
+        raise TypeError("For 'save_checkpoint', the argument 'append_dict' must be dict, but got "
+                        "{}.".format(type(append_dict)))
+    for key, value in append_dict.items():
+        if not isinstance(key, str) or not isinstance(value, (int, float, bool)):
+            raise TypeError(f"For 'save_checkpoint', the type of dict 'append_info' must be key: string, "
+                            f"value: int, float or bool, but got key: {type(key)}, value: {type(value)}")
     return append_dict
 
 
@@ -348,11 +362,14 @@ def load(file_name, **kwargs):
            [4. 6. 4.]]]]
     """
     if not isinstance(file_name, str):
-        raise ValueError("The file name must be string.")
+        raise ValueError("For 'load', the argument 'file_name' must be string, but "
+                         "got {}.".format(type(file_name)))
     if not file_name.endswith(".mindir"):
-        raise ValueError("The MindIR should end with mindir, please input the correct file name.")
+        raise ValueError("For 'load', the argument 'file_name'(MindIR file) should end with '.mindir', "
+                         "please input the correct 'file_name'.")
     if not os.path.exists(file_name):
-        raise ValueError("The file does not exist.")
+        raise ValueError("For 'load', the argument 'file_name'(MindIR file) does not exist, "
+                         "please check whether the 'file_name' is correct.")
     file_name = os.path.realpath(file_name)
 
     logger.info("Execute the process of loading mindir.")
@@ -367,8 +384,9 @@ def load(file_name, **kwargs):
 
     if graph is None:
         if _is_cipher_file(file_name):
-            raise RuntimeError("Load MindIR failed. The file may be encrypted, please pass in the "
-                               "correct dec_key and dec_mode.")
+            raise RuntimeError("Load MindIR failed. The file may be encrypted and decrypt failed, you "
+                               "can check whether the values of the arguments 'dec_key' and 'dec_mode'"
+                               " are the same as when exported MindIR file.")
         raise RuntimeError("Load MindIR failed.")
     return graph
 
@@ -418,16 +436,17 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         else:
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
             if pb_content is None:
-                raise ValueError
+                raise ValueError('Failed to decrypt the checkpoint file.')
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
-            logger.critical("Failed to read the checkpoint file `%s`. The file may be encrypted, please pass in the "
-                            "correct dec_key.", ckpt_file_name)
+            logger.critical("Failed to read the checkpoint file '%s'. The file may be encrypted, please pass in the "
+                            "correct 'dec_key'.", ckpt_file_name)
         else:
-            logger.critical("Failed to read the checkpoint file `%s`, please check the correct of the file.", \
-                            ckpt_file_name)
-        raise ValueError(e.__str__())
+            logger.critical("Failed to read the checkpoint file '%s' , may not have permission to read it, please "
+                            "check the correct of the file.", ckpt_file_name)
+        raise ValueError(e.__str__() + "\nFailed to read the checkpoint file {}, may not have permission to "
+                         "read it.".format(ckpt_file_name))
 
     parameter_dict = {}
     try:
@@ -464,11 +483,12 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         logger.info("Loading checkpoint files process is finished.")
 
     except BaseException as e:
-        logger.critical("Failed to load the checkpoint file `%s`.", ckpt_file_name)
-        raise RuntimeError(e.__str__())
+        logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
+        raise ValueError(e.__str__() + "\nFailed to load the checkpoint file {}.".format(ckpt_file_name))
 
     if not parameter_dict:
-        raise ValueError(f"The loaded parameter dict is empty after filtering, please check filter_prefix.")
+        raise ValueError(f"The loaded parameter dict is empty after filtering, please check whether "
+                         f"'filter_prefix' was set to filter out all parameters.")
 
     if net is not None:
         load_param_into_net(net, parameter_dict, strict_load)
@@ -479,27 +499,33 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
     """Check function load_checkpoint's parameter."""
     if not isinstance(ckpt_file_name, str):
-        raise ValueError("The ckpt_file_name must be string.")
+        raise ValueError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
+                         "but got {}.".format(type(ckpt_file_name)))
 
     if not os.path.exists(ckpt_file_name):
-        raise ValueError("The checkpoint file: {} does not exist.".format(ckpt_file_name))
+        raise ValueError("For 'load_checkpoint', the checkpoint file does not exist, please check "
+                         "whether the 'ckpt_file_name' is correct.")
 
     if ckpt_file_name[-5:] != ".ckpt":
-        raise ValueError("Please input the correct checkpoint file name.")
+        raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt', please "
+                         "input the correct 'ckpt_file_name'.")
     ckpt_file_name = os.path.realpath(ckpt_file_name)
 
     if filter_prefix is not None:
         if not isinstance(filter_prefix, (str, list, tuple)):
-            raise TypeError(f"The type of filter_prefix must be str, list[str] or tuple[str] "
-                            f"when filter_prefix is not None, but got {str(type(filter_prefix))}.")
+            raise TypeError(f"For 'load_checkpoint', the type of 'filter_prefix' must be string, "
+                            f"list[string] or tuple[string] when 'filter_prefix' is not None, but "
+                            f"got {str(type(filter_prefix))}.")
         if isinstance(filter_prefix, str):
             filter_prefix = (filter_prefix,)
         if not filter_prefix:
-            raise ValueError("The filter_prefix can't be empty when filter_prefix is list or tuple.")
+            raise ValueError("For 'load_checkpoint', the 'filter_prefix' can't be empty when "
+                             "'filter_prefix' is list or tuple.")
         for index, prefix in enumerate(filter_prefix):
             if not isinstance(prefix, str):
-                raise TypeError(f"The type of filter_prefix must be str, list[str] or tuple[str], "
-                                f"but got {str(type(prefix))} at index {index}.")
+                raise TypeError(f"For 'load_checkpoint', when 'filter_prefix' is list or tuple, "
+                                f"the element in 'filter_prefix' must be string, but got "
+                                f"{str(type(prefix))} at index {index}.")
     return ckpt_file_name, filter_prefix
 
 
@@ -533,12 +559,13 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     """
     if not isinstance(net, nn.Cell):
         logger.critical("Failed to combine the net and the parameters.")
-        msg = ("Argument net should be a Cell, but got {}.".format(type(net)))
+        msg = ("For 'load_param_into_net', the argument 'net' should be a Cell, but got {}.".format(type(net)))
         raise TypeError(msg)
 
     if not isinstance(parameter_dict, dict):
         logger.critical("Failed to combine the net and the parameters.")
-        msg = ("Argument parameter_dict should be a dict, but got {}.".format(type(parameter_dict)))
+        msg = ("For 'load_param_into_net', the argument 'parameter_dict' should be a dict, "
+               "but got {}.".format(type(parameter_dict)))
         raise TypeError(msg)
 
     strict_load = Validator.check_bool(strict_load)
@@ -550,7 +577,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             new_param = copy.deepcopy(parameter_dict[param.name])
             if not isinstance(new_param, Parameter):
                 logger.critical("Failed to combine the net and the parameters.")
-                msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
+                msg = ("For 'load_param_into_net', the element in the argument 'parameter_dict' should be a "
+                       "'Parameter', but got {}.".format(type(new_param)))
                 raise TypeError(msg)
             _update_param(param, new_param, strict_load)
         else:
@@ -565,7 +593,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     logger.info("Loading parameters into net is finished.")
     if param_not_load:
-        logger.warning("{} parameters in the net are not loaded.".format(len(param_not_load)))
+        logger.warning("{} parameters in the 'net' are not loaded, because they are not in the "
+                       "'parameter_dict'.".format(len(param_not_load)))
         for param_name in param_not_load:
             logger.warning("{} is not loaded.".format(param_name))
     return param_not_load
@@ -740,7 +769,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         if file_format != 'MINDIR':
-            raise ValueError(f"The enc_key can be passed in only when file_format=='MINDIR', but got {file_format}")
+            raise ValueError(f"For 'export', 'enc_key' can be passed in only when 'file_format' == 'MINDIR',"
+                             f" but got 'file_format' {file_format}.")
 
         enc_key = Validator.check_isinstance('enc_key', kwargs['enc_key'], bytes)
         enc_mode = 'AES-GCM'
@@ -767,7 +797,7 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
 
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:
-        raise ValueError(f'Illegal file format {file_format}, it must be one of {supported_formats}')
+        raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
     # When dumping ONNX file, switch network mode to infer when it is training(NOTE: ONNX only designed for prediction)
     is_dump_onnx_in_training = net.training and file_format == 'ONNX'
     if is_dump_onnx_in_training:
@@ -900,8 +930,9 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.critical("The parameter %s in the graph is not in the network.", param_name)
-            raise ValueError("The parameter in the graph must be in the network.")
+            logger.critical("The parameter %s in the graph should also be defined in the network.", param_name)
+            raise ValueError("The parameter {} in the graph should also be defined in the "
+                             "network.".format(param_name))
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.abspath(file_name)
@@ -943,7 +974,8 @@ def quant_mode_manage(func):
             return network
         quant_mode = kwargs['quant_mode']
         if not isinstance(quant_mode, str):
-            raise TypeError("The type of quant_mode should be str, but got {}.".format(type(quant_mode)))
+            raise TypeError("For 'export', the type of 'quant_mode' should be string, "
+                            "but got {}.".format(type(quant_mode)))
         if quant_mode in ('AUTO', 'MANUAL'):
             kwargs['quant_mode'] = 'QUANT'
         return func(network, *inputs, file_format=file_format, **kwargs)
@@ -962,7 +994,8 @@ def _quant_export(network, *inputs, file_format, **kwargs):
 
     quant_mode = kwargs['quant_mode']
     if quant_mode not in quant_mode_formats:
-        raise KeyError(f'The quant_mode input is wrong, Please choose the right mode of the quant_mode.')
+        raise KeyError(f"For 'export', the argument 'quant_mode' must be one of {quant_mode_formats}, "
+                       f"but got {quant_mode}.")
     if quant_mode == 'NONQUANT':
         return network
     quant_net = copy.deepcopy(network)
@@ -974,10 +1007,12 @@ def _quant_export(network, *inputs, file_format, **kwargs):
     std_dev = Validator.check_value_type("std_dev", std_dev, (int, float))
 
     if context.get_context('device_target') not in supported_device:
-        raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))
+        raise KeyError(f"For 'export', quant export only support {supported_device} device target now, "
+                       f"but got {context.get_context('device_target')}")
 
     if file_format not in supported_formats:
-        raise ValueError('Illegal file format {}.'.format(file_format))
+        raise ValueError(f"For 'export', quant export only support 'file_format' {supported_formats}, "
+                         f"but got {file_format}.")
 
     quant_net.set_train(False)
     if file_format == "MINDIR":
@@ -1033,7 +1068,8 @@ def parse_print(print_file_name):
     print_file_path = os.path.realpath(print_file_name)
 
     if os.path.getsize(print_file_path) == 0:
-        raise ValueError("The print file may be empty, please make sure enter the correct file name.")
+        raise ValueError("For 'parse_print', the print file may be empty, please make sure enter the correct "
+                         "'print_file_name'.")
 
     logger.info("Execute load print process.")
     print_list = Print()
@@ -1043,8 +1079,10 @@ def parse_print(print_file_name):
             pb_content = f.read()
         print_list.ParseFromString(pb_content)
     except BaseException as e:
-        logger.critical("Failed to read the print file %s, please check the correctness of the file.", print_file_name)
-        raise ValueError(e.__str__())
+        logger.critical("Failed to read the print file %s, please check whether the file is "
+                        "correct.", print_file_name)
+        raise ValueError(e.__str__() + "\nFailed to read the print file {}, please check whether "
+                         "the file is correct.".format(print_file_name))
 
     tensor_list = []
 
@@ -1076,7 +1114,7 @@ def parse_print(print_file_name):
 
     except BaseException as e:
         logger.critical("Failed to load the print file %s.", print_list)
-        raise RuntimeError(e.__str__())
+        raise RuntimeError(e.__str__() + "\nFailed to load the print file {}.".format(print_list))
 
     return tensor_list
 
@@ -1111,13 +1149,14 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         device_count *= dim
 
     if len(sliced_data) != device_count:
-        raise ValueError(f"The sliced_parameters length should be equal to device_count. "
-                         f"the sliced_parameters length is {len(sliced_data)} but device_count is {device_count}.")
+        raise ValueError(f"For 'merge_sliced_parameter', the length of 'sliced_parameters' should be equal to "
+                         f"device_count. The length of 'sliced_parameters' is {len(sliced_data)}, but "
+                         f"device_count is {device_count}.")
 
     if not param_split_shape:
         if not is_even:
-            raise ValueError("The shape of every parameter in sliced_parameters should be the same "
-                             "when slice manner is even.")
+            raise ValueError("When the shape of every parameter in 'sliced_parameters' is same, "
+                             "the 'is_even' should be True, but got {}.".format(is_even))
 
         all_gather_tensor = Tensor(np.concatenate(sliced_data))
 
@@ -1142,7 +1181,7 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         for i in range(device_count):
             slice_index = int(_get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, i))
             if tensor_slices[i].shape[0] != param_split_shape[slice_index]:
-                raise ValueError(f"The slice {slice_index} is {param_split_shape[slice_index]} in 0 axis, "
+                raise ValueError(f"The slice {slice_index} should be {param_split_shape[slice_index]} in 0 axis, "
                                  f"but got {tensor_slices[i].shape[0]}.")
             tensor_slices_new[slice_index] = np.array(tensor_slices[i])
 
@@ -1223,13 +1262,16 @@ def build_searched_strategy(strategy_filename):
         >>> strategy = build_searched_strategy("./strategy_train.ckpt")
     """
     if not isinstance(strategy_filename, str):
-        raise TypeError(f"The strategy_filename should be str, but got {type(strategy_filename)}.")
+        raise TypeError(f"For 'build_searched_strategy', the 'strategy_filename' should be string, "
+                        f"but got {type(strategy_filename)}.")
 
     if not os.path.isfile(strategy_filename):
-        raise ValueError(f"No such strategy file: {strategy_filename}.")
+        raise ValueError(f"For 'build_searched_strategy', no such strategy file: {strategy_filename}. "
+                         f"Please check whether the 'strategy_filename' exists.")
 
     if os.path.getsize(strategy_filename) == 0:
-        raise ValueError("The strategy file should not be empty.")
+        raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} should not "
+                         f"be empty. Please check whether the 'strategy_filename' is correct.")
 
     parallel_strategy_map = ParallelStrategyMap()
 
@@ -1239,7 +1281,8 @@ def build_searched_strategy(strategy_filename):
 
     layout_items = parallel_strategy_map.parallel_layout_item
     if not layout_items:
-        raise ValueError("The strategy file has no sliced parameter.")
+        raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} has no sliced "
+                         f"parameter, please check whether the 'strategy_filename' is correct.")
 
     strategy = {}
     for layout_item in layout_items:
@@ -1288,32 +1331,37 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         Parameter (name=network.embedding_table, shape=(12,), dtype=Float64, requires_grad=True)
     """
     if not isinstance(sliced_parameters, list):
-        raise TypeError(f"The sliced_parameters should be list, but got {type(sliced_parameters)}.")
+        raise TypeError(f"For 'merge_sliced_parameter', the 'sliced_parameters' should be list, "
+                        f"but got {type(sliced_parameters)}.")
 
     if not sliced_parameters:
-        raise ValueError("The sliced_parameters should not be empty.")
+        raise ValueError("For 'merge_sliced_parameter', the 'sliced_parameters' should not be empty.")
 
     if strategy and not isinstance(strategy, dict):
-        raise TypeError(f"The strategy should be dict, but got {type(strategy)}.")
+        raise TypeError(f"For 'merge_sliced_parameter', the 'strategy' should be dict, but got {type(strategy)}.")
 
     try:
         parameter_name = sliced_parameters[0].name
         parameter_shape = sliced_parameters[0].data.shape
         parameter_shape_length = len(parameter_shape)
     except BaseException as e:
-        raise TypeError(f"{e.__str__()}. the element in sliced_parameters should be Parameter.")
+        raise TypeError(e.__str__() + f" For 'merge_sliced_parameter', the element in 'sliced_parameters' should be "
+                        f"'Parameter', but got {type(sliced_parameters[0])} at index 0.")
 
     is_even = True
     for index, parameter in enumerate(sliced_parameters):
         if not isinstance(parameter, Parameter):
-            raise TypeError(f"The element in sliced_parameters should be Parameter, "
+            raise TypeError(f"For 'merge_sliced_parameter', the element in 'sliced_parameters' should be 'Parameter', "
                             f"but got {type(parameter)} at index {index}.")
 
         if parameter.name != parameter_name \
                 or len(parameter.data.shape) != parameter_shape_length \
                 or parameter.data.shape[1:] != parameter_shape[1:]:
-            raise ValueError("Please make sure that the elements in slice_parameters have the same name, "
-                             "dimension length and shape except 0 axis")
+            raise ValueError(f"Please make sure that the elements in 'slice_parameters' have the same name, "
+                             f"dimension length and shape except 0 axis. The name, dimension length, shape except "
+                             f"0 axis should be {parameter_name}, {parameter_shape_length}, {parameter_shape[1:]}, "
+                             f"but got name: {parameter.name}, dimension length: {len(parameter.data.shape)}, "
+                             f"shape except 0 axis: {parameter.data.shape[1:]} at index {index}.")
 
         if parameter.data.shape != parameter_shape:
             is_even = False
@@ -1328,8 +1376,8 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     else:
         if parameter_name not in strategy.keys():
-            raise KeyError(f"The parameter name should be one key of strategy. "
-                           f"the parameter name is {parameter_name}.")
+            raise KeyError(f"The parameter name {parameter_name} should be a key in the 'strategy'. Please check "
+                           f"'sliced_parameter' and 'strategy'.")
         merged_tensor = _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even)
         merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
 
@@ -1380,10 +1428,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     for dim in train_strategy[list(train_strategy.keys())[0]][0]:
         train_dev_count *= dim
     if train_dev_count != ckpt_file_len:
-        raise ValueError(
-            f"The length of checkpoint_filenames should be equal to the device count of training process. "
-            f"The length is {ckpt_file_len} but the device count is {train_dev_count}.")
-
+        raise ValueError(f"For 'Load_distributed_checkpoint', the length of 'checkpoint_filenames' should be "
+                         f"equal to the device count of training process. But the length of 'checkpoint_filenames'"
+                         f" is {ckpt_file_len} and the device count is {train_dev_count}.")
     rank_list = _infer_rank_list(train_strategy, predict_strategy)
 
     param_total_dict = defaultdict(dict)
@@ -1448,7 +1495,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             except BaseException as e:
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
-                raise RuntimeError(e.__str__())
+                raise RuntimeError(e.__str__() + f"\nFailed to load opt shard slice in load distributed "
+                                   f"checkpoint for {param.name}. Data shape is {split_param.data.shape} "
+                                   f"and group is {opt_shard_group}.")
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param

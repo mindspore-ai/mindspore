@@ -50,13 +50,15 @@ def auc(x, y, reorder=False):
         0.5357142857142857
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
-        raise TypeError('The inputs must be np.ndarray, but got {}, {}'.format(type(x), type(y)))
+        raise TypeError("For 'auc', the argument 'x' and 'y' must all be np.ndarray, but got {}, {}"
+                        .format(type(x), type(y)))
     _check_consistent_length(x, y)
     x = _column_or_1d(x)
     y = _column_or_1d(y)
 
     if x.shape[0] < 2:
-        raise ValueError('At least 2 points are needed to compute the AUC, but x.shape = {}.'.format(x.shape))
+        raise ValueError("For 'auc', the shape of the argument 'x' in axis 0 must be greater than 2, "
+                         "but got {}.".format(x.shape[0]))
 
     direction = 1
     if reorder:
@@ -68,7 +70,8 @@ def auc(x, y, reorder=False):
             if np.all(dx <= 0):
                 direction = -1
             else:
-                raise ValueError("Reordering is not turned on, and the x array is not increasing:{}".format(x))
+                raise ValueError("For 'auc', if the argument is False, the argument 'x' array should be increasing "
+                                 "or decreasing, but got 'x': {}".format(x))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
@@ -84,7 +87,8 @@ def _column_or_1d(y):
     if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
         return np.ravel(y)
 
-    raise ValueError("Bad input shape {0}.".format(shape))
+    raise ValueError("For 'auc', the input must be a 1-dimensional array, or a 2-dimensional array with the second "
+                     "dimension of 1, but got shape {}.".format(shape))
 
 
 def _num_samples(x):

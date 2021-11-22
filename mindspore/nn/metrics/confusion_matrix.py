@@ -67,9 +67,8 @@ class ConfusionMatrix(Metric):
         self.num_classes = validator.check_value_type("num_classes", num_classes, [int])
         if normalize != ConfusionMatrix.TARGET and normalize != ConfusionMatrix.PREDICTION and \
                 normalize != ConfusionMatrix.ALL and normalize is not ConfusionMatrix.NO_NORM:
-            raise ValueError(
-                'The normalize way should be in [all, prediction, label, None], but got {}.'.format(normalize)
-            )
+            raise ValueError("For 'ConfusionMatrix', the argument 'normalize' should be in "
+                             "['all', 'prediction', 'label', 'no_norm'(None)], but got {}.".format(normalize))
 
         self.normalize = normalize
         self.threshold = validator.check_value_type("threshold", threshold, [float])
@@ -95,14 +94,17 @@ class ConfusionMatrix(Metric):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The ConfusionMatrix needs 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
+            raise ValueError("For 'ConfusionMatrix.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
 
         if not (y_pred.ndim == y.ndim or y_pred.ndim == y.ndim + 1):
-            raise ValueError("The y_pred and y should have the same number of dimensions, or the dimension of y_pred "
-                             "equals the dimension of y add 1.")
+            raise ValueError(f"For 'ConfusionMatrix.update', predicted value (input[0]) and true value "
+                             f"(input[1]) should have same dimensions, or the dimension of predicted value "
+                             f"equals the dimension of true value add 1, but got predicted value ndim: "
+                             f"{y_pred.ndim}, true value ndim: {y.ndim}.")
 
         if y_pred.ndim == y.ndim + 1:
             y_pred = np.argmax(y_pred, axis=1)
@@ -125,7 +127,7 @@ class ConfusionMatrix(Metric):
         """
 
         if not self._is_update:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
 
         confusion_matrix = self.confusion_matrix.astype(float)
 
@@ -240,7 +242,8 @@ class ConfusionMatrixMetric(Metric):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The ConfusionMatrixMetric needs 2 inputs (y_pred, y), but got {}.'.format(len(inputs)))
+            raise ValueError("For 'ConfusionMatrixMetric.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
@@ -268,8 +271,8 @@ class ConfusionMatrixMetric(Metric):
 
         if self.calculation_method is True:
             if self._class_num == 0:
-                raise RuntimeError("The ConfusionMatrixMetric must have at least one example "
-                                   "before it can be computed.")
+                raise RuntimeError("The 'ConfusionMatrixMetric' can not be calculated, because the number of samples "
+                                   "is 0, please check whether your inputs(predicted value, true value) are correct.")
 
             return self._total_num / self._class_num
 
