@@ -49,7 +49,9 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   DeConvParam *deconv_param_ = nullptr;
-  std::mutex lock_;
+  std::mutex nc4hw4_mutex_;
+  std::condition_variable nc4hw4_cond_var_;
+  int completed_index_ = -1;
   float16_t *nhwc_input_ = nullptr;
   float16_t *nhwc_output_ = nullptr;
   float16_t *nc4hw4_output_ = nullptr;
