@@ -272,6 +272,7 @@ class HeUniform(Initializer):
 
     .. math::
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
+
     which is the bound of the HeUniform distribution.
 
     For details of HeUniform algorithm, please check
