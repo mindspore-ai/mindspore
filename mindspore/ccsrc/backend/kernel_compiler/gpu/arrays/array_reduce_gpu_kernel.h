@@ -116,6 +116,8 @@ class ArrayReduceGpuKernel : public GpuKernel {
           axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
         }
         std::sort(axis_.begin(), axis_.end());
+        auto multiple_pos = std::unique(axis_.begin(), axis_.end());
+        axis_.erase(multiple_pos, axis_.end());
       }
     } else if (prim->GetAttr("axis")->isa<Int64Imm>()) {
       int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
