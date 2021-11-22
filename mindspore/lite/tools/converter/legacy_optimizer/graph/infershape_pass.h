@@ -49,10 +49,14 @@ class InferShapePass : public GraphPass {
                              std::vector<uint32_t> next_nodes_indexes, size_t index);
   void AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes, uint32_t infer_node_index);
   void ResetIncorrectTensorShape(MetaGraphT *graph);
-  int InferPartialNode(const CNodeT *partial_node, MetaGraphT *graph);
-  int InferSwitchOrSwitchLayerNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
+  int InferPartialNode(const bool &is_tail_call, const std::unique_ptr<CNodeT> &call_node, const CNodeT *partial_node,
+                       MetaGraphT *graph);
+  int InferSwitchOrSwitchLayerNode(const bool &is_tail_call, const std::unique_ptr<CNodeT> &call_node,
+                                   const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
   int InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph);
   int CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph);
+  int SetNonTailCallOutputShape(const std::unique_ptr<CNodeT> &call_node, const CNodeT *partial_node,
+                                MetaGraphT *graph);
   void RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph);
   void InitInferTensor(MetaGraphT *graph);
   int InferSubgraph(const int64_t &subgraph_index, MetaGraphT *graph);

@@ -300,9 +300,8 @@ void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vec
 }
 #endif
 
-int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors,
-                size_t i, uint32_t infer_node_index) {
-  auto &node = graph->nodes.at(infer_node_index);
+int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
+                const std::unique_ptr<mindspore::schema::CNodeT> &node, std::vector<InferTensor> *tensors, size_t i) {
   auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
   output_tensor->format = static_cast<schema::Format>(output_tensors[i]->format());
   output_tensor->dataType = output_tensors[i]->data_type();
@@ -347,6 +346,21 @@ int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, 
     return RET_OK;
   }
   tensors->at(node->outputIndex[i]).is_inferred_ = true;
+  return RET_OK;
+}
+
+int CopyOutputShapeToTensorT(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
+                             const std::unique_ptr<mindspore::schema::CNodeT> &node,
+                             std::vector<InferTensor> *tensors) {
+  for (uint32_t i = 0; i < output_tensors.size(); i++) {
+    auto output_dims = output_tensors[i]->shape();
+    auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
+    output_tensorT->dims.swap(output_dims);
+    if (SetDataType(graph, output_tensors, node, tensors, i) != RET_OK) {
+      MS_LOG(ERROR) << "SetDataType failed.";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -397,7 +411,29 @@ void InferShapePass::RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT
   }
 }
 
-int InferShapePass::InferPartialNode(const CNodeT *partial_node, MetaGraphT *graph) {
+int InferShapePass::SetNonTailCallOutputShape(const std::unique_ptr<CNodeT> &call_node, const CNodeT *partial_node,
+                                              MetaGraphT *graph) {
+  auto subgraph_index = PartialGraphIndex(partial_node);
+  auto &subgraph = graph->subGraph.at(subgraph_index);
+  size_t call_node_output_size = call_node->outputIndex.size();
+  size_t subgraph_output_size = subgraph->outputIndices.size();
+  if (subgraph_output_size != call_node_output_size) {
+    MS_LOG(ERROR) << "call node output size: " << call_node_output_size
+                  << " is same as corresponding subgraph output size: " << subgraph_output_size;
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < subgraph_output_size; ++i) {
+    auto &subgraph_output_tensor = graph->allTensors.at(subgraph->outputIndices[i]);
+    auto &call_output_tensor = graph->allTensors.at(call_node->outputIndex[i]);
+    call_output_tensor->format = subgraph_output_tensor->format;
+    call_output_tensor->dims = subgraph_output_tensor->dims;
+    call_output_tensor->dataType = subgraph_output_tensor->dataType;
+  }
+  return RET_OK;
+}
+
+int InferShapePass::InferPartialNode(const bool &is_tail_call, const std::unique_ptr<CNodeT> &call_node,
+                                     const CNodeT *partial_node, MetaGraphT *graph) {
   int64_t subgraph_index = PartialGraphIndex(partial_node);
   int ret = CopyPartialShapeToSubGraph(partial_node, graph);
   if (ret != RET_OK) {
@@ -412,6 +448,14 @@ int InferShapePass::InferPartialNode(const CNodeT *partial_node, MetaGraphT *gra
   }
 
   RestoreSubGraphInput(partial_node, graph);
+
+  if (!is_tail_call) {
+    ret = SetNonTailCallOutputShape(call_node, partial_node, graph);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SetNonTailCallOutputShape failed.";
+      return ret;
+    }
+  }
   return ret;
 }
 
@@ -441,7 +485,8 @@ void InferShapePass::InitInferTensor(MetaGraphT *graph) {
   }
 }
 
-int InferShapePass::InferSwitchOrSwitchLayerNode(const std::unique_ptr<CNodeT> &aim_node, MetaGraphT *graph) {
+int InferShapePass::InferSwitchOrSwitchLayerNode(const bool &is_tail_call, const std::unique_ptr<CNodeT> &call_node,
+                                                 const std::unique_ptr<CNodeT> &aim_node, MetaGraphT *graph) {
   if (aim_node->inputIndex.size() < kSwitchInputMinSize) {
     MS_LOG(ERROR) << "switch or switch_layer node input size: " << aim_node->inputIndex.size() << " is less than 3.";
     return RET_PARAM_INVALID;
@@ -477,7 +522,7 @@ int InferShapePass::InferSwitchOrSwitchLayerNode(const std::unique_ptr<CNodeT> &
   while (!to_process.empty()) {
     auto node = to_process.front();
     to_process.pop_front();
-    int ret = InferPartialNode(node, graph);
+    int ret = InferPartialNode(is_tail_call, call_node, node, graph);
     if (ret != RET_OK) {
       MS_LOG(WARNING) << "not support partial infer.";
       return ret;
@@ -493,16 +538,17 @@ int InferShapePass::InferCallNode(const std::unique_ptr<CNodeT> &call_node, Meta
     return RET_PARAM_INVALID;
   }
   auto call_first_input_index = call_node->inputIndex.front();
+  bool is_tail_call = call_node->primitive->value.AsCall()->is_tail_call;
   for (auto &node : graph->nodes) {
     if (!IsContain(node->outputIndex, call_first_input_index)) {
       continue;
     }
     switch (node->primitive->value.type) {
       case PrimitiveType_PartialFusion:
-        return InferPartialNode(node.get(), graph);
+        return InferPartialNode(is_tail_call, call_node, node.get(), graph);
       case PrimitiveType_Switch:
       case PrimitiveType_SwitchLayer:
-        return InferSwitchOrSwitchLayerNode(node, graph);
+        return InferSwitchOrSwitchLayerNode(is_tail_call, call_node, node, graph);
       default:
         MS_LOG(ERROR) << "not able to call partial or call switch.";
         return RET_ERROR;
@@ -526,6 +572,7 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
   while (!infer_node_indexes.empty()) {
     auto infer_node_index = infer_node_indexes.front();
     auto &node = graph->nodes.at(infer_node_index);
+    infer_node_indexes.erase(infer_node_indexes.begin());
     auto node_type = node->primitive->value.type;
     if (node_type == PrimitiveType_Call) {
       ret = InferCallNode(node, graph);
@@ -535,7 +582,6 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
       }
     }
 
-    infer_node_indexes.erase(infer_node_indexes.begin());
     auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex);
     auto output_tensors = ConvertTensorToLiteTensor(graph, node->outputIndex);
     if (output_tensors.empty() || output_tensors.size() != node->outputIndex.size() || input_tensors.empty() ||
@@ -550,17 +596,11 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
 #ifdef Debug
       PrintTensorShape(input_tensors, output_tensors);
 #endif
-      // copy output shape to tensorT
-      for (uint32_t i = 0; i < output_tensors.size(); i++) {
-        auto output_dims = output_tensors[i]->shape();
-        auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
-        output_tensorT->dims.swap(output_dims);
-        ret = SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "SetDataType failed: " << ret;
-          FreeTensors(&input_tensors, &output_tensors);
-          return RET_INFER_ERR;
-        }
+      ret = CopyOutputShapeToTensorT(graph, output_tensors, node, &tensors_);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "SetDataType failed: " << ret;
+        FreeTensors(&input_tensors, &output_tensors);
+        return RET_INFER_ERR;
       }
     } else {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
