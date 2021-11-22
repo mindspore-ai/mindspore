@@ -14,6 +14,7 @@
 # ============================================================================
 
 """primitive"""
+import functools
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
@@ -606,6 +607,7 @@ def prim_attr_register(fn):
         >>> matmul = MatMul()
     """
 
+    @functools.wraps(fn)
     def deco(self, *args, **kwargs):
         class_name = self.__class__.__name__
         if hasattr(self.__class__, "substitute_name"):
