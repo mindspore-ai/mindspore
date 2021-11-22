@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
+#include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
