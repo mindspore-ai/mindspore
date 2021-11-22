@@ -46,6 +46,7 @@ class Environment {
   virtual size_t StateSizeInBytes() = 0;
   virtual size_t RewardSizeInBytes() = 0;
   virtual size_t DoneSizeInBytes() = 0;
+  virtual size_t WorkspaceSizeInBytes() { return 0; }
 };
 
 constexpr int64_t kInvalidHandle = -1;
