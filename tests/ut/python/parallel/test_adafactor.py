@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class Net(Cell):
         self.matmul = P.MatMul().shard(strategy1)
         self.bias_add = P.BiasAdd().shard(strategy2)
         self.add_weight = Parameter(add_weight, "w1")
-        self.mul_weight = Parameter(matmul_weight, "w1")
+        self.mul_weight = Parameter(matmul_weight, "w2")
         self.bias = Parameter(bias, "bias")
         self.reshape = P.Reshape()
 
