@@ -150,6 +150,7 @@ class _Context:
         self._thread_local_info = _ThreadLocalInfo()
         self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
+        self.enable_compile_cache = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -551,8 +552,8 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
-                 env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool,
-                 load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool)
+                 env_config_path=str, graph_kernel_flags=str, enable_compile_cache=bool,
+                 compile_cache_path=str, grad_for_scalar=bool, pynative_synchronize=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -618,9 +619,9 @@ def set_context(**kwargs):
     |                         +------------------------------+----------------------------+
     |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
-    |                         |  save_compile_cache          |  CPU/GPU/Ascend            |
+    |                         |  enable_compile_cache        |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
-    |                         |  load_compile_cache          |  CPU/GPU/Ascend            |
+    |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -746,17 +747,17 @@ def set_context(**kwargs):
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
             this interface only supports simple operations that can be deduced by the front-end.
-        save_compile_cache (bool): Whether to cache the graph compiled by front-end. Default: False.
-            After save_compile_cache is set to True, a hardware-independent compilation cache is
-            generated and exported to a MINDIR file, This is an experimental prototype that is
-            subject to change and/or deletion.
-        load_compile_cache (bool): Whether to use the cache of the graph compiled by front-end.
-            This parameter must be used together with save_compile_cache. After save_compile_cache is set to True,
-            a hardware-independent compilation cache is generated and exported to a MINDIR file.
-            When the network is executed again, if load_compile_cache is set to True, the compile cache is loaded.
-            By now, we do not support automatic checking for changes.
-            Default: False.
+        enable_compile_cache (bool): Whether to save or load the cache of the graph compiled by front-end.
+            After enable_compile_cache is set to True, during the first execution, a hardware-independent
+            compilation cache is generated and exported to a MINDIR file. When the network is executed again,
+            if enable_compile_cache is still set to True and the network scripts are not changed,
+            the compile cache is loaded. Note that only limited automatic detection for the changes of
+            python scripts is supported by now, which means that there is a correctness risk. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
+        compile_cache_path (str): Path to save the cache of the graph compiled by front-end. Default: ".".
+            If the specified directory does not exist, the system will automatically create the directory.
+            The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
+            the ID of the current device in the cluster.
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -782,8 +783,7 @@ def set_context(**kwargs):
         >>> context.set_context(env_config_path="./env_config.json")
         >>> context.set_context(auto_tune_mode="GA,RL")
         >>> context.set_context(grad_for_scalar=True)
-        >>> context.set_context(save_compile_cache=True)
-        >>> context.set_context(load_compile_cache=True)
+        >>> context.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> context.set_context(pynative_synchronize=True)
     """
     ctx = _context()

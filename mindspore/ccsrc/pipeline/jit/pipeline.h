@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   const std::string &phase() const { return phase_; }
   void SaveCompiledGraph(const std::string &phase);
-  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
-                    const std::string &queue_name, bool enable_tuple_broaden = false);
-  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm,
-               const std::string &queue_name, bool enable_tuple_broaden = false);
+  bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
+  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
 
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
 
@@ -107,6 +105,11 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void DelNetRes(const py::set &id);
   void ReleaseResource(const py::object &phase_obj);
   static void ClearRes();
+  void set_queue_name(const std::string &queue_name) { queue_name_ = queue_name; }
+  void set_enable_tuple_broaden(bool enable_tuple_broaden) { enable_tuple_broaden_ = enable_tuple_broaden; }
+  void set_compile_cache_dep_files(const py::list &compile_cache_dep_files) {
+    compile_cache_dep_files_ = compile_cache_dep_files;
+  }
 #ifdef ENABLE_DEBUGGER
   static bool GetDebugTerminate() { return debugger_terminate_; }
   static void DebugTerminate(bool val, bool exit_success) {
@@ -139,6 +142,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
   std::map<std::string, size_t> phase_to_num_op_info_;
+  std::string queue_name_;
+  bool enable_tuple_broaden_{false};
+  py::list compile_cache_dep_files_;
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 

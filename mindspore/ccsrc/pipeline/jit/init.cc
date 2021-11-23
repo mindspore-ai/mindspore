@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
     .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
-         py::arg("use_vm") = py::bool_(false), py::arg("queue_name"),
-         py::arg("enable_tuple_broaden") = py::bool_(false), "Compile obj by executor.")
+         py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")
     .def("updata_param_node_default_input", &GraphExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),
          py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
     .def("get_parameter_layout", &GraphExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),
@@ -105,7 +104,13 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_py_exe_path", &GraphExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""),
          "Set python executable path.")
     .def("set_kernel_build_server_dir", &GraphExecutorPy::KernelBuildServerDir,
-         py::arg("kernel_build_server_dir") = py::str(""), "Set kernel build server directory path.");
+         py::arg("kernel_build_server_dir") = py::str(""), "Set kernel build server directory path.")
+    .def("set_queue_name", &GraphExecutorPy::set_queue_name, py::arg("queue_name") = py::str(""),
+         "Set queue name for the graph loaded from compile cache.")
+    .def("set_enable_tuple_broaden", &GraphExecutorPy::set_enable_tuple_broaden,
+         py::arg("enable_tuple_broaden") = py::bool_(false), "Set tuple broaden enable.")
+    .def("set_compile_cache_dep_files", &GraphExecutorPy::set_compile_cache_dep_files,
+         py::arg("compile_cache_dep_files") = py::list(), "Set the compilation cache dependent files.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 

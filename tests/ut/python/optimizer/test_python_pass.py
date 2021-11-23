@@ -35,7 +35,7 @@ def get_func_graph(obj, *args, phase="validate"):
     obj.arguments_key = str(key)
     phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
     _executor = GraphExecutor_.get_instance()
-    _executor.compile(obj, args_list, phase, False, "", False)
+    _executor.compile(obj, args_list, phase, False)
     return _executor.get_func_graph(phase)
 
 def test_softmax_relu():

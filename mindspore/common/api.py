@@ -19,6 +19,9 @@ import types
 import sys
 import os
 import time
+import traceback
+import ast
+import importlib
 from collections import OrderedDict
 from functools import wraps
 
@@ -113,6 +116,81 @@ def _check_all_tensor(sequence):
             return False
     return True
 
+def _get_filename_from_trace(trace):
+    strings = trace.strip().split(' ')
+    filename = strings[1].rstrip(',').strip('"')
+    return filename
+
+
+def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files):
+    """Get the dependency files of the network"""
+    with open(file_path) as fh:
+        root = ast.parse(fh.read(), file_path)
+    for node in ast.iter_child_nodes(root):
+        module_name = ""
+        if isinstance(node, ast.ImportFrom):
+            module_name = node.module
+        elif not isinstance(node, ast.Import):
+            continue
+        # Do not care the files in mindspore package
+        if module_name.startswith("mindspore"):
+            continue
+
+        for n in node.names:
+            if n.name.startswith("mindspore"):
+                continue
+            if module_name == "":
+                whole_module = n.name
+            else:
+                whole_module = module_name
+                if not n.name is None:
+                    whole_module += "." + n.name
+            try:
+                module_spec = importlib.util.find_spec(whole_module)
+            except (ModuleNotFoundError, ValueError):
+                whole_module = whole_module[0:whole_module.rfind('.')]
+                module_spec = importlib.util.find_spec(whole_module)
+            if module_spec is None:
+                continue
+            module = importlib.util.module_from_spec(module_spec)
+            if hasattr(module, '__file__'):
+                dep_file_path = module.__file__
+            else:
+                continue
+            if not dep_file_path.startswith(python_bin_dir) and not dep_file_path in compile_cache_dep_files:
+                logger.debug(f"dependent file path: {dep_file_path}")
+                compile_cache_dep_files.append(dep_file_path)
+                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files)
+
+
+def _get_compile_cache_dep_files():
+    """Get the dependency files of the network"""
+    python_bin_path = sys.executable
+    if python_bin_path.endswith('bin/python'):
+        python_bin_dir = python_bin_path[:-10]
+    else:
+        return []
+    tb = traceback.format_stack()
+    tb.reverse()
+    compile_cache_dep_files = []
+    filename = None
+    # Get the entry script file.
+    for i in range(1, len(tb)):
+        # format: File "xxx.py", line x, in <module>
+        filename = _get_filename_from_trace(tb[i])
+        if i + 1 < len(tb):
+            next_filename = _get_filename_from_trace(tb[i + 1])
+            if next_filename.startswith(python_bin_dir):
+                break
+    if filename is None:
+        return None
+    file_path = os.path.realpath(filename)
+    logger.debug(f"entry script file path: {file_path}")
+    compile_cache_dep_files.append(file_path)
+    __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files)
+    return compile_cache_dep_files
+
+
 class _MindsporeFunctionExecutor:
     """
     Represents a function compiled by graph compiler.
@@ -187,22 +265,21 @@ class _MindsporeFunctionExecutor:
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
         else:
             self.enable_tuple_broaden = False
+        self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = generate_arguments_key(dic, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
-        if phase not in ms_compile_cache.keys():
-            if self.obj is None:
-                is_compile = self._graph_executor.compile(self.fn, args_list, phase, True, "",
-                                                          self.enable_tuple_broaden)
-            else:
-                is_compile = self._graph_executor.compile(self.obj, args_list, phase, True, "",
-                                                          self.enable_tuple_broaden)
-            if not is_compile:
-                raise RuntimeError("Executor compile failed.")
-            if context.get_context("enable_ge"):
-                self.build_data_init_graph(phase)
-            ms_compile_cache[phase] = phase
+        if phase in ms_compile_cache.keys():
             return phase
 
+        if self.obj is None:
+            is_compile = self._graph_executor.compile(self.fn, args_list, phase, True)
+        else:
+            is_compile = self._graph_executor.compile(self.obj, args_list, phase, True)
+        if not is_compile:
+            raise RuntimeError("Executor compile failed.")
+        if context.get_context("enable_ge"):
+            self.build_data_init_graph(phase)
+        ms_compile_cache[phase] = phase
         return phase
 
     @_wrap_func
@@ -475,7 +552,6 @@ class _CellGraphExecutor:
         self._graph_executor = GraphExecutor_.get_instance()
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self.queue_name = ""
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
                      input_indexs, phase='dataset'):
@@ -502,7 +578,7 @@ class _CellGraphExecutor:
                                  input_indexs=input_indexs,
                                  phase=phase):
             raise RuntimeError("Failure to init and dataset subgraph!")
-        self.queue_name = queue_name
+        self._graph_executor.set_queue_name(queue_name)
         return True
 
     def _build_data_graph(self, obj, phase):
@@ -523,6 +599,14 @@ class _CellGraphExecutor:
         enable_debug_runtime = context.get_context("enable_debug_runtime")
         exe_mode = context.get_context("mode") == context.PYNATIVE_MODE
         return not enable_ge or (enable_debug_runtime and exe_mode)
+
+    def _set_compile_cache_dep_files(self, phase):
+        # If enable compile cache, get the dependency files list
+        enable_compile_cache = context.get_context("enable_compile_cache")
+        if enable_compile_cache is None:
+            enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
+        if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
+            self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False):
         """
@@ -546,6 +630,7 @@ class _CellGraphExecutor:
             self.enable_tuple_broaden = obj.enable_tuple_broaden
         else:
             self.enable_tuple_broaden = False
+        self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = generate_arguments_key(dic, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
@@ -557,6 +642,7 @@ class _CellGraphExecutor:
         obj.check_names()
         _check_full_batch()
         self._set_dataset_mode(args_list)
+        self._set_compile_cache_dep_files(phase)
 
         is_sink_mode = args and isinstance(args[0], Tensor) and args[0].virtual_flag
         if auto_parallel_mode and _need_to_full() and not is_sink_mode and obj.auto_parallel_compile_and_run():
@@ -565,7 +651,8 @@ class _CellGraphExecutor:
 
         enable_ge = context.get_context("enable_ge")
         use_vm = self._use_vm_mode()
-        result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name, self.enable_tuple_broaden)
+
+        result = self._graph_executor.compile(obj, args_list, phase, use_vm)
         obj.compile_cache.add(phase)
         if not result:
             raise RuntimeError("Executor compile failed.")

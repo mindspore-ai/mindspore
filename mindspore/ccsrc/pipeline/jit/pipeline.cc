@@ -57,6 +57,8 @@
 #include "backend/session/executor_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "utils/system/sha256.h"
+#include "proto/compile_cache.pb.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -121,7 +123,11 @@ std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBa
   g_args_cache;
 
 namespace {
-constexpr char kCompileCacheFilePath[] = "compile_cache.mindir";
+constexpr char kCompileCacheSubDir[] = "graph_cache";
+constexpr char kCompileCacheFileName[] = "compile_cache";
+constexpr char kCompileCacheFileSuffix[] = ".mindir";
+constexpr char kDepFilesHashPath[] = "compile_dependency.hash";
+
 #ifdef ENABLE_DUMP_IR
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
@@ -190,28 +196,126 @@ void SetLoopCount(const ResourcePtr &resource) {
   }
 }
 
-void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_name) {
-  MS_EXCEPTION_IF_NULL(resource);
-  auto realpath = Common::CreatePrefixPath(kCompileCacheFilePath);
+std::string GetUserDefindCachePath() {
+  auto user_defined_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
+  if (!user_defined_path.empty()) {
+    user_defined_path += "/";
+    return user_defined_path;
+  }
+  user_defined_path = common::GetEnv("MS_COMPILER_CACHE_PATH");
+  if (!user_defined_path.empty()) {
+    user_defined_path += "/";
+  }
+  return user_defined_path;
+}
+
+std::string GetCompileCacheDir() {
+  static const std::string user_defined_path = GetUserDefindCachePath();
+  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const std::string compile_cache_dir =
+    user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
+  return compile_cache_dir;
+}
+
+std::string GetCompileCachePath(size_t idx) {
+  return GetCompileCacheDir() + "/" + kCompileCacheFileName + "_" + std::to_string(idx) + kCompileCacheFileSuffix;
+}
+
+std::string GetDepFilesHashPath() {
+  static const std::string dep_files_hash_path = GetCompileCacheDir() + "/" + kDepFilesHashPath;
+  return dep_files_hash_path;
+}
+
+size_t GetCompileCacheGraphId() {
+  static size_t idx = 0;
+  return idx++;
+}
+
+std::string GetCompileDepFilesHash(const py::list &dep_files) {
+  MS_LOG(DEBUG) << "Dependency files size: " << dep_files.size();
+  std::vector<std::string> dep_files_path;
+  for (auto dep_file : dep_files) {
+    auto file_path = py::cast<std::string>(dep_file);
+    MS_LOG(DEBUG) << "Dependency file path: " << file_path;
+    (void)dep_files_path.emplace_back(file_path);
+  }
+  std::sort(dep_files_path.begin(), dep_files_path.end());
+  std::string files_hash;
+  for (const auto &path : dep_files_path) {
+    std::string file_hash = system::sha256::GetHashFromFile(path);
+    files_hash += file_hash;
+  }
+  return files_hash;
+}
+
+bool CheckDepFilesHashConsistency(const std::string &current_dep_files_hash) {
+  if (current_dep_files_hash.empty()) {
+    MS_LOG(ERROR) << "Get current dependency files hash failed.";
+    return false;
+  }
+  std::string dep_files_hash_path = GetDepFilesHashPath();
+  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
   if (!realpath.has_value()) {
-    MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
+    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
+    return false;
+  }
+  std::fstream input(realpath.value(), std::ios::in | std::ios::binary);
+  if (!input) {
+    MS_LOG(WARNING) << "Open the hash file " << realpath.value() << " failed. The file may not exist."
+                    << ErrnoToString(errno);
+    return false;
+  }
+  compile_cache::CompileCacheProto proto;
+  if (!proto.ParseFromIstream(&input)) {
+    MS_LOG(ERROR) << "Parse the file " << realpath.value() << " from input stream failed.";
+    return false;
+  }
+  if (!proto.has_dep_files_hash()) {
+    MS_LOG(ERROR) << "Get the compilation dependency files hash from " << realpath.value() << " failed.";
+    return false;
+  }
+  if (proto.dep_files_hash() != current_dep_files_hash) {
+    MS_LOG(WARNING) << "The compilation dependency files are changed.";
+    return false;
+  }
+  return true;
+}
+
+FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx) {
+  std::string compile_cache_path = GetCompileCachePath(idx);
+  auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
+    return nullptr;
   }
   std::ifstream f(realpath.value());
-  bool cache_file_existed = f.good();
+  bool file_is_good = f.good();
   f.close();
-  if (!cache_file_existed) {
-    MS_LOG(WARNING) << "The compilation cache file '" << realpath.value()
-                    << "' dose not exist. Execute all the compilation actions.";
-    return;
+  if (!file_is_good) {
+    MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
+    return nullptr;
   }
-  MS_LOG(INFO) << "Use the compilation cache \"" << realpath.value() << "\" and execute the backend actions only.";
   MindIRLoader mindir_loader;
   mindir_loader.set_need_renormalize(false);
-  FuncGraphPtr fg = mindir_loader.LoadMindIR(realpath.value());
-  if (fg == nullptr) {
-    MS_LOG(ERROR) << "Failed to load the compilation cache file: " << realpath.value();
-    return;
+  return mindir_loader.LoadMindIR(realpath.value());
+}
+
+FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_name) {
+  MS_EXCEPTION_IF_NULL(resource);
+  // Compare the dependency files hash.
+  if (!CheckDepFilesHashConsistency(resource->compile_cache_dep_files_hash())) {
+    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+    return nullptr;
   }
+
+  // Load the compilation cache file.
+  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource->compile_cache_id());
+  if (fg == nullptr) {
+    MS_LOG(WARNING) << "Failed to load the compilation cache file. Execute all the compilation actions.";
+    return nullptr;
+  }
+
+  MS_LOG(WARNING) << "Use the compilation cache and execute the backend actions only. Be aware of correctness risks.";
   FuncGraphManagerPtr mng = fg->manager();
   if (mng == nullptr) {
     auto res_mng = resource->manager();
@@ -219,6 +323,7 @@ void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_na
     res_mng->AddFuncGraph(fg);
     fg->set_manager(res_mng);
   }
+  // The value of attr "shared_name" will changed every time.
   auto cnodes = fg->GetOrderedCnodes();
   for (auto cnode : cnodes) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -227,37 +332,82 @@ void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_na
       break;
     }
   }
-  resource->set_func_graph(fg);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("cache_loaded_graph_" + std::to_string(resource->compile_cache_id()) + ".ir", fg);
+  }
+  return fg;
 }
 
-void CacheFuncGraph(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  auto realpath = Common::CreatePrefixPath(kCompileCacheFilePath);
+bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, size_t idx) {
+  std::string compile_cache_path = GetCompileCachePath(idx);
+  auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. filename=" << kCompileCacheFilePath;
-    return;
+    MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
+    return false;
   }
 
   ChangeFileMode(realpath.value(), S_IRWXU);
   std::ofstream fout(realpath.value());
   if (!fout.is_open()) {
     MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
-    return;
+    return false;
   }
-  FuncGraphPtr fg = resource->func_graph();
   ModelProtoPtr fg_model = GetBinaryProto(fg, true);
   if (fg_model == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
     fout.close();
-    return;
+    return false;
   }
   if (!fg_model->SerializeToOstream(&fout)) {
-    MS_LOG(ERROR) << "Failed to cache the graph to file " << realpath.value();
+    MS_LOG(ERROR) << "Failed to write the graph compilation cache to file " << realpath.value();
     fout.close();
-    return;
+    return false;
   }
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
+  return true;
+}
+
+bool ExportDepFilesHash(const ResourcePtr &resource) {
+  std::string dep_files_hash_path = GetDepFilesHashPath();
+  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
+    return false;
+  }
+
+  ChangeFileMode(realpath.value(), S_IRWXU);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return false;
+  }
+  compile_cache::CompileCacheProto proto;
+  proto.set_dep_files_hash(resource->compile_cache_dep_files_hash());
+  if (!proto.SerializeToOstream(&fout)) {
+    MS_LOG(ERROR) << "Failed to write the dependency files hash to file " << realpath.value();
+    fout.close();
+    return false;
+  }
+  fout.close();
+  ChangeFileMode(realpath.value(), S_IRUSR);
+  return true;
+}
+
+void CacheFuncGraph(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  auto fg = resource->func_graph();
+  if (fg == nullptr) {
+    MS_LOG(ERROR) << "The func_graph to be cached is null.";
+    return;
+  }
+  if (!ExportFuncGraphToMindIR(fg, resource->compile_cache_id())) {
+    MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
+    return;
+  }
+  if (resource->compile_cache_id() == 0 && !ExportDepFilesHash(resource)) {
+    MS_LOG(ERROR) << "Failed to cache the dependency files hash";
+  }
 }
 
 void RecordInitStatus() {
@@ -725,10 +875,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     backend_ptr->SetDebugger();
 #endif
     resource->results()[kBackend] = backend_ptr;
-    // If the 'use_frontend_compile_cache' context has been set true and the cache is read successfully,
-    // do the backend actions only.
-    if (IsPhaseTrain(phase) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
-        resource->func_graph() != nullptr) {
+    // If enable compilation cache and the cache is read successfully, do the backend actions only.
+    if (resource->enable_compile_cache() && resource->func_graph() != nullptr) {
       return BackendPipeline();
     }
     if (IsPhaseLoadFromMindIR(phase)) {
@@ -740,7 +888,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 }
 
 bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
-                                   bool use_vm, const std::string &queue_name, bool enable_tuple_broaden) {
+                                   bool use_vm) {
   // Check if the phase is valid.
   if ((!py::isinstance<py::str>(phase_obj))) {
     MS_LOG(ERROR) << "The `phase` must be string.";
@@ -764,11 +912,15 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
 
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE)) {
+  // If enable compilation cache, it will get a non-empty dependent files list from python.
+  if (!compile_cache_dep_files_.empty()) {
 #ifdef ENABLE_PROFILE
     double t1 = GetTime();
 #endif
-    GetCachedFuncGraph(resource, queue_name);
+    resource->set_enable_compile_cache(true);
+    resource->set_compile_cache_id(GetCompileCacheGraphId());
+    resource->set_compile_cache_dep_files_hash(GetCompileDepFilesHash(compile_cache_dep_files_));
+    resource->set_func_graph(GetCachedFuncGraph(resource, queue_name_));
 #ifdef ENABLE_PROFILE
     double t2 = GetTime();
     MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
@@ -788,7 +940,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     if (!succ) {
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
-    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden));
+    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden_));
   }
   resource->set_args_spec(args_spec);
   executor_info->arg_list_size = size;
@@ -835,11 +987,11 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   ReclaimOptimizer();
 }
 
-bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase, bool use_vm,
-                              const std::string &queue_name, bool enable_tuple_broaden) {
+bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase,
+                              bool use_vm) {
   bool ret_value = false;
   try {
-    ret_value = CompileInner(source_obj, args, phase, use_vm, queue_name, enable_tuple_broaden);
+    ret_value = CompileInner(source_obj, args, phase, use_vm);
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release
@@ -883,7 +1035,7 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
 }
 
 void CacheValidateFuncGraph(const std::string &phase, const ResourcePtr &resource) {
-  if (IsPhaseTrain(phase) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
+  if (resource->enable_compile_cache()) {
 #ifdef ENABLE_PROFILE
     double t1 = GetTime();
 #endif
