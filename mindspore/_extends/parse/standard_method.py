@@ -1026,7 +1026,7 @@ def searchsorted(x, v, side='left', sorter=None):
     i = F.fill(mstype.int32, shape, 0)
     j = F.fill(mstype.int32, shape, a.size)
 
-    sort_range = F.make_range(get_log2_size(F.shape_mul(shape) + 1))
+    sort_range = F.make_range(get_log2_size(F.shape_mul(a.shape) + 1))
     for _ in sort_range:
         mid = (i - F.neg_tensor(j))//2
         mask = less_op(v, F.gather_nd(a, mid.reshape(mid.shape + (1,))))
