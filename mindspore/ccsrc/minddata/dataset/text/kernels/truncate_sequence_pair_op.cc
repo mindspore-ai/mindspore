@@ -25,7 +25,8 @@ namespace dataset {
 
 Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 2, "TruncateSequencePair: Expected two inputs.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 2, "TruncateSequencePair: Expected two inputs, but got " +
+                                                    std::to_string(input.size()) + " inputs.");
   std::shared_ptr<Tensor> seq1 = input[0];
   std::shared_ptr<Tensor> seq2 = input[1];
   CHECK_FAIL_RETURN_UNEXPECTED(seq1->shape().Rank() == 1 && seq2->shape().Rank() == 1,

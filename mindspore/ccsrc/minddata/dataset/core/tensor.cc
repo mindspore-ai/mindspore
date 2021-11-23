@@ -29,6 +29,7 @@
 
 #include "utils/ms_utils.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/util/validators.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
@@ -701,9 +702,9 @@ Status Tensor::to_json_convert(nlohmann::json *args) {
 }
 
 Status Tensor::from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tensor) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("shape") != op_params.end(), "Failed to find shape");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("type") != op_params.end(), "Failed to find type");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data") != op_params.end(), "Failed to find data");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "shape", "Tensor"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "type", "Tensor"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "data", "Tensor"));
   std::string type = op_params["type"];
   std::vector<dsize_t> list = op_params["shape"];
   TensorShape shape = TensorShape(list);

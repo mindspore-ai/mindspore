@@ -174,7 +174,7 @@ std::shared_ptr<TensorOperation> PadEnd::Parse() {
   std::shared_ptr<Tensor> pad_value;
   Status rc = Tensor::CreateFromMSTensor(data_->pad_value_, &pad_value);
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "Error creating value constant tensor. " << rc;
+    MS_LOG(ERROR) << "Error creating pad_value constant tensor. " << rc;
     return nullptr;
   }
   return std::make_shared<PadEndOperation>(TensorShape(data_->pad_shape_), pad_value);

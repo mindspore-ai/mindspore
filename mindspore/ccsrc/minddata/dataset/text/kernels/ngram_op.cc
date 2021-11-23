@@ -56,7 +56,7 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   }
 
   for (auto n : ngrams_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "Ngram: ngrams needs to be a positive number.\n");
+    CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "Ngram: The element in the container 'ngrams' cannot be negative.\n");
     int32_t start_ind = l_len_ - std::min(l_len_, n - 1);
     int32_t end_ind = offsets.size() - r_len_ + std::min(r_len_, n - 1);
     if (end_ind - start_ind <= n) {
@@ -81,8 +81,8 @@ void NgramOp::Print(std::ostream &out) const {
 }
 
 Status NgramOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "Ngram: incorrect num of inputs\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs[0].Rank() == 1, "Ngram: ngram only works with 1-dim data\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "Ngram: The size of inputs must be 1\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs[0].Rank() == 1, "Ngram: The parameter 'ngram' only works with 1-dim data\n");
   dsize_t num_elements = ngrams_.size();
   for (int32_t n : ngrams_) {
     // here since rank == 1, NumOfElements == shape[0]. add padding length to string
@@ -91,7 +91,7 @@ Status NgramOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<
     num_elements += std::max(len_with_padding - n, 0);
   }
   (void)outputs.emplace_back(TensorShape({num_elements}));
-  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "Ngram: incorrect num of outputs\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "Ngram: The size of outputs must be 1\n");
   return Status::OK();
 }
 }  // namespace dataset

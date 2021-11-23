@@ -99,7 +99,7 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
 Status ConfigManager::LoadFile(const std::string &settingsFile) {
   Status rc;
   if (!Path(settingsFile).Exists()) {
-    RETURN_STATUS_UNEXPECTED("File is not found.");
+    RETURN_STATUS_UNEXPECTED("File path: settingsFile is not exist, check input path of config 'load' API.");
   }
   // Some settings are mandatory, others are not (with default).  If a setting
   // is optional it will set a default value if the config is missing from the file.
