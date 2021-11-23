@@ -22,7 +22,14 @@ from mindspore import nn, Tensor, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
 def test_partial_pos_arg():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_pos_arg
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -35,13 +42,31 @@ def test_partial_pos_arg():
             ret = f(y, z)
             return ret
 
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self, x, y, z):
+            f = partial(self.show, x)
+            ret = f(y, z)
+            return ret
+
     x = Tensor(np.arange(3).reshape((3,)).astype(np.float32))
     y = Tensor(np.arange(3 * 4).reshape((3, 4)).astype(np.float32))
     z = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32))
-    net = Net()
-    net(x, y, z)
+
+    for net in [Net(), Net2()]:
+        net(x, y, z)
+
 
 def test_partial_key_ward_arg():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -54,13 +79,31 @@ def test_partial_key_ward_arg():
             ret = f(y=y, z=z)
             return ret
 
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self, x, y, z):
+            f = partial(self.show, x=x)
+            ret = f(y=y, z=z)
+            return ret
+
     x = Tensor(np.arange(3).reshape((3,)).astype(np.float32))
     y = Tensor(np.arange(3 * 4).reshape((3, 4)).astype(np.float32))
     z = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32))
-    net = Net()
-    net(x, y, z)
+
+    for net in [Net(), Net2()]:
+        net(x, y, z)
+
 
 def test_partial_key_ward_arg_update():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_update
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -73,14 +116,31 @@ def test_partial_key_ward_arg_update():
             ret = f(y=y, z=z)
             return ret
 
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self, x, y, z):
+            f = partial(self.show, x=x, y=y)
+            ret = f(y=y, z=z)
+            return ret
+
     x = Tensor(np.arange(3).reshape((3,)).astype(np.float32))
     y = Tensor(np.arange(3 * 4).reshape((3, 4)).astype(np.float32))
     z = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32))
-    net = Net()
-    net(x, y, z)
+
+    for net in [Net(), Net2()]:
+        net(x, y, z)
 
 
 def test_partial_key_ward_arg_and_pos_arg():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_and_pos_arg
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -93,14 +153,31 @@ def test_partial_key_ward_arg_and_pos_arg():
             ret = f(2, z=z)
             return ret
 
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self, x, y, z):
+            f = partial(self.show, y=y)
+            ret = f(2, z=z)
+            return ret
+
     x = Tensor(np.arange(3).reshape((3,)).astype(np.float32))
     y = Tensor(np.arange(3 * 4).reshape((3, 4)).astype(np.float32))
     z = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32))
-    net = Net()
-    net(x, y, z)
+
+    for net in [Net(), Net2()]:
+        net(x, y, z)
 
 
 def test_partial_pos_arg_const():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_pos_arg_const
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -113,10 +190,27 @@ def test_partial_pos_arg_const():
             ret = f(2, 3)
             return ret
 
-    net = Net()
-    assert net() == (1, 2, 3)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, 1)
+            ret = f(2, 3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        assert net() == (1, 2, 3)
+
 
 def test_partial_key_ward_arg_const():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_const
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -129,10 +223,27 @@ def test_partial_key_ward_arg_const():
             ret = f(y=2, z=3)
             return ret
 
-    net = Net()
-    assert net() == (1, 2, 3)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, x=1)
+            ret = f(y=2, z=3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        assert net() == (1, 2, 3)
+
 
 def test_partial_key_ward_arg_update_const():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_update_const
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -145,11 +256,27 @@ def test_partial_key_ward_arg_update_const():
             ret = f(y=3, z=4)
             return ret
 
-    net = Net()
-    assert net() == (1, 3, 4)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, x=1, y=2)
+            ret = f(y=3, z=4)
+            return ret
+
+    for net in [Net(), Net2()]:
+        assert net() == (1, 3, 4)
 
 
 def test_partial_key_ward_arg_and_pos_arg_const():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_and_pos_arg_const
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -162,11 +289,27 @@ def test_partial_key_ward_arg_and_pos_arg_const():
             ret = f(1, z=3)
             return ret
 
-    net = Net()
-    assert net() == (1, 2, 3)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, y=2)
+            ret = f(1, z=3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        assert net() == (1, 2, 3)
 
 
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_and_pos_arg_const_multi_assign_x
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -179,13 +322,29 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():
             ret = f(1, 2, 3)
             return ret
 
-    net = Net()
-    with pytest.raises(TypeError) as ex:
-        net()
-    assert "Multiply values for specific argument: x" in str(ex.value)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, x=1)
+            ret = f(1, 2, 3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        with pytest.raises(TypeError) as ex:
+            net()
+        assert "Multiply values for specific argument: x" in str(ex.value)
 
 
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_and_pos_arg_const_multi_assign_y
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -198,13 +357,29 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
             ret = f(1, 2, z=3)
             return ret
 
-    net = Net()
-    with pytest.raises(TypeError) as ex:
-        net()
-    assert "Multiply values for specific argument: y" in str(ex.value)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, y=2)
+            ret = f(1, 2, z=3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        with pytest.raises(TypeError) as ex:
+            net()
+        assert "Multiply values for specific argument: y" in str(ex.value)
 
 
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_z():
+    """
+    Feature: ALL TO ALL
+    Description: test cases for partial_key_ward_arg_and_pos_arg_const_multi_assign_z
+    Expectation: the result match given one
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -217,7 +392,17 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_z():
             ret = f(1, 2, 3)
             return ret
 
-    net = Net()
-    with pytest.raises(TypeError) as ex:
-        net()
-    assert "Multiply values for specific argument: z" in str(ex.value)
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.show = lambda x, y, z: (x, y, z)
+
+        def construct(self):
+            f = partial(self.show, z=1)
+            ret = f(1, 2, 3)
+            return ret
+
+    for net in [Net(), Net2()]:
+        with pytest.raises(TypeError) as ex:
+            net()
+        assert "Multiply values for specific argument: z" in str(ex.value)
