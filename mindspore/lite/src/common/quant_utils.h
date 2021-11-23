@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_QUANT_UTILS_H_
 #define MINDSPORE_LITE_SRC_COMMON_QUANT_UTILS_H_
 
-#include <float.h>
+#include <cfloat>
 #include <cmath>
 #include <climits>
 #include <limits>
@@ -66,14 +66,14 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
                           bool narrow_range, int quant_min, int quant_max);
 
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
-                          bool narrow_range);
+                          bool symmetric, bool narrow_range = false);
 
 template <typename T>
-T QuantizeData(float origin_data, const schema::QuantParamT *quantParam, int quant_max, int quant_min) {
-  MS_ASSERT(quantParam != nullptr);
-  MS_ASSERT(quantParam->inited);
-  const auto scale = quantParam->scale;
-  const int zero_point = quantParam->zeroPoint;
+T QuantizeData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min) {
+  MS_ASSERT(quant_param != nullptr);
+  MS_ASSERT(quant_param->inited);
+  const auto scale = quant_param->scale;
+  const int zero_point = quant_param->zeroPoint;
   if (scale <= SCALE_THREASHOLD) {
     return 0;
   }
@@ -101,8 +101,8 @@ T QuantizeData(const float origin_data, const schema::QuantParamT *quant_param) 
 
 template <typename T>
 int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
-                    const int &quant_max, const int &quant_min, const size_t &bit_num, const bool &k_means,
-                    std::vector<T> *quant_datas) {
+                    const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
+                    bool narrow_range = false, bool k_means = false) {
   if (k_means) {
     MS_LOG(ERROR) << "Unsupported K-means.";
     return RET_ERROR;
@@ -115,7 +115,7 @@ int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schem
   }
 
   schema::QuantParamT quant_param;
-  int status = CalQuantizationParams(&quant_param, min, max, bit_num, false, quant_min, quant_max);
+  int status = CalQuantizationParams(&quant_param, min, max, bit_num, narrow_range, quant_min, quant_max);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
     return status;
@@ -137,8 +137,8 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
 int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
 
 // Get the min max of each channel
-int GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                         std::map<int, MinMax> *per_channel_min_max);
+int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                        std::map<int, MinMax> *per_channel_min_max);
 
 // Calculate the distribution difference between quant and origin
 int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
@@ -147,8 +147,12 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
 template <typename T>
 int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
                       std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                      const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                      const std::vector<int> &dims, int preferred_dim) {
+                      const size_t &bit_num, std::vector<T> *quant_datas, const std::vector<int> &dims,
+                      int preferred_dim, bool narrow_range = false, bool k_means = false) {
+  if (k_means) {
+    MS_LOG(ERROR) << "Unsupported K-means.";
+    return RET_ERROR;
+  }
   int ret;
   auto count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
   if (static_cast<size_t>(count) != elem_count) {
@@ -167,7 +171,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
   std::vector<float> dequant_datas(quant_datas->size());
   // the key is bucket_index
   std::map<int, MinMax> per_channel_min_max;
-  ret = GetAllChannelMinMmax(raw_datas, elem_count, dims, preferred_dim, &per_channel_min_max);
+  ret = GetAllChannelMinMax(raw_datas, elem_count, dims, preferred_dim, &per_channel_min_max);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get all channel min max failed.";
     return ret;
@@ -178,7 +182,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
     float min = min_max_map.second.min;
     float max = min_max_map.second.max;
     schema::QuantParamT quant_param;
-    ret = CalQuantizationParams(&quant_param, min, max, bit_num, false, quant_min, quant_max);
+    ret = CalQuantizationParams(&quant_param, min, max, bit_num, narrow_range, quant_min, quant_max);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Cal quantization params failed.";
       return ret;

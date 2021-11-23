@@ -28,6 +28,7 @@
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_params.h"
+#include "tools/converter/quantizer/quant_strategy.h"
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"

@@ -375,7 +375,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
   if (config->commonQuantParam.is_debug) {
     converter::Flags new_flag = *config;
     new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, thread_num, true);
+    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, thread_num);
   }
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
     this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
@@ -431,7 +431,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
     }
   }
   if (config->commonQuantParam.is_debug) {
-    quant = quant::CreateSessionByFuncGraph(old_graph, *config, thread_num, true);
+    quant = quant::CreateSessionByFuncGraph(old_graph, *config, thread_num);
     std::map<std::string, OpParameter *> op_parameters;
     FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
     DebugInfoManager manager;

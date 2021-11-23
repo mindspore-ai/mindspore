@@ -34,12 +34,16 @@
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/quantizer/calibrator.h"
-#include "tools/converter/quantizer/diverg_info.h"
+#include "tools/converter/quantizer/data_distribution.h"
 
 namespace mindspore::lite::quant {
 enum OperationType {
   STORE,
   FETCH,
+};
+enum CollectType {
+  MIN_MAX,
+  KL_BIN,
 };
 class FullQuantQuantizer : public Quantizer {
  public:
@@ -54,14 +58,11 @@ class FullQuantQuantizer : public Quantizer {
 
   int PreProcess();
 
-  static int CheckFp32TensorVec(const std::string &node_name,
-                                const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
+  int CheckFp32TensorVec(const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
 
-  int DoInference();
+  int DoInference(CollectType collect_type);
 
   int UpdateDivergeInterval();
-
-  int CollectDataFrequency();
 
   int ComputeThreshold();
 
@@ -69,7 +70,7 @@ class FullQuantQuantizer : public Quantizer {
 
   int QuantNode();
 
-  int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DivergInfo> &info,
+  int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
 
   int DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
@@ -77,7 +78,12 @@ class FullQuantQuantizer : public Quantizer {
 
   int DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
 
-  static int DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
+  int CollectDataDistribution(
+    const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
+    std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
+    CollectType collect_type);
+
+  int DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
   int Int8Inference();
   int BiasCorrection(const FuncGraphPtr &func_graph);
   int BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
@@ -87,22 +93,22 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetFloatAfterCallBack();
 
  private:
-  TypeId target_type_{kNumberTypeInt8};
+  TypeId target_data_type_{kNumberTypeInt8};
   std::unique_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
   session::LiteSession *int8_session_{nullptr};
   Model *int8_model_{nullptr};
 
-  std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurrency
-  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurrency
-  std::map<std::string, std::vector<float>> op_bias_diff_map;            // only use by int8 model
-  std::mutex mutex_op_input;
-  std::mutex mutex_op_output;
+  std::map<std::string, std::vector<float>> fp32_op_input_map_;           // concurrency
+  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map_;  // concurrency
+  std::map<std::string, std::vector<float>> op_bias_diff_map_;            // only use by int8 model
+  std::mutex mutex_op_input_;
+  std::mutex mutex_op_output_;
 
-  size_t bit_num;
-  int quant_max{INT8_MAX};
-  int quant_min{INT8_MIN};
+  size_t bit_num_;
+  int q_max_{INT8_MAX};
+  int q_min_{INT8_MIN};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H
