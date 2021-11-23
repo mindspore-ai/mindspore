@@ -19,15 +19,9 @@
 #include <vector>
 #include <utility>
 #include <set>
-namespace mindspore::lite::quant {
-int DataDistribution::RecordMaxMinValue(const std::vector<float> &data) {
-  for (float val : data) {
-    max_ = std::max(val, max_);
-    min_ = std::min(val, min_);
-  }
-  return RET_OK;
-}
+#include "tools/common/statistic_utils.h"
 
+namespace mindspore::lite::quant {
 int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
   if (data.empty()) {
     return RET_ERROR;
@@ -38,13 +32,15 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
     max_num = std::max(val, max_num);
     min_num = std::min(val, min_num);
   }
+  real_max_ = std::max(max_num, real_max_);
+  real_min_ = std::min(min_num, real_min_);
   this->max_datas_.emplace_back(max_num);
   this->min_datas_.emplace_back(min_num);
   return RET_OK;
 }
 
 void DataDistribution::UpdateInterval() {
-  auto max_value = std::max(fabs(this->max_), fabs(this->min_));
+  auto max_value = std::max(fabs(this->real_max_), fabs(this->real_min_));
   MS_ASSERT(bin_num_ != 0);
   this->interval_ = max_value / static_cast<float>(bin_num_);
 }
@@ -139,15 +135,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
 }
 
 int DataDistribution::ComputeThreshold() {
-  if (activation_quant_method_ == MAX_MIN) {
-    this->best_T_ = std::max(fabs(this->max_), fabs(this->min_));
-    MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T_;
-    return RET_OK;
-  }
-
-  if (activation_quant_method_ == REMOVAL_OUTLIER && !this->min_datas_.empty()) {
-    this->percent_result_ = OutlierMethod(min_datas_, max_datas_);
-    this->best_T_ = std::max(std::fabs(percent_result_.first), std::fabs(percent_result_.second));
+  if (activation_quant_method_ != KL) {
     return RET_OK;
   }
 
@@ -163,28 +151,7 @@ int DataDistribution::ComputeThreshold() {
     after_threshold_sum -= this->histogram_[i];
     // handle bins for computing KL.
     HandleBinForKL(INT8_MAX + 1, i, &quantized_histogram, &expanded_histogram);
-    auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
-      auto sum = 0.0f;
-      std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
-      std::for_each(p.begin(), p.end(), [sum](float &item) { item /= sum; });
-      sum = 0.0f;
-      std::for_each(q.begin(), q.end(), [&sum](float item) { sum += item; });
-      std::for_each(q.begin(), q.end(), [sum](float &item) { item /= sum; });
-
-      float result = 0.0f;
-      const int size = p.size();
-      for (int i = 0; i < size; ++i) {
-        if (p[i] != 0) {
-          if (q[i] == 0) {
-            result += 1.0f;
-          } else {
-            result += (p[i] * std::log((p[i]) / (q[i])));
-          }
-        }
-      }
-      return result;
-    };
-    const float kl = KLDivergence(reference_histogram, expanded_histogram);
+    const float kl = lite::KLDivergence(reference_histogram, expanded_histogram);
     if (kl < min_kl) {
       min_kl = kl;
       threshold = i;
@@ -192,39 +159,53 @@ int DataDistribution::ComputeThreshold() {
   }
   this->best_T_ = (static_cast<float>(threshold) + 0.5f) * this->interval_;
   MS_LOG(DEBUG) << cnode_->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T_
-                << " max: " << std::max(fabs(this->max_), fabs(this->min_));
+                << " max: " << std::max(fabs(this->real_max_), fabs(this->real_min_));
   return RET_OK;
 }
 
-float DataDistribution::GetScale() {
-  float max_value = this->best_T_;
-  float min_value = -max_value;
+float DataDistribution::CalculateMinMaxScale() { return CalculateScale(this->real_min_, this->real_max_); }
 
-  if (this->activation_quant_method_ == REMOVAL_OUTLIER) {
-    min_value = percent_result_.first;
-    max_value = percent_result_.second;
+float DataDistribution::CalculateRemovalOutlierScale() {
+  this->percent_result_ = OutlierMethod(min_datas_, max_datas_);
+  return CalculateScale(percent_result_.first, percent_result_.second);
+}
+
+float DataDistribution::CalculateScale(float min_value, float max_value) {
+  if (symmetry_) {
+    auto abs_max = std::max(fabs(min_value), fabs(max_value));
+    min_value = -abs_max;
+    max_value = abs_max;
   }
+  this->encode_min_ = min_value;
+  this->encode_max_ = max_value;
+  // Optimize Handle 0.
+  MS_ASSERT(quant_max_ - quant_min_ > 0);
+  return (max_value - min_value) / (quant_max_ - quant_min_);
+}
 
-  MS_CHECK_TRUE_MSG(quant_max_ - quant_min_ > 0, 0, "quant_max_ - quant_min_ <= 0");
-  this->scale_ = (max_value - min_value) / (quant_max_ - quant_min_);
-  MS_ASSERT(fabs(this->scale_) <= 0.0f);
+float DataDistribution::CalculateKLScale() { return CalculateScale(this->best_T_, this->real_max_); }
+
+float DataDistribution::GetScale() {
+  switch (this->activation_quant_method_) {
+    case MAX_MIN:
+      this->scale_ = CalculateMinMaxScale();
+      break;
+    case KL:
+      this->scale_ = CalculateKLScale();
+      break;
+    case REMOVAL_OUTLIER:
+      this->scale_ = CalculateRemovalOutlierScale();
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported activation quant method " << this->activation_quant_method_;
+      return 0;
+  }
   return this->scale_;
 }
 
 // Support for asymmetry in the future
 int32_t DataDistribution::GetZeroPoint() {
-  int zero_point = 0;
-  if (quant_min_ == 0 && quant_max_ == UINT8_MAX) {
-    zero_point = INT8_MAX + 1;
-  } else if (quant_min_ == INT_LEAST8_MIN + 1 && quant_max_ == INT8_MAX) {
-    zero_point = 0;
-  } else {
-    MS_LOG(WARNING) << "unexpected quant range, quant_min_: " << quant_min_ << " quant_max_: " << quant_max_;
-  }
-  if (this->activation_quant_method_ == REMOVAL_OUTLIER) {
-    MS_CHECK_TRUE_MSG(fabs(scale_) <= 0.0f, 1, "fabs(scale) > 0.0f");
-    zero_point = std::round(quant_max_ - percent_result_.second / scale_);
-  }
+  int zero_point = std::round(quant_min_ - encode_min_ / scale_);
   return zero_point;
 }
 }  // namespace mindspore::lite::quant

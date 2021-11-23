@@ -26,22 +26,24 @@
 #include "tools/converter/quantizer/data_distribution.h"
 
 namespace mindspore::lite::quant {
+enum CollectType {
+  MIN_MAX,
+  KL_BIN,
+};
 class Calibrator {
  public:
-  explicit Calibrator(size_t bit_num, int quant_max, int quant_min)
-      : bit_num_(bit_num), quant_max_(quant_max), quant_min_(quant_min) {}
+  Calibrator(size_t bit_num, int quant_max, int quant_min, ActivationQuantizedMethod activation_quant_method,
+             const preprocess::DataPreProcessParam &data_pre_process_param, bool symmetry = true)
+      : bit_num_(bit_num),
+        quant_max_(quant_max),
+        quant_min_(quant_min),
+        symmetry_(symmetry),
+        activation_quant_method_(activation_quant_method),
+        data_pre_process_param_(data_pre_process_param) {}
 
   ~Calibrator() = default;
 
   int GenerateInputData(const std::string &input_name, size_t image_index, mindspore::tensor::MSTensor *tensor) const;
-
-  size_t GetBatchNum() const { return data_pre_process_param_.calibrate_size; }
-
-  uint32_t GetThreadNum() const { return thread_; }
-
-  bool GetBiasCorrection() const { return full_quant_param_.bias_correction; }
-
-  size_t GetInputNum() const { return data_pre_process_param_.calibrate_path_vector.size(); }
 
   int AddQuantizedOp(const CNodePtr &cnode);
 
@@ -53,25 +55,34 @@ class Calibrator {
 
   int ComputeThreshold();
 
-  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetInputDivergInfo();
+  size_t GetBatchNum() const { return data_pre_process_param_.calibrate_size; }
 
-  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetOutputDivergInfo();
+  size_t GetInputNum() const { return data_pre_process_param_.calibrate_path_vector.size(); }
 
-  FullQuantParam full_quant_param_;
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetInputDivergInfo() {
+    return &this->inputs_diverg_info_;
+  }
 
-  preprocess::DataPreProcessParam data_pre_process_param_;
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetOutputDivergInfo() {
+    return &this->outputs_diverg_info_;
+  }
 
-  int thread_ = 4;
+  int CollectDataDistribution(
+    const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
+    std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
+    CollectType collect_type);
 
  private:
   // {node_name,{tensor_index,DataDistribution}}
   std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> inputs_diverg_info_;
   // {node_name,{tensor_index,DataDistribution}}
   std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> outputs_diverg_info_;
-
   size_t bit_num_;
   int quant_max_;
   int quant_min_;
+  bool symmetry_;
+  ActivationQuantizedMethod activation_quant_method_;
+  preprocess::DataPreProcessParam data_pre_process_param_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__CALIBRATOR_H
