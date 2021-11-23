@@ -91,7 +91,8 @@ class Recall(EvaluationBase):
             ValueError: If the number of inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('The recall needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError("For 'Recall.update', it needs 2 inputs (predicted value, true value), "
+                             "but got {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -102,8 +103,9 @@ class Recall(EvaluationBase):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError('The class number does not match, the last input data contains {} classes, '
-                             'but the current data contains {} classes'.format(self._class_num, y_pred.shape[1]))
+            raise ValueError("Class number not match, last input predicted data contain {} classes, but current "
+                             "predicted data contain {} classes, please check your predicted value(inputs[0])."
+                             .format(self._class_num, y_pred.shape[1]))
 
         class_num = self._class_num
         if self._type == "classification":
@@ -140,7 +142,9 @@ class Recall(EvaluationBase):
             numpy.float64, the computed result.
         """
         if self._class_num == 0:
-            raise RuntimeError('The input number of samples can not be 0.')
+            raise RuntimeError("The 'Recall' can not be calculated, because the number of samples is 0, please check "
+                               "whether your inputs (predicted value, true value) are empty, or has called update "
+                               "method before calling eval method.")
 
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         result = self._true_positives / (self._actual_positives + self.eps)

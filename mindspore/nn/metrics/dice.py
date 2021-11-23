@@ -106,6 +106,7 @@ class Dice(Metric):
         """
         if self._samples_num == 0:
             raise RuntimeError("The 'Dice coefficient' can not be calculated, because the number of samples is 0, "
-                               "please check whether your inputs(predicted value, true value) are correct.")
+                               "please check whether your inputs(predicted value, true value) are empty, or has "
+                               "called update method before calling eval method.")
 
         return self._dice_coeff_sum / float(self._samples_num)

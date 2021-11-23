@@ -117,6 +117,7 @@ class Accuracy(EvaluationBase):
             RuntimeError: If the sample size is 0.
         """
         if self._total_num == 0:
-            raise RuntimeError("The 'Accuracy' can not be calculated, because the number of samples is 0, please "
-                               "check whether your inputs(predicted value, true value) are correct.")
+            raise RuntimeError("The 'Accuracy' can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs(predicted value, true value) are empty, "
+                               "or has called update method before calling eval method.")
         return self._correct_num / self._total_num

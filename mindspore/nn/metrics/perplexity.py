@@ -81,14 +81,16 @@ class Perplexity(Metric):
             RuntimeError: If label shape is not equal to pred shape.
         """
         if len(inputs) != 2:
-            raise ValueError('The perplexity needs 2 inputs (preds, labels), but got {}.'.format(len(inputs)))
+            raise ValueError("For 'Perplexity.update', it needs 2 inputs (predicted value, label), but got {}."
+                             .format(len(inputs)))
 
         preds = [self._convert_data(inputs[0])]
         labels = [self._convert_data(inputs[1])]
 
         if len(preds) != len(labels):
-            raise RuntimeError('The preds and labels should have the same length, but the length of preds is{}, '
-                               'the length of labels is {}.'.format(len(preds), len(labels)))
+            raise RuntimeError("For 'Perplexity.update', predicted value (input[0]) and label (input[1]) should have "
+                               "the same length, but got predicted value length {}, label length {}."
+                               .format(len(preds), len(labels)))
 
         loss = 0.
         num = 0
@@ -121,6 +123,7 @@ class Perplexity(Metric):
             RuntimeError: If the sample size is 0.
         """
         if self._num_inst == 0:
-            raise RuntimeError('The perplexity can not be calculated, because the number of samples is 0.')
+            raise RuntimeError("The 'Perplexity' can not be calculated, because the number of samples is 0, please "
+                               "check whether has called update method before calling eval method.")
 
         return math.exp(self._sum_metric / self._num_inst)

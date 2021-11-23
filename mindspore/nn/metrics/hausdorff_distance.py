@@ -44,8 +44,8 @@ class _ROISpatialData(metaclass=ABCMeta):
             self.roi_end = np.maximum(self.roi_start + roi_size, self.roi_start)
         else:
             if roi_start is None or roi_end is None:
-                raise ValueError("Please provide the center coordinates, size or start coordinates and end coordinates"
-                                 " of ROI.")
+                raise ValueError("For '_ROISpatialData', When either 'roi_center' or 'roi_size' is None, "
+                                 "neither 'roi_start' nor 'roi_end' can be None.")
             self.roi_start = np.maximum(np.asarray(roi_start, dtype=np.int16), 0)
             self.roi_end = np.maximum(np.asarray(roi_end, dtype=np.int16), self.roi_start)
 
@@ -200,7 +200,8 @@ class HausdorffDistance(Metric):
         if 0 <= self.percentile <= 100:
             return np.percentile(surface_distance, self.percentile)
 
-        raise ValueError(f"The percentile value should be between 0 and 100, but got {self.percentile}.")
+        raise ValueError(f"For 'HausdorffDistance', the value of the argument 'percentile' should be [0, 100], "
+                         f"but got {self.percentile}.")
 
     def _get_surface_distance(self, y_pred_edges, y_edges):
         """
@@ -276,20 +277,26 @@ class HausdorffDistance(Metric):
         self._is_update = True
 
         if len(inputs) != 3:
-            raise ValueError('The HausdorffDistance needs 3 inputs (y_pred, y, label), but got {}'.format(len(inputs)))
+            raise ValueError("For 'HausdorffDistance.update', it needs 3 inputs (predicted value, true value, "
+                             "label index), but got {}.".format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         label_idx = inputs[2]
 
         if not isinstance(label_idx, (int, float)):
-            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
+            raise ValueError(f"For 'HausdorffDistance.update', the label index (input[2]) must be int or float, "
+                             f"but got {type(label_idx)}.")
 
         if label_idx not in y_pred and label_idx not in y:
-            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
+            raise ValueError("For 'HausdorffDistance.update', the label index (input[2]) should be in predicted "
+                             "value (input[0]) or true value (input[1]), but {} is not.".format(label_idx))
 
         if y_pred.size == 0 or y_pred.shape != y.shape:
-            raise ValueError("Labelfields should have the same shape, but got {}, {}".format(y_pred.shape, y.shape))
+            raise ValueError(f"For 'HausdorffDistance.update', the size of predicted value (input[0]) and true value "
+                             f"(input[1]) should be greater than 0, in addition to that, predicted value and true "
+                             f"value should have the same shape, but got predicted value size: {y_pred.size}, shape: "
+                             f"{y_pred.shape}, true value size: {y.size}, shape: {y.shape}.")
 
         y_pred = (y_pred == label_idx) if y_pred.dtype is not bool else y_pred
         y = (y == label_idx) if y.dtype is not bool else y
@@ -307,7 +314,7 @@ class HausdorffDistance(Metric):
             RuntimeError: If the update method is not called first, an error will be reported.
         """
         if self._is_update is False:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
 
         hd = self._calculate_percent_hausdorff_distance(self.y_pred_edges, self.y_edges)
         if self.directed:

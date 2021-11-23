@@ -1428,9 +1428,11 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     for dim in train_strategy[list(train_strategy.keys())[0]][0]:
         train_dev_count *= dim
     if train_dev_count != ckpt_file_len:
-        raise ValueError(f"For 'Load_distributed_checkpoint', the length of 'checkpoint_filenames' should be "
-                         f"equal to the device count of training process. But the length of 'checkpoint_filenames'"
-                         f" is {ckpt_file_len} and the device count is {train_dev_count}.")
+        raise ValueError(f"For 'load_distributed_checkpoint', the argument 'predict_strategy' is dict, "
+                         f"the key of it must be string, and the value of it must be list or tuple that "
+                         f"the first four elements are dev_matrix (list[int]), tensor_map (list[int]), "
+                         f"param_split_shape (list[int]) and field_size (int, which value is 0)."
+                         f"Please check whether 'predict_strategy' is correct.")
     rank_list = _infer_rank_list(train_strategy, predict_strategy)
 
     param_total_dict = defaultdict(dict)
@@ -1564,7 +1566,10 @@ def _check_checkpoint_file(checkpoint_filenames):
     for index, filename in enumerate(checkpoint_filenames):
         if not isinstance(filename, str) or not os.path.exists(filename) \
                 or filename[-5:] != ".ckpt" or os.path.getsize(filename) == 0:
-            raise ValueError(f"Please make sure that the {filename} at index {index} is a valid checkpoint file.")
+            raise ValueError(f"For 'load_distributed_checkpoint', please check 'checkpoint_filenames', and "
+                             f"make sure the {filename} at index {index} is a valid checkpoint file, it must "
+                             f"be a string ending with '.ckpt', and the checkpoint file it represents must "
+                             f"be exist and not empty.")
 
 
 def _convert_to_list(strategy):

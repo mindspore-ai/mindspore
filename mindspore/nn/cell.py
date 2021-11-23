@@ -187,7 +187,7 @@ class Cell(Cell_):
             value (bool): Specifies whether to enable bprop debug. Default: False.
         """
         if not isinstance(value, bool):
-            raise TypeError("The 'bprop debug' value must be a bool type.")
+            raise TypeError(f"For 'Cell', the property 'bprop_debug' must be bool type, but got type {type(value)}.")
         self._bprop_debug = value
 
     def update_cell_prefix(self):
@@ -215,7 +215,8 @@ class Cell(Cell_):
     @cell_init_args.setter
     def cell_init_args(self, value):
         if not isinstance(value, str):
-            raise TypeError("The 'cell_init_args' must be a string type.")
+            raise TypeError(f"For 'Cell', the property 'cell_init_args' must be bool type, "
+                            f"but got type {type(value)}.")
         self._cell_init_args = value
 
     @property
@@ -225,7 +226,7 @@ class Cell(Cell_):
     @phase.setter
     def phase(self, value):
         if not isinstance(value, str):
-            raise TypeError("The 'phase' must be a string type.")
+            raise TypeError(f"For 'Cell', the property 'phase' must be string type, but got type {type(value)}.")
         self._phase = value
 
     @property
@@ -243,7 +244,8 @@ class Cell(Cell_):
     @parameter_layout_dict.setter
     def parameter_layout_dict(self, value):
         if not isinstance(value, dict):
-            raise TypeError("The 'parameter_layout_dict' must be a dict type.")
+            raise TypeError("The type of parameter 'value' must be a dict type, "
+                            "but got the type : {}.".format(type(value)))
         self._parameter_layout_dict = value
 
     @property
@@ -253,7 +255,8 @@ class Cell(Cell_):
     @parallel_parameter_name_list.setter
     def parallel_parameter_name_list(self, value):
         if not isinstance(value, list):
-            raise TypeError("The 'parallel_parameter_name_list' must be a list type.")
+            raise TypeError("The type of parameter 'parallel_parameter_name_list' must be a list type, "
+                            "but got the type : {}.".format(type(value)))
         self._parallel_parameter_name_list = value
 
     @property
@@ -262,13 +265,13 @@ class Cell(Cell_):
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
-        if isinstance(value, bool):
-            raise TypeError("'pipeline_stage' must be an int type, but got bool.")
-        if not isinstance(value, int):
-            raise TypeError("'pipeline_stage' must be an int type, but got {}".format(value))
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise TypeError("The parameter 'pipeline_stage' must be an int type, "
+                            "but got the type : {}.".format(type(value)))
 
         if value < 0:
-            raise TypeError("'pipeline_stage' can not be less than 0 but got {}".format(value))
+            raise TypeError("The parameter 'pipeline_stage' can not be less than 0,  "
+                            "but got the value : {}".format(value))
         self._pipeline_stage = value
         for item in self.trainable_params():
             item.add_pipeline_stage(value)
@@ -280,7 +283,8 @@ class Cell(Cell_):
     @parallel_parameter_merge_net_dict.setter
     def parallel_parameter_merge_net_dict(self, value):
         if not isinstance(value, dict):
-            raise TypeError("The 'parallel_parameter_merge_net_dict' must be a dict type.")
+            raise TypeError("The parameter 'parallel_parameter_merge_net_dict' must be a dict type, "
+                            "but got the type : {}".format(type(value)))
         self._parallel_parameter_merge_net_dict = value
 
     def get_func_graph_proto(self):

@@ -207,10 +207,12 @@ class ProximalAdagrad(Optimizer):
         optimizer operation.
         """
         if not isinstance(value, str):
-            raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
+            raise TypeError("For 'ProximalAdagrad', the property 'target' must be string type, "
+                            "but got {}".format(type(value)))
 
         if value not in ('CPU', 'Ascend', 'GPU'):
-            raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
+            raise ValueError("For 'ProximalAdagrad', the property 'target' must be 'CPU', 'Ascend' or 'GPU', "
+                             "but got {}.".format(value))
 
         if value == 'CPU':
             self.sparse_opt = P.FusedSparseProximalAdagrad(self.use_locking).add_prim_attr("primitive_target", "CPU")
