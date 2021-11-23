@@ -13,7 +13,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/flatbuffers/repository/archive/v1.11.0.tar.gz")
-    set(MD5 "4051dc865063ffa724c4264dea8dbbe9")
+    set(MD5 "a81553440366c65d16812b7732506d89")
 else()
     set(REQ_URL "https://github.com/google/flatbuffers/archive/v1.11.0.tar.gz")
     set(MD5 "02c64880acb89dbd57eebacfd67200d8")
