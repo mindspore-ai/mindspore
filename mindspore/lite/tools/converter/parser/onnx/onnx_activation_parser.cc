@@ -136,11 +136,20 @@ ops::PrimitiveC *OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph, co
   return prim.release();
 }
 
+ops::PrimitiveC *OnnxHardSigmoidParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::HSIGMOID);
+
+  return prim.release();
+}
+
 OnnxNodeRegistrar g_onnxReluParser("Relu", new OnnxReluParser());
 OnnxNodeRegistrar g_onnxLeakyReluParser("LeakyRelu", new OnnxLeakyReluParser());
 OnnxNodeRegistrar g_onnxPReluParser("PRelu", new OnnxPReluParser());
 OnnxNodeRegistrar g_onnxEluParser("Elu", new OnnxEluParser());
 OnnxNodeRegistrar g_onnxTanhParser("Tanh", new OnnxTanhParser());
-OnnxNodeRegistrar g_onnxSigmoodParser("Sigmoid", new OnnxSigmoidParser());
+OnnxNodeRegistrar g_onnxSigmoidParser("Sigmoid", new OnnxSigmoidParser());
+OnnxNodeRegistrar g_onnxHardSigmoidParser("HardSigmoid", new OnnxHardSigmoidParser());
 }  // namespace lite
 }  // namespace mindspore
