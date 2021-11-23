@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include "utils/dlopen_macro.h"
+#include "runtime/hardware/collective/collective_communication_lib.h"
 
 namespace mindspore {
 namespace device {
@@ -51,17 +52,6 @@ using CollectiveCommLibLoaderPtr = std::shared_ptr<CollectiveCommLibLoader>;
 }  // namespace device
 }  // namespace mindspore
 
-#ifndef _WIN32
 // The exported symbols of collective communication shared library is registered here.
-ORIGIN_METHOD(InitializeCollectiveLib, bool, uint32_t, uint32_t)
-ORIGIN_METHOD(FinalizeCollectiveLib, bool)
-ORIGIN_METHOD(CreateCommunicationGroup, bool, const std::string &, const std::vector<uint32_t> &)
-ORIGIN_METHOD(DestroyCommunicationGroup, bool, const std::string &)
-ORIGIN_METHOD(GetRankId, uint32_t, const std::string &)
-ORIGIN_METHOD(GetCommunicationGroupSize, uint32_t, const std::string &)
-ORIGIN_METHOD(AssignLocalRank, bool)
-ORIGIN_METHOD(global_rank_id, uint32_t)
-ORIGIN_METHOD(local_rank_id, uint32_t)
-ORIGIN_METHOD(global_rank_size, uint32_t)
-#endif
+ORIGIN_METHOD(communication_lib_instance, mindspore::device::CollectiveCommunicationLib *)
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_LIB_LOADER_H_

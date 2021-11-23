@@ -34,6 +34,7 @@ constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfWorker, kEnvRoleOfScheduler};
 
 constexpr char kLocalHost[] = "127.0.0.1";
+constexpr int MAX_HOSTNAME_LEN = 1024;
 const uint16_t kDefaultSchedPort = 6667;
 const uint16_t kMaxPort = 65535;
 }  // namespace distributed

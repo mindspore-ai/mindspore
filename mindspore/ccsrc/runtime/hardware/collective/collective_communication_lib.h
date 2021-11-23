@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "ir/dtype/type_id.h"
 #include "runtime/hardware/collective/communication_group.h"
 
 namespace mindspore {
@@ -60,6 +61,21 @@ class CollectiveCommunicationLib {
 
   // Assign the local rank id for this process. Normally used by collective communication library on the host side.
   virtual bool AssignLocalRank() { return true; }
+
+  // Return communication group pointer.
+  virtual CommunicationGroupPtr GetGroup(const std::string &group_name);
+
+  // Primitive of AllGather operation.
+  virtual bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                         const std::string &group_name, void *stream) {
+    return true;
+  }
+
+  // Primitive of Broadcast operation.
+  virtual bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                         uint32_t root_rank, const std::string &group_name, void *stream) {
+    return true;
+  }
 
   // Returns global rank id of this process.
   uint32_t global_rank_id() const;

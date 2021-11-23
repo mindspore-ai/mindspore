@@ -55,6 +55,11 @@ uint32_t CollectiveCommunicationLib::GetGroupSize(const std::string &group_name)
   return group->group_size();
 }
 
+CommunicationGroupPtr CollectiveCommunicationLib::GetGroup(const std::string &group_name) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  return groups_[group_name];
+}
+
 uint32_t CollectiveCommunicationLib::global_rank_id() const { return global_rank_id_; }
 
 uint32_t CollectiveCommunicationLib::local_rank_id() const { return local_rank_id_; }

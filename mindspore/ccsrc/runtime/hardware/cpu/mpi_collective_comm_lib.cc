@@ -55,11 +55,12 @@ bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_nam
   return true;
 }
 }  // namespace cpu
-}  // namespace device
-}  // namespace mindspore
 
 // The exported APIs for 'dlsym' to load.
 using MPICollectiveCommLib = mindspore::device::cpu::MPICollectiveCommLib;
+
+CollectiveCommunicationLib *communication_lib_instance() { return &MPICollectiveCommLib::GetInstance(); }
+
 bool InitializeCollectiveLib(uint32_t, uint32_t) { return MPICollectiveCommLib::GetInstance().Initialize(); }
 
 bool FinalizeCollectiveLib() { return MPICollectiveCommLib::GetInstance().Finalize(); }
@@ -80,8 +81,24 @@ uint32_t GetCommunicationGroupSize(const std::string &group_name) {
 
 bool AssignLocalRank() { return MPICollectiveCommLib::GetInstance().AssignLocalRank(); }
 
+CommunicationGroupPtr GetGroup(const std::string &group_name) {
+  return MPICollectiveCommLib::GetInstance().GetGroup(group_name);
+}
+
+bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+               const std::string &group_name, void *stream) {
+  return MPICollectiveCommLib::GetInstance().AllGather(send_buff, recv_buff, send_count, data_type, group_name, stream);
+}
+bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, mindspore::TypeId data_type,
+               uint32_t root_rank, const std::string &group_name, void *stream) {
+  return MPICollectiveCommLib::GetInstance().Broadcast(send_buff, recv_buff, send_count, data_type, root_rank,
+                                                       group_name, stream);
+}
+
 uint32_t global_rank_id() { return MPICollectiveCommLib::GetInstance().global_rank_id(); }
 
 uint32_t local_rank_id() { return MPICollectiveCommLib::GetInstance().local_rank_id(); }
 
 uint32_t global_rank_size() { return MPICollectiveCommLib::GetInstance().global_rank_size(); }
+}  // namespace device
+}  // namespace mindspore

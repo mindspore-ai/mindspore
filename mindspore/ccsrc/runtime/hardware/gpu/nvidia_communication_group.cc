@@ -21,7 +21,7 @@ namespace device {
 namespace gpu {
 NvidiaCommunicationGroup::NvidiaCommunicationGroup(const std::string name, const std::vector<uint32_t> &group_ranks,
                                                    uint32_t global_rank)
-    : CommunicationGroup(name, group_ranks, global_rank) {}
+    : CommunicationGroup(name, group_ranks, global_rank), unique_id_({}), comm_(nullptr) {}
 
 bool NvidiaCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
@@ -50,8 +50,12 @@ bool NvidiaCommunicationGroup::Finalize() {
   return true;
 }
 
-void *NvidiaCommunicationGroup::GenerateRootInfo() {
-  CHECK_RET(ncclGetUniqueId(&unique_id_), ncclSuccess, "Failed to get NCCL unique id.");
+void *NvidiaCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
+  *root_info_size = sizeof(unique_id_);
+  uint32_t group_rank = GetGroupRank(global_rank_);
+  if (group_rank == 0) {
+    CHECK_RET(ncclGetUniqueId(&unique_id_), ncclSuccess, "Failed to get NCCL unique id.");
+  }
   return &unique_id_;
 }
 }  // namespace gpu

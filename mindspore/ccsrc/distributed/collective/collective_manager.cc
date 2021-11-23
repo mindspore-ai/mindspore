@@ -28,7 +28,9 @@ CollectiveManager::CollectiveManager()
       host_ctx_(nullptr),
       device_ctx_(nullptr),
       host_comm_lib_(nullptr),
+      host_comm_lib_instance_(nullptr),
       device_comm_lib_(nullptr),
+      device_comm_lib_instance_(nullptr),
       global_rank_id_(0),
       local_rank_id_(0),
       global_rank_size_(0),
@@ -61,13 +63,25 @@ bool CollectiveManager::Initialize(const std::string &backend, const std::string
     return false;
   }
 
-  MS_EXCEPTION_IF_NULL(host_comm_lib_);
-  // Step 2: Create global communication group on host side.
-  if (!CreateHostGlobalCommGroup(global_group_name)) {
+  // Step 2, 3 and 4 are for device communication library. So if the training job is only launched on CPU, they will not
+  // be necessary.
+  // Step 2: Assign local rank id(device id) for this process.
+  if (!AssignLocalRank(global_group_name)) {
+    MS_LOG(ERROR) << "Failed to assign local rank id.";
+    return false;
+  }
+
+  // Step 3: Initialize device side collective communication.
+  if (!InitDeviceCommLib(backend)) {
+    MS_LOG(ERROR) << "Failed to initialize device communication library.";
+    return false;
+  }
+
+  // Step 4: Create global communication group.
+  if (!CreateCommunicationGroup(global_group_name, global_group_ranks_)) {
     MS_LOG(ERROR) << "Failed to initialize host communication library.";
     return false;
   }
-  // Step 3: Assign local rank id(device id) for this process.
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << backend << ".";
   return true;
@@ -75,24 +89,80 @@ bool CollectiveManager::Initialize(const std::string &backend, const std::string
 
 bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                                                  const std::vector<uint32_t> &group_ranks) {
-  MS_EXCEPTION_IF_NULL(host_comm_lib_);
-  MS_EXCEPTION_IF_NULL(device_comm_lib_);
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
   // Step 1: Create communication group on host side.
-  // Step 2: Generate device information of the root node.
-  // Step 3: Broadcast the device root information to all nodes.
-  // Step 4: Create communication group on device side.
+  if (!host_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks)) {
+    MS_LOG(ERROR) << "Failed to create communication group " << group_name << " on host side.";
+    return false;
+  }
+
+  // Step 2: Create communication group on device side.
+  if (!device_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks)) {
+    MS_LOG(ERROR) << "Failed to create communication group " << group_name << " on device side.";
+    return false;
+  }
+
+  // Step 3: Generate device information of the root node.
+  CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
+  MS_EXCEPTION_IF_NULL(group);
+  size_t root_info_size = 0;
+  void *root_info = group->GenerateRootInfo(&root_info_size);
+  MS_EXCEPTION_IF_NULL(root_info);
+
+  // Step 4: Broadcast the device root information to all nodes on host side.
+  if (!host_comm_lib_instance_->Broadcast(root_info, root_info, root_info_size, TypeId::kNumberTypeInt, 0, group_name,
+                                          nullptr)) {
+    MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
+    return false;
+  }
+
+  // Step 5: Initialize communication group on the device side.
+  if (!group->Initialize(root_info)) {
+    MS_LOG(ERROR) << "Initialize group on the device side failed.";
+    return false;
+  }
   return true;
 }
 
-bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) { return true; }
+bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  if (!host_comm_lib_instance_->DestroyCommunicationGroup(group_name)) {
+    MS_LOG(ERROR) << "Failed to destroy communication group of " << group_name << " on the host side.";
+    return false;
+  }
 
-uint32_t CollectiveManager::GetRankId(const std::string &group_name) { return 0; }
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  if (!device_comm_lib_instance_->DestroyCommunicationGroup(group_name)) {
+    MS_LOG(ERROR) << "Failed to destroy communication group of " << group_name << " on the device side.";
+    return false;
+  }
+  return true;
+}
 
-uint32_t CollectiveManager::GetGroupSize(const std::string &group_name) { return 0; }
+uint32_t CollectiveManager::GetRankId(const std::string &group_name) {
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  return host_comm_lib_instance_->GetRankId(group_name);
+}
+
+uint32_t CollectiveManager::GetGroupSize(const std::string &group_name) {
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  return host_comm_lib_instance_->GetGroupSize(group_name);
+}
 
 bool CollectiveManager::Finalize() {
   if (finalized_) {
     return true;
+  }
+
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  if (!host_comm_lib_instance_->Finalize()) {
+    MS_LOG(WARNING) << "Failed to finalize host communication library.";
+  }
+
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  if (!device_comm_lib_instance_->Finalize()) {
+    MS_LOG(WARNING) << "Failed to finalize device communication library.";
   }
   return true;
 }
@@ -105,19 +175,34 @@ bool CollectiveManager::InitHostCommlib() {
     MS_LOG(ERROR) << "Failed to load communication library on the host side.";
     return false;
   }
-  return true;
-}
-
-bool CollectiveManager::CreateHostGlobalCommGroup(const std::string &global_group_name) {
+  host_comm_lib_ = host_ctx_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(host_comm_lib_);
-  if (global_group_ranks_.empty()) {
-    MS_LOG(ERROR) << "The global group rank list is empty.";
+  auto instance_func = DlsymFuncObj(communication_lib_instance, host_comm_lib_);
+  host_comm_lib_instance_ = instance_func();
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+
+  // For some communication libraries, global_rank_id_', 'global_rank_size_' should be set by caller, e.g., when using
+  // MindSpore communication. For other communication libraries, global rank id and size is generated by itself, e.g.,
+  // OpenMPI, and parameters 'global_rank_id_', 'global_rank_size_' will not be used.
+  MS_LOG(INFO) << "Start initializing communication library on host side...";
+  if (!host_comm_lib_instance_->Initialize(global_rank_id_, global_rank_size_)) {
+    MS_LOG(ERROR) << "Failed to initialize communication library on host side.";
     return false;
   }
+
+  // Reassign 'global_rank_id_' and 'global_rank_size_'. Generate global communication group ranks.
+  global_rank_id_ = host_comm_lib_instance_->global_rank_id();
+  global_rank_size_ = host_comm_lib_instance_->global_rank_size();
+  for (uint32_t i = 0; i < global_rank_size_; i++) {
+    global_group_ranks_.push_back(i);
+  }
+
+  MS_LOG(INFO) << "Communication library on host side is successfully initialized. Global rank id: " << global_rank_id_
+               << ", global rank size: " << global_rank_size_;
   return true;
 }
 
-bool CollectiveManager::InitDeviceCommLib(const std::string &backend, uint32_t device_id) {
+bool CollectiveManager::InitDeviceCommLib(const std::string &backend) {
   std::string device_name;
   if (backend == "nccl") {
     device_name = "GPU";
@@ -128,13 +213,68 @@ bool CollectiveManager::InitDeviceCommLib(const std::string &backend, uint32_t d
     return false;
   }
 
-  device::DeviceContextKey device_key = {device_name, device_id};
+  device::DeviceContextKey device_key = {device_name, local_rank_id_};
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
   if (!device_ctx_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the device side.";
     return false;
   }
+  device_comm_lib_ = device_ctx_->collective_comm_lib();
+  MS_EXCEPTION_IF_NULL(device_comm_lib_);
+  auto instance_func = DlsymFuncObj(communication_lib_instance, device_comm_lib_);
+  device_comm_lib_instance_ = instance_func();
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+
+  MS_LOG(INFO) << "Start initializing communication library on device side...";
+  if (!device_comm_lib_instance_->Initialize(global_rank_id_, global_rank_size_)) {
+    MS_LOG(ERROR) << "Failed to initialize communication library on device side.";
+    return false;
+  }
+  MS_LOG(INFO) << "Communication library on device side is successfully initialized.";
+  return true;
+}
+
+bool CollectiveManager::AssignLocalRank(const std::string &global_group_name) {
+  char host_name[MAX_HOSTNAME_LEN] = {0};
+#ifndef _WIN32
+  if (gethostname(host_name, MAX_HOSTNAME_LEN) != 0) {
+    MS_LOG(ERROR) << "Failed to get host name.";
+    return false;
+  }
+#endif
+  MS_LOG(INFO) << "Host name for rank " << global_rank_id_ << " is " << host_name;
+
+  // Generate host name hash for every process. The host names of different physical machine should not be the same so
+  // that local rank id won't repeat.
+  size_t host_hash = std::hash<std::string>()(host_name);
+  const uint32_t kGlobalRankSize = global_rank_size_;
+  size_t all_host_hashs[kGlobalRankSize];
+  if (global_rank_id_ >= global_rank_size_) {
+    MS_LOG(ERROR) << "The global rank id " << global_rank_id_ << " should be less than global rank size "
+                  << global_rank_size_;
+    return false;
+  }
+  all_host_hashs[global_rank_id_] = host_hash;
+
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  // AllGather host names across the global communication group.
+  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, sizeof(size_t), TypeId::kNumberTypeInt,
+                                          global_group_name, nullptr)) {
+    MS_LOG(ERROR) << "AllGather for host names failed.";
+    return false;
+  }
+
+  // Accumulate rank id.
+  for (uint32_t rank = 0; rank < global_rank_size_; rank++) {
+    if (rank == global_rank_id_) {
+      break;
+    }
+    if (all_host_hashs[rank] == all_host_hashs[global_rank_id_]) {
+      local_rank_id_++;
+    }
+  }
+  MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_;
   return true;
 }
 }  // namespace collective

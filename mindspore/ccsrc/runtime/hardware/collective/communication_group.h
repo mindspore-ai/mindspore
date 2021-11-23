@@ -44,10 +44,9 @@ class CommunicationGroup {
   // Finalize the communication group. For example, destroy the group, etc.
   virtual bool Finalize() = 0;
 
-  // Return the root rank's information. Only root rank of one group could call this method.Normally this is used for
-  // collective libraries on the device side. For NCCL group, it returns 'ncclUniqueId'. For HCCL group, it returns
-  // 'HcclRootInfo'.
-  virtual void *GenerateRootInfo() { return nullptr; }
+  // Return the root rank's information and its size. Normally this is used for collective libraries on the device side.
+  // For NCCL group, it returns a pointer to 'ncclUniqueId'. For HCCL group, it returns a pointer to 'HcclRootInfo'.
+  virtual void *GenerateRootInfo(size_t *root_info_size) { return nullptr; }
 
   // Get group or global rank for the given rank.
   uint32_t GetGroupRank(uint32_t global_rank);
