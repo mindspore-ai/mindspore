@@ -125,7 +125,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
     switch (indices_tensor->data_type()) {
       case kNumberTypeInt64:
         for (int i = 0; i < indices_num; i++) {
-          indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->MutableData())[i];
+          indices_data_[i] = static_cast<int>(reinterpret_cast<int64_t *>(indices_tensor->MutableData())[i]);
         }
         break;
       case kNumberTypeFloat:

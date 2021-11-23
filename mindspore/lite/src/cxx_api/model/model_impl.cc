@@ -37,9 +37,9 @@
 
 namespace mindspore {
 namespace {
-static const char *kExecutionPlan = "execution_plan";
-static constexpr size_t kMaxSectionNum = 100;
-static constexpr size_t kMaxConfigNumPerSection = 1000;
+const char *const kExecutionPlan = "execution_plan";
+constexpr size_t kMaxSectionNum = 100;
+constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

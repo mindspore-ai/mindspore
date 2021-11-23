@@ -27,12 +27,16 @@ tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId
     return nullptr;
   }
 
-  int shape_size = 1;
+  size_t shape_size = 1;
   if (shape.empty()) {
     shape_size = 0;
   } else {
     for (size_t i = 0; i < shape.size(); ++i) {
-      shape_size *= shape[i];
+      if (shape[i] < 0) {
+        delete tensor;
+        return nullptr;
+      }
+      shape_size *= static_cast<size_t>(shape[i]);
     }
   }
   auto data_type_size = lite::DataTypeSize(type);
