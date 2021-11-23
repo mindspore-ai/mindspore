@@ -40,8 +40,7 @@ Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &
                               Dimensions basic_stra);
 Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                          Dimensions basic_stra);
-Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                        const size_t iter_graph, const size_t iter_ops);
+Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
 Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
                                      const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
                                      const size_t iter_ops);
@@ -88,7 +87,7 @@ Dimensions GetDimListFromAttrs(const std::vector<std::shared_ptr<OperatorInfo>> 
 Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                        const size_t incoming_op_index, Dimensions s);
 Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                             const size_t incoming_op_index);
+                                             const size_t iter_ops, const size_t incoming_op_index);
 Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                          Dimensions basic_stra);
 void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &graph,
