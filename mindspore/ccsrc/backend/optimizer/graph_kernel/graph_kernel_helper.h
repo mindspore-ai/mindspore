@@ -44,9 +44,7 @@ constexpr auto kGetGraphKernelOpExpander = "get_op_expander";
 constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
-constexpr auto kAllTarget = "ALL";
 
-constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 struct DataInfo {
   std::string format{kOpFormat_DEFAULT};
   ShapeVector shape{1};
@@ -79,9 +77,6 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info,
                      bool use_fake_abstract = false);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
-bool IsKeepBasicNode(const AnfNodePtr &node);
-void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string> &enable_ops_only,
-                  const std::vector<std::string> &enable_ops, const std::vector<std::string> &disable_ops);
 template <typename T>
 ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
   // Create tensor value.
@@ -126,9 +121,6 @@ FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, AnfNodePt
 
 // remove parameter which is not used
 void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
-
-std::vector<PrimitivePtr> GetValidOps(
-  const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level);
 
 // return a func_graph's manager
 FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);

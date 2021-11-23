@@ -18,10 +18,17 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_
 
 #include <string>
+#include <tuple>
+#include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {
+constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
+constexpr auto kAllTarget = "ALL";
+
+using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
+
 class GkUtils {
  public:
   /**
@@ -47,6 +54,25 @@ class GkUtils {
    * @return std::vector<AnfNodePtr>
    */
   static AnfNodePtrList SpreadTuples(const AnfNodePtrList &nodes, size_t begin_index = 0);
+
+  /**
+   * @brief Filter operators by target, op level, and enable/disable flags.
+   * @param[in] ops_with_level the default operator list
+   * @param[in] level enabled op level
+   * @param[in] enable_ops_only the "enable_xxx_ops_only" flag
+   * @param[in] enable_ops the "enable_xxx_ops" flag
+   * @param[in] disable_ops the "disable_xxx_ops" flag
+   * @return Available primitive list
+   */
+  static std::vector<PrimitivePtr> GetValidOps(const std::vector<OpWithLevel> &ops_with_level, unsigned int level,
+                                               const std::vector<std::string> &enable_ops_only,
+                                               const std::vector<std::string> &enable_ops,
+                                               const std::vector<std::string> &disable_ops);
+
+  /**
+   * @brief Check whether graphkernel supports the node
+   */
+  static bool IsKeepBasicNode(const AnfNodePtr &node);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

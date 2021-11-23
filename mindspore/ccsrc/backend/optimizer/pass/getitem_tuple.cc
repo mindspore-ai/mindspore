@@ -18,7 +18,6 @@
 #include <memory>
 #include "base/core_ops.h"
 #include "utils/utils.h"
-#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,7 +44,6 @@ const AnfNodePtr GetitemTuple::Process(const FuncGraphPtr &, const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(node);
   auto tuple_getitem = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(tuple_getitem);
-  CheckCNodeInputSize(tuple_getitem, kTupleGetItemInputTensorNum);
   AnfNodePtr make_tuple_anf = tuple_getitem->input(kRealInputNodeIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(make_tuple_anf);
   AnfNodePtr index_node = tuple_getitem->input(kInputNodeOutputIndexInTupleGetItem);

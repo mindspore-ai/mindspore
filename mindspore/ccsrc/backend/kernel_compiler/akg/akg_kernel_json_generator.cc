@@ -24,6 +24,7 @@
 #include <algorithm>
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 
 namespace mindspore::graphkernel {
@@ -581,6 +582,17 @@ OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) cons
   }
 }
 
+std::string AkgKernelJsonGenerator::GetProcessorByTarget() const {
+  auto target = cb_->GetTargetFromContext();
+  if (target == kGPUDevice) {
+    return "cuda";
+  }
+  if (target == kAscendDevice) {
+    return "aicore";
+  }
+  return "cpu";
+}
+
 bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(node_json);
@@ -683,7 +695,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = this->cb_->GetProcessorFromContext();
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyComposite] = false;
   if (dump_option_.get_compute_capability) {
     (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
@@ -782,7 +794,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = this->cb_->GetProcessorFromContext();
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
   if (dump_option_.get_compute_capability) {
