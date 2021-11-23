@@ -526,7 +526,7 @@ int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &o
     }
   }
   if (index_computation.empty()) {
-    MS_LOG(ERROR) << "There in no available strategy for zero communication cost for reshape: " << name();
+    MS_LOG(WARNING) << "There in no available strategy for zero communication cost for reshape: " << name();
     return -1;
   }
   if (index_computation.size() > 1) {
@@ -569,7 +569,7 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &in
     }
   }
   if (index_computation.empty()) {
-    MS_LOG(ERROR) << "There in no available strategy for zero communication cost for reshape: " << name();
+    MS_LOG(WARNING) << "There in no available strategy for zero communication cost for reshape: " << name();
     return -1;
   }
   if (index_computation.size() > 1) {
