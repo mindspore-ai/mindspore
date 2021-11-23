@@ -344,7 +344,6 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   // Do forward computation
   auto forward_app =
     k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(0))});
-  forward_app->set_user_data<abstract::AbstractBase>("primal_abstract", cnode_morph->abstract());
   // K:: cnode -> forward_app
   auto node_adjoint = std::make_shared<Adjoint>(morph, forward_app, tape_);
   UpdateAdjoint(node_adjoint);
