@@ -23,7 +23,7 @@
 #include <memory>
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "tools/converter/quantizer/diverg_info.h"
+#include "tools/converter/quantizer/data_distribution.h"
 
 namespace mindspore::lite::quant {
 class Calibrator {
@@ -45,17 +45,17 @@ class Calibrator {
 
   int AddQuantizedOp(const CNodePtr &cnode);
 
-  int RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  int RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DataDistribution> &diverg_info);
 
-  int UpdateDivergInterval(std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
+  int UpdateDivergInterval();
 
-  int UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  int UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DataDistribution> &diverg_info);
 
   int ComputeThreshold();
 
-  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetInputDivergInfo();
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetInputDivergInfo();
 
-  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetOutputDivergInfo();
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *GetOutputDivergInfo();
 
   FullQuantParam full_quant_param_;
 
@@ -64,9 +64,10 @@ class Calibrator {
   int thread_ = 4;
 
  private:
-  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> inputs_diverg_info_;
-
-  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> outputs_diverg_info_;
+  // {node_name,{tensor_index,DataDistribution}}
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> inputs_diverg_info_;
+  // {node_name,{tensor_index,DataDistribution}}
+  std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> outputs_diverg_info_;
 
   size_t bit_num_;
   int quant_max_;

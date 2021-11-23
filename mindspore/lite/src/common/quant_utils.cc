@@ -20,8 +20,18 @@
 
 namespace mindspore {
 namespace lite {
+// `symmetric` == true -> q range is [-127 , 127];
+//  abs_max = max(abs(r_min),abs(r_max)); r_min = -abs_max and r_max = abs_max.
+//  `symmetric` == false q range is [-128 , 127]. r_min or r_max keep the original value.
+// `narrow_range` is used to adjust q_min, and symmetric is always true.
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
-                          bool narrow_range) {
+                          bool symmetric, bool narrow_range) {
+  if (symmetric) {
+    auto abs_max = std::max(std::abs(real_min), std::abs(real_max));
+    real_min = -abs_max;
+    real_max = abs_max;
+    narrow_range = true;
+  }
   int quant_max = QuantMax(num_bits);
   int quant_min = QuantMin(num_bits, false, narrow_range);
   return CalQuantizationParams(quant_param, real_min, real_max, num_bits, narrow_range, quant_min, quant_max);
@@ -100,8 +110,8 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
   return (data_index / stride) % bucket_count;
 }
 
-int GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                         std::map<int, MinMax> *per_channel_min_max) {
+int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                        std::map<int, MinMax> *per_channel_min_max) {
   // the key is bucket_index
   std::map<int, std::vector<float>> sorted_data;
   for (int i = 0; i < elem_count; ++i) {
@@ -172,10 +182,11 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
     average_dequants[bucket_index] = total_dequants[bucket_index] / bucket_volume;
   }
 
+  constexpr int pow_exponent = 2;
   for (size_t data_index = 0; data_index < elem_count; data_index++) {
     auto bucket_index = GetBucketIndex(dims, preferred_dim, data_index);
-    var_raws[bucket_index] += std::pow(raw_datas[data_index] - average_raws[bucket_index], 2);
-    var_dequants[bucket_index] += std::pow(dequant_datas[data_index] - average_dequants[bucket_index], 2);
+    var_raws[bucket_index] += std::pow(raw_datas[data_index] - average_raws[bucket_index], pow_exponent);
+    var_dequants[bucket_index] += std::pow(dequant_datas[data_index] - average_dequants[bucket_index], pow_exponent);
   }
   for (size_t bucket_index = 0; bucket_index < bucket_size; bucket_index++) {
     var_raws[bucket_index] = std::sqrt(var_raws[bucket_index] / bucket_volume);

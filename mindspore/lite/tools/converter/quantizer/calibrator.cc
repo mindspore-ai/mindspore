@@ -25,7 +25,8 @@ namespace mindspore::lite::quant {
 namespace {
 constexpr int kDefaultBinNumber = 2048;
 }
-int Calibrator::RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info) {
+int Calibrator::RecordMaxMinValue(const std::vector<float> &data,
+                                  const std::unique_ptr<DataDistribution> &diverg_info) {
   auto ret = diverg_info->RecordMaxMinValue(data);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Record max min value failed.";
@@ -43,7 +44,7 @@ int Calibrator::ComputeThreshold() {
   for (auto &kv : this->outputs_diverg_info_) {
     auto &outputs_diverg_info = kv.second;
     for (auto &diverg_info : outputs_diverg_info) {
-      auto ret = diverg_info->ComputeThreshold();
+      auto ret = diverg_info.second->ComputeThreshold();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Compute threshold failed.";
         return ret;
@@ -64,10 +65,10 @@ int Calibrator::ComputeThreshold() {
             break;
           }
           for (const auto &output_diverg_info : outputs_diverg_info.second) {
-            auto output_diverg_cnode = output_diverg_info->GetCNode();
+            auto output_diverg_cnode = output_diverg_info.second->GetCNode();
             if (output_diverg_cnode == input_cnode) {
               if (NodePrimitiveType(input_cnode) != lite::kNameTupleGetItem) {
-                *(input_infos[i]) = *output_diverg_info;
+                *(input_infos[i]) = *output_diverg_info.second;
                 input_infos[i]->GetCNode() = cnode;
                 already_computed = true;
                 break;
@@ -88,18 +89,23 @@ int Calibrator::ComputeThreshold() {
   return RET_OK;
 }
 
-int Calibrator::UpdateDivergInterval(
-  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info) {
+int Calibrator::UpdateDivergInterval() {
   MS_ASSERT(diverg_info != nullptr);
-  for (auto &kv : *diverg_info) {
+  for (auto &kv : inputs_diverg_info_) {
     for (auto &info : kv.second) {
-      info->UpdateInterval();
+      info.second->UpdateInterval();
+    }
+  }
+  for (auto &kv : outputs_diverg_info_) {
+    for (auto &info : kv.second) {
+      info.second->UpdateInterval();
     }
   }
   return RET_OK;
 }
 
-int Calibrator::UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info) {
+int Calibrator::UpdateDataFrequency(const std::vector<float> &data,
+                                    const std::unique_ptr<DataDistribution> &diverg_info) {
   MS_ASSERT(diverg_info != nullptr);
   return diverg_info->UpdateHistogram(data);
 }
@@ -110,14 +116,31 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto node_name = cnode->fullname_with_scope();
-  std::unique_ptr<DivergInfo> input_diverg = std::make_unique<DivergInfo>(
-    cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
-  MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
-  std::unique_ptr<DivergInfo> output_diverg = std::make_unique<DivergInfo>(
-    cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
-  MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
-  inputs_diverg_info_[node_name].push_back(std::move(input_diverg));
-  outputs_diverg_info_[node_name].push_back(std::move(output_diverg));
+  auto size = cnode->inputs().size();
+  for (size_t i = 1; i < size; i++) {
+    std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
+      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+    MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
+    inputs_diverg_info_[node_name].insert({i - 1, std::move(input_diverg)});
+  }
+
+  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
+    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
+    MS_CHECK_TRUE_MSG(tuple != nullptr, RET_ERROR, "tuple is nullptr");
+    auto elements = tuple->elements();
+    MS_ASSERT(elements.size() > 1);
+    for (size_t i = 0; i < elements.size(); i++) {
+      std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
+        cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+      MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
+      outputs_diverg_info_[node_name].insert({i, std::move(output_diverg)});
+    }
+  } else {
+    std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
+      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+    MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
+    outputs_diverg_info_[node_name].insert({0, std::move(output_diverg)});
+  }
   return RET_OK;
 }
 
@@ -126,11 +149,11 @@ int Calibrator::GenerateInputData(const std::string &input_name, size_t image_in
   return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
 }
 
-std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *Calibrator::GetInputDivergInfo() {
+std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *Calibrator::GetInputDivergInfo() {
   return &this->inputs_diverg_info_;
 }
 
-std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *Calibrator::GetOutputDivergInfo() {
+std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *Calibrator::GetOutputDivergInfo() {
   return &this->outputs_diverg_info_;
 }
 }  // namespace mindspore::lite::quant

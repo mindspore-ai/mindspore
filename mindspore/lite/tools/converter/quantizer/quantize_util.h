@@ -60,35 +60,14 @@ constexpr size_t kMaxBit = 8;
 constexpr size_t kMaxNum1024 = 1024;
 constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;
+constexpr float delta = 0.1;
+constexpr float ratio = 10.0;
+constexpr int percent = 10;
 
 struct SessionModel {
   session::LiteSession *session{nullptr};
   Model *model{nullptr};
 };
-
-/**
- * 1. when op's weight size > mWeightSize just skip
- * 2. only do conv/deconv/convdepthwise/deconvdepthwise/mul/matmul/batchmatmul quantization
- * 3. when conv/deconv/convdepthwise/deconvdepthwise ops' weight channel size > covWeightQuantChannelThreshold just skip
- * */
-class QuantStrategy {
- public:
-  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel)
-      : min_quant_weight_size_(min_quant_weight_size), min_quant_weight_channel_(min_quant_weight_channel) {}
-
-  ~QuantStrategy() = default;
-
-  static bool CanOpFullQuantized(const AnfNodePtr &node);
-  bool CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim) const;
-
- private:
-  size_t min_quant_weight_size_;
-  size_t min_quant_weight_channel_;
-};
-
-constexpr float delta = 0.1;
-constexpr float ratio = 10.0;
-constexpr int percent = 10;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
@@ -117,7 +96,8 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 template <typename T>
 int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
-                        WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool k_means = false) {
+                        WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool narrow_range = false,
+                        bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -143,7 +123,7 @@ int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
     ret =
       DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                            static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max, quant_min,
-                           bit_num, k_means, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim);
+                           bit_num, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim, narrow_range, k_means);
     if (ret == RET_NO_CHANGE) {
       return ret;
     } else if (ret != RET_OK) {
@@ -152,7 +132,7 @@ int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
     }
   } else if (weight_quant_type == FIXED_BIT_PER_LAYER) {
     ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
-                             quant_min, bit_num, k_means, &quant_data);
+                             quant_min, bit_num, &quant_data, narrow_range, k_means);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;
@@ -188,10 +168,9 @@ int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      bool is_debug = false);
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size, bool is_debug = false);
+                                      int *size);
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);
