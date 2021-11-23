@@ -573,7 +573,7 @@ class Reshape(PrimitiveWithInfer):
                 max_shape[neg_index] = int(max_arr_prod / dim_prod)
                 min_shape[neg_index] = int(min_arr_prod / dim_prod)
 
-            out = {'shape': shape['value'],
+            out = {'shape': shape_v,
                    'dtype': x['dtype'],
                    'value': None,
                    'max_shape': tuple(max_shape),
