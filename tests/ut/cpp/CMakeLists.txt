@@ -157,7 +157,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/*.cc"
         "../../../mindspore/ccsrc/backend/optimizer/ascend/*.cc"
         "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/*.cc"
-        "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/model/*.cc"
         "../../../mindspore/ccsrc/backend/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/backend/session/ascend_session.cc"
         "../../../mindspore/ccsrc/backend/session/ascend_auto_monad.cc"
@@ -202,6 +201,8 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_add_relu_grad_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_grad_fusion.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/callback_impl.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/tbe_kernel_compile.cc")
 if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
