@@ -22,9 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
+static constexpr size_t BATCH_SIZE = 10000;
+static constexpr float MIN_GLOBAL_NORM = 1e-10;
 void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs,
                                                                 const std::vector<AddressPtr> &) {
-  auto var = reinterpret_cast<float *>(inputs[VAR]->addr);
   auto m = reinterpret_cast<float *>(inputs[M]->addr);
   auto v = reinterpret_cast<float *>(inputs[V]->addr);
   auto lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
@@ -33,6 +34,12 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vecto
   auto epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex];
   auto decay = reinterpret_cast<float *>(inputs[DECAY]->addr)[kScalarIndex];
   auto gradient16 = reinterpret_cast<float16 *>(inputs[GRAD]->addr);
+  auto var = reinterpret_cast<float *>(inputs[VAR]->addr);
+  auto global_norm = reinterpret_cast<float *>(inputs[GLOBAL_NORM]->addr)[kScalarIndex];
+  if (global_norm < MIN_GLOBAL_NORM) {
+    global_norm = 1.0f;
+  }
+  auto global_norm_reciprocal = 1.0f / global_norm;
   const auto beta1_minus = 1 - beta1;
   const auto beta2_minus = 1 - beta2;
 
@@ -42,10 +49,10 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vecto
 
   task = [&](size_t start, size_t end) {
     size_t i = FusedCastAdamFp32(var, m, v, lr, beta1, beta2, epsilon, decay, reinterpret_cast<int16_t *>(gradient16),
-                                 start, end);
+                                 global_norm_reciprocal, start, end);
     // remaining
     for (; i < end; i++) {
-      auto temp = static_cast<float>(gradient16[i]);
+      auto temp = static_cast<float>(gradient16[i]) * global_norm_reciprocal;
       m[i] += (temp - m[i]) * beta1_minus;
       v[i] += (temp * temp - v[i]) * beta2_minus;
       auto update = m[i] / (std::sqrt(v[i]) + epsilon);
@@ -53,12 +60,11 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vecto
       var[i] -= lr * update;
     }
   };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  CPUKernelUtils::ParallelFor(task, lens, BATCH_SIZE);
 }
 
 void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs,
                                                                 const std::vector<AddressPtr> &) {
-  auto var16 = reinterpret_cast<float16 *>(inputs[VAR]->addr);
   auto m = reinterpret_cast<float *>(inputs[M]->addr);
   auto v = reinterpret_cast<float *>(inputs[V]->addr);
   auto lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
@@ -67,6 +73,12 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vecto
   auto epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex];
   auto decay = reinterpret_cast<float *>(inputs[DECAY]->addr)[kScalarIndex];
   auto gradient16 = reinterpret_cast<float16 *>(inputs[GRAD]->addr);
+  auto var16 = reinterpret_cast<float16 *>(inputs[VAR]->addr);
+  auto global_norm = reinterpret_cast<float *>(inputs[GLOBAL_NORM]->addr)[kScalarIndex];
+  if (global_norm < MIN_GLOBAL_NORM) {
+    global_norm = 1.0f;
+  }
+  auto global_norm_reciprocal = 1.0f / global_norm;
   const auto beta1_minus = 1 - beta1;
   const auto beta2_minus = 1 - beta2;
 
@@ -76,11 +88,11 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vecto
 
   task = [&](size_t start, size_t end) {
     size_t i = FusedCastAdamFp16(reinterpret_cast<int16_t *>(var16), m, v, lr, beta1, beta2, epsilon, decay,
-                                 reinterpret_cast<int16_t *>(gradient16), start, end);
+                                 reinterpret_cast<int16_t *>(gradient16), global_norm_reciprocal, start, end);
     // remaining
     for (; i < end; i++) {
       auto temp_var = static_cast<float>(var16[i]);
-      auto temp_grad = static_cast<float>(gradient16[i]);
+      auto temp_grad = static_cast<float>(gradient16[i]) * global_norm_reciprocal;
       m[i] += (temp_grad - m[i]) * beta1_minus;
       v[i] += (temp_grad * temp_grad - v[i]) * beta2_minus;
       auto update = m[i] / (std::sqrt(v[i]) + epsilon);
@@ -89,7 +101,7 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vecto
       var16[i] = static_cast<float16>(temp_var);
     }
   };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  CPUKernelUtils::ParallelFor(task, lens, BATCH_SIZE);
 }
 
 void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -123,10 +135,12 @@ void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) 
 void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but AdamWeightDecay needs 9 inputs.";
+    MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but AdamWeightDecay needs "
+                      << kFusedCastAdamWeightDecayInputNum << " inputs.";
   }
   if (outputs.size() != kFusedCastAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but AdamWeightDecay needs 3 outputs.";
+    MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but AdamWeightDecay needs "
+                      << kFusedCastAdamWeightDecayOutputNum << " outputs.";
   }
   size_t elem_size_fp32 = elem_num_ * kSizeFloat32;
   size_t elem_size_fp16 = elem_num_ * kSizeFloat16;
