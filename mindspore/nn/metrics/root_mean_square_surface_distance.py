@@ -20,18 +20,37 @@ from .metric import Metric, rearrange_inputs
 
 
 class RootMeanSquareDistance(Metric):
-    """
-    This function is used to compute the Residual Mean Square Distance from `y_pred` to `y` under the default
-    setting. Residual Mean Square Distance(RMS), the mean is taken from each of the points in the vector, these
-    residuals are squared (to remove negative signs), summed, weighted by the mean and then the square-root is taken.
-    Measured in mm.
+    r"""
+    Computes the Root Mean Square Surface Distance from `y_pred` to `y` under the default setting.
+
+    Given two sets A and B, S(A) denotes the set of surface voxels of A. The shortest distance of an
+    arbitrary voxel v to S(A) is defined as:
+
+    .. math::
+        {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert
+
+    The Root Mean Square Surface Distance form set(B) to set(A) is:
+
+    .. math::
+        RmsSurDis(B \rightarrow A) = \sqrt{\frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}^2  \left ( s_{B}, S(A)
+        \right )} }{\left | S(B) \right |}}
+
+    Where the ||\*|| denotes a distance measure. |\*| denotes the number of elements.
+
+    The Root Mean Square Surface Distance form set(B) to set(A) and from set(A) to set(B) is:
+
+    .. math::
+        RmsSurDis(A \leftrightarrow B) = \sqrt{\frac{\sum_{s_{A}  \in S(A)}^{} {\text{dis}  \left ( s_{A},
+        S(B) \right ) ^{2}} + \sum_{s_{B} \in S(B)}^{} {\text{dis}  \left ( s_{B}, S(A) \right ) ^{2}}}{\left | S(A)
+        \right | + \left | S(B) \right |}}
 
     Args:
-        distance_metric (string): The parameter of calculating Hausdorff distance supports three measurement methods,
-                                  "euclidean", "chessboard" or "taxicab". Default: "euclidean".
-        symmetric (bool): if calculate the symmetric average surface distance between `y_pred` and `y`. In addition,
-                          if sets ``symmetric = True``, the average symmetric surface distance between these two inputs
-                          will be returned. Default: False.
+        distance_metric (string):  Three measurement methods are supported:
+                "euclidean", "chessboard" or "taxicab". Default: "euclidean".
+        symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
+                y_pred and y. If False, only calculates :math:`RmsSurDis(y_pred, y)` surface distance,
+                otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                :math:`RmsSurDis(A \leftrightarrow B)` will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -95,9 +114,9 @@ class RootMeanSquareDistance(Metric):
         Updates the internal evaluation result 'y_pred', 'y' and 'label_idx'.
 
         Args:
-            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are Tensor or numpy.ndarray. 'y_pred' is the
-                    predicted binary image. 'y' is the actual binary image. 'label_idx', the data type of `label_idx`
-                    is int.
+            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are `Tensor`, list or numpy.ndarray.
+                    'y_pred' is the predicted binary image. 'y' is the actual binary image. 'label_idx', the data
+                    type of `label_idx` is int.
 
         Raises:
             ValueError: If the number of the inputs is not 3.
@@ -131,10 +150,10 @@ class RootMeanSquareDistance(Metric):
 
     def eval(self):
         """
-        Calculate residual mean square surface distance.
+        Calculate Root Mean Square Distance.
 
         Returns:
-             A float with residual mean square surface distance.
+             numpy.float64, root mean square surface distance.
 
         Raises:
             RuntimeError: If the update method is not called first, an error will be reported.

@@ -63,13 +63,13 @@ class TopKCategoricalAccuracy(Metric):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result y_pred and y.
+        Updates the internal evaluation result `y_pred` and `y`.
 
         Args:
-            inputs: Input y_pred and y. y_pred and y are Tensor, list or numpy.ndarray.
-                y_pred is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
+            inputs: Input `y_pred` and `y`. ` y_pred` and `y` are Tensor, list or numpy.ndarray.
+                `y_pred` is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
-                is the number of categories. y contains values of integers. The shape is :math:`(N, C)`
+                is the number of categories. `y` contains values of integers. The shape is :math:`(N, C)`
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
@@ -90,7 +90,7 @@ class TopKCategoricalAccuracy(Metric):
         Computes the top-k categorical accuracy.
 
         Returns:
-            Float, computed result.
+            numpy.float64, computed result.
         """
         if self._samples_num == 0:
             raise RuntimeError('The total number of samples must not be 0.')

@@ -20,24 +20,46 @@ from .metric import Metric, rearrange_inputs
 
 
 class MeanSurfaceDistance(Metric):
-    """
-    This function is used to compute the Average Surface Distance from `y_pred` to `y` under the default setting.
-    Mean Surface Distance(MSD), the mean of the vector is taken. This tell us how much, on average, the surface varies
-    between the segmentation and the GT.
+    r"""
+    Computes the Average Surface Distance from `y_pred` to `y` under the default setting. It measures how much,
+    on average, the surface varies between the segmentation and the GT (ground truth).
+
+    Given two sets A and B, S(A) denotes the set of surface voxels of A. The shortest distance of an arbitrary voxel v
+     to S(A) is defined as:
+
+    .. math::
+        {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert \
+
+    The Average Surface Distance form set(B) to set(A) is given by:
+
+    .. math::
+        AvgSurDis(B\rightarrow A) = \frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}  \
+        left ( s_{B}, S(A) \right )} } {\left | S(B) \right |}
+
+    Where the ||*|| denotes a distance measure. |*| denotes the number of elements.
+
+    The mean of surface distance form set(B) to set(A) and from set(A) to set(B) is:
+
+    .. math::
+        MeanSurDis(A \leftrightarrow B) = \frac{\sum_{s_{A}  \in S(A)}^{} {\text{dis}  \left ( s_{A}, S(B) \right )}
+        + \sum_{s_{B}  \in S(B)}^{} {\text{dis}  \left ( s_{B}, S(A) \right )} }{\left | S(A) \right | +
+        \left | S(B) \right |}
 
     Args:
-        distance_metric (string): The parameter of calculating Hausdorff distance supports three measurement methods,
-                                  "euclidean", "chessboard" or "taxicab". Default: "euclidean".
-        symmetric (bool): if calculate the symmetric average surface distance between `y_pred` and `y`. In addition,
-                          if sets ``symmetric = True``, the average symmetric surface distance between these two inputs
-                          will be returned. Default: False.
+        distance_metric (string): Three measurement methods are supported: "euclidean", "chessboard" or "taxicab".
+                          Default: "euclidean".
+        symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
+                          If False, it only calculates :math: `AvgSurDis(y_pred\rightarrow y)`,
+                           otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                           :math: `MeanSurDis(A \leftrightarrow B)`, will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import nn, Tensor
+
+        >>> from mindspore imporst nn, Tensor
         >>>
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
         >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))
@@ -93,9 +115,9 @@ class MeanSurfaceDistance(Metric):
         Updates the internal evaluation result 'y_pred', 'y' and 'label_idx'.
 
         Args:
-            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are Tensor or numpy.ndarray. 'y_pred' is the
-                    predicted binary image. 'y' is the actual binary image. 'label_idx', the data type of `label_idx`
-                    is int.
+            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are a Tensor, list or numpy.ndarray.
+                    'y_pred' is the predicted binary image. 'y' is the actual binary image. 'label_idx', the data
+                    type of `label_idx` is int.
 
         Raises:
             ValueError: If the number of the inputs is not 3.
@@ -132,7 +154,7 @@ class MeanSurfaceDistance(Metric):
         Calculate mean surface distance.
 
         Returns:
-             A float with mean surface distance.
+             numpy.float64. The mean surface distance value.
 
         Raises:
             RuntimeError: If the update method is not called first, an error will be reported.

@@ -37,8 +37,7 @@ class Precision(EvaluationBase):
         In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
-        eval_type (str): Metric to calculate accuracy over a dataset, for classification or
-                         multilabel. Default: 'classification'.
+        eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
 
     Examples:
         >>> import numpy as np
@@ -135,10 +134,10 @@ class Precision(EvaluationBase):
         Computes the precision.
 
         Args:
-            average (bool): Specify whether calculate the average precision. Default value is False.
+            average (bool): Specify whether calculate the average precision. Default: False.
 
         Returns:
-            Float, the computed result.
+            numpy.float64, the computed result.
         """
         if self._class_num == 0:
             raise RuntimeError('The input number of samples can not be 0.')

@@ -37,8 +37,8 @@ class Recall(EvaluationBase):
         In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
-        eval_type (str): The metric to calculate the recall over a dataset, for classification or
-                         multilabel. Default: 'classification'.
+        eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
+        Default: 'classification'.
 
     Examples:
         >>> import numpy as np
@@ -134,10 +134,10 @@ class Recall(EvaluationBase):
         Computes the recall.
 
         Args:
-            average (bool): Specify whether calculate the average recall. Default value is False.
+            average (bool): Specify whether calculate the average recall. Default: False.
 
         Returns:
-            Float, the computed result.
+            numpy.float64, the computed result.
         """
         if self._class_num == 0:
             raise RuntimeError('The input number of samples can not be 0.')

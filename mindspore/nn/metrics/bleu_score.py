@@ -21,7 +21,8 @@ from .metric import Metric, rearrange_inputs
 
 class BleuScore(Metric):
     """
-    Calculates BLEU score of machine translated text with one or more references.
+    Calculates the BLEU score. BLEU (bilingual evaluation understudy) is a metric for evaluating
+    the quality of text translated by machine.
 
     Args:
         n_gram (int): The n_gram value ranges from 1 to 4. Default: 4.
@@ -92,12 +93,13 @@ class BleuScore(Metric):
         Updates the internal evaluation result with `candidate_corpus` and `reference_corpus`.
 
         Args:
-            inputs: Input `candidate_corpus` and `reference_corpus`. `candidate_corpus` and `reference_corpus` are a
-                list. The `candidate_corpus` is an iterable of machine translated corpus. The `reference_corpus` is
-                an iterable of iterables of reference corpus.
+            inputs: Input `candidate_corpus` and `reference_corpus`. `candidate_corpus` and `reference_corpus` are
+                    both a list. The `candidate_corpus` is an iterable of machine translated corpus. The
+                    `reference_corpus` is an iterable object of iterables of reference corpus.
 
         Raises:
             ValueError: If the number of inputs is not 2.
+            ValueError: If the lengths of `candidate_corpus` and `reference_corpus` are not equal.
         """
         if len(inputs) != 2:
             raise ValueError("For 'BleuScore.update', it needs 2 inputs (candidate_corpus, reference_corpus), "
@@ -137,7 +139,7 @@ class BleuScore(Metric):
          Computes the bleu score.
 
          Returns:
-             A numpy with bleu score.
+             numpy.float64, the bleu score.
 
          Raises:
             RuntimeError: If the update method is not called first, an error will be reported.

@@ -30,7 +30,7 @@ class Fbeta(Metric):
                 {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     Args:
-        beta (Union[float, int]): The weight of precision.
+        beta (Union[float, int]): Beta coefficient in the F measure.
 
     Examples:
         >>> import numpy as np
@@ -109,10 +109,10 @@ class Fbeta(Metric):
         Computes the fbeta.
 
         Args:
-            average (bool): Whether to calculate the average fbeta. Default value is False.
+            average (bool): Whether to calculate the average fbeta. Default: False.
 
         Returns:
-            Float, computed result.
+            numpy.ndarray or numpy.float64, the computed result.
         """
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         if self._class_num == 0:

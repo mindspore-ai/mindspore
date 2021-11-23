@@ -20,24 +20,24 @@ from .metric import Metric, rearrange_inputs
 
 class ConfusionMatrix(Metric):
     r"""
-    Computes the confusion matrix. The performance matrix of measurement classification model is the model whose output
-    is binary or multi class. The confusion matrix is calculated. An array of shape [BC4] is returned.
-    The third dimension represents each channel of each sample in the input batch.Where B is the batch size and C is
-    the number of classes to be calculated.
+    Computes the confusion matrix, which is commonly used to evaluate the performance of classification models,
+    including binary classification and multiple classification. It returns an array of shape [BC4], where B is the
+    batch size and C is the number of classes to be calculated, the third dimension represents each channel of
+    each sample in the input batch, .
 
-    If you only want to find confusion matrix, use this class. If you want to find 'PPV', 'TPR', 'TNR', etc., use class
-    'mindspore.metrics.ConfusionMatrixMetric'.
+    If you only need confusion matrix, use this class. If you want to calculate other metrics, such as 'PPV',
+    'TPR', 'TNR', etc., use class 'mindspore.metrics.ConfusionMatrixMetric'.
 
     Args:
         num_classes (int): Number of classes in the dataset.
-        normalize (str): The parameter of calculating ConfusionMatrix supports four Normalization modes, Choose from:
+        normalize (str): Normalization mode for confusion matrix. Choose from:
 
             - **'no_norm'** (None) - No Normalization is used. Default: None.
             - **'target'** (str) - Normalization based on target value.
             - **'prediction'** (str) - Normalization based on predicted value.
             - **'all'** (str) - Normalization over the whole matrix.
 
-        threshold (float): A threshold, which is used to compare with the input tensor. Default: 0.5.
+        threshold (float): The threshold used to compare with the input tensor. Default: 0.5.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -85,13 +85,14 @@ class ConfusionMatrix(Metric):
         Update state with y_pred and y.
 
         Args:
-            inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, a list or an array.
+            inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`,  list or numpy.ndarray.
                     `y_pred` is the predicted value, `y` is the true value.
                     The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
                     The shape of `y` is :math:`(N, ...)`.
 
         Raises:
-            ValueError: If the number of the inputs is not 2.
+            ValueError: If the number of inputs is not 2.
+            ValueError: If the lengths of `candidate_corpus` and `reference_corpus` are not equal.
         """
         if len(inputs) != 2:
             raise ValueError("For 'ConfusionMatrix.update', it needs 2 inputs (predicted value, true value), "
@@ -150,28 +151,26 @@ class ConfusionMatrix(Metric):
 
 class ConfusionMatrixMetric(Metric):
     r"""
-    The performance matrix of measurement classification model is the model whose output is binary or multi class.
-    The correlation measure of confusion matrix was calculated from the full-scale tensor, and the average values of
-    batch, class channel and iteration were collected. This function supports the calculation of all measures described
-    below: the metric name in parameter metric_name.
+    Computes metrics related to confusion matrix. The calculation based on full-scale tensor, average values of
+    batch, class channel and iteration are collected. All metrics supported by the interface are listed in comments
+    of `metric_name`.
 
-    If you want to use confusion matrix to calculate, such as 'PPV', 'TPR', 'TNR', use this class.
+    If you want to calculate metrics related to confusion matrix, such as 'PPV', 'TPR', 'TNR', use this class.
     If you only want to calculate confusion matrix, please use 'mindspore.metrics.ConfusionMatrix'.
 
     Args:
         skip_channel (bool): Whether to skip the measurement calculation on the first channel of the predicted output.
                              Default: True.
-        metric_name (str): The names of indicators are in the following range. Of course, you can also set the industry
-                           common aliases for these indicators. Choose from:
-                           ["sensitivity", "specificity", "precision", "negative predictive value", "miss rate",
+        metric_name (str): Names of supported metrics , users can also set the industry common aliases for them.  Choose
+                            from: ["sensitivity", "specificity", "precision", "negative predictive value", "miss rate",
                            "fall out", "false discovery rate", "false omission rate", "prevalence threshold",
                            "threat score", "accuracy", "balanced accuracy", "f1 score",
                            "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"].
         calculation_method (bool): If true, the measurement for each sample will be calculated first.
                                    If not, the confusion matrix of all samples will be accumulated first.
                                    As for classification task, 'calculation_method' should be False. Default: False.
-        decrease (str): Define the mode to reduce the calculation result of one batch of data. Decrease is used only if
-                        calculation_method is True. Default: "mean". Choose from:
+        decrease (str): The reduction method on data batch. `decrease` takes effect only when calculation_method
+                            is True. Default: "mean". Choose from:
                         ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"].
 
     Supported Platforms:
@@ -220,23 +219,11 @@ class ConfusionMatrixMetric(Metric):
         Update state with predictions and targets.
 
         Args:
-            inputs: Input `y_pred` and `y`. `y_pred` and `y` are ndarray.
-                y_pred: Input data to compute. It must be one-hot format and the first dim represents batch.
-                The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
-                As for classification tasks, `y_pred` should have the shape [BN] where N is larger than 1.
-                As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
-                y: Compute the true value of the measure. It must be one-hot format and first dim is batch.
-                The shape of `y` is :math:`(N, C, ...)`.
-
-        inputs:
-            Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, a list or an array.
-
-            - **y_pred** (ndarray) - Input data to compute. It must be one-hot format and first dim is batch.
-              The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
-              As for classification tasks, `y_pred` should have the shape [BN] where N is larger than 1.
-              As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
-            - **y** (ndarray) - Compute the true value of the measure. It must be one-hot format and first dim is batch.
-              The shape of `y` is :math:`(N, C, ...)`.
+            inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, list or numpy.ndarray.
+                `y_pred`: The batch data shape is :math:`(N, C, ...)` or :math:`(N, ...)`, representing onehot format
+                or category index format respectively. As for classification tasks, y_pred should have the shape [BN]
+                where N is larger than 1. As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
+                `y`: It must be one-hot format. The batch data shape is :math:`(N, C, ...)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.

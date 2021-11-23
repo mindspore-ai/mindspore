@@ -70,18 +70,23 @@ class HausdorffDistance(Metric):
     Given two feature sets A and B, the Hausdorff distance between two point sets A and B is defined as follows:
 
     .. math::
-        H(A, B) = \text{max}[h(A, B), h(B, A)]
-        h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}
-        h(A, B) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+        \begin{array}{ll} \\
+                H(A, B) = \text{max}[h(A, B), h(B, A)]\\
+                h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}\\
+                h(A, B) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+        \end{array}
+
+    where h(A,B) is the maximum distance of a set A to the nearest point in the set B, h(B,A) is the maximum distance
+    of a set B to the nearest point in the set A. The distance calculation is oriented, which means that most of times
+    :math: `h(A, B)` is not equal to :math: `h(B, A)`.
 
     Args:
-        distance_metric (string): The parameter of calculating Hausdorff distance supports three measurement methods,
-                                  "euclidean", "chessboard" or "taxicab". Default: "euclidean".
+        distance_metric (string): Three distance measurement methods are supported: "euclidean", "chessboard" or
+                           "taxicab". Default: "euclidean".
         percentile (float): Floating point numbers between 0 and 100. Specify the percentile parameter to get the
                             percentile of the Hausdorff distance. Default: None.
-        directed (bool): It can be divided into directional and non-directional Hausdorff distance,
-                         and the default is non-directional Hausdorff distance, specify the percentile parameter to get
-                         the percentile of the Hausdorff distance. Default: False.
+        directed (bool): If True, it only calculates h(y_pred, y) distance, otherwise, max(h(y_pred, y), h(y, y_pred))
+                    will be returned. Default: False.
         crop (bool): Crop input images and only keep the foregrounds. In order to maintain two inputs' shapes,
                      here the bounding box is achieved by (y_pred | y) which represents the union set of two images.
                      Default: True.
@@ -255,15 +260,18 @@ class HausdorffDistance(Metric):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result 'y_pred', 'y' and 'label_idx'.
+        Updates the internal evaluation result with the inputs: 'y_pred', 'y' and 'label_idx'.
 
         Args:
-            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are Tensor or numpy.ndarray. 'y_pred' is the
-                    predicted binary image. 'y' is the actual binary image. 'label_idx', the data type of `label_idx`
-                    is int.
+            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are a `Tensor`, list or
+                        numpy.ndarray.  'y_pred' is the predicted binary image. 'y' is the actual
+                        binary image. Data type of 'label_idx' is int or float.
 
         Raises:
             ValueError: If the number of the inputs is not 3.
+            TypeError: If the data type of label_idx is not int or float.
+            ValueError: If the value of label_idx is not in y_pred or y.
+            ValueError: If y_pred and y have different shapes.
         """
         self._is_update = True
 
@@ -293,7 +301,7 @@ class HausdorffDistance(Metric):
         Calculate the no-directed or directed Hausdorff distance.
 
         Returns:
-             A float with hausdorff_distance.
+             numpy.float64, the hausdorff distance.
 
         Raises:
             RuntimeError: If the update method is not called first, an error will be reported.

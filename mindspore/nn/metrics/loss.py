@@ -54,7 +54,7 @@ class Loss(Metric):
 
         Raises:
             ValueError: If the length of inputs is not 1.
-            ValueError: If the dimension of loss is not 1.
+            ValueError: If the dimension of loss is not 1 or 0.
         """
         if len(inputs) != 1:
             raise ValueError('The length of inputs must be 1, but got {}'.format(len(inputs)))
@@ -76,7 +76,7 @@ class Loss(Metric):
         Calculates the average of the loss.
 
         Returns:
-            Float, the average of the loss.
+            numpy.float64. The average of the loss.
 
         Raises:
             RuntimeError: If the total number is 0.
