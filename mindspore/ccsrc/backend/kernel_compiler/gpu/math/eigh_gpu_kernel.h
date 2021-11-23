@@ -83,7 +83,8 @@ class EighGpuKernel : public GpuKernel {
     }
     auto output_addr = GetDeviceAddress<T>(outputs, kDim0);    // output eigenvalues
     auto output_v_addr = GetDeviceAddress<T>(outputs, kDim1);  // output eigenvalues
-    auto w_v_addr = GetDeviceAddress<T>(workspace, kDim0);     // temp eigenvector before transpose
+    int *devInfo = GetDeviceAddress<int>(workspace, kDim0);
+    auto w_v_addr = GetDeviceAddress<T>(workspace, kDim1);  // temp eigenvector before transpose
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(w_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -95,38 +96,31 @@ class EighGpuKernel : public GpuKernel {
     } else if constexpr (std::is_same_v<T, double>) {
       cusolverDnDsyevd_bufferSize(cusolver_handle_, jobz_, uplo_, m_, inout_A_addr, lda_, output_addr, &lwork);
     }
-    int *devInfo = nullptr;
-    cudaMalloc(reinterpret_cast<void **>(&devInfo), sizeof(int));
-    T *d_work = nullptr;
-    cudaMalloc(reinterpret_cast<void **>(&d_work), sizeof(T) * lwork);
+
+    void *d_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
     if constexpr (std::is_same_v<T, float>) {
-      cusolverDnSsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, d_work, lwork, devInfo);
+      cusolverDnSsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, reinterpret_cast<T *>(d_work),
+                       lwork, devInfo);
     } else if constexpr (std::is_same_v<T, double>) {
-      cusolverDnDsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, d_work, lwork, devInfo);
+      cusolverDnDsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, reinterpret_cast<T *>(d_work),
+                       lwork, devInfo);
     }
     size_t input_shape[kShape2dDims] = {m_, m_};
     size_t input_axis[kShape2dDims] = {1, 0};
-    size_t *dev_input_shape = nullptr;
-    cudaMalloc(reinterpret_cast<void **>(&dev_input_shape), kShape2dDims * sizeof(size_t));
-    size_t *dev_input_axis = nullptr;
-    cudaMalloc(reinterpret_cast<void **>(&dev_input_axis), kShape2dDims * sizeof(size_t));
+    size_t *dev_input_shape = GetDeviceAddress<size_t>(workspace, kDim2);
+    size_t *dev_input_axis = GetDeviceAddress<size_t>(workspace, kDim3);
     cudaMemcpyAsync(dev_input_shape, input_shape, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
     cudaMemcpyAsync(dev_input_axis, input_axis, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
     CalTranspose(m_ * m_, w_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, output_v_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (d_work) {
-      cudaFree(d_work);
-    }
+    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "copy to device result failed");
-    if (devInfo) {
-      cudaFree(devInfo);
-    }
     if (info_gpu != 0) {
       MS_LOG_EXCEPTION << kernel_name_ << " launch gpu kernel fail for dtype:" << dtype_;
     }
@@ -141,7 +135,12 @@ class EighGpuKernel : public GpuKernel {
     output_size_list_.push_back(m_ * sizeof(T));
     // eigenvector
     output_size_list_.push_back(m_ * m_ * sizeof(T));
+    // result
+    workspace_size_list_.push_back(sizeof(int));
     workspace_size_list_.push_back(m_ * m_ * sizeof(T));
+    // transpose scalar workspace
+    workspace_size_list_.push_back(kShape2dDims * sizeof(size_t));
+    workspace_size_list_.push_back(kShape2dDims * sizeof(size_t));
   }
 
   size_t m_{1};
