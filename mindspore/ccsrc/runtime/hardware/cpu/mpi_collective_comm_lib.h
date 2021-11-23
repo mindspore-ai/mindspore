@@ -60,5 +60,7 @@ extern "C" EXPORT_MPI_WRAPPER bool DestroyCommunicationGroup(const std::string &
 extern "C" EXPORT_MPI_WRAPPER uint32_t GetRankId(const std::string &group_name);
 extern "C" EXPORT_MPI_WRAPPER uint32_t GetGroupSize(const std::string &group_name);
 extern "C" EXPORT_MPI_WRAPPER bool AssignLocalRank();
+extern "C" EXPORT_MPI_WRAPPER uint32_t global_rank_id();
 extern "C" EXPORT_MPI_WRAPPER uint32_t local_rank_id();
+extern "C" EXPORT_MPI_WRAPPER uint32_t global_rank_size();
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MPI_COLLECTIVE_COMM_LIB_H_

@@ -60,9 +60,7 @@ bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_nam
 
 // The exported APIs for 'dlsym' to load.
 using MPICollectiveCommLib = mindspore::device::cpu::MPICollectiveCommLib;
-bool InitializeCollectiveLib(uint32_t global_rank, uint32_t global_rank_size) {
-  return MPICollectiveCommLib::GetInstance().Initialize(global_rank, global_rank_size);
-}
+bool InitializeCollectiveLib(uint32_t, uint32_t) { return MPICollectiveCommLib::GetInstance().Initialize(); }
 
 bool FinalizeCollectiveLib() { return MPICollectiveCommLib::GetInstance().Finalize(); }
 
@@ -82,4 +80,8 @@ uint32_t GetCommunicationGroupSize(const std::string &group_name) {
 
 bool AssignLocalRank() { return MPICollectiveCommLib::GetInstance().AssignLocalRank(); }
 
+uint32_t global_rank_id() { return MPICollectiveCommLib::GetInstance().global_rank_id(); }
+
 uint32_t local_rank_id() { return MPICollectiveCommLib::GetInstance().local_rank_id(); }
+
+uint32_t global_rank_size() { return MPICollectiveCommLib::GetInstance().global_rank_size(); }

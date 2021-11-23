@@ -30,15 +30,15 @@
 namespace mindspore {
 namespace distributed {
 namespace cluster {
-// The dummy cluster context interface. This class is the stub for some test cases and windows compiling.
+// The dummy cluster context interface. This class is for ut test and windows compiling.
 class ClusterContext {
  public:
   ~ClusterContext() = default;
   DISABLE_COPY_AND_ASSIGN(ClusterContext)
   static std::shared_ptr<ClusterContext> instance();
 
-  void Initialize() const;
-  void Finalize() const;
+  bool Initialize() const;
+  bool Finalize() const;
   std::string node_role() const;
 
  private:
