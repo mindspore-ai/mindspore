@@ -192,7 +192,7 @@ std::unordered_map<std::string, VectorRef> ConvPadFusion::DefinePatterns() const
 
 AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                   const AnfNodePtr &node, const EquivPtr &equiv) const {
-  if (func_graph == nullptr || node == nullptr || equiv != nullptr) {
+  if (func_graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }

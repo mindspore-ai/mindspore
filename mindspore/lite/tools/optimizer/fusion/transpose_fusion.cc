@@ -217,12 +217,12 @@ AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, con
     if (perm == ori_perm) {
       return pre_cnode->input(1);
     }
-    auto name = pre_cnode->fullname_with_scope();
-    auto new_transpose = GenTransposeNode(func_graph, pre_cnode->input(1), perm, name);
+    auto name = trans_cnode_2->fullname_with_scope();
+    auto perm_node = BuildIntVecParameterNode(func_graph, perm, name + "_perm");
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);
-    manager->Replace(trans_cnode_2, new_transpose);
-    return new_transpose;
+    manager->SetEdge(trans_cnode_2, 1, pre_cnode->input(1));
+    manager->SetEdge(trans_cnode_2, kInputIndexTwo, perm_node);
   }
   return nullptr;
 }
@@ -251,7 +251,6 @@ int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
       return lite::RET_ERROR;
     }
     if (weight_shape.size() != 1) {
-      MS_LOG(ERROR) << "Dot not support weight size larger than 1.";
       return lite::RET_ERROR;
     }
   }
@@ -291,7 +290,6 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return TransTransFusion(func_graph, node);
   } else if (pattern_name == "TransScalePatternName" || pattern_name == "TransSoftmaxPatternName") {
     if (AdjustAxis(node) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Adjust axis for node " << node->fullname_with_scope() << " failed.";
       return nullptr;
     }
   }

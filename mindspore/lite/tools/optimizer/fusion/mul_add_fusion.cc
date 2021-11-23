@@ -127,32 +127,10 @@ bool MulAddFusion::CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const
   return true;
 }
 
-tensor::TensorPtr MulAddFusion::GetTensorFromParamOrValueNode(const AnfNodePtr &node) const {
-  MS_ASSERT(node != nullptr);
-  if (utils::isa<ParameterPtr>(node)) {
-    auto param_node = node->cast<ParameterPtr>();
-    MS_ASSERT(param_node != nullptr);
-    if (!param_node->has_default()) {
-      MS_LOG(DEBUG) << "Const input of add op should has data";
-      return nullptr;
-    }
-    return param_node->default_param()->cast<tensor::TensorPtr>();
-  } else if (utils::isa<ValueNodePtr>(node)) {
-    auto value_node = node->cast<ValueNodePtr>();
-    MS_ASSERT(value != nullptr);
-    if (value_node->value() == nullptr) {
-      MS_LOG(DEBUG) << "Const input of add op should has data";
-      return nullptr;
-    }
-    return value_node->value()->cast<tensor::TensorPtr>();
-  }
-  return nullptr;
-}
-
 bool MulAddFusion::AdjustScaleBiasTensorShape(size_t *axis_offset) const {
   MS_CHECK_TRUE_RET(axis_offset != nullptr, false);
   auto scale_shape = scale_tensor_->shape_c();
-  if (mul_input_shape_.size() != scale_shape.size() || mul_input_shape_ == scale_shape) {
+  if (mul_input_shape_ == scale_shape) {
     return true;
   }
   while (scale_shape.size() > DIMENSION_1D) {
@@ -235,8 +213,8 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
   size_t mul_const_idx = utils::isa<CNodePtr>(mul_cnode->input(SECOND_INPUT)) ? THIRD_INPUT : SECOND_INPUT;
   mul_const_anode_ = mul_cnode->input(mul_const_idx);
   MS_CHECK_TRUE_RET(mul_const_anode_ != nullptr && !utils::isa<CNodePtr>(mul_const_anode_), nullptr);
-  bias_tensor_ = GetTensorFromParamOrValueNode(add_const_anode_);
-  scale_tensor_ = GetTensorFromParamOrValueNode(mul_const_anode_);
+  bias_tensor_ = GetTensorInfo(add_const_anode_);
+  scale_tensor_ = GetTensorInfo(mul_const_anode_);
   if (bias_tensor_ == nullptr || scale_tensor_ == nullptr) {
     return nullptr;
   }
@@ -264,6 +242,7 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
 
   // create scale op
   auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode, mul_const_anode_, add_const_anode_});
+  scale_node->set_abstract(add_cnode->abstract());
   return scale_node;
 }
 }  // namespace mindspore::opt

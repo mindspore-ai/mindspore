@@ -44,7 +44,6 @@ class MulAddFusion : public MultiplePatternProcessPass {
 
   bool CheckAddNode(const mindspore::CNodePtr &cnode) const;
   bool CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const;
-  tensor::TensorPtr GetTensorFromParamOrValueNode(const AnfNodePtr &node) const;
   bool ScaleInputShapeValid(size_t *axis_offset) const;
   bool AdjustScaleBiasTensorShape(size_t *axis_offset) const;
 
