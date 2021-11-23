@@ -24,12 +24,10 @@ from ..operations import _grad_ops as G
 @bprop_getters.register(P.CTCLossV2)
 def get_bprop_ctc_loss_v2(self):
     """Grad definition for `CTCLossV2` operation"""
-    transpose = P.Transpose()
     ctc_loss_grad = P.CTCLossV2Grad(self.blank, self.reduction, self.zero_infinity)
 
     def bprop(log_probs, targets, input_lengths, target_lengths, out, dout):
-        grad = ctc_loss_grad(dout[1], log_probs, targets, input_lengths, target_lengths, out[0], out[1])
-        grad = transpose(grad, (1, 0, 2))
+        grad = ctc_loss_grad(dout[0], log_probs, targets, input_lengths, target_lengths, out[0], out[1])
         return grad, zeros_like(targets), zeros_like(input_lengths), zeros_like(target_lengths)
 
     return bprop
