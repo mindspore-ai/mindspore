@@ -62,20 +62,6 @@ class ShrinkUpdateState : public opt::Pass {
 };
 
 /**
- * @brief Spread the MakeTuple in node list
- * @param nodes
- * @param begin_index
- * @example
- *   input
- *     nodes: [ a, b, MakeTuple[i, j], c, d, MakeTuple[x, MakeTuple[y, z]] ]
- *     begin_index: 1
- *   output
- *     [b, i, j, c, d, x, y, z]
- * @return std::vector<AnfNodePtr>
- */
-AnfNodePtrList SpreadTuples(const AnfNodePtrList &nodes, size_t begin_index = 0);
-
-/**
  * @brief Extend the getitem for UpdateState
  * @example
  *   In this example, the Cast is an output of GraphKernel and only links to an UpdateState,

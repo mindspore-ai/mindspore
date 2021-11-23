@@ -34,6 +34,7 @@ class CallbackImpl : public Callback {
   std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetProcessor(const AnfNodePtr &node) override;
   std::string GetProcessorFromContext() override;
+  void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_CALLBACK_IMPL_H_

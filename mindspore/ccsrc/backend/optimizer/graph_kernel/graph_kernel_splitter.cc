@@ -27,6 +27,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/context/graph_kernel_flags.h"
 
@@ -632,7 +633,7 @@ class Splitter {
       graph_manager->AddFuncGraph(sub_func_graph);
 
       // set GraphKernel attr
-      auto attr = ExtractGraphKernelName(TopoSort(sub_func_graph->get_return()), "", "split");
+      auto attr = GkUtils::ExtractGraphKernelName(TopoSort(sub_func_graph->get_return()), "", "split");
       sub_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(attr));
 
       // set kernel info

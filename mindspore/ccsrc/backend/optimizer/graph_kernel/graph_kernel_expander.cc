@@ -37,6 +37,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -164,12 +165,9 @@ AnfNodePtr PyExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_grap
   auto func_graph = old_node->func_graph();
   std::vector<AnfNodePtr> inputs(old_node->inputs().begin() + 1, old_node->inputs().end());
   AnfNodePtrList kernel_nodes;
-  AnfNodePtrList outputs;
   EliminateRedundantParameters(new_func_graph, &inputs);
   kernel::GetValidKernelNodes(new_func_graph, &kernel_nodes);
-  kernel::GetFuncGraphOutputNodes(new_func_graph, &outputs);
-  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs, outputs);
-  SetNewKernelInfo(graph_kernel_node, new_func_graph, inputs, outputs);
+  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs);
   MS_LOG(DEBUG) << "Expand node: " << old_node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();
   return graph_kernel_node;

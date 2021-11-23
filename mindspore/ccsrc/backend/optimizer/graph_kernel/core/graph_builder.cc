@@ -25,29 +25,27 @@
 #include "base/core_ops.h"
 #include "ir/func_graph.h"
 #include "utils/utils.h"
+#include "utils/anf_utils.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
-                         const std::unordered_set<AnfNodePtr> &seen) {
+namespace {
+// find outputs of nodes
+AnfNodePtrList FindOutputs(const AnfNodePtrList &nodes, const AnfNodePtrToAnfNodePtrMap &eqv) {
   AnfNodePtrList output;
-  if (users.size() == 0) {
-    return output;
-  }
+  auto mng = nodes[0]->func_graph()->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  auto &users = mng->node_users();
   for (auto &node : nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
+    // only CNode can be an output.
+    if (!node->isa<CNode>()) continue;
     auto iter = users.find(node);
-    if (iter == users.end()) {
-      continue;
-    }
+    if (iter == users.end()) continue;
     auto &node_users = iter->second;
-    const bool has_outer_user = std::any_of(std::begin(node_users), std::end(node_users),
-                                            [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool {
-                                              const bool is_outer_user = (seen.find(u.first) == seen.end());
-                                              return is_outer_user;
-                                            });
-    if (has_outer_user) {
+    // if any user of the `node` is not in the nodes list, the `node` is an output.
+    if (std::any_of(std::begin(node_users), std::end(node_users),
+                    [&eqv](const std::pair<AnfNodePtr, int> &u) { return eqv.find(u.first) == eqv.end(); })) {
       output.emplace_back(node);
     }
   }
@@ -56,12 +54,11 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
 
 AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *const inputs_ptr,
                            AnfNodePtrToAnfNodePtrMap *eqv_ptr) {
-  auto &input_list = *inputs_ptr;
   auto &eqv = *eqv_ptr;
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
     eqv[node] = node;
   } else if (eqv.find(node) == eqv.end()) {
-    input_list.push_back(node);
+    inputs_ptr->push_back(node);
     eqv[node] = fg->add_parameter();
     eqv[node]->set_abstract(node->abstract());
     eqv[node]->set_kernel_info(node->kernel_info_ptr());
@@ -69,43 +66,150 @@ AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNo
   return eqv[node];
 }
 
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &node_list) {
+bool InlineInnerFuncGraph(const FuncGraphPtr &fg) {
+  auto mng = fg->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  bool changed = false;
+  auto cnodes = fg->GetOrderedCnodes();
+  for (const auto &n : cnodes) {
+    auto graph_kernel_g = GetCNodeFuncGraph(n);
+    if (graph_kernel_g == nullptr) continue;
+    AnfNodePtrList inp(n->inputs().begin() + 1, n->inputs().end());
+    auto out = InlineClone(graph_kernel_g, fg, inp, n->input(0)->scope());
+    mng->Replace(n, out);
+    changed = true;
+  }
+  return changed;
+}
+
+void EliminateMakeTuple(const FuncGraphPtr &fg) {
+  if (!IsPrimitiveCNode(fg->output(), prim::kPrimMakeTuple)) {
+    return;
+  }
+  auto out_cnode = fg->output()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  AnfNodePtrList new_args = GkUtils::SpreadTuples(out_cnode->inputs());
+  if (new_args.size() != out_cnode->size()) {
+    auto new_out = fg->NewCNode(new_args);
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    mng->Replace(out_cnode, new_out);
+  }
+  AbstractBasePtrList abs_list;
+  std::transform(new_args.begin() + 1, new_args.end(), std::back_inserter(abs_list),
+                 [](const AnfNodePtr &node) { return node->abstract(); });
+  fg->output()->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+}
+
+bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
+  auto cnodes = fg->GetOrderedCnodes();
+  AnfNodePtrList value_nodes;
+  for (const auto &cnode : cnodes) {
+    auto &inputs = cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      const auto &tnode = inputs[i];
+      auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
+      if (tensor == nullptr || tensor->DataSize() == 1) {
+        continue;
+      }
+      value_nodes.push_back(tnode);
+    }
+  }
+  if (value_nodes.empty()) return false;
+  auto mng = fg->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  for (auto &vnode : value_nodes) {
+    auto parameter = fg->add_parameter();
+    parameter->set_abstract(vnode->abstract());
+    parameter->set_kernel_info(vnode->kernel_info_ptr());
+    mng->Replace(vnode, parameter);
+    inputs_ptr->push_back(vnode);
+  }
+  return true;
+}
+
+bool IsTupleOutput(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
+  if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
+    auto &inputs = out->cast<CNodePtr>()->inputs();
+    real_outs->assign(inputs.begin() + 1, inputs.end());
+    return true;
+  }
+  if (auto fg = GetCNodeFuncGraph(out); fg != nullptr) {
+    return IsTupleOutput(fg->output(), real_outs);
+  }
+  return false;
+}
+
+void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_fuse_cnode,
+                         const AnfNodePtrList &outputs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  // single out
+  if (outputs.size() == 1) {
+    mng->Replace(outputs[0], new_fuse_cnode);
+    return;
+  }
+
+  size_t offset = 0;
+  for (size_t out_idx = 0; out_idx < outputs.size(); out_idx++) {
+    AnfNodePtrList real_outs;
+    // the output is a single tensor
+    if (!IsTupleOutput(outputs[out_idx], &real_outs)) {
+      auto gt_idx = MakeValue(SizeToLong(out_idx + offset));
+      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), new_fuse_cnode, NewValueNode(gt_idx)};
+      gt_inputs.back()->set_abstract(gt_idx->ToAbstract());
+      auto new_out = func_graph->NewCNode(gt_inputs);
+      new_out->set_abstract(outputs[out_idx]->abstract());
+      mng->Replace(outputs[out_idx], new_out);
+      continue;
+    }
+
+    // the out is make tuple , modify the get_item node's value
+    auto users = mng->node_users()[outputs[out_idx]];  // use a copy, the original user map is changed in for-loop.
+    for (auto &user : users) {
+      auto getitem_node = user.first;
+      if (!getitem_node->isa<CNode>() || !IsPrimitiveCNode(getitem_node, prim::kPrimTupleGetItem)) {
+        continue;
+      }
+      auto value_ptr = GetValueNode(getitem_node->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
+      MS_EXCEPTION_IF_NULL(value_ptr);
+      auto old_gt_idx = GetValue<int64_t>(value_ptr);
+      auto gt_idx = MakeValue(SizeToLong(out_idx + offset) + old_gt_idx);
+      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), new_fuse_cnode, NewValueNode(gt_idx)};
+      gt_inputs.back()->set_abstract(gt_idx->ToAbstract());
+      auto new_getitem_node = func_graph->NewCNode(gt_inputs);
+      new_getitem_node->set_abstract(getitem_node->abstract());
+      mng->Replace(getitem_node, new_getitem_node);
+    }
+
+    offset += real_outs.size() - 1;
+  }
+}
+}  // namespace
+
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &nodes) {
   FuncGraphPtr fg = nullptr;
   {
     // limit the lifetime of guard.
-    TraceGuard guard(
-      std::make_shared<TraceSegmentTransform>(node_list[0]->cast<CNodePtr>()->func_graph()->debug_info()));
+    TraceGuard guard(std::make_shared<TraceSegmentTransform>(nodes[0]->cast<CNodePtr>()->func_graph()->debug_info()));
     fg = std::make_shared<FuncGraph>();
   }
   AnfNodePtrList input_list;
   AnfNodePtrToAnfNodePtrMap eqv;
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
-  for (auto node : node_list) {
-    auto &input_nodes = node->cast<CNodePtr>()->inputs();
-    auto fn = input_nodes[0];
-    std::vector<AnfNodePtr> new_args{fn};
-    if (IsPrimitive(fn, prim::kPrimDepend) && input_nodes.size() >= kDependInputSize &&
-        eqv.find(input_nodes[kDependAttachNodeIndex]) == eqv.end()) {
-      new_args.emplace_back(RefSubGraphNode(fg, input_nodes[kRealInputIndexInDepend], &input_list, &eqv));
-      const size_t value_start_index = 2;
-      for (size_t i = value_start_index; i < input_nodes.size(); ++i) {
-        new_args.emplace_back(NewValueNode(MakeValue(0)));
-      }
-    } else {
-      (void)std::transform(
-        std::begin(input_nodes) + 1, std::end(input_nodes), std::back_inserter(new_args),
-        [&fg, &input_list, &eqv](const AnfNodePtr &node) { return RefSubGraphNode(fg, node, &input_list, &eqv); });
-    }
+  for (auto &node : nodes) {
+    auto &node_inputs = node->cast<CNodePtr>()->inputs();
+    std::vector<AnfNodePtr> new_args{node_inputs[0]};
+    (void)std::transform(
+      std::begin(node_inputs) + 1, std::end(node_inputs), std::back_inserter(new_args),
+      [&fg, &input_list, &eqv](const AnfNodePtr &node) { return RefSubGraphNode(fg, node, &input_list, &eqv); });
     TraceGuard tg(std::make_shared<TraceSegmentTransform>(node->debug_info()));
     eqv[node] = fg->NewCNode(new_args);
     eqv[node]->set_abstract(node->abstract());
     eqv[node]->set_kernel_info(node->kernel_info_ptr());
   }
-  std::unordered_set<AnfNodePtr> eqv_keys;
-  (void)std::transform(std::begin(eqv), std::end(eqv), std::inserter(eqv_keys, eqv_keys.end()),
-                       [](const std::pair<AnfNodePtr, AnfNodePtr> &elem) -> AnfNodePtr { return elem.first; });
-  auto mgr = node_list[0]->func_graph()->manager();
-  auto outputs = GetOutput(node_list, mgr->node_users(), eqv_keys);
+  auto outputs = FindOutputs(nodes, eqv);
   AnfNodePtr fg_output;
   if (outputs.size() > 1) {
     std::vector<AnfNodePtr> output_args;
@@ -119,5 +223,53 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
   }
   fg->set_output(fg_output);
   return std::make_tuple(fg, input_list, outputs);
+}
+
+// Transform nodes(including basic and composite node) to a new graph, and collect their inputs and outputs.
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNodes(const AnfNodePtrList &nodes) {
+  FuncGraphPtr fg;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes);
+
+  FuncGraphManagerPtr mng = fg->manager();
+  if (mng == nullptr) {
+    mng = Manage(fg, false);
+    fg->set_manager(mng);
+  }
+
+  InlineInnerFuncGraph(fg);
+  // eliminate tuple of tuple, and set Abstract for output MakeTuple
+  EliminateMakeTuple(fg);
+  ConvertNonscalarTensorToParameter(fg, &inputs);
+
+  return std::make_tuple(fg, inputs, outputs);
+}
+
+AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
+  std::vector<AnfNodePtr> fn_inputs{NewValueNode(sub_fg)};
+  fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
+  auto fuse_cnode = main_fg->NewCNode(fn_inputs);
+  fuse_cnode->set_abstract(sub_fg->output()->abstract());
+  Callback::Instance()->SetGraphKernelNodeKernelInfo(fuse_cnode);
+  return fuse_cnode;
+}
+
+AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
+                                           const std::string &postfix) {
+  auto mng = main_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(main_graph, true);
+    main_graph->set_manager(mng);
+  }
+  FuncGraphPtr fg;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = BuildSingleGraphFromNodes(nodes);
+  auto fuse_new_node = CreateNewFuseCNode(main_graph, fg, inputs);
+  ReplaceNewFuseCNode(main_graph, fuse_new_node, outputs);
+  auto fuse_op_name = GkUtils::ExtractGraphKernelName(nodes, "", postfix);
+  fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
+  return fuse_new_node;
 }
 }  // namespace mindspore::graphkernel

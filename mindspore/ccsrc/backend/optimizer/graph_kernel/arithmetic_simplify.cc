@@ -25,6 +25,7 @@
 #include <unordered_map>
 
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_builder.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/anf.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -645,14 +646,12 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       }
       if (!change_anf_graph) continue;
       ReorganizeEmptyGraph(lg);
-      AnfNodePtrList outputs;
-      auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
+      auto new_funcgraph = LiteGraph2AnfGraph(lg);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
       EliminateRedundantParameters(new_funcgraph, &inputs);
-      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
-      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
       mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
       do_simplify = true;
