@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+
+#include <unordered_set>
 #include <fstream>
-#include "utils/ms_utils.h"
+
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {

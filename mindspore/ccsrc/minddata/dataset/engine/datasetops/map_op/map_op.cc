@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
+
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <vector>
 
 #include "minddata/dataset/callback/callback_param.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
-
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"

@@ -16,6 +16,8 @@
 
 #include "minddata/dataset/engine/cache/perf/cache_pipeline_run.h"
 
+#include <algorithm>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/util/random.h"

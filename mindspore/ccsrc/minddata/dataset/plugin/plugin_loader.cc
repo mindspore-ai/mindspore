@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <numeric>
+
 #include "minddata/dataset/plugin/plugin_loader.h"
-#include "minddata/dataset/plugin/shared_lib_util.h"
+
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <vector>
+
 #include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/plugin/shared_lib_util.h"
 
 namespace mindspore {
 namespace dataset {

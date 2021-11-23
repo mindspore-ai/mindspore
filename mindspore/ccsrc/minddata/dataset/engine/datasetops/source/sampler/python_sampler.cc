@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/engine/datasetops/source/sampler/python_sampler.h"
+
+#include <utility>
 
 namespace mindspore {
 namespace dataset {
