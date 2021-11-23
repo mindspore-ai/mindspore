@@ -32,7 +32,9 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
     MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size
-                    << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics();
+                    << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
+                    << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
+                       "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
     return 0;
   }
   auto alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE;
