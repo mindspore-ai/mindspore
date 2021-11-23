@@ -3070,22 +3070,21 @@ class NeighborListUpdate(PrimitiveWithInfer):
     is L, and the number of total atom in excluded list is E.
 
     Args:
-        grid_numbers(int32): the total number of grids divided.
-        not_first_time(int32): whether to construct the neighbor
-          list first time or not.
-        nxy(int32): the total number of grids divided in xy plane.
-        excluded_atom_numbers(int32): the total atom numbers in the excluded list.
-        cutoff(float32): the cutoff distance for short-range force calculation.
-        skin(float32): the overflow value of cutoff to maintain a neighbor list.
-        cutoff_square(float32): the square value of cutoff.
-        half_skin_square(float32): skin*skin/4, indicates the maximum
-          square value of the distance atom allowed to move between two updates.
-        cutoff_with_skin(float32): cutoff + skin, indicates the
-          radius of the neighbor list for each atom.
-        half_cutoff_with_skin(float32): cutoff_with_skin/2.
-        cutoff_with_skin_square(float32): the square value of cutoff_with_skin.
-        refresh_interval(int32): the number of iteration steps between two updates of neighbor list.
-        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid k.
+        grid_numbers (int32): the total number of grids divided G.
+        atom_numbers (int32): the number of atoms n.
+        not_first_time (int32): whether to construct the neighbor list first time or not.
+        nxy (int32): the total number of grids divided in xy plane.
+        excluded_atom_numbers (int32): the total atom numbers in the excluded list E.
+        cutoff_square (float32): the cutoff square distance for short-range force calculation.
+        half_skin_square (float32): the maximum square value of the distance atom allowed to move between two updates.
+        cutoff_with_skin (float32): cutoff + skin, indicates the radius of the neighbor list for each atom.
+        half_cutoff_with_skin (float32): cutoff_with_skin/2.
+        cutoff_with_skin_square (float32): the square value of cutoff_with_skin.
+        refresh_interval (int32): the number of iteration steps between two updates of neighbor list. Default: 20.
+        cutoff (float32): the cutoff distance for short-range force calculation. Default: 10.0.
+        skin (float32): the maximum value of the distance atom allowed to move. Default: 2.0.
+        max_atom_in_grid_numbers (int32): the maximum number of atoms in one grid k. Default: 64.
+        max_neighbor_numbers (int32): The maximum number of neighbors m. Default: 800.
 
     Inputs:
         - **atom_numbers_in_grid_bucket** (Tensor) - The number of atoms in each grid bucket.
