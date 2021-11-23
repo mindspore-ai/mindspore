@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/nccl/repository/archive/v2.7.6-1.tar.gz")
-    set(MD5 "220d232b30cb9bff2e54219399b9f6fb")
+    set(MD5 "6884364c2b1cf229f0bdaf94efcb5782")
 else()
     set(REQ_URL "https://github.com/NVIDIA/nccl/archive/v2.7.6-1.tar.gz")
     set(MD5 "073b19899f374c5ba07d2db02dc38f9f")
