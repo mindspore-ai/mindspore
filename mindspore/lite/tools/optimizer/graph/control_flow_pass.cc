@@ -322,29 +322,39 @@ int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, con
   }
 
   // call the cond fg
+  ValueNodePtr cond_partial_anf_primitive = lite::GetPartialFusionPrim();
+  if (cond_partial_anf_primitive == nullptr) {
+    MS_LOG(ERROR) << "`new cond_partial_anf_primitive failed.";
+    return RET_FAILED;
+  }
   auto cond_partial_vnode = NewValueNode(cond_fg);
   MS_CHECK_TRUE_MSG(cond_partial_vnode != nullptr, lite::RET_NULL_PTR, "cond_partial_vnode is nullptr");
-  std::vector<AnfNodePtr> cond_call_cnode_inputs{cond_partial_vnode};
+  std::vector<AnfNodePtr> cond_partial_inputs{cond_partial_anf_primitive, cond_partial_vnode};
   // set body fg output
   auto body_output = body_fg->output()->cast<CNodePtr>();
   MS_ASSERT(body_output != nullptr);
   if (CheckPrimitiveType(body_output, prim::kPrimMakeTuple)) {
     for (size_t i = 1; i < body_output->inputs().size(); ++i) {
-      cond_call_cnode_inputs.push_back(body_output->input(i));
+      cond_partial_inputs.push_back(body_output->input(i));
     }
     body_fg->DropNode(body_output);
   } else {
-    cond_call_cnode_inputs.push_back(body_output);
+    cond_partial_inputs.push_back(body_output);
   }
 
   body_fg_inputs = body_fg->get_inputs();
   for (size_t i = origin_body_fg_inputs_size; i < body_fg_inputs.size(); ++i) {
-    cond_call_cnode_inputs.push_back(body_fg_inputs[i]);
+    cond_partial_inputs.push_back(body_fg_inputs[i]);
   }
 
-  auto cond_call_cnode = body_fg->NewCNode(cond_call_cnode_inputs);
-  MS_CHECK_TRUE_MSG(cond_call_cnode != nullptr, lite::RET_NULL_PTR, "cond_call_cnode != nullptr");
-  cond_call_cnode->set_fullname_with_scope(body_fg->get_attr("graph_name")->ToString() + "_call_cond_fg");
+  auto cond_partial_cnode = body_fg->NewCNode(cond_partial_inputs);
+  MS_CHECK_TRUE_MSG(cond_partial_cnode != nullptr, lite::RET_NULL_PTR, "cond_partial_cnode != nullptr");
+  cond_partial_cnode->set_fullname_with_scope(body_fg->get_attr("graph_name")->ToString() + "_call_cond_fg");
+
+  // insert call node
+  std::vector<AnfNodePtr> call_node_inputs{cond_partial_cnode};
+  auto cond_call_cnode = body_fg->NewCNode(call_node_inputs);
+  cond_call_cnode->set_fullname_with_scope("call_" + cond_partial_cnode->fullname_with_scope());
   body_fg->set_output(cond_call_cnode);
 
   to_process_q.push_back(body_fg);
