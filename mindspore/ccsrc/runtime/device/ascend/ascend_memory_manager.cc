@@ -50,7 +50,7 @@ void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
   auto align_size = GetCommonAlignSize(size);
   const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
   if (device_addr == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << align_size
+    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
                       << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
   }
   return device_addr;
@@ -83,7 +83,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
 
   uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
   if (alloc_address == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << align_size
+    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
                       << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
   }
   // create protect area [kMemAlignSize -- data -- kMemAlignSize] for communication node memory
@@ -121,7 +121,7 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   auto align_size = GetCommunicationAlignSize(size);
   uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
   if (base_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc tensor memory, size: " << align_size
+    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
                       << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
   }
   return base_ptr + kMemAlignSize;
