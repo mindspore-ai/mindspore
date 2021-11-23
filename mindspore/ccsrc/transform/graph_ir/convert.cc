@@ -863,11 +863,10 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
     UpdateOpDesc(it);
   }
 
-  if (error_ == 0) {
-    df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
-  } else {
+  if (error_ != 0) {
     return *this;
   }
+  df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
 
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
