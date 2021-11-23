@@ -58,17 +58,20 @@ using AnyListPtr = std::shared_ptr<AnyList>;
 
 struct OpRunInfo {
   std::string op_name;
-  PrimitivePtr primitive;
+  Primitive *primitive;
   AbstractBasePtr abstract;
   bool is_dynamic_shape = false;
   bool is_auto_mixed_precision = false;
   bool lazy_build = false;
-  std::string next_op_name = "";
+  std::string next_op_name;
 #if defined(__APPLE__)
   int next_input_index = 0;
 #else
   size_t next_input_index = 0;
 #endif
+  std::string graph_info;
+  std::vector<int64_t> tensor_mask;
+  std::vector<tensor::TensorPtr> input_tensors;
 };
 
 struct InputTensorInfo {
@@ -108,8 +111,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void BuildGraph(GraphId graphId);
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  void RunOp(OpRunInfo *, const GraphInfo &, std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-             const std::vector<int64_t> &tensors_mask);
+  void RunOp(OpRunInfo *, VectorRef *outputs);
   void RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
 
 #ifndef ENABLE_SECURITY
@@ -276,7 +278,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // Generate graph info for a single op graph
   GraphInfo GetSingleOpGraphInfo(const CNodePtr &kernel, const std::vector<tensor::TensorPtr> &input_tensors);
-  void GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info);
+  OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info);
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index);
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,

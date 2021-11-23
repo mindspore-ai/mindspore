@@ -220,6 +220,7 @@ set(SUB_COMP
         runtime/device
         runtime/framework
         runtime/hardware
+        runtime/op_builder
         runtime/hccl_adapter
         frontend/optimizer
         frontend/parallel

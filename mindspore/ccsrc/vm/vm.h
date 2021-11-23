@@ -130,7 +130,6 @@ class FinalVM {
   void Pushsp();
   void Popsp();
   void DoJmp(const BaseRef &jmp);
-  void SyncData(const py::object &args);
 
  private:
   InstSet insts_;

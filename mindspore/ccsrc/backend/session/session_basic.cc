@@ -1218,20 +1218,29 @@ GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,
   return graph_info;
 }
 
-void SessionBasic::GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info) {
+OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
+                                           const InputTensorInfo &tensor_info) {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(run_info);
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
-  run_info->primitive = primitive;
-  run_info->op_name = primitive->name();
   const auto &abstract = cnode->abstract();
   if (abstract == nullptr) {
     MS_LOG(EXCEPTION) << "Abstract is nullptr, node = " << cnode->DebugString();
   }
-  run_info->abstract = abstract;
   const auto &shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
-  run_info->is_dynamic_shape = shape->IsDynamic();
+
+  OpRunInfo op_run_info = {.op_name = primitive->name(),
+                           .primitive = primitive.get(),
+                           .abstract = abstract,
+                           .is_dynamic_shape = shape->IsDynamic(),
+                           .is_auto_mixed_precision = false,
+                           .lazy_build = false,
+                           .next_op_name = std::string(),
+                           .next_input_index = 0,
+                           .graph_info = graph_info,
+                           .tensor_mask = tensor_info.input_tensors_mask,
+                           .input_tensors = tensor_info.input_tensors};
+  return op_run_info;
 }
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
@@ -2143,7 +2152,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   graph_sum_++;
   std::vector<AnfNodePtr> inputs;
   // set input[0]
-  PrimitivePtr op_prim = op_run_info.primitive;
+  auto op_prim = op_run_info.primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
   // Decoupling of frontend PrimitivePy and backend Primitive
   inputs.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(*op_prim)));
@@ -2238,11 +2247,11 @@ void SessionBasic::BuildGraph(GraphId graph_id) {
   executor_->BuildGraph(shared_from_this(), graph_id);
 }
 
-void SessionBasic::RunOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                         std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                         const std::vector<int64_t> &tensors_mask) {
+void SessionBasic::RunOp(OpRunInfo *op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
-  executor_->RunOp(shared_from_this(), op_run_info, graph_info, input_tensors, outputs, tensors_mask);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  executor_->RunOp(shared_from_this(), op_run_info, op_run_info->graph_info, &op_run_info->input_tensors, outputs,
+                   op_run_info->tensor_mask);
 }
 
 void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -2305,13 +2314,12 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     InputTensorInfo input_tensor_info;
     GetOpInputTensors(kernel, op_output_map, parameter_index, inputs, &input_tensor_info);
 
+    VectorRef op_outputs;
     // Get OpRunInfo and GraphInfo
-    OpRunInfo run_info;
-    GetSingleOpRunInfo(kernel, &run_info);
     GraphInfo graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
+    OpRunInfo run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info);
 
     // Build and run current single op
-    VectorRef op_outputs;
     RunOpImplOrigin(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
                     input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();

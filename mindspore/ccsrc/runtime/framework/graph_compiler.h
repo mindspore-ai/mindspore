@@ -104,9 +104,11 @@ class GraphCompiler {
   GraphId CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context);
 
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
-  GraphId CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                       const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *const input_tensors,
-                       bool *single_op_cache_hit, const DeviceContext *device_context);
+  GraphId CompileGraph(const session::OpRunInfo &op_run_info, bool *single_op_cache_hit,
+                       const DeviceContext *device_context);
+
+  // Create kernel and Create workspace for graphs in PyNative mode.
+  void BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context) const;
 
   // Get graph by graph id, if not exist return nullptr, used in Graph mode.
   KernelGraphPtr Fetch(GraphId graph_id) const;
@@ -135,8 +137,8 @@ class GraphCompiler {
                                           InputTensorInfo *const input_tensor_info, size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
-  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
-                                      OpRunInfo *const run_info, GraphInfo *const graph_info);
+  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, OpRunInfo *run_info,
+                                      GraphInfo *graph_info);
 
   // Calculate ref count of PyNative back propagation operators.
   void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
@@ -180,6 +182,9 @@ class GraphCompiler {
 
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+
+  // Create device address for input and output of ops.
+  void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Single op kernel graph cache for PyNative mode.
   std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;
