@@ -30,7 +30,7 @@ class LiteTensorExtractor {
   LiteTensorExtractor() = default;
   ~LiteTensorExtractor() = default;
   static int GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs, converter::FmkType fmk_type,
-                                  bool train_flag);
+                                  bool train_flag, bool copy_data);
   static int GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *outputs, bool train_flag);
 };
 }  // namespace opt

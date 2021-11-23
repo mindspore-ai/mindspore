@@ -47,6 +47,7 @@ class DecreaseTransposeAlgo : public Pass {
   bool DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph);
   STATUS PostTransposeFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
+  STATUS HandleGraphSingleNode(const FuncGraphPtr &func_graph, const TransTypePair &trans_info, const CNodePtr &cnode);
   STATUS HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                               std::set<CNodePtr> *visit_transposes);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);

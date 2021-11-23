@@ -117,7 +117,7 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
 }
 
 int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, converter::FmkType fmk_type,
-                         bool train_flag, DataInfo *data_info) {
+                         bool train_flag, DataInfo *data_info, bool copy_data) {
   MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
   auto valueAbstract = value_node->abstract();
   MS_CHECK_TRUE_MSG(valueAbstract != nullptr, RET_ERROR, "valueAbstract is nullptr");
@@ -139,16 +139,20 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   auto data = value->cast<tensor::TensorPtr>();
   MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is invalid");
-  data_info->data_.resize(data->Size());
   if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
     MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
     return RET_ERROR;
   }
 
   // process weight tensor
-  if (data->Size() > 0 && memcpy_s(data_info->data_.data(), data->Size(), data->data_c(), data->Size()) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error.";
-    return RET_ERROR;
+  if (copy_data) {
+    data_info->data_.resize(data->Size());
+    if (data->Size() > 0 && memcpy_s(data_info->data_.data(), data->Size(), data->data_c(), data->Size()) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s error.";
+      return RET_ERROR;
+    }
+  } else {
+    data_info->data_ptr_ = data->data_c();
   }
   return RET_OK;
 }
@@ -236,7 +240,8 @@ int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &p
 }
 }  // namespace
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info) {
+int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info,
+                          bool copy_data) {
   MS_ASSERT(param_node != nullptr && data_info != nullptr);
   ShapeVector shape_vector;
   TypeId data_type = kTypeUnknown;
@@ -258,13 +263,28 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
   std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
   data_info->shape_ = dims;
   if (tensor_info != nullptr && tensor_info->Size() != 0) {
-    if (data_type != kObjectTypeTensorType || tensor_info->Size() >= kTensorListMinSize) {
+    // tensor_list tensor
+    if (data_type == kObjectTypeTensorType && tensor_info->Size() >= kTensorListMinSize) {
       data_info->data_.resize(tensor_info->Size() - offset);
       if (EOK != common::huge_memcpy_s(data_info->data_.data(), data_info->data_.size(),
                                        static_cast<uint8_t *>(tensor_info->data_c()) + offset,
                                        tensor_info->Size() - offset)) {
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;
+      }
+    }
+    // common node with const data
+    if (data_type != kObjectTypeTensorType) {
+      if (copy_data) {
+        data_info->data_.resize(tensor_info->Size() - offset);
+        if (EOK != common::huge_memcpy_s(data_info->data_.data(), data_info->data_.size(),
+                                         static_cast<uint8_t *>(tensor_info->data_c()) + offset,
+                                         tensor_info->Size() - offset)) {
+          MS_LOG(ERROR) << "memcpy_s failed.";
+          return RET_ERROR;
+        }
+      } else {
+        data_info->data_ptr_ = static_cast<uint8_t *>(tensor_info->data_c()) + offset;
       }
     }
   }
@@ -274,11 +294,11 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
 }
 
 int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                               DataInfo *data_info) {
+                               DataInfo *data_info, bool copy_data) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto param_node = cnode->input(index)->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "input node is not parameter node.");
-  if (FetchFromDefaultParam(param_node, fmk_type, data_info) != RET_OK) {
+  if (FetchFromDefaultParam(param_node, fmk_type, data_info, copy_data) != RET_OK) {
     MS_LOG(ERROR) << "fetch information from default param failed.";
     return RET_ERROR;
   }
@@ -304,7 +324,7 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
 }
 
 int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                           DataInfo *data_info) {
+                           DataInfo *data_info, bool copy_data) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto value_node = cnode->input(index)->cast<ValueNodePtr>();
   MS_CHECK_TRUE_MSG(value_node != nullptr, RET_ERROR, "input node is not value node.");
@@ -314,7 +334,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "prim is nullptr");
   if (value->isa<tensor::Tensor>()) {
-    ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info);
+    ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info, copy_data);
     if (index == kNumWeightIndex && prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
       data_info->format_ = GetValue<int64_t>(prim->GetAttr(mindspore::ops::kFormat));
     }

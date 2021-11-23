@@ -160,9 +160,9 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
     if (!input_node->has_default()) {
       return lite::RET_OK;
     }
-    status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info);
+    status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info, true);
   } else {
-    status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info);
+    status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info, true);
   }
   if (status != lite::RET_OK) {
     return lite::RET_ERROR;
@@ -409,6 +409,33 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
   return lite::RET_OK;
 }
 
+STATUS DecreaseTransposeAlgo::HandleGraphSingleNode(const FuncGraphPtr &func_graph, const TransTypePair &trans_info,
+                                                    const CNodePtr &cnode) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto status = ConvertTensorToNCOrNH(func_graph, cnode, i, fmk_type_, train_flag_, trans_info.post_);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  auto status = transpose_strategy_.ChangeOpAxis(func_graph, cnode, trans_info.post_);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "change op attr failed.";
+    return lite::RET_ERROR;
+  }
+  status = ModifyCNodeFormat(cnode, trans_info.post_);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "ModifyCNodeFormat failed.";
+    return lite::RET_ERROR;
+  }
+  status = node_infer_shape_.InferShape(cnode);
+  if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+    MS_LOG(ERROR) << "infer shape failed.";
+    return lite::RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                    std::set<CNodePtr> *visit_transposes) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr && visit_transposes != nullptr);
@@ -452,27 +479,10 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
     if (IsSpecialType(middle_cnode)) {
       continue;
     }
-    for (size_t i = 1; i < middle_cnode->size(); ++i) {
-      status = ConvertTensorToNCOrNH(func_graph, middle_cnode, i, fmk_type_, train_flag_, trans_info.post_);
-      if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
-        return lite::RET_ERROR;
-      }
-    }
-    status = transpose_strategy_.ChangeOpAxis(func_graph, middle_cnode, trans_info.post_);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "change op attr failed.";
-      return lite::RET_ERROR;
-    }
-    status = ModifyCNodeFormat(middle_cnode, trans_info.post_);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "ModifyCNodeFormat failed.";
-      return lite::RET_ERROR;
-    }
-    status = node_infer_shape_.InferShape(middle_cnode);
-    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-      MS_LOG(ERROR) << "infer shape failed.";
-      return lite::RET_ERROR;
+    status = HandleGraphSingleNode(func_graph, trans_info, middle_cnode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Decrease transpose for op failed.";
+      return status;
     }
   }
   return lite::RET_OK;
@@ -515,7 +525,7 @@ int DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGra
         }
         continue;
       }
-      auto status = lite::FetchDataFromValueNode(cnode, index, fmk_type_, train_flag_, &data_info);
+      auto status = lite::FetchDataFromValueNode(cnode, index, fmk_type_, train_flag_, &data_info, true);
       if (status != lite::RET_OK) {
         continue;
       }

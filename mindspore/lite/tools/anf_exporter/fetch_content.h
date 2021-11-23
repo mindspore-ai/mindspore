@@ -35,17 +35,22 @@ struct DataInfo {
   int node_type_;
   std::vector<int> shape_;
   std::vector<uint8_t> data_;
-  DataInfo() : enable_huffman_code_(false), format_(0), data_type_(0), node_type_{0} {}
+  void *data_ptr_;
+  DataInfo() : enable_huffman_code_(false), format_(0), data_type_(0), node_type_{0}, data_ptr_(nullptr) {}
 };
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info);
+int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info,
+                          bool copy_data);
 
 int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                               DataInfo *data_info);
+                               DataInfo *data_info, bool copy_data);
+
 int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                           DataInfo *data_info);
+                           DataInfo *data_info, bool copy_data);
+
 int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                        DataInfo *data_info);
+
 int RemoveIfDepend(const CNodePtr &cnode);
 
 int RemoveIfMakeTuple(const CNodePtr &cnode);

@@ -344,7 +344,7 @@ bool ConstFoldPass::CheckCanSpecialFold(const CNodePtr &cnode) const {
 int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   std::vector<TensorPtr> inputs_ptr;
-  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_) != lite::RET_OK) {
+  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_, true) != lite::RET_OK) {
     MS_LOG(ERROR) << "extract input tensor from cnode failed. " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }

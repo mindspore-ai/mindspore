@@ -156,9 +156,11 @@ int ConvBiasaddFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr
   lite::DataInfo add_bias_info;
   int status = lite::RET_ERROR;
   if (add_bias->isa<Parameter>()) {
-    status = lite::FetchDataFromParameterNode(add_cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &add_bias_info);
+    status =
+      lite::FetchDataFromParameterNode(add_cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &add_bias_info, true);
   } else if (add_bias->isa<ValueNode>()) {
-    status = lite::FetchDataFromValueNode(add_cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &add_bias_info);
+    status =
+      lite::FetchDataFromValueNode(add_cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &add_bias_info, true);
   }
   if (status != lite::RET_OK) {
     MS_LOG(DEBUG) << "conv and add do fusion failed, please check";
@@ -170,11 +172,11 @@ int ConvBiasaddFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr
   if (conv_cnode->size() > kInputSizeThree) {
     auto conv_bias = conv_cnode->input(kInputIndexThree);
     if (conv_bias->isa<Parameter>()) {
-      status =
-        lite::FetchDataFromParameterNode(conv_cnode, kInputIndexThree, converter::kFmkTypeMs, false, &conv_bias_info);
+      status = lite::FetchDataFromParameterNode(conv_cnode, kInputIndexThree, converter::kFmkTypeMs, false,
+                                                &conv_bias_info, true);
     } else if (conv_bias->isa<ValueNode>()) {
       status =
-        lite::FetchDataFromValueNode(conv_cnode, kInputIndexThree, converter::kFmkTypeMs, false, &conv_bias_info);
+        lite::FetchDataFromValueNode(conv_cnode, kInputIndexThree, converter::kFmkTypeMs, false, &conv_bias_info, true);
     }
     if (status != lite::RET_OK) {
       MS_LOG(DEBUG) << "conv and add do fusion failed, please check";

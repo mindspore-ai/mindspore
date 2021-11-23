@@ -86,7 +86,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   }
   anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
   std::vector<TensorPtr> inputs_ptr;
-  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_) != lite::RET_OK) {
+  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_, false) != lite::RET_OK) {
     MS_LOG(ERROR) << "get inputs failed.";
     return lite::RET_ERROR;
   }
@@ -172,9 +172,9 @@ std::vector<int> NodeInferShape::GetInputShape(const CNodePtr &cnode, size_t ind
   if (utils::isa<CNode>(base_node->input(position))) {
     status = lite::FetchDataFromCNode(base_node, position, fmk_type_, train_flag_, &data_info);
   } else if (utils::isa<Parameter>(base_node->input(position))) {
-    status = lite::FetchDataFromParameterNode(base_node, position, fmk_type_, train_flag_, &data_info);
+    status = lite::FetchDataFromParameterNode(base_node, position, fmk_type_, train_flag_, &data_info, false);
   } else if (utils::isa<ValueNodePtr>(base_node->input(position))) {
-    status = lite::FetchDataFromValueNode(base_node, position, fmk_type_, train_flag_, &data_info);
+    status = lite::FetchDataFromValueNode(base_node, position, fmk_type_, train_flag_, &data_info, false);
   } else {
     MS_LOG(ERROR) << "input node is invalid.";
     return {};
@@ -195,7 +195,8 @@ std::vector<int> NodeInferShape::GetIntVecInput(const CNodePtr &cnode, size_t in
   std::vector<AnfNodePtr> specify_inputs = {origin_inputs[0], origin_inputs[index]};
   cnode->set_inputs(specify_inputs);
   std::vector<TensorPtr> specify_tensors;
-  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &specify_tensors, fmk_type_, train_flag_) != lite::RET_OK ||
+  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &specify_tensors, fmk_type_, train_flag_, false) !=
+        lite::RET_OK ||
       specify_tensors.empty()) {
     cnode->set_inputs(origin_inputs);
     return {};

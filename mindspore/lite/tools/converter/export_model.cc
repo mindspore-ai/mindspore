@@ -90,9 +90,9 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   DataInfo data_info;
   STATUS status;
   if (utils::isa<Parameter>(node)) {
-    status = FetchDataFromParameterNode(cnode, index, flags->fmk, flags->trainModel, &data_info);
+    status = FetchDataFromParameterNode(cnode, index, flags->fmk, flags->trainModel, &data_info, true);
   } else if (utils::isa<ValueNode>(node)) {
-    status = FetchDataFromValueNode(cnode, index, flags->fmk, flags->trainModel, &data_info);
+    status = FetchDataFromValueNode(cnode, index, flags->fmk, flags->trainModel, &data_info, true);
   } else {
     status = RET_ERROR;
   }
