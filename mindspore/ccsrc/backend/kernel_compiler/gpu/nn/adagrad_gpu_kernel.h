@@ -18,6 +18,7 @@
 #define MINDSPORE_ADAGRAD_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/adagrad_impl.cuh"
@@ -33,7 +34,8 @@ class AdagradGpuKernel : public GpuKernel {
         learning_rate_size_(0),
         gradient_size_(0),
         update_slots(true),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        kernel_name_("ApplyAdagrad") {}
 
   ~AdagradGpuKernel() override = default;
 
@@ -68,11 +70,11 @@ class AdagradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     update_slots = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
     if (input_num != 4) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but adagrad needs 4 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 4, but got " << input_num;
     }
     variable_size_ = sizeof(T);
     accumulation_size_ = sizeof(T);
@@ -82,10 +84,10 @@ class AdagradGpuKernel : public GpuKernel {
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ =
-      CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) || CHECK_NULL_INPUT(gradient_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
+                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "grad");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'AdagradGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -121,6 +123,7 @@ class AdagradGpuKernel : public GpuKernel {
   size_t gradient_size_;
   bool update_slots;
   bool is_null_input_;
+  std::string kernel_name_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

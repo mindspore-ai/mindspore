@@ -51,16 +51,16 @@ class FusedWeightDecayScaleMomentumGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but FusedMomentum needs " << INPUT_NUM << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    is_null_input_ = CHECK_NULL_INPUT(variable_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "variable");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FusedWeightDecayScaleMomentumGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

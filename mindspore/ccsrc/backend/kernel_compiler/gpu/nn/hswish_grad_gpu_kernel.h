@@ -48,19 +48,19 @@ class HSwishGradKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but HSwishGrad needs 2 inputs.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but HSwishGrad has 1 output.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of output should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'HswishGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

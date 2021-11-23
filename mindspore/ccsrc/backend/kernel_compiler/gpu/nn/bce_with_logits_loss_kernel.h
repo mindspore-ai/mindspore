@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/bce_with_logits_loss_impl.cuh"
@@ -68,41 +69,42 @@ class BCEWithLogitsLossKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
-      MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but BCEWithLogitsLoss needs 4 inputs.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 4, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but BCEWithLogitsLoss has 1 output.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     weight_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     pos_weight_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ =
-      CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(weight_shape_) || CHECK_NULL_INPUT(pos_weight_shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "logits") ||
+                     CHECK_SHAPE_NULL(weight_shape_, kernel_name_, "weight") ||
+                     CHECK_SHAPE_NULL(pos_weight_shape_, kernel_name_, "pos_weight");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BCEWithLogitsLossGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
     if (input_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'BCEWithLogitsLossGpuKernel', the rank of input cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be less than 1, but got "
                         << input_shape_.size();
     }
     if (weight_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'BCEWithLogitsLossGpuKernel', the rank of weight cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of weight cannot be less than 1, but got "
                         << weight_shape_.size();
     }
     if (pos_weight_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'BCEWithLogitsLossGpuKernel', the rank of pos_weight cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of pos_weight cannot be less than 1, but got "
                         << pos_weight_shape_.size();
     }
     input_size_ = 1;
     if (input_shape_.size() > MAX_LOGITS_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input dimension is " << input_shape_.size()
-                        << ", but BCEWithLogitsLoss can only support up to " << MAX_LOGITS_DIMENSION << "-D.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be greater than "
+                        << MAX_LOGITS_DIMENSION << ", but got " << input_shape_.size();
     }
     for (size_t i = 0; i < input_shape_.size(); i++) {
       input_size_ *= input_shape_[i];
@@ -130,6 +132,7 @@ class BCEWithLogitsLossKernel : public GpuKernel {
     weight_need_broadcast_ = false;
     pos_weight_need_broadcast_ = false;
     is_null_input_ = false;
+    kernel_name_ = "BCEWithLogitsLoss";
     input_shape_.clear();
     weight_shape_.clear();
     pos_weight_shape_.clear();
@@ -176,6 +179,7 @@ class BCEWithLogitsLossKernel : public GpuKernel {
   bool weight_need_broadcast_;
   bool pos_weight_need_broadcast_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> weight_shape_;
   std::vector<size_t> pos_weight_shape_;

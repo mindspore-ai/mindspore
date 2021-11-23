@@ -52,10 +52,10 @@ class FusedAddReluV2GpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FusedAddReluV2GpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

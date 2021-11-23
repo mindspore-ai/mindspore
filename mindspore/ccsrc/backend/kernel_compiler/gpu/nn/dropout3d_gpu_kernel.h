@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT3D_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/dropout3d_impl.cuh"
@@ -69,17 +70,17 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but Dropout3DGpuFwdKernel needs 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 1, but got " << input_num;
     }
 
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "Dropout3DGpuKernel input is null.";
       InitSizeLists();
       return true;
     }
@@ -88,7 +89,8 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
 
     size_t dims = input_shape.size();
     if (dims != 5) {
-      MS_LOG(EXCEPTION) << "Input dims " << dims << "not supported. Must be in NCDHW format.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 5, but got "
+                        << input_shape.size();
     }
 
     // get N and C values from 5 dim input tensor
@@ -106,7 +108,8 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
 
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
     if ((keep_prob_ < 0.0) || (keep_prob_ > 1.0)) {
-      MS_LOG(EXCEPTION) << "keep_prob is out of range [0.0, 1.0]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
+                        << "but got " << keep_prob_;
     }
 
     InitSizeLists();
@@ -116,6 +119,7 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
   void ResetResource() noexcept override {
     cudnn_handle_ = nullptr;
     is_null_input_ = false;
+    kernel_name_ = "Dropout3D";
     num_count_ = 0;
     keep_prob_ = 0.0;
     states_init_ = false;
@@ -145,6 +149,7 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
   cudnnHandle_t cudnn_handle_;
   curandGenerator_t curand_generator_;
   bool is_null_input_;
+  std::string kernel_name_;
   bool states_init_;
   size_t num_count_;
   size_t n_;

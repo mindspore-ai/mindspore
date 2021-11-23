@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/dropout_impl.cuh"
@@ -65,17 +66,17 @@ class DropoutGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but DropoutGpuFwdKernel needs 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 1, but got " << input_num;
     }
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'DropoutGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -101,6 +102,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
   void ResetResource() noexcept override {
     cudnn_handle_ = nullptr;
     is_null_input_ = false;
+    kernel_name_ = "Dropout";
     num_count_ = 0;
     keep_prob_ = 0.0;
     seed_ = 0;
@@ -125,6 +127,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
  private:
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t num_count_;
   float keep_prob_;
   bool states_init_;

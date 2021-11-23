@@ -92,7 +92,8 @@ class BatchNormGpuKernel : public GpuKernel {
     } else if (kernel_name == kBatchNormWithAddAndActivation) {
       bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid kernel name: " << kernel_name;
+      MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNorm << ", " << kBatchNormWithActivation << ", "
+                        << kBatchNormWithAddAndActivation << ", but got " << kernel_name;
     }
 
     InitResource();
@@ -104,23 +105,23 @@ class BatchNormGpuKernel : public GpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
       if (input_num != CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << " should be "
-                          << CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be "
+                          << CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM << ", but got " << input_num;
       }
     } else {
       if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << " should be "
-                          << NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be "
+                          << NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM << ", but got " << input_num;
       }
     }
 
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (shape.size() != 4 && shape.size() != 2) {
-      MS_LOG(EXCEPTION) << "tensor shape is " << shape.size() << ", BatchNormGpuKernel should be 2D or 4D";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 2 or 4, but got "
+                        << shape.size();
     }
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BatchNormGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

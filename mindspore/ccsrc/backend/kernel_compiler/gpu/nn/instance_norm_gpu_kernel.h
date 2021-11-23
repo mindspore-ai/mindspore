@@ -109,15 +109,15 @@ class InstanceNormGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
-      MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << "  should be 5";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be 5, but got " << input_num;
     }
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (input_shape_.size() != 4) {
-      MS_LOG(EXCEPTION) << "tensor shape is " << input_shape_.size() << ", InstanceNormGpuKernel should be 4";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x should be 4, but got "
+                        << input_shape_.size();
     }
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input_x");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "InstanceNormGpuKernel input is null";
       InitSizeLists();
       return true;
     }

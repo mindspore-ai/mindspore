@@ -38,9 +38,8 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
     }
 
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, node_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FusedAdamWeightDecayGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

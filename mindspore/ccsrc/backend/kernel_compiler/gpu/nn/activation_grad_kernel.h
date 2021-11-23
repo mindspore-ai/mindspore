@@ -67,7 +67,7 @@ class ActivationGradGpuKernel : public GpuKernel {
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kernel_map.find(node_name);
     if (iter == kernel_map.end()) {
-      MS_LOG(EXCEPTION) << "Kernel: " << node_name << " not support.";
+      MS_LOG(EXCEPTION) << "Only support these activations: ReLU6, Tanh, Elu, Sigmoid currently, but got " << node_name;
     }
     mode_ = iter->second;
 
@@ -75,13 +75,11 @@ class ActivationGradGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ActivationGradGpuKernel needs 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << node_name << "', the number of input should be 2, but got " << input_num;
     }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "ActivationGradGpuKernel input is null.";
       InitSizeLists();
       return true;
     }

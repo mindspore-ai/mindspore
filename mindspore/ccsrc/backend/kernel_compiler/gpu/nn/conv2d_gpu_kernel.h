@@ -77,11 +77,10 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
@@ -91,9 +90,10 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape) || CHECK_NULL_INPUT(filter_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "x") ||
+                     CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'Conv2dGpuFwdKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -111,7 +111,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (pad_list.size() != 4) {
-      MS_LOG(EXCEPTION) << "Conv2dGpuFwdKernel pad_list must have length 4.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
     }
 
     pad_height_ = pad_list[0];
@@ -196,6 +196,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     dilation_.clear();
     group_ = 1;
     is_null_input_ = false;
+    kernel_name_ = "Conv2d";
     input_size_ = 0;
     filter_size_ = 0;
     output_size_ = 0;
@@ -275,18 +276,15 @@ class Conv2dGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but conv2d needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but conv2d needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
 
   void Set4DDesc(const std::vector<size_t> &in_shape, const std::vector<size_t> &filter_shape,
@@ -345,16 +343,20 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 4) {
-      MS_LOG(EXCEPTION) << "Conv2d's' stride must be 4d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 4, but got "
+                        << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv2d stride only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+                        << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != 4) {
-      MS_LOG(EXCEPTION) << "Conv2d's dilation must be 4d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
+                        << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv2d dilation only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
   cudnnHandle_t cudnn_handle_;
@@ -384,6 +386,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t filter_size_;
   size_t output_size_;

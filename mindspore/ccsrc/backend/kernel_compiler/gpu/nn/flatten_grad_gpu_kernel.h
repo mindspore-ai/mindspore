@@ -19,6 +19,7 @@
 
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 
@@ -51,16 +52,15 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but FlattenGardGpuFwdKernel needs 1.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 1, but got " << input_num;
     }
 
     auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FlattenGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -79,6 +79,7 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
   void ResetResource() noexcept override {
     input_size_ = 0;
     is_null_input_ = false;
+    kernel_name_ = "FlattenGrad";
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -97,6 +98,7 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
 
   size_t input_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

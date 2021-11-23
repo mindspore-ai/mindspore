@@ -19,6 +19,7 @@
 
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 
@@ -50,10 +51,10 @@ class FlattenGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FlattenGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -67,6 +68,7 @@ class FlattenGpuFwdKernel : public GpuKernel {
   void ResetResource() noexcept override {
     input_size_ = 0;
     is_null_input_ = false;
+    kernel_name_ = "Flatten";
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -85,6 +87,7 @@ class FlattenGpuFwdKernel : public GpuKernel {
 
   size_t input_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
