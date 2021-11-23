@@ -353,8 +353,6 @@ int MatmulBaseFP16CPUKernel::Run() {
       MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
       return RET_ERROR;
     }
-    InitMatrixB(in_tensors_.at(1)->data(), in_tensors_.at(1)->data_type());
-    InitBias();
   }
 
   if (params_->a_const_ == false) {
