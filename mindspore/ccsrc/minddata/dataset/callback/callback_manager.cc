@@ -64,7 +64,10 @@ Status CallbackManager::EpochBegin(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
   RETURN_UNEXPECTED_IF_NULL(op_);
 
-  RETURN_IF_NOT_OK(op_->WaitForWorkers());
+  // only wait if there are callbacks to call
+  if (epoch_begin_indices_.size() > 0) {
+    RETURN_IF_NOT_OK(op_->WaitForWorkers());
+  }
 
   // Now do the actual callback
   for (size_t ind : epoch_begin_indices_) {
