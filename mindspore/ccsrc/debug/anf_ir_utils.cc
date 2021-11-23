@@ -340,49 +340,42 @@ std::string AnfExporter::GetOtherValueText(const FuncGraphPtr &, const ValuePtr 
   return oss.str();
 }
 
+static bool CanUseDumpText(const ValuePtr &value) {
+  return (value->isa<RefKey>() || value->isa<Scalar>() || value->isa<StringImm>() || value->isa<tensor::Tensor>() ||
+          value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>() || value->isa<ValueSlice>() ||
+          value->isa<Type>() || value->isa<KeywordArg>());
+}
+
 std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
-  std::ostringstream oss;
-  bool is_null_ptr = (func_graph == nullptr || value == nullptr);
-  if (is_null_ptr) {
-    return oss.str();
+  if (func_graph == nullptr || value == nullptr) {
+    return "";
   }
-
   if (value->isa<Primitive>()) {
-    oss << GetPrimitiveText(value->cast<PrimitivePtr>());
-  } else if (value->isa<MetaFuncGraph>()) {
-    MetaFuncGraphPtr meta_func_graph = value->cast<MetaFuncGraphPtr>();
-    oss << GetMetaFuncGraphText(meta_func_graph);
-  } else if (value->isa<SymbolicKeyInstance>()) {
-    oss << GetSymbolicKeyInstanceText(func_graph, value->cast<SymbolicKeyInstancePtr>());
-  } else if (value->isa<RefKey>()) {
-    oss << value->DumpText();
-  } else if (value->isa<Scalar>() || value->isa<StringImm>()) {
-    oss << value->DumpText();
-  } else if (value->isa<tensor::Tensor>()) {
-    oss << value->DumpText();
-  } else if (value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>()) {
-    oss << value->DumpText();
-  } else if (value->isa<ValueSequeue>()) {
-    oss << GetSequenceText(func_graph, value);
-  } else if (value->isa<ValueDictionary>()) {
-    oss << GetDictText(func_graph, value);
-  } else if (value->isa<ValueSlice>()) {
-    ValueSlicePtr slice = value->cast<ValueSlicePtr>();
-    oss << slice->DumpText();
-  } else if (value->isa<Type>()) {
-    oss << value->DumpText();
-  } else if (value->isa<parse::NameSpace>()) {
-    oss << GetNameSpaceText(value->cast<parse::NameSpacePtr>());
-  } else if (value->isa<parse::PyObjectWrapper>()) {
-    oss << value->type_name();
-  } else if (value->isa<KeywordArg>()) {
-    KeywordArgPtr keyword_arg = value->cast<KeywordArgPtr>();
-    oss << keyword_arg->DumpText();
-  } else {
-    return GetOtherValueText(func_graph, value);
+    return GetPrimitiveText(value->cast<PrimitivePtr>());
   }
-
-  return oss.str();
+  if (value->isa<MetaFuncGraph>()) {
+    MetaFuncGraphPtr meta_func_graph = value->cast<MetaFuncGraphPtr>();
+    return GetMetaFuncGraphText(meta_func_graph);
+  }
+  if (value->isa<SymbolicKeyInstance>()) {
+    return GetSymbolicKeyInstanceText(func_graph, value->cast<SymbolicKeyInstancePtr>());
+  }
+  if (value->isa<ValueSequeue>()) {
+    return GetSequenceText(func_graph, value);
+  }
+  if (value->isa<ValueDictionary>()) {
+    return GetDictText(func_graph, value);
+  }
+  if (value->isa<parse::NameSpace>()) {
+    return GetNameSpaceText(value->cast<parse::NameSpacePtr>());
+  }
+  if (value->isa<parse::PyObjectWrapper>()) {
+    return value->type_name();
+  }
+  if (CanUseDumpText(value)) {
+    return value->DumpText();
+  }
+  return GetOtherValueText(func_graph, value);
 }
 
 // This function is used to output node in CNode's inputs

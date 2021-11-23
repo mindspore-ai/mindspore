@@ -169,24 +169,13 @@ class ChoicePartialEliminater : public AnfVisitor {
     return true;
   }
 
-  // f(x1, x2, x3, z1, z2)
-  // g(x4, x2, z1, z2)
-  // h(x5, x2, x7, x8, z1, z2)
-  // --> anchor_fg = h
-  // h(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // f(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // g(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // as z1, z2 maybe U or IO monad.
-  AnfNodePtrList UnifyParameters(const size_t &anchor_index, const AnfNodePtrList &fg_list,
-                                 const std::vector<AnfNodePtrList> args_list) {
-    std::vector<size_t> inputs_index_list[args_list.size()];
-    size_t extra_input_counter = 0;
-    AnfNodePtrList extra_inputs;
+  // Find the new location of the old_inputs except Zs.
+  size_t FindNewLocation(const std::vector<AnfNodePtrList> &args_list, size_t anchor_index,
+                         std::vector<size_t> *inputs_index_list, AnfNodePtrList *extra_inputs_ptr) {
     const auto &anchor_args = args_list[anchor_index];
+    auto &extra_inputs = *extra_inputs_ptr;
+    size_t extra_input_counter = 0;
     size_t anchor_args_size = anchor_args.size();
-    auto anchor_fg = GetValueNode<FuncGraphPtr>(fg_list[anchor_index]);
-    MS_EXCEPTION_IF_NULL(anchor_fg);
-    // Find the new location of the old_inputs except Zs;
     for (size_t i = 0; i < args_list.size(); ++i) {
       if (i == anchor_index) {
         continue;
@@ -217,6 +206,26 @@ class ChoicePartialEliminater : public AnfVisitor {
         }
       }
     }
+    return extra_input_counter;
+  }
+
+  // f(x1, x2, x3, z1, z2)
+  // g(x4, x2, z1, z2)
+  // h(x5, x2, x7, x8, z1, z2)
+  // --> anchor_fg = h
+  // h(x5, x2, x7, x8, x1, x3, x4, z1, z2)
+  // f(x5, x2, x7, x8, x1, x3, x4, z1, z2)
+  // g(x5, x2, x7, x8, x1, x3, x4, z1, z2)
+  // as z1, z2 maybe U or IO monad.
+  AnfNodePtrList UnifyParameters(size_t anchor_index, const AnfNodePtrList &fg_list,
+                                 const std::vector<AnfNodePtrList> args_list) {
+    std::vector<size_t> inputs_index_list[args_list.size()];
+    AnfNodePtrList extra_inputs;
+    const auto &anchor_args = args_list[anchor_index];
+    size_t anchor_args_size = anchor_args.size();
+    auto anchor_fg = GetValueNode<FuncGraphPtr>(fg_list[anchor_index]);
+    MS_EXCEPTION_IF_NULL(anchor_fg);
+    size_t extra_input_counter = FindNewLocation(args_list, anchor_index, inputs_index_list, &extra_inputs);
 
     auto manager = anchor_fg->manager();
     MS_EXCEPTION_IF_NULL(manager);

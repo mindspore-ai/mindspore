@@ -387,6 +387,36 @@ PrimitivePtr GetPrimitiveFromValueNode(const AnfNodePtr &node) {
   return value->cast<PrimitivePtr>();
 }
 
+static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
+  auto &inputs = cnode->inputs();
+  std::vector<AnfNodePtr> real_inputs;
+  const size_t update_state_valid_input_index = 2;
+  const size_t make_tuple_valid_input_index = 1;
+  if (cnode->IsApply(prim::kPrimUpdateState) && inputs.size() > update_state_valid_input_index) {
+    (void)std::copy(inputs.begin() + SizeToLong(update_state_valid_input_index), inputs.end(),
+                    std::back_inserter(real_inputs));
+  } else if (cnode->IsApply(prim::kPrimMakeTuple) && inputs.size() > make_tuple_valid_input_index) {
+    (void)std::copy(inputs.begin() + SizeToLong(make_tuple_valid_input_index), inputs.end(),
+                    std::back_inserter(real_inputs));
+  }
+  std::string first_input_target = kTargetUnDefined;
+  bool has_diff_target =
+    std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodePtr &n) {
+      auto target = GetOriginNodeTarget(n);
+      if (target == kTargetUnDefined) {
+        return false;
+      }
+      if (first_input_target == kTargetUnDefined) {
+        first_input_target = target;
+      }
+      return target != first_input_target;
+    });
+  if (!has_diff_target) {
+    return first_input_target;
+  }
+  return kTargetUnDefined;
+}
+
 std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -402,7 +432,7 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
   }
 #endif
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad)) {
-    const size_t node_inputs_num = 3;
+    constexpr size_t node_inputs_num = 3;
     if (inputs.size() >= node_inputs_num) {
       size_t use_index = 1;
       if (!inputs[use_index]->isa<CNode>()) {
@@ -411,31 +441,7 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
       return GetOriginNodeTarget(inputs[use_index]);
     }
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) || IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
-    std::vector<AnfNodePtr> real_inputs;
-    const size_t update_state_valid_input_index = 2;
-    const size_t make_tuple_valid_input_index = 1;
-    if (IsPrimitiveCNode(node, prim::kPrimUpdateState) && inputs.size() > update_state_valid_input_index) {
-      (void)std::copy(inputs.begin() + SizeToLong(update_state_valid_input_index), inputs.end(),
-                      std::back_inserter(real_inputs));
-    } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) && inputs.size() > make_tuple_valid_input_index) {
-      (void)std::copy(inputs.begin() + SizeToLong(make_tuple_valid_input_index), inputs.end(),
-                      std::back_inserter(real_inputs));
-    }
-    std::string first_input_target = kTargetUnDefined;
-    bool has_diff_target =
-      std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodePtr &n) {
-        auto target = GetOriginNodeTarget(n);
-        if (target == kTargetUnDefined) {
-          return false;
-        }
-        if (first_input_target == kTargetUnDefined) {
-          first_input_target = target;
-        }
-        return target != first_input_target;
-      });
-    if (!has_diff_target) {
-      return first_input_target;
-    }
+    return GetNodeTargetForVarInputNode(node->cast<CNodePtr>());
   } else if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return GetOriginNodeTarget(cnode->input(1));
   }

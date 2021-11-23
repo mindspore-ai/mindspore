@@ -146,9 +146,8 @@ class InlinerBase : public AnfVisitor {
     if (IsForceInline(this, fg, node)) {
       if (IsUniqueUse(nullptr, fg, nullptr)) {
         return InlineMove(node, fg, args, inputs);
-      } else {
-        return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
       }
+      return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
     }
 
     if (IsUniqueUse(nullptr, fg, nullptr)) {
