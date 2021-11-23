@@ -146,6 +146,21 @@ Status ReshapeInfo::ComputeReplaceOp() {
     replace_op_info_ = redistribution_oplist_ptr->second;
   }
   MS_LOG(DEBUG) << name_ << ": replace op size = " << replace_op_.size();
+  if (replace_op_.size() == 1 && replace_op_.front().first == RESHAPE) {
+    int64_t shape_dim = 2;
+    auto value = replace_op_.front().second.second.front().first.second;
+    Shape dst_shape = GetValue<std::vector<int64_t>>(value);
+    Shape origin_dst_shape = GetValue<std::vector<int64_t>>(cnode_->input(shape_dim)->cast<ValueNodePtr>()->value());
+    if (dst_shape.size() == origin_dst_shape.size()) {
+      for (size_t i = 0; i < dst_shape.size(); ++i) {
+        if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != -1) {
+          return SUCCESS;
+        }
+      }
+      MS_LOG(INFO) << "The reshape would not change the target shape.";
+      replace_op_.front().second.second.front().first.second = MakeValue(origin_dst_shape);
+    }
+  }
   return SUCCESS;
 }
 
