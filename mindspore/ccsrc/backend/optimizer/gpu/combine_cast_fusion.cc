@@ -22,6 +22,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
+bool IsParameter(const mindspore::AnfNodePtr &node) {
+  return node->isa<Parameter>() || (IsPrimitiveCNode(node, prim::kPrimLoad) &&
+                                    (AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0))->isa<Parameter>());
+}
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
   MS_EXCEPTION_IF_NULL(deal_list);
   std::vector<AnfNodePtr> cast_32to16_list;
@@ -37,8 +41,7 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
       continue;
     }
     auto input0 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
-    if (input0->isa<Parameter>() || (IsPrimitiveCNode(input0, prim::kPrimLoad) &&
-                                     (AnfAlgo::GetInputNode(utils::cast<CNodePtr>(input0), 0))->isa<Parameter>())) {
+    if (IsParameter(input0)) {
       auto dst = AnfAlgo::GetOutputInferDataType(cast_node, 0);
       auto src = AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
       if (dst == kNumberTypeFloat16 && src == kNumberTypeFloat32) {
