@@ -57,8 +57,6 @@ Status AddCpuDevice(const Context *a_context, lite::InnerContext *l_context, Dev
 Status AddGpuDevice(lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto gpu_context = device->Cast<GPUDeviceInfo>();
-  device_info.gpu_device_info_ = {gpu_context->GetEnableFP16(), gpu_context->GetDeviceID(), gpu_context->GetRankID(),
-                                  gpu_context->GetGroupSize()};
 #ifdef ENABLE_OPENGL_TEXTURE
   device_info.gpu_device_info_ = {gpu_context->GetEnableFP16(), gpu_context->GetDeviceID(), gpu_context->GetRankID(),
                                   gpu_context->GetGroupSize(), gpu_context->GetEnableGLTexture()};

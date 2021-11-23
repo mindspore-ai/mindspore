@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,6 @@
 #ifdef ENABLE_OPENGL_TEXTURE
 #include <vector>
 #include "EGL/egl.h"
-#include "GLES3/gl3.h"
-#include "GLES3/gl32.h"
-#include "CL/cl_gl.h"
 #include "src/inner_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 

@@ -1312,7 +1312,17 @@ int LiteSession::InitGPURuntime() {
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
 #ifdef ENABLE_OPENGL_TEXTURE
     opencl_runtime->SetGLTextureEnable(gpu_device_info.enable_gl_texture_);
-    opencl_runtime->InitGLQueue();
+    if (opencl_runtime->InitGLQueue() != RET_OK) {
+      MS_LOG(ERROR)
+        << "Init OpenCL Runtime failed, the device unspport OpenGL sharing context or OpenGL Context is not Init";
+      return RET_ERROR;
+    }
+#else
+    if (gpu_device_info.enable_gl_texture_ == true) {
+      MS_LOG(ERROR) << "this lib doesn't support OpenGLTexture, Please trun MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL on "
+                       "in the CmakeLists";
+      return RET_ERROR;
+    }
 #endif
     if (opencl_runtime->Init() != RET_OK) {
       this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
