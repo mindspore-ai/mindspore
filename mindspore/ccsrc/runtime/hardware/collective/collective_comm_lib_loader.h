@@ -17,18 +17,10 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_LIB_LOADER_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_LIB_LOADER_H_
 
-#ifndef _WIN32
-#include "utils/dlopen_macro.h"
-#else
-#include <windows.h>
-#undef ERROR
-#undef SM_DEBUG
-#undef Yield
-#include "utils/log_adapter.h"
-#endif
 #include <string>
 #include <memory>
 #include <vector>
+#include "utils/dlopen_macro.h"
 
 namespace mindspore {
 namespace device {
