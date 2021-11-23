@@ -177,8 +177,7 @@ class HcclParser:
         """Get the name of communication operators mapping between hccl and step trace."""
         dir_path = self._validate_dir_path(self._source_dir)
         # The name of the operator in hccl is like：operatorName_{Ordered_number}_xx_xx.
-        operators_names_in_hccl = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()
-                                   and entry.name.endswith(self._dev_id)]
+        operators_names_in_hccl = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()]
         operators_names_in_hccl_set = set({i.split('_')[0] for i in operators_names_in_hccl})
         op_names_in_hccl_dic = dict()
         for item in operators_names_in_hccl_set:
@@ -226,8 +225,7 @@ class HcclParser:
         """Obtain time-consuming information of all communication operators."""
         operators_cost_info = dict()
         dir_path = self._validate_dir_path(dir_path)
-        operators_dir = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()
-                         and entry.name.endswith(self._dev_id)]
+        operators_dir = [entry.name for entry in os.scandir(dir_path) if entry.is_dir()]
         operator_dir_path = [os.path.join(dir_path, operator_dir) for operator_dir in operators_dir]
         for operator_dir in operator_dir_path:
             operator_cost = self._calculate_communication_operator_cost(operator_dir)
@@ -438,9 +436,16 @@ class HcclParser:
                     rdma_communication_time += rdma_send_cost + notify_record_cost + notify_wait_cost
                     rdma_communication_wait_time += notify_wait_cost
                     rdma_size = trace_event[start_index].get("args").get("size")
-                    rdma_size = int(rdma_size, 16) if rdma_size else 0
+                    if rdma_size:
+                        rdma_size = rdma_size if isinstance(rdma_size, int) else int(rdma_size, 16)
+                    else:
+                        rdma_size = 0
                     notify_record_size = trace_event[start_index + 1].get("args").get("size")
-                    notify_record_size = int(notify_record_size, 16) if notify_record_size else 0
+                    if notify_record_size:
+                        notify_record_size = notify_record_size if isinstance(notify_record_size, int) \
+                            else int(notify_record_size, 16)
+                    else:
+                        notify_record_size = 0
                     rdma_communication_size += rdma_size + notify_record_size
                     start_index += 2
             start_index += 1
@@ -470,7 +475,12 @@ class HcclParser:
             task_type = item.get("args").get("task type")
             if task_type in (CommunicationInfo.REDUCE_INLINE.value, CommunicationInfo.MEMCPY.value):
                 sdma_communication_time += item.get("dur", 0)
-                sdma_size = int(item.get("args").get("size"), 16) if item.get("args").get("size") else 0
+                sdma_size = item.get("args").get("size")
+                if sdma_size:
+                    sdma_size = sdma_size if isinstance(sdma_size, int) else int(sdma_size, 16)
+                else:
+                    sdma_size = 0
+
                 sdma_communication_size += sdma_size
 
         # The unit of sdma_bandwidth is KB/s.
