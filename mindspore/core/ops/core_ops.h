@@ -73,6 +73,7 @@ constexpr auto kLog = "Log";
 constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kSelect = "Select";
 constexpr auto kAdd = "Add";
+constexpr auto kAddV2 = "AddV2";
 constexpr auto kBiasAdd = "BiasAdd";
 constexpr auto kTile = "Tile";
 constexpr auto kAcosh = "Acosh";
@@ -783,6 +784,7 @@ GVAR_DEF(PrimitivePtr, kPrimMatrixSolve, std::make_shared<Primitive>("MatrixSolv
 GVAR_DEF(PrimitivePtr, kPrimCholeskyInverse, std::make_shared<Primitive>("CholeskyInverse"));
 GVAR_DEF(PrimitivePtr, kPrimTensorAdd, std::make_shared<Primitive>("TensorAdd"));
 GVAR_DEF(PrimitivePtr, kPrimAdd, std::make_shared<Primitive>(kAdd));
+GVAR_DEF(PrimitivePtr, kPrimAddV2, std::make_shared<Primitive>(kAddV2));
 GVAR_DEF(PrimitivePtr, kPrimAddcdiv, std::make_shared<Primitive>(kAddcdiv));
 GVAR_DEF(PrimitivePtr, kPrimAddcmul, std::make_shared<Primitive>(kAddcmul));
 GVAR_DEF(PrimitivePtr, kPrimMatMul, std::make_shared<Primitive>("MatMul"));

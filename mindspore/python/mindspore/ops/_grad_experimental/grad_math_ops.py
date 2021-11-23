@@ -32,6 +32,7 @@ from ..operations import math_ops as math
 from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
 from ..operations.math_ops import ReduceStd
+from ..operations.math_ops import AddV2
 
 transpose = P.Transpose()
 
@@ -657,5 +658,15 @@ def get_bprop_igammac(self):
             return neg_(reshape_(reduce_sum_(partial_a * dout, ra), sa)), \
                    neg_(reshape_(reduce_sum_(partial_x * dout, rx), sx))
         return neg_(reshape_(partial_a * dout, sa)), neg_(reshape_(partial_x * dout, sx))
+
+    return bprop
+
+
+@bprop_getters.register(AddV2)
+def get_bprop_add_v2(self):
+    """Grad definition for `AddV2` operation."""
+
+    def bprop(x, y, out, dout):
+        return binop_grad_common(x, y, dout, dout)
 
     return bprop

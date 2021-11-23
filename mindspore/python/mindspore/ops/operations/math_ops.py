@@ -329,6 +329,58 @@ class Addcmul(Primitive):
         self.init_prim_io_names(inputs=['input_data', 'x1', 'x2', 'value'], outputs=['y'])
 
 
+class AddV2(Primitive):
+    r"""
+    Adds two input tensors element-wise.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors, the shapes of them should be the same.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+    .. math::
+
+        out_{i} = x_{i} + y_{i}
+
+    Inputs:
+        - **x** (Union[Tensor]) - The first input is a tensor whose data type is one of
+          uint8, int8, int16, int32, int64, float16, float32, float64,
+          complex64, complex128 currently or scalar.
+        - **y** (Union[Tensor]) - The second input is a tensor whose data type is one of
+          uint8, int8, int16, int32, int64, float16, float32, float64,
+          complex64, complex128 currently or scalar.
+
+    Outputs:
+        Tensor, the shape is the same as the input tensor,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If neither `x` nor `y` is a Tensor .
+        TypeError: If dtype of `x` or `y` is not in [float16, float32, float64,
+        uint8, int8, int16, int32, int64, complex64, complex128].
+        ValueError: If the shape of 'x' and 'y' is not the same.
+
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.math_ops import AddV2
+        >>> addv2 = AddV2()
+        >>> x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.int32))
+        >>> output = addv2(x, y)
+        >>> print(output)
+        [5 7 9]
+    """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AddV2"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+
 class TensorAdd(_MathBinaryOp):
     """
     Same as operator Add. TensorAdd will be deprecated in the future.

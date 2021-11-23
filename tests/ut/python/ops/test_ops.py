@@ -50,6 +50,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
+from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import RaggedRange
@@ -1263,6 +1264,10 @@ test_case_math_ops = [
         'block': P.Add(),
         'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
+    ('AddV2', {
+        'block': AddV2(),
+        'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
+        'skip': ['backward']}),
     ('Mul0', {
         'block': P.Mul(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
