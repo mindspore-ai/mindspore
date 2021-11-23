@@ -72,6 +72,7 @@ struct AclOptionCfgString {
   std::string dynamic_batch_size;
   std::string buffer_optimize;
   std::string insert_op_config_file_path;
+  std::string dynamic_image_size;
 };
 
 class ConfigFileParser {

@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_OPTIONS_PARSERS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_OPTIONS_PARSERS_H_
 
+#include <memory>
 #include <string>
-#include <set>
-#include <utility>
+#include "include/api/context.h"
+#include "include/errorcode.h"
+#include "src/runtime/kernel/ascend310/src/acl_model_options.h"
 
 namespace mindspore::kernel {
 namespace acl {
-const uint64_t kBatchSizeInvalid = 0;
+using mindspore::lite::STATUS;
 
-typedef struct AclModelOptions {
-  int32_t device_id;
-  std::string dump_cfg_path;
-  std::set<uint64_t> batch_size;
-  std::set<std::pair<uint64_t, uint64_t>> image_size;
+class AclOptionsParser {
+ public:
+  STATUS ParseAclOptions(const mindspore::Context *ctx, AclModelOptions *acl_options);
 
-  AclModelOptions() : device_id(0) {}
-} AclModelOptions;
+ private:
+  STATUS Parse310AclOptions(const std::shared_ptr<DeviceInfoContext> &device_info, AclModelOptions *acl_options);
+  STATUS CheckAndModifyDeviceId(int32_t *device_id);
+};
 }  // namespace acl
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_MODEL_OPTIONS_H_
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_ACL_OPTIONS_PARSERS_H_

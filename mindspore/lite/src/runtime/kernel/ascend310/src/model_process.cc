@@ -19,12 +19,14 @@
 #include <algorithm>
 #include <map>
 #include "common/log_adapter.h"
+#include "src/common/utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::kernel {
 namespace acl {
 namespace {
-constexpr size_t kDynamicBatchSize = 1;
-constexpr size_t kDynamicImageSize = 2;
+constexpr size_t kBatchSizeNum = 1;
+constexpr size_t kImageSizeHwNum = 2;
 }  // namespace
 static DataType TransToDataType(aclDataType data_type) {
   static const std::map<aclDataType, enum DataType> data_type_map = {
@@ -113,6 +115,50 @@ STATUS ModelProcess::PreInitModelResource() {
     return ret;
   }
   return lite::RET_OK;
+}
+
+std::set<uint64_t> ModelProcess::GetDynamicBatch() {
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return std::set<uint64_t>();
+  }
+  aclmdlBatch dynamic_batch;
+  if (aclmdlGetDynamicBatch(model_desc_, &dynamic_batch) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to get dynamic batch.";
+    return std::set<uint64_t>();
+  }
+  size_t batch_count = dynamic_batch.batchCount;
+  if (batch_count > ACL_MAX_BATCH_NUM) {
+    MS_LOG(ERROR) << "Real batch count " << batch_count << " is larger than max " << ACL_MAX_BATCH_NUM;
+    return std::set<uint64_t>();
+  }
+  std::set<uint64_t> batch;
+  for (size_t i = 0; i < dynamic_batch.batchCount; ++i) {
+    batch.insert(dynamic_batch.batch[i]);
+  }
+  return batch;
+}
+
+std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return std::set<std::pair<uint64_t, uint64_t>>();
+  }
+  aclmdlHW dynamic_hw;
+  if (aclmdlGetDynamicHW(model_desc_, 0, &dynamic_hw) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to get dynamic hw.";
+    return std::set<std::pair<uint64_t, uint64_t>>();
+  }
+  size_t hw_count = dynamic_hw.hwCount;
+  if (hw_count > ACL_MAX_HW_NUM) {
+    MS_LOG(ERROR) << "Real hw count " << hw_count << " is larger than max " << ACL_MAX_HW_NUM;
+    return std::set<std::pair<uint64_t, uint64_t>>();
+  }
+  std::set<std::pair<uint64_t, uint64_t>> image;
+  for (size_t i = 0; i < dynamic_hw.hwCount; ++i) {
+    image.insert(std::pair<uint64_t, uint64_t>(dynamic_hw.hw[i][0], dynamic_hw.hw[i][1]));
+  }
+  return image;
 }
 
 STATUS ModelProcess::InitInputsBuffer() {
@@ -226,9 +272,7 @@ STATUS ModelProcess::InitOutputsBuffer() {
       return lite::RET_OK;
     }
     aclFormat format = aclmdlGetOutputFormat(model_desc_, i);
-    if (format != aclFormat::ACL_FORMAT_NCHW && format != aclFormat::ACL_FORMAT_ND) {
-      MS_LOG(WARNING) << "The output format of om should be nchw, but now is " << format;
-    }
+    MS_LOG(DEBUG) << "The output format of om is " << format;
     aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
     std::string output_name = aclmdlGetOutputNameByIndex(model_desc_, i);
@@ -311,17 +355,24 @@ STATUS ModelProcess::UnLoad() {
 }
 
 STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs) {
-  size_t index;
-  aclError ret;
   for (size_t i = 0; i < inputs.size(); i++) {
     input_infos_[i].buffer_size = inputs[i].DataSize();
   }
-  auto *p = reinterpret_cast<const int32_t *>(inputs[inputs.size() - 1].Data().get());
-  if (p == nullptr) {
-    MS_LOG(ERROR) << "Pointer is nullptr.";
-    return lite::RET_OK;
+  auto batch_size_tensor = inputs[inputs.size() - 1];
+  size_t data_type_size = lite::DataTypeSize(static_cast<enum TypeId>(batch_size_tensor.DataType()));
+  size_t num = 0;
+  if (data_type_size != 0) {
+    num = batch_size_tensor.DataSize() / data_type_size;
   }
-  auto batch_size = p[0];
+  if (num != kBatchSizeNum) {
+    MS_LOG(ERROR) << "Batch size num should be " << kBatchSizeNum;
+    return lite::RET_ERROR;
+  }
+  auto *ptr = reinterpret_cast<const int32_t *>(batch_size_tensor.Data().get());
+  CHECK_NULL_RETURN(ptr);
+  auto batch_size = ptr[0];
+  aclError ret;
+  size_t index;
   ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Get index failed";
@@ -329,6 +380,40 @@ STATUS ModelProcess::SetBatchSize(const std::vector<mindspore::MSTensor> &inputs
   }
   MS_LOG(INFO) << "Set Batch size(" << batch_size << ") of input " << index << ".";
   ret = aclmdlSetDynamicBatchSize(model_id_, inputs_, index, batch_size);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+STATUS ModelProcess::SetImageSize(const std::vector<mindspore::MSTensor> &inputs) {
+  for (size_t i = 0; i < inputs.size(); i++) {
+    input_infos_[i].buffer_size = inputs[i].DataSize();
+  }
+  auto image_size_tensor = inputs[inputs.size() - 1];
+  size_t data_type_size = lite::DataTypeSize(static_cast<enum TypeId>(image_size_tensor.DataType()));
+  size_t num = 0;
+  if (data_type_size != 0) {
+    num = image_size_tensor.DataSize() / data_type_size;
+  }
+  if (num != kImageSizeHwNum) {
+    MS_LOG(ERROR) << "Image size hw num should be " << kImageSizeHwNum;
+    return lite::RET_ERROR;
+  }
+  auto *hw = reinterpret_cast<const int32_t *>(image_size_tensor.Data().get());
+  CHECK_NULL_RETURN(hw);
+  int32_t height = hw[0];
+  int32_t width = hw[1];
+  size_t index;
+  aclError ret = ACL_ERROR_NONE;
+  ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Get index failed";
+    return lite::RET_ERROR;
+  }
+  MS_LOG(INFO) << "Set Image size(" << height << "," << width << ") of input " << index << ".";
+  ret = aclmdlSetDynamicHWSize(model_id_, inputs_, index, height, width);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
     return lite::RET_ERROR;
@@ -362,22 +447,34 @@ STATUS ModelProcess::CheckTensorByTensorInfo(const std::vector<mindspore::MSTens
 }
 
 STATUS ModelProcess::ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs) {
+  if (!IsDynamicShape()) {
+    MS_LOG(DEBUG) << "Input is not dynamic shape";
+    return lite::RET_OK;
+  }
   if (IsDynamicBatchSize()) {
     if (SetBatchSize(inputs) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Failed to convert dynamic batch size";
+      MS_LOG(ERROR) << "Set dynamic batch size failed.";
       return lite::RET_ERROR;
     }
-    if (ResetOutputSize() != lite::RET_OK) {
-      MS_LOG(ERROR) << "Reset output size failed";
+  }
+  if (IsDynamicImageSize()) {
+    if (SetImageSize(inputs) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Set dynamic image size failed.";
       return lite::RET_ERROR;
     }
+  }
+  if (ResetOutputSize() != lite::RET_OK) {
+    MS_LOG(ERROR) << "Reset output size failed";
+    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
 
-bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize(); }
+bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize() || IsDynamicImageSize(); }
 
-bool ModelProcess::IsDynamicBatchSize() { return options_.batch_size != kBatchSizeInvalid; }
+bool ModelProcess::IsDynamicBatchSize() { return !GetDynamicBatch().empty(); }
+
+bool ModelProcess::IsDynamicImageSize() { return !GetDynamicImage().empty(); }
 
 STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &inputs) {
   aclError ret;
@@ -398,7 +495,7 @@ STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &i
       ret = aclrtMemcpy(info.cur_device_data, info.buffer_size, data, input.DataSize(), ACL_MEMCPY_HOST_TO_DEVICE);
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, src input size: " << input.DataSize()
-                      << "dst device buffer size: " << info.buffer_size;
+                      << ", dst device buffer size: " << info.buffer_size;
         return lite::RET_ERROR;
       }
       input_buffer = info.cur_device_data;

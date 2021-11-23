@@ -15,19 +15,33 @@
  */
 
 #include "src/runtime/kernel/ascend310/src/custom_kernel.h"
+#include <utility>
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/runtime/kernel/ascend310/src/model_infer.h"
+#include "src/runtime/kernel/ascend310/src/acl_options_parser.h"
 #include "src/common/log_util.h"
 #include "common/log_adapter.h"
 
 namespace mindspore::kernel {
 namespace acl {
+namespace {
+constexpr auto kInputDimNum = 4;
+constexpr auto kNHWCHeightIdx = 1;
+constexpr auto kNHWCWidthIdx = 2;
+constexpr auto kNCHWHeightIdx = 2;
+constexpr auto kNCHWWidthIdx = 3;
+constexpr auto kImageSizeHwNum = 2;
+}  // namespace
 CustomAscend310Kernel::CustomAscend310Kernel(const std::vector<mindspore::MSTensor> &inputs,
                                              const std::vector<mindspore::MSTensor> &outputs,
                                              const schema::Primitive *primitive, const mindspore::Context *ctx)
-    : Kernel(inputs, outputs, primitive, ctx), load_model_(false), acl_options_({}), model_infer_(nullptr) {}
+    : Kernel(inputs, outputs, primitive, ctx),
+      load_model_(false),
+      acl_options_({}),
+      model_infer_(nullptr),
+      InputDataIndex_(0) {}
 
 CustomAscend310Kernel::~CustomAscend310Kernel() {
   if (load_model_) {
@@ -36,54 +50,6 @@ CustomAscend310Kernel::~CustomAscend310Kernel() {
       MS_LOG(ERROR) << "Model finalize failed.";
     }
   }
-}
-
-STATUS CustomAscend310Kernel::ParseBatchSize(const std::string &batch_size, AclModelOptions *options) {
-  CHECK_NULL_RETURN(options);
-  if (!batch_size.empty()) {
-    char *ptr = nullptr;
-    options->batch_size = strtol(batch_size.c_str(), &ptr, 0);
-    bool ret = (ptr == (batch_size.c_str() + batch_size.size()));
-    if (!ret) {
-      options->batch_size = kBatchSizeInvalid;
-      MS_LOG(ERROR) << "Convert batch size failed, val: " << batch_size;
-      return lite::RET_ERROR;
-    }
-    MS_LOG(INFO) << "Batch size of context is " << options->batch_size;
-  }
-  return lite::RET_OK;
-}
-
-AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Context *ctx) {
-  AclModelOptions options;
-  options.device_id = 0;
-  if (ctx == nullptr) {
-    MS_LOG(WARNING) << "Context is nullptr.";
-    return options;
-  }
-  auto context = const_cast<mindspore::Context *>(ctx);
-  auto device_infos = context->MutableDeviceInfo();
-  if (device_infos.size() < 1) {
-    MS_LOG(WARNING) << "Size of device infos is less than one.";
-    return options;
-  }
-  if (device_infos[0] == nullptr) {
-    MS_LOG(WARNING) << "Device info is nullptr.";
-    return options;
-  }
-  auto ascend31o_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
-  if (ascend31o_info == nullptr) {
-    MS_LOG(WARNING) << "Ascend310 info is nullptr.";
-    return options;
-  }
-
-  options.device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
-  auto batch_size = ascend31o_info->GetDynamicBatchSize();
-  if (ParseBatchSize(batch_size, &options) != lite::RET_OK) {
-    MS_LOG(WARNING) << "Parse batch size failed.";
-    return options;
-  }
-  return options;
 }
 
 STATUS CustomAscend310Kernel::PrepareModelInfer() {
@@ -95,7 +61,11 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
   int idx = inputs_.size() - 1;
   Buffer om_data(inputs_[idx].Data().get(), inputs_[idx].DataSize());
   if (model_infer_ == nullptr) {
-    acl_options_ = GetAclModelOptions(context_);
+    AclOptionsParser parser;
+    if (parser.ParseAclOptions(context_, &acl_options_) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Parse acl options failed.";
+      return lite::RET_ERROR;
+    }
     model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_);
     CHECK_NULL_RETURN(model_infer_);
   }
@@ -109,6 +79,8 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
     MS_LOG(ERROR) << "Load om data failed.";
     return lite::RET_ERROR;
   }
+  acl_options_.batch_size = model_infer_->GetDynamicBatch();
+  acl_options_.image_size = model_infer_->GetDynamicImage();
   MS_LOG(INFO) << "Load om data success.";
   return lite::RET_OK;
 }
@@ -122,28 +94,126 @@ STATUS CustomAscend310Kernel::Prepare() {
     MS_LOG(ERROR) << "Model infer prepare is not ok.";
     return lite::RET_ERROR;
   }
+  RecordInputDataIndex();
+
   load_model_ = true;
   return lite::RET_OK;
 }
 
-STATUS CustomAscend310Kernel::ReSize() {
-  if (load_model_) {
-    int ret = model_infer_->Finalize();
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "Model finalize failed.";
+void CustomAscend310Kernel::RecordInputDataIndex() {
+  for (size_t idx = 0; idx < inputs_.size(); ++idx) {
+    if (inputs_[idx].Data() == nullptr) {
+      InputDataIndex_ = idx;
+      break;
     }
-    load_model_ = false;
   }
-  return Prepare();
 }
 
-STATUS CustomAscend310Kernel::ProcDynamicBatchSizeInput(std::vector<mindspore::MSTensor> *input) {
-  CHECK_NULL_RETURN(input);
-  if (acl_options_.batch_size != kBatchSizeInvalid) {
-    mindspore::MSTensor dynamic_input("batch", DataType::kNumberTypeInt32, {1}, &acl_options_.batch_size,
-                                      sizeof(int32_t));
-    input->push_back(dynamic_input);
+STATUS CustomAscend310Kernel::ReSize() {
+  if (!load_model_) {
+    return Prepare();
   }
+  return lite::RET_OK;
+}
+
+STATUS CustomAscend310Kernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *inputs) {
+  if (acl_options_.batch_size.empty() && acl_options_.image_size.empty()) {
+    MS_LOG(INFO) << "Input is not dynamic mode.";
+    return lite::RET_OK;
+  }
+  if (!acl_options_.batch_size.empty() && !acl_options_.image_size.empty()) {
+    MS_LOG(ERROR) << "Batch size and image size can't be set at the same time.";
+    return lite::RET_ERROR;
+  }
+  CHECK_NULL_RETURN(inputs);
+  if (!acl_options_.batch_size.empty()) {
+    int32_t *batch_size = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
+    if (batch_size == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return lite::RET_ERROR;
+    }
+    if (GetRealBatchSize(inputs, batch_size) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get real batch size failed.";
+      free(batch_size);
+      return lite::RET_ERROR;
+    }
+    mindspore::MSTensor batch_size_input("batch", DataType::kNumberTypeInt32, {1}, batch_size, sizeof(int32_t));
+    inputs->emplace_back(batch_size_input);
+  }
+  if (!acl_options_.image_size.empty()) {
+    int32_t *image_size = reinterpret_cast<int32_t *>(malloc(kImageSizeHwNum * sizeof(int32_t)));
+    if (GetRealImageSize(inputs, image_size, kImageSizeHwNum) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get real image size failed.";
+      free(image_size);
+      return lite::RET_ERROR;
+    }
+    mindspore::MSTensor image_size_input("batch", DataType::kNumberTypeInt32, {2}, image_size,
+                                         kImageSizeHwNum * sizeof(int32_t));
+    inputs->emplace_back(image_size_input);
+  }
+  return lite::RET_OK;
+}
+
+STATUS CustomAscend310Kernel::GetRealBatchSize(std::vector<mindspore::MSTensor> *inputs, int32_t *batch_size) {
+  CHECK_NULL_RETURN(batch_size);
+  if (InputDataIndex_ >= inputs->size()) {
+    MS_LOG(ERROR) << " Input data index " << InputDataIndex_ << " is larger than input size " << inputs->size();
+    return lite::RET_ERROR;
+  }
+  auto tensor = (*inputs)[InputDataIndex_];
+  std::vector<int64_t> shape = tensor.Shape();
+  if (shape.empty()) {
+    MS_LOG(ERROR) << "Shape is empty, input index = " << InputDataIndex_;
+    return lite::RET_ERROR;
+  }
+  int32_t cur_batch_size = static_cast<uint64_t>(shape[0]);
+  auto iter = acl_options_.batch_size.find(cur_batch_size);
+  if (iter == acl_options_.batch_size.end()) {
+    MS_LOG(ERROR) << "Current batch size " << cur_batch_size << " is invalid, please check device info of context";
+    return lite::RET_ERROR;
+  }
+  *batch_size = cur_batch_size;
+  MS_LOG(DEBUG) << "Current batch size " << cur_batch_size;
+  return lite::RET_OK;
+}
+
+STATUS CustomAscend310Kernel::GetRealImageSize(std::vector<mindspore::MSTensor> *inputs, int32_t *image_size,
+                                               int32_t num) {
+  CHECK_NULL_RETURN(image_size);
+  if (InputDataIndex_ >= inputs->size()) {
+    MS_LOG(ERROR) << "Input data index " << InputDataIndex_ << " is larger than input size " << inputs->size();
+    return lite::RET_ERROR;
+  }
+  auto tensor = (*inputs)[InputDataIndex_];
+  std::vector<int64_t> shape = tensor.Shape();
+  if (shape.size() != kInputDimNum) {
+    MS_LOG(ERROR) << "Shape size " << shape.size() << " is invalid, input index = " << InputDataIndex_;
+    return lite::RET_ERROR;
+  }
+  auto format = tensor.format();
+  uint64_t height;
+  uint64_t width;
+  if (format == mindspore::Format::NHWC) {
+    height = shape[kNHWCHeightIdx];
+    width = shape[kNHWCWidthIdx];
+  } else {
+    height = shape[kNCHWHeightIdx];
+    width = shape[kNCHWWidthIdx];
+  }
+  auto cur_image_size = std::pair<int32_t, int32_t>(static_cast<uint64_t>(height), static_cast<uint64_t>(width));
+  auto iter = acl_options_.image_size.find(cur_image_size);
+  if (iter == acl_options_.image_size.end()) {
+    MS_LOG(ERROR) << "Image size height " << height << ",weight " << width
+                  << " is invalid, please check device info of context.";
+    return lite::RET_ERROR;
+  }
+  if (num != kImageSizeHwNum) {
+    MS_LOG(ERROR) << "The hw num should be " << kImageSizeHwNum << ",real num " << num;
+    return lite::RET_ERROR;
+  }
+  image_size[0] = height;
+  image_size[1] = width;
+  MS_LOG(DEBUG) << "Current height " << height << " width " << width;
   return lite::RET_OK;
 }
 
@@ -153,7 +223,7 @@ STATUS CustomAscend310Kernel::Execute() {
     return lite::RET_OK;
   }
   std::vector<mindspore::MSTensor> inputs(inputs_.begin(), inputs_.end() - 1);
-  if (ProcDynamicBatchSizeInput(&inputs) != lite::RET_OK) {
+  if (ProcDynamicInput(&inputs) != lite::RET_OK) {
     MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
     return lite::RET_ERROR;
   }

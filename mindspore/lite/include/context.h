@@ -46,6 +46,7 @@ typedef struct NpuDeviceInfo {
 typedef struct AscendDeviceInfo {
   uint32_t device_id_;
   std::string batch_size_;
+  std::string image_size_;
 } AscendDeviceInfo;
 /// \brief DeviceInfo defined for backend's configuration information.
 struct DeviceInfo {

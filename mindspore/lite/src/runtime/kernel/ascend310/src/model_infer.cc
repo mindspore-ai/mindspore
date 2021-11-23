@@ -159,5 +159,10 @@ STATUS ModelInfer::Inference(const std::vector<mindspore::MSTensor> &inputs,
 
   return model_process_.PredictFromHost(inputs, outputs);
 }
+
+std::set<uint64_t> ModelInfer::GetDynamicBatch() { return model_process_.GetDynamicBatch(); }
+
+// need to be called after model load;
+std::set<std::pair<uint64_t, uint64_t>> ModelInfer::GetDynamicImage() { return model_process_.GetDynamicImage(); }
 }  // namespace acl
 }  // namespace mindspore::kernel

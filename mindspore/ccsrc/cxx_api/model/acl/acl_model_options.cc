@@ -51,6 +51,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
     output_type_ = iter->second;
   }
   dynamic_batch_size_ = ascend310_info->GetDynamicBatchSize();
+  dynamic_image_size_ = ascend310_info->GetDynamicImageSize();
   precision_mode_ = ascend310_info->GetPrecisionMode();
   op_select_impl_mode_ = ascend310_info->GetOpSelectImplMode();
   fusion_switch_cfg_path_ = ascend310_info->GetFusionSwitchConfigPath();

@@ -80,7 +80,8 @@ Status AddNpuDevice(lite::InnerContext *l_context, DeviceInfoContext *device) {
 Status AddAscend310Device(lite::InnerContext *l_context, DeviceInfoContext *device) {
   lite::DeviceInfo device_info = {0};
   auto ascend310_context = device->Cast<Ascend310DeviceInfo>();
-  device_info.ascend310_device_info_ = {ascend310_context->GetDeviceID(), ascend310_context->GetDynamicBatchSize()};
+  device_info.ascend310_device_info_ = {ascend310_context->GetDeviceID(), ascend310_context->GetDynamicBatchSize(),
+                                        ascend310_context->GetDynamicImageSize()};
   l_context->device_list_.push_back({lite::DT_ASCEND310, device_info});
   return kSuccess;
 }

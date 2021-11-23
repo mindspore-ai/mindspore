@@ -240,6 +240,10 @@ std::vector<char> Ascend310DeviceInfo::GetDynamicBatchSizeChar() const {
   return StringToChar(ref);
 }
 
+void Ascend310DeviceInfo::SetDynamicImageSize(const std::vector<char> &dynamic_image_size) { return; }
+
+std::vector<char> Ascend310DeviceInfo::GetDynamicImageSizeChar() const { return std::vector<char>(); }
+
 void Ascend310DeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   MS_EXCEPTION_IF_NULL(data_);
   data_->params[kModelOptionAscend310PrecisionMode] = CharToString(precision_mode);
