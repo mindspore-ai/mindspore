@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""expanders init"""
+"""expanders init. Deprecated, please add the new operators in the c++ file"""
+
 
 from .addn import AddN
 from .assign_add import AssignAdd

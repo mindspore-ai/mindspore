@@ -100,6 +100,13 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
     {kGPUDevice, OpLevel_0, prim::kPrimSign},
     {kGPUDevice, OpLevel_0, prim::kPrimSin},
     {kGPUDevice, OpLevel_0, prim::kPrimStridedSlice},
+    // cpu
+    {kCPUDevice, OpLevel_0, prim::kPrimLogicalNot},
+    {kCPUDevice, OpLevel_0, prim::kPrimMod},
+    {kCPUDevice, OpLevel_1, prim::kPrimReduceMax},
+    {kCPUDevice, OpLevel_0, prim::kPrimSelect},
+    {kCPUDevice, OpLevel_0, prim::kPrimLess},
+    {kCPUDevice, OpLevel_0, prim::kPrimLessEqual},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,

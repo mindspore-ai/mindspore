@@ -17,6 +17,8 @@
 #include "backend/kernel_compiler/akg/cpu/akg_cpu_kernel_mod.h"
 
 #include <dlfcn.h>
+#include <omp.h>
+#include <thread>
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -28,24 +30,29 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
-int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
-  size_t num_workers =
-    std::min(mindspore::common::ThreadPool::GetInstance().GetSyncRunThreadNum(), static_cast<size_t>(num_task));
-  std::vector<mindspore::common::Task> tasks;
-  size_t thread_index = 0;
-  while (thread_index < num_workers) {
-    auto block = [&, thread_index]() {
-      flambda(thread_index, num_workers, cdata);
-      return mindspore::common::SUCCESS;
-    };
-    tasks.emplace_back(block);
-    thread_index++;
+class AkgParallelLaunch {
+ public:
+  using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
+  static size_t num_workers;
+  static int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
+#pragma omp parallel num_threads(num_workers)
+    { flambda(omp_get_thread_num(), num_workers, cdata); }
+    return 0;
   }
-  mindspore::common::ThreadPool::GetInstance().SyncRun(tasks);
-  return 0;
-}
+  // the GetFunc should be called only once.
+  static void *GetFunc() {
+    const char *omp_num_threads = getenv("OMP_NUM_THREADS");
+    if (omp_num_threads != nullptr) {
+      auto env_thread = std::stoi(std::string(omp_num_threads));
+      if (env_thread > 0) {
+        AkgParallelLaunch::num_workers = static_cast<size_t>(env_thread);
+      }
+    }
+    MS_LOG(INFO) << "AKG threads is : " << AkgParallelLaunch::num_workers;
+    return reinterpret_cast<void *>(&AkgParallelLaunch::AkgLaunchFunc);
+  }
+};
+size_t AkgParallelLaunch::num_workers = 1;
 
 struct AkgCallBack {
   void *parallel_launch_func;
@@ -53,13 +60,13 @@ struct AkgCallBack {
   void (*free_func)(void *);
 
   AkgCallBack() {
-    parallel_launch_func = reinterpret_cast<void *>(&AkgLaunchFunc);
+    parallel_launch_func = AkgParallelLaunch::GetFunc();
     malloc_func = &malloc;
     free_func = &free;
   }
   ~AkgCallBack() = default;
 };
-}  // namespace
+
 CpuKernelManagerPtr CpuKernelMod::kernelmanager_ = std::make_shared<CpuKernelManager>();
 
 CpuKernelManager::~CpuKernelManager() {
@@ -120,14 +127,16 @@ void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
   return launch_func;
 }
 
+CpuKernelMod::CpuKernelMod(const KernelPackPtr &kp) {
+  auto js = nlohmann::json::parse(kp->GetJson()->contents, kp->GetJson()->contents + kp->GetJson()->len);
+  kernel_name_ = js["kernelName"];
+  launch_func_ = kernelmanager_->GetFunction(kernel_name_);
+}
+
 bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto js = nlohmann::json::parse(kernel_pack_->GetJson()->contents,
-                                  kernel_pack_->GetJson()->contents + kernel_pack_->GetJson()->len);
-  std::string kernel_name = js["kernelName"];
-  auto launch_func = kernelmanager_->GetFunction(kernel_name);
-  if (launch_func == nullptr) {
-    MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name;
+  if (launch_func_ == nullptr) {
+    MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;
   }
   std::vector<void *> runtimeargs;
@@ -135,10 +144,10 @@ bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &input) -> void * { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
-  AkgCallBack akg_callback;
+  static AkgCallBack akg_callback;
   runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   using AkgCpuKernelFunction = void (*)(void *);
-  reinterpret_cast<AkgCpuKernelFunction>(launch_func)(reinterpret_cast<void *>(runtimeargs.data()));
+  reinterpret_cast<AkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
   return true;
 }
 }  // namespace kernel
