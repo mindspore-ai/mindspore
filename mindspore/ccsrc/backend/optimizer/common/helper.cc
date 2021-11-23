@@ -42,18 +42,18 @@ constexpr size_t kType32Len = 4;
 constexpr size_t kType64Len = 8;
 
 void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
+  std::vector<AnfNodePtr> orig_real_cnodes;
   for (auto &orig_node : orig_nodes) {
-    if (!orig_node->isa<CNode>()) {
-      continue;
-    }
-    auto orig_cnode = orig_node->cast<CNodePtr>();
-    if (AnfAlgo::HasNodeAttr(kAttrDump, orig_cnode)) {
-      AnfAlgo::CopyNodeAttr(kAttrDump, orig_cnode, node);
-      break;
+    if (AnfUtils::IsRealCNodeKernel(orig_node)) {
+      auto orig_cnode = orig_node->cast<CNodePtr>();
+      if (AnfAlgo::HasNodeAttr(kAttrDump, orig_cnode)) {
+        AnfAlgo::CopyNodeAttr(kAttrDump, orig_cnode, node);
+      }
+      orig_real_cnodes.push_back(orig_node);
     }
   }
 
-  node->AddFusedDebugInfoList(orig_nodes);
+  node->AddFusedDebugInfoList(orig_real_cnodes);
 }
 }  // namespace
 
