@@ -37,15 +37,16 @@ class PadCPUKernel : public CPUKernel {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   TypeId dtype_{kTypeUnknown};
-  uint64_t tensor_size_{1};
-  size_t shape_size_{1};
-  uint64_t output_size_{1};
   std::vector<std::vector<int64_t>> paddings_;
+  size_t input_rank_;
+  std::vector<int32_t> flattened_paddings_;
   std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<size_t> strides_;
+  size_t input_size_{1};
+  size_t output_size_{1};
 };
 
 MS_REG_CPU_KERNEL(Pad, KernelAttr(), PadCPUKernel);
