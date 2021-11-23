@@ -147,23 +147,20 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
 }
 
 std::string FilterExceptionMessage(const std::vector<nlohmann::json> &all_logs) {
-  std::ostringstream buffer;
+  std::ostringstream exception_buffer;
+  // print all logs if exception log is empty
+  std::ostringstream all_message_buffer;
   for (const auto &item : all_logs) {
     auto message = GetJsonValue<std::string>(item, kMessage);
-    if (message.find("except_msg") != std::string::npos) {
-      buffer << message;
-      buffer << "\n";
-    }
-    if (message.find("except_tuple_msg") != std::string::npos) {
-      buffer << message;
-      buffer << "\n";
-    }
-    if (message.find("Error message") != std::string::npos) {
-      buffer << message;
-      buffer << "\n";
+    all_message_buffer << message;
+    all_message_buffer << "\n";
+    if (message.find("except_msg") != std::string::npos || message.find("except_tuple_msg") != std::string::npos ||
+        message.find("Error message") != std::string::npos) {
+      exception_buffer << message;
+      exception_buffer << "\n";
     }
   }
-  auto res = buffer.str().empty() ? "None" : buffer.str();
+  auto res = exception_buffer.str().empty() ? all_message_buffer.str() : exception_buffer.str();
   return res;
 }
 
