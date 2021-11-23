@@ -77,10 +77,17 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 int ConvolutionCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
+  size_t in_channel = filter_tensor->Channel();
+  auto input_tensor = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input_tensor);
+  size_t input_channel = input_tensor->Channel();
+  if (input_channel != in_channel) {
+    MS_LOG(ERROR) << "input channel must be equal to weight channel";
+    return RET_ERROR;
+  }
   if (op_parameter_->is_train_session_) {
-    auto filter_tensor = in_tensors_.at(kWeightIndex);
-    CHECK_NULL_RETURN(filter_tensor);
-    size_t in_channel = filter_tensor->Channel();
     size_t out_channel = filter_tensor->Batch();
     size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
     size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();

@@ -34,6 +34,8 @@ int BatchToSpaceCPUKernel::Processinput() {
   CHECK_NULL_RETURN(crops_data);
   auto block_shape = static_cast<int *>(block_shape_data);
   auto crops = static_cast<int *>(crops_data);
+  MS_CHECK_GT(in_tensors_[DIMENSION_1D]->ElementsNum(), 0, RET_ERROR);
+  MS_CHECK_GT(in_tensors_[DIMENSION_2D]->ElementsNum(), 0, RET_ERROR);
   CHECK_LESS_RETURN(in_tensors_[DIMENSION_1D]->ElementsNum(), BATCH_TO_SPACE_BLOCK_SHAPE_SIZE);
   CHECK_LESS_RETURN(in_tensors_[DIMENSION_2D]->ElementsNum(), COMM_SHAPE_SIZE);
   for (int i = 0; i < BATCH_TO_SPACE_BLOCK_SHAPE_SIZE; ++i) {

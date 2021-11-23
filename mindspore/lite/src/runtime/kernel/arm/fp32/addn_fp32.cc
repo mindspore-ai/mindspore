@@ -59,6 +59,7 @@ int AddNCPUKernel::AddNParallelRun(int thread_id, float lhs_scale, float rhs_sca
 
 int AddNCPUKernel::Run() {
   elements_num_ = out_tensors_[0]->ElementsNum();
+  MS_CHECK_GT(elements_num_, 0, RET_ERROR);
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
@@ -71,8 +72,11 @@ int AddNCPUKernel::Run() {
     } else {
       ArithmeticParameter param;
       param.in_elements_num0_ = in_tensors_[0]->ElementsNum();
+      MS_CHECK_GT(param.in_elements_num0_, 0, RET_ERROR);
       param.in_elements_num1_ = in_tensors_[1]->ElementsNum();
+      MS_CHECK_GT(param.in_elements_num1_, 0, RET_ERROR);
       param.out_elements_num_ = out_tensors_[0]->ElementsNum();
+      MS_CHECK_GT(param.out_elements_num_, 0, RET_ERROR);
       param.broadcasting_ = true;
       ElementOptAdd(input0_data, input1_data, output_data, elements_num_, &param);
     }
@@ -85,8 +89,11 @@ int AddNCPUKernel::Run() {
       } else {
         ArithmeticParameter param;
         param.in_elements_num0_ = in_tensors_[i]->ElementsNum();
+        MS_CHECK_GT(param.in_elements_num0_, 0, RET_ERROR);
         param.in_elements_num1_ = out_tensors_[0]->ElementsNum();
+        MS_CHECK_GT(param.in_elements_num1_, 0, RET_ERROR);
         param.out_elements_num_ = out_tensors_[0]->ElementsNum();
+        MS_CHECK_GT(param.out_elements_num_, 0, RET_ERROR);
         param.broadcasting_ = true;
         ElementOptAdd(in_data, output_data, output_data, elements_num_, &param);
       }

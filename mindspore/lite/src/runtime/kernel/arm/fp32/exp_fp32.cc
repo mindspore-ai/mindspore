@@ -47,6 +47,7 @@ int ExpCPUKernel::Init() {
 
 int ExpCPUKernel::ReSize() {
   param_->element_num_ = in_tensors_.front()->ElementsNum();
+  MS_CHECK_GT(param_->element_num_, 0, RET_ERROR);
   return RET_OK;
 }
 

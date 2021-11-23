@@ -72,6 +72,7 @@ int ArithmeticSelfCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
   int elements_num = in_tensors_.at(0)->ElementsNum();
+  MS_CHECK_GT(elements_num, 0, RET_ERROR);
   MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
   int stride = UP_DIV(elements_num, op_parameter_->thread_num_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, stride, RET_ERROR);

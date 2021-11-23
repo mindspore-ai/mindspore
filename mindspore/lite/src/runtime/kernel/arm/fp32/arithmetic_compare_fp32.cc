@@ -64,7 +64,7 @@ int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *o
 
 int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
-
+  MS_CHECK_GT(element_num, 0, RET_ERROR);
   MS_ASSERT(op_parameter_->thread_num_ != 0);
   int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
