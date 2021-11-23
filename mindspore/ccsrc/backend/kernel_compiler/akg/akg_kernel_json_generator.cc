@@ -978,6 +978,23 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_);
 }
 
+bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_node) {
+  kernel_json_ = nlohmann::json();
+  std::vector<AnfNodePtr> node_list, input_list, output_list;
+  node_list.push_back(c_node);
+  (void)input_list.insert(input_list.begin(), c_node->inputs().begin() + 1, c_node->inputs().end());
+  auto output_num = static_cast<int64_t>(AnfUtils::GetOutputTensorNum(c_node));
+  if (output_num > 1) {
+    for (int64_t idx = 0; idx < output_num; idx++) {
+      auto gt = c_node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), c_node, NewValueNode(idx)});
+      output_list.emplace_back(std::move(gt));
+    }
+  } else {
+    output_list.push_back(c_node);
+  }
+  return CollectFusedJson(node_list, input_list, output_list, &kernel_json_);
+}
+
 void ComputeCapability::GetComputeCapability() {
 #ifdef ENABLE_GPU
   int a, b;
