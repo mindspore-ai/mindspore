@@ -58,10 +58,10 @@ class ExponentialDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate based on exponential decay function.
 
-    For the i-th step, the formula of computing decayed_learning_rate[i] is:
+    For current step, the formula of computing decayed_learning_rate[current_step] is:
 
     .. math::
-        decayed\_learning\_rate[i] = learning\_rate * decay\_rate^{p}
+        decayed\_learning\_rate[current\_step] = learning\_rate * decay\_rate^{p}
 
     Where :
 
@@ -259,10 +259,10 @@ class CosineDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate based on cosine decay function.
 
-    For the i-th step, the formula of computing decayed_learning_rate[i] is:
+    For current step, the formula of computing decayed_learning_rate[current_step] is:
 
     .. math::
-        decayed\_learning\_rate[i] = min\_learning\_rate + 0.5 * (max\_learning\_rate - min\_learning\_rate) *
+        decayed\_learning\_rate[current\_step] = min\_lr + 0.5 * (max\_lr - min\_lr) *
         (1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
 
@@ -412,10 +412,10 @@ class WarmUpLR(LearningRateSchedule):
     r"""
     Gets learning rate warming up.
 
-    For the i-th step, the formula of computing warmup_learning_rate[i] is:
+    For current step, the formula of computing warmup_learning_rate[i] is:
 
     .. math::
-        warmup\_learning\_rate[i] = learning\_rate * tmp\_step / warmup\_steps
+        warmup\_learning\_rate[current\_step] = learning\_rate * tmp\_step / warmup\_steps
 
     Where :
 
