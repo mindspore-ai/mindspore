@@ -160,6 +160,29 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 }
+
+void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto ref_node_map = graph->GetRefMap();
+  for (auto iter : ref_node_map) {
+    auto &output_pair = iter.first;
+    auto &input_pair = iter.second;
+    auto &ref_node = output_pair.first;
+    auto output_index = output_pair.second;
+    auto &input_node = input_pair.first;
+    auto input_node_output_index = input_pair.second;
+
+    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index);
+    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index);
+    // Just compare shared_ptr of two DeviceAddress.
+    // The ptr of DeviceAddress may still be nullptr.
+    if (input_addr != ref_node_output_addr) {
+      // The output of RefNode will not be used by subsequent Node.
+      // So update the DeviceAddress of the kernel directly instead of updating the ptr of the DeviceAddress.
+      AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
+    }
+  }
+}
 }  // namespace
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
@@ -295,6 +318,9 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
       PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
     }
+    // The DeviceAddress of the graph parameter has been updated.
+    // The output address of RefNode needs to be consistent with the address of parameter.
+    UpdateRefNodeOutputDeviceAddress(graph);
   }
 
   PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);

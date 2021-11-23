@@ -335,7 +335,11 @@ void KernelActor::FetchOutputDeviceTensor() {
     MS_EXCEPTION_IF_NULL(output_address);
     if (output_size_list[i] != output_address->GetSize()) {
       // The size of output address may be changed in dynamic shape scenario.
-      output_address->SetSize(output_size_list[i]);
+      // If the format of the DeviceAddress is different, then the size is originally different.
+      // Such as NCHW(1,1,1,3) and NC1HWC0(1,1,1,1,16). So we don't need to update the size.
+      if (AnfAlgo::GetOutputFormat(kernel_, i) == output_address->format()) {
+        output_address->SetSize(output_size_list[i]);
+      }
     }
 
     // When the tensor is the output of graph or in dynamic shape scenario, the output tensor may be changed.

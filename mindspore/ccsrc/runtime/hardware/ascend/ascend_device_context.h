@@ -124,7 +124,7 @@ class AscendDeviceContext : public DeviceContext {
   bool IsLoopCountSink(const KernelGraphPtr &graph) const override;
 
   // set rt_context_ to this thread to control device
-  bool BindDeviceToCurrentThread() const;
+  void BindDeviceToCurrentThread() const;
 
   // dump all graphs.
   void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) const override;
@@ -135,6 +135,8 @@ class AscendDeviceContext : public DeviceContext {
   void AssignInputMemory(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void LoadModel(const NotNull<KernelGraphPtr> &root_graph) const;
   void UpdateExecOrder(const KernelGraphPtr &graph) const;
+  static bool IsGraphMode();
+  bool SyncRuning() const;
 
   // Kernel Runtime  --- only for task sink
   AscendKernelRuntime *runtime_instance_{nullptr};
@@ -157,6 +159,7 @@ class AscendDeviceContext : public DeviceContext {
   bool LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
                          const std::vector<AddressPtr> &outputs) const;
   void *compute_stream_;
+  void *communication_stream_;
 };
 }  // namespace ascend
 }  // namespace device
