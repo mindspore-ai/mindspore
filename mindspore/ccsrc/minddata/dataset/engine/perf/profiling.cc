@@ -209,7 +209,7 @@ Status Tracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, flo
   std::vector<int32_t> sizes;
   RETURN_IF_NOT_OK(GetConnectorSize(start_step, end_step, &sizes));
   int32_t total = end_step - start_step + 1;
-  CHECK_FAIL_RETURN_UNEXPECTED(total <= 0, "Start step is greater than end step.");
+  CHECK_FAIL_RETURN_UNEXPECTED(total > 0, "Start step is greater than end step.");
   uint32_t count = std::count(sizes.begin(), sizes.end(), 0);
   *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
   return Status::OK();
@@ -222,7 +222,7 @@ Status Tracing::Init() {
 
 // Constructor
 ProfilingManager::ProfilingManager()
-    : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false), tree_(nullptr), autotuning_(false) {}
+    : profiling_state_(ProfilingState::kProfilingStateUnBegun), tree_(nullptr), autotuning_(false), profiling_(false) {}
 
 bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
   auto external_state = GetProfilerTreeState(tree);
@@ -231,8 +231,10 @@ bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
 
 Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "Another tree is already registered.");
-  CHECK_FAIL_RETURN_UNEXPECTED(enabled_ == true, "MD Profiler is disabled. Cannot register a tree.");
+  CHECK_FAIL_RETURN_UNEXPECTED((autotuning_ || profiling_) == true,
+                               "MD Profiler is disabled. Cannot register the tree.");
   tree_ = tree_adapter->tree_.get();
+  MS_LOG(INFO) << "Registering tree: " + tree_->GetUniqueId();
   perf_monitor_ = std::make_unique<Monitor>(this);
   // Register all sampling nodes here.
   // Tracing node registration is the responsibility of the Consumer
@@ -639,21 +641,27 @@ Status ProfilingManager::Reset() {
   tree_ = nullptr;
   profiling_state_ = ProfilingState::kProfilingStateUnBegun;
   autotuning_ = false;
+  profiling_ = false;
   return Status::OK();
 }
 
-Status ProfilingManager::Init() {
+Status ProfilingManager::Init(const bool for_autotune) {
   // Reinitialization should only be done in case of UT with sequential pipelines and should not be used externally.
   // Reinitialization with parallel data pipelines can have unexpected consequences.
+  CHECK_FAIL_RETURN_UNEXPECTED(!autotuning_, "Stop MD Autotune before initializing the MD Profiler.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!profiling_, "Stop MD Profiler before initializing it.");
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
                                "Stop MD Profiler before reinitializing it.");
   Reset();
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ == ProfilingState::kProfilingStateUnBegun,
                                "MD Profiler is in an unexpected state.");
-  // Enable profiling
-  enabled_ = true;
-
-  MS_LOG(INFO) << "MD profiler is initialized successfully.";
+  if (for_autotune) {
+    autotuning_ = true;
+    MS_LOG(INFO) << "MD profiler is initialized successfully for autotuning.";
+  } else {
+    profiling_ = true;
+    MS_LOG(INFO) << "MD profiler is initialized successfully for profiling.";
+  }
   return Status::OK();
 }
 
@@ -690,8 +698,14 @@ Status ProfilingManager::Stop() {
     RETURN_IF_NOT_OK(node.second->Stop());
   }
   profiling_state_ = ProfilingState::kProfilingStateFinished;
-  enabled_ = false;
-  MS_LOG(INFO) << "MD profiler is stopped.";
+  if (autotuning_) {
+    autotuning_ = false;
+    MS_LOG(INFO) << "MD Autotune is stopped.";
+  }
+  if (profiling_) {
+    profiling_ = false;
+    MS_LOG(INFO) << "MD Profiler is stopped.";
+  }
   return Status::OK();
 }
 
@@ -737,9 +751,10 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
 }
 
 ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
-  if (!enabled_) return kNotEnabled;
+  auto enabled = (profiling_ || autotuning_);
+  if (!enabled) return kNotEnabled;
   if (tree_ == nullptr) {
-    return enabled_ ? kEnabledTreeNotRegistered : kNotEnabled;
+    return kEnabledTreeNotRegistered;
   } else {
     return tree_ == tree ? kEnabledTreeRegistered : kEnabledDifferentTreeRegistered;
   }

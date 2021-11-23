@@ -446,16 +446,16 @@ def get_enable_autotune():
 
 def set_autotune_interval(interval):
     """
-    Set the default interval (in milliseconds) for data pipeline auto-tuning.
+    Set the default interval (in milliseconds) for data pipeline autotuning.
 
     Args:
-        interval (int): Interval (in milliseconds) to be used for data pipeline auto-tuning.
+        interval (int): Interval (in milliseconds) to be used for data pipeline autotuning.
 
     Raises:
         ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
 
     Examples:
-        >>> # Set a new global configuration value for the auto-tuning interval.
+        >>> # Set a new global configuration value for the autotuning interval.
         >>> ds.config.set_autotune_interval(100)
     """
     if not isinstance(interval, int):
@@ -467,13 +467,13 @@ def set_autotune_interval(interval):
 
 def get_autotune_interval():
     """
-    Get the global configuration of sampling interval of pipeline auto-tuning.
+    Get the global configuration of sampling interval of pipeline autotuning.
 
     Returns:
-        int, interval (in milliseconds) for data pipeline auto-tuning.
+        int, interval (in milliseconds) for data pipeline autotuning.
 
     Examples:
-        >>> # Get the global configuration of the auto-tuning interval.
+        >>> # Get the global configuration of the autotuning interval.
         >>> # If set_autotune_interval() is never called before, the default value(100) will be returned.
         >>> autotune_interval = ds.config.get_autotune_interval()
     """
