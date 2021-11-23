@@ -41,7 +41,7 @@ Status RenameOp::GetNextRow(TensorRow *row) {
   return Status::OK();
 }
 
-Status RenameOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. RenameOp is an inlined operator."); }
+Status RenameOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] RenameOp is an inlined operator."); }
 
 // Rename core functionality to compute the new column name id map.
 // We need to overwrite the super class ComputeColMap here because we're making a modification of the
@@ -71,7 +71,7 @@ Status RenameOp::ComputeColMap() {
         MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
         if (new_col_name.find(out_columns_[index]) != new_col_name.end()) {
           std::string err_msg(
-            "Invalid parameter, rename operation does not support rename one column name into another already exist "
+            "Invalid column, rename operation does not support rename one column name into another already exist "
             "column name, existing column name is: " +
             out_columns_[index] + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
@@ -82,7 +82,7 @@ Status RenameOp::ComputeColMap() {
         // not found
         if (new_col_name.find(name) != new_col_name.end()) {
           std::string err_msg(
-            "Invalid parameter, rename operation does not support rename one column name into another already exist "
+            "Invalid column, rename operation does not support rename one column name into another already exist "
             "column name, existing column name is: " +
             name + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
@@ -95,7 +95,7 @@ Status RenameOp::ComputeColMap() {
     // only checks number of renamed columns have been found, this input check doesn't check everything
     if (found != in_columns_.size()) {
       MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
-      std::string err_msg = "Invalid parameter, column to be renamed does not exist in dataset.";
+      std::string err_msg = "Invalid column, column to be renamed does not exist.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 

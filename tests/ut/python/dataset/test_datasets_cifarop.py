@@ -210,7 +210,7 @@ def test_cifar10_exception():
     with pytest.raises(ValueError, match=error_msg_6):
         ds.Cifar10Dataset(DATA_DIR_10, shuffle=False, num_parallel_workers=256)
 
-    error_msg_7 = "no .bin files found"
+    error_msg_7 = r"cifar\(.bin\) files are missing"
     with pytest.raises(RuntimeError, match=error_msg_7):
         ds1 = ds.Cifar10Dataset(NO_BIN_DIR)
         for _ in ds1.__iter__():
@@ -360,7 +360,7 @@ def test_cifar100_exception():
     with pytest.raises(ValueError, match=error_msg_6):
         ds.Cifar100Dataset(DATA_DIR_100, shuffle=False, num_parallel_workers=256)
 
-    error_msg_7 = "no .bin files found"
+    error_msg_7 = r"cifar\(.bin\) files are missing"
     with pytest.raises(RuntimeError, match=error_msg_7):
         ds1 = ds.Cifar100Dataset(NO_BIN_DIR)
         for _ in ds1.__iter__():

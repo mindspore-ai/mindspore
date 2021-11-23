@@ -74,7 +74,7 @@ TensorRow ProjectOp::Project(const TensorRow &row) {
 // However, the ProjectOp is defined as a inlined operator, so it is invalid to launch the
 // functor since this op runs inlined inside another operator. The function is overloaded to
 // ensure that it is not called by mistake (it will generate an error).
-Status ProjectOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. ProjectOp is an inlined operator."); }
+Status ProjectOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] ProjectOp is an inlined operator."); }
 
 Status ProjectOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
@@ -92,7 +92,7 @@ Status ProjectOp::ComputeColMap() {
     for (size_t i = 0; i < columns_to_project_.size(); i++) {
       std::string &current_column = columns_to_project_[i];
       if (child_column_name_mapping.find(current_column) == child_column_name_mapping.end()) {
-        std::string err_msg = "Invalid parameter, column name: " + current_column + " does not exist in dataset.";
+        std::string err_msg = "Invalid column, column name: " + current_column + " does not exist.";
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       // Setup the new column name mapping for ourself (base class field)

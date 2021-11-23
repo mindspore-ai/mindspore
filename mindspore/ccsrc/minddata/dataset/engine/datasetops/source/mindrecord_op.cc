@@ -68,7 +68,8 @@ Status MindRecordOp::Init() {
   data_schema_ = std::make_unique<DataSchema>();
 
   std::vector<std::string> col_names = shard_reader_->GetShardColumn()->GetColumnName();
-  CHECK_FAIL_RETURN_UNEXPECTED(!col_names.empty(), "Invalid data, no column names are specified.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!col_names.empty(),
+                               "Invalid column, no column names are specified, check mindrecord file.");
   std::vector<mindrecord::ColumnDataType> col_data_types = shard_reader_->GetShardColumn()->GeColumnDataType();
   std::vector<std::vector<int64_t>> col_shapes = shard_reader_->GetShardColumn()->GetColumnShape();
 
@@ -107,9 +108,8 @@ Status MindRecordOp::Init() {
   if (!load_all_cols) {
     std::unique_ptr<DataSchema> tmp_schema = std::make_unique<DataSchema>();
     for (std::string colname : columns_to_load_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(
-        colname_to_ind.find(colname) != colname_to_ind.end(),
-        "Invalid data, specified loading column name: " + colname + " does not exist in data file.");
+      CHECK_FAIL_RETURN_UNEXPECTED(colname_to_ind.find(colname) != colname_to_ind.end(),
+                                   "Invalid column, " + colname + " does not exist in data file.");
       RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->Column(colname_to_ind[colname])));
     }
     data_schema_ = std::move(tmp_schema);
@@ -177,7 +177,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
+  RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unexpected nullptr received in worker.");
 }
 
 Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, int32_t worker_id) {
@@ -231,14 +231,15 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
         RETURN_IF_NOT_OK(shard_column->GetColumnFromJson(column_name, sample_json_, &data_ptr, &n_bytes));
       } else if (category == mindrecord::ColumnInBlob) {
         CHECK_FAIL_RETURN_UNEXPECTED(sample_bytes_.find(column_name) != sample_bytes_.end(),
-                                     "Invalid data, failed to retrieve blob data from padding sample.");
+                                     "Invalid padded_sample, failed to retrieve blob data from padding sample, "
+                                     "check 'padded_sample'.");
 
         std::string ss(sample_bytes_[column_name]);
         n_bytes = ss.size();
         data_ptr = std::make_unique<unsigned char[]>(n_bytes);
         std::copy(ss.begin(), ss.end(), data_ptr.get());
       } else {
-        RETURN_STATUS_UNEXPECTED("Invalid data, retrieved data type is unknown.");
+        RETURN_STATUS_UNEXPECTED("Invalid datatype, retrieved data type is unknown.");
       }
       if (data == nullptr) {
         data = reinterpret_cast<const unsigned char *>(data_ptr.get());
@@ -254,7 +255,8 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     DataType type = column.Type();
 
     // Set shape
-    CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "Found memory size of column data type is 0.");
+    CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0,
+                                 "[Internal ERROR] Found memory size of column data type is 0.");
     auto num_elements = n_bytes / column_data_type_size;
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};

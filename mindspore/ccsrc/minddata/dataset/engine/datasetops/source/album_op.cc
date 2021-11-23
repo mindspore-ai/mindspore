@@ -64,7 +64,7 @@ Status AlbumOp::PrepareData() {
   dirname_offset_ = folder_path_.length();
   std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
   if (!folder.Exists() || dirItr == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_ + ".");
+    RETURN_STATUS_UNEXPECTED("Invalid folder, " + folder_path_ + " does not exist or permission denied.");
   }
   MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
 
@@ -94,7 +94,7 @@ Status AlbumOp::PrepareData() {
 // This function does not return status because we want to just skip bad input, not crash
 bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   if (valid == nullptr) {
-    MS_LOG(ERROR) << "Album parameter can't be nullptr.";
+    MS_LOG(ERROR) << "[Internal ERROR] Album parameter can't be nullptr.";
     return false;
   }
   std::ifstream file_handle;
@@ -214,8 +214,8 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_n
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither int32 nor int64, it is " +
-                             data_schema_->Column(col_num).Type().ToString());
+    RETURN_STATUS_UNEXPECTED("Invalid column type, column type of " + data_schema_->Column(col_num).Name() +
+                             " should be int32 or int64, but got " + data_schema_->Column(col_num).Type().ToString());
   }
   row->push_back(std::move(label));
   return Status::OK();
@@ -243,7 +243,8 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &float_array));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither float32 nor float64, it is " +
+    RETURN_STATUS_UNEXPECTED("Invalid column type, column type of " + data_schema_->Column(col_num).Name() +
+                             " should be float32 nor float64, but got " +
                              data_schema_->Column(col_num).Type().ToString());
   }
   row->push_back(std::move(float_array));
@@ -323,7 +324,7 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 
   std::ifstream file_handle(folder_path_ + file);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + folder_path_ + file);
+    RETURN_STATUS_UNEXPECTED("Invalid json file, " + folder_path_ + file + " does not exist or permission denied.");
   }
   std::string line;
   while (getline(file_handle, line)) {
@@ -342,7 +343,7 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
       }
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + folder_path_ + file);
+      RETURN_STATUS_UNEXPECTED("Invalid file, " + folder_path_ + file + " load failed: " + std::string(err.what()));
     }
   }
   file_handle.close();

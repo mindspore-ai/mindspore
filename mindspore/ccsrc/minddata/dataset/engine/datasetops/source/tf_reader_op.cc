@@ -44,7 +44,7 @@ const int64_t kTFRecordFileLimit = 0x140000000;
 bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
   auto realpath = FileUtils::GetRealPath(filename.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filename;
+    MS_LOG(ERROR) << "Invalid file path, " << filename << " does not exist.";
     return false;
   }
 
@@ -126,7 +126,7 @@ Status TFReaderOp::Init() {
   }
   if (total_rows_ < 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid parameter, num_samples or num_rows for TFRecordDataset must be greater than 0, but got: " +
+      "[Internal ERROR] num_samples or num_rows for TFRecordDataset must be greater than 0, but got: " +
       std::to_string(total_rows_));
   }
 
@@ -267,14 +267,14 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
 Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = FileUtils::GetRealPath(filename.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filename;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + filename);
+    MS_LOG(ERROR) << "Invalid file path, " << filename << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + filename + " does not exist.");
   }
 
   std::ifstream reader;
   reader.open(realpath.value());
   if (!reader) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + filename);
+    RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
   }
 
   int64_t rows_read = 0;
@@ -304,7 +304,7 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
       dataengine::Example tf_file;
       if (!tf_file.ParseFromString(serialized_example)) {
-        std::string errMsg = "Invalid file, failed to parse tfrecord file : " + filename;
+        std::string errMsg = "Failed to parse tfrecord file: " + filename + ", make sure protobuf version is suitable.";
         MS_LOG(DEBUG) << errMsg + ", details of string: " << serialized_example;
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
@@ -333,7 +333,8 @@ Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, TensorRow *ou
     const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
     auto iter_column = feature_map.find(current_col.Name());
     if (iter_column == feature_map.end()) {
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.Name() + " does not exist.");
+      RETURN_STATUS_UNEXPECTED("Invalid columns_list, column name: " + current_col.Name() +
+                               " does not exist in tfrecord file, check tfrecord files.");
     }
     const dataengine::Feature &column_values_list = iter_column->second;
     RETURN_IF_NOT_OK(LoadFeature(out_row, column_values_list, current_col, col));
@@ -383,11 +384,13 @@ Status TFReaderOp::LoadFeature(TensorRow *tensor_row, const dataengine::Feature 
       break;
     }
     case dataengine::Feature::KindCase::KIND_NOT_SET: {
-      std::string err_msg = "Invalid data, column type in tf record file must be uint8, int64 or float32.";
+      std::string err_msg =
+        "Unrecognized datatype, column type in tfrecord file must be uint8, int64 or float32, check tfrecord file.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     default: {
-      std::string err_msg = "Invalid data, column type in tf record file must be uint8, int64 or float32.";
+      std::string err_msg =
+        "Unrecognized datatype, column type in tfrecord file must be uint8, int64 or float32, check tfrecord file.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
@@ -404,8 +407,8 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // Must be single byte type for each element!
   if (current_col.Type() != DataType::DE_UINT8 && current_col.Type() != DataType::DE_INT8 &&
       current_col.Type() != DataType::DE_STRING) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
-                          ", data type should be int8, uint8 or string, but got " + current_col.Type().ToString();
+    std::string err_msg = "Invalid column type, the column type of " + current_col.Name() +
+                          " should be int8, uint8 or string, but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -439,7 +442,8 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
       for (int i = 1; i < cur_shape.Size(); ++i) {
         if (cur_shape[i] == TensorShape::kDimUnknown) {
           std::string err_msg =
-            "Invalid data, more than one unknown dimension in the shape of column: " + current_col.Name();
+            "Invalid data dimension, only one dimension shape supported is -1, but the 0th and the" +
+            std::to_string(i) + "th dimension shape of " + current_col.Name() + " are both -1.";
           RETURN_STATUS_UNEXPECTED(err_msg);
         }
         new_pad_size *= cur_shape[i];
@@ -447,10 +451,10 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
       pad_size = new_pad_size;
     } else {
       if (cur_shape.known() && cur_shape.NumOfElements() != max_size) {
-        std::string err_msg = "Invalid data, shape in schema's column '" + current_col.Name() + "' is incorrect." +
-                              "\nshape received: " + cur_shape.ToString() +
-                              "\ntotal elements in shape received: " + std::to_string(cur_shape.NumOfElements()) +
-                              "\nexpected total elements in shape: " + std::to_string(max_size);
+        std::string err_msg = "Data dimensions of '" + current_col.Name() +
+                              "' do not match, the expected total elements of shape " + cur_shape.ToString() +
+                              " should be " + std::to_string(max_size) + ", but got " +
+                              std::to_string(cur_shape.NumOfElements());
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
     }
@@ -469,8 +473,8 @@ Status TFReaderOp::LoadFloatList(const ColDescriptor &current_col, const dataeng
   // KFloatList can only map to DE types:
   // DE_FLOAT32
   if (current_col.Type() != DataType::DE_FLOAT32) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
-                          ", data type should be string, but got " + current_col.Type().ToString();
+    std::string err_msg = "Invalid column type, the column type of " + current_col.Name() +
+                          " should be string, but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -507,9 +511,9 @@ Status TFReaderOp::LoadIntListSwitch(const ColDescriptor &current_col, const dat
   } else if (current_col.Type() == DataType::DE_INT8) {
     RETURN_IF_NOT_OK(LoadIntList<int8_t>(current_col, column_values_list, num_elements, tensor));
   } else {
-    std::string err_msg = "Invalid data, invalid datatype for Tensor at column: " + current_col.Name() +
-                          ", data type should be uint64, int64, uint32, int32, uint16, int16, uint8 or int8" +
-                          ", but got " + current_col.Type().ToString();
+    std::string err_msg = "Invalid column type, the column type of " + current_col.Name() +
+                          " should be uint64, int64, uint32, int32, uint16, int16, uint8 or int8, but got " +
+                          current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -522,8 +526,8 @@ template <typename T>
 Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengine::Feature &column_values_list,
                                int32_t *num_elements, std::shared_ptr<Tensor> *tensor) {
   if (!(current_col.Type().IsInt())) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
-                          ", data type should be int, but got " + current_col.Type().ToString();
+    std::string err_msg = "Invalid column type, the column type of " + current_col.Name() + " should be int, but got " +
+                          current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -551,8 +555,8 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
 Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
   auto realpath = FileUtils::GetRealPath(tf_file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << tf_file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + tf_file);
+    MS_LOG(ERROR) << "Invalid file path, " << tf_file << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + tf_file + " does not exist.");
   }
 
   std::ifstream reader;
@@ -572,7 +576,8 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::stri
 
   dataengine::Example example;
   if (!example.ParseFromString(serialized_example)) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse tfrecord file: " + serialized_example);
+    RETURN_STATUS_UNEXPECTED("Failed to parse tfrecord file: " + realpath.value() +
+                             ", fields that failed to parse: " + serialized_example);
   }
 
   const dataengine::Features &example_features = example.features();
@@ -587,7 +592,7 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::stri
   for (const auto &curr_col_name : columns_to_load) {
     auto it = feature_map.find(curr_col_name);
     if (it == feature_map.end()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name);
+      RETURN_STATUS_UNEXPECTED("Invalid columns_list, tfrecord file failed to find column name: " + curr_col_name);
     }
     std::string column_name = it->first;
 
@@ -609,10 +614,12 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::stri
         break;
 
       case dataengine::Feature::KindCase::KIND_NOT_SET:
-        RETURN_STATUS_UNEXPECTED("Invalid data, column type of tf record file must be uint8, int64 or float32.");
+        RETURN_STATUS_UNEXPECTED("Unrecognized column type, the column type of " + column_name +
+                                 " should be uint8, int64 or float32, but got unrecognized column type.");
 
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid data, column type of tf record file must be uint8, int64 or float32.");
+        RETURN_STATUS_UNEXPECTED("Unsupported column type, the column type of " + column_name +
+                                 " should be uint8, int64 or float32, but got unsupported column type.");
     }
 
     RETURN_IF_NOT_OK(
@@ -633,7 +640,9 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
     std::vector<std::future<int64_t>> async_results;
 
     if (threads <= 0) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, the threads of TFReader should be greater than zero, but got zero.");
+      RETURN_STATUS_UNEXPECTED(
+        "Invalid threads number, the threads number of TFReader should be greater than zero, but got " +
+        std::to_string(threads) + ".");
     }
     int64_t chunk_size = filenames.size() / threads;
     int64_t remainder = filenames.size() % threads;
@@ -672,7 +681,7 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
     *out_total_rows = total_rows;
   } catch (const std::exception &e) {
     std::string err_msg = "Unexpected error occurred: ";
-    err_msg += e.what();
+    err_msg += std::string(e.what());
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -684,7 +693,7 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
   for (int i = begin; i < end; i++) {
     auto realpath = FileUtils::GetRealPath(filenames[i].data());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << filenames[i];
+      MS_LOG(ERROR) << "Invalid file path, " << filenames[i] << " does not exist.";
       continue;
     }
 

@@ -69,7 +69,7 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
 Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in " + DatasetName() + " file.");
+      RETURN_STATUS_UNEXPECTED("Invalid " + DatasetName() + " file, image data is missing.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
@@ -89,7 +89,7 @@ Status MnistOp::ReadFromReader(std::ifstream *reader, uint32_t *result) {
   uint32_t res = 0;
   reader->read(reinterpret_cast<char *>(&res), 4);
   CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(),
-                               "Invalid data, failed to read 4 bytes from " + DatasetName() + " file.");
+                               "Invalid file, failed to read 4 bytes from " + DatasetName() + " file.");
   *result = SwapEndian(res);
   return Status::OK();
 }
@@ -100,17 +100,22 @@ uint32_t MnistOp::SwapEndian(uint32_t val) const {
 }
 
 Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images) {
-  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(),
-                               "Invalid file, failed to open " + DatasetName() + " image file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(), "Invalid " + DatasetName() + " file, failed to open " +
+                                                          file_name + " : the file is damaged or permission denied.");
   int64_t image_len = image_reader->seekg(0, std::ios::end).tellg();
   (void)image_reader->seekg(0, std::ios::beg);
   // The first 16 bytes of the image file are type, number, row and column
-  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16,
+                               "Invalid " + DatasetName() + " file, the first data length of " + file_name +
+                                 " should be 16 bytes(contains type, number, row and column), but got " +
+                                 std::to_string(image_len) + ".");
 
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistImageFileMagicNumber,
-                               "Invalid file, this is not the " + DatasetName() + " image file: " + file_name);
+                               "Invalid " + DatasetName() + " file, the image number of " + file_name + " should be " +
+                                 std::to_string(kMnistImageFileMagicNumber) + ", but got " +
+                                 std::to_string(magic_number));
 
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &num_items));
@@ -120,28 +125,38 @@ Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_re
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &cols));
   // The image size of the Mnist dataset is fixed at [28,28]
   CHECK_FAIL_RETURN_UNEXPECTED((rows == kMnistImageRows) && (cols == kMnistImageCols),
-                               "Invalid data, shape of image is not equal to (28, 28).");
+                               "Invalid " + DatasetName() + " file, shape of image in " + file_name +
+                                 " should be (28, 28), but got (" + std::to_string(rows) + ", " + std::to_string(cols) +
+                                 ").");
   CHECK_FAIL_RETURN_UNEXPECTED((image_len - 16) == num_items * rows * cols,
-                               "Invalid data, got truncated data len: " + std::to_string(image_len - 16) +
-                                 ", which is not equal to real data len: " + std::to_string(num_items * rows * cols));
+                               "Invalid " + DatasetName() + " file, truncated data length of " + file_name +
+                                 " should be " + std::to_string(image_len - 16) + ", but got " +
+                                 std::to_string(num_items * rows * cols));
   *num_images = num_items;
   return Status::OK();
 }
 
 Status MnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels) {
-  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(),
-                               "Invalid file, failed to open " + DatasetName() + " label file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(), "Invalid " + DatasetName() + " file, failed to open " +
+                                                          file_name + " : the file is damaged or permission denied!");
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 8 bytes of the image file are type and number
-  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Invalid " + DatasetName() + " file, the first data length of " +
+                                                 file_name + " should be 8 bytes(contains type and number), but got " +
+                                                 std::to_string(label_len) + ".");
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistLabelFileMagicNumber,
-                               "Invalid file, this is not the " + DatasetName() + " label file: " + file_name);
+                               "Invalid " + DatasetName() + " file, the number of labels in " + file_name +
+                                 " should be " + std::to_string(kMnistLabelFileMagicNumber) + ", but got " +
+                                 std::to_string(magic_number) + ".");
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
-  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Invalid data, number of labels is wrong.");
+  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Invalid " + DatasetName() +
+                                                               " file, the data length of labels in " + file_name +
+                                                               " should be " + std::to_string(label_len - 8) +
+                                                               ", but got " + std::to_string(num_items) + ".");
   *num_labels = num_items;
   return Status::OK();
 }
@@ -151,7 +166,10 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
   RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));
   CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                               "Invalid data, num_images is not equal to num_labels. Ensure data file is not damaged.");
+                               "Invalid " + DatasetName() + " file, the images number of " + image_names_[index] +
+                                 " should be equal to the labels number of " + label_names_[index] +
+                                 ", but got images number: " + std::to_string(num_images) +
+                                 ", labels number: " + std::to_string(num_labels) + ".");
   // The image size of the Mnist dataset is fixed at [28,28]
   int64_t size = kMnistImageRows * kMnistImageCols;
   auto images_buf = std::make_unique<char[]>(size * num_images);
@@ -163,13 +181,13 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   }
   (void)image_reader->read(images_buf.get(), size * num_images);
   if (image_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " image: " + image_names_[index] +
-                             ", size:" + std::to_string(size * num_images) + ". Ensure data file is not damaged.");
+    RETURN_STATUS_UNEXPECTED("Invalid " + DatasetName() + " file, failed to read " + image_names_[index] +
+                             " : the file is damaged or permission denied!");
   }
   (void)label_reader->read(labels_buf.get(), num_images);
   if (label_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " label:" + label_names_[index] +
-                             ", size: " + std::to_string(num_images) + ". Ensure data file is not damaged.");
+    RETURN_STATUS_UNEXPECTED("Invalid " + DatasetName() + " file, failed to read " + label_names_[index] +
+                             " : the file is damaged or the file content is incomplete.");
   }
   TensorShape img_tensor_shape = TensorShape({kMnistImageRows, kMnistImageCols, 1});
   for (int64_t j = 0; j != num_images; ++j) {
@@ -244,8 +262,10 @@ Status MnistOp::WalkAllFiles() {
   std::sort(image_names_.begin(), image_names_.end());
   std::sort(label_names_.begin(), label_names_.end());
 
-  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
-                               "Invalid data, num of images is not equal to num of labels.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    image_names_.size() == label_names_.size(),
+    "Invalid " + DatasetName() + " file, num of images should be equal to num of labels, but got num of images: " +
+      std::to_string(image_names_.size()) + ", num of labels: " + std::to_string(label_names_.size()) + ".");
 
   return Status::OK();
 }
@@ -279,7 +299,9 @@ Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage,
     uint32_t num_labels;
     RETURN_IF_NOT_OK(op->CheckLabel(op->label_names_[i], &label_reader, &num_labels));
     CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                                 "Invalid data, num of images is not equal to num of labels.");
+                                 "Invalid " + op->DatasetName() +
+                                   " file, num of images should be equal to num of labels, but got num of images: " +
+                                   std::to_string(num_images) + ", num of labels: " + std::to_string(num_labels) + ".");
     *count = *count + num_images;
 
     // Close the readers

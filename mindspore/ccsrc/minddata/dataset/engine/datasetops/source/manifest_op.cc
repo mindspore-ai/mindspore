@@ -63,7 +63,8 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + data.first;
+      std::string err =
+        "Invalid image, failed to decode: " + data.first + ", the image is damaged or permission denied.";
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -91,7 +92,7 @@ void ManifestOp::Print(std::ostream &out, bool show_all) const {
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
     if (image_labelname_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in dataset.");
+      RETURN_STATUS_UNEXPECTED("Invalid manifest file, image data is missing in " + file_);
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
@@ -120,13 +121,14 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 Status ManifestOp::PrepareData() {
   auto realpath = FileUtils::GetRealPath(file_.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_;
-    RETURN_STATUS_UNEXPECTED("Invalid data, get real path failed, path=" + file_);
+    MS_LOG(ERROR) << "Invalid file path, " << file_ << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_ + " does not exist.");
   }
 
   std::ifstream file_handle(realpath.value());
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Manifest file: " + file_);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + file_ +
+                             ": manifest file is damaged or permission denied!");
   }
   std::string line;
   std::set<std::string> classes;
@@ -137,7 +139,7 @@ Status ManifestOp::PrepareData() {
       std::string image_file_path = js.value("source", "");
       if (image_file_path == "") {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, 'source' is not found in Manifest file: " + file_ + " at line " +
+        RETURN_STATUS_UNEXPECTED("Invalid manifest file, 'source' is missing in file: " + file_ + " at line " +
                                  std::to_string(line_count));
       }
       // If image is not JPEG/PNG/GIF/BMP, drop it
@@ -149,7 +151,7 @@ Status ManifestOp::PrepareData() {
       std::string usage = js.value("usage", "");
       if (usage == "") {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, 'usage' is not found in Manifest file: " + file_ + " at line " +
+        RETURN_STATUS_UNEXPECTED("Invalid manifest file, 'usage' is missing in file: " + file_ + " at line " +
                                  std::to_string(line_count));
       }
       (void)std::transform(usage.begin(), usage.end(), usage.begin(), ::tolower);
@@ -164,7 +166,7 @@ Status ManifestOp::PrepareData() {
         classes.insert(label_name);
         if (label_name == "") {
           file_handle.close();
-          RETURN_STATUS_UNEXPECTED("Invalid data, 'name' of label is not found in Manifest file: " + file_ +
+          RETURN_STATUS_UNEXPECTED("Invalid manifest file, 'name' attribute of label is missing in file: " + file_ +
                                    " at line " + std::to_string(line_count));
         }
         if (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) {
@@ -180,7 +182,8 @@ Status ManifestOp::PrepareData() {
       line_count++;
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + file_);
+      RETURN_STATUS_UNEXPECTED("Invalid manifest file, parse ManiFest file: " + file_ + " failed, " +
+                               std::string(err.what()));
     }
   }
   num_classes_ = classes.size();
@@ -193,8 +196,8 @@ Status ManifestOp::PrepareData() {
 Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
   auto realpath = FileUtils::GetRealPath(file_name.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);
+    MS_LOG(ERROR) << "Invalid file path, " << file_name << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_name + " does not exist.");
   }
 
   std::ifstream file_handle;
@@ -202,14 +205,16 @@ Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
   *valid = false;
   file_handle.open(realpath.value(), std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image file: " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid manifest file, failed to open " + file_name +
+                             " : the manifest file is damaged or permission denied.");
   }
   unsigned char file_type[read_num];
   (void)file_handle.read(reinterpret_cast<char *>(file_type), read_num);
 
   if (file_handle.fail()) {
     file_handle.close();
-    RETURN_STATUS_UNEXPECTED("Invalid data, failed to read image file: " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid manifest file, failed to read " + file_name +
+                             " : the manifest file is damaged or permission denied.");
   }
   file_handle.close();
   if (file_type[0] == 0xff && file_type[1] == 0xd8 && file_type[2] == 0xff) {

@@ -64,7 +64,7 @@ FilenameBlock::FilenameBlock(IOBlockFlags io_block_flags)
 // Gets the filename from the block using the provided index container
 Status FilenameBlock::GetFilename(std::string *out_filename, const AutoIndexObj<std::string> &index) const {
   if (out_filename == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Failed to get filename from FilenameBlock.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get filename from FilenameBlock.");
   }
 
   // a FilenameBlock only has one key.  Call base class method to fetch that key
@@ -77,7 +77,7 @@ Status FilenameBlock::GetFilename(std::string *out_filename, const AutoIndexObj<
     auto &it = r.first;
     *out_filename = it.value();
   } else {
-    RETURN_STATUS_UNEXPECTED("Could not find filename from index.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Could not find filename from index.");
   }
 
   return Status::OK();

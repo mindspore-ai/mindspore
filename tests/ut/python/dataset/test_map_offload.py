@@ -68,6 +68,9 @@ def test_auto_offload():
                                       dataset_auto_enabled.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(img_0, img_1)
 
+    # Need to turn off here or subsequent test cases will fail.
+    ds.config.set_auto_offload(False)
+
 
 def test_offload_concat_dataset_1():
     """

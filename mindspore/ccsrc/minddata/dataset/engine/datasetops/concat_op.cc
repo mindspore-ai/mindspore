@@ -74,9 +74,17 @@ Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
     // Compare the data type and data rank with these in child[0]
     int32_t index = 0;
     for (auto item : new_row) {
-      if ((item->type() != data_type_[index]) || item->Rank() != data_rank_[index++]) {
-        RETURN_STATUS_UNEXPECTED("Invalid data, data type or data rank is not the same with previous dataset.");
+      if (item->type() != data_type_[index]) {
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid datatype, the data type of two datasets concated should be the same, but got " +
+          item->type().ToString() + " and " + data_type_[index].ToString() + ".");
       }
+      if (item->Rank() != data_rank_[index]) {
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid datatype, the data rank of two datasets concated should be the same, but got " +
+          std::to_string(item->Rank()) + " and " + std::to_string(data_rank_[index]) + ".");
+      }
+      index++;
     }
   }
   verified_ = true;
@@ -89,12 +97,13 @@ Status ConcatOp::ComputeColMap() {
     // Obtain columns_name_id_map from child_[0]
     column_name_id_map_ = child_[0]->column_name_id_map();
     if (column_name_id_map_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Child column name map cannot be empty!");
     }
     // Verify all children have the same column name map
     for (size_t i = 0; i < child_.size(); ++i) {
       if (child_[i]->column_name_id_map() != column_name_id_map_) {
-        RETURN_STATUS_UNEXPECTED("Invalid data, column name or column order is not the same with previous dataset.");
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid columns, 'column name' or 'column order' of concat datasets should be the same.");
       }
     }
   } else {
@@ -118,7 +127,7 @@ Status ConcatOp::GetNumClasses(int64_t *num_classes) {
   *num_classes = max_num_classes;
   return Status::OK();
 }
-Status ConcatOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
+Status ConcatOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] ConcatOp is an inlined operator."); }
 
 bool ConcatOp::IgnoreSample() {
   bool is_not_mappable_or_second_ne_zero = true;
@@ -184,10 +193,10 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
     return Status::OK();
   }
   if (row->eof()) {
-    CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "Received an unexpected EOF.");
+    CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "[Internal ERROR] Received an unexpected EOF.");
     for (int32_t i = cur_child_ + 1; i < child_.size(); i++) {
       RETURN_IF_NOT_OK(child_[i]->GetNextRow(row));
-      CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "Row must be an EOF.");
+      CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "[Internal ERROR] Row must be an EOF.");
     }
     return Status::OK();
   }

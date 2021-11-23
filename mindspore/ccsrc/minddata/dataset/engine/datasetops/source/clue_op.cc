@@ -55,7 +55,7 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
     if (cursor.find(key_chain[i]) != cursor.end()) {
       cursor = cursor[key_chain[i]];
     } else {
-      RETURN_STATUS_UNEXPECTED("Invalid data, in given JSON file, failed to find key: " + key_chain[i]);
+      RETURN_STATUS_UNEXPECTED("Invalid json file, in given JSON file, failed to find key: " + key_chain[i]);
     }
   }
   std::string final_str = key_chain.back();
@@ -84,13 +84,13 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
 Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file);
+    std::string err_msg = "Invalid file path, " + file + " does not exist.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + file + ", the file is damaged or permission denied.");
   }
 
   int64_t rows_total = 0;
@@ -115,7 +115,7 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
       js = nlohmann::json::parse(line);
     } catch (const std::exception &err) {
       // Catch any exception and convert to Status return code
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse JSON file: " + file);
+      RETURN_STATUS_UNEXPECTED("Invalid json, failed to parse " + file + ", " + std::string(err.what()));
     }
     int cols_count = cols_to_keyword_.size();
     TensorRow t_row(cols_count, nullptr);
@@ -219,7 +219,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, CLUEDataset API can't read the data file (interface mismatch or no data found). "
+      "Invalid data, 'CLUEDataset' API can't read the data file (interface mismatch or no data found). "
       "Check file path:" +
       file_list);
   }
@@ -232,13 +232,13 @@ Status ClueOp::CalculateNumRowsPerShard() {
 int64_t CountTotalRowsPerFile(const std::string &file) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file, " << file << " does not exist.";
     return 0;
   }
 
   std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
-    MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
+    MS_LOG(ERROR) << "Invalid file, failed to open " << file << ": the file is damaged or permission denied.";
     return 0;
   }
 

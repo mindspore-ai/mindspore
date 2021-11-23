@@ -41,10 +41,9 @@ Status WeightedRandomSamplerRT::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
     num_samples_ = num_rows_;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    num_rows_ > 0 && num_samples_,
-    "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_rows: " +
-      std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && num_samples_,
+                               "[Internal ERROR] num_samples and num_rows must be greater than 0, but got num_rows: " +
+                                 std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_tensor_ > 0,
                                "Invalid parameter, samples_per_tensor(num_samples) must be greater than 0, but got " +
                                  std::to_string(samples_per_tensor_) + ".\n");
@@ -160,8 +159,9 @@ Status WeightedRandomSamplerRT::GetNextSample(TensorRow *out) {
       }
 
       if (genId >= num_rows_) {
-        RETURN_STATUS_UNEXPECTED("Generated indice is out of bound, expect range [0, num_data-1], got indice: " +
-                                 std::to_string(genId) + ", num_data: " + std::to_string(num_rows_ - 1));
+        RETURN_STATUS_UNEXPECTED(
+          "[Internal ERROR] Generated indice is out of bound, expect range [0, num_data-1], got indice: " +
+          std::to_string(genId) + ", num_data: " + std::to_string(num_rows_ - 1));
       }
 
       if (HasChildSampler()) {

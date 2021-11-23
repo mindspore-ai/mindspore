@@ -107,7 +107,8 @@ Status Places365Op::GetFileContent(const std::string &info_file, std::string *an
   RETURN_UNEXPECTED_IF_NULL(ans);
   std::ifstream reader;
   reader.open(info_file);
-  CHECK_FAIL_RETURN_UNEXPECTED(!reader.fail(), "Invalid file, failed to open Places365 file: " + info_file);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !reader.fail(), "Invalid file, failed to open " + info_file + ": Places365 file is damaged or permission denied.");
   reader.seekg(0, std::ios::end);
   std::size_t size = reader.tellg();
   reader.seekg(0, std::ios::beg);
@@ -153,21 +154,21 @@ Status Places365Op::LoadCategories(const std::string &category_meta_name) {
   while ((pos = s.find(" ")) != std::string::npos) {
     switch (col_idx) {
       case CATEGORY: {
-        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(),
-                                     "Reading places365 category file failed: " + category_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(), "Invalid data, Reading places365 category file failed: " +
+                                                            category_meta_name + ", space characters not found.");
         category = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!category.empty(),
-                                     "Reading places365 category file failed: " + category_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(!category.empty(), "Invalid data, Reading places365 category file failed: " +
+                                                          category_meta_name + ", space characters not found.");
         // switch the type of substring.
         col_idx = LABEL;
         break;
       }
       case LABEL: {
-        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(),
-                                     "Reading places365 category file failed: " + category_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(), "Invalid data, Reading places365 category file failed: " +
+                                                            category_meta_name + ", space characters not found.");
         std::string label_item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!label_item.empty(),
-                                     "Reading places365 category file failed: " + category_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(!label_item.empty(), "Invalid data, Reading places365 category file failed: " +
+                                                            category_meta_name + ", space characters not found.");
         label = std::atoi(label_item.c_str());
         // switch the type of substring.
         col_idx = CATEGORY;
@@ -204,19 +205,21 @@ Status Places365Op::LoadFileLists(const std::string &filelists_meta_name) {
   while ((pos = s.find(" ")) != std::string::npos) {
     switch (col_idx) {
       case PATH: {
-        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(),
-                                     "Reading places365 category file failed: " + filelists_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(), "Invalid data, Reading places365 category file failed: " +
+                                                            filelists_meta_name + ", space characters not found.");
         path = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!path.empty(), "Reading places365 filelist file failed: " + filelists_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(!path.empty(), "Invalid data, Reading places365 filelist file failed: " +
+                                                      filelists_meta_name + ", space characters not found.");
         // switch the type of substring.
         col_idx = LABEL;
         break;
       }
       case LABEL: {
-        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(),
-                                     "Reading places365 category file failed: " + filelists_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(pos + 1 <= s.size(), "Invalid data, Reading places365 category file failed: " +
+                                                            filelists_meta_name + ", space characters not found.");
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading places365 filelist file failed: " + filelists_meta_name);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Invalid data, Reading places365 filelist file failed: " +
+                                                      filelists_meta_name + ", space characters not found.");
         label = std::atoi(item.c_str());
         // switch the type of substring.
         col_idx = PATH;
@@ -233,13 +236,15 @@ Status Places365Op::LoadFileLists(const std::string &filelists_meta_name) {
 
 Status Places365Op::GetPlaces365DataTensor(uint32_t index, std::shared_ptr<Tensor> *image_tensor) {
   std::string file_path = image_path_label_pairs_[index].first;
-  CHECK_FAIL_RETURN_UNEXPECTED(Path(file_path).Exists(), file_path + " File not exists.");
+  CHECK_FAIL_RETURN_UNEXPECTED(Path(file_path).Exists(),
+                               "Invalid file path, Places365 image: " + file_path + " does not exists.");
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(file_path, image_tensor));
   if (decode_) {
     Status rc = Decode(*image_tensor, image_tensor);
     if (rc.IsError()) {
       *image_tensor = nullptr;
-      std::string err_msg = "Invalid data, failed to decode image: " + file_path;
+      std::string err_msg =
+        "Invalid image, failed to decode " + file_path + ": the image is damaged or permission denied.";
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
     }
   }
@@ -249,14 +254,15 @@ Status Places365Op::GetPlaces365DataTensor(uint32_t index, std::shared_ptr<Tenso
 
 Status Places365Op::PrepareData() {
   auto real_folder_path = FileUtils::GetRealPath(root_.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Get real path failed: " + root_);
+  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Invalid file path, " + root_ + " does not exist.");
 
   RETURN_IF_NOT_OK(LoadCategories((Path(real_folder_path.value()) / Path(kCategoriesMeta)).ToString()));
   RETURN_IF_NOT_OK(LoadFileLists((Path(real_folder_path.value()) / Path(kFileListMeta.at(usage_))).ToString()));
   num_rows_ = image_path_label_pairs_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_rows_ > 0,
-    "Invalid data, no valid data matching the dataset API Places365Dataset. Please check file path or dataset API.");
+    "Invalid data, no valid data matching the dataset API Places365Dataset. Please check dataset API or file path: " +
+      root_ + ".");
   return Status::OK();
 }
 
@@ -281,7 +287,7 @@ Status Places365Op::CountTotalRows(const std::string &dir, const std::string &us
 
   for (size_t i = 0; i < op->image_path_label_pairs_.size(); ++i) {
     CHECK_FAIL_RETURN_UNEXPECTED(Path(op->image_path_label_pairs_[i].first).Exists(),
-                                 op->image_path_label_pairs_[i].first + " File not exists.");
+                                 "Invalid file path, " + op->image_path_label_pairs_[i].first + " does not exists.");
   }
   *count = op->image_path_label_pairs_.size();
   return Status::OK();

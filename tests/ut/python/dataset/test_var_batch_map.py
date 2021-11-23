@@ -369,9 +369,12 @@ def test_multi_col_map():
     # test exceptions
     assert "output_columns with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], 233)
     assert "column_order with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], ["col1"], 233)
-    assert "output_columns in batch is not set correctly" in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
-    assert "Incorrect number of columns" in batch_map_config(2, 2, split_col, ["col2"], ["col3", "col4", "col5"])
-    assert "col-1 doesn't exist" in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
+    assert "columns that are not involved in 'per_batch_map' should not be in output_columns"\
+           in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
+    assert "the number of columns returned in 'per_batch_map' function should be 3"\
+           in batch_map_config(2, 2, split_col, ["col2"], ["col3", "col4", "col5"])
+    assert "'col-1' of 'input_columns' doesn't exist"\
+           in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 
 
 def test_exceptions_2():
@@ -379,16 +382,16 @@ def test_exceptions_2():
         for i in range(num):
             yield (np.array([i]),)
 
-    def simple_copy(colList, batchInfo):
-        return ([np.copy(arr) for arr in colList],)
+    def simple_copy(col_list, batch_info):
+        return ([np.copy(arr) for arr in col_list],)
 
-    def concat_copy(colList, batchInfo):
+    def concat_copy(col_list, batch_info):
         # this will duplicate the number of rows returned, which would be wrong!
-        return ([np.copy(arr) for arr in colList] * 2,)
+        return ([np.copy(arr) for arr in col_list] * 2,)
 
-    def shrink_copy(colList, batchInfo):
+    def shrink_copy(col_list, batch_info):
         # this will duplicate the number of rows returned, which would be wrong!
-        return ([np.copy(arr) for arr in colList][0:int(len(colList) / 2)],)
+        return ([np.copy(arr) for arr in col_list][0:int(len(col_list) / 2)],)
 
     def test_exceptions_config(gen_num, batch_size, in_cols, per_batch_map):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size, input_columns=in_cols,
@@ -401,9 +404,9 @@ def test_exceptions_2():
             return str(e)
 
     # test exception where column name is incorrect
-    assert "col:num1 doesn't exist" in test_exceptions_config(4, 2, ["num1"], simple_copy)
-    assert "expects: 2 rows returned from per_batch_map, got: 4" in test_exceptions_config(4, 2, ["num"], concat_copy)
-    assert "expects: 4 rows returned from per_batch_map, got: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
+    assert "'num1' of 'input_columns' doesn't exist" in test_exceptions_config(4, 2, ["num1"], simple_copy)
+    assert "expects: 2 rows returned from 'per_batch_map', got: 4" in test_exceptions_config(4, 2, ["num"], concat_copy)
+    assert "expects: 4 rows returned from 'per_batch_map', got: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
 
 
 if __name__ == '__main__':

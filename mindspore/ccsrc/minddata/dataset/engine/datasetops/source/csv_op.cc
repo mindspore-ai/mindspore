@@ -111,7 +111,11 @@ int CsvOp::CsvParser::PutRecord(int c) {
   std::string s = std::string(str_buf_.begin(), str_buf_.begin() + pos_);
   std::shared_ptr<Tensor> t;
   if (cur_col_ >= column_default_.size()) {
-    err_message_ = "Number of file columns does not match the default records";
+    std::stringstream ss;
+    ss << "Invalid columns, the size of column_names should be less than the size of 'column_defaults', "
+       << "but got the size of column_names: " << cur_col_
+       << ", the size of column_defaults : " << column_default_.size() << ".";
+    err_message_ = ss.str();
     return -1;
   }
   Status rc;
@@ -139,7 +143,11 @@ int CsvOp::CsvParser::PutRecord(int c) {
       break;
   }
   if (cur_col_ >= cur_row_.size()) {
-    err_message_ = "Number of file columns does not match the tensor table";
+    std::stringstream ss;
+    ss << "Invalid columns, the size of column_names should be greater than or equal to the size of columns of "
+       << "loading data, but got the size of column_names: " << cur_col_
+       << ", the size of columns in original loaded dataset: " << column_default_.size() << ".";
+    err_message_ = ss.str();
     return -1;
   }
   cur_row_[cur_col_] = std::move(t);
@@ -166,7 +174,11 @@ int CsvOp::CsvParser::PutRow(int c) {
   }
 
   if (cur_col_ != column_default_.size()) {
-    err_message_ = "The number of columns does not match the definition.";
+    std::stringstream ss;
+    ss << "Invalid columns, the size of column_names should be less than the size of 'column_defaults', "
+       << "but got the size of column_names: " << cur_col_
+       << ", the size of 'column_defaults': " << column_default_.size() << ".";
+    err_message_ = ss.str();
     return -1;
   }
 
@@ -201,11 +213,11 @@ int CsvOp::CsvParser::EndFile(int c) {
 
 int CsvOp::CsvParser::CatchException(int c) {
   if (GetMessage(c) == Message::MS_QUOTE && cur_state_ == State::UNQUOTE) {
-    err_message_ = "Invalid quote in unquote field.";
+    err_message_ = "Invalid csv file, unexpected quote in unquote field from " + file_path_ + ".";
   } else if (GetMessage(c) == Message::MS_END_OF_FILE && cur_state_ == State::QUOTE) {
-    err_message_ = "Reach the end of file in quote field.";
+    err_message_ = "Invalid csv file, reach the end of file in quote field, check " + file_path_ + ".";
   } else if (GetMessage(c) == Message::MS_NORMAL && cur_state_ == State::SECOND_QUOTE) {
-    err_message_ = "Receive unquote char in quote field.";
+    err_message_ = "Invalid csv file, receive unquote char in quote field, check " + file_path_ + ".";
   }
   return -1;
 }
@@ -459,14 +471,14 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
 
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, " + DatasetName() + " file get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file path, " << file << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
   }
 
   std::ifstream ifs;
   ifs.open(realpath.value(), std::ifstream::in);
   if (!ifs.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + " file: " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + file + ", the file is damaged or permission denied.");
   }
   if (column_name_list_.empty()) {
     std::string tmp;
@@ -483,17 +495,18 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
       if (err != 0) {
         // if error code is -2, the returned error is interrupted
         if (err == -2) return Status(kMDInterrupted);
-        RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ": line " +
+        RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse csv file: " + file + " at line " +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +
                                  ". Error message: " + csv_parser.GetErrorMessage());
       }
     }
   } catch (std::invalid_argument &ia) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ": line " + err_row + ", type does not match.");
+    RETURN_STATUS_UNEXPECTED("Invalid csv, csv file: " + file + " parse failed at line " + err_row +
+                             ", type does not match.");
   } catch (std::out_of_range &oor) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ": line " + err_row + ", value out of range.");
+    RETURN_STATUS_UNEXPECTED("Invalid csv, " + file + " parse failed at line " + err_row + " : value out of range.");
   }
   return Status::OK();
 }
@@ -594,13 +607,14 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   CsvParser csv_parser(0, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
   Status rc = csv_parser.InitCsvParser();
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "[Internal ERROR], failed to initialize " + DatasetName(true) + " Parser. Error:" << rc;
+    MS_LOG(ERROR) << "[Internal ERROR], failed to initialize " + DatasetName(true) + " Parser. Error description:"
+                  << rc;
     return 0;
   }
 
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file path, csv file: " << file << " does not exist.";
     return 0;
   }
 
@@ -673,8 +687,8 @@ Status CsvOp::ComputeColMap() {
 
       /* Process exception if ERROR in column name solving*/
       if (!rc.IsOk()) {
-        MS_LOG(ERROR) << "Invalid file, fail to analyse column name map, path=" + csv_file;
-        RETURN_STATUS_UNEXPECTED("Invalid file, fail to analyse column name map, path=" + csv_file);
+        MS_LOG(ERROR) << "Invalid file, failed to get column name list from csv file: " + csv_file;
+        RETURN_STATUS_UNEXPECTED("Invalid file, failed to get column name list from csv file: " + csv_file);
       }
     }
   } else {
@@ -689,9 +703,10 @@ Status CsvOp::ComputeColMap() {
 
   if (column_default_list_.size() != column_name_id_map_.size()) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid parameter, the number of column names does not match the default column, size of default column_list: " +
+      "Invalid parameter, the size of column_names should be equal to the size of 'column_defaults', but got "
+      " size of 'column_defaults': " +
       std::to_string(column_default_list_.size()) +
-      ", size of column_name: " + std::to_string(column_name_id_map_.size()));
+      ", size of column_names: " + std::to_string(column_name_id_map_.size()));
   }
 
   return Status::OK();
@@ -703,7 +718,7 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
     if (!check_flag_) {
       auto realpath = FileUtils::GetRealPath(csv_file_name.data());
       if (!realpath.has_value()) {
-        std::string err_msg = "Invalid file, " + DatasetName() + " file get real path failed, path=" + csv_file_name;
+        std::string err_msg = "Invalid file path, csv file: " + csv_file_name + " does not exist.";
         MS_LOG(ERROR) << err_msg;
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
@@ -721,11 +736,9 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
         if (column_name_id_map_.find(col_names[i]) == column_name_id_map_.end()) {
           column_name_id_map_[col_names[i]] = i;
         } else {
-          MS_LOG(ERROR) << "Invalid parameter, duplicate column names are not allowed: " + col_names[i] +
-                             ", The corresponding data files: " + csv_file_name;
-
-          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column names are not allowed: " + col_names[i] +
-                                   ", The corresponding data files: " + csv_file_name);
+          MS_LOG(ERROR) << "Invalid parameter, duplicate column " << col_names[i] << " for csv file: " << csv_file_name;
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column " + col_names[i] +
+                                   " for csv file: " + csv_file_name);
         }
       }
       check_flag_ = true;
@@ -736,11 +749,10 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
         if (column_name_id_map_.find(column_name_list_[i]) == column_name_id_map_.end()) {
           column_name_id_map_[column_name_list_[i]] = i;
         } else {
-          MS_LOG(ERROR) << "Invalid parameter, duplicate column names are not allowed: " + column_name_list_[i] +
-                             ", The corresponding data files: " + csv_file_name;
-
-          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column names are not allowed: " +
-                                   column_name_list_[i] + ", The corresponding data files: " + csv_file_name);
+          MS_LOG(ERROR) << "Invalid parameter, duplicate column " << column_name_list_[i]
+                        << " for csv file: " << csv_file_name << ".";
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column " + column_name_list_[i] +
+                                   " for csv file: " + csv_file_name + ".");
         }
       }
       check_flag_ = true;
@@ -764,7 +776,7 @@ bool CsvOp::ColumnNameValidate() {
   for (auto &csv_file : csv_files_list_) {
     auto realpath = FileUtils::GetRealPath(csv_file.data());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << csv_file;
+      MS_LOG(ERROR) << "Invalid file path, csv file: " << csv_file << " does not exist.";
       return false;
     }
 
@@ -781,9 +793,8 @@ bool CsvOp::ColumnNameValidate() {
       match_file = csv_file;
     } else {  // Case the other files
       if (col_names != record) {
-        MS_LOG(ERROR)
-          << "Invalid parameter, every corresponding column name must be identical, either element or permutation. "
-          << "Invalid files are: " + match_file + " and " + csv_file;
+        MS_LOG(ERROR) << "Invalid parameter, every column name should be equal the record from csv, but got column: "
+                      << col_names << ", csv record: " << record << ". Check " + match_file + " and " + csv_file + ".";
         return false;
       }
     }

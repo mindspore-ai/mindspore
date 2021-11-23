@@ -58,11 +58,12 @@ Status EMnistOp::WalkAllFiles() {
   const std::string train_prefix = "-train";
   const std::string test_prefix = "-test";
   auto realpath = FileUtils::GetRealPath(folder_path_.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed: " + folder_path_);
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Invalid file path, " + folder_path_ + " does not exist.");
   Path dir(realpath.value());
   auto dir_it = Path::DirIterator::OpenDirectory(&dir);
   if (dir_it == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + dir.ToString());
+    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open emnist dataset dir: " + dir.ToString() +
+                             ", the directory is not a directory or permission denied.");
   }
   std::string prefix;
   prefix = "emnist-" + name_;  // used to match usage == "all".
@@ -88,7 +89,9 @@ Status EMnistOp::WalkAllFiles() {
   std::sort(image_names_.begin(), image_names_.end());
   std::sort(label_names_.begin(), label_names_.end());
   CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
-                               "Invalid data, num of images is not equal to num of labels.");
+                               "Invalid data, num of image files should be equal to num of label files under " +
+                                 realpath.value() + ", but got num of images: " + std::to_string(image_names_.size()) +
+                                 ", num of labels: " + std::to_string(label_names_.size()) + ".");
 
   return Status::OK();
 }
@@ -118,12 +121,12 @@ Status EMnistOp::CountTotalRows(const std::string &dir, const std::string &name,
   for (size_t i = 0; i < op->image_names_.size(); ++i) {
     std::ifstream image_reader;
     image_reader.open(op->image_names_[i], std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(image_reader.is_open(),
-                                 "Invalid file, failed to open image file: " + op->image_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(image_reader.is_open(), "Invalid file, failed to open " + op->image_names_[i] +
+                                                           ": the image file is damaged or permission denied.");
     std::ifstream label_reader;
     label_reader.open(op->label_names_[i], std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(),
-                                 "Invalid file, failed to open label file: " + op->label_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(), "Invalid file, failed to open " + op->label_names_[i] +
+                                                           ": the label file is damaged or permission denied.");
     uint32_t num_images;
     Status s = op->CheckImage(op->image_names_[i], &image_reader, &num_images);
     image_reader.close();
@@ -134,8 +137,10 @@ Status EMnistOp::CountTotalRows(const std::string &dir, const std::string &name,
     label_reader.close();
     RETURN_IF_NOT_OK(s);
 
-    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                                 "Invalid data, num of images is not equal to num of labels.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (num_images == num_labels),
+      "Invalid data, num of images should be equal to num of labels, but got num of images: " +
+        std::to_string(num_images) + ", num of labels: " + std::to_string(num_labels) + ".");
     *count = *count + num_images;
   }
 

@@ -134,7 +134,7 @@ Status BatchOp::operator()() {
     if ((num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
       MS_LOG(WARNING) << "Memory consumption is more than " << (GetMemoryUsage() * 100) << "%, "
                       << "which may cause oom error. Please reduce num_parallel_workers size / "
-                      << "optimize per_batch_map function / other python data preprocess function to "
+                      << "optimize 'per_batch_map' function / other python data preprocess function to "
                       << "reduce memory usage.";
     }
 #endif
@@ -203,8 +203,9 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
           first_shape.Print(shape1);
           old_tensor->shape().Print(shape2);
           RETURN_STATUS_UNEXPECTED(
-            "Invalid data, batch operation expect same shape for each data row, but got inconsistent shape in column " +
-            std::to_string(i) + " expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
+            "Inconsistent batch shapes, batch operation expect same shape for each data row, "
+            "but got inconsistent shape in column " +
+            std::to_string(i) + ", expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
         }
       }
     } else {  // handle string column differently
@@ -300,7 +301,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
     CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size(),
                                  "Invalid data, column: " + out_col_names_[i] +
                                    " expects: " + std::to_string(num_rows) +
-                                   " rows returned from per_batch_map, got: " + std::to_string(out_cols[i].size()));
+                                   " rows returned from 'per_batch_map', got: " + std::to_string(out_cols[i].size()));
     for (auto &t_row : *out_q_table) {
       t_row[col_id] = out_cols[i][row_id++];
     }
@@ -339,14 +340,16 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
       *batch_size = size.cast<int32_t>();
       if (*batch_size <= 0) {
         return Status(StatusCode::kMDPyFuncException,
-                      "Invalid parameter, batch_size function should return an integer greater than 0, but got: " +
+                      "Invalid batch_size function, 'batch_size' function should return an integer greater than 0, "
+                      "but got: " +
                         std::to_string(*batch_size));
       }
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
-      return Status(StatusCode::kMDPyFuncException,
-                    "Invalid parameter, batch_size function should return an integer greater than 0.");
+      return Status(
+        StatusCode::kMDPyFuncException,
+        "Invalid batch_size function, the return value of batch_size function cast failed: " + std::string(e.what()));
     }
   }
   return Status(StatusCode::kSuccess, "batch_size function call succeeded.");
@@ -379,11 +382,13 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
       CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple),
-                                   "per_batch_map function should return a tuple.");
+                                   "Invalid per_batch_map, 'per_batch_map' function should return a tuple, but got " +
+                                     std::string(ret_py_obj.get_type().str()));
       CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(),
-                                   "Incorrect number of columns returned in per_batch_map function. Expects: " +
+                                   "Invalid per_batch_map, the number of columns returned in 'per_batch_map' function "
+                                   "should be " +
                                      std::to_string(out_col_names_.size()) +
-                                     " got: " + std::to_string(ret_tuple.size()));
+                                     " , but got: " + std::to_string(ret_tuple.size()));
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorRow output_batch;
         // If user returns a type that is neither a list nor an array, issue a error msg.
@@ -405,7 +410,8 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
       return Status(StatusCode::kMDPyFuncException,
-                    "Invalid parameter, per_batch_map function of batch should return a tuple of list of numpy array.");
+                    "Invalid per_batch_map, the return value of 'per_batch_map' function cast to py::tuple failed: " +
+                      std::string(e.what()));
     }
   }
   return Status::OK();
@@ -432,7 +438,7 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
     if (pad_shapes[col_id].empty()) pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
     CHECK_FAIL_RETURN_UNEXPECTED(
       pad_shapes[col_id].size() == max_shapes[col_id].size(),
-      "Invalid data, rank of pad_shape must be equal to rank of specified column. pad_shapes rank:" +
+      "Invalid pad_info, rank of pad_shape must be equal to rank of specified column. pad_shapes rank:" +
         std::to_string(pad_shapes[col_id].size()) + ", column rank: " + std::to_string(max_shapes[col_id].size()));
   }
 
@@ -482,12 +488,14 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
     for (const auto &p : pad_info) {
       auto location = column_name_id_map.find(p.first);
       CHECK_FAIL_RETURN_UNEXPECTED(location != column_name_id_map.end(),
-                                   "Invalid parameter, column name: " + p.first + " does not exist.");
+                                   "Invalid pad_info, column name: " + p.first + " does not exist.");
       auto col_id = static_cast<dsize_t>(location->second);
       CHECK_FAIL_RETURN_UNEXPECTED(
         col_id < pad_vals->size() && col_id < pad_shapes->size(),
-        "Invalid parameter, column id must be less than the size of pad_val and pad_shape, but got: " +
-          std::to_string(col_id));
+        "Invalid pad_info, column name should be match with the size of pad value and pad shape, but got "
+        "column name: " +
+          p.first + ", the size of pad value: " + std::to_string(pad_vals->size()) +
+          " and the size of pad shape: " + std::to_string(pad_shapes->size()) + ".");
       pad_cols->insert(col_id);
       (*pad_vals)[col_id] = p.second.second;              // set pad values
       (*pad_shapes)[col_id] = p.second.first.AsVector();  // empty vector if shape is unknown
@@ -498,8 +506,9 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 
 Status BatchOp::ComputeColMap() {
   CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1,
-                               "Invalid data, batch operator can't be used as a single operator, "
-                               "should be preceded by an operator that reads data, for example, ImageFolderDataset.");
+                               "Invalid batch, batch operator can't be used as a single operator, "
+                               "should be preceded by an operator that reads data, for example, "
+                               "ds1 = ds.ImageFolderDataset().batch().");
   CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()),
                                "Invalid data, the column of the previous operator of the batch cannot be empty.");
 
@@ -514,7 +523,7 @@ Status BatchOp::ComputeColMap() {
   // check all input columns exist
   for (const auto &col : in_col_names_) {
     CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(),
-                                 "Invalid parameter, col:" + col + " doesn't exist in dataset.");
+                                 "Invalid input_columns, '" + col + "' of 'input_columns' doesn't exist.");
   }
 
   // following logic deals with per_batch_map
@@ -551,8 +560,21 @@ Status BatchOp::ComputeColMap() {
     }
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(column_name_id_map_.size() == (child_map_no_in_col.size() + out_col_names_.size()),
-                               "Key error in column_name_id_map_. output_columns in batch is not set correctly!");
+  if (column_name_id_map_.size() != (child_map_no_in_col.size() + out_col_names_.size())) {
+    const std::string prefix_str = std::string("[");
+    auto column_no_in_col = std::accumulate(
+      child_map_no_in_col.begin(), child_map_no_in_col.end(), prefix_str,
+      [](const std::string &str, const std::pair<std::string, int32_t> &p) { return str + p.first + ","; });
+    column_no_in_col += "]";
+    auto column_out =
+      std::accumulate(out_col_names_.begin(), out_col_names_.end(), prefix_str,
+                      [](const std::string &str, const std::string &out_col) { return str + out_col + ","; });
+    column_out += "]";
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid output_columns, columns that are not involved in 'per_batch_map' should not be "
+      "in output_columns, but got columns that are not in input_columns: " +
+      column_no_in_col + ", output_columns: " + column_out + ".");
+  }
   return Status::OK();
 }
 

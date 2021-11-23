@@ -118,14 +118,15 @@ Status VOCOp::ParseImageIds() {
 
   auto realpath = FileUtils::GetRealPath(image_sets_file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << image_sets_file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + image_sets_file);
+    MS_LOG(ERROR) << "Invalid file path, " << image_sets_file << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + image_sets_file + " does not exist.");
   }
 
   std::ifstream in_file;
   in_file.open(realpath.value());
   if (in_file.fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + image_sets_file);
+    RETURN_STATUS_UNEXPECTED("Invalid ImageSets file, failed to open ImageSets file: " + image_sets_file +
+                             ", the file is damaged or permission denied.");
   }
   std::string id;
   while (getline(in_file, id)) {
@@ -187,28 +188,30 @@ Status VOCOp::CheckIfBboxValid(const float &xmin, const float &ymin, const float
     std::string invalid_bbox = "{" + std::to_string(static_cast<int>(xmin)) + ", " +
                                std::to_string(static_cast<int>(ymin)) + ", " + std::to_string(static_cast<int>(xmax)) +
                                ", " + std::to_string(static_cast<int>(ymax)) + "}";
-    RETURN_STATUS_UNEXPECTED("Invalid bndbox: " + invalid_bbox + " found in " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid bndbox, the coordinate of bndbox in " + path +
+                             " should be greater than 0, but got " + invalid_bbox);
   }
   return Status::OK();
 }
 
 Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   if (!Path(path).Exists()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + path + " does not exist.");
   }
   Annotation annotation;
   XMLDocument doc;
   XMLError e = doc.LoadFile(common::SafeCStr(path));
   if (e != XMLError::XML_SUCCESS) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to load xml file: " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid xml, failed to load " + path + ": the xml file is damaged or incorrect format.");
   }
   XMLElement *root = doc.RootElement();
   if (root == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, failed to load root element for xml file.");
+    RETURN_STATUS_UNEXPECTED("Invalid xml, failed to load root element of " + path +
+                             ": the format of xml file is incorrect.");
   }
   XMLElement *object = root->FirstChildElement("object");
   if (object == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, no object found in " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid xml, the node of object is missing in " + path + ".");
   }
   while (object != nullptr) {
     std::string label_name;
@@ -226,7 +229,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
       ParseNodeValue(bbox_node, "ymax", &ymax);
       RETURN_IF_NOT_OK(CheckIfBboxValid(xmin, ymin, xmax, ymax, path));
     } else {
-      RETURN_STATUS_UNEXPECTED("Invalid data, bndbox dismatch in " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid xml, the node of bndbox is missing in " + path);
     }
 
     if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
@@ -254,7 +257,8 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, failed to decode image: " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid image, failed to decode " + path +
+                               ": the image is damaged or permission denied.");
     }
   }
   return Status::OK();
@@ -280,7 +284,7 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
       }
       CHECK_FAIL_RETURN_UNEXPECTED(
         item.second.size() == 6,
-        "Invalid parameter, annotation only support 6 parameters, but got " + std::to_string(item.second.size()));
+        "[Internal ERROR] annotation only support 6 parameters, but got " + std::to_string(item.second.size()));
 
       std::vector<float> tmp_bbox = {(item.second)[0], (item.second)[1], (item.second)[2], (item.second)[3]};
       bbox_data.insert(bbox_data.end(), tmp_bbox.begin(), tmp_bbox.end());
@@ -328,8 +332,8 @@ Status VOCOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<in
   RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
   if ((*output_class_indexing).empty()) {
     if (task_type_ != TaskType::Detection) {
-      MS_LOG(ERROR) << "Invalid parameter, GetClassIndexing only valid in \"Detection\" task.";
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, GetClassIndexing only valid in \"Detection\" task.");
+      MS_LOG(ERROR) << "Invalid task, only 'Detection' task support GetClassIndexing.";
+      RETURN_STATUS_UNEXPECTED("Invalid task, only 'Detection' task support GetClassIndexing.");
     }
     RETURN_IF_NOT_OK(ParseImageIds());
     RETURN_IF_NOT_OK(ParseAnnotationIds());

@@ -66,7 +66,7 @@ class BuildVocabOp : public ParallelOp<TensorRow, TensorRow> {
 
   Status operator()() override;
 
-  Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildVocabOp"); }
+  Status Reset() override { RETURN_STATUS_UNEXPECTED("[Internal ERROR] Reset shouldn't be called in BuildVocabOp"); }
 
  private:
   const int32_t interval_;

@@ -108,7 +108,7 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
     for (size_t i = 0; i < number_of_arguments; i++) {
       auto map_item = column_name_id_map_.find(length_dependent_columns_[i]);
       if (map_item == column_name_id_map_.end()) {
-        RETURN_STATUS_UNEXPECTED("BucketBatchByLength: Couldn't find the specified column(" +
+        RETURN_STATUS_UNEXPECTED("Invalid column, BucketBatchByLength couldn't find the specified column(" +
                                  length_dependent_columns_[i] + ") in the dataset.");
       }
       int32_t column_index = map_item->second;
@@ -118,7 +118,8 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
     RETURN_IF_NOT_OK(output.at(0)->GetItemAt(out_element_length, {0}));
     if (*out_element_length < 0) {
       RETURN_STATUS_UNEXPECTED(
-        "Invalid parameter, element_length_function must return an integer greater than or equal to 0, but got" +
+        "Invalid element_length_function, element_length_function must return an integer greater than or equal to 0, "
+        "but got" +
         std::to_string(*out_element_length));
     }
   } else {
@@ -139,7 +140,8 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
         if (pad_shape[i] == TensorShape::kDimUnknown) {
           if (bucket_index + 1 >= bucket_boundaries_.size()) {
             std::string error_message =
-              "Invalid data, requested to pad to bucket boundary, element falls in last bucket.";
+              "Invalid data, requested to pad to bucket boundary failed, bucket index should be less than " +
+              std::to_string(bucket_boundaries_.size()) + ", but got " + std::to_string(bucket_index);
             return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, error_message);
           }
 

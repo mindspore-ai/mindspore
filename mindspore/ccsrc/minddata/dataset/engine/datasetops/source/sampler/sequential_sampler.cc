@@ -29,7 +29,7 @@ Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   if (id_count_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED(
-      "Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
+      "[Internal ERROR] Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
       std::to_string(id_count_) + ", num_samples_: " + std::to_string(num_samples_));
   } else if (id_count_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);

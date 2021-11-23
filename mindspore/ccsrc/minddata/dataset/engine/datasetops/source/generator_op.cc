@@ -64,7 +64,7 @@ Status GeneratorOp::CreateGeneratorObject() {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized.");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized.");
     }
     try {
       py::array sample_ids;
@@ -93,15 +93,17 @@ Status GeneratorOp::Init() {
 Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) {
   if (!py::isinstance<py::tuple>(py_data)) {
     return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
-                  "Invalid data, Generator should return a tuple of NumPy arrays, currently returned is not a tuple.");
+                  "Invalid python function, the 'source' of 'GeneratorDataset' should return a tuple of NumPy arrays, "
+                  "but got " +
+                    std::string(py_data.get_type().str()));
   }
   py::tuple py_row = py_data.cast<py::tuple>();
   // Check if returned number of columns matches with column names
   if (py_row.size() != column_names_.size()) {
     return Status(
       StatusCode::kMDPyFuncException, __LINE__, __FILE__,
-      "Invalid data, Generator should return same number of NumPy arrays as specified in column_names, the size of"
-      " column_names is:" +
+      "Invalid python function, the 'source' of 'GeneratorDataset' should return same number of NumPy arrays as "
+      "specified in column_names, the size of column_names is:" +
         std::to_string(column_names_.size()) +
         " and number of returned NumPy array is:" + std::to_string(py_row.size()));
   }
@@ -110,15 +112,18 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
     py::object ret_py_ele = py_row[i];
     if (!py::isinstance<py::array>(ret_py_ele)) {
       return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
-                    "Invalid data, Generator should return a tuple of NumPy arrays. Ensure each item in tuple that "
-                    "returned by source function of GeneratorDataset be NumPy array.");
+                    "Invalid python function, 'GeneratorDataset' should return a tuple of NumPy arrays, but got " +
+                      std::string(ret_py_ele.get_type().str()));
     }
     std::shared_ptr<Tensor> tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
       return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
-                    "Invalid data, type of returned data in GeneratorDataset is not same with specified column_types.");
+                    "Invalid python function, type of returned data in 'GeneratorDataset' should be same with "
+                    "specified column_types, but the type of returned data: " +
+                      std::string(ret_py_ele.get_type().str()) +
+                      ", specified column type: " + column_types_[i].ToString());
     }
     tensor_row->push_back(tensor);
   }
@@ -173,7 +178,7 @@ Status GeneratorOp::operator()() {
     {
       py::gil_scoped_acquire gil_acquire;
       if (Py_IsInitialized() == 0) {
-        return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+        return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
       }
       try {
 #ifndef ENABLE_SECURITY

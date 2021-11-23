@@ -98,7 +98,7 @@ void RandomDataOp::GenerateSchema() {
       std::make_unique<ColDescriptor>(col_name, DataType(newType), TensorImpl::kFlexible, rank, new_shape.get());
 
     Status rc = data_schema_->AddColumn(*new_col);
-    if (rc.IsError()) MS_LOG(ERROR) << "Failed to generate a schema. Message:" << rc;
+    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Failed to generate a schema. Message:" << rc;
   }
 }
 
@@ -136,7 +136,8 @@ Status RandomDataOp::CreateRandomRow(TensorRow *new_row) {
     buf = std::make_unique<unsigned char[]>(size_in_bytes);
     int ret_code = memset_s(buf.get(), size_in_bytes, random_byte, size_in_bytes);
     if (ret_code != 0) {
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                    "[Internal ERROR] memset_s failed to set random bytes for a tensor.");
     }
 
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.Type(), buf.get(), &new_tensor));

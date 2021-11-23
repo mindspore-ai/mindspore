@@ -80,13 +80,14 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, " + DatasetName() + " get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file path, " << file << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
   }
 
   std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open text:" + file +
+                             ", the file is damaged or permission denied.");
   }
 
   int64_t rows_total = 0;
@@ -170,13 +171,13 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 int64_t CountTotalRows(const std::string &file) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file, " << file << " does not exist.";
     return 0;
   }
 
   std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
-    MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
+    MS_LOG(ERROR) << "Invalid file, failed to open text file:" << file << ", the file is damaged or permission denied.";
     return 0;
   }
 

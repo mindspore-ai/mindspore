@@ -214,12 +214,12 @@ def test_usps_exception():
         for _ in test_data.__iter__():
             pass
 
-    error_msg_9 = "failed to find USPS train data file"
+    error_msg_9 = "usps does not exist or is a directory"
     with pytest.raises(RuntimeError, match=error_msg_9):
         train_data = ds.USPSDataset(WRONG_DIR, "train")
         for _ in train_data.__iter__():
             pass
-    error_msg_10 = "failed to find USPS test data file"
+    error_msg_10 = "usps.t does not exist or is a directory"
     with pytest.raises(RuntimeError, match=error_msg_10):
         test_data = ds.USPSDataset(WRONG_DIR, "test")
         for _ in test_data.__iter__():
