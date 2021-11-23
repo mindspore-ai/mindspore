@@ -972,7 +972,7 @@ class ReduceProd(_Reduce):
         ValueError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))

@@ -52,5 +52,7 @@ MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat16).
                       ArrayReduceGpuKernel, half)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       ArrayReduceGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      ArrayReduceGpuKernel, double)
 }  // namespace kernel
 }  // namespace mindspore
