@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,63 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+
+
+class AdjustHue(Primitive):
+    """
+    Adjust hue of RGB images.
+
+    Note:
+        This is a convenience method that converts an RGB image to float
+        representation, converts it to HSV, adds an offset to the
+        hue channel, converts back to RGB and then back to the original
+        data type. If several adjustments are chained it is advisable to minimize
+        the number of redundant conversions.
+
+    Inputs:
+        - **image** (Tensor): RGB image or images. The size of the last dimension must be 3.
+          the dtype is float16 or float32.  At least 3-D.
+        - **delta** (Tensor): How much to add to the hue channel, the dtype is float32. Must be 0-D.
+
+    Output:
+        Adjusted image(s), same shape and dtype as `image`.
+
+    Raises:
+        TypeError: If neither `image` nor `delta` is a tensor.
+        TypeError: If the dtype of image not float16 or float32.
+        TypeError: If the dtype of delta not float32.
+        ValueError: If image have at less than 3 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+         >>> class AdjustHue(nn.Cell):
+         ...   def __init__(self):
+         ...     super(AdjustHue, self).__init__()
+         ...     self.adjustHue = P.AdjustHue()
+         ...   def construct(self, image, delta):
+         ...     return self.adjustHue(image, delta)
+         ...
+         >>> image = np.array([[[1, 2, 3], [4, 5, 6]],
+         ...                   [[7, 8, 9], [10, 11, 12]],
+         ...                   [[13, 14, 15], [16, 17, 18]]]).astype(np.float32)
+         >>> delta = 0.2
+         >>> adjust_hue = AdjustHue()
+         >>> output = adjust_hue(Tensor(image), Tensor(delta))
+         >>> print("output", output)
+         output [[[ 2.3999996  1.         3.       ]
+                  [ 5.3999996  4.         6.       ]]
+                 [[ 8.4        7.         9.       ]
+                  [11.4       10.        12.       ]]
+                 [[14.4       13.        15.       ]
+                  [17.4       16.        18.       ]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AdjustHue"""
+        self.init_prim_io_names(inputs=['images', 'delta'], outputs=['y'])
 
 
 class CropAndResize(PrimitiveWithInfer):
