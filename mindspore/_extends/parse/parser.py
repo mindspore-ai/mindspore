@@ -511,6 +511,7 @@ def eval_script(exp_str, params):
     if len(params) != 2:
         raise ValueError(f"eval_script(), params tuple length is wrong, params: {params}")
 
+    # Eval function parses the expression argument and evaluates it as a python expression.
     logger.debug(f"exp_str: '{exp_str}', params: '{params}'")
     global_params = params[0]
     local_params = params[1]
@@ -521,8 +522,11 @@ def eval_script(exp_str, params):
             ". You can try to turn off the Fallback feature by 'export ENV_SUPPORT_FALLBACK=0'."
         logger.error(error_info)
         raise e
+
+    # Check the result of eval.
     if obj is None:
         raise ValueError(f"When call 'eval', the result is none. exp_str: '{exp_str}'")
+    # Convert set to tuple.
     if isinstance(obj, set):
         obj = tuple(obj)
     return obj
