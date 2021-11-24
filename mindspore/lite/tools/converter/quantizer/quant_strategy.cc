@@ -120,4 +120,11 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   }
   return is_data_type_fp32;
 }
+
+bool QuantStrategy::IsSkipOp(const AnfNodePtr &input_node) {
+  if (skip_node_.find(input_node->fullname_with_scope()) == skip_node_.end()) {
+    return false;
+  }
+  return true;
+}
 }  // namespace mindspore::lite::quant
