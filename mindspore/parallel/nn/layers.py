@@ -30,7 +30,7 @@ from mindspore import nn
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.primitive import constexpr
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = [
@@ -320,6 +320,16 @@ class _Linear(Cell):
     """
 
     @cell_attr_register
+    @_args_type_validator_check(in_channels=Validator.check_positive_int,
+                                out_channels=Validator.check_positive_int,
+                                has_bias=Validator.check_bool,
+                                activation=_valid_type_checks([type(None), str], "Linear"),
+                                transpose_b=Validator.check_bool,
+                                expert_num=Validator.check_positive_int,
+                                param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                    "Linear"),
+                                compute_dtype=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                  "Linear"))
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -332,12 +342,8 @@ class _Linear(Cell):
                  param_init_type=mstype.float32,
                  compute_dtype=mstype.float16):
         super(_Linear, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        if param_init_type not in [mstype.float32, mstype.float16]:
-            raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
-        if activation and not isinstance(activation, str):
-            raise ValueError("Activation can only be str, but found type {}".format(activation))
+        self.in_channels = in_channels
+        self.out_channels = out_channels
         if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels):
             raise ValueError("Weight init shape error.")
@@ -361,8 +367,6 @@ class _Linear(Cell):
             self.bias_add = P.Add()
         self.act_name = activation
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
-        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
         self.activation_flag = self.activation is not None
         self.dtype = compute_dtype
         self.cast = P.Cast()
