@@ -102,24 +102,24 @@ class Tracing : public Profiling {
   // It only includes some common routines.
   Status SaveToFile(const std::string &dir_path, const std::string &rank_id) override;
   Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override;
-  virtual Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
-  virtual Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
-  virtual Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
-  virtual Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
-  virtual Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) = 0;
-  virtual Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) = 0;
+  Status Init() override;
+  Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+  Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+  Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+  Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+  Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
+  Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq);
   void Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value,
               const uint64_t time_stamp);
   Status TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts);
   Status StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step);
 
  protected:
-  explicit Tracing(int32_t records_per_step);
-  const int32_t records_per_step_;
+  Tracing() = default;
   std::vector<std::string> value_;
   std::vector<TracingRecord> records_;
   std::vector<uint64_t> ts_;  // End time of each step or batch
-  Status GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset, std::string field,
+  Status GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset, const std::string &field,
                                   std::vector<int32_t> *result);
 };
 

@@ -57,13 +57,9 @@ class AutoTune {
   /// \return status code
   Status RunIteration();
 
-  /// The AutoTune logic for sink pipelines that executes every iteration
+  /// The AutoTune logic for pipelines that executes every epoch
   /// \return status code
-  Status RunIterationSink();
-
-  /// The AutoTune logic for non-sink pipelines that executes every iteration
-  /// \return status code
-  Status RunIterationNonSink();
+  Status RunIterationEpoch();
 
   /// Check if the dataset pipeline is the bottleneck
   /// \param[out] isBottleneck bool

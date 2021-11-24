@@ -136,11 +136,7 @@ Status AutoTune::RunIteration() {
   // Run every epoch
   if ((profiling_manager_->GetNumOfProfiledEpochs()) >= cur_epoch_) {
     MS_LOG(INFO) << "Run AutoTune at epoch #" << cur_epoch_;
-    if (IsSink()) {
-      RETURN_IF_NOT_OK(RunIterationSink());
-    } else {
-      RETURN_IF_NOT_OK(RunIterationNonSink());
-    }
+    RETURN_IF_NOT_OK(RunIterationEpoch());
     ++cur_epoch_;
   }
   return Status::OK();
@@ -154,7 +150,7 @@ Status AutoTune::RecordPipelineTime() {
                << " ms. The avg pipeline time for all epochs is " << Mean(avg_pipeline_times_) << "ms";
   return Status::OK();
 }
-Status AutoTune::RunIterationSink() {
+Status AutoTune::RunIterationEpoch() {
   RETURN_IF_NOT_OK(RecordPipelineTime());
   bool isBottleneck = false;
   RETURN_IF_NOT_OK(IsDSaBottleneck(&isBottleneck));
@@ -162,9 +158,6 @@ Status AutoTune::RunIterationSink() {
     RETURN_IF_NOT_OK(Analyse());
   }
   return Status::OK();
-}
-Status AutoTune::RunIterationNonSink() {
-  return Status(StatusCode::kMDUnexpectedError, "AutoTune doesn't support non-sink pipeline.");
 }
 
 Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
@@ -243,6 +236,8 @@ Status AutoTune::Analyse() {
     int64_t queue_capacity = 0;
     RETURN_IF_NOT_OK(GetOpConnectorCapacity(op_id, &queue_capacity));
 
+    MS_LOG(DEBUG) << "Op (" << ops_[op_id]->NameWithID() << ") CPU=" << cpu_util / num_workers
+                  << ", in=" << input_queue_util << "out=" << output_queue_util;
     // map decisions - queue
     if (queue_diff > INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD) {
       MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID()

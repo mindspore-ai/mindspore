@@ -23,25 +23,15 @@
 
 namespace mindspore {
 namespace dataset {
-constexpr int32_t RECORDS_PER_STEP_DATASET_ITERATOR = 1;
 class DatasetIteratorTracing : public Tracing {
  public:
   // Constructor
-  DatasetIteratorTracing() : Tracing(RECORDS_PER_STEP_DATASET_ITERATOR) {}
+  DatasetIteratorTracing() = default;
 
   // Destructor
   ~DatasetIteratorTracing() override = default;
 
   std::string Name() const override { return kDatasetIteratorTracingName; };
-
-  Status Init() override;
-
-  Status GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
-  Status GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
-  Status GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
-  Status GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
-  Status GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) override;
-  Status GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) override;
 
  private:
   Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
