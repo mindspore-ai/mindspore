@@ -248,6 +248,8 @@ class _Context:
 
     def set_variable_memory_max_size(self, variable_memory_max_size):
         """set values of variable_memory_max_size and graph_memory_max_size"""
+        logger.warning("The parameter 'variable_memory_max_size' is deprecated, and will be removed in a future "
+                       "version. Please use parameter 'max_device_memory' instead.")
         if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should be in correct"
                              " format! It must be a string ending with 'GB', in addition to that, it must contain "
@@ -582,7 +584,7 @@ def _check_target_specific_cfgs(device, arg_key):
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
         'auto_tune_mode': ['Ascend'],
-        'max_device_memory': ['GPU'],
+        'max_device_memory': ['Ascend', 'GPU'],
         'mempool_block_size': ['GPU', 'Ascend']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
@@ -626,7 +628,7 @@ def set_context(**kwargs):
     |                         +------------------------------+----------------------------+
     |                         |   device_target              |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
-    |                         |  max_device_memory           |  GPU                       |
+    |                         |  max_device_memory           |  GPU/Ascend                |
     |                         +------------------------------+----------------------------+
     |                         |  variable_memory_max_size    |  Ascend                    |
     |                         +------------------------------+----------------------------+
@@ -682,11 +684,10 @@ def set_context(**kwargs):
             while device_num_per_host should be no more than 4096. Default: 0.
         device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
             If device target is not set, the version of MindSpore package is used.
-        max_device_memory (str): Set the maximum memory available for devices.
-            Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
+        max_device_memory (str): Set the maximum memory available for devices. The format is "xxGB". Default: "1024GB".
             The actual used memory size is the minimum of the available memory of the device and max_device_memory.
-        variable_memory_max_size (str): Set the maximum size of the variable memory max size. Default: "30GB".
-            After this parameter is set, the maximum memory used by the framework is restricted to the configured value.
+        variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
+            Please use parameter 'max_device_memory' instead.
         mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
             The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
             of the available memory of the device and mempool_block_size.
