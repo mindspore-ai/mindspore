@@ -44,7 +44,7 @@ CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &r
   constexpr auto kMaskShapeSize = 4;
   auto prim = std::make_shared<Primitive>(kReluV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(kIndex1)};
-  auto new_node = NewCNode(inputs, graph);
+  auto new_node = opt::NewCNode(inputs, graph, {relu});
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu->scope());
 
@@ -88,7 +88,7 @@ CNodePtr DereluFusion::CreateReluGradV2(const FuncGraphPtr &graph, const CNodePt
 
   auto prim = std::make_shared<Primitive>(kReluGradV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu_grad->input(1), second_input};
-  auto new_node = NewCNode(inputs, graph);
+  auto new_node = opt::NewCNode(inputs, graph, {relu_grad});
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu_grad->scope());
   new_node->set_abstract(relu_grad->abstract());

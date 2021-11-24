@@ -158,7 +158,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
     dropout_gen_mask_inputs.push_back(shape_value);
     dropout_gen_mask_inputs.push_back(keep_prob_value);
   }
-  CNodePtr dropout_gen_mask = NewCNode(dropout_gen_mask_inputs, func_graph);
+  CNodePtr dropout_gen_mask = opt::NewCNode(dropout_gen_mask_inputs, func_graph, {dropout});
   MS_EXCEPTION_IF_NULL(dropout_gen_mask);
 
   std::shared_ptr<abstract::AbstractTensor> gen_mask_abstract;
@@ -242,7 +242,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
           std::vector<AnfNodePtr> dropout_do_mask1_inputs{
             NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), dropout_input, dropout_gen_mask,
             keep_prob_value};
-          dropout_do_mask1 = NewCNode(dropout_do_mask1_inputs, func_graph);
+          dropout_do_mask1 = opt::NewCNode(dropout_do_mask1_inputs, func_graph, {dropout_node});
           MS_EXCEPTION_IF_NULL(dropout_do_mask1);
           auto do_mask_abstract1 =
             std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
@@ -262,7 +262,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   auto dropout_grad_input = utils::cast<AnfNodePtr>((*equiv)[grad_input_]);
   std::vector<AnfNodePtr> dropout_do_mask_inputs{NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)),
                                                  dropout_grad_input, dropout_gen_mask, keep_prob_value};
-  auto dropout_do_mask = NewCNode(dropout_do_mask_inputs, func_graph);
+  auto dropout_do_mask = opt::NewCNode(dropout_do_mask_inputs, func_graph, {node});
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
   dropout_do_mask->set_abstract(do_mask_abstract);

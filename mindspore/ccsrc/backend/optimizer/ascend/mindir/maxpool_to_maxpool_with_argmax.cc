@@ -54,7 +54,7 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolWithArgmax(const FuncGraphPtr &
   }
   std::vector<AnfNodePtr> maxpool_argmax_inputs = {NewValueNode(std::make_shared<Primitive>(kMaxPoolWithArgmaxOpName)),
                                                    maxpool->input(kIndex1)};
-  auto maxpool_argmax = NewCNode(maxpool_argmax_inputs, graph);
+  auto maxpool_argmax = opt::NewCNode(maxpool_argmax_inputs, graph, {maxpool});
   MS_EXCEPTION_IF_NULL(maxpool_argmax);
   maxpool_argmax->set_scope(maxpool->scope());
 
@@ -81,7 +81,7 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolGradWithArgmax(
   std::vector<AnfNodePtr> maxpool_grad_argmax_inputs = {
     NewValueNode(std::make_shared<Primitive>(kMaxPoolGradWithArgmaxOpName)), maxpool_grad->input(kIndex1),
     maxpool_grad->input(kIndex3), maxpool_argmax_outputs[kIndex1]};
-  auto maxpool_grad_argmax = NewCNode(maxpool_grad_argmax_inputs, graph);
+  auto maxpool_grad_argmax = opt::NewCNode(maxpool_grad_argmax_inputs, graph, {maxpool_grad});
   MS_EXCEPTION_IF_NULL(maxpool_grad_argmax);
   maxpool_grad_argmax->set_scope(maxpool_grad->scope());
   maxpool_grad_argmax->set_abstract(maxpool_grad->abstract());
