@@ -6435,7 +6435,7 @@ class CLUEDataset(SourceDataset):
             :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
             :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
             :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
-        - usage = output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+        - usage = :py:obj:`test`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
             :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
             :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, :py:obj:`[text, dtype=string]`.
         - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
