@@ -347,14 +347,12 @@ class Parameter(Tensor_):
     @property
     def comm_fusion(self):
         """
-        Get and set the fusion type (int) for communication operators corresponding to this parameter.
+        Get the fusion type (int) for communication operators corresponding to this parameter.
 
         In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, some communication operators used for parameters or
-        gradients aggregation are inserted automatically. Set the fusion type for communication operators generated
-        for this parameter. The value of fusion must be greater than or equal to 0. When the value of fusion is 0,
-        operators will not be fused together.
+        gradients aggregation are inserted automatically. The value of fusion must be greater than or equal to 0.
+        When the value of fusion is 0, operators will not be fused together.
 
-        Only support in Ascend environment with Graph mode.
         """
         return self.param_info.comm_fusion
 
@@ -369,17 +367,16 @@ class Parameter(Tensor_):
     @property
     def parallel_optimizer_comm_recompute(self):
         """
-        Get and Set the whether do recompute for communication operators corresponding to this parameter
-        when applying parallel optimizer.
+        Get the communication recompute status(bool) of optimizer parallel for the parameter.
 
-        In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, when applying parallel optimizer, some all_gather operators
-        used for parameters gathering are inserted automatically.
-        The interface is used to control the recompute attr for those all_gather operators.
+        In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, when applying parallel optimizer, some AllGather operators
+        used for parameters gathering are inserted automatically. It is used to control the recompute attr for those
+        AllGather operators.
 
         Note:
-            - Only `Ascend` and `Graph` mode is supported.
+            - Only `Graph` mode is supported.
             - It is recommended to use cell.recompute(parallel_optimizer_comm_recompute=True/False) to configure
-              the all_gather operators introducing by parallel optimizer rather than using this interface directly.
+              the AllGather operators introducing by parallel optimizer rather than using this interface directly.
         """
         return self.param_info.parallel_optimizer_comm_recompute
 
@@ -450,8 +447,10 @@ class Parameter(Tensor_):
     @property
     def layerwise_parallel(self):
         """
-        When layerwise_parallel is true in data/hybrid parallel mode, broadcast and gradients communication would not
-        be applied to parameters.
+        Get the layerwise parallel status(bool) of the parameter.
+
+        When layerwise_parallel is true in `DATA_PARALLEL` and `HYBRID_PARALLEL` parallel mode, broadcast and gradients
+        communication would not be applied to parameters.
         """
         return self.param_info.layerwise_parallel
 
@@ -464,7 +463,9 @@ class Parameter(Tensor_):
     @property
     def parallel_optimizer(self):
         """
-        It is used to filter the weight shard operation in semi auto or auto parallel mode. It works only
+        Get the optimizer parallel status(bool) of the parameter.
+
+        It is used to filter the weight shard operation in `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode. It works only
         when enable parallel optimizer in `mindspore.context.set_auto_parallel_context()`.
         """
         return self.param_info.parallel_optimizer
@@ -595,19 +596,23 @@ class Parameter(Tensor_):
         Initialize the parameter's data.
 
         Args:
-            layout (Union[None, tuple(list(int))]): Parameter slice
-                layout [dev_mat, tensor_map, slice_shape]. Default: None.
+            layout (Union[None, tuple]): The parameter's layout info.
+                layout [dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]. Default: None.
+                It's not None only in 'SEMI_AUTO_PARALLEL' or 'AUTO_PARALLEL' mode.
 
-                - dev_mat (list(int)): Device matrix.
-                - tensor_map (list(int)): Tensor map.
-                - slice_shape (list(int)): Shape of slice.
+                - dev_mat (list(int)): The parameter's device matrix.
+                - tensor_map (list(int)): The parameter's tensor map.
+                - slice_shape (list(int)): The parameter's slice shape.
+                - filed_size (int): The parameter's filed size.
+                - uniform_split (bool): Whether the parameter is split evenly.
+                - opt_shard_group (str): The group of the parameter while running optimizer parallel.
 
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
         Raises:
             RuntimeError: If it is from Initializer, and parallel mode has changed after the Initializer created.
-            ValueError: If the length of the layout is less than 3.
+            ValueError: If the length of the layout is less than 6.
             TypeError: If `layout` is not tuple.
 
         Returns:
