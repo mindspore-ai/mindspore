@@ -76,11 +76,12 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   (void)CheckAndConvertUtils::CheckSubClass("y_type", y_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
   if (*x_type != *y_type) {
-    MS_EXCEPTION(TypeError) << prim_name << "the x_type " << x_type->ToString() << " must be the same as y_type "
+    MS_EXCEPTION(TypeError) << prim_name << "'s the x_type " << x_type->ToString() << " must be the same as y_type "
                             << y_type->ToString();
   }
   return x_type;
 }
+
 AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;
@@ -90,27 +91,11 @@ AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shape, type);
 }
 
-ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto result_type = SelectInferType(prim, input_args);
-  auto result_shape = SelectInferShape(prim, input_args)->cast<abstract::ShapePtr>();
-  auto cond_value = input_args[kCondIndex]->BuildValue();
-  auto x = input_args[kXIndex]->BuildValue();
-  auto y = input_args[kYIndex]->BuildValue();
-  if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
-    return nullptr;
-  }
-  auto x_tensor = x->cast<tensor::TensorPtr>();
-  auto y_tensor = y->cast<tensor::TensorPtr>();
-  auto cond_tensor = cond_value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_tensor);
-  MS_EXCEPTION_IF_NULL(y_tensor);
-  MS_EXCEPTION_IF_NULL(cond_tensor);
-  auto conds = cond_tensor->data_c();
-  MS_EXCEPTION_IF_NULL(conds);
+void SelectInnerInferValue(const tensor::TensorPtr &cond_tensor, const tensor::TensorPtr &x_tensor,
+                           const tensor::TensorPtr &y_tensor, const tensor::TensorPtr &result_tensor) {
   bool *cond_data = reinterpret_cast<bool *>(cond_tensor->data_c());
   auto data_size = cond_tensor->DataSize();
   auto type_id = x_tensor->data_type();
-  auto result_tensor = std::make_shared<tensor::Tensor>(type_id, result_shape->shape());
   switch (type_id) {
     case kNumberTypeBool: {
       SelectImpl<bool>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
@@ -173,9 +158,31 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
       break;
     }
     default: {
-      MS_EXCEPTION(TypeError) << "Select not supported type " << result_type->ToString();
+      MS_EXCEPTION(TypeError) << "Select not supported type " << result_tensor->type()->ToString();
     }
   }
+}
+
+ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  (void)SelectInferType(prim, input_args);
+  auto result_shape = SelectInferShape(prim, input_args)->cast<abstract::ShapePtr>();
+  auto cond_value = input_args[kCondIndex]->BuildValue();
+  auto x = input_args[kXIndex]->BuildValue();
+  auto y = input_args[kYIndex]->BuildValue();
+  if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
+    return nullptr;
+  }
+  auto x_tensor = x->cast<tensor::TensorPtr>();
+  auto y_tensor = y->cast<tensor::TensorPtr>();
+  auto cond_tensor = cond_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  MS_EXCEPTION_IF_NULL(cond_tensor);
+  auto conds = cond_tensor->data_c();
+  MS_EXCEPTION_IF_NULL(conds);
+  auto type_id = x_tensor->data_type();
+  auto result_tensor = std::make_shared<tensor::Tensor>(type_id, result_shape->shape());
+  SelectInnerInferValue(cond_tensor, x_tensor, y_tensor, result_tensor);
   return result_tensor;
 }
 }  // namespace

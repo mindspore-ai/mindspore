@@ -313,34 +313,6 @@ void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVec
   *max_shape = (*max_shape).empty() ? shape : *max_shape;
 }
 
-int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name) {
-  int64_t num_segments_value = 0;
-  constexpr size_t scalar_index = 2;
-  if (args_spec_list[scalar_index]->isa<AbstractTensor>()) {  // num_segments is Tensor
-    auto num_segments = args_spec_list[scalar_index]->cast<AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments);
-    auto num_segments_value_ptr = num_segments->BuildValue();
-    MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
-    auto num_segments_tensor = num_segments_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments_tensor);
-    if (num_segments->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
-      num_segments_value = *static_cast<int64_t *>(num_segments_tensor->data_c());
-    } else {
-      num_segments_value = *static_cast<int32_t *>(num_segments_tensor->data_c());
-    }
-  } else if (args_spec_list[scalar_index]->isa<AbstractScalar>()) {  // num_segments is Scalar
-    auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, scalar_index);
-    if (num_segments->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
-      num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
-    } else {
-      num_segments_value = GetValue<int32_t>(num_segments->BuildValue());
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "num_segments incorrect type in " << op_name;
-  }
-  return num_segments_value;
-}
-
 AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(type);
