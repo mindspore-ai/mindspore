@@ -1869,7 +1869,7 @@ class Tensor(Tensor_):
         j = tensor_operator_registry.get('fill')(mstype.int32, shape, a.size)
 
         sort_range = tuple(range(validator.get_log2_size(
-            tensor_operator_registry.get('shape_mul')(shape) + 1)))
+            tensor_operator_registry.get('shape_mul')(a.shape) + 1)))
         for _ in sort_range:
             mid = (i - -j)//2
             mask = less_op(v, tensor_operator_registry.get('gather_nd')(a, mid.reshape(mid.shape + (1,))))
