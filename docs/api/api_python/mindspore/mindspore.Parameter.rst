@@ -17,45 +17,43 @@
         - **name** (str)：参数的名称。默认值：None。
         - **requires_grad** (bool)：是否需要微分求梯度。默认值：True。
         - **layerwise_parallel** (bool)：在数据/混合并行模式下， `layerwise_parallel` 配置为True时，参数广播和梯度聚合时会过滤掉该参数。默认值：False。
-        - **parallel_optimizer** (bool)：用于在"semi_auto_parallel"或"auto_parallel"并行模式下区分参数是否进行优化器切分。仅在 `mindspore.context.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
+        - **parallel_optimizer** (bool)：用于在 `semi_auto_parallel` 或 `auto_parallel` 并行模式下区分参数是否进行优化器切分。仅在 `mindspore.context.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
 
     **样例：**
-    
-    .. code-block::
 
-        >>> import numpy as np
-        >>> from mindspore import Parameter, Tensor
-        >>> import mindspore.ops as ops
-        >>> import mindspore.nn as nn
-        >>> import mindspore
-        >>>
-        >>> class Net(nn.Cell)：
-        ...     def __init__(self)：
-        ...         super(Net, self).__init__()
-        ...         self.matmul = ops.MatMul()
-        ...         self.weight = Parameter(Tensor(np.ones((1, 2)), mindspore.float32), name="w", requires_grad=True)
-        ...
-        ...     def construct(self, x)：
-        ...         out = self.matmul(self.weight, x)
-        ...         return out
-        >>> net = Net()
-        >>> x = Tensor(np.ones((2, 1)), mindspore.float32)
-        >>> print(net(x))
-        [[2.]]
-        >>> net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
-        >>> print(net(x))
-        [[0.]]
+    >>> import numpy as np
+    >>> from mindspore import Parameter, Tensor
+    >>> import mindspore.ops as ops
+    >>> import mindspore.nn as nn
+    >>> import mindspore
+    >>>
+    >>> class Net(nn.Cell)：
+    ...     def __init__(self)：
+    ...         super(Net, self).__init__()
+    ...         self.matmul = ops.MatMul()
+    ...         self.weight = Parameter(Tensor(np.ones((1, 2)), mindspore.float32), name="w", requires_grad=True)
+    ...
+    ...     def construct(self, x)：
+    ...         out = self.matmul(self.weight, x)
+    ...         return out
+    >>> net = Net()
+    >>> x = Tensor(np.ones((2, 1)), mindspore.float32)
+    >>> print(net(x))
+    [[2.]]
+    >>> net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
+    >>> print(net(x))
+    [[0.]]
     
 
     .. py:method:: cache_enable
         :property: 
 
-        返回该参数是否开启缓存功能。
+        表示该参数是否开启缓存功能。
 
     .. py:method::  cache_shape
         :property:
 
-        如果开启缓存，则返回对应参数的缓存形状。
+        如果使用缓存，则返回对应参数的缓存shape。
 
     .. py:method:: clone(init='same')
 
@@ -63,20 +61,19 @@
 
         **参数：**
                 
-            - **init** (Union[Tensor, str, numbers.Number])：初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。 如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
+        **init** (Union[Tensor, str, numbers.Number])：初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。 如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
 
         **返回：**
 
-            `Parameter` ，返回克隆的新参数。
+        `Parameter` ，返回克隆的新参数。
         
 
     .. py:method:: comm_fusion
+        :property:
 
-        获取和设置与此参数对应的通信算子的融合类型（int）。
+        获取此参数的通信算子的融合类型（int）。
 
-        在"auto_parallel"和"semi_auto_parallel"模式下，一些用于参数或梯度聚合的通信算子将自动插入，此属性表示当前参数对应通信算子的融合类型。 `comm_fusion` 的值必须大于等于0。当 `comm_fusion` 的值为0时，算子不融合。
-
-        仅在Ascend环境的图模式下使用。
+        在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。fusion的值必须大于等于0。当fusion的值为0时，算子不会融合在一起。
         
 
     .. py:method:: data
@@ -90,27 +87,28 @@
 
         **参数：**
 
-            - **layout** (Union[None, tuple(list(int))])：参数切片。
-                
-            - **layout** [dev_mat, tensor_map, slice_shape]：默认值：None。
+        - **layout** (Union[None, tuple])：参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]：默认值：None。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下layout不是None。
 
-                - **dev_mat** (list(int))：设备矩阵。
-                - **tensor_map** (list(int))：张量映射。
-                - **slice_shape** (list(int))：切片形状。
+            - **dev_mat** (list(int))：该参数的设备矩阵。
+            - **tensor_map** (list(int))：该参数的张量映射。
+            - **slice_shape** (list(int))：该参数的切片shape。
+            - **filed_size** (int)：该权重的行数。
+            - **uniform_split** (bool)：该参数是否进行均匀切分。
+            - **opt_shard_group** (str)：该参数进行优化器切分时的group。
 
-            - **set_sliced** (bool)：参数初始化时被设定为分片，则为True。默认值：False。
+        - **set_sliced** (bool)：参数初始化时被设定为分片，则为True。默认值：False。
 
         **异常：**
 
-            **RuntimeError：** 参数使用 `Initializer` 模块进行初始化，初始化后并行模式发生更改。
+        - **RuntimeError：** 参数使用 `Initializer` 模块进行初始化，初始化后并行模式发生更改。
 
-            **ValueError：** `layout` 长度小于3。
-            
-            **TypeError：** `layout` 不是元组。
+        - **ValueError：** `layout` 长度小于6。
+
+        - **TypeError：** `layout` 不是元组。
 
         **返回：**
 
-            初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
+        初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
         
 
     .. py:method:: is_init
@@ -124,7 +122,9 @@
     .. py:method:: layerwise_parallel
         :property:
 
-        在"data_parallel"或"hybrid_parallel"并行模式下，如果"layerwise_parallel"为True，参数广播和梯度聚合将不会应用到参数。
+        获取此参数的逐层并行状态（bool）。
+
+        在 `DATA_PARALLEL` 和 `HYBRID_PARALLEL` 模式下，如果 `layerwise_parallel` 为True，则广播和gradients通信将不会应用到参数。
         
 
     .. py:method:: name
@@ -135,21 +135,21 @@
     .. py:method:: parallel_optimizer
         :property:
 
-        用于在"semi_auto_parallel"或"auto_parallel"并行模式下区分参数是否进行优化器切分。仅在 `mindspore.context.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
+        获取此参数的优化器并行状态（bool）。
+
+        用于在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下过滤权重切分操作。当在 `mindspore.context.set_auto_parallel_context()` 中启用优化器并行时，它才有效。
         
 
     .. py:method:: parallel_optimizer_comm_recompute
         :property:
 
-        在优化器并行场景下，是否重新计算与此参数对应的通信算子。
+        获取此参数的优化器并行通信重计算状态（bool）。
 
-        在"auto_parallel"和"semi_auto_parallel"模式下使用优化器并行时，若参数被切分分布在不同卡上，框架会自动插入 :class:`mindspore.ops.AllGather` 通信算子用于参数汇聚。该接口用于控制 :class:`mindspore.ops.AllGather` 算子的二次计算属性。
+        在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，当使用并行优化器时，会自动插入一些 :class:`mindspore.ops.AllGather` 算子，用于参数聚合。它用于控制这些 :class:`mindspore.ops.AllGather` 算子的重计算属性。
 
         .. note::
-
-            仅支持Ascend下的Graph模式。
-
-            优化器并行场景下生成的 :class:`mindspore.ops.AllGather` 算子，建议使用 `cell.recompute(parallel_optimizer_comm_recompute=True/False)` 接口配置，不推荐直接使用本接口。
+            - 仅支持 `Graph` 模式。
+            - 建议使用(cell.recompute(parallel_optimizer_comm_recompute=True/False)去配置由优化器并行生成的 :class:`mindspore.ops.AllGather` 算子，而不是直接使用该接口。
         
 
     .. py:method:: requires_grad
@@ -163,41 +163,39 @@
 
         **参数：**
 
-            - **data** (Union[Tensor, int, float])：新数据。
-            - **slice_shape** (bool)：如果`slice_shape`设为True，则不检查 `data` 和当前参数shape的一致性。默认值：False。
+        - **data** (Union[Tensor, int, float])：新数据。
+        - **slice_shape** (bool)：如果 `slice_shape` 设为True，则不检查 `data` 和当前参数shape的一致性。默认值：False。
 
         **返回：**
     
-            完成数据设置的新参数。
+        完成数据设置的新参数。
         
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
-        设置参数和服务器的交互方式。
+        设置参数和服务器的互动方式。
 
         **参数：**
 
-            - **push_to_server** (bool)：表示是否将参数推送到服务器。默认值：False。
-            - **pull_from_server** (bool)：表示是否应从服务器中拉取参数。默认值：False。
-            - **requires_aggr** (bool)：表示是否应在服务器中聚合参数。默认值：True。
+        - **push_to_server** (bool)：表示是否将参数推送到服务器。默认值：False。
+        - **pull_from_server** (bool)：表示是否应从服务器中拉取参数。默认值：False。
+        - **requires_aggr** (bool)：表示是否应在服务器中聚合参数。默认值：True。
         
 
     .. py:method:: set_param_ps(init_in_server=False)
 
-        在Parameter Server模式下，表示训练参数是否在Server端初始化，以及是否由Server更新。
+        表示可训练参数是否由参数服务器更新，以及可训练参数是否在服务器上初始化。
 
-        .. note:: 仅在Parameter Server模式下有效。
+        .. note:: 仅当运行的任务处于参数服务器模式下有效。
 
         **参数：**
 
-            - **init_in_server** (bool)：表示训练参数初始化位置是否为Server端，以及是否通过Server进行更新。默认值：False。
-        
+        **init_in_server** (bool)：表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
 
     .. py:method:: sliced
         :property:
 
         获取参数的切片状态。
-
 
     .. py:method:: unique
         :property:
