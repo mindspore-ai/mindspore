@@ -22,10 +22,11 @@ import os
 import shutil
 import stat
 import sys
-import time
-from collections import defaultdict
 import threading
 from threading import Thread, Lock
+import time
+from collections import defaultdict
+
 
 import numpy as np
 from mindspore.train.checkpoint_pb2 import Checkpoint
@@ -67,6 +68,7 @@ _ckpt_mutex = Lock()
 SLICE_SIZE = 512 * 1024
 PROTO_LIMIT_SIZE = 1024 * 1024 * 2
 TOTAL_SAVE = 1024 * 1024
+PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 
 
 def _special_process_par(par, new_par):
@@ -837,6 +839,108 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
         net.set_train(mode=True)
 
 
+def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
+    front_info = bytes()
+    check_code = sys.byteorder == "little"
+    front_info += check_code.to_bytes(1, byteorder=sys.byteorder)
+    front_info += bytes(63)
+    if is_encrypt():
+        front_info = _encrypt(front_info, len(front_info), kwargs['enc_key'],
+                              len(kwargs['enc_key']), kwargs['enc_mode'])
+    return front_info
+
+
+def _change_file(ori_data_file_name, dirname, external_local):
+    # The parameter has been not written in the file
+    if os.path.getsize(ori_data_file_name) == 64:
+        raise RuntimeError("The parameter size is exceed 1T,cannot export to the file")
+    data_file_name = os.path.join(dirname, external_local)
+    if os.path.exists(data_file_name):
+        os.chmod(data_file_name, stat.S_IWUSR)
+    return data_file_name
+
+
+def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
+    '''
+        The function to save parameter data
+    '''
+    logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
+    # save parameter
+    file_prefix = file_name.split("/")[-1]
+    if file_prefix.endswith(".mindir"):
+        file_prefix = file_prefix[:-7]
+    current_path = os.path.abspath(file_name)
+    dirname = os.path.dirname(current_path)
+    data_path = os.path.join(dirname, file_prefix + "_variables")
+    if os.path.exists(data_path):
+        shutil.rmtree(data_path)
+    os.makedirs(data_path, exist_ok=True)
+    os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    # Reserves 4096 bytes as spare information such as check data
+    offset = 64
+    index = 0
+    parameter_size = (offset / 1024)
+    external_local = os.path.join(file_prefix + "_variables", "data_" + str(index))
+    data_file_name = os.path.join(dirname, external_local)
+    if os.path.exists(data_file_name):
+        os.chmod(data_file_name, stat.S_IWUSR)
+    f = open(data_file_name, "wb")
+    f.write(bytes(offset))
+    try:
+        for param_proto in model.graph.parameter:
+            name = param_proto.name[param_proto.name.find(":") + 1:]
+            param = net_dict[name]
+            raw_data = param.data.asnumpy().tobytes()
+            data_length = len(raw_data)
+            append_size = 0
+            if data_length % 64 != 0:
+                append_size = 64 - (data_length % 64)
+                parameter_size += ((append_size + data_length) / 1024)
+            if parameter_size > PARAMETER_SPLIT_SIZE:
+                front_info = _generate_front_info_for_param_data_file(is_encrypt, kwargs)
+                f.seek(0, 0)
+                f.write(front_info)
+                f.close()
+                os.chmod(data_file_name, stat.S_IRUSR)
+                offset = 64
+                index += 1
+                parameter_size = (offset + append_size + data_length) / 1024
+                external_local = os.path.join(file_prefix + "_variables", "data_" + str(index))
+                data_file_name = _change_file(data_file_name, dirname, external_local)
+                f = open(data_file_name, "wb")
+                f.write(bytes(offset))
+            param_proto.external_data.location = external_local
+            param_proto.external_data.length = data_length
+            param_proto.external_data.offset = offset
+            write_data = raw_data + bytes(append_size)
+            offset += (data_length + append_size)
+            if is_encrypt():
+                write_data = _encrypt(write_data, len(write_data), kwargs['enc_key'],
+                                      len(kwargs['enc_key']), kwargs['enc_mode'])
+            f.write(write_data)
+
+        # save graph
+        graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
+        if os.path.exists(graph_file_name):
+            os.chmod(graph_file_name, stat.S_IWUSR)
+        with open(graph_file_name, 'wb') as model_file:
+            os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
+            model_string = model.SerializeToString()
+            if is_encrypt():
+                model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'],
+                                        len(kwargs['enc_key']),
+                                        kwargs['enc_mode'])
+            model_file.write(model_string)
+            os.chmod(graph_file_name, stat.S_IRUSR)
+
+        front_info = _generate_front_info_for_param_data_file(is_encrypt, kwargs)
+        f.seek(0, 0)
+        f.write(front_info)
+    finally:
+        f.close()
+        os.chmod(data_file_name, stat.S_IRUSR)
+
+
 def _save_mindir(net, file_name, *inputs, **kwargs):
     """Save MindIR format file."""
     model = mindir_model()
@@ -859,67 +963,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     if save_together:
         _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs)
     else:
-        logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
-        # save parameter
-        file_prefix = file_name.split("/")[-1]
-        if file_prefix.endswith(".mindir"):
-            file_prefix = file_prefix[:-7]
-        current_path = os.path.abspath(file_name)
-        dirname = os.path.dirname(current_path)
-        data_path = os.path.join(dirname, file_prefix + "_variables")
-        if os.path.exists(data_path):
-            shutil.rmtree(data_path)
-        os.makedirs(data_path, exist_ok=True)
-        os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        # Reserves 4096 bytes as spare information such as check data
-        offset = 64
-        data_file_name = os.path.join(data_path, "veriables.data")
-        if os.path.exists(data_file_name):
-            os.chmod(data_file_name, stat.S_IWUSR)
-        with open(data_file_name, "wb") as f:
-            f.write(bytes(offset))
-            for name, param in net_dict.items():
-                for param_proto in model.graph.parameter:
-                    if name == param_proto.name[param_proto.name.find(":") + 1:]:
-                        data_file = os.path.join(file_prefix + "_variables", "veriables.data")
-                        param_proto.external_data.location = data_file
-                        raw_data = param.data.asnumpy().tobytes()
-                        data_length = len(raw_data)
-                        param_proto.external_data.length = data_length
-                        param_proto.external_data.offset = offset
-                        write_data = raw_data
-                        offset += data_length
-                        if data_length % 64 != 0:
-                            append_size = 64 - (data_length % 64)
-                            write_data += (bytes(append_size))
-                            offset += append_size
-                        if is_encrypt():
-                            write_data = _encrypt(write_data, len(write_data), kwargs['enc_key'],
-                                                  len(kwargs['enc_key']), kwargs['enc_mode'])
-                        f.write(write_data)
-
-                # save graph
-                graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
-                if os.path.exists(graph_file_name):
-                    os.chmod(graph_file_name, stat.S_IWUSR)
-                with open(graph_file_name, 'wb') as model_file:
-                    os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
-                    model_string = model.SerializeToString()
-                    if is_encrypt():
-                        model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'],
-                                                len(kwargs['enc_key']),
-                                                kwargs['enc_mode'])
-                    model_file.write(model_string)
-                    os.chmod(graph_file_name, stat.S_IRUSR)
-
-            front_info = bytearray()
-            check_code = sys.byteorder == "little"
-            front_info += check_code.to_bytes(1, byteorder=sys.byteorder)
-            f.seek(0, 0)
-            if is_encrypt():
-                front_info = _encrypt(front_info, len(front_info), kwargs['enc_key'],
-                                      len(kwargs['enc_key']), kwargs['enc_mode'])
-            f.write(front_info)
+        _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs)
 
 
 def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
@@ -1242,6 +1286,7 @@ def restore_group_info_list(group_info_file_name):
     restore_rank_list = [rank for rank in restore_list.dim]
     return restore_rank_list
 
+
 def build_searched_strategy(strategy_filename):
     """
     Build strategy of every parameter in network. Used in the case of distributed inference.
@@ -1527,7 +1572,6 @@ def async_ckpt_thread_status():
 
 def _check_predict_strategy(predict_strategy):
     """Check predict strategy."""
-
 
     def _check_int_list(arg):
         if not isinstance(arg, list):

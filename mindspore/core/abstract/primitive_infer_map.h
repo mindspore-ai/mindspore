@@ -56,16 +56,16 @@ void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const Standard
 class RegisterStandardPrimitiveEvalHelper {
  public:
   RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferShapeImpl &infer_impl,
-                                      const InferValueImpl &infer_value_impl, const bool is_wight_list = true) {
-    const StandardPrimitiveImplReg impl_reg{infer_impl, infer_value_impl, is_wight_list};
+                                      const InferValueImpl &infer_value_impl, const bool is_white_list = true) {
+    const StandardPrimitiveImplReg impl_reg{infer_impl, infer_value_impl, is_white_list};
     RegisterStandardPrimitiveImpl(primitive, impl_reg);
   }
   ~RegisterStandardPrimitiveEvalHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl, is_wight_list)         \
+#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl, is_white_list)         \
   static auto helper_##name =                                                                              \
-    abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, is_wight_list); \
+    abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, is_white_list); \
   std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                               \
     auto out = std::make_shared<name>();                                                                   \
     return out;                                                                                            \
