@@ -444,51 +444,6 @@ void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfN
   AnfAlgo::SetNodeAttr(key, value, node);
 }
 
-bool IsKeepBasicNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  // Dynamic shape is unsupported yet.
-  if (AnfAlgo::HasDynamicShapeFlag(AnfAlgo::GetCNodePrimitive(cnode))) {
-    return true;
-  }
-
-  static const std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
-                                                            "aggregate", "aggregate_input_indexx"};
-  // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
-  if (std::any_of(contagious_attrs.cbegin(), contagious_attrs.cend(),
-                  [&cnode](const std::string &attr_name) -> bool { return AnfAlgo::HasNodeAttr(attr_name, cnode); })) {
-    return true;
-  }
-  if (AnfAlgo::GetBooleanAttr(cnode, "skip")) {
-    return true;
-  }
-  return false;
-}
-
-void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string> &enable_ops_only,
-                  const std::vector<std::string> &enable_ops, const std::vector<std::string> &disable_ops) {
-  auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
-  if (!enable_ops_only.empty()) {
-    ops->clear();
-    (void)std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
-  } else {
-    if (!enable_ops.empty()) {
-      (void)std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
-    }
-    if (!disable_ops.empty()) {
-      auto iter = std::remove_if(ops->begin(), ops->end(), [&disable_ops](const PrimitivePtr &p) {
-        return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
-      });
-      (void)ops->erase(iter, ops->end());
-    }
-  }
-}
-
 inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
   inner::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
   std::map<AnfNodePtr, inner::NodePtr> node_map;
@@ -630,22 +585,6 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   }
   func_graph->set_parameters(new_parameter);
   *inputs = std::move(new_inputs);
-}
-
-std::vector<PrimitivePtr> GetValidOps(
-  const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  std::vector<PrimitivePtr> valid_ops;
-  for (const auto &[op_target, op_level, op] : ops_with_level) {
-    if (op_target == kAllTarget || op_target == target) {
-      if (level >= op_level) {
-        (void)valid_ops.emplace_back(op);
-      }
-    }
-  }
-  return valid_ops;
 }
 
 FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph) {

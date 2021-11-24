@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 #include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
+#include <algorithm>
+#include <memory>
 #include <sstream>
 #include "base/core_ops.h"
 #include "utils/anf_utils.h"
+#include "utils/utils.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,
@@ -52,5 +56,65 @@ AnfNodePtrList GkUtils::SpreadTuples(const AnfNodePtrList &nodes, size_t begin_i
     }
   }
   return result;
+}
+
+std::vector<PrimitivePtr> GkUtils::GetValidOps(const std::vector<OpWithLevel> &ops_with_level, unsigned int level,
+                                               const std::vector<std::string> &enable_ops_only,
+                                               const std::vector<std::string> &enable_ops,
+                                               const std::vector<std::string> &disable_ops) {
+  std::vector<PrimitivePtr> ops;
+  auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
+  if (!enable_ops_only.empty()) {
+    (void)std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(ops), new_prim);
+    return ops;
+  }
+  auto target = Callback::Instance()->GetTargetFromContext();
+  for (const auto &[op_target, op_level, op] : ops_with_level) {
+    if (op_target == kAllTarget || op_target == target) {
+      if (level >= op_level) {
+        (void)ops.emplace_back(op);
+      }
+    }
+  }
+  if (!enable_ops.empty()) {
+    (void)std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(ops), new_prim);
+  }
+  if (!disable_ops.empty()) {
+    auto iter = std::remove_if(ops.begin(), ops.end(), [&disable_ops](const PrimitivePtr &p) {
+      return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
+    });
+    (void)ops.erase(iter, ops.end());
+  }
+  return ops;
+}
+
+bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto get_bool_attr = [](const PrimitivePtr &primitive, const std::string &attr_name) -> bool {
+    if (!primitive->HasAttr(attr_name)) {
+      return false;
+    }
+    return GetValue<bool>(primitive->GetAttr(attr_name));
+  };
+  auto prim = GetCNodePrimitive(node);
+  if (prim == nullptr) return false;
+
+  // Dynamic shape is unsupported yet.
+  if (get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape) ||
+      get_bool_attr(prim, kAttrIsDynamicShape)) {
+    return true;
+  }
+  if (get_bool_attr(prim, "skip")) {
+    return true;
+  }
+
+  // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
+  const std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
+                                                     "aggregate", "aggregate_input_indexx"};
+  if (std::any_of(contagious_attrs.cbegin(), contagious_attrs.cend(),
+                  [&prim](const std::string &attr_name) -> bool { return prim->HasAttr(attr_name); })) {
+    return true;
+  }
+  return false;
 }
 }  // namespace mindspore::graphkernel

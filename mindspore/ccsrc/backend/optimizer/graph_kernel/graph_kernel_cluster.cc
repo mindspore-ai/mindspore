@@ -16,28 +16,27 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 
 #include <algorithm>
-#include <map>
-#include <unordered_map>
 #include <set>
-#include <vector>
-#include <tuple>
-#include <memory>
 #include <utility>
 #include <fstream>
+#include <string>
 
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
+#include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/file_utils.h"
 #include "utils/context/graph_kernel_flags.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/optimizer/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
+using opt::GetitemTuple;
+
 std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
-  std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> clusterable_ops_with_level = {
+  std::vector<OpWithLevel> clusterable_ops_with_level = {
     // all target
     {kAllTarget, OpLevel_0, prim::kPrimAbs},
     {kAllTarget, OpLevel_0, prim::kPrimAdd},
@@ -100,19 +99,17 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
     {kGPUDevice, OpLevel_0, prim::kPrimSign},
     {kGPUDevice, OpLevel_0, prim::kPrimSin},
     {kGPUDevice, OpLevel_0, prim::kPrimStridedSlice},
-    {kGPUDevice, OpLevel_0, prim::kPrimUserDefined},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  std::vector<PrimitivePtr> clusterable_ops = GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level);
-  OpListFilter(&clusterable_ops, flags.enable_cluster_ops_only, flags.enable_cluster_ops, flags.disable_cluster_ops);
-  return clusterable_ops;
+  return GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,
+                              flags.enable_cluster_ops, flags.disable_cluster_ops);
 }
 
 bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
-  if (AnfAlgo::IsGraphKernel(node)) {
+  if (AnfUtils::IsGraphKernel(node)) {
     return true;
   }
-  if (IsKeepBasicNode(node)) {
+  if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
@@ -120,12 +117,15 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (!node_in_oplist) {
     return false;
   }
-#if ENABLE_D
+
   // For AICPU operators, only the Reshape can be clustered.
-  if (AnfAlgo::GetProcessor(node) != kernel::Processor::AICORE && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
-    return false;
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  if (cb->GetTargetFromContext() == kAscendDevice) {
+    if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
+      return false;
+    }
   }
-#endif
   return true;
 }
 
@@ -393,7 +393,7 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
       // Do not cluster a single GraphKernel again.
       // Do not cluster a single Assign.
       const auto &node = nodes_[clusters[i][0]];
-      if (AnfAlgo::IsGraphKernel(node) || IsPrimitiveCNode(node, prim::kPrimAssign) || !IsClusterableOp(node)) {
+      if (AnfUtils::IsGraphKernel(node) || IsPrimitiveCNode(node, prim::kPrimAssign) || !IsClusterableOp(node)) {
         continue;
       }
     }
@@ -408,8 +408,8 @@ void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const s
   (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
                        [this](size_t id) { return this->nodes_[id]; });
   auto new_node = ReplaceNodesWithGraphKernelNode(old_nodes, func_graph, "fusion");
-  std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<opt::GetitemTuple>();
-  (void)eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(new_node));
+  std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<GetitemTuple>();
+  (void)eliminate_getitem_pass->Run(GetCNodeFuncGraph(new_node));
   if (GraphKernelFlags::GetInstance().dump_as_text) {
     DumpClusterInfo(old_nodes, new_node);
   }

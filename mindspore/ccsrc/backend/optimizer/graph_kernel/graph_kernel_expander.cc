@@ -29,6 +29,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/optimizer/graph_kernel/split_umonad.h"
 #include "backend/optimizer/graph_kernel/substitute_dropout.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -47,7 +48,7 @@ constexpr size_t kLambWeightInputIdx = 4;
 constexpr size_t kRandomInputIdx = 1;
 
 std::vector<PrimitivePtr> GetExpandOps() {
-  std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> expand_ops_with_level = {
+  std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
     {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
     {kAllTarget, OpLevel_0, prim::kPrimErfc},
@@ -95,9 +96,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kGPUDevice, OpLevel_0, prim::kPrimStandardNormal},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  std::vector<PrimitivePtr> expand_ops = GetValidOps(expand_ops_with_level, flags.fusion_ops_level);
-  OpListFilter(&expand_ops, flags.enable_expand_ops_only, flags.enable_expand_ops, flags.disable_expand_ops);
-  return expand_ops;
+  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                              flags.enable_expand_ops, flags.disable_expand_ops);
 }
 }  // namespace
 
@@ -217,8 +217,8 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &n : todos) {
     auto node = n->cast<CNodePtr>();
-    if (node == nullptr || AnfAlgo::IsGraphKernel(node) || IsKeepBasicNode(node) || !AnfUtils::IsRealKernel(node) ||
-        !CanExpand(node)) {
+    if (node == nullptr || AnfAlgo::IsGraphKernel(node) || GkUtils::IsKeepBasicNode(node) ||
+        !AnfUtils::IsRealKernel(node) || !CanExpand(node)) {
       continue;
     }
 

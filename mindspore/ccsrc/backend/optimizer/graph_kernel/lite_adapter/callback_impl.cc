@@ -119,5 +119,7 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) { re
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return "cpu"; }
 
-std::string CallbackImpl::GetProcessorFromContext() { return "cpu"; }
+std::string CallbackImpl::GetTargetFromContext() { return "CPU"; }
+
+void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {}
 }  // namespace mindspore::graphkernel

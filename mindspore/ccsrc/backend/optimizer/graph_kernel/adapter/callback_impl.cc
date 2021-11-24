@@ -20,6 +20,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 
@@ -77,7 +78,11 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return kernel::GetProcessorStr(node); }
 
-std::string CallbackImpl::GetProcessorFromContext() { return kernel::GetStrProcessorFromContext(); }
+std::string CallbackImpl::GetTargetFromContext() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+}
 
 void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   std::vector<std::string> graph_input_format;

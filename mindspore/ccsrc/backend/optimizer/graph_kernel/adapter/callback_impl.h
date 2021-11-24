@@ -33,7 +33,7 @@ class CallbackImpl : public Callback {
   std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetProcessor(const AnfNodePtr &node) override;
-  std::string GetProcessorFromContext() override;
+  std::string GetTargetFromContext() override;
   void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel

@@ -116,9 +116,9 @@ class Callback {
   virtual std::string GetProcessor(const AnfNodePtr &node) = 0;
 
   /**
-   * @brief Get the backend processor from context.
+   * @brief Get the backend target from context.
    */
-  virtual std::string GetProcessorFromContext() = 0;
+  virtual std::string GetTargetFromContext() = 0;
 
   /**
    * @brief Set KernelInfo for a GraphKernel node, the info is extract from its inputs/outputs.

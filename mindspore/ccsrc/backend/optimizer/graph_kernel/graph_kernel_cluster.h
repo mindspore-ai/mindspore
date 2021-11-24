@@ -17,19 +17,13 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CLUSTER_H_
 
 #include <vector>
-#include <string>
 #include <unordered_map>
-#include <set>
 #include <memory>
 
 #include "ir/anf.h"
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
-namespace prim {
-inline const PrimitivePtr kPrimUserDefined = std::make_shared<Primitive>("UserDefined");
-}
-
 namespace graphkernel {
 class Graph;
 using GraphPtr = std::shared_ptr<Graph>;
