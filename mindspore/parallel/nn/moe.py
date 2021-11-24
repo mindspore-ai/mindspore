@@ -130,11 +130,9 @@ class MoE(Cell):
                                parallel_config=parallel_config)
         self.reshape = P.Reshape()
         self.shape = P.Shape()
-        self.transpose = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose2 = P.Transpose().shard(((self.dp, 1, 1, 1),))
-        self.transpose3 = P.Transpose().shard(((self.dp, 1, 1, 1),))
-        self.transpose4 = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose5 = P.Transpose().shard(((self.dp, 1, 1),))
+        self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
+        self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
+        self.transpose_4dim = P.Transpose().shard(((self.dp, 1, 1, 1),))
         self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
         self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
         self.mul = P.Mul().shard(((), ()))
@@ -157,7 +155,7 @@ class MoE(Cell):
         dispatch_tensor, combine_tensor, aux_loss = self.router(input_tensor)
 
         # after transpose, input_tensor's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
-        input_tensor = self.transpose(input_tensor, (0, 2, 1))
+        input_tensor = self.transpose_3dim(input_tensor, (0, 2, 1))
         dispatch_tensor = self.reshape(dispatch_tensor, (self.expert_parallel, tokens_per_device,
                                                          self.expert_dim * expert_capacity))
         dispatch_tensor = self.cast(dispatch_tensor, F.dtype(input_tensor))
@@ -165,8 +163,15 @@ class MoE(Cell):
         expert_input = self.batch_mm(input_tensor, dispatch_tensor)
         expert_input = self.reshape(expert_input, (self.expert_parallel, self.hidden_size, self.expert_dim,
                                                    expert_capacity))
+        # The following four ops are to implement transpose(expert_input, (2, 0, 3, 1)), for that a single transpose
+        # has bad performance
+        expert_input = self.reshape(expert_input, (self.expert_parallel*self.hidden_size,
+                                                   self.expert_dim*expert_capacity))
+        expert_input = self.transpose_2dim(expert_input, (1, 0))
+        expert_input = self.reshape(expert_input, (self.expert_dim, expert_capacity, self.expert_parallel,
+                                                   self.hidden_size))
         # expert_input's shape: (self.expert_dim, self.expert_parallel, expert_capacity, self.hidden_size)
-        expert_input = self.transpose2(expert_input, (2, 0, 3, 1))
+        expert_input = self.transpose_4dim(expert_input, (0, 2, 1, 3))
         expert_input = self.reshape(expert_input, (self.expert_dim * self.expert_parallel * expert_capacity,
                                                    self.hidden_size))
 
@@ -174,20 +179,29 @@ class MoE(Cell):
         expert_output = self.ffn(expert_input)
         expert_output = self.reshape(expert_output, (self.expert_dim, self.expert_parallel,
                                                      expert_capacity, self.hidden_size))
+        # The following five ops are to implement transpose(expert_output, (1, 3, 0, 2)), for that a single transpose
+        # has bad performance
+        expert_output = self.reshape(expert_output, (self.expert_dim,
+                                                     self.expert_parallel*expert_capacity*self.hidden_size))
+        expert_output = self.transpose_2dim(expert_output, (1, 0))
+        expert_output = self.reshape(expert_output, (self.expert_parallel, expert_capacity,
+                                                     self.hidden_size*self.expert_dim))
+        expert_output = self.transpose_3dim(expert_output, (0, 2, 1))
         # expert_output's shape: (self.expert_parallel, self.hidden_size, self.expert_dim, expert_capacity)
-        expert_output = self.transpose3(expert_output, (1, 3, 0, 2))
+        expert_output = self.reshape(expert_output, (self.expert_parallel, self.hidden_size, self.expert_dim,
+                                                     expert_capacity))
         expert_output = self.reshape(expert_output, (self.expert_parallel, self.hidden_size,
                                                      self.expert_dim*expert_capacity))
         combine_tensor = self.reshape(combine_tensor, (self.expert_parallel, tokens_per_device,
                                                        self.expert_dim*expert_capacity))
         # combine_tensor's shape: (self.expert_parallel, self.expert_dim*expert_capacity, tokens_per_device)
-        combine_tensor = self.transpose4(combine_tensor, (0, 2, 1))
+        combine_tensor = self.transpose_3dim(combine_tensor, (0, 2, 1))
         combine_tensor = self.cast(combine_tensor, F.dtype(expert_output))
 
         # combined_output's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
         combined_output = self.batch_mm2(expert_output, combine_tensor)
         # combined_output's shape: (self.expert_parallel, tokens_per_device, self.hidden_size)
-        combined_output = self.transpose5(combined_output, (0, 2, 1))
+        combined_output = self.transpose_3dim(combined_output, (0, 2, 1))
         combined_output = self.reshape(combined_output, (bs_and_dmodel[0], bs_and_dmodel[1]))
         combined_output = self.reshape(combined_output, input_shape)
 
