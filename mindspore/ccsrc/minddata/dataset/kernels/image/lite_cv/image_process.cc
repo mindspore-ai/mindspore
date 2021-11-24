@@ -379,6 +379,9 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
   }
   if (dst.IsEmpty()) {
     (void)dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
+    if (dst.IsEmpty()) {
+      return false;
+    }
   } else if (dst.height_ != dst_h || dst.width_ != dst_w || dst.channel_ != src.channel_) {
     return false;
   } else if (dst.data_type_ != LDataType::UINT8) {
@@ -965,10 +968,17 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   return true;
 }
 
+inline bool CheckInt(const std::vector<int> &nums) {
+  if (std::any_of(nums.begin(), nums.end(), [](const auto &num) { return num < 0; })) {
+    return false;
+  }
+  return true;
+}
+
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
   RETURN_FALSE_IF_LITEMAT_EMPTY(src);
-  if (top < 0 || bottom < 0 || left < 0 || right < 0) {
+  if (!CheckInt({top, bottom, left, right})) {
     return false;
   }
   if (src.width_ > std::numeric_limits<int>::max() - left ||
