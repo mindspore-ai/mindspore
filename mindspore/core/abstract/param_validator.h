@@ -53,8 +53,6 @@ void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape);
 
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape);
 
-int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name);
-
 std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &attr, const size_t start_idx,
                                          const size_t num_element);
 

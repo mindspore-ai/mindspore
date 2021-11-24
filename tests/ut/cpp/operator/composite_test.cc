@@ -104,7 +104,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
     engine_->Run(tupleSliceGraphPtr, args_spec_list);
     FAIL() << "Excepted exception :Args type is wrong";
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("TupleSlice input args size should be 2, but got 3") != std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("TupleSlice input arguments size should be 2, but got 3") !=
+                std::string::npos);
   } catch (...) {
     FAIL() << "Excepted exception :Args type is wrong";
   }
@@ -250,7 +251,7 @@ TEST_F(TestComposite, test_UnpackCall_3args) {
   MetaFuncGraphPtr unPackCallPtr = std::make_shared<prim::UnpackCall>("UnPackCall");
   FuncGraphPtr unPackCallGraphPtr = UTCompositeUtils::MakeFuncGraph(unPackCallPtr, 3);
 
-  auto fn_arg= std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeTuple);
+  auto fn_arg = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeTuple);
   AbstractTensorPtr tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractBasePtrList eles;
   for (size_t i = 0; i < 6; i++) {

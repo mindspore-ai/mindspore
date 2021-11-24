@@ -43,19 +43,10 @@ AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const Abstrac
 // else self.Clone;
 AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec);
 
-TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_list);
-
-bool CheckType(const TypePtr &expected_type, const TypePtr &x);
-
-int64_t GetPositiveAxis(int64_t axis_value, size_t increment);
-
 ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy);
 
 MS_CORE_API size_t TypeIdSize(const TypeId data_type);
 size_t ShapeSize(const std::vector<size_t> &shape);
-
-// Get broadcasted shape for binary element-wise operation
-ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
 
 // Check dynamic shape routine
 void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);

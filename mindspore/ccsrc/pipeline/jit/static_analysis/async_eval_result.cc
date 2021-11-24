@@ -326,11 +326,10 @@ void AnalysisResultCacheMgr::Todo() {
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {
   std::ostringstream buffer;
-  buffer << "(";
   for (const auto &item : args_spec_list) {
-    buffer << item->ToString() << " # ";
+    buffer << item->BuildType()->ToString() << "," << item->BuildShape()->ToString() << " #"
+           << "\n";
   }
-  buffer << " )";
   return buffer.str();
 }
 }  // namespace abstract

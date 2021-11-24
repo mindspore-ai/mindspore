@@ -445,6 +445,36 @@ void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *
     }
   }
 }
+
+bool CheckType(const TypePtr &expected_type, const TypePtr &x) {
+  // As x and predicate both are mindspore type statically, here we only to judge whether
+  // x is predicate or is a subclass of predicate.
+  return IsIdentidityOrSubclass(x, expected_type);
+}
+
+// Join all types in args_type_list;
+TypePtr TypeJoin(const TypePtrList &args_type_list) {
+  if (args_type_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_type_list is empty";
+  }
+
+  TypePtr type_tmp = args_type_list[0];
+  for (std::size_t i = 1; i < args_type_list.size(); i++) {
+    type_tmp = abstract::TypeJoin(type_tmp, args_type_list[i]);
+  }
+  return type_tmp;
+}
+
+TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_list) {
+  MS_EXCEPTION_IF_NULL(predicate);
+  for (const auto &arg_type : args_type_list) {
+    MS_EXCEPTION_IF_NULL(arg_type);
+    if (!CheckType(predicate, arg_type)) {
+      MS_LOG(EXCEPTION) << "The expected is " << predicate->ToString() << ", not " << arg_type->ToString();
+    }
+  }
+  return TypeJoin(args_type_list);
+}
 }  // end anonymous namespace
 
 py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
