@@ -221,10 +221,6 @@ def testDoNamedConstFalse():
     return False
 
 
-def testDoNamedConstNone():
-    return None
-
-
 # Test_Class_type
 @dataclass
 class TestFoo:

@@ -146,9 +146,6 @@ TEST_F(TestParser, TestParseGraphNamedConst) {
   GetPythonFunction("testDoNamedConstFalse");
   ret_val = ParsePythonCode(fn);
   ASSERT_TRUE(nullptr != ret_val);
-  GetPythonFunction("testDoNamedConstNone");
-  ret_val = ParsePythonCode(fn);
-  ASSERT_TRUE(nullptr != ret_val);
 }
 
 TEST_F(TestParser, TestParseGraphForStatement) {

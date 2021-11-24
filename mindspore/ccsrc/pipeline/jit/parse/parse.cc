@@ -480,6 +480,16 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
   return_expr_node = HandleInterpret(block, return_expr_node, value_object);
   // Create the `return` CNode.
   auto func_graph = block->func_graph();
+  if (IsValueNode<None>(return_expr_node)) {
+    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    const auto min_list_size = 2;
+    if (ret.size() < min_list_size) {
+      MS_LOG(EXCEPTION) << "list size:" << ret.size() << " is less than 2.";
+    }
+    py::str desc =
+      python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(), ret[0], ret[1]);
+    MS_EXCEPTION(TypeError) << "Function should not 'Return None', is located in:" << desc.cast<std::string>();
+  }
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
   func_graph->set_return(return_cnode);
   return block;
