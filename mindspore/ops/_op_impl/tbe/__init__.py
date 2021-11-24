@@ -55,6 +55,7 @@ from .assign_add_ds import _assign_add_ds_tbe
 from .assign_sub import _assign_sub_tbe
 from .batch_matmul import _batch_matmul_tbe
 from .batch_matmul_ds import _batch_matmul_ds_tbe
+from .batch_matmul_v2 import _batch_matmul_v2_tbe
 from .batchnorm import _batch_norm_tbe
 from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe

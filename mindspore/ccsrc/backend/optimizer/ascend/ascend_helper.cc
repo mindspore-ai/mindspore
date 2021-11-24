@@ -192,6 +192,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   return make_tuple;
 }
 }  // namespace
+
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select, size_t insert_index, bool is_insert_input) {
   AnfNodePtr trans_node = nullptr;
@@ -244,9 +245,9 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
 }
 
 void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                            const AnfNodePtr &trans_data, const std::string &reshape_type, const TypeId &type_id) {
-  MS_EXCEPTION_IF_NULL(trans_data);
-  auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(trans_data);
+                            const AnfNodePtr &trans_node, const std::string &reshape_type, const TypeId &type_id) {
+  MS_EXCEPTION_IF_NULL(trans_node);
+  auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(trans_node);
   MS_EXCEPTION_IF_NULL(ori_build_info);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(ori_build_info);
   MS_EXCEPTION_IF_NULL(builder);
@@ -258,8 +259,8 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
     builder->SetOutputsDeviceType({type_id});
     builder->SetInputsDeviceType({type_id});
   }
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), trans_data.get());
-  SetTransNodeAttr(trans_data->cast<CNodePtr>());
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), trans_node.get());
+  SetTransNodeAttr(trans_node->cast<CNodePtr>());
 }
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,

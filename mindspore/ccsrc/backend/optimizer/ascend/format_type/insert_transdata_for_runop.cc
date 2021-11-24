@@ -40,13 +40,15 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       auto input_format = AnfAlgo::GetInputFormat(cnode, index);
       auto input_node = AnfAlgo::GetInputNode(cnode, index);
       // convert the format of node's input node to default
-      if (kCommonFormatSet.find(prev_input_format) == kCommonFormatSet.end() && prev_node_out_infer_shape.size() > 1) {
+      if (kCommonFormatSet.find(prev_input_format) == kCommonFormatSet.end() &&
+          (prev_node_out_infer_shape.size() > 1 || prev_input_format == kOpFormat_ND_RNN_BIAS)) {
         auto trans_node = AddTransOpNodeToGraph(graph, input_node, kernel_select_, 0, false);
         AnfAlgo::SetNodeInput(cnode, trans_node, index);
         has_changed = true;
       }
       // convert node's output format
-      if (kCommonFormatSet.find(input_format) == kCommonFormatSet.end() && prev_node_out_infer_shape.size() > 1) {
+      if (kCommonFormatSet.find(input_format) == kCommonFormatSet.end() &&
+          (prev_node_out_infer_shape.size() > 1 || input_format == kOpFormat_ND_RNN_BIAS)) {
         auto trans_node = AddTransOpNodeToGraph(graph, cnode, kernel_select_, index, true);
         AnfAlgo::SetNodeInput(cnode, trans_node, index);
         has_changed = true;

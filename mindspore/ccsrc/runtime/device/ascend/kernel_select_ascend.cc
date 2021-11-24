@@ -587,7 +587,25 @@ void FillNoneInKernelInfo(const CNodePtr &kernel_node, std::vector<kernel::Kerne
     (*kernel_info_list)[idx] = builder->Build();
   }
 }
+
+void ResetPreFixedFormat(const CNodePtr &kernel_node, kernel::KernelBuildInfoPtr *selected_kernel_info) {
+  if (!AnfAlgo::HasNodeAttr(kAttrFixedInputFormat, kernel_node) ||
+      !AnfAlgo::HasNodeAttr(kAttrFixedOutputFormat, kernel_node)) {
+    return;
+  }
+
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(*selected_kernel_info);
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetInputsFormat(AnfAlgo::GetNodeAttr<std::vector<string>>(kernel_node, kAttrFixedInputFormat));
+  builder->SetOutputsFormat(AnfAlgo::GetNodeAttr<std::vector<string>>(kernel_node, kAttrFixedOutputFormat));
+  *selected_kernel_info = builder->Build();
+  MS_LOG(INFO) << "Current node: " << kernel_node->fullname_with_scope()
+               << " selected kernel build info after reset fixed format: " << (*selected_kernel_info)->ToString();
+  AnfAlgo::EraseNodeAttr(kAttrFixedInputFormat, kernel_node);
+  AnfAlgo::EraseNodeAttr(kAttrFixedOutputFormat, kernel_node);
+}
 }  // namespace
+
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
@@ -613,14 +631,14 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
 }
 
 KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
-                                        const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+                                        const std::vector<kernel::KernelBuildInfoPtr> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   KernelSelectStatus select_status = kNoMatched;
   if (kernel_info_list.empty()) {
     return select_status;
   }
   bool precision_reduce = false;
-  std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
+  kernel::KernelBuildInfoPtr selected_kernel_info = nullptr;
   // Matched kernel info
   // Filter kernel info matched with me inferred type
   auto filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
@@ -642,6 +660,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   // Set kernel build info to node
   MS_LOG(INFO) << "Current node: " << kernel_node->fullname_with_scope()
                << " selected: " << selected_kernel_info->ToString();
+  ResetPreFixedFormat(kernel_node, &selected_kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
   // Set format and data type for input tensor.
   if (AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
