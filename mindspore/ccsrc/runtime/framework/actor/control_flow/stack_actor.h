@@ -39,9 +39,11 @@ class StackActor : public ControlActor {
   ~StackActor() override = default;
 
   void Init() override;
-  // The input data of the stack actor needs to be pushed into the stack according to the input index, so it is
-  // implemented separately.
+  // The input data and partial of the stack actor needs to be pushed into the stack according to the input index,
+  // so it is implemented separately.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+  void RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
+                    OpContext<DeviceTensor> *const context) override;
 
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
@@ -56,12 +58,15 @@ class StackActor : public ControlActor {
   // The device tensors created and stored by the stack.
   std::vector<DeviceTensorPtr> created_device_tensors_;
 
-  // The input data records that the stack actor is copied from the input nodes and needs to be stored in the
-  // device tensor in the stack.
+  // The input data and partials records that the stack actor is copied from the input nodes and needs to be
+  // stored in the device tensor in the stack.
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
-  // Input parameter data num represents the number of actor's input come from funcgraph itself, these inputs
-  // will be ranked at the front of input.
+  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartial>>> input_parameter_partial_;
+
+  // Input parameter num represents the number of actor's input come from funcgraph itself, these inputs will
+  // be ranked at the front of input.
   size_t input_parameter_data_num_{0};
+  size_t input_parameter_partial_num_{0};
   // The backend parameter is used to save the backend node corresponding to the device tensor in the stack.
   // When these device tensors are used as output, they need to be placed in the node of the result arrow,
   // so these nodes need to be saved.

@@ -261,7 +261,7 @@ size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) 
   MS_EXCEPTION_IF_NULL(data_node);
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
-    MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope() << " is not exist.";
+    MS_LOG(EXCEPTION) << "Data node: " << data_node->DebugString() << " is not exist.";
   }
   return iter->second;
 }

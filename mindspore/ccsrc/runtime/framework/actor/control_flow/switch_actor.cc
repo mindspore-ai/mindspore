@@ -54,7 +54,7 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
   if (!output_partial_arrows_.empty()) {
     auto func_graph = input_partials_[index + kSwitchCondPos].first;
     MS_EXCEPTION_IF_NULL(func_graph);
-    output_partial_ = input_partials_[index + kSwitchCondPos];
+    input_partials_[0] = input_partials_[index + kSwitchCondPos];
   }
 
   for (auto &output_data : output_data_by_output_index_[kSwitchDefaultOutputNum - 1]) {

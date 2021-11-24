@@ -24,6 +24,7 @@
 #include <queue>
 #include <map>
 #include <utility>
+#include <unordered_map>
 #include <algorithm>
 #include "utils/hash_map.h"
 #include "runtime/hardware/device_context.h"
@@ -76,7 +77,10 @@ bool HasAbstractRef(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
 KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, KernelGraph *const graph);
-
+// Get all the real input of the frontend node, skip the virtual node like maketuple, tuplegetitem.
+std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node);
+// Fetch the sub abstract from the top abstract by the index.
+abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:
@@ -94,6 +98,7 @@ class ControlNodeParser {
   // 2. In the kernel graph with call node input, the data arrow needs to be connected to the stack actor.
   bool IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &node);
   bool IsRootGraphParameter(const AnfNodePtr &node);
+  bool IsRecursionCallNode(const AnfNodePtr &node);
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
@@ -117,7 +122,7 @@ class ControlNodeParser {
   // value nodes will not enter the kernel graph, so these nodes need to be saved separately, and space is allocated for
   // them separately during initialization.
   // The interface is initialized by finding the backend node in the kernel graph that the front node finally sends to.
-  void FetchFrontValueNode(DeviceContext *default_context);
+  void FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes, DeviceContext *default_context);
   // Create branch id for all call node in the control flow.
   void CreateBranchIDForCallNode(const std::vector<AnfNodePtr> &control_nodes);
 
@@ -138,6 +143,8 @@ class ControlNodeParser {
                                               const FormalToRealParameter &formal_to_real_parameters,
                                               std::set<KernelWithIndex> *total_real_parameters,
                                               std::set<AnfNodePtr> *invalid_real_parameter);
+  // Get all the call nodes without a recursion call relation.
+  void ParseUnRecursionCallNode();
 
   // Parse the device context of the control node. In a heterogeneous scenario, different device contexts need to be
   // copied between different device memories. The analysis steps:
@@ -179,7 +186,12 @@ class ControlNodeParser {
   void FetchAutoMonadNode(const std::vector<AnfNodePtr> &control_nodes);
   // Fetch the formal parameter in root graph by parameters in subgraph.
   AnfNodePtr FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node);
-
+  // Get the control nodes which need to add a stack actor for them.
+  // When a control node has input that is a call node, you need to add a stack actor for it.
+  void FetchNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
+  // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
+  // tensor needs to be created for it.
+  void CreateDeviceTensorForRootGraphParameter(DeviceContext *default_context);
   // In control flow, funcgraph will be cut into multiple kernel graphs for execution, and this relationship is recorded
   // in this map.
   FuncGraphToKernelGraph func_graph_to_kernel_graphs_;
@@ -220,6 +232,12 @@ class ControlNodeParser {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
   mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
+  // Call nodes without recursive call. The funcgraphs of the call will not call the funcgraph where the call node
+  // belong.
+  std::set<AnfNodePtr> unrecursion_call_nodes_;
+  // Those control nodes that need to create the corresponding stack actor, when there is a call node in the inputs
+  // of the control node, the stack actor is needed to collect these inputs.
+  std::set<AnfNodePtr> need_stack_control_nodes_;
 
   // In heterogeneous scenario, each parameter has its own device context type, so the device context corresponding
   // to the type needs to be parsed in advance so that it can add some copy operation in the scheduler.

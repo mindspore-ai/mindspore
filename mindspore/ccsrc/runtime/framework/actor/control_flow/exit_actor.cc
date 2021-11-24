@@ -72,6 +72,22 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
       ActorDispatcher::Send(control_arrow, &OpActor::RunOpControl, source_aid, context);
     }
   }
+
+  // 3.Send output partial in output branch.
+  const auto &partial_iter = output_branch_partial_arrows_.find(output_branch_id_);
+  if (partial_iter != output_branch_partial_arrows_.end()) {
+    for (const auto &partial_arrow : partial_iter->second) {
+      MS_EXCEPTION_IF_NULL(partial_arrow);
+      if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+        MS_LOG(ERROR) << "Invalid partial input:" << partial_arrow->from_output_index_
+                      << " current:" << input_partials_.size() << " for actor:" << GetAID();
+      }
+      auto output_partial = input_partials_[partial_arrow->from_output_index_];
+      MS_EXCEPTION_IF_NULL(output_partial.first);
+      Async(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial.first, output_partial.second,
+            IntToSize(partial_arrow->to_input_index_), context);
+    }
+  }
 }
 
 void ExitActor::CopyDeviceAddress() {

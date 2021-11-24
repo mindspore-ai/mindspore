@@ -27,29 +27,76 @@ StackActor::StackActor(const std::string &name, const std::vector<KernelWithInde
 
 void StackActor::Init() {
   ControlActor::Init();
-  for (const auto &formal_parameter : formal_parameters_) {
-    if (AnfAlgo::IsCallNode(formal_parameter.first)) {
-      break;
-    }
-    ++input_parameter_data_num_;
-  }
-  input_datas_num_ = formal_parameters_.size() - input_parameter_data_num_;
-  if (input_parameter_data_num_ < device_tensor_store_keys_.size()) {
+  // The stack actor has 6 parts of input :
+  // 1. Directly input data.
+  // 2. Direct input partial.
+  // 3. Weight.
+  // 4. Local tensor.
+  // 5. Call input data.
+  // 6. Call input partial.
+  input_datas_num_ = formal_parameters_.size() - input_parameter_data_num_ - input_parameter_partial_num_;
+  if (input_parameter_data_num_ < device_tensor_store_keys_.size() + local_device_tensors_.size()) {
     MS_LOG(EXCEPTION) << "Invalid input parameter data num:" << input_parameter_data_num_
-                      << " device store num:" << device_tensor_store_keys_.size() << " for actor:" << GetAID();
+                      << " device store num:" << device_tensor_store_keys_.size() << " local device tensor num"
+                      << local_device_tensors_.size() << " for actor:" << GetAID();
   }
-  input_parameter_data_num_ -= device_tensor_store_keys_.size();
+
+  // Fetch the total number of input partial.
+  int total_partials_num = 0;
+  for (const auto &formal_parameter : formal_parameters_) {
+    const auto &abstract = formal_parameter.first->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    const auto &real_abstract = FetchAbstractByIndex(abstract, formal_parameter.second);
+    MS_EXCEPTION_IF_NULL(real_abstract);
+    if (real_abstract->isa<abstract::AbstractFunction>()) {
+      total_partials_num++;
+    }
+  }
+
+  // Fetch call input data num.
+  input_datas_num_ = formal_parameters_.size() - total_partials_num - input_parameter_data_num_;
+  input_partials_num_ = total_partials_num - input_parameter_partial_num_;
+  // Fetch call input partial num.
+  input_parameter_data_num_ -= (device_tensor_store_keys_.size() + local_device_tensors_.size());
+  // Check if the input num is valid.
+  if (input_parameter_data_num_ + input_parameter_partial_num_ + input_datas_num_ + input_partials_num_ +
+        device_tensor_store_keys_.size() + local_device_tensors_.size() !=
+      formal_parameters_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid input num, input parameter data num:" << input_parameter_data_num_
+                      << " input parameter partial num:" << input_parameter_partial_num_
+                      << " input data num:" << input_datas_num_ << " input partial num:" << input_partials_num_
+                      << " device tensor store size:" << device_tensor_store_keys_.size()
+                      << " need total size:" << formal_parameters_.size() << " for actor:" << GetAID();
+  }
 }
 
 void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_data);
+  MS_EXCEPTION_IF_NULL(input_data->data_);
   // The parameters from the inside of the subgraph need to be put into the stack.
-  if (IntToSize(input_data->index_) < input_parameter_data_num_ + device_tensor_store_keys_.size()) {
+  if (IntToSize(input_data->index_) < input_parameter_data_num_ + device_tensor_store_keys_.size() +
+                                        input_parameter_partial_num_ + local_device_tensors_.size()) {
     FillStack(input_data, context);
   } else {
     // The outputs of call nodes are placed directly in the input data.
     input_op_datas_[context->sequential_num_].emplace_back(input_data);
+  }
+  if (CheckRunningCondition(context)) {
+    Run(context);
+  }
+}
+
+void StackActor::RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
+                              OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // The parameters from the inside of the subgraph need to be put into the stack.
+  if (IntToSize(position) < input_parameter_data_num_ + device_tensor_store_keys_.size() +
+                              input_parameter_partial_num_ + local_device_tensors_.size()) {
+    input_parameter_partial_[context->sequential_num_][position].push(OpPartial(func_graph, input_data));
+  } else {
+    input_op_partials_[context->sequential_num_].emplace_back(position, OpPartial(func_graph, input_data));
   }
   if (CheckRunningCondition(context)) {
     Run(context);
@@ -122,6 +169,26 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
   }
+
+  if (input_parameter_partial_num_ != 0) {
+    const auto &partial_iter = input_parameter_partial_.find(context->sequential_num_);
+    if (partial_iter == input_parameter_partial_.end()) {
+      return false;
+    }
+    if (partial_iter->second.size() != input_parameter_partial_num_) {
+      return false;
+    }
+
+    auto iter = input_branch_ids_.find(context->sequential_num_);
+    if (iter == input_branch_ids_.end() || iter->second.empty()) {
+      MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID();
+    }
+    size_t branch_id_size = iter->second.size();
+    if (std::any_of(partial_iter->second.begin(), partial_iter->second.end(),
+                    [branch_id_size](const auto &one_stack) { return one_stack.second.size() != branch_id_size; })) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -133,11 +200,27 @@ void StackActor::FetchInput(OpContext<DeviceTensor> *const context) {
       MS_LOG(ERROR) << "Invalid input for actor:" << GetAID();
     }
     for (const auto &one_stack : data_iter->second) {
-      if (one_stack.first >= input_parameter_data_num_ + device_tensor_store_keys_.size()) {
+      if (one_stack.first >= input_parameter_data_num_ + device_tensor_store_keys_.size() +
+                               local_device_tensors_.size() + input_parameter_partial_num_) {
         MS_LOG(ERROR) << "Invalid input index:" << one_stack.first << " need:" << input_parameter_data_num_
                       << " for actor:" << GetAID();
       }
       input_device_tensors_[one_stack.first] = one_stack.second.top();
+    }
+  }
+
+  if (input_parameter_partial_num_ != 0) {
+    const auto &partial_iter = input_parameter_partial_.find(context->sequential_num_);
+    if (partial_iter == input_parameter_partial_.end()) {
+      MS_LOG(ERROR) << "Invalid input for actor:" << GetAID();
+    }
+    for (const auto &one_stack : partial_iter->second) {
+      if (one_stack.first >= input_parameter_data_num_ + device_tensor_store_keys_.size() +
+                               local_device_tensors_.size() + input_parameter_partial_num_) {
+        MS_LOG(ERROR) << "Invalid input index:" << one_stack.first << " need:" << input_parameter_partial_
+                      << " for actor:" << GetAID();
+      }
+      input_partials_[one_stack.first] = one_stack.second.top();
     }
   }
   ControlActor::FetchInput(context);
@@ -154,6 +237,20 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     }
 
     for (auto &one_stack : data_iter->second) {
+      if (one_stack.second.empty()) {
+        MS_LOG(ERROR) << "Input index:" << one_stack.first << " is null in actor:" << GetAID();
+      }
+      one_stack.second.pop();
+    }
+  }
+
+  if (input_parameter_partial_num_ != 0) {
+    const auto &partial_iter = input_parameter_partial_.find(context->sequential_num_);
+    if (partial_iter == input_parameter_partial_.end()) {
+      MS_LOG(ERROR) << "Invalid input for actor:" << GetAID();
+    }
+
+    for (auto &one_stack : partial_iter->second) {
       if (one_stack.second.empty()) {
         MS_LOG(ERROR) << "Input index:" << one_stack.first << " is null in actor:" << GetAID();
       }

@@ -208,9 +208,14 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send Partial.
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);
-    MS_EXCEPTION_IF_NULL(output_partial_.first);
-    ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial_.first,
-                          output_partial_.second, IntToSize(partial_arrow->to_input_index_), context);
+    if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
+      MS_LOG(ERROR) << "Invalid partial input:" << partial_arrow->from_output_index_
+                    << " current:" << input_partials_.size() << " for actor:" << GetAID();
+    }
+    auto output_partial = input_partials_[partial_arrow->from_output_index_];
+    MS_EXCEPTION_IF_NULL(output_partial.first);
+    ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial.first,
+                          output_partial.second, IntToSize(partial_arrow->to_input_index_), context);
   }
 }
 }  // namespace runtime
