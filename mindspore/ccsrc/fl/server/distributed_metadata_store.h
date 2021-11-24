@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include "utils/hash_map.h"
 #include "proto/ps.pb.h"
 #include "fl/server/common.h"
 #include "ps/core/server_node.h"
@@ -106,7 +107,7 @@ class DistributedMetadataStore {
   // We store metadata which is serialized by ProtoBuffer so that data storage and data transmission API is easy to use.
   // Key: data name.
   // Value: ProtoBuffer Struct.
-  std::unordered_map<std::string, PBMetadata> metadata_;
+  mindspore::HashMap<std::string, PBMetadata> metadata_;
 
   // Because the metadata is read/written conccurently, we must ensure the operations are threadsafe.
   std::unordered_map<std::string, std::mutex> mutex_;

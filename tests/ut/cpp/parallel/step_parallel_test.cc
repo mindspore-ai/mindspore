@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ TEST_F(TestStepParallel, GetPythonPath2) {
 TEST_F(TestStepParallel, ExtractStrategy) {
   Dimensions v1 = {2, 2};
   Dimensions v2 = {4, 4};
-  std::unordered_map<std::string, ValuePtr> attrs;
+  mindspore::HashMap<std::string, ValuePtr> attrs;
   // stage
   ValuePtr val1 = MakeValue(v1);
   ValuePtr val2 = MakeValue(v2);
@@ -295,7 +295,7 @@ TEST_F(TestStepParallel, CreatOpInstance) {
     py::object allreduce_pyobj = parse::python_adapter::CallPyFn(
       "mindspore.parallel._utils", "_get_python_op", "AllReduce", "mindspore.ops.operations", "test", arglist);
     py::dict opAttr = py::getattr(allreduce_pyobj, "attrs");
-    std::unordered_map<std::string, ValuePtr> attributes{};
+    mindspore::HashMap<std::string, ValuePtr> attributes{};
     for (auto item : opAttr) {
       if (!py::isinstance<py::str>(item.first)) {
         MS_LOG(EXCEPTION) << "type error in py dict convert";

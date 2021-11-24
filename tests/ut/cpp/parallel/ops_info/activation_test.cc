@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,10 @@ void TestActivation::SetUp() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
   ValuePtr relu = MakeValue(std::string("relu"));
-  std::unordered_map<std::string, ValuePtr> relu_attr = {{"activation_type", relu}};
+  mindspore::HashMap<std::string, ValuePtr> relu_attr = {{"activation_type", relu}};
   ValuePtr sm = MakeValue(std::string("softmax"));
   ValuePtr axix = MakeValue(std::int64_t(2));
-  std::unordered_map<std::string, ValuePtr> softmax_attr = {{"activation_type", sm}, {"axis", axix}};
+  mindspore::HashMap<std::string, ValuePtr> softmax_attr = {{"activation_type", sm}, {"axis", axix}};
 
   Shapes relu_inputs_shape = {{2, 4, 8, 16}};
   Shapes relu_outputs_shape = {{2, 4, 8, 16}};

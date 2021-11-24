@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -508,7 +508,7 @@ session::KernelWithIndex MemReuseUtil::VisitKernelWithReturnType(const AnfNodePt
 
   auto &cache =
     skip_nop_node ? visit_kernel_with_return_type_in0pos_cache_ : visit_kernel_with_return_type_in0pos_skip_nop_cache_;
-  std::unordered_map<AnfNodePtr, session::KernelWithIndex>::iterator tag_iter;
+  mindspore::HashMap<AnfNodePtr, session::KernelWithIndex>::iterator tag_iter;
   if (auto iter = cache.find(node); iter == cache.end()) {
     auto tmp_item =
       std::pair<AnfNodePtr, session::KernelWithIndex>{node, AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node)};

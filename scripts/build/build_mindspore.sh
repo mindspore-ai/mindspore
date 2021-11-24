@@ -101,6 +101,11 @@ build_mindspore()
     if [[ "X$ENABLE_TRT" == "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DTENSORRT_HOME=${TENSORRT_HOME}"
     fi
+    if [[ "X$ENABLE_FAST_HASH_TABLE" == "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_FAST_HASH_TABLE=ON"
+    else
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_FAST_HASH_TABLE=OFF"
+    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ${BASEPATH}

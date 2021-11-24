@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@
 namespace mindspore {
 namespace transform {
 template <>
-std::unordered_map<std::string, std::unordered_map<int, std::string>> OpAdapter<ge::Operator>::cus_input_map_{};
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_input_map_{};
 template <>
-std::unordered_map<std::string, std::unordered_map<int, std::string>> OpAdapter<ge::Operator>::cus_output_map_{};
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_output_map_{};
 
-std::unordered_map<std::string, OpAdapterDescPtr> OpAdapterMap::adpt_map_ = {
+mindspore::HashMap<std::string, OpAdapterDescPtr> OpAdapterMap::adpt_map_ = {
   {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>())}};
 
-std::unordered_map<std::string, OpAdapterDescPtr> &OpAdapterMap::get() { return adpt_map_; }
+mindspore::HashMap<std::string, OpAdapterDescPtr> &OpAdapterMap::get() { return adpt_map_; }
 }  // namespace transform
 }  // namespace mindspore

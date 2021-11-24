@@ -22,11 +22,11 @@
 #include <string>
 #include <queue>
 #include <map>
-#include <unordered_map>
 #include <set>
-#include <unordered_set>
 #include <stack>
 #include <atomic>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
@@ -163,7 +163,7 @@ class KernelGraph : public FuncGraph {
   // add value node tensor relation map
   void TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node);
   // get all value nodes of graph
-  const std::unordered_set<ValueNodePtr> graph_value_nodes() const { return graph_value_nodes_; }
+  const mindspore::HashSet<ValueNodePtr> graph_value_nodes() const { return graph_value_nodes_; }
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   // ref output is in map
@@ -358,10 +358,10 @@ class KernelGraph : public FuncGraph {
   void InsertToSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
     allreduce_to_send_recv_pairs_[allreduce] = send_recv_pair;
   }
-  const std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() const {
+  const mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() const {
     return allreduce_from_send_recv_pairs_;
   }
-  const std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() const {
+  const mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() const {
     return allreduce_to_send_recv_pairs_;
   }
 
@@ -405,7 +405,7 @@ class KernelGraph : public FuncGraph {
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
   void EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                          std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first = true);
+                          mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first = true);
   // update node edge list
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge
@@ -432,21 +432,21 @@ class KernelGraph : public FuncGraph {
   uint32_t root_graph_id_{0};
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map
-  std::unordered_map<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> backend_front_anf_map_;
-  std::unordered_map<AnfNodePtr, AnfWithOutIndex> tuple_backend_front_anf_index_map_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> backend_front_anf_map_;
+  mindspore::HashMap<AnfNodePtr, AnfWithOutIndex> tuple_backend_front_anf_index_map_;
   // there may be a tensor from ME backend ,a value ndoe will be create according the tensor,map record
-  std::unordered_map<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
+  mindspore::HashMap<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
   // include all value nodes
-  std::unordered_set<ValueNodePtr> graph_value_nodes_;
-  std::unordered_map<AnfNodePtr, size_t> node_input_num_;
-  std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_input_edges_;
+  mindspore::HashSet<ValueNodePtr> graph_value_nodes_;
+  mindspore::HashMap<AnfNodePtr, size_t> node_input_num_;
+  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_input_edges_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
-  std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
+  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // parameters that will be updated when graph is executed
-  std::unordered_set<ParameterPtr> updated_parameters_;
+  mindspore::HashSet<ParameterPtr> updated_parameters_;
   // graph needn't execute
   bool executable_{false};
   // exist summary node in graph
@@ -471,29 +471,29 @@ class KernelGraph : public FuncGraph {
   // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
   // related to the input of this kernel graph. The first of unordered map is the input of this kernel graph, the second
   // of unordered map is front node corresponding to the output of previous kernel graph.
-  std::unordered_map<AnfNodePtr, AnfWithOutIndex> internal_parameter_to_front_node_map_;
+  mindspore::HashMap<AnfNodePtr, AnfWithOutIndex> internal_parameter_to_front_node_map_;
   // The first of map is the backend graph output of this kernel graph, the second of map is front node corresponding to
   // the backend node with index.
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_to_front_node_map_;
 
-  std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, std::pair<AnfNodePtr, bool>>>
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
+  mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, std::pair<AnfNodePtr, bool>>>
     internal_outputs_to_front_map_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
+  mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
   std::set<AnfNodePtr> visited_nodes_;
   std::map<AnfNodePtr, AnfNodePtr> edge_to_;
   std::stack<AnfNodePtr> loop_nodes_;
   std::vector<AnfNodePtr> input_nodes_;
   std::vector<tensor::TensorPtr> input_tensors_;
   KernelMapTensor output_node_to_tensor_;
-  std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> pre_graphs_;
-  std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> post_graphs_;
+  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> pre_graphs_;
+  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> post_graphs_;
   // The send/recv pairs inserted for allreduce, the key is allreduce kernel, the first of pair is send node, the second
   // of pair is recv node.
-  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_from_send_recv_pairs_;
-  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_to_send_recv_pairs_;
+  mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_from_send_recv_pairs_;
+  mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_to_send_recv_pairs_;
   std::atomic<size_t> pre_graph_finished_count_{0};
   std::atomic<size_t> post_graph_finished_count_{0};
   bool first_step_{true};

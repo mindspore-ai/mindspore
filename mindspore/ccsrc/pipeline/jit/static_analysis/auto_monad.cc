@@ -15,19 +15,19 @@
  */
 
 #include "pipeline/jit/static_analysis/auto_monad.h"
-#include <set>
-#include <map>
 #include <list>
-#include <unordered_map>
 #include <vector>
 #include <stack>
 #include <utility>
+#include <memory>
 #include <algorithm>
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "utils/flags.h"
 #include "utils/utils.h"
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "base/core_ops.h"
@@ -207,9 +207,9 @@ prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
 // --------------------------------------------------------------------
 // SCC (Strongly Connected Components) related types.
 // --------------------------------------------------------------------
-using SccVector = std::set<FuncGraphPtr>;
+using SccVector = mindspore::HashSet<FuncGraphPtr>;
 using SccPtr = std::shared_ptr<SccVector>;
-using SccMap = std::unordered_map<FuncGraphPtr, SccPtr>;
+using SccMap = mindspore::HashMap<FuncGraphPtr, SccPtr>;
 
 // ---------------------------------------------------------------------
 // SccFinder find SCCs using Tarjan's algorithm.
@@ -219,7 +219,7 @@ class SccFinder {
   explicit SccFinder(const FuncGraphPtr &root) : root_(root) {}
   ~SccFinder() = default;
   void Run() { (void)Search(root_); }
-  const SccMap &scc_map() const { return scc_map_; }
+  SccMap scc_map() { return std::move(scc_map_); }
 
  private:
   // Save state of a func graph.
@@ -232,14 +232,14 @@ class SccFinder {
   };
 
   // Search SCCs from the given graph.
-  const State &Search(FuncGraphPtr graph) {
+  State &Search(FuncGraphPtr graph) {
     // Create graph state, set it as visited.
     MS_EXCEPTION_IF_NULL(graph);
-    auto [inserted, ok] = visited_.emplace(graph, State(index_++));
+    auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
     if (!ok) {
       MS_LOG(EXCEPTION) << "Already visited: " << graph->ToString();
     }
-    auto &state = inserted->second;
+    auto &state = *(inserted->second);
     // Push visited graph to stack.
     stack_.push(graph);
     state.in_stack = true;
@@ -251,9 +251,9 @@ class SccFinder {
         // Successor graph has not yet been visited, recurse on it.
         auto &sg_state = Search(sg);
         state.lowlink = std::min(state.lowlink, sg_state.lowlink);
-      } else if (iter->second.in_stack) {
+      } else if (iter->second->in_stack) {
         // Successor graph is in stack and hence in the current SCC.
-        state.lowlink = std::min(state.lowlink, iter->second.index);
+        state.lowlink = std::min(state.lowlink, iter->second->index);
       }
     }
     // If index == lowlink, this means it is the root of SCC.
@@ -267,7 +267,7 @@ class SccFinder {
         if (found == visited_.end()) {
           MS_LOG(EXCEPTION) << "Unexpected graph: " << g->ToString();
         }
-        found->second.in_stack = false;
+        found->second->in_stack = false;
         // Add graph to SCC, and create the map from graph to SCC.
         scc->insert(g);
         scc_map_.emplace(g, scc);
@@ -290,7 +290,7 @@ class SccFinder {
   size_t index_ = 1;
 
   // Visited graphs and their states.
-  std::unordered_map<FuncGraphPtr, State> visited_;
+  mindspore::HashMap<FuncGraphPtr, std::unique_ptr<State>> visited_;
 
   // The stack for Tarjan algorithm.
   std::stack<FuncGraphPtr> stack_;
@@ -957,7 +957,7 @@ class SideEffectFinder {
   }
 
   // Gets SCC that the given graph belongs to.
-  const SccPtr &GetScc(const FuncGraphPtr &func_graph) const {
+  SccPtr GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
       MS_LOG(EXCEPTION) << "SCC not found for " << (func_graph ? func_graph->ToString() : "FG(null)");
@@ -983,7 +983,7 @@ class SideEffectFinder {
       return effect_info;
     }
     // Get SCC that this graph belongs to.
-    auto &scc = GetScc(func_graph);
+    auto scc = GetScc(func_graph);
     MS_EXCEPTION_IF_NULL(scc);
     // To prevent SCC members be visited again, we set effect info
     // to 'kDetecting' state before start to check cnodes.
@@ -1118,14 +1118,14 @@ class SideEffectFinder {
 
   // Map graph to its caller cnodes, so that we can add monad inputs to the
   // caller cnode when we late found that the graph added monad parameters.
-  std::map<FuncGraphPtr, std::set<CNodePtr>> graph_callers_;
+  mindspore::HashMap<FuncGraphPtr, mindspore::HashSet<CNodePtr>> graph_callers_;
 
   // Current high order func caller cnode.
   CNodePtr caller_ = nullptr;
 
   // Save switch caller cnodes and their branches, so that we can check and
   // update monad parameters for branches according the caller inputs.
-  std::map<CNodePtr, FuncGraphVector> switch_calls_;
+  mindspore::HashMap<CNodePtr, FuncGraphVector> switch_calls_;
 
   // switch_layer_calls save all switch_layer calls, so that
   // we can check whether monad argument should be added for them.

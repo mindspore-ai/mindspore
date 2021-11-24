@@ -23,7 +23,7 @@
 #include <utility>
 #include <algorithm>
 #include <map>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"

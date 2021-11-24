@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@
 #include <list>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "utils/contract.h"
 #include "ir/anf.h"
 #include "vm/segment_runner.h"
@@ -97,7 +97,7 @@ class MsBackend : public Backend {
   session::SessionPtr other_sess_;
   std::string target_device_;
   std::string other_device_;
-  std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
+  mindspore::HashMap<GraphId, LinConvertResult> graph_id_map_;
 };
 
 class MindRTBackend : public Backend {
@@ -181,7 +181,7 @@ class MindRTBackend : public Backend {
   std::map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
 
-  std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
+  mindspore::HashMap<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;

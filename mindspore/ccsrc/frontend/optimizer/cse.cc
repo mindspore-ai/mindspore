@@ -20,8 +20,8 @@
 
 #include <vector>
 #include <set>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
 #include "utils/utils.h"
@@ -71,8 +71,8 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
 bool CSE::BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const {
   MS_EXCEPTION_IF_NULL(fg);
   std::vector<std::size_t> order_group;
-  std::unordered_map<std::size_t, std::vector<AnfNodePtr>> groups;
-  std::unordered_map<AnfNodePtr, std::size_t> hashes;
+  mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> groups;
+  mindspore::HashMap<AnfNodePtr, std::size_t> hashes;
 
   std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
   for (auto node : toposet) {
@@ -212,7 +212,7 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool chec
 }
 
 bool CSE::DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
-                    std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const {
+                    mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups) const {
   bool changes = false;
   std::set<size_t> clear_set;
   for (auto &h : order_group) {

@@ -23,11 +23,11 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "base/core_ops.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
@@ -248,7 +248,7 @@ void InitCostGraph() {
 }
 
 void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const PrimitivePtr &prim,
-                           std::unordered_map<std::string, ValuePtr> attrs, bool, StrategyMap *stra_map,
+                           mindspore::HashMap<std::string, ValuePtr> attrs, bool, StrategyMap *stra_map,
                            const std::string &strategy_key_name) {
   // In this case, the configured strategy should be extracted to help setting cost
   StrategyPtr strategyPtr;
@@ -811,7 +811,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       Shapes inputs_shape = {shape};
       Shapes outputs_shape = {shape};
       // 2) init the attr
-      std::unordered_map<std::string, ValuePtr> attr = {};
+      mindspore::HashMap<std::string, ValuePtr> attr = {};
 
       // Create the TmpIdentity instance
       tmp_identity_ptr = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
@@ -878,7 +878,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
 }
 
 void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
-  std::unordered_set<std::string> op_cache;
+  mindspore::HashSet<std::string> op_cache;
   for (auto node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if (!FindReshape(cnode, &op_cache)) {

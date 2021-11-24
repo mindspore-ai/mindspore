@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@
 #include <sstream>
 #include <string>
 #include <typeindex>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/dtype.h"
@@ -56,7 +56,7 @@ class PrimToFunction {
   PrimToFunction();
   // Get the number of primitive arguments
   int64_t GetPrimType(const PrimitivePtr &prim) const;
-  const std::unordered_map<std::string, int64_t> prim_func_type_map_;
+  const mindspore::HashMap<std::string, int64_t> prim_func_type_map_;
 };
 }  // namespace prim
 }  // namespace mindspore

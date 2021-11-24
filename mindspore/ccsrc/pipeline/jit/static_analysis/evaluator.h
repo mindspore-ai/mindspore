@@ -21,10 +21,11 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <stack>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "utils/ms_context.h"

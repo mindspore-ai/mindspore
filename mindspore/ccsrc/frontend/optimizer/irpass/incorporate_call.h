@@ -19,10 +19,10 @@
 
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
 #include <utility>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -68,7 +68,7 @@ class CallOutputTransform {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, std::unordered_map<std::pair<size_t, bool>, FuncGraphPtr, PairHasher>> cache_;
+  mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<std::pair<size_t, bool>, FuncGraphPtr, PairHasher>> cache_;
 };
 }  // namespace internal
 

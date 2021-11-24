@@ -18,10 +18,10 @@
 #include <map>
 #include <tuple>
 #include <set>
-#include <unordered_set>
 #include <string>
 #include <list>
 
+#include "utils/hash_set.h"
 #include "base/core_ops.h"
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"
@@ -984,7 +984,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   MS_EXCEPTION_IF_NULL(graph);
   std::map<KernelWithIndex, OutputTensorInfo> op_output_info;
   std::vector<CNodePtr> kernels;
-  std::unordered_map<KernelGraphPtr, GraphInfo> single_op_graphs;
+  mindspore::HashMap<KernelGraphPtr, GraphInfo> single_op_graphs;
   // Collect kernels need to be built in single op graphs
   for (const auto &kernel : graph->execution_order()) {
     // Generate fake input tensors, tensor masks and input kernel with index
@@ -1252,7 +1252,7 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   if (!kernel_graph->subgraph_multi_call()) {
     return;
   }
-  std::unordered_map<uint32_t, uint32_t> label_id_index_map;
+  mindspore::HashMap<uint32_t, uint32_t> label_id_index_map;
   auto kernel_cnodes = kernel_graph->execution_order();
   std::vector<CNodePtr> mem_reuse_order;
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {

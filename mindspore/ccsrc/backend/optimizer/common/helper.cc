@@ -17,11 +17,11 @@
 #include "backend/optimizer/common/helper.h"
 #include <string>
 #include <utility>
-#include <unordered_set>
 #include <algorithm>
 #include <map>
 #include <set>
 #include <deque>
+#include "utils/hash_set.h"
 #include "utils/utils.h"
 #include "base/base_ref.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -74,7 +74,7 @@ bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<
   FuncGraphManagerPtr manager = graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  std::unordered_set<AnfNodePtr> seen_node;
+  mindspore::HashSet<AnfNodePtr> seen_node;
   std::deque<AnfNodePtr> todo{node};
   while (!todo.empty()) {
     AnfNodePtr nd = todo.front();
@@ -299,7 +299,7 @@ bool IsNopNode(const AnfNodePtr &node) {
     return false;
   }
 
-  static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
+  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
                                                       prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
                                                       kFlattenGradOpName,         prim::kPrimReformat->name()};
   if (node == nullptr || !node->isa<CNode>()) {
@@ -580,7 +580,7 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
   return shape_value_node;
 }
 
-void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs) {
+void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs;
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
@@ -1074,7 +1074,7 @@ int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, cons
   return std::accumulate(output_used_num.begin(), output_used_num.end(), int64_t(0));
 }
 
-void GetCustomOpAttrIndex(const PrimitivePtr &primitive, std::unordered_set<size_t> *indexes) {
+void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes) {
   if (primitive == nullptr || primitive->name() != prim::kPrimCustom->name()) {
     return;
   }

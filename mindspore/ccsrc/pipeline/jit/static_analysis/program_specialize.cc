@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <unordered_set>
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"

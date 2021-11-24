@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -370,7 +370,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
       nor_tensor_sizes_.push_back(it->GetSize());
       curr_ous.push_back(it->GetPtr());
     }
-    (void)node_ous_.insert(std::make_pair(node.get(), curr_ous));
+    (void)node_ous_.emplace(node.get(), curr_ous);
     std::vector<const void *> curr_ins;
     size_t input_num = AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
@@ -390,12 +390,12 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
       nor_input_tensors_.push_back(device_address->GetPtr());
       curr_ins.push_back(device_address->GetPtr());
     }
-    (void)node_ins_.insert(std::make_pair(node.get(), curr_ins));
+    (void)node_ins_.emplace(node.get(), curr_ins);
   }
   size_t ou_idx = 0;
   for (const auto &ou : nor_output_tensors_) {
-    (void)ptr_idx_.insert(std::make_pair(ou, ou_idx));
-    (void)ptr_refs_.insert(std::make_pair(ou, 0));
+    (void)ptr_idx_.emplace(ou, ou_idx);
+    (void)ptr_refs_.emplace(ou, 0);
     ou_idx++;
   }
   for (const auto &in : nor_input_tensors_) {

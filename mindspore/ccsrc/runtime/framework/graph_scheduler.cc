@@ -551,7 +551,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
   std::vector<DataSourceActorPtr> data_source_actors;
   HostQueueDSActorPtr host_queue_ds_actor = nullptr;
   size_t data_node_position = 0;
-  std::unordered_map<AnfNodePtr, size_t> front_node_position_temp_map;
+  mindspore::HashMap<AnfNodePtr, size_t> front_node_position_temp_map;
 
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -890,7 +890,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(auto_monad_actors);
   MS_EXCEPTION_IF_NULL(communication_nodes);
 
-  const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad};
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
@@ -1173,7 +1173,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     return;
   }
 
-  const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   // Get the real depend input by monad node which needs to link the control arrow.
   std::vector<AnfNodePtr> real_depend_inputs;

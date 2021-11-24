@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MACRO_H_
 
 #include <string>
-#include <unordered_map>
 #include <memory>
+#include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "mindspore/core/base/core_ops.h"
@@ -28,38 +28,38 @@ namespace mindspore::transform {
 #define DECLARE_OP_ADAPTER(T)                                        \
   using T = ge::op::T;                                               \
   template <>                                                        \
-  const std::unordered_map<int, InputDesc> OpAdapter<T>::input_map_; \
+  const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_; \
   template <>                                                        \
-  const std::unordered_map<std::string, AttrDesc> OpAdapter<T>::attr_map_;
+  const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
 
 #define DECLARE_OP_USE_OUTPUT(T) \
   template <>                    \
-  const std::unordered_map<int, OutputDesc> OpAdapter<T>::output_map_;
+  const mindspore::HashMap<int, OutputDesc> OpAdapter<T>::output_map_;
 
 #define DECLARE_OP_USE_ENUM(T) \
   template <>                  \
-  const std::unordered_map<std::string, int> OpAdapter<T>::enum_map_{};
+  const mindspore::HashMap<std::string, int> OpAdapter<T>::enum_map_{};
 
 #define DECLARE_OP_USE_INPUT_ATTR(T) \
   template <>                        \
-  const std::unordered_map<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
+  const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
 
 #define DECLARE_OP_USE_DYN_INPUT(T) \
   template <>                       \
-  const std::unordered_map<int, DynInputDesc> OpAdapter<T>::dyn_input_map_;
+  const mindspore::HashMap<int, DynInputDesc> OpAdapter<T>::dyn_input_map_;
 
 #define DECLARE_OP_USE_DYN_SUBGRAPH(T) \
   template <>                          \
-  const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
+  const mindspore::HashMap<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
 
 #define DECLARE_OP_USE_DYN_OUTPUT(T) \
   template <>                        \
-  const std::unordered_map<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
+  const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
 
 #define INPUT_MAP(T) \
   template <>        \
-  const std::unordered_map<int, InputDesc> OpAdapter<T>::input_map_
-#define EMPTY_INPUT_MAP std::unordered_map<int, InputDesc>()
+  const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_
+#define EMPTY_INPUT_MAP mindspore::HashMap<int, InputDesc>()
 #define INPUT_DESC(name) \
   {                      \
 #name, \
@@ -79,7 +79,7 @@ namespace mindspore::transform {
 
 #define DYN_INPUT_MAP(T) \
   template <>            \
-  const std::unordered_map<int, DynInputDesc> OpAdapter<T>::dyn_input_map_
+  const mindspore::HashMap<int, DynInputDesc> OpAdapter<T>::dyn_input_map_
 #define DYN_INPUT_DESC(name) \
   {                          \
 #name, \
@@ -99,7 +99,7 @@ namespace mindspore::transform {
 
 #define DYN_SUBGRAPH_MAP(T) \
   template <>               \
-  const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_
+  const mindspore::HashMap<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_
 #define DYN_SUBGRAPH_DESC(name) \
   {                             \
 #name, \
@@ -115,8 +115,8 @@ namespace mindspore::transform {
 
 #define ATTR_MAP(T) \
   template <>       \
-  const std::unordered_map<std::string, AttrDesc> OpAdapter<T>::attr_map_
-#define EMPTY_ATTR_MAP std::unordered_map<std::string, AttrDesc>()
+  const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_
+#define EMPTY_ATTR_MAP mindspore::HashMap<std::string, AttrDesc>()
 #define ATTR_DESC(name, ...) \
   {                          \
 #name, \
@@ -128,11 +128,11 @@ namespace mindspore::transform {
 
 #define INPUT_ATTR_MAP(T) \
   template <>             \
-  const std::unordered_map<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_
+  const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_
 
 #define OUTPUT_MAP(T) \
   template <>         \
-  const std::unordered_map<int, OutputDesc> OpAdapter<T>::output_map_
+  const mindspore::HashMap<int, OutputDesc> OpAdapter<T>::output_map_
 #define OUTPUT_DESC(name) \
   {                       \
 #name, \
@@ -144,7 +144,7 @@ namespace mindspore::transform {
 
 #define DYN_OUTPUT_MAP(T) \
   template <>             \
-  const std::unordered_map<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_
+  const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_
 
 #define DYN_OUTPUT_DESC(name) \
   {                           \

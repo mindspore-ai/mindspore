@@ -16,12 +16,12 @@
 
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
 
-#include <unordered_set>
 #include <numeric>
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
+#include "utils/hash_set.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
@@ -172,7 +172,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
 }
 }  // namespace
 
-const std::unordered_set<std::string> kChannelLastKernel = {prim::kPrimBiasAdd->name()};
+const mindspore::HashSet<std::string> kChannelLastKernel = {prim::kPrimBiasAdd->name()};
 
 bool InsertFormatTransformOpCPU::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);

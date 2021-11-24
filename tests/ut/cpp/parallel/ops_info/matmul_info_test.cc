@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ void TestMatmulInfo::SetUp() {
   // matmul1
   ValuePtr transpose_a_1 = MakeValue(false);
   ValuePtr transpoce_b_1 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpoce_b_1}};
+  mindspore::HashMap<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpoce_b_1}};
 
   Shapes inputs_shape_1 = {{2, 4, 8, 16}, {2, 4, 16, 32}};
   Shapes outputs_shape_1 = {{2, 4, 8, 32}};
@@ -71,7 +71,7 @@ void TestMatmulInfo::SetUp() {
   // matmul2
   ValuePtr transpose_a_2 = MakeValue(false);
   ValuePtr transpoce_b_2 = MakeValue(true);
-  std::unordered_map<std::string, ValuePtr> attr_2 = {{"transpose_a", transpose_a_2}, {"transpose_b", transpoce_b_2}};
+  mindspore::HashMap<std::string, ValuePtr> attr_2 = {{"transpose_a", transpose_a_2}, {"transpose_b", transpoce_b_2}};
 
   Shapes inputs_shape_2 = {{2, 4, 8, 16}, {32, 16}};
   Shapes outputs_shape_2 = {{2, 4, 8, 32}};
@@ -81,7 +81,7 @@ void TestMatmulInfo::SetUp() {
   // matmul3
   ValuePtr transpose_a_3 = MakeValue(false);
   ValuePtr transpoce_b_3 = MakeValue(true);
-  std::unordered_map<std::string, ValuePtr> attr_3 = {{"transpose_a", transpose_a_3}, {"transpose_b", transpoce_b_3}};
+  mindspore::HashMap<std::string, ValuePtr> attr_3 = {{"transpose_a", transpose_a_3}, {"transpose_b", transpoce_b_3}};
 
   Shapes inputs_shape_3 = {{8, 16}, {2, 4, 32, 16}};
   Shapes outputs_shape_3 = {{2, 4, 8, 32}};
@@ -89,7 +89,7 @@ void TestMatmulInfo::SetUp() {
   matmul3 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
 
   // matmul4
-  std::unordered_map<std::string, ValuePtr> attr_4 = {{"transpose_a", transpose_a_3}};
+  mindspore::HashMap<std::string, ValuePtr> attr_4 = {{"transpose_a", transpose_a_3}};
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_4);
 }
 

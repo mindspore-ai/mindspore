@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ void TestOneHotInfo2::SetUp() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
   ValuePtr axis = MakeValue(std::int64_t(0));
-  std::unordered_map<std::string, ValuePtr> attr = {{"axis", axis}};
+  mindspore::HashMap<std::string, ValuePtr> attr = {{"axis", axis}};
 
   Shapes inputs_shape = {{64}, {}, {}};
   Shapes outputs_shape = {{10, 64}};

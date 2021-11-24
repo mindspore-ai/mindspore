@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "backend/optimizer/common/optimizer.h"
@@ -44,7 +44,7 @@ class EliminateRedundantOp : public PatternProcessPass {
   const AnfNodePtr DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                        const CNodePtr &prev_cnode, std::vector<KernelWithIndex> *pass_vector) const;
-  std::unordered_map<std::string, RedundantOpPair> redundant_process_map_;
+  mindspore::HashMap<std::string, RedundantOpPair> redundant_process_map_;
 };
 }  // namespace opt
 }  // namespace mindspore

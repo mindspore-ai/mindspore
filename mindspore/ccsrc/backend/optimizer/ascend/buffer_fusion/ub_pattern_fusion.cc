@@ -16,10 +16,10 @@
 #include "backend/optimizer/ascend/buffer_fusion/ub_pattern_fusion.h"
 #include <vector>
 #include <utility>
-#include <unordered_map>
 #include <map>
 #include <memory>
 #include <string>
+#include "utils/hash_map.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "debug/anf_ir_dump.h"
@@ -163,7 +163,7 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   return tuple_item;
 }
 
-void ReplaceInputNodeInOtherFusionScope(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+void ReplaceInputNodeInOtherFusionScope(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
                                         int64_t fusion_id, const AnfNodePtr &output_item,
                                         const AnfNodePtr &replace_item) {
   for (int64_t id = fusion_id + 1; id <= SizeToLong(buffer_fusion_infos->size()); ++id) {
@@ -176,7 +176,7 @@ void ReplaceInputNodeInOtherFusionScope(std::unordered_map<int64_t, BufferFusion
   }
 }
 
-void ReplaceOldNode(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
+void ReplaceOldNode(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
                     const AnfNodePtr &buffer_fusion_kernel, session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
@@ -204,7 +204,7 @@ void ReplaceOldNode(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusi
 }
 
 void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
-                                   std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                   mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto nodes = TopoSort(kernel_graph->get_return());
@@ -222,7 +222,7 @@ void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
 }
 
 void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
-                                 std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                 mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -283,7 +283,7 @@ AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const A
 }
 
 void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
-                                  std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                  mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto manager = kernel_graph->manager();
@@ -349,7 +349,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
 }
 
 void SetOutputUsedNumAttr(const session::KernelGraph &kernel_graph,
-                          const std::unordered_map<int64_t, BufferFusionInfo_t> &buffer_fusion_infos) {
+                          const mindspore::HashMap<int64_t, BufferFusionInfo_t> &buffer_fusion_infos) {
   for (auto &fusion_info : buffer_fusion_infos) {
     auto &fusion_nodes = fusion_info.second.anf_nodes;
     for (auto iter = fusion_nodes.begin(); iter != fusion_nodes.end() - 1; ++iter) {
@@ -408,7 +408,7 @@ bool CheckCircle(const session::KernelGraph &kernel_graph, const BufferFusionInf
 }
 
 void RemoveCircle(const session::KernelGraph &kernel_graph,
-                  std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                  mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   std::vector<int64_t> fusion_ids;
   for (auto &[fusion_id, fusion_info] : *buffer_fusion_infos) {
@@ -425,7 +425,7 @@ void RemoveCircle(const session::KernelGraph &kernel_graph,
 }  // namespace
 
 void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
-                                          std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
+                                          mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
@@ -449,17 +449,17 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
 bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   bool change = false;
-  std::unordered_map<int64_t, BufferFusionInfo_t> buffer_fusion_infos;
+  mindspore::HashMap<int64_t, BufferFusionInfo_t> buffer_fusion_infos;
   GetBufferFusionInfo(kernel_graph, &buffer_fusion_infos);
 
   std::vector<mindspore::kernel::FusionScopeInfo> fusion_scope_infos;
-  std::transform(
-    buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
-    [](const std::pair<int64_t, BufferFusionInfo_t> &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
-      return mindspore::kernel::FusionScopeInfo(
-        buffer_fusion_info.first, buffer_fusion_info.second.full_name, buffer_fusion_info.second.inputs_list,
-        buffer_fusion_info.second.anf_nodes, buffer_fusion_info.second.outputs_list);
-    });
+  std::transform(buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
+                 [](const auto &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
+                   return mindspore::kernel::FusionScopeInfo(
+                     buffer_fusion_info.first, buffer_fusion_info.second.full_name,
+                     buffer_fusion_info.second.inputs_list, buffer_fusion_info.second.anf_nodes,
+                     buffer_fusion_info.second.outputs_list);
+                 });
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
   auto id_names = build_manager.TbeFusionOpCompile(fusion_scope_infos);
   std::set<int64_t> fusion_ids;
@@ -486,7 +486,7 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   return change;
 }
 
-bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
                                       int64_t fusion_id, session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];

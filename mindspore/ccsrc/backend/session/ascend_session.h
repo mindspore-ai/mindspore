@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
 #define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
 
-#include <unordered_map>
 #include <string>
 #include <memory>
 #include <vector>
@@ -26,6 +25,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include "utils/hash_map.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -164,9 +164,9 @@ class AscendSession : public SessionBasic {
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const;
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *memo) const;
   // key is final_graph_id,value is child graph execute order of final graph
-  std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
+  mindspore::HashMap<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
-  std::unordered_map<GraphId, std::vector<GraphType>> graph_order_types_;
+  mindspore::HashMap<GraphId, std::vector<GraphType>> graph_order_types_;
   // initial tensors, these tensor will sync data to device before run graph
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation

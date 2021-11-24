@@ -30,7 +30,7 @@ void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const An
   if (fusion_id_allocator->HasFusionIdAttr(relu_input)) {
     return;
   }
-  std::unordered_set<AnfNodePtr> record{cnode, relu_input};
+  mindspore::HashSet<AnfNodePtr> record{cnode, relu_input};
   candidate_fusion->push_back(record);
   SetRecordFusionId(record);
 }

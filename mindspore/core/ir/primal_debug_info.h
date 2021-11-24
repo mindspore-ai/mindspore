@@ -20,7 +20,7 @@
 #include <memory>
 #include <stack>
 #include <vector>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "utils/info.h"
 
 namespace mindspore {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1128,7 +1128,7 @@ void AbstractNode::OnCustomEventCallback(const uint32_t &event) {
   }
 }
 
-bool AbstractNode::IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info) {
+bool AbstractNode::IsWorkerOrServer0(const mindspore::HashMap<std::string, NodeInfo> &info) {
   for (const auto &it : info) {
     if (it.second.is_alive == true && it.second.node_role_ == NodeRole::WORKER) {
       return true;

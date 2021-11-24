@@ -101,7 +101,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
     int64_t in_dim = iter->second;
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
-      (void)map_.erase(iter++);
+      iter = map_.erase(iter);
       continue;
     }
     if (in_dim == NONE &&
@@ -112,7 +112,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
         MS_LOG(ERROR) << "Insert SplitByAxis Error!";
         return Status::FAILED;
       }
-      (void)map_.erase(iter++);
+      iter = map_.erase(iter);
     } else {
       (void)++iter;
     }
@@ -123,10 +123,10 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
 Status RedistributionOperatorInfer::InferPermuteByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
     uint64_t index = iter->first;
-    int64_t in_dim = map_[index];
+    int64_t in_dim = iter->second;
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
-      (void)map_.erase(iter++);
+      iter = map_.erase(iter);
       continue;
     }
     if (in_dim == NONE &&
@@ -154,7 +154,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
           return Status::FAILED;
         }
       }
-      (void)map_.erase(iter++);
+      iter = map_.erase(iter);
       map_[LongToSize(cat_dim)] = NONE;
     } else {
       (void)++iter;
@@ -166,7 +166,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
 Status RedistributionOperatorInfer::InferConcatByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
     uint64_t index = iter->first;
-    int64_t in_dim = map_[index];
+    int64_t in_dim = iter->second;
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim != NONE && out_tensor_map_.GetIndexByValue(in_dim) == NONE) {
       Args args = {SizeToLong(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
@@ -175,9 +175,9 @@ Status RedistributionOperatorInfer::InferConcatByAxis() {
         return Status::FAILED;
       }
       if (out_dim == NONE) {
-        (void)map_.erase(iter++);
+        iter = map_.erase(iter);
       } else {
-        map_[index] = NONE;
+        iter->second = NONE;
         (void)++iter;
       }
     } else {

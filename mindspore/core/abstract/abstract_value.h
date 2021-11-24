@@ -22,13 +22,13 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
 
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
 #include "utils/any.h"
 #include "utils/flags.h"
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
@@ -864,7 +864,7 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
   /// \param[in] attributes The abstracts of the attributes of the class.
   /// \param[in] methods The methods of the class.
   AbstractClass(const Named &tag, const std::vector<AbstractAttribute> &attributes,
-                const std::unordered_map<std::string, ValuePtr> &methods)
+                const mindspore::HashMap<std::string, ValuePtr> &methods)
       : attributes_(attributes), tag_(tag), methods_(methods) {}
 
   /// \brief Destructor of AbstractClass.
@@ -890,7 +890,7 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
   /// \brief get the methods of the class.
   ///
   /// \return A map of the method names and methods.
-  std::unordered_map<std::string, ValuePtr> methods() { return methods_; }
+  mindspore::HashMap<std::string, ValuePtr> methods() { return methods_; }
 
   /// \brief Get a attribute by name.
   ///
@@ -923,7 +923,7 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
  private:
   std::vector<AbstractAttribute> attributes_;
   Named tag_;
-  std::unordered_map<std::string, ValuePtr> methods_;
+  mindspore::HashMap<std::string, ValuePtr> methods_;
 };
 using AbstractClassPtr = std::shared_ptr<AbstractClass>;
 

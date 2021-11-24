@@ -20,11 +20,11 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
@@ -64,7 +64,7 @@ class Somas {
   // hash id
   std::string hash_id_;
   // Maps
-  std::unordered_map<size_t, SomasTensorPtr> tensors_map_;
+  mindspore::HashMap<size_t, SomasTensorPtr> tensors_map_;
   std::map<void *, std::vector<SomasNodePtr>> nodes_map_;
   std::map<void *, vector<SomasParameterPtr>> parameters_map_;
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 #ifndef MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 #define MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <memory>
 #include <vector>
@@ -29,6 +27,8 @@
 #include <string>
 #include <functional>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/scalar.h"

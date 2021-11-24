@@ -18,8 +18,8 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -48,7 +48,7 @@ class Imm;
 using ImmPtr = std::shared_ptr<Imm>;
 struct PatternHasher;
 struct PatternEqual;
-using PatternNodeMap = std::unordered_map<PatternPtr, AnfNodePtr, PatternHasher, PatternEqual>;
+using PatternNodeMap = mindspore::HashMap<PatternPtr, AnfNodePtr, PatternHasher, PatternEqual>;
 
 class Pattern : public Base {
  public:

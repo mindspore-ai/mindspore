@@ -16,11 +16,11 @@
 
 #include <map>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 #include <algorithm>
 #include <functional>
 
+#include "utils/hash_map.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/func_graph.h"
@@ -36,7 +36,7 @@ using FloatPtr = std::shared_ptr<Float>;
 using IntPtr = std::shared_ptr<Int>;
 using UIntPtr = std::shared_ptr<UInt>;
 // anf type to mindir type map
-static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_type_map = {
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = {
   {kNumberTypeBool, mind_ir::TensorProto_DataType_BOOL},
   {kNumberTypeInt8, mind_ir::TensorProto_DataType_INT8},
   {kNumberTypeInt16, mind_ir::TensorProto_DataType_INT16},
@@ -52,21 +52,21 @@ static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kObjectTypeString, mind_ir::TensorProto_DataType_STRING},
 };
 
-static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_bits_int_map = {
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_int_map = {
   {8, mind_ir::TensorProto_DataType_INT8},
   {16, mind_ir::TensorProto_DataType_INT16},
   {32, mind_ir::TensorProto_DataType_INT32},
   {64, mind_ir::TensorProto_DataType_INT64},
 };
 
-static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_bits_uint_map = {
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_uint_map = {
   {8, mind_ir::TensorProto_DataType_UINT8},
   {16, mind_ir::TensorProto_DataType_UINT16},
   {32, mind_ir::TensorProto_DataType_UINT32},
   {64, mind_ir::TensorProto_DataType_UINT64},
 };
 
-static std::unordered_map<int, mind_ir::TensorProto_DataType> g_data_bits_float_map = {
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_float_map = {
   {16, mind_ir::TensorProto_DataType_FLOAT16},
   {32, mind_ir::TensorProto_DataType_FLOAT},
   {64, mind_ir::TensorProto_DataType_FLOAT64},

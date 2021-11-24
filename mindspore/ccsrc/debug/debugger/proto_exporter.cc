@@ -18,11 +18,11 @@
 #include <fstream>
 #include <map>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <algorithm>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 #include "debug/debugger/debugger.h"

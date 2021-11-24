@@ -20,9 +20,9 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <map>
 #include <set>
+#include "utils/hash_map.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/control_node_parser.h"
@@ -187,9 +187,9 @@ class GraphCompiler {
   void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Single op kernel graph cache for PyNative mode.
-  std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;
+  mindspore::HashMap<GraphInfo, KernelGraphPtr> run_op_graphs_;
   // Single op kernel graph output nodes cache for PyNative mode.
-  std::unordered_map<GraphId, std::vector<KernelWithIndex>> run_op_graph_output_nodes_;
+  mindspore::HashMap<GraphId, std::vector<KernelWithIndex>> run_op_graph_output_nodes_;
 
   // The member variable 'session_' will be removed after removing session module.
   // Now all the GraphCompiler share the same 'session_'.

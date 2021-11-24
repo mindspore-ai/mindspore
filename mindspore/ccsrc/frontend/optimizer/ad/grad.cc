@@ -114,7 +114,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
 
   multi_graph_sink(res);
   if (func_graph != grad_fg) {
-    (void)func_graph->transforms().insert(std::make_pair("grad", FuncGraphTransform(res)));
+    (void)func_graph->transforms().emplace("grad", FuncGraphTransform(res));
   }
   return res;
 }

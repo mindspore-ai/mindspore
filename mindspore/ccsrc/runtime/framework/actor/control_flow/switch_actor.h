@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
 #include <utility>
 #include "runtime/framework/actor/actor_common.h"

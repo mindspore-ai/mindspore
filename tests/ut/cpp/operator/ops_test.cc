@@ -432,7 +432,7 @@ TEST_F(TestOps, GetConv2DPrimPyTest) {
 
     py::object conv2d_pyobj = parse::python_adapter::GetPyFn("gtest_input.pynative", "conv2d_prim");
     py::dict opAttrs = py::getattr(conv2d_pyobj, "attrs");
-    std::unordered_map<std::string, ValuePtr> attrs{};
+    mindspore::HashMap<std::string, ValuePtr> attrs{};
     for (auto item : opAttrs) {
       if (!py::isinstance<py::str>(item.first)) {
         MS_LOG(EXCEPTION) << "type error in py dict convert";

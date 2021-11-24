@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_
 
-#include <unordered_map>
 #include <string>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <sstream>
 
+#include "utils/hash_map.h"
 #include "transform/graph_ir/util.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
@@ -139,7 +139,7 @@ class BaseOpAdapter {
   virtual int setAttr(const OperatorPtr &op, const std::string &attrKey, const ValuePtr &attrValue) = 0;
   virtual int setAttr(const OperatorPtr &op, const PrimitivePtr &prim) = 0;
   virtual int setAttr(const OperatorPtr &op, const AnfNodePtr &node) = 0;
-  virtual std::unordered_map<std::string, ValuePtr> GetExtraAttr() = 0;
+  virtual mindspore::HashMap<std::string, ValuePtr> GetExtraAttr() = 0;
   template <typename T, typename _ = typename std::enable_if<!std::is_base_of<Value, T>::value>::type>
   int setAttr(const OperatorPtr &op, const std::string &attrKey, const std::shared_ptr<T> &attrValue) {
     return setAttr(op, attrKey, MakeValue(attrValue));
@@ -151,11 +151,11 @@ class BaseOpAdapter {
   virtual OutHandler getOutput(const OperatorPtr &op, int index) = 0;
   virtual void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const AnfNodePtr &node) = 0;
-  virtual const std::unordered_map<int, InputDesc> &getInputMap() = 0;
-  virtual const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() = 0;
-  virtual const std::unordered_map<int, DynInputDesc> &getDynInputMap() = 0;
-  virtual const std::unordered_map<int, OutputDesc> &getOutputMap() = 0;
-  virtual const std::unordered_map<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
+  virtual const mindspore::HashMap<int, InputDesc> &getInputMap() = 0;
+  virtual const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() = 0;
+  virtual const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() = 0;
+  virtual const mindspore::HashMap<int, OutputDesc> &getOutputMap() = 0;
+  virtual const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }
@@ -193,7 +193,7 @@ struct AnyTraits<int> {
   using type = int64_t;
 };
 
-using ExtraAttr = std::unordered_map<std::string, ValuePtr>;
+using ExtraAttr = mindspore::HashMap<std::string, ValuePtr>;
 }  // namespace transform
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_BASE_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
   EXPECT_EQ(topk_cnode->inputs().size(), 3);
   auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
   EXPECT_EQ(input_names_vec.size(), 2);
-  std::unordered_set<size_t> attr_index{1};
+  mindspore::HashSet<size_t> attr_index{1};
   ConstInputToAttr(topk_cnode, attr_index);
   EXPECT_EQ(topk_cnode->inputs().size(), 2);
   input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_NODE_H_
 
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "frontend/parallel/status.h"
 
@@ -36,7 +36,7 @@ class AllreduceNode {
   Status Init(const CNodePtr &cnode_ptr);
   Status AddPara(const AnfNodePtr &node_ptr);
   Status RemovePara(const AnfNodePtr &node_ptr);
-  const std::unordered_set<AnfNodePtr> &paras() const { return paras_; }
+  const mindspore::HashSet<AnfNodePtr> &paras() const { return paras_; }
   double curr_para_size() const { return curr_para_size_; }
   virtual ~AllreduceNode() = default;
   // Add previous node
@@ -55,8 +55,8 @@ class AllreduceNode {
   CNodePtr cnode_ptr_;
   std::vector<AllreduceNodePtr> prev_;
   std::vector<AllreduceNodePtr> next_;
-  std::unordered_set<AnfNodePtr> paras_;
-  std::unordered_map<AnfNodePtr, double> para_size_map_;
+  mindspore::HashSet<AnfNodePtr> paras_;
+  mindspore::HashMap<AnfNodePtr, double> para_size_map_;
   double curr_para_size_;
   double depend_feat_size_;
 };

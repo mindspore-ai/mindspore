@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include <map>
+#include "utils/hash_map.h"
 
 namespace mindspore {
 class UserData {
@@ -45,7 +45,7 @@ class UserData {
   bool has(const std::string &key) const { return data_.find(key) != data_.end(); }
 
  private:
-  std::map<std::string, std::shared_ptr<void>> data_;
+  mindspore::HashMap<std::string, std::shared_ptr<void>> data_;
 };
 }  // namespace mindspore
 

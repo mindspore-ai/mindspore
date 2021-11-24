@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 #include <memory>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "ir/primitive.h"
@@ -109,7 +109,7 @@ class PrimitivePyAdapter {
   friend PrimitivePy;
   std::string name_;
   PrimitivePyWeakPtr attached_primitive_;
-  std::unordered_map<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
   PrimType prim_type_{kPrimTypeBuiltIn};
   bool is_const_prim_{false};
   std::vector<size_t> const_input_indexes_;

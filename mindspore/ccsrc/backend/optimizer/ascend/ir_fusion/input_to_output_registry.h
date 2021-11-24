@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <utility>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 
@@ -56,7 +56,7 @@ class InputToOutputRegistry {
   InputToOutputRegistry();
   ~InputToOutputRegistry() = default;
   DISABLE_COPY_AND_ASSIGN(InputToOutputRegistry)
-  std::unordered_map<std::string, InputToOutputRegister> op_input_to_output_map_;
+  mindspore::HashMap<std::string, InputToOutputRegister> op_input_to_output_map_;
 };
 }  // namespace opt
 }  // namespace mindspore

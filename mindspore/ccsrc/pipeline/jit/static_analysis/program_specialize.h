@@ -22,11 +22,12 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
-#include <unordered_set>
-#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
@@ -52,7 +53,7 @@ class ProgramSpecializer {
   ~ProgramSpecializer() = default;
   // Run the program specializer on the topmost graph in the given context.
   FuncGraphPtr Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context);
-  const std::unordered_set<AnfNodePtr> &seen() const { return seen_; }
+  const mindspore::HashSet<AnfNodePtr> &seen() const { return seen_; }
   void AddSeen(const AnfNodePtr &node) { (void)seen_.insert(node); }
 
   std::shared_ptr<FuncGraphSpecializer> GetFuncGraphSpecializer(const AnalysisContextPtr &context);
@@ -65,7 +66,7 @@ class ProgramSpecializer {
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
-  std::unordered_set<AnfNodePtr> seen_;
+  mindspore::HashSet<AnfNodePtr> seen_;
   FuncGraphManagerPtr mng_;
   std::unordered_map<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>, ContextHasher, ContextEqual>
     specializations_;
@@ -90,8 +91,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   std::shared_ptr<AnalysisEngine> engine_;
   ClonerPtr cloner_;
   std::vector<AnfNodePtr> todo_;
-  std::unordered_set<AnfNodePtr> marked_;
-  std::unordered_map<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
+  mindspore::HashSet<AnfNodePtr> marked_;
+  mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
 
   void FirstPass();
   void SecondPass();

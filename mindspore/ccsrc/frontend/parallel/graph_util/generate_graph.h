@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -46,7 +46,7 @@ std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {
  public:
-  explicit GenerateGraph(std::unordered_map<std::string, ValuePtr> origin_attrs)
+  explicit GenerateGraph(mindspore::HashMap<std::string, ValuePtr> origin_attrs)
       : name_idx_(0), origin_attrs_(origin_attrs) {}
   Status Init(const CNodePtr &cnode);
   ~GenerateGraph() = default;
@@ -63,7 +63,7 @@ class GenerateGraph {
   AnfNodePtr virtual_input_node_;
   std::string instance_name_base_;
   int64_t name_idx_;
-  std::unordered_map<std::string, ValuePtr> origin_attrs_;
+  mindspore::HashMap<std::string, ValuePtr> origin_attrs_;
 };
 }  // namespace parallel
 }  // namespace mindspore

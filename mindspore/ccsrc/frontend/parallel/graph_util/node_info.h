@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "frontend/parallel/ops_info/operator_info.h"
@@ -45,14 +45,14 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const 
 
 bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name);
 
-bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cache);
+bool FindReshape(const CNodePtr &cnode, mindspore::HashSet<std::string> *op_cache);
 
 bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index,
                                  size_t curr_depth);
 
 bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
                                   bool *is_next_reshape, size_t curr_depth);
-void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim);
+void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim);
 }  // namespace parallel
 }  // namespace mindspore
 

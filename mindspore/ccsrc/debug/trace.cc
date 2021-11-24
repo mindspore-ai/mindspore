@@ -19,8 +19,6 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -28,6 +26,8 @@
 #include <stack>
 #include <algorithm>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/meta_func_graph.h"
 #include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
@@ -145,7 +145,7 @@ class AnalyzeFailExporter : public AnfExporter {
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
-  std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
+  mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
     const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
 
  private:
@@ -153,10 +153,10 @@ class AnalyzeFailExporter : public AnfExporter {
   AnalysisEnginePtr engine_ = nullptr;
 };
 
-std::unordered_map<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTaggedNodeMap(
+mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTaggedNodeMap(
   const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack) {
-  std::unordered_set<abstract::AnfNodeConfigPtr> forwarded_configs;  // Check if config. is forwarded.
-  std::unordered_map<FuncGraphPtr, TaggedNodeMap> tagged_func_graphs;
+  mindspore::HashSet<abstract::AnfNodeConfigPtr> forwarded_configs;  // Check if config. is forwarded.
+  mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> tagged_func_graphs;
   size_t index = 0;
   for (auto &node_config : node_config_stack) {
     MS_EXCEPTION_IF_NULL(node_config);
@@ -327,7 +327,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   }
 
   auto tagged_func_graphs = CreateTaggedNodeMap(node_config_stack);
-  std::unordered_set<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
+  mindspore::HashSet<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
   // Output graph on the analysis stack
   for (const auto &node_config : node_config_stack) {
     MS_EXCEPTION_IF_NULL(node_config);

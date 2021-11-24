@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "frontend/optimizer/optimizer.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -61,9 +61,9 @@ class Util {
                        const std::string &fused_cnode_name);
   static kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
 
-  static std::unordered_map<std::string, int64_t> optimizer_to_ids;
-  static std::unordered_map<int64_t, std::string> id_to_optimizers;
-  static std::unordered_map<int64_t, std::string> id_to_optimizer_nodes;
+  static mindspore::HashMap<std::string, int64_t> optimizer_to_ids;
+  static mindspore::HashMap<int64_t, std::string> id_to_optimizers;
+  static mindspore::HashMap<int64_t, std::string> id_to_optimizer_nodes;
   static int64_t rank_id_;
 };
 }  // namespace ps

@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "base/base.h"
 #include "base/user_data.h"
 #include "base/effect_info.h"
@@ -36,6 +36,7 @@
 #include "ir/primal_attr.h"
 #include "ir/primal_debug_info.h"
 #include "utils/info.h"
+#include "utils/hashing.h"
 #include "utils/ms_utils.h"
 
 // A MindSpore ANF IR defined here.
@@ -76,7 +77,7 @@ class Primitive;
 using PrimitivePtr = std::shared_ptr<Primitive>;
 struct PrimitiveHasher;
 struct PrimitiveEqual;
-using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
+using PrimitiveSet = mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
 class BaseRef;
 
@@ -114,7 +115,6 @@ class MS_CORE_API AnfNode : public Base {
         intermediate_abstract_(nullptr),
         debug_info_(std::move(debug_info)),
         fullname_with_scope_(""),
-        hash_(std::hash<const AnfNode *>()),
         scope_(ScopeManager::GetInstance().GetCurrentScope()),
         kernel_info_(nullptr),
         interpret_(false),
@@ -224,7 +224,7 @@ class MS_CORE_API AnfNode : public Base {
   /// \return The shape of the element.
   BaseShapePtr Shape() const;
 
-  std::size_t hash() const override { return this->hash_(this); }
+  std::size_t hash() const final { return PointerHash<AnfNode>{}(this); }
 
   /// \brief Obtain detailed information about scope namespace.
   ///
@@ -364,7 +364,6 @@ class MS_CORE_API AnfNode : public Base {
   std::string fullname_with_scope_;
 
  private:
-  std::hash<const AnfNode *> hash_;
   ScopePtr scope_;
   KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
@@ -540,8 +539,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Get all attributes of this CNode.
   ///
   /// \return Attributes of this CNode.
-  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
-  void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
+  void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     attrs_.insert(attrs.cbegin(), attrs.cend());
   }
 
@@ -579,12 +578,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Get the primal attributes of this CNode.
   ///
   /// \return The primal attributes.
-  const std::unordered_map<std::string, ValuePtr> &primal_attrs() const { return primal_attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &primal_attrs() const { return primal_attrs_; }
 
   /// \brief Set the primal attributes of this CNode.
   ///
   /// \param[in] attrs The primal attributes.
-  void set_primal_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+  void set_primal_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     primal_attrs_.insert(attrs.cbegin(), attrs.cend());
   }
 
@@ -612,7 +611,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] name The name of the attribute.
   /// \return True if it exists, otherwise false.
-  bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != attrs_.cend(); }
+  bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != primal_attrs_.end(); }
 
   /// \brief Get primal debug information.
   ///
@@ -688,8 +687,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   // output_value_ store cnode value and id in pynative mode
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
   std::pair<ValueNodePtr, std::string> output_value_;
-  std::unordered_map<std::string, ValuePtr> attrs_;
-  std::unordered_map<std::string, ValuePtr> primal_attrs_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
   std::vector<NodeDebugInfoPtr> primal_debug_infos_;
   std::vector<NodeDebugInfoPtr> fused_debug_infos_;
   ssize_t input_tensor_num_ = -1;
@@ -1136,7 +1135,7 @@ namespace id_generator {
 std::string get_id(const AnfNodePtr &node);
 void reset_id();
 }  // namespace id_generator
-using TaggedNodeMap = std::unordered_map<AnfNodePtr, size_t>;
+using TaggedNodeMap = mindspore::HashMap<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 std::string GetCNodeTarget(const AnfNodePtr &node);
 std::string GetOriginNodeTarget(const AnfNodePtr &node);

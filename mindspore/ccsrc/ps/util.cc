@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,30 @@
  */
 
 #include "ps/util.h"
-#include <unordered_map>
 #include <vector>
 #include <memory>
+#include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace ps {
-std::unordered_map<std::string, int64_t> Util::optimizer_to_ids{
+mindspore::HashMap<std::string, int64_t> Util::optimizer_to_ids{
   {kApplyMomentum, 0},
   {kSparseAdam, 1},
   {kSparseLazyAdam, 2},
   {kSparseFtrl, 3},
 };
 
-std::unordered_map<int64_t, std::string> Util::id_to_optimizers{
+mindspore::HashMap<int64_t, std::string> Util::id_to_optimizers{
   {0, kApplyMomentum},
   {1, kSparseAdam},
   {2, kSparseLazyAdam},
   {3, kSparseFtrl},
 };
 
-std::unordered_map<int64_t, std::string> Util::id_to_optimizer_nodes{
+mindspore::HashMap<int64_t, std::string> Util::id_to_optimizer_nodes{
   {0, kApplyMomentumOp},
   {1, kSparseAdamOp},
   {2, kSparseLazyAdamOp},

@@ -80,8 +80,8 @@ bool BpropMindirDirExists() {
 }
 
 // Get the serializable bprop list from the module mindspore.ops.bprop_mindir in python.
-std::unordered_set<std::string> GetSerializableBpropList() {
-  std::unordered_set<std::string> serializable_bprop_list;
+mindspore::HashSet<std::string> GetSerializableBpropList() {
+  mindspore::HashSet<std::string> serializable_bprop_list;
   if (!BpropMindirDirExists()) {
     return serializable_bprop_list;
   }
@@ -105,14 +105,14 @@ std::unordered_set<std::string> GetSerializableBpropList() {
 }
 
 bool IsSerializableBprop(const std::string &prim_name) {
-  static std::unordered_set<std::string> serializable_bprop_list = GetSerializableBpropList();
+  static mindspore::HashSet<std::string> serializable_bprop_list = GetSerializableBpropList();
   return std::any_of(serializable_bprop_list.begin(), serializable_bprop_list.end(),
                      [&prim_name](const std::string &serializable_bprop_prim_name) {
                        return prim_name == serializable_bprop_prim_name;
                      });
 }
 
-void GetFilesHash(const std::string &dir, std::unordered_map<std::string, std::string> *bprop_hash_to_file) {
+void GetFilesHash(const std::string &dir, mindspore::HashMap<std::string, std::string> *bprop_hash_to_file) {
   if (dir.empty()) {
     MS_LOG(ERROR) << "The directory path is empty.";
     return;
@@ -139,13 +139,13 @@ void GetFilesHash(const std::string &dir, std::unordered_map<std::string, std::s
       continue;
     }
     auto real_path = std::string(dir) + "/" + filename->d_name;
-    bprop_hash_to_file->insert(std::make_pair(system::sha256::GetHashFromFile(real_path), real_path));
+    (void)bprop_hash_to_file->emplace(system::sha256::GetHashFromFile(real_path), real_path);
   }
   closedir(open_dir);
 }
 
-std::unordered_map<std::string, std::string> GetAllBpropFileHash() {
-  std::unordered_map<std::string, std::string> bprop_hash_to_file;
+mindspore::HashMap<std::string, std::string> GetAllBpropFileHash() {
+  mindspore::HashMap<std::string, std::string> bprop_hash_to_file;
   auto bprop_dir = GetBpropDir();
   auto realpath = FileUtils::GetRealPath(common::SafeCStr(bprop_dir));
   if (!realpath.has_value()) {
@@ -228,7 +228,7 @@ AnfNodePtr GetPythonOps(const FuncGraphPtr &fg, const AnfNodePtr &origin_node, c
   MS_EXCEPTION_IF_NULL(origin_node);
   MS_EXCEPTION_IF_NULL(prim);
   // DoSignaturePrimitive to the pair of primitive name and module name.
-  static std::unordered_map<std::string, std::pair<std::string, std::string>> python_ops{
+  static mindspore::HashMap<std::string, std::pair<std::string, std::string>> python_ops{
     {"S-Prim-zeros_like_leaf", {"zeros_like", ""}},
     {"S-Prim-getitem", {"getitem", "mindspore.ops.composite.multitype_ops.getitem_impl"}}};
   auto iter = python_ops.find(prim->name());
@@ -527,7 +527,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   }
 
   AdjustForAutoMonad(prim, bprop_fg);
-  std::unordered_map<std::string, ValuePtr> primal_attrs;
+  mindspore::HashMap<std::string, ValuePtr> primal_attrs;
   std::vector<NodeDebugInfoPtr> primal_debug_infos = GeneratePrimalDebugInfo(value_node, resources);
   if (cnode != nullptr) {
     primal_attrs = cnode->primal_attrs();

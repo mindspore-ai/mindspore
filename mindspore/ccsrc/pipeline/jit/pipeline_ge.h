@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@
 #include <utility>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <map>
 #include <mutex>
 
+#include "utils/hash_map.h"
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/base.h"
 #include "frontend/operator/ops.h"

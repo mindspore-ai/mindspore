@@ -20,8 +20,8 @@
 #include <vector>
 #include <utility>
 #include <functional>
-#include <unordered_map>
 #include <memory>
+#include "utils/hash_map.h"
 #include "utils/ordered_map.h"
 
 namespace mindspore {
@@ -41,7 +41,7 @@ class Counter {
   struct KeyEqual {
     bool operator()(const key_type lhs, const key_type rhs) const noexcept { return Equal{}(*lhs, *rhs); }
   };
-  using map_type = std::unordered_map<key_type, iterator, KeyHash, KeyEqual>;
+  using map_type = mindspore::HashMap<key_type, iterator, KeyHash, KeyEqual>;
 
  public:
   Counter() = default;

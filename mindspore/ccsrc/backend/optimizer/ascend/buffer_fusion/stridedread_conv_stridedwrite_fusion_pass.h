@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_STRIDEDREAD_CONV_STRIDEDWRITE_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_STRIDEDREAD_CONV_STRIDEDWRITE_FUSION_PASS_H_
 
-#include <unordered_set>
 #include <vector>
 
+#include "utils/hash_set.h"
 #include "backend/optimizer/ascend/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/pass.h"
@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace opt {
-using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
+using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
 
 class StridedReadConvStridedWriteFusionPass : public FusionBasePass {
  public:

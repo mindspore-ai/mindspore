@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "pybind_api/ir/primitive_py.h"
@@ -75,7 +75,7 @@ class PyPassManager {
   bool should_reopt_ = true;
   MatchResultPtr res_;
   pipeline::ResourcePtr resource_;
-  static std::unordered_map<Phase, PassGroupPtr> phase_to_group_;
+  static mindspore::HashMap<Phase, PassGroupPtr> phase_to_group_;
 };
 }  // namespace python_pass
 }  // namespace opt

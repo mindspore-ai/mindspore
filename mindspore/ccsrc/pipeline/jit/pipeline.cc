@@ -21,11 +21,12 @@
 #include <memory>
 #include <sstream>
 #include <map>
-#include <unordered_map>
 #include <cstdlib>
 #include <algorithm>
 #include <iomanip>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "ir/param_info.h"
 #include "pipeline/jit/pass.h"

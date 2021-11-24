@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <regex>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "utils/symbolic.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
@@ -917,7 +918,7 @@ ValuePtr AbstractClass::RealBuildValue() const {
   auto type = BuildType();
   MS_EXCEPTION_IF_NULL(type);
   auto cls = type->cast<ClassPtr>();
-  std::unordered_map<std::string, ValuePtr> attributes_value_map;
+  mindspore::HashMap<std::string, ValuePtr> attributes_value_map;
   for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
     ValuePtr value = attr.second->BuildValue();

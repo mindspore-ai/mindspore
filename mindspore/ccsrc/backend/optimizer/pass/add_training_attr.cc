@@ -19,9 +19,9 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include <unordered_map>
-#include <unordered_set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/graph_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -31,10 +31,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
-std::unordered_map<std::string, std::unordered_set<std::string>> MarkOp{
+mindspore::HashMap<std::string, mindspore::HashSet<std::string>> MarkOp{
   {"LSTM", {"LSTMGradWeight", "LSTMGrad", "LSTMGradData"}}};
 
-bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const std::unordered_set<std::string> &set) {
+bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const mindspore::HashSet<std::string> &set) {
   for (const auto &node_index : manager->node_users()[cnode]) {
     auto output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);

@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_VALUE_NODE_DUP_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_VALUE_NODE_DUP_H_
 
-#include <unordered_map>
 #include <vector>
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/manager.h"
 
 namespace mindspore {
 namespace pipeline {
-using HashCache = std::unordered_map<std::size_t, std::vector<AnfNodePtr>>;
-using HashValue = std::unordered_map<AnfNodePtr, std::size_t>;
+using HashCache = mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>>;
+using HashValue = mindspore::HashMap<AnfNodePtr, std::size_t>;
 
 void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache *hash_cache, HashValue *hash_value);
 }  // namespace pipeline

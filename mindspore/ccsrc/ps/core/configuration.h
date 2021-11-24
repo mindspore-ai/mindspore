@@ -25,8 +25,8 @@
 #include <vector>
 #include <thread>
 #include <mutex>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "utils/log_adapter.h"
 

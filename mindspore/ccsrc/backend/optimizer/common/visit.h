@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 
-#include <unordered_map>
 #include <stdexcept>
 #include <list>
 #include <vector>
 #include <string>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "base/base_ref.h"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 #include <utility>
 #include <string>
 #include <memory>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "pipeline/pynative/base.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/graph_runner.h"
@@ -37,7 +37,7 @@ using GeGraphPtr = std::shared_ptr<GeGraph>;
 namespace mindspore {
 namespace pynative {
 bool BuildSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs,
-                        const std::unordered_map<std::string, ValuePtr> &attrs, const GeGraphPtr &graph);
+                        const mindspore::HashMap<std::string, ValuePtr> &attrs, const GeGraphPtr &graph);
 
 py::object RunOpInGE(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
 }  // namespace pynative

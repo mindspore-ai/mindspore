@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include <fstream>
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
+#include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
@@ -59,7 +59,7 @@ static std::map<std::string, ParseForm> kParseTypeSwitchMap{
   {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR},
   {"none", FORM_PARSE_NONE}, {"Monad", FORM_PARSE_MONAD},   {"", FORM_PARSE_UNDEFINE}};
 
-static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
+static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_BOOL, kNumberTypeBool},
   {mind_ir::TensorProto_DataType_INT8, kNumberTypeInt8},
   {mind_ir::TensorProto_DataType_INT16, kNumberTypeInt16},
@@ -77,7 +77,7 @@ static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
 };
 
 template <typename T, typename P>
-std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<string, P> &kv) {
+std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<string, P> &kv) {
   std::stack<std::string> rules;
   std::stack<P> value;
   int count = 0;
@@ -124,7 +124,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
 }
 
 template <typename T>
-std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const std::unordered_map<string, ValuePtr> &kv) {
+std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const mindspore::HashMap<string, ValuePtr> &kv) {
   std::string str = attr_name;
   auto replace = [&](const string &orgStr, const string &newStr) {
     std::string::size_type pos(0);
@@ -144,7 +144,7 @@ std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const std
 }
 
 std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
-  const std::string &attr_name, const std::unordered_map<string, abstract::AbstractBasePtr> &kv) {
+  const std::string &attr_name, const mindspore::HashMap<string, abstract::AbstractBasePtr> &kv) {
   std::string str = attr_name;
   auto replace = [&](const string &orgStr, const string &newStr) {
     std::string::size_type pos(0);
@@ -522,13 +522,13 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
 }
 
 void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
-                                                   std::unordered_map<std::string, ValuePtr> *multi_value_map) {
+                                                   mindspore::HashMap<std::string, ValuePtr> *multi_value_map) {
   string name;
   auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int length) -> void {
     for (int i = 0; i < length; ++i) {
       auto res = this->ParseAttrInScalarForm(attr_proto, i);
       name = "value" + std::to_string(i + 1);
-      multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+      (void)multi_value_map->emplace(name, res);
     }
   };
   func(attr_proto, attr_proto.ints_size());
@@ -617,7 +617,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
   std::size_t pos(0);
   string type = GetTypeString(ref_attr_name, &pos);
 
-  std::unordered_map<std::string, ValuePtr> multi_value_map;
+  mindspore::HashMap<std::string, ValuePtr> multi_value_map;
   switch (kParseTypeSwitchMap[type]) {
     case FORM_PARSE_TYPE: {
       ObtainCNodeAttrInTypeForm(prim, attr_proto);
@@ -797,7 +797,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   }
 
   ValueNodePtr new_value_node;
-  std::unordered_map<std::string, ValuePtr> multi_value_map;
+  mindspore::HashMap<std::string, ValuePtr> multi_value_map;
   switch (kParseTypeSwitchMap[type]) {
     case FORM_PARSE_TYPE: {
       ObtainValueNodeInTypeForm(value_node_name, attr_proto.tensors(0));
@@ -870,9 +870,9 @@ bool MSANFModelParser::BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node
   return GetAttrValueForValueNode(value_node_name, attr_proto);
 }
 
-std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::GetAbstractForCNode(
+mindspore::HashMap<std::string, abstract::AbstractBasePtr> MSANFModelParser::GetAbstractForCNode(
   const mind_ir::AttributeProto &attr_proto) {
-  std::unordered_map<std::string, abstract::AbstractBasePtr> kv;
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> kv;
   for (int i = 0; i < attr_proto.tensors_size(); ++i) {
     ShapeVector shape_vec;
     const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(i);
@@ -887,11 +887,11 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
       auto abs_ref_key = ref_key->ToAbstract();
       auto abs_value = tensor_info->ToAbstract()->Broaden()->cast<abstract::AbstractTensorPtr>();
       auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
-      kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abs_ref));
+      (void)kv.emplace(attr_tensor.name(), abs_ref);
     } else {
       auto abstract = tensor_info->ToAbstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abstract));
+      (void)kv.emplace(attr_tensor.name(), abstract);
     }
   }
   return kv;
@@ -1009,7 +1009,7 @@ void MSANFModelParser::SetCNodeAbstract(const mind_ir::NodeProto &node_proto, CN
     return;
   }
 
-  std::unordered_map<std::string, abstract::AbstractBasePtr> kv;
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> kv;
   string shape_ref_attr_name;
 
   bool is_tuple_or_list = false;
@@ -1030,7 +1030,7 @@ void MSANFModelParser::SetCNodeAbstract(const mind_ir::NodeProto &node_proto, CN
   if (kv.size() == 0) {
     SetEmptyTensorProtoCNodeAbstract(cnode_ptr, node_type);
   } else if (kv.size() == 1 && !is_tuple_or_list) {
-    std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
+    auto iter = kv.begin();
     if (iter->second != nullptr) {
       iter->second->set_value(kAnyValue);
       cnode_ptr->set_abstract(iter->second);

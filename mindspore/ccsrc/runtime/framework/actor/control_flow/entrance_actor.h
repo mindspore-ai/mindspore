@@ -20,10 +20,10 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <stack>
 #include <queue>
 #include <set>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
 
@@ -62,7 +62,7 @@ class EntranceActor : public ControlActor {
   bool is_actor_ready_{true};
 
   // Input data with branch id.
-  std::unordered_map<int, std::queue<OpDataWithBranchID>> input_op_data_with_branch_id_;
+  mindspore::HashMap<int, std::queue<OpDataWithBranchID>> input_op_data_with_branch_id_;
 
   // Call nodes are used to record the caller of the subgraph, and are used to connect the data arrow
   // and branch id arrow in the link process.

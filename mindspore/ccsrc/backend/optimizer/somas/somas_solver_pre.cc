@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &t
     for (size_t sol = 1; sol < total_sol; sol++) {
       SomasSolverTensorDesc newDesc = *(pairT.second.get());
       SomasSolverTensorDescPtr newDescPtr = std::make_shared<SomasSolverTensorDesc>(newDesc);
-      vecTensorsMap[sol].insert(std::make_pair(pairT.first, newDescPtr));
+      (void)vecTensorsMap[sol].emplace(pairT.first, newDescPtr);
     }
   }
   return vecTensorsMap;

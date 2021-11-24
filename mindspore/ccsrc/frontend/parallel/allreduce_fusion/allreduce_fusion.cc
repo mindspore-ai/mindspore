@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <memory>
 #include <queue>
 #include <string>
-#include <unordered_set>
+#include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint64_t recursive_times = 0) {
+mindspore::HashSet<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint64_t recursive_times = 0) {
   if (recursive_times > MAX_RECURSIVE_CALL_TIMES) {
     MS_LOG(EXCEPTION) << "FindCNodesWithPara exceeds max recursive call times! Max recursive call times is "
                       << MAX_RECURSIVE_CALL_TIMES;
@@ -38,7 +38,7 @@ std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint64_t
   FuncGraphManagerPtr manager = para->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto node_set = manager->node_users()[para];
-  std::unordered_set<CNodePtr> cnode_set;
+  mindspore::HashSet<CNodePtr> cnode_set;
   for (auto &node_pair : node_set) {
     auto cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -89,7 +89,7 @@ CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint64_t recursi
                       << MAX_RECURSIVE_CALL_TIMES;
   }
   MS_EXCEPTION_IF_NULL(from);
-  std::unordered_map<CNodePtr, double> cnode_dist;
+  mindspore::HashMap<CNodePtr, double> cnode_dist;
   if (!from->isa<CNode>()) {
     return cnode_dist;
   }
@@ -130,7 +130,7 @@ CNodeCostMap AllreduceFusion::FindNextCNodes(const CNodePtr &from, uint64_t recu
                       << MAX_RECURSIVE_CALL_TIMES;
   }
   const auto &from_inputs = from->inputs();
-  std::unordered_map<CNodePtr, double> dist_map;
+  mindspore::HashMap<CNodePtr, double> dist_map;
   MS_LOG(DEBUG) << "from cnode " << from->DebugString() << " has " << from_inputs.size() << " inputs";
   for (auto &input_node : from_inputs) {
     auto cnode_dist = FindCNode(input_node, recursive_times + 1);
@@ -142,7 +142,7 @@ CNodeCostMap AllreduceFusion::FindNextCNodes(const CNodePtr &from, uint64_t recu
 }
 
 Status AllreduceFusion::AddEdgeToGraph() {
-  std::unordered_map<CNodePtr, int64_t> cnode_state_map;
+  mindspore::HashMap<CNodePtr, int64_t> cnode_state_map;
   const auto &cnodes = allreduce_graph_.cnode_set();
   for (auto &cnode : cnodes) {
     cnode_state_map[cnode] = 0;

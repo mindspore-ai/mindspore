@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 
 #include <algorithm>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "utils/convert_utils.h"
@@ -31,7 +31,7 @@ namespace parallel {
 using DeviceArrangement = Shape;
 using TensorMap = Shape;
 using TensorShape = Shape;
-using RedistributionOperatorMap = std::unordered_map<uint64_t, int64_t>;
+using RedistributionOperatorMap = mindspore::HashMap<uint64_t, int64_t>;
 using OperatorR = std::pair<OperatorName, Args>;
 using OperatorC = std::pair<OperatorR, Shape>;
 using OperatorList = std::vector<OperatorC>;

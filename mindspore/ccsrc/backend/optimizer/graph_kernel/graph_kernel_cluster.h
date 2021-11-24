@@ -17,9 +17,10 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CLUSTER_H_
 
 #include <vector>
-#include <unordered_map>
 #include <memory>
+#include <sstream>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/optimizer.h"
 
@@ -51,7 +52,7 @@ class GraphKernelCluster : public opt::Pass {
 
   GraphPtr graph_{nullptr};
   std::vector<AnfNodePtr> nodes_;
-  std::unordered_map<AnfNodePtr, size_t> node_idx_map_;
+  mindspore::HashMap<AnfNodePtr, size_t> node_idx_map_;
   std::stringstream dump_buf_;
   std::vector<PrimitivePtr> op_list_;
 };

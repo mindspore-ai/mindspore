@@ -319,7 +319,7 @@ ParameterPtr Cloner::AddParameter(const FuncGraphPtr &func_graph, const AnfNodeP
 void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params,
                            AnfNodePtrList *const lift_params, AnfNodePtrList *const input_params) {
   AnfNodePtrList parameters;
-  std::unordered_set<AnfNodePtr> old_params;
+  mindspore::HashSet<AnfNodePtr> old_params;
   for (auto &param : func_graph->parameters()) {
     auto iter = repl_node_.find(param);
     if (iter != repl_node_.end()) {
@@ -457,11 +457,11 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
 }
 
 void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index) {
-  std::unordered_set<AnfNodePtr> old_params;
+  mindspore::HashSet<AnfNodePtr> old_params;
   for (auto &param : func_graph->parameters()) {
     (void)old_params.insert(repl_node_[param]);
   }
-  std::unordered_set<AnfNodePtr> new_params;
+  mindspore::HashSet<AnfNodePtr> new_params;
   AnfNodePtrList parameters;
   // Ignore the 1st and 2nd param of inputs(such as. partial graph)
   for (size_t i = arg_start_index; i < inputs.size(); ++i) {

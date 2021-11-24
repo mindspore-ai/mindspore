@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 TypePtr Keyword::DeepCopy() const {
@@ -89,7 +90,8 @@ bool Slice::operator==(const Type &other) const {
     return false;
   }
   auto other_slice = static_cast<const Slice &>(other);
-  return (*start_ == *other_slice.start_ && *stop_ == *other_slice.stop_ && *step_ == *other_slice.step_);
+  return common::IsEqual(start_, other_slice.start_) && common::IsEqual(stop_, other_slice.stop_) &&
+         common::IsEqual(step_, other_slice.step_);
 }
 
 std::string Slice::DumpText() const { return ToString(); }

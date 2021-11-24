@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "fl/server/common.h"
 #include "fl/server/kernel/round/round_kernel.h"
 
@@ -42,7 +42,7 @@ class RoundKernelFactory {
   RoundKernelFactory(const RoundKernelFactory &) = delete;
   RoundKernelFactory &operator=(const RoundKernelFactory &) = delete;
 
-  std::unordered_map<std::string, RoundKernelCreator> name_to_creator_map_;
+  mindspore::HashMap<std::string, RoundKernelCreator> name_to_creator_map_;
 };
 
 class RoundKernelRegister {

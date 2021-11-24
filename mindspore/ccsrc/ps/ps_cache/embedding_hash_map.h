@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -63,7 +63,7 @@ class EmbeddingHashMap {
                 const size_t graph_running_step, size_t *const swap_out_size, bool *const need_wait_graph);
   size_t hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
   void set_hash_step(const int hash_index, const size_t step) { hash_map_elements_[hash_index].set_step(step); }
-  const std::unordered_map<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
+  const mindspore::HashMap<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
   size_t hash_capacity() const { return hash_capacity_; }
   void DumpHashMap();
   void Reset();
@@ -74,7 +74,7 @@ class EmbeddingHashMap {
   size_t hash_count_;
   size_t hash_capacity_;
   std::vector<HashMapElement> hash_map_elements_;
-  std::unordered_map<int, int> hash_id_to_index_;
+  mindspore::HashMap<int, int> hash_id_to_index_;
   size_t current_pos_;
   size_t current_batch_start_pos_;
   size_t graph_running_index_num_;

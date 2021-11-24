@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include <unordered_map>
 #include <set>
 #include <vector>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "utils/hash_map.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -40,10 +40,10 @@
 
 namespace mindspore {
 namespace parallel {
-std::unordered_map<AnfNodePtr, std::set<int64_t>> parameter_color_map;
+mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map;
 // map<rank, tag>
-std::unordered_map<int64_t, int64_t> send_tag_map;
-std::unordered_map<int64_t, int64_t> recv_tag_map;
+mindspore::HashMap<int64_t, int64_t> send_tag_map;
+mindspore::HashMap<int64_t, int64_t> recv_tag_map;
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
 
 static bool IsInWhiteList(const CNodePtr &cnode) {

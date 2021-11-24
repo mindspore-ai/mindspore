@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,21 @@
 #include <queue>
 #include <utility>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <string>
 #include <algorithm>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/common/helper.h"
 #include "frontend/optimizer/optimizer.h"
 #include "ir/func_graph.h"
 #include "utils/cache_embedding_hashmap_struct.h"
 namespace mindspore {
 namespace parallel {
-using ParamMap = std::unordered_map<ParameterPtr, ParameterPtr>;
-using ParamSet = std::unordered_set<ParameterPtr>;
+using ParamMap = mindspore::HashMap<ParameterPtr, ParameterPtr>;
+using ParamSet = mindspore::HashSet<ParameterPtr>;
 using NodePairList = std::vector<std::pair<AnfNodePtr, AnfNodePtr>>;
-using AnfMap = std::unordered_map<AnfNodePtr, AnfNodePtr>;
-using AnfSet = std::unordered_set<AnfNodePtr>;
+using AnfMap = mindspore::HashMap<AnfNodePtr, AnfNodePtr>;
+using AnfSet = mindspore::HashSet<AnfNodePtr>;
 
 ParamMap AddCacheParameters(const FuncGraphPtr &graph, const ParamSet &parameter_cache_enable_set) {
   ParamMap cache_host_params_map;

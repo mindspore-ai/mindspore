@@ -19,10 +19,10 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include <thread>
 #include <algorithm>
+#include "utils/hash_map.h"
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
 #include "backend/session/anf_runtime_algorithm.h"

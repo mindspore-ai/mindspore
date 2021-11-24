@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CONVERT_CAST_FORMAT_H_
 
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <memory>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
@@ -34,7 +34,7 @@ class ConvertCastFormat : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  std::unordered_map<string, size_t> CalculateFormat(
+  mindspore::HashMap<string, size_t> CalculateFormat(
     const std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> &used_cast_node_list,
     const CNodePtr &cast_node) const;
   void ChangeCastFormat(const CNodePtr &cast_node, const FuncGraphPtr &func_graph) const;

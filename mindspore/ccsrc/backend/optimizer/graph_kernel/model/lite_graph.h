@@ -19,10 +19,10 @@
 #include <memory>
 #include <vector>
 #include <list>
-#include <unordered_map>
-#include <unordered_set>
 #include <stack>
 #include <string>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ TEST_F(TestAbstract, TestParseDataClass) {
     }
   }
 
-  std::unordered_map<std::string, ValuePtr> methods = cls->methods();
+  auto methods = cls->methods();
   ASSERT_EQ(methods.size(), 4);
   int counts = 0;
   for (auto &v : methods) {

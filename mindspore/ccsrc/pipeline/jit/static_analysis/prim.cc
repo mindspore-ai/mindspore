@@ -23,8 +23,8 @@
 #include <mutex>
 #include <string>
 #include <utility>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -48,7 +48,7 @@ namespace mindspore {
 namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
-std::unordered_set<std::string> prims_to_skip_undetermined_infer{
+mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
   "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -1455,29 +1455,30 @@ struct PrimitiveImplInferValue {
   bool in_white_list_;        // true if this Primitive in white list, else false.
 };
 
-using PrimitiveToImplMap = std::unordered_map<PrimitivePtr, PrimitiveImplInferValue, PrimitiveHasher, PrimitiveEqual>;
+using PrimitiveToImplMap = mindspore::HashMap<PrimitivePtr, PrimitiveImplInferValue, PrimitiveHasher, PrimitiveEqual>;
 PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
-  static PrimitiveToImplMap uniform_prim_implement_map = {
-    {prim::kPrimScalarAdd, {prim::ScalarAdd, true, nullptr, true}},
-    {prim::kPrimScalarSub, {prim::ScalarSub, true, nullptr, true}},
-    {prim::kPrimScalarMul, {prim::ScalarMul, true, nullptr, true}},
-    {prim::kPrimScalarDiv, {prim::ScalarDiv, true, nullptr, true}},
-    {prim::kPrimScalarMod, {prim::ScalarMod, true, nullptr, true}},
-    {prim::kPrimScalarPow, {prim::ScalarPow, true, nullptr, true}},
-    {prim::kPrimScalarFloordiv, {prim::ScalarFloordiv, true, nullptr, true}},
-    {prim::kPrimScalarUadd, {prim::ScalarUAdd, true, nullptr, true}},
-    {prim::kPrimScalarUsub, {prim::ScalarUSub, true, nullptr, true}},
-    {prim::kPrimScalarLog, {prim::ScalarLog, true, nullptr, true}},
-    {prim::kPrimScalarEq, {prim::ScalarEq, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimScalarLt, {prim::ScalarLt, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimScalarGt, {prim::ScalarGt, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimScalarNe, {prim::ScalarNe, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimScalarLe, {prim::ScalarLe, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimScalarGe, {prim::ScalarGe, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimBoolNot, {prim::BoolNot, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimBoolAnd, {prim::BoolAnd, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimBoolEq, {prim::BoolEq, true, std::make_shared<Bool>(), true}},
-    {prim::kPrimBoolOr, {prim::BoolOr, true, std::make_shared<Bool>(), true}},
+  using R = PrimitiveToImplMap::mapped_type;
+  static PrimitiveToImplMap uniform_prim_implement_map{
+    {prim::kPrimScalarAdd, R{prim::ScalarAdd, true, nullptr, true}},
+    {prim::kPrimScalarSub, R{prim::ScalarSub, true, nullptr, true}},
+    {prim::kPrimScalarMul, R{prim::ScalarMul, true, nullptr, true}},
+    {prim::kPrimScalarDiv, R{prim::ScalarDiv, true, nullptr, true}},
+    {prim::kPrimScalarMod, R{prim::ScalarMod, true, nullptr, true}},
+    {prim::kPrimScalarPow, R{prim::ScalarPow, true, nullptr, true}},
+    {prim::kPrimScalarFloordiv, R{prim::ScalarFloordiv, true, nullptr, true}},
+    {prim::kPrimScalarUadd, R{prim::ScalarUAdd, true, nullptr, true}},
+    {prim::kPrimScalarUsub, R{prim::ScalarUSub, true, nullptr, true}},
+    {prim::kPrimScalarLog, R{prim::ScalarLog, true, nullptr, true}},
+    {prim::kPrimScalarEq, R{prim::ScalarEq, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarLt, R{prim::ScalarLt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarGt, R{prim::ScalarGt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarNe, R{prim::ScalarNe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarLe, R{prim::ScalarLe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarGe, R{prim::ScalarGe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolNot, R{prim::BoolNot, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolAnd, R{prim::BoolAnd, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolEq, R{prim::BoolEq, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolOr, R{prim::BoolOr, true, std::make_shared<Bool>(), true}},
   };
   return uniform_prim_implement_map;
 }

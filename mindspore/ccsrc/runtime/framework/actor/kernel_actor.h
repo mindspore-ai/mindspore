@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/hardware/device_context.h"

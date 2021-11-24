@@ -73,6 +73,12 @@ build_option_proc_upper_s()
   echo "enable download from gitee"  
 }
 
+build_option_proc_upper_f()
+{
+  check_on_off $OPTARG F
+  export ENABLE_FAST_HASH_TABLE="$OPTARG"
+}
+
 build_option_proc_z()
 {
   eval ARG=\$\{$OPTIND\}

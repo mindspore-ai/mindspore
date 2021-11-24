@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 #ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_SERVER_H_
 #define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_SERVER_H_
-
-#include "ps/core/communicator/http_message_handler.h"
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -36,9 +34,10 @@
 #include <memory>
 #include <string>
 #include <atomic>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
+#include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/http_request_handler.h"
 
 namespace mindspore {
@@ -78,7 +77,7 @@ class HttpServer {
   std::vector<std::shared_ptr<std::thread>> worker_threads_;
   std::vector<std::shared_ptr<HttpRequestHandler>> http_request_handlers;
   int32_t backlog_;
-  std::unordered_map<std::string, OnRequestReceive *> request_handlers_;
+  mindspore::HashMap<std::string, OnRequestReceive *> request_handlers_;
   int fd_;
 };
 }  // namespace core

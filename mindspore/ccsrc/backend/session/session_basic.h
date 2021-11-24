@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <memory>
 #include <map>
 #include <set>
+#include "utils/hash_map.h"
 #include "backend/session/session_context.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -128,7 +128,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
@@ -180,7 +180,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph);
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                         std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
@@ -319,11 +319,11 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
-  std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
-  std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
-  std::unordered_map<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
-  std::unordered_map<AnfNodePtr, std::string> partial_target_map_;
+  mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
+  mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
+  mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
+  mindspore::HashMap<AnfNodePtr, std::string> partial_target_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;

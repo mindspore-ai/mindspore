@@ -16,9 +16,9 @@
 #include "backend/session/kernel_graph.h"
 #include <algorithm>
 #include <queue>
-#include <unordered_set>
 #include <set>
 #include <exception>
+#include "utils/hash_set.h"
 #include "base/core_ops.h"
 #include "ir/param_info.h"
 #include "utils/utils.h"
@@ -39,7 +39,7 @@ const std::set<std::string> kOpAssignKernelNameList = {prim::kPrimAssign->name()
                                                        prim::kPrimAssignSub->name()};
 
 void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
-                       std::unordered_set<AnfNodePtr> *visited_nodes) {
+                       mindspore::HashSet<AnfNodePtr> *visited_nodes) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(que);
   MS_EXCEPTION_IF_NULL(visited_nodes);
@@ -163,7 +163,7 @@ std::vector<AnfNodePtr> KernelGraph::outputs() const {
 }
 
 void KernelGraph::EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                                     std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first) {
+                                     mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first) {
   MS_EXCEPTION_IF_NULL(visit_queue);
   MS_EXCEPTION_IF_NULL(visited_nodes);
   auto it = node_output_edges_.find(node);
@@ -213,7 +213,7 @@ void KernelGraph::SetExecOrderByDefault() {
   std::queue<AnfNodePtr> seed_nodes;
   UpdateNodeEdgeList(&seed_nodes);
   execution_order_.clear();
-  std::unordered_set<AnfNodePtr> visited_nodes;
+  mindspore::HashSet<AnfNodePtr> visited_nodes;
   std::queue<AnfNodePtr> zero_input_nodes;
   std::queue<AnfNodePtr> delay_comm_stack;
   std::queue<AnfNodePtr> communication_descendants;
@@ -764,35 +764,40 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
     MS_LOG(DEBUG) << "Old same with new:" << old_backend_anf->DebugString();
     return;
   }
-  if (backend_front_anf_map_.find(old_backend_anf) == backend_front_anf_map_.end()) {
+  auto bf_iter = backend_front_anf_map_.find(old_backend_anf);
+  if (bf_iter == backend_front_anf_map_.end()) {
     MS_LOG(DEBUG) << "Old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";
     return;
   }
-  if (front_backend_anf_map_.find(backend_front_anf_map_[old_backend_anf]) == front_backend_anf_map_.end()) {
+  auto front_anf = bf_iter->second;
+  auto fb_iter = front_backend_anf_map_.find(front_anf);
+  if (fb_iter == front_backend_anf_map_.end()) {
     MS_LOG(EXCEPTION) << "Anf is not exist in the map ,old " << old_backend_anf->DebugString();
   }
+  fb_iter->second = new_backend_anf;
+  // Delete old kernel, should be called before add new item to map.
+  (void)backend_front_anf_map_.erase(bf_iter);
+  backend_front_anf_map_[new_backend_anf] = front_anf;
   if (IsInternalOutput(old_backend_anf)) {
     ReplaceInternalOutput(old_backend_anf, new_backend_anf);
   }
-  front_backend_anf_map_[backend_front_anf_map_[old_backend_anf]] = new_backend_anf;
-  backend_front_anf_map_[new_backend_anf] = backend_front_anf_map_[old_backend_anf];
-  // delete old kernel
-  (void)backend_front_anf_map_.erase(old_backend_anf);
 }
 
 // get kernel by anf
 AnfNodePtr KernelGraph::GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf) {
-  if (front_backend_anf_map_.find(front_anf) == front_backend_anf_map_.end()) {
+  auto iter = front_backend_anf_map_.find(front_anf);
+  if (iter == front_backend_anf_map_.end()) {
     return nullptr;
   }
-  return front_backend_anf_map_[front_anf];
+  return iter->second;
 }
 
 AnfNodePtr KernelGraph::GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) {
-  if (backend_front_anf_map_.find(backend_anf) == backend_front_anf_map_.end()) {
+  auto iter = backend_front_anf_map_.find(backend_anf);
+  if (iter == backend_front_anf_map_.end()) {
     return nullptr;
   }
-  return backend_front_anf_map_[backend_anf];
+  return iter->second;
 }
 
 bool KernelGraph::BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf) {
@@ -800,10 +805,11 @@ bool KernelGraph::BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_an
 }
 
 ValueNodePtr KernelGraph::GetValueNodeByTensor(const mindspore::tensor::TensorPtr &tensor) {
-  if (tensor_to_value_node_map_.find(tensor) == tensor_to_value_node_map_.end()) {
+  auto iter = tensor_to_value_node_map_.find(tensor);
+  if (iter == tensor_to_value_node_map_.end()) {
     return nullptr;
   }
-  return tensor_to_value_node_map_[tensor];
+  return iter->second;
 }
 
 void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node) {
@@ -816,29 +822,12 @@ void KernelGraph::AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input,
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input);
   MS_LOG(DEBUG) << "Input:" << input->DebugString() << ",  node:" << node->DebugString() << ",num:" << depend_edge_num;
-  auto output_depend_edge = std::pair<AnfNodePtr, size_t>(node, depend_edge_num);
   // add output depend edge of input
-  auto output_it = node_output_edges_.find(input);
-  if (output_it == node_output_edges_.end()) {
-    node_output_edges_[input] = std::vector<std::pair<AnfNodePtr, size_t>>{output_depend_edge};
-  } else {
-    output_it->second.push_back(output_depend_edge);
-  }
+  node_output_edges_[input].emplace_back(node, depend_edge_num);
   // add input depend edge of output
-  auto input_depend_edge = std::pair<AnfNodePtr, size_t>(input, depend_edge_num);
-  auto input_it = node_input_edges_.find(node);
-  if (input_it == node_input_edges_.end()) {
-    node_input_edges_[node] = std::vector<std::pair<AnfNodePtr, size_t>>{input_depend_edge};
-  } else {
-    input_it->second.push_back(input_depend_edge);
-  }
+  node_input_edges_[node].emplace_back(input, depend_edge_num);
   // add node input depend num
-  auto depend_it = node_input_num_.find(node);
-  if (depend_it == node_input_num_.end()) {
-    node_input_num_[node] = depend_edge_num;
-  } else {
-    depend_it->second += depend_edge_num;
-  }
+  node_input_num_[node] += depend_edge_num;
 }
 
 std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
@@ -848,8 +837,9 @@ std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Can't find node[" << node->DebugString() << "]";
   }
   std::vector<AnfNodePtr> output_nodes;
-  auto trans = [](const std::pair<AnfNodePtr, size_t> &pair) -> AnfNodePtr { return pair.first; };
-  (void)std::transform(it->second.begin(), it->second.end(), std::back_inserter(output_nodes), trans);
+  output_nodes.reserve(it->second.size());
+  (void)std::transform(it->second.begin(), it->second.end(), std::back_inserter(output_nodes),
+                       [](const auto &p) { return p.first; });
   return output_nodes;
 }
 
@@ -858,7 +848,7 @@ void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
   node_output_edges_.clear();
   node_input_num_.clear();
   node_input_edges_.clear();
-  std::unordered_set<AnfNodePtr> visited_nodes;
+  mindspore::HashSet<AnfNodePtr> visited_nodes;
   std::queue<AnfNodePtr> que;
   que.push(get_return());
   while (!que.empty()) {
@@ -900,15 +890,11 @@ void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const
     MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap, node is " << final_pair.first->DebugString()
                       << ", index is " << final_pair.second;
   }
-  (void)ref_out_in_map_.insert(std::make_pair(final_pair, origin_pair));
+  (void)ref_out_in_map_.emplace(final_pair, origin_pair);
 }
 
 bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
-  if (graph_value_nodes_.find(value_node) != graph_value_nodes_.end()) {
-    (void)graph_value_nodes_.erase(value_node);
-    return true;
-  }
-  return false;
+  return graph_value_nodes_.erase(value_node) != 0;
 }
 
 void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter) {
@@ -1094,13 +1080,15 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     return;
   }
   MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
-  auto &front_nodes = iter->second;
-  // Move all front nodes to new node mapping
-  internal_outputs_to_front_map_[new_node] = front_nodes;
+  auto front_nodes = std::move(iter->second);
+  // We should do 'erase(iter)' before modify 'internal_outputs_to_front_map_',
+  // since the 'iter' may be invalidated after new item added.
+  internal_outputs_to_front_map_.erase(iter);
+  // Move all front nodes to new node mapping.
   for (const auto &front_node_iter : front_nodes) {
     front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
   }
-  internal_outputs_to_front_map_.erase(iter);
+  internal_outputs_to_front_map_[new_node] = std::move(front_nodes);
 }
 
 void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
@@ -1126,13 +1114,14 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     MS_LOG(INFO) << "The output " << src_output_idx << " of node " << node->DebugString() << " is not an internal node";
     return;
   }
-  auto front_node_pair = front_node_iter->second;
-  internal_outputs_to_front_map_[new_node][dst_output_idx] = front_node_pair;
-  front_to_internal_outputs_map_[front_node_pair.first] = new_node;
-  front_nodes.erase(src_output_idx);
+  auto front_node_pair = std::move(front_node_iter->second);
+  (void)front_nodes.erase(front_node_iter);
   if (front_nodes.empty()) {
-    internal_outputs_to_front_map_.erase(iter);
+    (void)internal_outputs_to_front_map_.erase(iter);
   }
+  // We should do 'erase' before 'insert', since the 'iter' may be invalidated after new item added.
+  front_to_internal_outputs_map_[front_node_pair.first] = new_node;
+  internal_outputs_to_front_map_[new_node][dst_output_idx] = std::move(front_node_pair);
 }
 
 void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
@@ -1161,7 +1150,7 @@ void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
 }
 
 AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
-  const auto &iter = internal_parameter_to_front_node_map_.find(parameter);
+  auto iter = internal_parameter_to_front_node_map_.find(parameter);
   if (iter != internal_parameter_to_front_node_map_.end()) {
     return iter->second;
   }
@@ -1169,10 +1158,6 @@ AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &p
 }
 
 FuncGraphPtr KernelGraph::GetFuncGraph() {
-  if (front_backend_anf_map_.empty()) {
-    return nullptr;
-  }
-
   for (const auto &front_backend_anf : front_backend_anf_map_) {
     const auto &front_node = front_backend_anf.first;
     const auto &func_graph = front_node->func_graph();
@@ -1218,7 +1203,7 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
 
 AnfWithOutIndex KernelGraph::GetFrontNodeWithIndexByGraphOutput(
   const AnfWithOutIndex &backend_graph_output_with_index) const {
-  const auto &iter = graph_output_to_front_node_map_.find(backend_graph_output_with_index);
+  auto iter = graph_output_to_front_node_map_.find(backend_graph_output_with_index);
   if (iter != graph_output_to_front_node_map_.end()) {
     return iter->second;
   }
@@ -1234,11 +1219,7 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
 }
 
 bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
-  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
-  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
-    return false;
-  }
-  return true;
+  return internal_outputs_to_front_map_.find(node) != internal_outputs_to_front_map_.end();
 }
 
 bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, size_t output_idx) const {
@@ -1247,10 +1228,7 @@ bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, size_t output_idx) co
     return false;
   }
   auto &front_nodes = front_nodes_iter->second;
-  if (front_nodes.find(output_idx) == front_nodes.end()) {
-    return false;
-  }
-  return true;
+  return front_nodes.find(output_idx) != front_nodes.end();
 }
 
 bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const {
@@ -1296,15 +1274,13 @@ void KernelGraph::UpdateChildGraphOrder() {
 
 void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (backend_front_anf_map_.find(node) != backend_front_anf_map_.end()) {
-    auto front_node = backend_front_anf_map_[node];
-    (void)backend_front_anf_map_.erase(node);
-    (void)front_backend_anf_map_.erase(front_node);
+  auto iter = backend_front_anf_map_.find(node);
+  if (iter != backend_front_anf_map_.end()) {
+    (void)front_backend_anf_map_.erase(iter->second);
+    (void)backend_front_anf_map_.erase(iter);
   }
   if (node->isa<ValueNode>()) {
-    if (graph_value_nodes_.find(node->cast<ValueNodePtr>()) != graph_value_nodes_.end()) {
-      (void)graph_value_nodes_.erase(node->cast<ValueNodePtr>());
-    }
+    (void)graph_value_nodes_.erase(node->cast<ValueNodePtr>());
   }
 }
 

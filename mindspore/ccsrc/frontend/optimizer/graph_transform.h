@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_GRAPH_TRANSFORM_H
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_GRAPH_TRANSFORM_H
 
-#include <unordered_map>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -73,7 +73,7 @@ class GraphTupleParamTransform {
     auto new_fg = cloner[fg];
     auto &params = new_fg->parameters();
     std::vector<AnfNodePtr> new_params;
-    std::unordered_map<AnfNodePtr, AnfNodePtr> repl;
+    mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
     for (auto &param : params) {
       auto abs = param->abstract();
       if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
@@ -101,7 +101,7 @@ class GraphTupleParamTransform {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> cache_;
+  mindspore::HashMap<FuncGraphPtr, FuncGraphPtr> cache_;
 };
 }  // namespace opt
 }  // namespace mindspore

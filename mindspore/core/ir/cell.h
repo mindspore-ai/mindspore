@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_IR_CELL_H_
 #define MINDSPORE_CCSRC_IR_CELL_H_
 
-#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
 #include <tuple>
 
+#include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "utils/misc.h"
 
@@ -52,12 +52,12 @@ class MS_CORE_API Cell final : public Named {
   /// \brief Obtain all attributes of Cell.
   ///
   /// \return All attributes of Cell.
-  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
 
   /// \brief Set the attributes of Cell.
   ///
   /// \param[in] attributes Attributes.
-  void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs_input) { attrs_ = attrs_input; }
+  void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs_input) { attrs_ = attrs_input; }
 
   /// \brief Add a new attribute.
   ///
@@ -110,7 +110,7 @@ class MS_CORE_API Cell final : public Named {
   ~Cell() override = default;
 
  private:
-  std::unordered_map<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
   enum MixedPrecisionType mixed_type_ { kNotSet };
 };
 

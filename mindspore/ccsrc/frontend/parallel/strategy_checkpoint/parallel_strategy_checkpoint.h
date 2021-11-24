@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STRATEGY_CHEKCPOINT_PARALLEL_STRATEGY_CHECKPOINT_H_
 
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <memory>
+#include "utils/hash_map.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
@@ -30,11 +30,11 @@
 
 namespace mindspore {
 namespace parallel {
-using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
+using StrategyMap = mindspore::HashMap<std::string, StrategyPtr>;
 using TensorLayoutPtr = std::shared_ptr<TensorLayout>;
-using TensorInfoMap = std::unordered_map<std::string, TensorLayoutPtr>;
+using TensorInfoMap = mindspore::HashMap<std::string, TensorLayoutPtr>;
 using ParameterMap = std::vector<std::pair<std::string, ParameterPtr>>;
-using ManualShapeMap = std::unordered_map<std::string, std::vector<std::pair<int64_t, int64_t>>>;
+using ManualShapeMap = mindspore::HashMap<std::string, std::vector<std::pair<int64_t, int64_t>>>;
 using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 class StrategyCheckpoint {
  public:

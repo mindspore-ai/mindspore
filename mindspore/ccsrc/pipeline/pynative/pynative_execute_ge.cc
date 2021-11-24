@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 #include <typeinfo>
 #include <map>
 #include <set>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
@@ -119,7 +119,7 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vec
 }
 
 bool BuildSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs,
-                        const std::unordered_map<std::string, ValuePtr> &attrs, const GeGraphPtr &graph) {
+                        const mindspore::HashMap<std::string, ValuePtr> &attrs, const GeGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   std::string op_name = op_exec_info->op_name;
   auto op_inputs = op_exec_info->op_inputs;
@@ -190,7 +190,7 @@ void ToTensorPtr(const OpExecInfoPtr op_exec_info, std::vector<GeTensorPtr> *con
 PynativeStatusCode ConvertAttributes(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   auto op_attrs = op_exec_info->op_attrs;
-  std::unordered_map<std::string, ValuePtr> attrs{};
+  mindspore::HashMap<std::string, ValuePtr> attrs{};
 
   for (auto &item : op_attrs) {
     if (!py::isinstance<py::str>(item.first)) {

@@ -18,16 +18,16 @@
 #define MINDSPORE_CORE_UTILS_ORDERED_MAP_H_
 
 #include <list>
-#include <unordered_map>
 #include <algorithm>
 #include <functional>
 #include <utility>
 #include <memory>
 #include "utils/hashing.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 // Implementation of OrderedMap that keeps insertion order
-// using unordered_map to improve the performance of find/erase, and use list to keep insertion order
+// using hash map to improve the performance of find/erase, and use list to keep insertion order
 template <typename KeyT, typename ValueT, class Hash = std::hash<KeyT>, class Equal = std::equal_to<KeyT>>
 class OrderedMap {
   using key_ptr_t = const KeyT *;
@@ -47,7 +47,7 @@ class OrderedMap {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = std::unordered_map<key_ptr_t, iterator, KeyPtrHash, KeyPtrEqual>;
+  using map_type = mindspore::HashMap<key_ptr_t, iterator, KeyPtrHash, KeyPtrEqual>;
   using value_type = typename sequential_type::value_type;
   using size_type = typename sequential_type::size_type;
 
@@ -221,7 +221,7 @@ class OrderedMap<std::shared_ptr<T>, ValueT> {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = std::unordered_map<raw_key_t, iterator, hash_t>;
+  using map_type = mindspore::HashMap<raw_key_t, iterator, hash_t>;
   using value_type = typename sequential_type::value_type;
   using size_type = typename sequential_type::size_type;
 

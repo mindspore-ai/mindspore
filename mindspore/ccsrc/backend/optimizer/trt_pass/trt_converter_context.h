@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTITIMIZER_TRT_CONVERTER_CONTEXT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTITIMIZER_TRT_CONVERTER_CONTEXT_H_
 
-#include <unordered_map>
 #include <vector>
 #include <string>
 #include <memory>
 #include <tuple>
 #include <map>
 #include <NvInfer.h>
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -90,7 +90,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
   std::shared_ptr<nvinfer1::ICudaEngine> engine_;
 
   // Cache (AnfNode + output_index : ILayer output).
-  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, LayerInput>> output_map_;
+  mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, LayerInput>> output_map_;
   std::vector<std::shared_ptr<tensor::Tensor>> temp_weights_;
 };
 }  // namespace opt

@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <unordered_set>
+#include "utils/hash_set.h"
 #include "base/core_ops.h"
 #include "utils/utils.h"
 #include "utils/log_adapter.h"
@@ -30,7 +30,7 @@ namespace mindspore::graphkernel {
 namespace {
 bool IsTypeInsensitive(const CNodePtr &node) {
   // Nodes that will change the input data type will not seen as type insensitive nodes.
-  static std::unordered_set<PrimitivePtr> type_insensitive_op_list{
+  static mindspore::HashSet<PrimitivePtr> type_insensitive_op_list{
     prim::kPrimTransData, prim::kPrimTranspose, prim::kPrimExpandDims, prim::kPrimReshape,
     prim::kPrimSqueeze,   prim::kPrimTile,      prim::kPrimNeg,        prim::kPrimRelu,
     prim::kPrimMaximum,   prim::kPrimMinimum,   prim::kPrimSelect};
@@ -150,7 +150,7 @@ void ReorderOps::SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::v
     new_inputs->resize(0);
   }
   new_inputs->push_back(node->input(0));
-  std::unordered_set<size_t> indexes_set(indexes.begin(), indexes.end());
+  mindspore::HashSet<size_t> indexes_set(indexes.begin(), indexes.end());
   size_t idx = 0;
   for (size_t i = 1; i < node_inputs_num; ++i) {
     size_t data_idx = i - 1;
@@ -180,7 +180,7 @@ void ReorderOps::SetTypeInsensitiveNodeInputsInfo(const CNodePtr &node, const st
   // node's inputs info at indexes change to input_at_indexes's input or output info
   new_inputs_info->inputs_format.resize(0);
   new_inputs_info->inputs_type.resize(0);
-  std::unordered_set<size_t> indexes_set(indexes.begin(), indexes.end());
+  mindspore::HashSet<size_t> indexes_set(indexes.begin(), indexes.end());
   size_t idx = 0;
   for (size_t data_idx = 0; data_idx < node_inputs_num - 1; ++data_idx) {
     if (indexes_set.find(data_idx) == indexes_set.end()) {

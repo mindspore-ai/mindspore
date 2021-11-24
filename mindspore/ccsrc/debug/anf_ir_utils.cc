@@ -19,9 +19,9 @@
 #include <fstream>
 #include <map>
 #include <memory>
-#include <unordered_map>
 #include <algorithm>
 #include <iomanip>
+#include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"

@@ -440,7 +440,7 @@ void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
   }
 }
 
-const std::unordered_map<AnfNodePtr, int> &FuncGraph::j_value_nodes() const { return j_value_nodes_; }
+const mindspore::HashMap<AnfNodePtr, int> &FuncGraph::j_value_nodes() const { return j_value_nodes_; }
 
 void FuncGraph::CopyJValueNodes(const FuncGraphPtr &source) {
   MS_EXCEPTION_IF_NULL(source);

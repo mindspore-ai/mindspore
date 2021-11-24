@@ -22,9 +22,9 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -164,7 +164,7 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
   const std::size_t nargs_;
   const TypePtr return_value_type_;
   const TypePtr specify_out_type_;
-  std::unordered_map<TypePtr, std::shared_ptr<std::vector<size_t>>, TypeHasher, TypeEqual> type_map_;
+  mindspore::HashMap<TypePtr, std::shared_ptr<std::vector<size_t>>, TypeHasher, TypeEqual> type_map_;
 };
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors();

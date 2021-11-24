@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_MAP_H_
 
 #include <string>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter_desc.h"
 
 namespace mindspore {
@@ -343,10 +343,10 @@ constexpr const char kNameFillV1[] = "FillV1";
 
 class OpAdapterMap {
  public:
-  static std::unordered_map<std::string, OpAdapterDescPtr> &get();
+  static mindspore::HashMap<std::string, OpAdapterDescPtr> &get();
 
  private:
-  static std::unordered_map<std::string, OpAdapterDescPtr> adpt_map_;
+  static mindspore::HashMap<std::string, OpAdapterDescPtr> adpt_map_;
 };
 }  // namespace transform
 }  // namespace mindspore

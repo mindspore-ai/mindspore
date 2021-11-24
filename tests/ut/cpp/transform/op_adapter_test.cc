@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include <iostream>
-#include <unordered_map>
 #include <string>
 
 #include "common/common_test.h"
@@ -26,7 +25,6 @@
 using std::cout;
 using std::endl;
 using std::string;
-using std::unordered_map;
 
 namespace mindspore {
 namespace transform {
@@ -73,7 +71,7 @@ TEST_F(TestOpAdapter, TestSetAttr_Conv2d_Primitive) {
     ASSERT_EQ(adpt->setAttr(conv, "pad_mode", string("same")), 0);
     ASSERT_EQ(adpt->setAttr(conv, "nothing", "test"), NOT_FOUND);
 
-    const unordered_map<std::string, ValuePtr> attrs = {
+    const mindspore::HashMap<std::string, ValuePtr> attrs = {
         {"padding", MakeValue(2)},
         {"padding_mode", MakeValue(string("normal"))},
         {"stride", MakeValue(8)}

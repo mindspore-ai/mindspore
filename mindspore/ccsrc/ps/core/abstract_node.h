@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ps/core/node.h"
 #include "ps/core/communicator/message.h"
 #include "ps/core/follower_scaler.h"
@@ -208,7 +208,7 @@ class AbstractNode : public Node {
   // Trigger the callback corresponding to the custom event.
   void OnCustomEventCallback(const uint32_t &event);
 
-  bool IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info);
+  bool IsWorkerOrServer0(const mindspore::HashMap<std::string, NodeInfo> &info);
 
   void CreateTcpServer();
 
@@ -229,13 +229,13 @@ class AbstractNode : public Node {
   std::condition_variable receive_cond_;
 
   // the key is rank_id, the value is rank_id's expected request_id
-  std::unordered_map<uint32_t, uint64_t> expected_rank_request_ids_;
+  mindspore::HashMap<uint32_t, uint64_t> expected_rank_request_ids_;
   // the key is rank_id, the value is rank_id's actual request_id
-  std::unordered_map<uint32_t, uint64_t> actual_rank_request_ids_;
+  mindspore::HashMap<uint32_t, uint64_t> actual_rank_request_ids_;
   std::mutex rank_request_ids_mutex;
   timeval scheduler_time_{0, 0};
-  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
-  std::unordered_map<NodeCommand, ServerHandler> server_handler_;
+  mindspore::HashMap<NodeCommand, ResponseHandler> handlers_;
+  mindspore::HashMap<NodeCommand, ServerHandler> server_handler_;
 
   // Workers and servers launch the server to process command: FINISH,SCALE_OUT,SCALE_IN,SEND_METADATA
   std::shared_ptr<TcpServer> server_;
@@ -269,10 +269,10 @@ class AbstractNode : public Node {
   uint16_t scheduler_port_;
 
   // Synchronize all node metadata from the scheduler.
-  std::unordered_map<std::string, NodeInfo> all_nodes_info_;
+  mindspore::HashMap<std::string, NodeInfo> all_nodes_info_;
   RequestHandler request_handler_;
 
-  std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
+  mindspore::HashMap<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
   std::mutex communicator_mutex_;
 };
 }  // namespace core

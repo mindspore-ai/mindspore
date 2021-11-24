@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -70,9 +70,9 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
                     const CNodePtr &middle_node, int64_t index, TensorRedistribution tensor_redistribution,
                     const CNodePtr &pre_node);
 
-bool StrategyFound(const std::unordered_map<std::string, ValuePtr> &attrs);
+bool StrategyFound(const mindspore::HashMap<std::string, ValuePtr> &attrs);
 
-bool AttrFound(const std::unordered_map<std::string, ValuePtr> &attrs, const std::string &target);
+bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &target);
 
 AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::string &weight_name);
 

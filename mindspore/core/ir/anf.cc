@@ -22,8 +22,8 @@
 #include <sstream>
 #include <vector>
 #include <queue>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "base/core_ops.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
@@ -373,7 +373,7 @@ size_t NewSeenGeneration() {
 }
 
 namespace id_generator {
-static std::unordered_map<std::string, int> node_ids;
+static mindspore::HashMap<std::string, int> node_ids;
 std::string get_id(const AnfNodePtr &node) {
   auto type_name = node->type_name();
   if (node_ids.find(type_name) == node_ids.end()) {

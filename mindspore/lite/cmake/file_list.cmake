@@ -54,6 +54,8 @@ set(UTILS_HEADER
         ${CORE_DIR}/utils/convert_utils_base.h
         ${CORE_DIR}/utils/flags.h
         ${CORE_DIR}/utils/hashing.h
+        ${CORE_DIR}/utils/hash_map.h
+        ${CORE_DIR}/utils/hash_set.h
         ${CORE_DIR}/utils/info.h
         ${CORE_DIR}/utils/label.h
         ${CORE_DIR}/utils/log_adapter.h

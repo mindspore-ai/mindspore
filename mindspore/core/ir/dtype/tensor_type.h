@@ -27,8 +27,9 @@
 #include <string>
 #include <vector>
 #include <type_traits>
-#include <unordered_map>
 #include <algorithm>
+
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/named.h"
 #include "ir/dtype/type.h"

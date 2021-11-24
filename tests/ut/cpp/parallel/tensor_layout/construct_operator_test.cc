@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ void TestConstructOperator::SetUp() {
 
   ValuePtr transpose_a_1 = MakeValue(false);
   ValuePtr transpose_b_1 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpose_b_1}};
+  mindspore::HashMap<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpose_b_1}};
 
   Shapes inputs_shape_1 = {{2, 4, 8, 16}, {2, 4, 16, 32}};
   Shapes outputs_shape_1 = {{2, 4, 8, 32}};

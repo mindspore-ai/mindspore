@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ void FuncGraph::DumpFuncGraph(const std::string &path) {
 
 void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count,
                                   int pos_args_input_count, std::vector<AnfNodePtr> *specialized_parameter_list,
-                                  std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
+                                  mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   // if there is variable argument, pass the input arguments that does not match positional args to it as a tuple
   MS_EXCEPTION_IF_NULL(specialized_graph);
   if (specialized_graph->has_vararg()) {
@@ -120,7 +120,7 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int var
 void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
                                  const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
                                  std::vector<AnfNodePtr> *specialized_parameter_list,
-                                 std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
+                                 mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   std::vector<AnfNodePtr> kwarg_keys_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> kwarg_values_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
 
@@ -176,7 +176,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
 void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
                                       const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
                                       const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes,
-                                      std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
+                                      mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   if (has_kwarg()) {
     MS_EXCEPTION_IF_NULL(specialized_graph);
     TraceGuard guard(
@@ -203,7 +203,7 @@ bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> 
 
 void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
                                      const std::vector<AnfNodePtr> &specialized_parameter_list,
-                                     std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
+                                     mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   MS_EXCEPTION_IF_NULL(specialized_graph);
   for (size_t i = 0; i < specialized_graph->parameters().size() - hyper_param_count(); ++i) {
     MS_EXCEPTION_IF_NULL(specialized_graph->parameters()[i]);
@@ -256,7 +256,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   int pos_args_count = std::min(pos_args_input_count, this->GetPositionalArgsCount());
   int variable_args_count = pos_args_input_count - pos_args_count;
   std::vector<AnfNodePtr> specialized_parameter_list;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> repl_nodes;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl_nodes;
   // the parameters that has arg input, copy from original parameters
   for (size_t i = 0; i < IntToSize(pos_args_count); ++i) {
     specialized_parameter_list.push_back(specialized_graph->parameters()[i]);

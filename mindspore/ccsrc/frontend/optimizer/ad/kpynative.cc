@@ -19,11 +19,11 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <algorithm>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "frontend/optimizer/ad/adjoint.h"
@@ -283,7 +283,7 @@ class KPynativeCellImpl : public KPynativeCell {
   FuncGraphPtr tape_;
   AnfNodePtrList cell_inputs_;
   // These weights need to calculate gradient.
-  std::unordered_set<AnfNodePtr> need_grad_weights_;
+  mindspore::HashSet<AnfNodePtr> need_grad_weights_;
   OrderedMap<AnfNodePtr, PynativeAdjointPtr> anfnode_to_adjoin_;
 
   // For CNode like TupleGetItem, ListGetItem, MakeTuple, MakeList, it's bypassed by caller so

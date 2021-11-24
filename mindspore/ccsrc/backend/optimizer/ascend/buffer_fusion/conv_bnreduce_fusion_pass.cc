@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ void ConvBnReduceFusionPass::MatchConvBnreduce(const CNodePtr &cnode, const sess
   MS_EXCEPTION_IF_NULL(conv);
   if (conv->isa<CNode>() && AnfAlgo::GetCNodeName(conv) == prim::kPrimConv2D->name() &&
       GetNodeOutputTotalUsedNum(kernel_graph, conv) == kConvOutputUsedTotalNum) {
-    std::unordered_set<AnfNodePtr> record{cnode, conv};
+    mindspore::HashSet<AnfNodePtr> record{cnode, conv};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
   }

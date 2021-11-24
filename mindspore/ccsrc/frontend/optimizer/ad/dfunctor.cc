@@ -36,8 +36,8 @@
 
 namespace mindspore {
 namespace ad {
-std::unordered_map<FuncGraphPtr, DFunctorPtr> DFunctor::func_graph_to_functor_;
-std::unordered_map<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definition_;
+mindspore::HashMap<FuncGraphPtr, DFunctorPtr> DFunctor::func_graph_to_functor_;
+mindspore::HashMap<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definition_;
 
 bool lift_fv_before_grad = true;
 
@@ -142,7 +142,7 @@ void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNode
   if (!IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
     MS_LOG(EXCEPTION) << "The 2th input of switch_layer expect a tuple of graphs, but got " << input->ToString() << ".";
   }
-  std::unordered_map<AnfNodePtr, FuncGraphPtr> node_to_fg;
+  mindspore::HashMap<AnfNodePtr, FuncGraphPtr> node_to_fg;
   auto tuple_graphs = input->cast<CNodePtr>();
   for (size_t i = 1; i < tuple_graphs->size(); ++i) {
     auto graph = tuple_graphs->input(i);
@@ -510,8 +510,8 @@ void DFunctor::MapMorphism() {
   auto output = k_graph_->NewCNode({NewValueNode(prim::kPrimMakeTuple), forward_app, NewValueNode(tape_)});
   output_adjoint->second->RegisterKUser(output, 1);
   k_graph_->set_output(output);
-  (void)primal_graph_->transforms().insert(std::make_pair("grad", FuncGraphTransform(k_graph_)));
-  (void)k_graph_->transforms().insert(std::make_pair("primal", FuncGraphTransform(primal_graph_)));
+  (void)primal_graph_->transforms().emplace("grad", FuncGraphTransform(k_graph_));
+  (void)k_graph_->transforms().emplace("primal", FuncGraphTransform(primal_graph_));
 }
 
 FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
@@ -536,8 +536,8 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     }
 
     // Cache the grad func
-    (void)primal->transforms().insert(std::make_pair("grad", FuncGraphTransform(fg)));
-    (void)fg->transforms().insert(std::make_pair("primal", FuncGraphTransform(primal)));
+    (void)primal->transforms().emplace("grad", FuncGraphTransform(fg));
+    (void)fg->transforms().emplace("primal", FuncGraphTransform(primal));
     // Reset defer_inline to enable successive inlining
     primal->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
 
@@ -868,7 +868,7 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
   return primal_user;
 }
 
-static std::unordered_map<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const FuncGraphManagerPtr &manager,
+static mindspore::HashMap<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const FuncGraphManagerPtr &manager,
                                                                            const FuncGraphPtr &primal_graph) {
   std::vector<CNodePtr> j_users;
   std::map<FuncGraphPtr, std::vector<CNodePtr>> primal_map;
@@ -893,7 +893,7 @@ static std::unordered_map<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const
     }
   }
 
-  std::unordered_map<CNodePtr, std::vector<CNodePtr>> primal_user_to_j_users;
+  mindspore::HashMap<CNodePtr, std::vector<CNodePtr>> primal_user_to_j_users;
   for (const auto &j_user : j_users) {
     MS_EXCEPTION_IF_NULL(j_user);
     auto primal = GetPrimalUser(j_user, primal_map);

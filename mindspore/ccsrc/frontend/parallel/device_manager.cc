@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 #include <algorithm>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
+#include "utils/hash_set.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/log_adapter.h"
 
@@ -321,7 +321,7 @@ Group DeviceManager::CreateGroup(const std::string &group_name,
 
 // Create the group with only the given devices' ranks.
 Group DeviceManager::CreateGroup(const RankList &dev_ranks) {
-  std::unordered_set<int64_t> rank_set(dev_ranks.begin(), dev_ranks.end());
+  mindspore::HashSet<int64_t> rank_set(dev_ranks.begin(), dev_ranks.end());
   if (dev_ranks.size() != rank_set.size()) {
     MS_LOG(EXCEPTION) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";
   }

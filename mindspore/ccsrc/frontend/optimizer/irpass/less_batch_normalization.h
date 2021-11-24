@@ -21,8 +21,8 @@
 #include <vector>
 #include <tuple>
 #include <string>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -42,7 +42,7 @@ class LessBatchNormalization : public AnfVisitor {
   bool MatchGraphStructure(const CNodePtr &cnode, const std::vector<kStructureTuple> &match_pattern);
 
  private:
-  std::unordered_set<CNodePtr> remove_node_list_{};
+  mindspore::HashSet<CNodePtr> remove_node_list_{};
   std::vector<size_t> total_match_node_{0};
   size_t match_node_{0};
   size_t match_branch_{0};

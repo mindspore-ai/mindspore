@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <stack>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
 
@@ -58,7 +58,7 @@ class StackActor : public ControlActor {
 
   // The input data records that the stack actor is copied from the input nodes and needs to be stored in the
   // device tensor in the stack.
-  std::unordered_map<int, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
+  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
   // Input parameter data num represents the number of actor's input come from funcgraph itself, these inputs
   // will be ranked at the front of input.
   size_t input_parameter_data_num_{0};

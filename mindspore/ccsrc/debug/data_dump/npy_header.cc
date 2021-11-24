@@ -16,10 +16,10 @@
 
 #include "debug/data_dump/npy_header.h"
 
-#include <unordered_map>
 #include <utility>
 #include <sstream>
 
+#include "utils/hash_map.h"
 #include "mindspore/core/ir/dtype.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/utils/convert_utils_base.h"
@@ -92,7 +92,7 @@ std::string NpyHeader::shape_to_str() const {
 }
 
 // dtype description corresponding to tensor type
-const std::unordered_map<TypeId, DtypeDescr> type_desc_map = {
+const mindspore::HashMap<TypeId, DtypeDescr> type_desc_map = {
   {kNumberTypeBool, DtypeDescr{'|', 'b', 1}},    {kNumberTypeInt8, DtypeDescr{'|', 'i', 1}},
   {kNumberTypeInt16, DtypeDescr{'<', 'i', 2}},   {kNumberTypeInt32, DtypeDescr{'<', 'i', 4}},
   {kNumberTypeInt64, DtypeDescr{'<', 'i', 8}},   {kNumberTypeUInt8, DtypeDescr{'|', 'u', 1}},

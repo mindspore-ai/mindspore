@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_REGISTRY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_REGISTRY_H_
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -33,31 +33,31 @@ class ConstInputToAttrInfoRegister {
     return *this;
   }
 
-  ConstInputToAttrInfoRegister &SetConstInputToAttr(const std::unordered_set<size_t> &input_attr_set) {
+  ConstInputToAttrInfoRegister &SetConstInputToAttr(const mindspore::HashSet<size_t> &input_attr_set) {
     (void)input_attr_set_.insert(input_attr_set.begin(), input_attr_set.end());
     return *this;
   }
 
-  const std::unordered_set<size_t> &GetConstInputAttrInfo() const { return input_attr_set_; }
+  const mindspore::HashSet<size_t> &GetConstInputAttrInfo() const { return input_attr_set_; }
   const std::string &GetOpName() const { return op_name_; }
 
  private:
   std::string op_name_;
-  std::unordered_set<size_t> input_attr_set_;
+  mindspore::HashSet<size_t> input_attr_set_;
 };
 
 class ConstInputToAttrInfoRegistry {
  public:
   static ConstInputToAttrInfoRegistry &Instance();
   void Register(const ConstInputToAttrInfoRegister &reg);
-  void Register(const std::string &op_name, const std::unordered_set<size_t> &input_attr_set);
+  void Register(const std::string &op_name, const mindspore::HashSet<size_t> &input_attr_set);
   bool GetRegisterByOpName(const std::string &op_name, ConstInputToAttrInfoRegister *reg) const;
 
  private:
   ConstInputToAttrInfoRegistry();
   ~ConstInputToAttrInfoRegistry() = default;
   DISABLE_COPY_AND_ASSIGN(ConstInputToAttrInfoRegistry)
-  std::unordered_map<std::string, ConstInputToAttrInfoRegister> op_input_to_attr_map_;
+  mindspore::HashMap<std::string, ConstInputToAttrInfoRegister> op_input_to_attr_map_;
 };
 
 struct ConstInputToAttrInfoReceiver {

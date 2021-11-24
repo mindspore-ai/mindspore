@@ -18,8 +18,8 @@
 
 #include <algorithm>
 #include <utility>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
 #include "debug/trace.h"

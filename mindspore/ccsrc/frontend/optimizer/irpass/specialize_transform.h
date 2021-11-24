@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include <unordered_map>
 #include <tuple>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -70,7 +70,7 @@ class SpecializeTransform {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, std::map<std::vector<ValuePtr>, FuncGraphPtr>> cache_;
+  mindspore::HashMap<FuncGraphPtr, std::map<std::vector<ValuePtr>, FuncGraphPtr>> cache_;
   static ValueNodePtr NewReplaceValueNode(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<FuncGraph>() || value->isa<Primitive>() || value->isa<parse::NameSpace>()) {

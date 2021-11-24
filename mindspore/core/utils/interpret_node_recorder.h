@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 #define MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 
-#include <unordered_set>
 #include <string>
 
 namespace mindspore {
@@ -34,7 +33,7 @@ class InterpretNodeRecorder {
 
   void PushLineInfo(const std::string &line) { interpret_nodes_lines_.emplace(line); }
 
-  const std::unordered_set<std::string> &LineInfos() const { return interpret_nodes_lines_; }
+  const mindspore::HashSet<std::string> &LineInfos() const { return interpret_nodes_lines_; }
 
   void Clear() { interpret_nodes_lines_.clear(); }
 
@@ -43,7 +42,7 @@ class InterpretNodeRecorder {
   virtual ~InterpretNodeRecorder() = default;
 
  private:
-  std::unordered_set<std::string> interpret_nodes_lines_;
+  mindspore::HashSet<std::string> interpret_nodes_lines_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_

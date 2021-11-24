@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <unordered_map>
 
 namespace mindspore {
 class PynativeProfiler {

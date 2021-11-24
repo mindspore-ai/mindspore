@@ -24,8 +24,8 @@
 #include <queue>
 #include <map>
 #include <utility>
-#include <unordered_map>
 #include <algorithm>
+#include "utils/hash_map.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/kernel_graph.h"
 
@@ -60,15 +60,15 @@ const char kStackActorNameSuffix[] = "_StackActor";
 
 using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
-using FuncGraphToKernelGraph = std::unordered_map<FuncGraphPtr, std::vector<KernelGraphPtr>>;
-using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>>;
+using FuncGraphToKernelGraph = mindspore::HashMap<FuncGraphPtr, std::vector<KernelGraphPtr>>;
+using HostParameterToWeight = mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>>;
 using NodeWithDeviceContext = std::set<std::pair<KernelWithIndex, const DeviceContext *>>;
-using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
-using FormalToRealParameter = std::unordered_map<AnfNodePtr, std::set<KernelWithIndex>>;
-using RealToFormalParameter = std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>>;
+using RealToFormalNode = mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>>;
+using FormalToRealParameter = mindspore::HashMap<AnfNodePtr, std::set<KernelWithIndex>>;
+using RealToFormalParameter = mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>>;
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
-using FrontNodeToKernelGraph = std::unordered_map<AnfNodePtr, KernelGraphPtr>;
-using FuncGraphCallRelation = std::unordered_map<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
+using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
+using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
 
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
@@ -200,12 +200,12 @@ class ControlNodeParser {
   // different places. Therefore, a branch id is created for each funcgraph. When funcgraph is called, the branch
   // id needs to be sent to the gather actor corresponding to the funcgraph, and the gather will send the branch id
   // to its output switch actor.
-  std::unordered_map<AnfNodePtr, int> call_node_to_branch_id_;
-  std::unordered_map<AnfNodePtr, std::set<FuncGraphPtr>> call_node_to_func_graphs_;
+  mindspore::HashMap<AnfNodePtr, int> call_node_to_branch_id_;
+  mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>> call_node_to_func_graphs_;
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.
   HostParameterToWeight host_parameter_to_weights_;
-  std::unordered_map<AnfNodePtr, AnfNodePtr> sub_front_node_to_root_front_node_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> sub_front_node_to_root_front_node_;
   // The front value node saves all value nodes that are not in the kernel graph. These nodes are generally the
   // input of the control node.
   NodeWithDeviceContext front_value_nodes_;
@@ -215,18 +215,18 @@ class ControlNodeParser {
   // The kernel graph of call exists in the front input node.
   // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a gather actor
   // is created for kernel graph which has a call input.
-  std::unordered_map<KernelGraph *, DeviceContext *> call_input_kernel_graphs_;
+  mindspore::HashMap<KernelGraph *, DeviceContext *> call_input_kernel_graphs_;
   // The dependency between kernel and call node in auto monad.
-  std::unordered_map<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
-  std::unordered_map<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
+  mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
 
   // In heterogeneous scenario, each parameter has its own device context type, so the device context corresponding
   // to the type needs to be parsed in advance so that it can add some copy operation in the scheduler.
   // 1. The device context type of the formal parameters of funcgraph.
-  std::unordered_map<FuncGraphPtr, std::vector<const DeviceContext *>> func_graph_to_device_contexts_;
+  mindspore::HashMap<FuncGraphPtr, std::vector<const DeviceContext *>> func_graph_to_device_contexts_;
   // 2. The device context type of the control node inputs.
-  std::unordered_map<AnfNodePtr, std::vector<const DeviceContext *>> control_node_to_device_contexts_;
+  mindspore::HashMap<AnfNodePtr, std::vector<const DeviceContext *>> control_node_to_device_contexts_;
 
   // Is control flow enable.
   bool is_inited_{false};

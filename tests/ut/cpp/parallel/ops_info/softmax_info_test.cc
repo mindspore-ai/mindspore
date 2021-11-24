@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,10 @@ void TestSoftmaxInfo::SetUp() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
   ValuePtr axis1 = MakeValue(static_cast<int64_t>(-2));
-  std::unordered_map<std::string, ValuePtr> attr1 = {{"axis", axis1}};
+  mindspore::HashMap<std::string, ValuePtr> attr1 = {{"axis", axis1}};
 
   ValuePtr axis2 = MakeValue(static_cast<int64_t>(4));
-  std::unordered_map<std::string, ValuePtr> attr2 = {{"axis", axis2}};
+  mindspore::HashMap<std::string, ValuePtr> attr2 = {{"axis", axis2}};
 
   Shapes inputs_shape = {{2, 4, 8, 16}};
   Shapes outputs_shape = {{2, 4, 8, 16}};

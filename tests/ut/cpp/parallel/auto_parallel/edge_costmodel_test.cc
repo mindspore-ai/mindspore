@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ void TestEdgeCostModel::SetUp() {
   // matmul1
   ValuePtr transpose_a_1 = MakeValue(false);
   ValuePtr transpose_b_1 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpose_b_1}};
+  mindspore::HashMap<std::string, ValuePtr> attr_1 = {{"transpose_a", transpose_a_1}, {"transpose_b", transpose_b_1}};
   Shapes inputs_shape_1 = {{8, 16}, {16, 32}};
   Shapes outputs_shape_1 = {{8, 32}};
   matmul1 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
@@ -71,7 +71,7 @@ void TestEdgeCostModel::SetUp() {
   // matmul2
   ValuePtr transpose_a_2 = MakeValue(false);
   ValuePtr transpose_b_2 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_2 = {{"transpose_a", transpose_a_2}, {"transpose_b", transpose_b_2}};
+  mindspore::HashMap<std::string, ValuePtr> attr_2 = {{"transpose_a", transpose_a_2}, {"transpose_b", transpose_b_2}};
   Shapes inputs_shape_2 = {{8, 32}, {32, 16}};
   Shapes outputs_shape_2 = {{8, 16}};
   matmul2 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
@@ -80,7 +80,7 @@ void TestEdgeCostModel::SetUp() {
   // matmul3
   ValuePtr transpose_a_3 = MakeValue(false);
   ValuePtr transpose_b_3 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_3 = {{"transpose_a", transpose_a_3}, {"transpose_b", transpose_b_3}};
+  mindspore::HashMap<std::string, ValuePtr> attr_3 = {{"transpose_a", transpose_a_3}, {"transpose_b", transpose_b_3}};
   Shapes inputs_shape_3 = {{16, 8}, {8, 32}};
   Shapes outputs_shape_3 = {{16, 32}};
   matmul3 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
@@ -89,7 +89,7 @@ void TestEdgeCostModel::SetUp() {
   // matmul4
   ValuePtr transpose_a_4 = MakeValue(false);
   ValuePtr transpose_b_4 = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr_4 = {{"transpose_a", transpose_a_4}, {"transpose_b", transpose_b_4}};
+  mindspore::HashMap<std::string, ValuePtr> attr_4 = {{"transpose_a", transpose_a_4}, {"transpose_b", transpose_b_4}};
   Shapes inputs_shape_4 = {{8, 16}, {16, 32}};
   Shapes outputs_shape_4 = {{8, 32}};
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_4);
@@ -98,7 +98,7 @@ void TestEdgeCostModel::SetUp() {
   // matmul5
   ValuePtr transpose_a_5 = MakeValue(false);
   ValuePtr transpose_b_5 = MakeValue(true);
-  std::unordered_map<std::string, ValuePtr> attr_5 = {{"transpose_a", transpose_a_5}, {"transpose_b", transpose_b_5}};
+  mindspore::HashMap<std::string, ValuePtr> attr_5 = {{"transpose_a", transpose_a_5}, {"transpose_b", transpose_b_5}};
   Shapes inputs_shape_5 = {{8, 32}, {8, 32}};
   Shapes outputs_shape_5 = {{8, 8}};
   matmul5 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_5, outputs_shape_5, attr_5);

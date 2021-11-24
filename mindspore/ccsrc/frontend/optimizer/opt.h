@@ -21,8 +21,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/optimizer/optimizer_caller.h"
@@ -85,7 +85,7 @@ class SubstitutionList {
   bool ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
                              const SubstitutionPtr &sub) const;
   bool ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
-  void DisplayStatusOfSubstitution(const std::unordered_map<std::string, std::vector<bool>> &status,
+  void DisplayStatusOfSubstitution(const mindspore::HashMap<std::string, std::vector<bool>> &status,
                                    const OptimizerPtr &optimizer, size_t space) const;
 
   std::vector<SubstitutionPtr> list_;

@@ -20,7 +20,7 @@
 #include <any>
 #include <mutex>
 #include <string>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "fl/server/common.h"
 
 namespace mindspore {
@@ -77,7 +77,7 @@ class LocalMetaStore {
   LocalMetaStore &operator=(const LocalMetaStore &) = delete;
 
   // key_to_meta_ stores metadata with key-value format.
-  std::unordered_map<std::string, std::any> key_to_meta_;
+  mindspore::HashMap<std::string, std::any> key_to_meta_;
   // This mutex makes sure that the operations on key_to_meta_ is threadsafe.
   std::mutex mtx_;
   size_t curr_iter_num_;

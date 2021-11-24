@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/log_adapter.h"
@@ -37,7 +37,7 @@ bool GetObjectValue(const std::string &obj_key, ValuePtr *const data);
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 
-const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
+const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
 
 std::vector<std::string> GetObjKey(const py::object &obj);
 ResolveTypeDef GetObjType(const py::object &obj);

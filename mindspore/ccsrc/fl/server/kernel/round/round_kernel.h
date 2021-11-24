@@ -26,7 +26,7 @@
 #include <utility>
 #include <chrono>
 #include <thread>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "fl/server/common.h"
@@ -120,7 +120,7 @@ class RoundKernel : virtual public CPUKernel {
   std::mutex release_mtx_;
   std::queue<AddressPtr> heap_data_to_release_;
   std::mutex heap_data_mtx_;
-  std::unordered_map<AddressPtr, std::unique_ptr<unsigned char[]>> heap_data_;
+  mindspore::HashMap<AddressPtr, std::unique_ptr<unsigned char[]>> heap_data_;
 };
 }  // namespace kernel
 }  // namespace server

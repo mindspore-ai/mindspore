@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <stack>
 #include <utility>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
 
@@ -41,13 +41,13 @@ class ExitActor : public ControlActor {
 
   void Init() override;
 
-  const std::unordered_map<int, std::vector<AID>> &output_branch_control_arrows() const {
+  const mindspore::HashMap<int, std::vector<AID>> &output_branch_control_arrows() const {
     return output_branch_control_arrows_;
   }
-  const std::unordered_map<int, std::vector<DataArrowPtr>> &output_branch_data_arrows() const {
+  const mindspore::HashMap<int, std::vector<DataArrowPtr>> &output_branch_data_arrows() const {
     return output_branch_data_arrows_;
   }
-  const std::unordered_map<int, std::vector<DataArrowPtr>> &output_branch_partial_arrows() const {
+  const mindspore::HashMap<int, std::vector<DataArrowPtr>> &output_branch_partial_arrows() const {
     return output_branch_partial_arrows_;
   }
 
@@ -61,9 +61,9 @@ class ExitActor : public ControlActor {
 
   // Exit actor will send to different actors according to different callers, so the output data, control,
   // and partial arrows will have branch.
-  std::unordered_map<int, std::vector<DataArrowPtr>> output_branch_data_arrows_;
-  std::unordered_map<int, std::vector<AID>> output_branch_control_arrows_;
-  std::unordered_map<int, std::vector<DataArrowPtr>> output_branch_partial_arrows_;
+  mindspore::HashMap<int, std::vector<DataArrowPtr>> output_branch_data_arrows_;
+  mindspore::HashMap<int, std::vector<AID>> output_branch_control_arrows_;
+  mindspore::HashMap<int, std::vector<DataArrowPtr>> output_branch_partial_arrows_;
 
   // The exit actor needs to create a new device address and take out the ptr from the device tensor come from
   // the kernel actor. These new created device tensors are stored in the created device tensors.
@@ -73,7 +73,7 @@ class ExitActor : public ControlActor {
   std::vector<bool> is_need_copy_device_tensors_;
   // Output data.
   //  The output branch data corresponds to the output_data_arrows_ one by one.
-  std::unordered_map<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;
+  mindspore::HashMap<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;
 };
 
 using ExitActorPtr = std::shared_ptr<ExitActor>;

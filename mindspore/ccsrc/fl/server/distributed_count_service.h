@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include "utils/hash_map.h"
 #include "proto/ps.pb.h"
 #include "fl/server/common.h"
 #include "ps/core/server_node.h"
@@ -117,14 +118,14 @@ class DistributedCountService {
 
   // Key: name, e.g, startFLJob, updateModel, push.
   // Value: a set of id without repeatation because each work may report multiple times.
-  std::unordered_map<std::string, std::set<std::string>> global_current_count_;
+  mindspore::HashMap<std::string, std::set<std::string>> global_current_count_;
 
   // Key: name, e.g, StartFLJobCount.
   // Value: global threshold count in the server cluster dimension for this name.
-  std::unordered_map<std::string, size_t> global_threshold_count_;
+  mindspore::HashMap<std::string, size_t> global_threshold_count_;
 
   // First/last count event callbacks of the name.
-  std::unordered_map<std::string, CounterHandlers> counter_handlers_;
+  mindspore::HashMap<std::string, CounterHandlers> counter_handlers_;
 
   // Because the count is increased/queried conccurently, we must ensure the operations are threadsafe.
   std::unordered_map<std::string, std::mutex> mutex_;

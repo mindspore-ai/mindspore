@@ -16,17 +16,17 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_IO_FORMAT_MAP_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_IO_FORMAT_MAP_H_
 
-#include <unordered_map>
 #include <string>
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace transform {
 class IOFormatMap {
  public:
-  static std::unordered_map<std::string, std::string> &get();
+  static mindspore::HashMap<std::string, std::string> &get();
 
  private:
-  static std::unordered_map<std::string, std::string> io_format_map_;
+  static mindspore::HashMap<std::string, std::string> io_format_map_;
 };
 }  // namespace transform
 }  // namespace mindspore

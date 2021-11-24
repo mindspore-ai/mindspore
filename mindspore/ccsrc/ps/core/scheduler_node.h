@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@
 #include <vector>
 #include <thread>
 #include <mutex>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
 #include "ps/core/communicator/tcp_client.h"
@@ -147,7 +147,7 @@ class SchedulerNode : public Node {
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
-  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
+  mindspore::HashMap<NodeCommand, ResponseHandler> handlers_;
 
   NodeManager node_manager_;
 
@@ -155,14 +155,14 @@ class SchedulerNode : public Node {
   std::unique_ptr<std::thread> restful_thread_;
   std::shared_ptr<HttpServer> http_server_;
 
-  std::unordered_map<std::string, std::shared_ptr<TcpClient>> connected_nodes_;
+  mindspore::HashMap<std::string, std::shared_ptr<TcpClient>> connected_nodes_;
 
   std::unique_ptr<std::thread> client_thread_;
   std::atomic<bool> is_client_started_;
 
   std::unique_ptr<LeaderScaler> leader_scaler_;
 
-  std::unordered_map<std::string, OnRequestReceive> callbacks_;
+  mindspore::HashMap<std::string, OnRequestReceive> callbacks_;
 
   // Used to persist and obtain metadata information for scheduler.
   std::unique_ptr<RecoveryBase> scheduler_recovery_;

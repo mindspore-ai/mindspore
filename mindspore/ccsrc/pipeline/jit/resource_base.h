@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "utils/any.h"
 #include "ir/manager.h"
 
@@ -38,7 +38,7 @@ class ResourceBase {
   // set a manager defined outside which will not manage the graphs.
   void set_manager(const FuncGraphManagerPtr &manager) { manager_ = manager; }
 
-  std::unordered_map<std::string, Any> &results() { return results_; }
+  mindspore::HashMap<std::string, Any> &results() { return results_; }
 
   void SetResult(const std::string &key, const Any &value) { results_[key] = value; }
 
@@ -53,7 +53,7 @@ class ResourceBase {
 
  protected:
   FuncGraphManagerPtr manager_;
-  std::unordered_map<std::string, Any> results_;
+  mindspore::HashMap<std::string, Any> results_;
 };
 
 using ResourceBasePtr = std::shared_ptr<pipeline::ResourceBase>;

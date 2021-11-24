@@ -26,7 +26,7 @@ HttpRequestHandler::~HttpRequestHandler() {
   }
 }
 
-bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers) {
+bool HttpRequestHandler::Initialize(int fd, const mindspore::HashMap<std::string, OnRequestReceive *> &handlers) {
   evbase_ = event_base_new();
   MS_EXCEPTION_IF_NULL(evbase_);
   struct evhttp *http = evhttp_new(evbase_);

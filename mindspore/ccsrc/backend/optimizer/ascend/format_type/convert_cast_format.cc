@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 namespace mindspore {
@@ -79,7 +79,7 @@ void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGr
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast_node);
   auto used_cast_node_list = GetRealNodeUsedList(func_graph, cast_node);
   MS_EXCEPTION_IF_NULL(used_cast_node_list);
-  std::unordered_map<string, size_t> format_counter = CalculateFormat(used_cast_node_list, cast_node);
+  mindspore::HashMap<string, size_t> format_counter = CalculateFormat(used_cast_node_list, cast_node);
   auto cast_input_format = AnfAlgo::GetPrevNodeOutputFormat(cast_node, 0);
   string convert_format = kOpFormat_DEFAULT;
   if (cast_input_format == kOpFormat_DEFAULT) {
@@ -109,12 +109,12 @@ void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGr
   }
 }
 
-std::unordered_map<string, size_t> ConvertCastFormat::CalculateFormat(
+mindspore::HashMap<string, size_t> ConvertCastFormat::CalculateFormat(
   const std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> &used_cast_node_list,
   const CNodePtr &cast_node) const {
   MS_EXCEPTION_IF_NULL(used_cast_node_list);
   MS_EXCEPTION_IF_NULL(cast_node);
-  std::unordered_map<string, size_t> format_counter;
+  mindspore::HashMap<string, size_t> format_counter;
   for (const auto &node_info : *used_cast_node_list) {
     MS_EXCEPTION_IF_NULL(node_info.first);
     auto cast_out_node = node_info.first->cast<CNodePtr>();

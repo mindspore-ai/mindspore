@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -52,7 +52,7 @@ using Operator = ge::Operator;
 using OperatorPtr = std::shared_ptr<ge::Operator>;
 using DfGraph = ge::Graph;
 using DfGraphPtr = std::shared_ptr<DfGraph>;
-using TensorMap = std::unordered_map<std::string, std::shared_ptr<MeTensor>>;
+using TensorMap = mindspore::HashMap<std::string, std::shared_ptr<MeTensor>>;
 }  // namespace transform
 }  // namespace mindspore
 

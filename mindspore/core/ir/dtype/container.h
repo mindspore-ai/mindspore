@@ -27,8 +27,9 @@
 #include <string>
 #include <vector>
 #include <type_traits>
-#include <unordered_map>
 #include <algorithm>
+
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/named.h"
 #include "ir/dtype/type.h"
@@ -101,7 +102,7 @@ class MS_CORE_API Class final : public Object {
   /// \param[in] tag Define the tag of Class object.
   /// \param[in] attributes Define the attributes of Class object.
   /// \param[in] methods Define the methods of Class object.
-  Class(const Named &tag, const ClassAttrVector &attributes, const std::unordered_map<std::string, ValuePtr> &methods);
+  Class(const Named &tag, const ClassAttrVector &attributes, const mindspore::HashMap<std::string, ValuePtr> &methods);
 
   /// \brief Destructor of Class.
   ~Class() override {}
@@ -116,7 +117,7 @@ class MS_CORE_API Class final : public Object {
   /// \brief Set attributes value of Class object.
   ///
   /// \param[in] v Define the attributes value to be set.
-  void set_value(const std::unordered_map<std::string, ValuePtr> &v) { attributes_value_ = v; }
+  void set_value(const mindspore::HashMap<std::string, ValuePtr> &v) { attributes_value_ = v; }
 
   /// \brief Get the tag of Class object.
   ///
@@ -126,12 +127,12 @@ class MS_CORE_API Class final : public Object {
   /// \brief Get the value of Class object.
   ///
   /// \return The attributes value of Class object.
-  std::unordered_map<std::string, ValuePtr> GetValue() { return attributes_value_; }
+  mindspore::HashMap<std::string, ValuePtr> GetValue() { return attributes_value_; }
 
   /// \brief Get the methods of Class object.
   ///
   /// \return The methods of Class object.
-  std::unordered_map<std::string, ValuePtr> methods() { return methods_; }
+  mindspore::HashMap<std::string, ValuePtr> methods() { return methods_; }
 
   /// \brief Get the attributes of Class object.
   ///
@@ -147,9 +148,9 @@ class MS_CORE_API Class final : public Object {
   /// \return The description of the Class object.
   std::string DumpContent(bool is_dumptext) const;
   Named tag_;
-  std::unordered_map<std::string, ValuePtr> methods_;
+  mindspore::HashMap<std::string, ValuePtr> methods_;
   // For AbstractClass build value
-  std::unordered_map<std::string, ValuePtr> attributes_value_;
+  mindspore::HashMap<std::string, ValuePtr> attributes_value_;
 };
 using ClassPtr = std::shared_ptr<Class>;
 

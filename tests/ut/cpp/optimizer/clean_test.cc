@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ TEST_F(TestClean, TestEraseClassGetAttr) {
     if (IsValueNode<parse::ClassObject>(input0)) {
       std::vector<AbstractAttribute> attr = {{"x", std::make_shared<AbstractScalar>(kFloat64)},
                                              {"y", std::make_shared<AbstractScalar>(kFloat64)}};
-      std::unordered_map<std::string, ValuePtr> methods;
+      mindspore::HashMap<std::string, ValuePtr> methods;
       AbstractBasePtr abs_ptr = std::make_shared<AbstractClass>(Named("Point"), attr, methods);
       node->set_abstract(abs_ptr);
     }
@@ -141,7 +141,7 @@ TEST_F(TestClean, TestEraseClassMakeRecord) {
   para2->set_abstract(std::make_shared<AbstractScalar>(kAnyValue, kInt64));
   std::vector<AbstractAttribute> attr = {{"x", std::make_shared<AbstractScalar>(kAnyValue, kInt64)},
                                          {"y", std::make_shared<AbstractScalar>(kAnyValue, kInt64)}};
-  std::unordered_map<std::string, ValuePtr> methods;
+  mindspore::HashMap<std::string, ValuePtr> methods;
   AbstractBasePtr abs_ptr = std::make_shared<AbstractClass>(Named("Point"), attr, methods);
   auto cons_class = NewValueNode(abs_ptr->BuildValue());
   cons_class->set_abstract(abs_ptr);
@@ -176,7 +176,7 @@ TEST_F(TestClean, TestEraseClassPartial) {
 
   std::vector<AbstractAttribute> attr = {{"x", std::make_shared<AbstractScalar>(kAnyValue, kInt64)},
                                          {"y", std::make_shared<AbstractScalar>(kAnyValue, kInt64)}};
-  std::unordered_map<std::string, ValuePtr> methods;
+  mindspore::HashMap<std::string, ValuePtr> methods;
   AbstractBasePtr abs_ptr = std::make_shared<AbstractClass>(Named("Point"), attr, methods);
   auto cons_class = NewValueNode(abs_ptr->BuildValue());
   cons_class->set_abstract(abs_ptr);

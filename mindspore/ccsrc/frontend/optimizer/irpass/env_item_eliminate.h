@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 
 #include <algorithm>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/optimizer_caller.h"
@@ -87,8 +87,8 @@ class EnvGetitemTransform {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr,
-                     std::unordered_map<std::pair<SymbolicKeyInstancePtr, AnfNodePtr>, FuncGraphPtr, PairHasher>>
+  mindspore::HashMap<FuncGraphPtr,
+                     mindspore::HashMap<std::pair<SymbolicKeyInstancePtr, AnfNodePtr>, FuncGraphPtr, PairHasher>>
     cache_;
 };
 
@@ -150,8 +150,8 @@ class EnvGetitemTransformACrossGraph {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr,
-                     std::unordered_map<std::pair<SymbolicKeyInstancePtr, AnfNodePtr>, FuncGraphPtr, PairHasher>>
+  mindspore::HashMap<FuncGraphPtr,
+                     mindspore::HashMap<std::pair<SymbolicKeyInstancePtr, AnfNodePtr>, FuncGraphPtr, PairHasher>>
     cache_;
 };
 }  // namespace internal

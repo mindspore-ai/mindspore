@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
  */
 #ifndef MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
 #define MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
-#include <unordered_map>
+
 #include <vector>
 #include <memory>
+#include "utils/hash_map.h"
 #include "ir/primitive.h"
 #include "ops/primitive_c.h"
 #include "base/core_ops.h"
@@ -41,7 +42,7 @@ struct StandardPrimitiveImplReg {
 };
 
 using PrimitiveEvalImplMap =
-  std::unordered_map<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
+  mindspore::HashMap<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
 
 PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
 

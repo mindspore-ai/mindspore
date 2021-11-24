@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_CONST_INPUT_TO_ATTR_H_
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/optimizer.h"
 
@@ -32,7 +32,7 @@ class ConvertConstInputToAttr : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  std::unordered_map<std::string, std::unordered_set<size_t>> op_input_attr_map_;
+  mindspore::HashMap<std::string, mindspore::HashSet<size_t>> op_input_attr_map_;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace transform {
-std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"BasicLSTMCell", "ND"},
+mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BasicLSTMCell", "ND"},
                                                                             {"BasicLSTMCellInputGrad", "ND"},
                                                                             {"BasicLSTMCellCStateGrad", "ND"},
                                                                             {"Dequant", "ND"},
@@ -37,6 +37,6 @@ std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"Ba
                                                                             {"Conv3DBackpropFilter", "format"},
                                                                             {"Conv3DBackpropInput", "format"},
                                                                             {"Conv3DTranspose", "format"}};
-std::unordered_map<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
+mindspore::HashMap<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
 }  // namespace mindspore

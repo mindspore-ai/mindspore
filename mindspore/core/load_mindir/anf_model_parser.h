@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 
 #include <string>
 #include <map>
-#include <unordered_map>
 #include <memory>
+#include "utils/hash_map.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
@@ -65,7 +65,7 @@ class MSANFModelParser {
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   void ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
-                                   std::unordered_map<std::string, ValuePtr> *multi_value_map);
+                                   mindspore::HashMap<std::string, ValuePtr> *multi_value_map);
   ValuePtr ParseAttrInScalarForm(const mind_ir::AttributeProto &attr_proto, int index);
   ValuePtr ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
@@ -81,7 +81,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool little_endian() { return little_endian_; }
-  std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
     const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr GetAnfNode(const std::string &node_name);
 
@@ -92,7 +92,7 @@ class MSANFModelParser {
   bool is_lite_ = false;
   bool inc_load_ = false;
   bool need_renormalize_ = true;
-  std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
+  mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
   const unsigned char *mindir_dec_key_{nullptr};
   size_t mindir_key_size_;

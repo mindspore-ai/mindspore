@@ -20,8 +20,8 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/parallel/context.h"
 #include "frontend/optimizer/optimizer.h"
@@ -358,7 +358,7 @@ class InlinerBase : public AnfVisitor {
   bool is_checked_{false}, is_recursive_{false};
   bool use_move_;
   std::vector<std::vector<CriterionFuncType>> criterions_;
-  std::unordered_map<FuncGraphPtr, bool> graph_branch_cache_;
+  mindspore::HashMap<FuncGraphPtr, bool> graph_branch_cache_;
 };
 
 bool IsUniqueUse(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {

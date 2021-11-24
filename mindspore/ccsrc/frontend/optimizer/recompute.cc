@@ -20,9 +20,9 @@
 #include <utility>
 #include <list>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <algorithm>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "mindspore/core/base/core_ops.h"
 #include "utils/utils.h"
@@ -33,7 +33,7 @@ namespace {
 constexpr auto kGradientsFlag = "Gradients";
 const int64_t fusion_id_increasement_size = 2000;
 bool CanNotRecomputed(const CNodePtr &node) {
-  static std::unordered_set<PrimitivePtr> not_recomputed_op_list{
+  static mindspore::HashSet<PrimitivePtr> not_recomputed_op_list{
     prim::kPrimDropoutGenMask, prim::kPrimLoad, prim::kPrimTupleGetItem, prim::kPrimSend, prim::kPrimReceive};
 
   return std::any_of(not_recomputed_op_list.begin(), not_recomputed_op_list.end(),
@@ -95,7 +95,7 @@ std::vector<CNodePtr> FindCandidateRecomputedNodes(const FuncGraphManagerPtr &mn
     }
     const auto &node_index_set = output_set_iter->second;
     if (!std::any_of(node_index_set.begin(), node_index_set.end(),
-                     [](const std::pair<AnfNodePtr, int> &node_index) { return IsBpropNode(node_index.first); })) {
+                     [](const auto &node_index) { return IsBpropNode(node_index.first); })) {
       continue;
     }
     // Check inputs.
@@ -108,7 +108,7 @@ std::vector<CNodePtr> FindCandidateRecomputedNodes(const FuncGraphManagerPtr &mn
   return candidate_recomputed_nodes;
 }
 
-void GetMaxSubGraph(const FuncGraphManagerPtr &mng, std::unordered_set<CNodePtr> *recomputed_nodes, bool get_inputs,
+void GetMaxSubGraph(const FuncGraphManagerPtr &mng, mindspore::HashSet<CNodePtr> *recomputed_nodes, bool get_inputs,
                     bool get_outputs) {
   MS_EXCEPTION_IF_NULL(mng);
   MS_EXCEPTION_IF_NULL(recomputed_nodes);
@@ -160,9 +160,9 @@ void GetMaxSubGraph(const FuncGraphManagerPtr &mng, std::unordered_set<CNodePtr>
 }
 
 void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
-                                      const std::unordered_set<CNodePtr> &max_recomputed_sub_graph,
-                                      std::unordered_set<CNodePtr> *recompute_nodes,
-                                      std::unordered_set<CNodePtr> *target_nodes) {
+                                      const mindspore::HashSet<CNodePtr> &max_recomputed_sub_graph,
+                                      mindspore::HashSet<CNodePtr> *recompute_nodes,
+                                      mindspore::HashSet<CNodePtr> *target_nodes) {
   MS_EXCEPTION_IF_NULL(mng);
   MS_EXCEPTION_IF_NULL(recompute_nodes);
   MS_EXCEPTION_IF_NULL(target_nodes);
@@ -189,8 +189,8 @@ void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
 }
 
 std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin_nodes_topological,
-                                             const std::unordered_set<CNodePtr> &recomputed_origin_nodes,
-                                             const std::unordered_set<CNodePtr> &target_nodes) {
+                                             const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
+                                             const mindspore::HashSet<CNodePtr> &target_nodes) {
   std::vector<AnfNodePtr> first_target_inputs;
   for (const auto &node : origin_nodes_topological) {
     MS_EXCEPTION_IF_NULL(node);
@@ -212,7 +212,7 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
   return first_target_inputs;
 }
 
-bool HasGradInputs(const AnfNodePtr &node, std::unordered_map<AnfNodePtr, bool> *has_grad_inputs_map) {
+bool HasGradInputs(const AnfNodePtr &node, mindspore::HashMap<AnfNodePtr, bool> *has_grad_inputs_map) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(has_grad_inputs_map);
   if (has_grad_inputs_map->find(node) != has_grad_inputs_map->end()) {
@@ -220,7 +220,7 @@ bool HasGradInputs(const AnfNodePtr &node, std::unordered_map<AnfNodePtr, bool> 
   }
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
-    has_grad_inputs_map->insert(std::make_pair(node, false));
+    (void)has_grad_inputs_map->emplace(node, false);
     return false;
   }
   const auto &inputs = cnode->inputs();
@@ -230,11 +230,11 @@ bool HasGradInputs(const AnfNodePtr &node, std::unordered_map<AnfNodePtr, bool> 
       continue;
     }
     if (IsBpropNode(inputs[i]) || HasGradInputs(inputs[i], has_grad_inputs_map)) {
-      has_grad_inputs_map->insert(std::make_pair(node, true));
+      (void)has_grad_inputs_map->emplace(node, true);
       return true;
     }
   }
-  has_grad_inputs_map->insert(std::make_pair(node, false));
+  (void)has_grad_inputs_map->emplace(node, false);
   return false;
 }
 
@@ -277,7 +277,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
   MS_EXCEPTION_IF_NULL(graph);
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  std::unordered_map<AnfNodePtr, bool> has_grad_inputs_map;
+  mindspore::HashMap<AnfNodePtr, bool> has_grad_inputs_map;
   for (const auto &node : origin_nodes_topological) {
     MS_EXCEPTION_IF_NULL(node);
     // The node may be set the non-recomputed before such as the cell outputs.
@@ -336,8 +336,8 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
 
 CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_node,
                            const std::vector<AnfNodePtr> &first_target_inputs,
-                           const std::unordered_set<CNodePtr> &recomputed_origin_nodes,
-                           std::unordered_map<CNodePtr, CNodePtr> *origin_to_recomputed_nodes) {
+                           const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
+                           mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_recomputed_nodes) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(origin_node);
   MS_EXCEPTION_IF_NULL(origin_to_recomputed_nodes);
@@ -400,14 +400,14 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
     new_inputs[1] = depend_node;
   }
   auto recomputed_node = CreateNewRecomputedNode(graph, origin_node, new_inputs);
-  origin_to_recomputed_nodes->insert(std::make_pair(origin_node, recomputed_node));
+  (void)origin_to_recomputed_nodes->emplace(origin_node, recomputed_node);
   return recomputed_node;
 }
 
-void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const std::unordered_set<CNodePtr> &target_nodes,
-                              const std::unordered_set<CNodePtr> &origin_recomputed_nodes,
+void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSet<CNodePtr> &target_nodes,
+                              const mindspore::HashSet<CNodePtr> &origin_recomputed_nodes,
                               const std::vector<AnfNodePtr> &first_target_inputs,
-                              std::unordered_map<CNodePtr, CNodePtr> *origin_to_recomputed_nodes) {
+                              mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_recomputed_nodes) {
   MS_EXCEPTION_IF_NULL(graph);
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
@@ -449,18 +449,18 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
   SetRecomputedAttr(graph, origin_nodes_topological);
   // Get candidate origin recomputed nodes which have no grad inputs and output to at least one grad node directly.
   std::vector<CNodePtr> candidate_recomputed_nodes = FindCandidateRecomputedNodes(mng, origin_nodes_topological);
-  std::unordered_set<CNodePtr> visited_nodes;
+  mindspore::HashSet<CNodePtr> visited_nodes;
   for (const auto &candidate_recomputed_node : candidate_recomputed_nodes) {
     if (visited_nodes.find(candidate_recomputed_node) != visited_nodes.end()) {
       continue;
     }
-    std::unordered_set<CNodePtr> max_recomputed_sub_graph = {candidate_recomputed_node};
+    mindspore::HashSet<CNodePtr> max_recomputed_sub_graph = {candidate_recomputed_node};
     // Get max continuous recomputed sub-graph.
     GetMaxSubGraph(mng, &max_recomputed_sub_graph, true, true);
     visited_nodes.insert(max_recomputed_sub_graph.begin(), max_recomputed_sub_graph.end());
     // Get the origin recomputed nodes which directly output to the grad nodes.
-    std::unordered_set<CNodePtr> origin_recomputed_nodes;
-    std::unordered_set<CNodePtr> target_nodes;
+    mindspore::HashSet<CNodePtr> origin_recomputed_nodes;
+    mindspore::HashSet<CNodePtr> target_nodes;
     GetOriginRecomputeAndTargetNodes(mng, max_recomputed_sub_graph, &origin_recomputed_nodes, &target_nodes);
     // Also get the inputs of origin recomputed nodes which eventually output to the grad nodes.
     GetMaxSubGraph(mng, &origin_recomputed_nodes, true, false);
@@ -469,7 +469,7 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
     // not be executed until these inputs are ready.
     std::vector<AnfNodePtr> first_target_inputs =
       GetFirstTargetInputs(origin_nodes_topological, origin_recomputed_nodes, target_nodes);
-    std::unordered_map<CNodePtr, CNodePtr> origin_to_recomputed_nodes;
+    mindspore::HashMap<CNodePtr, CNodePtr> origin_to_recomputed_nodes;
     // Begin duplicate origin recomputed nodes with each target node.
     DuplicateRecomputedNodes(graph, target_nodes, origin_recomputed_nodes, first_target_inputs,
                              &origin_to_recomputed_nodes);

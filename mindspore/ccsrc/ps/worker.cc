@@ -312,7 +312,7 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     return false;
   }
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
-  std::unordered_map<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
+  mindspore::HashMap<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
   std::shared_ptr<std::vector<float>> values = std::make_shared<std::vector<float>>();
   std::shared_ptr<std::vector<Key>> keys = std::make_shared<std::vector<Key>>();
   int64_t value_offset = 0;
@@ -534,7 +534,7 @@ bool Worker::IsReadyForPull(const Key &key) {
   }
 }
 
-void Worker::PrepareSparseGradient(const size_t, const size_t, const std::unordered_set<int> &distinct_ids,
+void Worker::PrepareSparseGradient(const size_t, const size_t, const mindspore::HashSet<int> &distinct_ids,
                                    const std::vector<std::pair<int, float *>> &indice_to_grads, const int *all_indice,
                                    const size_t segment_size, float *gradient, int *indices) {
   MS_EXCEPTION_IF_NULL(all_indice);
@@ -696,7 +696,7 @@ void Worker::LookupIdPartitioner(const EmbeddingTableLookup &send, PartitionEmbe
     const EmbeddingTableShardMetadata &range = ranges[i];
     const auto &begin = range.begin();
     const auto &end = range.end();
-    std::unordered_set<int32_t> unique_ids;
+    mindspore::HashSet<int32_t> unique_ids;
     auto &kvs = partition->at(i).second;
 
     kvs.set_key(key);
@@ -780,7 +780,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
 
     // Prepare the sparse gradient and indice
     std::vector<int> indice_ids;
-    std::unordered_set<int> distinct_ids;
+    mindspore::HashSet<int> distinct_ids;
     for (size_t j = 0; j < indice_size; j++) {
       size_t indice = static_cast<size_t>(indice_data[j]);
       if (indice >= begin && indice <= end) {

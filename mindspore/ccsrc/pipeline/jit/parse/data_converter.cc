@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
  */
 
 #include "pipeline/jit/parse/data_converter.h"
-#include <unordered_map>
 #include <utility>
 #include <string>
 #include <memory>
 #include <vector>
+#include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/operator/ops.h"
@@ -340,8 +340,8 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
     FuncGraphPtr bprop_graph =
       enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
     if (bprop_graph != nullptr) {
-      (void)func_graph->transforms().insert(std::make_pair(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph)));
-      (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
+      (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
+      (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
       func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
     }
   }
@@ -575,16 +575,16 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
 }
 
 namespace data_converter {
-static std::unordered_map<std::string, ValuePtr> object_map_;
+static mindspore::HashMap<std::string, ValuePtr> object_map_;
 
-static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
+static mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
   MS_LOG(DEBUG) << "Set func graph size:" << object_graphs_map_.size();
 }
 
-const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
+const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
   MS_LOG(DEBUG) << "Obj size:" << object_graphs_map_.size();
   return object_graphs_map_;
 }
@@ -687,7 +687,7 @@ void ClearObjectCache() {
 }
 }  // namespace data_converter
 
-static std::unordered_map<std::string, ClassPtr> g_dataClassToClass = {};
+static mindspore::HashMap<std::string, ClassPtr> g_dataClassToClass = {};
 
 // Parse dataclass to mindspore Class type
 ClassPtr ParseDataClass(const py::object &cls_obj) {
@@ -709,7 +709,7 @@ ClassPtr ParseDataClass(const py::object &cls_obj) {
     attributes.push_back(std::make_pair(py::cast<std::string>(item.first), type_value));
   }
 
-  std::unordered_map<std::string, ValuePtr> methods_map;
+  mindspore::HashMap<std::string, ValuePtr> methods_map;
   py::dict methods = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_METHODS, cls_obj);
   for (auto &item : methods) {
     auto fun_name = item.first.cast<std::string>();
