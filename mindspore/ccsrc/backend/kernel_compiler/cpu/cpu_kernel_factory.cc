@@ -127,7 +127,8 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
   if (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);
     if (op_info_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Not find op[" << kernel_name << "] in cpu";
+      MS_LOG(EXCEPTION) << "Not find op[" << kernel_name << "] in cpu. For more details, "
+                        << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
     }
     kernel_attrs.clear();
     SetKernelAttrs(op_info_ptr, &kernel_attrs);

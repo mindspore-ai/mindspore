@@ -672,7 +672,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
   MS_EXCEPTION_IF_NULL(inst);
   if (inst->parallel_mode() != parallel::STAND_ALONE) {
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
-      MS_LOG(WARNING) << "Get rank id failed.";
+      MS_LOG(WARNING) << "Get rank id failed, now using the default value 0.";
     }
   }
 
@@ -680,7 +680,8 @@ std::string AscendKernelRuntime::GetDumpPath() {
   std::string path;
   const auto kSuffix = "/node_dump";
   if (ms_om_path.empty()) {
-    MS_LOG(WARNING) << "MS_OM_PATH is null, so dump to process local path, as ./rank_id/node_dump/...";
+    MS_LOG(WARNING) << "The environment variable 'MS_OM_PATH' is not set, the files of node dump will save to the "
+                    << "process local path, as ./rank_id/node_dump/...";
     path = "./rank_" + std::to_string(rank_id) + kSuffix;
   } else {
     path = ms_om_path + "/rank_" + std::to_string(rank_id) + kSuffix;
@@ -1082,18 +1083,22 @@ bool AscendKernelRuntime::HcclInit() {
   if (config_path_str == nullptr) {
     config_path_str = std::getenv("RANK_TABLE_FILE");
     if (config_path_str == nullptr) {
-      MS_LOG(ERROR) << "Get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+      MS_LOG(ERROR) << "The environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE' is not set, so get"
+                    << " hccl json config failed, please set env 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE'";
       return false;
     }
   }
   if (strlen(config_path_str) >= kPathMax) {
-    MS_LOG(ERROR) << "File path oversize";
+    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE', the path length"
+                  << " should be smaller than " << kPathMax << ", but got " << config_path_str;
     return false;
   }
   std::string rank_id_str = GetRankIdStr();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
-    MS_LOG(ERROR) << "File path " << config_path_str << " does not exist";
+    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE', the path is: "
+                  << config_path_str << ". Please check (1) whether the path exists, "
+                  << "(2) whether the path has the access permission, (3) whether the path is too long. ";
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;

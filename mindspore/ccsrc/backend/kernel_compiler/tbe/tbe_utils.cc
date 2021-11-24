@@ -178,7 +178,9 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   std::string path = config_path + kCceKernelMeta + json_name + kInfoSuffix;
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
-    MS_LOG(WARNING) << "Get real path failed, invalid path: " << realpath.value();
+    MS_LOG(WARNING) << "Invalid path is: " << realpath.value()
+                    << "Please check (1) whether the path exists, (2) whether the path has the access "
+                    << "permission, (3) whether the path is too long. ";
     return;
   }
   ChangeFileMode(realpath.value(), S_IWUSR);
@@ -391,7 +393,7 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;
   if (path.size() > PATH_MAX) {
-    MS_LOG(WARNING) << "File path: " << path << "is too long.";
+    MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got " << path;
     *get_flag = false;
     return;
   }
@@ -417,7 +419,7 @@ void TbeUtils::SaveCompileInfo(const std::string &json_name, const std::string &
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kJsonSuffix;
   if (path.size() > PATH_MAX) {
-    MS_LOG(WARNING) << "File path: " << path << "is too long.";
+    MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got " << path;
     *save_flag = false;
     return;
   }

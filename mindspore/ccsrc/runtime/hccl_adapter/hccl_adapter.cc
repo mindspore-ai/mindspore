@@ -44,7 +44,7 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
                                                          std::string_view rank_file) {
   auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
   if (env_deploy_mode.empty()) {
-    MS_LOG(WARNING) << kHcclDeployModeEnv << " is not set in ENV. Now set to default value 0";
+    MS_LOG(WARNING) << "The environment variable 'DEPLOY_MODE' is not set. Now set to default value 0";
     env_deploy_mode = "0";
   }
 
