@@ -149,7 +149,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadGraphOutputs();
 
-  void CheckDatasetSinkMode();
+  void CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
   void LoadGraphs(const KernelGraphPtr &graph_ptr);
 
