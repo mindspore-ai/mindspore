@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include <tuple>
+#include <set>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -103,7 +104,7 @@ void EliminateMakeTuple(const FuncGraphPtr &fg) {
 
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
-  AnfNodePtrList value_nodes;
+  std::set<AnfNodePtr> value_nodes;
   for (const auto &cnode : cnodes) {
     auto &inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
@@ -112,7 +113,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       if (tensor == nullptr || tensor->DataSize() == 1) {
         continue;
       }
-      value_nodes.push_back(tnode);
+      value_nodes.insert(tnode);
     }
   }
   if (value_nodes.empty()) return false;
