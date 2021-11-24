@@ -15,12 +15,11 @@
 """ test graph fallback """
 import pytest
 import numpy as np
-from mindspore import ms_function, context
+from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_1():
     """
     Feature: JIT Fallback
@@ -30,12 +29,12 @@ def test_np_array_1():
     @ms_function
     def np_array_1():
         a = np.array([1, 2, 3])
-        return a
+        return Tensor(a)
     res = np_array_1()
-    assert res == (1, 2, 3)
+    expect_res = Tensor(np.array([1, 2, 3]))
+    assert np.all(res.asnumpy() == expect_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_2():
     """
     Feature: JIT Fallback
@@ -45,12 +44,12 @@ def test_np_array_2():
     @ms_function
     def np_array_2():
         a = np.array([[1, 2], [3, 4]])
-        return a
+        return Tensor(a)
     res = np_array_2()
-    assert res == ([1, 2], [3, 4])
+    expect_res = Tensor(np.array([[1, 2], [3, 4]]))
+    assert np.all(res.asnumpy() == expect_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_3():
     """
     Feature: JIT Fallback
@@ -60,9 +59,10 @@ def test_np_array_3():
     @ms_function
     def np_array_3():
         a = np.array([1, 2, 3, 4, 5], ndmin=2)
-        return a
+        return Tensor(a)
     res = np_array_3()
-    assert res == ([1, 2, 3, 4, 5],)
+    expect_res = Tensor(np.array([[1, 2, 3, 4, 5]]))
+    assert np.all(res.asnumpy() == expect_res.asnumpy())
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -75,12 +75,11 @@ def test_np_array_4():
     @ms_function
     def np_array_4():
         a = np.array([1, 2, 3], dtype=complex)
-        return a
+        return Tensor(a)
     res = np_array_4()
-    assert res == ((1+0j), (2+0j), (3+0j))
+    assert np.all(res.asnumpy() == Tensor(np.array([1+0j, 2+0j, 3+0j])).asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_dtype_1():
     """
     Feature: JIT Fallback
@@ -90,12 +89,11 @@ def test_np_dtype_1():
     @ms_function
     def np_dtype_1():
         t = np.dtype(np.int32)
-        return t
+        return Tensor(np.array([1, 2, 3], dtype=t))
     res = np_dtype_1()
-    print("res:", res)
+    assert np.all(res.asnumpy() == Tensor(np.array([1, 2, 3], dtype=np.int32)).asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_dtype_2():
     """
     Feature: JIT Fallback
@@ -105,9 +103,9 @@ def test_np_dtype_2():
     @ms_function
     def np_dtype_2():
         t = np.dtype('i4')
-        return t
+        return Tensor(np.array([1, 2, 3], dtype=t))
     res = np_dtype_2()
-    print("res:", res)
+    assert np.all(res.asnumpy() == Tensor(np.array([1, 2, 3], dtype=np.int32)).asnumpy())
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -120,7 +118,7 @@ def test_np_dtype_3():
     @ms_function
     def np_dtype_3():
         t = np.dtype([('age', np.int8)])
-        return t
+        return Tensor(np.array([1, 2, 3], dtype=t))
     res = np_dtype_3()
     print("res:", res)
 
@@ -136,12 +134,11 @@ def test_np_dtype_4():
     def np_dtype_4():
         student = np.dtype([('name', 'S20'), ('age', 'i1'), ('marks', 'f4')])
         a = np.array([('abc', 21, 50), ('xyz', 18, 75)], dtype=student)
-        return a
+        return Tensor(a)
     res = np_dtype_4()
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_array_ndim():
     """
     Feature: JIT Fallback
@@ -151,9 +148,9 @@ def test_np_array_ndim():
     @ms_function
     def np_array_ndim():
         a = np.arange(24)
-        return a.ndim
+        return Tensor(a.ndim)
     res = np_array_ndim()
-    print("res:", res)
+    assert res == 1
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -167,9 +164,9 @@ def test_np_array_reshape_1():
     def np_array_reshape_1():
         a = np.array([[1, 2, 3], [4, 5, 6]])
         b = a.reshape(3, 2)
-        return b.ndim
+        return Tensor(b.ndim)
     res = np_array_reshape_1()
-    print("res:", res)
+    assert res == 2
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -198,9 +195,10 @@ def test_np_array_itemsize():
     @ms_function
     def np_array_itemsize():
         a = np.array([1, 2, 3, 4, 5], dtype=np.int8)
-        return a.itemsize
+        return Tensor(a.itemsize)
     res = np_array_itemsize()
     print("res:", res)
+    assert res == 1
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -218,7 +216,6 @@ def test_np_array_flags():
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_empty_zeros_ones():
     """
     Feature: JIT Fallback
@@ -230,12 +227,12 @@ def test_np_empty_zeros_ones():
         x = np.empty([3, 2], dtype=np.int)
         y = np.zeros(x.shape, dtype=np.int)
         z = np.ones(x.shape, dtype=np.int)
-        return y + z
+        return Tensor(y + z)
     res = np_empty_zeros_ones()
-    print("res:", res)
+    except_res = Tensor(np.ones([3, 2], dtype=np.int))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_asarray_list():
     """
     Feature: JIT Fallback
@@ -246,12 +243,12 @@ def test_np_asarray_list():
     def np_asarray_list():
         x = [1, 2, 3]
         y = np.asarray(x)
-        return y
+        return Tensor(y)
     res = np_asarray_list()
-    print("res:", res)
+    except_res = Tensor(np.asarray([1, 2, 3]))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_asarray_tuple():
     """
     Feature: JIT Fallback
@@ -262,9 +259,10 @@ def test_np_asarray_tuple():
     def np_asarray_tuple():
         x = (1, 2, 3)
         y = np.asarray(x)
-        return y
+        return Tensor(y)
     res = np_asarray_tuple()
-    print("res:", res)
+    except_res = Tensor(np.asarray((1, 2, 3)))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
@@ -278,7 +276,7 @@ def test_np_asarray_tuple_list():
     def np_asarray_tuple_list():
         x = [(1, 2, 3), (4, 5)]
         y = np.asarray(x)
-        return y
+        return Tensor(y)
     res = np_asarray_tuple_list()
     print("res:", res)
 
@@ -299,7 +297,6 @@ def test_np_frombuffer():
     print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_fromiter():
     """
     Feature: JIT Fallback
@@ -311,12 +308,12 @@ def test_np_fromiter():
         l = range(5)
         it = iter(l)
         x = np.fromiter(it, dtype=float)
-        return x
+        return Tensor(x)
     res = np_fromiter()
-    print("res:", res)
+    except_res = Tensor(np.asarray([0., 1., 2., 3., 4.]))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_arange():
     """
     Feature: JIT Fallback
@@ -327,38 +324,12 @@ def test_np_arange():
     def np_arange():
         x = np.arange(5, dtype=float)
         y = np.arange(10, 20, 2)
-        return x, y
-    res1, res2 = np_arange()
-    print("res1:", res1)
-    print("res2:", res2)
+        return Tensor(x + y)
+    res = np_arange()
+    except_res = Tensor(np.asarray([10., 13., 16., 19., 22.]))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_linspace():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with linspace in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_linspace():
-        a = np.linspace(1, 10, 10)
-        b = np.linspace(1, 1, 10)
-        c = np.linspace(10, 20, 5, endpoint=False)
-        d = np.linspace(10, 20, 5, endpoint=True)
-        e = np.linspace(1, 10, 10, retstep=True)
-        f = np.linspace(1, 10, 10).reshape([10, 1])
-        return a, b, c, d, e, f
-    a, b, c, d, e, f = np_linspace()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-    print("d:", d)
-    print("e:", e)
-    print("f:", f)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_np_logspace():
     """
     Feature: JIT Fallback
@@ -367,126 +338,8 @@ def test_np_logspace():
     """
     @ms_function
     def np_logspace():
-        a = np.logspace(1.0, 2.0, num=10)
-        b = np.logspace(0, 9, 10, base=2)
-        return a, b
-    a, b = np_logspace()
-    print("a:", a)
-    print("b:", b)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_arange_slice_1():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with arange slice in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_arange_slice_1():
-        x = np.arange(10)
-        index = slice(2, 7, 2)
-        a = x[index]
-        b = x[2:7:2]
-        c = x[5]
-        d = x[2:]
-        e = x[2:5]
-        return a, b, c, d, e
-    a, b, c, d, e = np_arange_slice_1()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-    print("d:", d)
-    print("e:", e)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_arange_slice_2():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with arange slice in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_arange_slice_2():
-        x = np.array([[1, 2, 3], [3, 4, 5], [4, 5, 6]])
-        a = x[1:]
-        b = x[..., 1]
-        c = x[1, ...]
-        d = x[..., 1:]
-        return a, b, c, d
-    a, b, c, d = np_arange_slice_2()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-    print("d:", d)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_array_advanced_index_1():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with array advanced index in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_array_advanced_index_1():
-        x = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]])
-        a = x[[0, 1, 2], [0, 1, 0]]
-        rows = np.array([[0, 0], [3, 3]])
-        cols = np.array([[0, 2], [0, 2]])
-        b = x[rows, cols]
-        c = x[1:3, 1:3]
-        d = x[1:3, [1, 2]]
-        e = x[..., 1:]
-        return a, b, c, d, e
-    a, b, c, d, e = np_array_advanced_index_1()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-    print("d:", d)
-    print("e:", e)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_array_advanced_index_2():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with array advanced index in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_array_advanced_index_2():
-        x = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]])
-        y = np.array([np.nan, 1, 2, np.nan, 3, 4, 5])
-        z = np.array([1, 2 + 6j, 5, 3.5 + 5j])
-        a = x[x > 5]
-        b = y[~np.isnan(y)]
-        c = z[np.iscomplex(z)]
-        return a, b, c
-    a, b, c = np_array_advanced_index_2()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_array_advanced_index_3():
-    """
-    Feature: JIT Fallback
-    Description: Test numpy with array advanced index in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_array_advanced_index_3():
-        x = np.arange(32).reshape((8, 4))
-        a = x[[4, 2, 1, 7]]
-        y = np.arange(32).reshape((8, 4))
-        b = y[[-4, -2, -1, -7]]
-        z = np.arange(32).reshape((8, 4))
-        c = z[np.ix_([1, 5, 7, 2], [0, 3, 1, 2])]
-        return a, b, c
-    a, b, c = np_array_advanced_index_3()
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
+        a = np.logspace(0, 9, 10, base=2)
+        return Tensor(a)
+    res = np_logspace()
+    except_res = Tensor(np.array([1., 2., 4., 8., 16., 32., 64., 128., 256., 512.]))
+    assert np.all(res.asnumpy() == except_res.asnumpy())
