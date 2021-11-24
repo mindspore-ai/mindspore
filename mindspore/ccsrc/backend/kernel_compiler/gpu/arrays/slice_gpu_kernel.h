@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SLICE_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include <utility>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -29,7 +30,8 @@ namespace kernel {
 template <typename T>
 class SliceGpuFwdKernel : public GpuKernel {
  public:
-  SliceGpuFwdKernel() : is_null_input_(false), input_size_(0), output_size_(0), workspace_size_(0) {}
+  SliceGpuFwdKernel()
+      : is_null_input_(false), input_size_(0), output_size_(0), workspace_size_(0), kernel_name_("Slice") {}
   ~SliceGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -86,15 +88,14 @@ class SliceGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckParam(kernel_node);
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(out_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(out_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SliceGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -139,34 +140,32 @@ class SliceGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SliceGpuFwdKernel needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but SliceGpuFwdKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (input_shape.size() > 7) {
-      MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", but SliceGpuFwdKernel olny support 7d or lower.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
+                        << input_shape.size();
     }
     if (input_shape.size() == 0) {
-      MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to 0, but got "
+                        << input_shape.size();
     }
     auto size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     auto begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
 
     if (size.size() != input_shape.size() || begin.size() != input_shape.size()) {
-      MS_LOG(ERROR) << "For 'SliceGpuFwdKernel', the dims of size and begin should be equal to the dims of input, "
-                    << "but got dims of input: " << input_shape.size() << ", dims of size: " << size.size()
-                    << ", dims of begin: " << begin.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of size, begin and input_x should be the same, but got the dimension "
+                        << "of size: " << size.size() << ", the dimension of begin: " << begin.size()
+                        << ", the dimension of input_x: " << input_shape.size();
     }
 
     for (size_t i = 0; i < input_shape.size(); i++) {
@@ -174,7 +173,9 @@ class SliceGpuFwdKernel : public GpuKernel {
         size[i] = input_shape[i] - begin[i];
       }
       if (input_shape[i] <= 0 || size[i] <= 0) {
-        MS_LOG(WARNING) << "Slice output is null.";
+        MS_LOG(WARNING) << "For '" << kernel_name_
+                        << "', the element of 'size' and the shape of input_x should be greater than 0, but got "
+                        << "size[" << i << "]: " << size[i] << ", input_x.shape[" << i << "] " << input_shape[i];
         is_null_input_ = true;
       }
     }
@@ -183,8 +184,6 @@ class SliceGpuFwdKernel : public GpuKernel {
                          [](const int64_t &e) { return static_cast<int32_t>(e); });
     (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
                          [](const int64_t &e) { return static_cast<int32_t>(e); });
-
-    return true;
   }
 
   // use int32_t, a smaller type than the typical size_t, so that we can add higher
@@ -202,6 +201,7 @@ class SliceGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

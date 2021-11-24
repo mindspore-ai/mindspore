@@ -69,28 +69,27 @@ class ReverseV2GpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but ReverseV2GpuKernel expects 1.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
     }
 
     size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 1) {
-      MS_LOG(ERROR) << "Number of outputs is " << output_count << ", but should be 1 for ReverseV2GpuKernel.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_count;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ReverseV2GpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
     input_rank_ = input_shape_.size();
     if (input_rank_ < 1) {
-      MS_LOG(EXCEPTION) << "For 'ReverseV2GpuKernel', the rank of input cannot be less than 1, bot got " << input_rank_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 1, but got "
+                        << input_rank_;
     }
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
@@ -105,7 +104,8 @@ class ReverseV2GpuKernel : public GpuKernel {
 
     axis_ = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
     if (axis_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'ReverseV2GpuKernel', the rank of axis cannot be less than 1, bot got " << axis_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of 'axis' cannot be less than 1, but got "
+                        << axis_.size();
     }
     for (int64_t &dimension : axis_) {
       if (dimension < 0) {

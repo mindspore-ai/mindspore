@@ -93,27 +93,27 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     memcpy_flag_ = false;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but TensorScatterUpdate needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but TensorScatterUpdate has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
     update_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(update_shapes_) || CHECK_NULL_INPUT(indices_shapes_) ||
-                     CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    is_null_input_ = CHECK_SHAPE_NULL(update_shapes_, kernel_name, "update") ||
+                     CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
+                     CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input_x") ||
+                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'TensorScatterUpdateGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -126,14 +126,18 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
     const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
     void *indices_stride_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (indices_stride_work == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to alloc indices_stride_work, size: " << indices_len;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the memory alloc of indices_stride_work should be successful, but failed, got size: "
+                        << indices_len;
     }
     indices_stride_ = static_cast<S *>(indices_stride_work);
 
     const size_t vec_work_len = sizeof(S) * vec_work_shape_.size();
     void *work_shape_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
     if (work_shape_work == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to alloc work_shape_work, size: " << vec_work_len;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the memory alloc of work_shape_work should be successful, but failed, got size: "
+                        << vec_work_len;
     }
     work_shape_ = static_cast<S *>(work_shape_work);
 

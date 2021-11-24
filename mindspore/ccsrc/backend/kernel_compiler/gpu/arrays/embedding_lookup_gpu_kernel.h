@@ -59,6 +59,7 @@ class EmbeddingLookupKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == 3) {
@@ -67,20 +68,21 @@ class EmbeddingLookupKernel : public GpuKernel {
     } else if (input_num == 2) {
       MS_LOG(INFO) << " EmbeddingLookup running in Normal Mode.";
     } else {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but EmbeddingLookup needs 2 or 3.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2 or 3, but got " << input_num;
     }
     input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(indices_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "input_indices") ||
+                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'EmbeddingLookupGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     if (input_shapes_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'EmbeddingLookupGpuKernel', the rank of input cannot be less than 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 1, but got "
+                        << input_shapes_.size();
     }
     if (!is_dynamic_shape_) {
       offset_ = GetAttr<int64_t>(kernel_node, "offset");

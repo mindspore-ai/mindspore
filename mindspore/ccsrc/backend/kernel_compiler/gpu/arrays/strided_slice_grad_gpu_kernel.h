@@ -50,13 +50,14 @@ class StridedSliceGradGpuKernel : public GpuKernel, public StridedSliceGpuCommon
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
     for (auto x : shapex) {
       input_shape_.push_back(static_cast<size_t>(x));
     }
     if (input_shape_.size() > MAX_DIMS) {
-      MS_LOG(ERROR) << "StridedSliceGrad support support dims less than " << input_shape_.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than " << MAX_DIMS
+                        << ", but got " << input_shape_.size();
     }
 
     CollectInfo(kernel_node);

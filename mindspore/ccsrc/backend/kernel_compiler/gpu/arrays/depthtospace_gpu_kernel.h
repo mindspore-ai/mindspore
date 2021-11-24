@@ -53,35 +53,34 @@ class DepthToSpaceFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
-    if (block_size_ == 0) {
-      MS_LOG(ERROR) << "block_size_ can not be 0.";
-      return false;
+    if (block_size_ < 2) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'block_size' cannot be less than 2, but got "
+                        << block_size_;
     }
     // check input num and output num
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but DepthToSpace needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", DepthToSpace needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     // check input_shape
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'DepthToSpaceGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
     shape_size_ = input_shape.size();
     if (shape_size_ != DEPTHTOSPACE_BUFFER_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but DepthToSpace supports 4-D tensor.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be "
+                        << DEPTHTOSPACE_BUFFER_DIMENSION << ", but got " << shape_size_;
     }
     // get input and out put information
     input_size_ = 1;

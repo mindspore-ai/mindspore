@@ -53,17 +53,17 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
     small_ = (kernel_name == "ArgMinWithValue") ? true : false;
     std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ArgmaxwithvalueGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     int64_t dims = SizeToLong(shape.size());
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < -dims || axis >= dims) {
-      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be in the range [-" << dims << "," << dims
+                        << "), but got " << axis;
     }
     if (axis < 0) {
       axis += dims;
@@ -78,7 +78,8 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
     }
     bound_ = static_cast<S>(shape[axis]);
     if (shape[axis] != static_cast<size_t>(bound_)) {
-      MS_LOG(EXCEPTION) << "bound's shape is larger than index type and overflows when casting.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of shape[axis] should be "
+                        << static_cast<size_t>(bound_) << ", but got " << shape[axis];
     }
     outerSize_ = 1;
     for (int64_t i = axis - 1; i >= 0; i--) {

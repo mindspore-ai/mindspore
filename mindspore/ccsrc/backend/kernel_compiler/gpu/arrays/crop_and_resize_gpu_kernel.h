@@ -64,15 +64,14 @@ class CropAndResizeGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but CropAndResize needs 4 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but CropAndResize has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     // input image
     auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -80,19 +79,19 @@ class CropAndResizeGpuKernel : public GpuKernel {
     auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_image_shape) || CHECK_NULL_INPUT(input_boxes_shape) ||
-                     CHECK_NULL_INPUT(input_box_index_shape) || CHECK_NULL_INPUT(input_crop_size_shape) ||
-                     CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_image_shape, kernel_name, "x") ||
+                     CHECK_SHAPE_NULL(input_boxes_shape, kernel_name, "boxes") ||
+                     CHECK_SHAPE_NULL(input_box_index_shape, kernel_name, "boxes_index") ||
+                     CHECK_SHAPE_NULL(input_crop_size_shape, kernel_name, "crop_size") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'CropAndResizeGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     size_t input_image_shape_len = input_image_shape.size();
     if (input_image_shape_len != 4) {
-      MS_LOG(ERROR) << " image tensor is " << input_image_shape_len << "-D, but CropAndResize supports only " << 4
-                    << "-D image tensors.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x should be 4, but got "
+                        << input_image_shape_len;
     }
     input_image_size_ = 1;
     for (size_t i = 0; i < input_image_shape_len; i++) {
@@ -104,9 +103,8 @@ class CropAndResizeGpuKernel : public GpuKernel {
     // input boxes
     size_t input_boxes_shape_len = input_boxes_shape.size();
     if (input_boxes_shape_len != 2) {
-      MS_LOG(ERROR) << "Boxes is rank" << input_boxes_shape_len << " but CropAndResize supports only rank " << 2
-                    << " for boxes.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of boxes should be 2, but got "
+                        << input_boxes_shape_len;
     }
     input_boxes_size_ = 1;
     for (size_t i = 0; i < input_boxes_shape_len; i++) {
@@ -116,9 +114,8 @@ class CropAndResizeGpuKernel : public GpuKernel {
     // input box_index
     size_t input_box_index_shape_len = input_box_index_shape.size();
     if (input_box_index_shape_len != 1) {
-      MS_LOG(ERROR) << "Box_index is rank " << input_box_index_shape_len << " but CropAndResize supports only rank "
-                    << 1 << " for box_index.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of box_index should be 1, but got "
+                        << input_box_index_shape_len;
     }
     input_box_ind_size_ = 1;
     input_box_ind_size_ *= input_box_index_shape[0];  // single dim required
@@ -126,14 +123,12 @@ class CropAndResizeGpuKernel : public GpuKernel {
     // input crop_size
     size_t input_crop_size_shape_len = input_crop_size_shape.size();
     if (input_crop_size_shape_len != 1) {
-      MS_LOG(ERROR) << "Crop_size is rank " << input_crop_size_shape_len << "-D, but CropAndResize supports only rank "
-                    << 1 << " for Crop_size.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of crop_size should be 1, but got "
+                        << input_crop_size_shape_len;
     }
     if (input_crop_size_shape[0] != 2) {
-      MS_LOG(ERROR) << "Crop_size is size " << input_crop_size_shape[0] << "-D, but CropAndResize supports only size "
-                    << 2 << " for Crop_size.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the first element in crop_size should be 2, but got "
+                        << input_crop_size_shape[0];
     }
     input_crop_size_ = 1;
     input_crop_size_ *= input_crop_size_shape[0];
@@ -141,8 +136,8 @@ class CropAndResizeGpuKernel : public GpuKernel {
     // output
     auto output_shape_len = output_shape.size();
     if (output_shape_len != 4) {
-      MS_LOG(ERROR) << "For 'CropAndResize', the rank of output should be 4, but got " << output_shape_len;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 4, but got "
+                        << output_shape_len;
     }
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_len; i++) {

@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_TENSOR_STRIDE_UPDATE_GPU_KERNEL_H_
 
 #include <algorithm>
+#include <string>
 #include <vector>
 #include <numeric>
 #include <functional>
@@ -31,7 +32,8 @@ namespace kernel {
 template <typename T>
 class TensorCopySlicesGpuKernel : public GpuKernel {
  public:
-  TensorCopySlicesGpuKernel() : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false) {}
+  TensorCopySlicesGpuKernel()
+      : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false), kernel_name_("TensorCopySlices") {}
   ~TensorCopySlicesGpuKernel() {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -57,32 +59,30 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but TensorCopySlices needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but TensorCopySlices has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(update_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(update_shape, kernel_name_, "update");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'TensorCopySlicesGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     if (input_shape_.size() > kMaxDims) {
-      MS_LOG(ERROR) << "StridedSlice support dims no more than " << kMaxDims << ", but the input shape is "
-                    << input_shape_.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
+                        << ", but got " << input_shape_.size();
     }
 
     begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
@@ -90,10 +90,9 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
 
     if (begin_.size() > input_shape_.size()) {
-      MS_LOG(ERROR) << "For 'TensorCopySlicesGpuKernel', the rank of begin attr cannot be more than the rank of input, "
-                    << "but got the rank of begin attr: " << begin_.size()
-                    << ", the rank of input: " << input_shape_.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the size of 'begin' cannot be greater than the dimension of input, but got the "
+                        << "size of 'begin': " << begin_.size() << ", the dimension of input: " << input_shape_.size();
     }
 
     FillEmptyDims(kernel_node);
@@ -111,7 +110,9 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     size_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
-      MS_LOG(EXCEPTION) << "Invalid attr begin:" << begin_ << " end:" << end_ << " strides:" << strides_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' should be the same "
+                        << "but got the size of 'begin': " << begin_.size()
+                        << ", the size of 'strides':" << strides_.size() << ", the size of 'end':" << end_.size();
     }
     auto len = begin_.size();
     size_t total_input_num = 1;
@@ -120,7 +121,8 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
       total_input_num *= ((end_[i] - begin_[i]) / strides_[i]);
     }
     if (total_input_num != total_update_num) {
-      MS_LOG(EXCEPTION) << "Invalid update_shape:" << update_shape << ". Maybe you need to broadcast it.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', invalid 'update_shape':" << update_shape
+                        << ". Maybe you need to broadcast it.";
     }
   }
 
@@ -204,6 +206,7 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
   size_t output_size_;
   inline static size_t kMaxDims = 8;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

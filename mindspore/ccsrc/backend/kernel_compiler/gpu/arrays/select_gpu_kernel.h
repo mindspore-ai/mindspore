@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SELECT_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/select_impl.cuh"
@@ -27,7 +28,7 @@ namespace kernel {
 template <typename T>
 class SelectGpuKernel : public GpuKernel {
  public:
-  SelectGpuKernel() : input_size_(0), output_size_(0), is_null_input_(false) {}
+  SelectGpuKernel() : input_size_(0), output_size_(0), is_null_input_(false), kernel_name_("Select") {}
   ~SelectGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -48,13 +49,11 @@ class SelectGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckParam(kernel_node);
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SelectGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -77,18 +76,15 @@ class SelectGpuKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SelectGpuKernel needs 3 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but SelectGpuKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    return true;
   }
 
   std::vector<size_t> input_size_list_;
@@ -98,6 +94,7 @@ class SelectGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

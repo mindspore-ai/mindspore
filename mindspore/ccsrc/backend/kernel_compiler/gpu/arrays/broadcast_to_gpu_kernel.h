@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_TO_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/broadcast_impl.cuh"
@@ -28,7 +29,7 @@ constexpr size_t SHAPE_SIZE = 4;
 template <typename T>
 class BroadcastToGpuKernel : public GpuKernel {
  public:
-  BroadcastToGpuKernel() {}
+  BroadcastToGpuKernel() : kernel_name_("BroadcastTo") {}
   ~BroadcastToGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -49,20 +50,24 @@ class BroadcastToGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BroadcastToGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     if (input_shapes.size() > SHAPE_SIZE || output_shapes.size() > SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "BroadcastTo operation not support dim greater than " << SHAPE_SIZE;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output cannot be greater than "
+                        << SHAPE_SIZE << ", but got the dimension of input: " << input_shapes.size()
+                        << ", the dimension of output: " << output_shapes.size();
     }
 
     if (output_shapes.size() < input_shapes.size()) {
-      MS_LOG(EXCEPTION) << "The rank of BroadcastTo's output cannot be smaller than the rank of the input.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than "
+                        << input_shapes.size() << ", but got " << output_shapes.size();
     }
 
     size_t offset = output_shapes.size() - input_shapes.size();
@@ -92,6 +97,7 @@ class BroadcastToGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

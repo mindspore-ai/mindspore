@@ -117,31 +117,29 @@ class SortGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but SortGpuKernel expects 1.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
     }
 
     size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 2) {
-      MS_LOG(ERROR) << "Number of outputs is " << output_count << ", but should be 2 for SortGpuKernel.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_count;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SortGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
 
     input_rank_ = input_shape_.size();
     if (input_rank_ > TRANSPOSE_MAX_DIMENSION || input_rank_ < 1) {
-      MS_LOG(ERROR) << "For 'SortGpuKernel', the rank of input cannot be more than " << TRANSPOSE_MAX_DIMENSION
-                    << " dimensions or less than 1 dimension.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than "
+                        << TRANSPOSE_MAX_DIMENSION << ", or less than 1"
+                        << ", but got " << input_rank_;
     }
 
     input_size_ = 1;
@@ -156,9 +154,8 @@ class SortGpuKernel : public GpuKernel {
       axis_ += input_rank_;
     }
     if ((size_t)axis_ >= input_rank_) {
-      MS_LOG(ERROR) << "For 'SortGpuKernel', axis should be less than the rank of input, bot got axis: " << axis_
-                    << " the rank of input: " << input_rank_;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than " << input_rank_
+                        << ", but got " << (size_t)axis_;
     }
 
     perm_.resize(input_rank_);

@@ -80,25 +80,23 @@ class ArrayReduceGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto type_name = TypeIdLabel(type_id);
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) && type_id != kNumberTypeBool) {
-      MS_LOG(ERROR) << "Input data type of ReduceAny or ReduceAll should be bool, but got " << type_name;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data type should be bool, but got " << type_name;
     }
     data_type_ = GetCudnnDataType(type_name);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but reduce op needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but reduce op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0).size());
 
@@ -123,15 +121,15 @@ class ArrayReduceGpuKernel : public GpuKernel {
       int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
     } else {
-      MS_LOG(EXCEPTION) << "Attribute axis type is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute 'axis' type is invalid.";
     }
     keep_dims_ = GetAttr<bool>(kernel_node, "keep_dims");
 
     auto inputA_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto outputC_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(inputA_shape) || CHECK_NULL_INPUT(outputC_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(inputA_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(outputC_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ArrayReduceGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -157,6 +155,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
+    kernel_name_ = "ArrayReduce";
     axis_.clear();
     input_size_list_.clear();
     output_size_list_.clear();
@@ -205,7 +204,9 @@ class ArrayReduceGpuKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kReduceTypeMap.find(kernel_name);
     if (iter == kReduceTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Array reduce kernel type " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "Only support these array reduce kernel types: "
+                        << "ReduceMax, ReduceMean, ReduceSum, ReduceMin, ReduceAny, ReduceAll, ReduceProd currently"
+                        << ", but got " << kernel_name;
     }
     reduce_tensor_op_ = iter->second;
     // add check for float64
@@ -301,6 +302,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

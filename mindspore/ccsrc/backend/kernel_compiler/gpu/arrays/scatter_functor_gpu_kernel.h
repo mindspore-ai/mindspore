@@ -63,20 +63,21 @@ class ScatterFunctorKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kScatterFunctorTypeMap.find(kernel_name);
     if (iter == kScatterFunctorTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "Scatter functor " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION)
+        << "For '" << kernel_name
+        << "Only support these scatter functors: ScatterUpdate, ScatterAdd or ScatterSub currently, but got "
+        << kernel_name;
     } else {
       scatter_functor_type_ = iter->second;
     }
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but " << kernel_name << " needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but " << kernel_name << " has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     input_size_ = 1;

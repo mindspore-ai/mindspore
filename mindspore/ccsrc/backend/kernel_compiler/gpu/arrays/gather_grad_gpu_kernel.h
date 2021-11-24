@@ -49,30 +49,33 @@ class GatherGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherGradGpuKernel needs 2.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     index_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     grad_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(index_shapes_) || CHECK_NULL_INPUT(grad_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    is_null_input_ = CHECK_SHAPE_NULL(index_shapes_, kernel_name, "index") ||
+                     CHECK_SHAPE_NULL(grad_shapes_, kernel_name, "grad") ||
+                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'GatherGradGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
-      MS_LOG(ERROR) << "The shape of grad, index and output should be same.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the dimension of grad, index and output should be the same, but got the dimension of "
+                        << "grad: " << grad_shapes_.size() << ", the dimension of index: " << index_shapes_.size()
+                        << ", the dimension of output: " << output_shapes_.size();
     }
     int dims = SizeToInt(grad_shapes_.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "dim"));
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+                        << "), but got " << axis_;
     }
     if (axis_ < 0) {
       axis_ += dims;

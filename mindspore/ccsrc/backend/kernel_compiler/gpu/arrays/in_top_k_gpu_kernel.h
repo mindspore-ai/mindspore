@@ -95,27 +95,25 @@ class InTopKGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 2) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but InTopKGpuKernel expects 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_count;
     }
 
     size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 1) {
-      MS_LOG(ERROR) << "Number of outputs is " << output_count << ", but should be 1 for InTopKGpuKernel.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of output should be 1, but got " << output_count;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (input_shape_.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'InTopKGpuKernel', the rank of input cannot be less than 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
                         << input_shape_.size();
     }
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'InTopKGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

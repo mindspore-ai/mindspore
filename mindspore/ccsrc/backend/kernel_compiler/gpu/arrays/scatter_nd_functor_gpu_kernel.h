@@ -69,20 +69,20 @@ class ScatterNdFunctorKernel : public GpuKernel {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kScatterNdFunctorTypeMap.find(kernel_name);
     if (iter == kScatterNdFunctorTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "ScatterNd functor " << kernel_name << " is not supported.";
+      MS_LOG(EXCEPTION)
+        << "Only support these scatter functors: ScatterNdUpdate, ScatterNdAdd or ScatterNdSub currently, but got "
+        << kernel_name;
     } else {
       scatter_nd_functor_type_ = iter->second;
     }
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but " << kernel_name << " needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but " << kernel_name << " has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -90,17 +90,21 @@ class ScatterNdFunctorKernel : public GpuKernel {
     auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto index_depth = indices_shape.back();
     if (index_depth > input_shape.size()) {
-      MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the last dimension value of indices should be greater than "
+                        << input_shape.size() << ", but got " << index_depth;
     }
     if (indices_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "Indices dimension less than 2";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of indices cannot be greater than 2, but got "
+                        << indices_shape.size();
     }
     if (updates_shape.size() != indices_shape.size() - 1 + input_shape.size() - index_depth) {
-      MS_LOG(EXCEPTION) << "Update, shape rank and indices rank inconsistent";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the dimension of updates, indices, shape should be consistent.";
     }
     for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
       if (updates_shape[i] != indices_shape[i]) {
-        MS_LOG(EXCEPTION) << "Value of " << i << "th dimension of indices is not equal to that update";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << ", value of " << i
+                          << "th dimension of indices is not equal to that update";
       }
     }
 
