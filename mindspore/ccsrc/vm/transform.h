@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
 #include <memory>
 #include <functional>
 #include <utility>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "vm/vm.h"
 #include "ir/anf.h"
 #include "frontend/operator/ops.h"
@@ -103,7 +103,7 @@ class CompileGraph {
   int64_t height_{0};
   int64_t max_height_{0};
 
-  std::unordered_map<AnfNodePtr, int64_t> slots_;
+  mindspore::HashMap<AnfNodePtr, int64_t> slots_;
   InstSet inst_;
 };
 
@@ -127,7 +127,7 @@ class CompileGraphs {
 
  protected:
   InstSet insts_;
-  std::unordered_map<FuncGraphPtr, int64_t> mapping_;
+  mindspore::HashMap<FuncGraphPtr, int64_t> mapping_;
   CompileGraphPtr transform_;
   BackendPtr backend_;
 };

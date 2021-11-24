@@ -98,26 +98,6 @@ AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBase
   return nullptr;
 }
 
-std::size_t AnfNodeConfigHasher::operator()(const AnfNodeConfigPtr conf) const {
-  MS_EXCEPTION_IF_NULL(conf);
-  MS_EXCEPTION_IF_NULL(conf->node());
-  std::size_t hash_value = conf->node()->hash();
-  if (!conf->context()->IsDummyContext()) {
-    hash_value = hash_combine(hash_value, std::hash<AnalysisContext *>{}(conf->context().get()));
-  }
-  return hash_value;
-}
-
-bool AnfNodeConfigEqual::operator()(const AnfNodeConfigPtr lhs, const AnfNodeConfigPtr rhs) const {
-  if (lhs == nullptr || rhs == nullptr) {
-    return false;
-  }
-  if (lhs == rhs) {
-    return true;
-  }
-  return (*lhs == *rhs);
-}
-
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {
   StaticAnalysisException::Instance().ClearException();
   AnalysisResult result;
@@ -652,7 +632,7 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
 
   bool has_undetermined = false;
   // Check whether sub loop has untraced undetermined evaluator.
-  std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
+  mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
   for (auto r_it = eval_trace_.rbegin(); r_it != latest_entry_iter; r_it++) {
     undetermined_evals.insert(*r_it);
   }

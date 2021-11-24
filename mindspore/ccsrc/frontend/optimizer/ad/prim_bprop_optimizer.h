@@ -19,9 +19,10 @@
 
 #include <vector>
 #include <utility>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/resource.h"
@@ -42,7 +43,7 @@ using PrimBpropOptGraphInfoPtr = std::shared_ptr<PrimBpropOptGraphInfo>;
 
 using PrimBpropOptGraphLevel2InfoPtr = std::shared_ptr<PrimBpropOptGraphLevel2Info>;
 
-using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr, PrimitiveHasher, PrimitiveTotalEqual>;
+using PrimBpropCache = mindspore::HashMap<PrimitivePtr, PrimBpropOptGraphInfoPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 
 using TupleListKey = std::pair<PrimitivePtr, abstract::AbstractBasePtrList>;
 

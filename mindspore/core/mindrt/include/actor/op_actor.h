@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
@@ -110,11 +110,11 @@ class OpActor : public ActorBase {
 
  protected:
   // The op data.
-  std::unordered_map<int, std::vector<OpData<T> *>> input_op_datas_;
+  mindspore::HashMap<int, std::vector<OpData<T> *>> input_op_datas_;
   std::vector<DataArrowPtr> output_data_arrows_;
 
   // The op controls.
-  std::unordered_map<int, std::vector<AID *>> input_op_controls_;
+  mindspore::HashMap<int, std::vector<AID *>> input_op_controls_;
   std::vector<AID> output_control_arrows_;
 };
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 namespace mindspore {
 #define MS_TYPE2LABLE(type_id) #type_id
-static std::unordered_map<TypeId, std::string> g_type_2_lable{
+static mindspore::HashMap<TypeId, std::string> g_type_2_lable{
   {kTypeUnknown, MS_TYPE2LABLE(kTypeUnknown)},
   {kMetaTypeType, MS_TYPE2LABLE(kMetaTypeType)},
   {kMetaTypeAnything, MS_TYPE2LABLE(kMetaTypeAnything)},

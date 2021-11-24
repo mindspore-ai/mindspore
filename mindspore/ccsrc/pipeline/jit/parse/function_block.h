@@ -23,11 +23,11 @@
 #include <string>
 #include <map>
 #include <set>
-#include <unordered_map>
 #include <memory>
 #include <utility>
 #include <tuple>
 
+#include "utils/hash_map.h"
 #include "ir/meta_func_graph.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "utils/log_adapter.h"
@@ -79,7 +79,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr HandleBuiltinNamespaceInfo(const py::tuple &namespace_info);
   AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
-  const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
+  const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
   void FindIsolatedNodes();
   void AddIsolatedNode(const AnfNodePtr &target);
   void AttachIsolatedNodesBeforeReturn();
@@ -151,19 +151,19 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::map<FunctionBlock *, CNodePtr> jumps_;
 
   // Keep all removable phis which will be removed in one pass.
-  std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis_;
+  mindspore::HashMap<ParameterPtr, AnfNodePtr> removable_phis_;
 
   // Keep the map for the resolve node to the removable phi node.
   // For the case that ReadVariable returns a phi node although this phi node
   // generated in the prev block is identified as removable. The other blocks
   // should find this phi node.
-  std::unordered_map<AnfNodePtr, ParameterPtr> resolve_to_removable_phis_;
+  mindspore::HashMap<AnfNodePtr, ParameterPtr> resolve_to_removable_phis_;
 
   // Hold declared global variables in function
   std::set<std::string> global_vars_;
 
   // Keep new made resolve symbol for the variable not found in vars_.
-  std::unordered_map<std::string, AnfNodePtr> var_to_resolve_;
+  mindspore::HashMap<std::string, AnfNodePtr> var_to_resolve_;
 
   // Collect all python symbols in the block.
   // We treat both global symbols and local symbols declared previously as global symbols.

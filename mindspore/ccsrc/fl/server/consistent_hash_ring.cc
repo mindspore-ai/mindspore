@@ -37,7 +37,7 @@ bool ConsistentHashRing::Insert(uint32_t rank) {
 bool ConsistentHashRing::Erase(uint32_t rank) {
   for (auto iterator = ring_.begin(); iterator != ring_.end();) {
     if (iterator->second == rank) {
-      (void)ring_.erase(iterator++);
+      iterator = ring_.erase(iterator);
     } else {
       ++iterator;
     }

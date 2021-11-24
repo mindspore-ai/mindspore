@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
 #define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
-#include <unordered_map>
 #include <string>
 #include <memory>
 #include <vector>
@@ -24,6 +23,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include "utils/hash_map.h"
 #include "backend/session/ascend_session.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"

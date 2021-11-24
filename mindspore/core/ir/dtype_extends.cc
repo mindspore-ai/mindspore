@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ bool TypeListEqual::operator()(TypePtrList const &lhs, TypePtrList const &rhs) c
 }
 
 TypePtr TypeIdToType(TypeId id) {
-  static std::unordered_map<TypeId, TypePtr> type_id_to_type = {
+  static mindspore::HashMap<TypeId, TypePtr> type_id_to_type = {
     {kNumberTypeFloat16, kFloat16},     {kNumberTypeFloat, kFloat32},         {kNumberTypeFloat32, kFloat32},
     {kNumberTypeFloat64, kFloat64},     {kNumberTypeComplex64, kComplex64},   {kNumberTypeInt8, kInt8},
     {kNumberTypeInt16, kInt16},         {kNumberTypeInt32, kInt32},           {kNumberTypeInt, kInt32},

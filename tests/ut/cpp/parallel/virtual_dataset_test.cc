@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ void TestVirtualDatasetInfo::SetUp() {
   g_device_manager = std::make_shared<DeviceManager>();
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
-  std::unordered_map<std::string, ValuePtr> attr;
+  mindspore::HashMap<std::string, ValuePtr> attr;
 
   Shapes inputs_shape = {{128, 32}, {1280, 320}, {12800, 3200}};
   Shapes outputs_shape = {{128, 32}, {1280, 320}, {12800, 3200}};

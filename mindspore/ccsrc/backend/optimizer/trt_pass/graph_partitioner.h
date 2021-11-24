@@ -19,9 +19,9 @@
 #include <memory>
 #include <set>
 #include <map>
-#include <unordered_map>
 #include <tuple>
 #include <string>
+#include "utils/hash_map.h"
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
@@ -78,7 +78,7 @@ class GraphDependency {
   std::string ToString() const;
 
  private:
-  std::unordered_map<std::string, std::set<std::string>> dependencies_;
+  mindspore::HashMap<std::string, std::set<std::string>> dependencies_;
 };
 
 using Subgraph = std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList>;
@@ -114,7 +114,7 @@ class GraphPartitioner {
   bool NodeGrouping(const FuncGraphPtr &func_graph);
   std::map<std::string, AnfNodePtrList> CollectSegments();
 
-  std::unordered_map<AnfNodePtr, NodeInfo> node_info_;
+  mindspore::HashMap<AnfNodePtr, NodeInfo> node_info_;
   GraphDependency dependency_;
 };
 }  // namespace opt

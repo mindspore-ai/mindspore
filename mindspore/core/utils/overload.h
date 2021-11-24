@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
 #include <vector>
 #include <iostream>
 #include <initializer_list>
-#include <unordered_map>
 #include <map>
 #include <memory>
 #include <string>
+#include "utils/hash_map.h"
 
 namespace mindspore {
 template <typename T>
@@ -99,8 +99,8 @@ std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &pair) {
 }
 
 template <typename T1, typename T2, typename T3>
-std::ostream &operator<<(std::ostream &os, const std::unordered_map<T1, T2, T3> &map) {
-  os << "[const unordered_map]";
+std::ostream &operator<<(std::ostream &os, const mindspore::HashMap<T1, T2, T3> &map) {
+  os << "[const hash_map]";
   return os;
 }
 
@@ -119,7 +119,7 @@ std::string ToString(const std::vector<T> &vec) {
 }
 
 template <typename T1, typename T2>
-std::string ToString(const std::unordered_map<T1, T2> &map) {
+std::string ToString(const mindspore::HashMap<T1, T2> &map) {
   std::ostringstream buffer;
 
   buffer << map;

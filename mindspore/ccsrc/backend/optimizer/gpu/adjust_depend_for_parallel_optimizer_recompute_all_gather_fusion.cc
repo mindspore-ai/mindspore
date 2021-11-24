@@ -16,9 +16,9 @@
 
 #include "backend/optimizer/gpu/adjust_depend_for_parallel_optimizer_recompute_all_gather_fusion.h"
 
-#include <unordered_map>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace opt {
 bool AdjustDependForParallelOptimizerRecomputeAllGatherFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  std::unordered_map<int64_t, bool> forward_allgather_recompute_value_in_fusion_group;
+  mindspore::HashMap<int64_t, bool> forward_allgather_recompute_value_in_fusion_group;
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   std::vector<int64_t> parallel_optimizer_recompute_allgather_fusion_ids;
   std::vector<AnfNodePtr> parallel_optimizer_recompute_allgathers;

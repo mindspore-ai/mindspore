@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
   MS_EXCEPTION_IF_NULL(bnupdate);
   if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
       GetNodeOutputTotalUsedNum(kernel_graph, bnupdate) == kBNTrainingUpdateOutputUsedTotalNum) {
-    std::unordered_set<AnfNodePtr> record{cnode, bnupdate};
+    mindspore::HashSet<AnfNodePtr> record{cnode, bnupdate};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
   }

@@ -18,8 +18,8 @@
 
 #include <memory>
 #include <utility>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 
@@ -111,10 +111,10 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
   return false;
 }
 
-using NodeInputReplMap = std::unordered_map<std::pair<AnfNodePtr, size_t>, AnfNodePtr, PairHasher>;
+using NodeInputReplMap = mindspore::HashMap<std::pair<AnfNodePtr, size_t>, AnfNodePtr, PairHasher>;
 // replace the nodes which should be changed
 void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::pair<CNodePtr, CNodePtr>> nodes_changed,
-                          std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs,
+                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs,
                           const FuncGraphPtr &func_graph) {
   for (auto &node_pair : nodes_changed) {
     CNodePtr old_node = node_pair.first;
@@ -153,7 +153,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
   // record the node that has been changed
   std::vector<std::pair<CNodePtr, CNodePtr>> nodes_changed;
   // record the node to be replaced
-  std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl_node;
   // record the node input to be replaced
   NodeInputReplMap repl_node_inputs;
   const AnfNodeSet &nodes = graph->nodes();
@@ -322,7 +322,7 @@ bool IsNetOutputNode(const FuncGraphManagerPtr &manager, const AnfNodePtr &node)
 // generate node for Depended MakeTuple
 void GenerateReplNodeForDependMakeTuple(
   const AnfNodePtr &depended_node, const FuncGraphPtr &graph, const AnfNodePtr &cond,
-  const std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> &repl_node,
+  const std::shared_ptr<mindspore::HashMap<AnfNodePtr, AnfNodePtr>> &repl_node,
   const std::function<AnfNodePtr(FuncGraphPtr graph, AnfNodePtr cond, AnfNodePtr data)> &generate_func) {
   MS_EXCEPTION_IF_NULL(graph->manager());
 
@@ -356,7 +356,7 @@ void GenerateReplNodeForDependMakeTuple(
 // generate a replace depend node for a single network output node
 void GenerateRepDepend(
   const CNodePtr &node, const FuncGraphPtr &graph, const AnfNodePtr &cond,
-  const std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> &repl_node,
+  const std::shared_ptr<mindspore::HashMap<AnfNodePtr, AnfNodePtr>> &repl_node,
   const std::function<AnfNodePtr(FuncGraphPtr graph, AnfNodePtr cond, AnfNodePtr data)> &generate_func) {
   MS_EXCEPTION_IF_NULL(graph->manager());
 
@@ -393,8 +393,8 @@ FuncGraphPtr TransformGraphDependNode(
   MS_EXCEPTION_IF_NULL(manager);
 
   ResetSharedOp();
-  std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> repl_node =
-    std::make_shared<std::unordered_map<AnfNodePtr, AnfNodePtr>>();  // record the node to be replaced
+  std::shared_ptr<mindspore::HashMap<AnfNodePtr, AnfNodePtr>> repl_node =
+    std::make_shared<mindspore::HashMap<AnfNodePtr, AnfNodePtr>>();  // record the node to be replaced
   const AnfNodeSet &nodes = graph->nodes();
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);

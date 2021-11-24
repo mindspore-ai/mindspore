@@ -431,7 +431,7 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
   size_t index = 0;
   string name;
 
-  int32_t count_size = std::count_if(vars_.begin(), vars_.end(), [](const std::pair<std::string, OperatorPtr> &it) {
+  int32_t count_size = std::count_if(vars_.begin(), vars_.end(), [](const auto &it) {
     return (it.second == nullptr || it.first.find("/") != std::string::npos);
   });
 
@@ -609,7 +609,7 @@ void DfGraphConvertor::TraceOutputFromTupleGetItem(const AnfNodePtr &anf_out) {
     auto op = handle.op;
     if (op != nullptr) {
       MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType() << ", out_name: " << handle.out;
-      graph_outputs_.emplace_back(std::make_pair(*op, handle.out));
+      graph_outputs_.emplace_back(*op, handle.out);
     } else {
       MS_LOG(EXCEPTION) << "tuple_getitem: " << anf_out->fullname_with_scope() << " is not converted";
     }
@@ -628,7 +628,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
   if (node->isa<ValueNode>()) {
     auto op = Convert(anf_out);
     if (op != nullptr) {
-      graph_outputs_.emplace_back(std::make_pair(*op, ""));
+      graph_outputs_.emplace_back(*op, "");
       AddGraphConstInput(op);
     }
     return;
@@ -678,7 +678,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
         }
       }
       MS_LOG(INFO) << "Add graph output: " << anf_out->fullname_with_scope() << ":" << index;
-      graph_outputs_.emplace_back(make_pair(*op, index));
+      graph_outputs_.emplace_back(*op, index);
     }
   }
 }
@@ -693,13 +693,13 @@ void DfGraphConvertor::TraceOutputFromParameter(const AnfNodePtr &anf_out) {
       OutHandler handle = it->second;
       auto op = handle.op;
       MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType() << ", out_name: " << handle.out;
-      graph_outputs_.emplace_back(make_pair(*op, handle.out));
+      graph_outputs_.emplace_back(*op, handle.out);
     } else {
       // common parameter case
       auto op = Convert(anf_out);
       if (op != nullptr) {
         MS_LOG(INFO) << "op name: " << op->GetName() << ", op type: " << op->GetOpType();
-        graph_outputs_.emplace_back(std::make_pair(*op, ""));
+        graph_outputs_.emplace_back(*op, "");
       }
     }
   }
@@ -1840,7 +1840,7 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
   (void)adpt->setAttr(op, node);
 
   // add into cache
-  (void)op_cache_.insert(std::make_pair(node.get(), op));
+  (void)op_cache_.emplace(node.get(), op);
 
   DrawCNode(node, adpt);
 

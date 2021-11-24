@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 #include <type_traits>
-#include <unordered_map>
 #include <algorithm>
 #include "base/base.h"
 #include "ir/named.h"

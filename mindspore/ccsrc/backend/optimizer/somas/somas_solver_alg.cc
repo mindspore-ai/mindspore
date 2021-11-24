@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,13 +201,12 @@ void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
   size_t offset1 = offset;
   SomasSolverTensorDescPtr tensor = block->m_start_tensor_;
   MS_LOG(DEBUG) << "Allocating block: " << tensor->index_ << " in offset: " << offset;
-  pair<uint32_t, size_t> sol_offset;
-  sol_offset.first = block->m_current_sol_;
-  sol_offset.second = offset;
-  if (block->offsets_.count(sol_offset.first))
-    MS_LOG(WARNING) << "Warning addElem: Offset overwritten at solution " << block->m_current_sol_ << " for block "
+  auto sol_id = block->m_current_sol_;
+  if (block->offsets_.find(sol_id) != block->offsets_.end()) {
+    MS_LOG(WARNING) << "Warning addElem: Offset overwritten at solution " << sol_id << " for block "
                     << block->m_start_tensor_->index_;
-  block->offsets_.insert(sol_offset);
+  }
+  (void)block->offsets_.emplace(sol_id, offset);
   while (tensor) {
     tensor->offset_ = offset1;
     offset1 += tensor->size_;
@@ -234,14 +233,13 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, const std::shared
   for (auto &block : *block_tensors_v) {
     if (!block.m_bre_allocate_) {
       offset = block.m_start_tensor_->offset_;
-      pair<uint32_t, size_t> aux;
-      aux.first = foot_print->m_solId_;
-      aux.second = block.m_start_tensor_->offset_;
-      if (block.offsets_.count(aux.first)) {
-        MS_LOG(WARNING) << "Warning: Offset overwritten at solution " << aux.first << " for block "
+      auto aux_id = foot_print->m_solId_;
+      auto aux_offset = block.m_start_tensor_->offset_;
+      if (block.offsets_.find(aux_id) != block.offsets_.end()) {
+        MS_LOG(WARNING) << "Warning: Offset overwritten at solution " << aux_id << " for block "
                         << block.m_start_tensor_->index_;
       }
-      block.offsets_.insert(aux);
+      (void)block.offsets_.emplace(aux_id, aux_offset);
       continue;
     }
     bpushed = false;

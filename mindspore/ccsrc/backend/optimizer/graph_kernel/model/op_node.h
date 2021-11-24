@@ -20,9 +20,9 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <functional>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "ir/dtype/type.h"
 

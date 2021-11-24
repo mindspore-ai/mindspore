@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "actor/actor.h"
 #include "actor/op_actor.h"
 

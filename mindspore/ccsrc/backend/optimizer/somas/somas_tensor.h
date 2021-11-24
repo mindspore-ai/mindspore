@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
 
 #include <memory>
 #include <set>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
 #include "backend/optimizer/somas/somas_stream.h"
@@ -79,7 +79,7 @@ class SomasTensor {
 
   std::set<SomasNodePtr> destinations_;
   std::set<SomasStreamPtr> destinationStreams_;
-  unordered_map<SomasStreamPtr, SomasNodePtr> max_destinations_;
+  mindspore::HashMap<SomasStreamPtr, SomasNodePtr> max_destinations_;
 
   // Constructors/Destructors
   explicit SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr source_stream, size_t real_size,
@@ -116,7 +116,7 @@ class SomasTensor {
  private:
   bool ref_overlap_;
   size_t num_constraints_{0};
-  unordered_map<SomasStreamPtr, size_t> max_destination_id_;
+  mindspore::HashMap<SomasStreamPtr, size_t> max_destination_id_;
   const size_t id_{0};
   const SomasNodePtr source_node_;
   SomasStreamPtr const source_stream_;

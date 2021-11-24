@@ -18,9 +18,9 @@
 
 #include <memory>
 #include <vector>
-#include <unordered_map>
 #include <string>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "ir/func_graph.h"
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
@@ -37,7 +37,7 @@ class ArithmeticSimplify : public opt::Pass {
  private:
   bool DoArithmeticTrans(const inner::LiteGraphPtr &litegraph);
   bool DoConstantFold(const inner::LiteGraphPtr &litegraph);
-  std::unordered_map<std::string, std::vector<PatternTreePtr>> expressions_map_;
+  mindspore::HashMap<std::string, std::vector<PatternTreePtr>> expressions_map_;
 };
 using ArithmeticSimplifyPtr = std::shared_ptr<ArithmeticSimplify>;
 }  // namespace mindspore::graphkernel

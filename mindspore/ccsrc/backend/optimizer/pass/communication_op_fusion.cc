@@ -18,8 +18,8 @@
 #include <vector>
 #include <set>
 #include <memory>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "base/core_ops.h"
 #include "runtime/device/kernel_info.h"
@@ -454,7 +454,7 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
   const float input_grad_size_num = 0.0;
   const float input_grad_time_num = 0.0;
   // divide candidate fusion groups with same (group,op,fusion,dtype) attrs, fusion==0 means not fusion
-  std::unordered_map<std::string, CommunicationOpInfo> candidate_groups;
+  mindspore::HashMap<std::string, CommunicationOpInfo> candidate_groups;
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node != nullptr && node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == op_name_) {

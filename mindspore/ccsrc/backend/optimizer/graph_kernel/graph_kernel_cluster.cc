@@ -21,6 +21,7 @@
 #include <fstream>
 #include <string>
 
+#include "utils/hash_map.h"
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
@@ -137,7 +138,7 @@ class Graph {
     size_t seed_{0};           // visited flag of dfs.
     size_t max_node_id_;       // largest node id of a cluster
 
-    Cluster(size_t node_id, const AnfNodePtr &node, const std::unordered_map<AnfNodePtr, size_t> &node_idx_map)
+    Cluster(size_t node_id, const AnfNodePtr &node, const mindspore::HashMap<AnfNodePtr, size_t> &node_idx_map)
         : cluster_id_(node_id), max_node_id_(node_id) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -170,7 +171,7 @@ class Graph {
 
  public:
   // Init and build graph
-  Graph(const AnfNodePtrList &nodes, const std::unordered_map<AnfNodePtr, size_t> &node_idx_map) {
+  Graph(const AnfNodePtrList &nodes, const mindspore::HashMap<AnfNodePtr, size_t> &node_idx_map) {
     clusters_.reserve(nodes.size());
     for (size_t i = 0; i < nodes.size(); i++) {
       (void)clusters_.emplace_back(i, nodes[i], node_idx_map);

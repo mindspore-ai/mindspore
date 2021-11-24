@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     auto depthwise_conv = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(depthwise_conv);
     if (cnode->isa<CNode>() && IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNative)) {
-      std::unordered_set<AnfNodePtr> record{cnode, depthwise_conv};
+      mindspore::HashSet<AnfNodePtr> record{cnode, depthwise_conv};
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);
     }
@@ -42,7 +42,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     auto relu = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(relu);
     if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimRelu) || IsPrimitiveCNode(relu, prim::kPrimReluV2))) {
-      std::unordered_set<AnfNodePtr> record{cnode, relu};
+      mindspore::HashSet<AnfNodePtr> record{cnode, relu};
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMap
 
 bool SameSubgraph(const AnfNodePtr &root1, const AnfNodePtr &root2, FuncGraphPairMapEquiv *equiv_func_graph,
                   NodeMapEquiv *const equiv_node) {
-  std::unordered_set<AnfNodePtr> done;
+  mindspore::HashSet<AnfNodePtr> done;
   std::stack<std::pair<AnfNodePtr, AnfNodePtr>> todo;
 
   todo.push(std::make_pair(root1, root2));

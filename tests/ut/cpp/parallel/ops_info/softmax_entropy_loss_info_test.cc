@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ void TestSoftmaxLoss::SetUp() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
   ValuePtr is_grad = MakeValue(true);
-  std::unordered_map<std::string, ValuePtr> attr = {{"is_grad", is_grad}};
+  mindspore::HashMap<std::string, ValuePtr> attr = {{"is_grad", is_grad}};
 
   Shapes inputs_shape = {{2, 4, 8, 16}, {2, 4, 8, 16}};
   Shapes outputs_shape = {{2}, {2, 4, 8, 16}};

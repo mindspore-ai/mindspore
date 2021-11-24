@@ -18,13 +18,13 @@
 #define MINDSPORE_CORE_UTILS_ORDERED_SET_H_
 
 #include <algorithm>
-#include <unordered_map>
 #include <vector>
 #include <list>
 #include <utility>
 #include <functional>
 #include <memory>
 #include "utils/hashing.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 // Implementation of OrderedSet that keeps insertion order
@@ -41,7 +41,7 @@ class OrderedSet {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = std::unordered_map<element_type, iterator, hasher, equal>;
+  using map_type = mindspore::HashMap<element_type, iterator, hasher, equal>;
   using ordered_set_type = OrderedSet<element_type, hasher, equal>;
 
   OrderedSet() = default;
@@ -309,7 +309,7 @@ class OrderedSet<std::shared_ptr<T>> {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = std::unordered_map<key_type, iterator, hash_t>;
+  using map_type = mindspore::HashMap<key_type, iterator, hash_t>;
   using ordered_set_type = OrderedSet<std::shared_ptr<T>>;
 
   OrderedSet() = default;

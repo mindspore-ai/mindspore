@@ -21,8 +21,8 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include <unordered_map>
 #include <map>
+#include "utils/hash_map.h"
 #include "runtime/framework/graph_compiler.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/data_source_actor.h"

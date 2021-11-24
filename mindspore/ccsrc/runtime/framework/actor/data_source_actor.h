@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <queue>
 #include <utility>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/hardware/device_context.h"
@@ -142,7 +142,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
   std::vector<AnfNodePtr> data_nodes_;
 
   // The location of the data node in the data source actor.
-  std::unordered_map<AnfNodePtr, size_t> data_node_position_map_;
+  mindspore::HashMap<AnfNodePtr, size_t> data_node_position_map_;
 };
 
 using DataSourceActorPtr = std::shared_ptr<DataSourceActor>;

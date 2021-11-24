@@ -1212,7 +1212,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->GetSolverTensorDesc() != nullptr) {
       SomasSolverTensorDescPtr pSolverTensor = tensor->GetSolverTensorDesc();
-      solver_tensor_desc_map_.insert(std::pair<size_t, SomasSolverTensorDescPtr>(pSolverTensor->index_, pSolverTensor));
+      (void)solver_tensor_desc_map_.emplace(pSolverTensor->index_, pSolverTensor);
     }
   }
   MS_LOG(INFO) << "End Loop to create solver info";
@@ -1566,7 +1566,7 @@ std::string Somas::Offline() const {
     } else {
       std::map<size_t, size_t> dest_infos;
       for (SomasNodePtr dest_node : tensor->destinations_) {
-        dest_infos.insert(std::make_pair(dest_node->GetId(), dest_node->GetStream()->GetId()));
+        (void)dest_infos.emplace(dest_node->GetId(), dest_node->GetStream()->GetId());
       }
 
       for (auto dest_info : dest_infos) {

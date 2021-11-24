@@ -20,14 +20,14 @@
 #include <functional>
 #include <sstream>
 #include <vector>
-#include <unordered_map>
 #include <iostream>
 #include <string>
 
-#include "mindspore/core/ir/dtype/type_id.h"
-#include "mindspore/core/ir/value.h"
-#include "mindspore/core/ir/tensor.h"
-#include "mindspore/core/utils/shape_utils.h"
+#include "utils/hash_map.h"
+#include "ir/dtype/type_id.h"
+#include "ir/value.h"
+#include "ir/tensor.h"
+#include "utils/shape_utils.h"
 #include "utils/utils.h"
 
 namespace mindspore::graphkernel::inner {

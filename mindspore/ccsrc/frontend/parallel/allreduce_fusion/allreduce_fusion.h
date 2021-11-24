@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_FUSION_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_FUSION_H_
 
-#include <unordered_map>
 #include <vector>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_graph.h"
 #include "frontend/parallel/status.h"
@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-using CNodeCostMap = std::unordered_map<CNodePtr, double>;
+using CNodeCostMap = mindspore::HashMap<CNodePtr, double>;
 
 constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM = 0;
 constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES = 0;

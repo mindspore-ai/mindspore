@@ -19,12 +19,12 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include <unordered_map>
 #include <set>
 #include <utility>
 #include <string>
 #include <iostream>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 #include "backend/optimizer/graph_kernel/model/op_register.h"
@@ -52,7 +52,7 @@ std::string LiteGraph::Dump() const {
 }
 
 const NodePtrList &LiteGraph::GetOrderedNodes() {
-  std::unordered_map<NodePtr, size_t> outdegrees;
+  mindspore::HashMap<NodePtr, size_t> outdegrees;
   std::function<void(NodePtr)> dfs;
   std::set<NodePtr> visited;
   dfs = [&dfs, &outdegrees, &visited](const NodePtr &node) {

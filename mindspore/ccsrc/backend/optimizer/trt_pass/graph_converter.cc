@@ -20,11 +20,11 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <unordered_map>
 #include <tuple>
 #include <algorithm>
 #include <utility>
 #include <string>
+#include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/trt_pass/trt_converter_context.h"
 #include "utils/singleton.h"
@@ -105,9 +105,9 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
 AnfNodePtrList GraphConverter::GetUsefulArguments(const AnfNodePtrList &arguments, const AnfNodePtrList &parameters,
                                                   const AnfNodePtrList &useful_parameters) {
   // Present map between formal parameter and actual argument.
-  std::unordered_map<AnfNodePtr, AnfNodePtr> args_map;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> args_map;
   for (size_t i = 0; i < parameters.size(); i++) {
-    args_map.insert(std::make_pair(parameters[i], arguments[i]));
+    (void)args_map.emplace(parameters[i], arguments[i]);
   }
 
   AnfNodePtrList useful_arguments;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from input index to input name.
-  std::unordered_map<int, std::string> input_map;
+  mindspore::HashMap<int, std::string> input_map;
   auto value = prim->GetAttr("input_names");
   if (value == nullptr) {
     (*cus_output_map_)[prim->name()] = input_map;
@@ -57,7 +57,7 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from output index to output name.
-  std::unordered_map<int, std::string> output_map;
+  mindspore::HashMap<int, std::string> output_map;
   auto value = prim->GetAttr("output_names");
   if (value == nullptr) {
     // generate a empty output_map for it
@@ -127,7 +127,7 @@ Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, cons
   if (it == cus_input_map_->end()) {
     return NOT_FOUND;
   }
-  std::unordered_map<int, std::string> &input_map = it->second;
+  mindspore::HashMap<int, std::string> &input_map = it->second;
 
   if ((input_map.find(index) != input_map.end())) {
     MS_LOG(DEBUG) << "Link op " << input->GetName() << " to " << op->GetName() << ":" << input_map[index];
@@ -164,7 +164,7 @@ Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, cons
     return NOT_FOUND;
   }
 
-  std::unordered_map<int, std::string> &input_map = it->second;
+  mindspore::HashMap<int, std::string> &input_map = it->second;
   if ((handle.op != nullptr) && (input_map.find(index) != input_map.end())) {
     if (handle.out.empty()) {
       MS_LOG(DEBUG) << "Link op " << handle.op->GetName() << " to " << op->GetName() << ":" << input_map[index];
@@ -249,7 +249,7 @@ OutHandler OpAdapterImpl::getCustomOutput(const OperatorPtr &op, int index) {
     return OutHandler();
   }
 
-  std::unordered_map<int, std::string> &output_map = it->second;
+  mindspore::HashMap<int, std::string> &output_map = it->second;
 
   if ((output_map.find(index) != output_map.end())) {
     return OutHandler(op, output_map[index]);
@@ -293,7 +293,7 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     }
     auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
     MS_EXCEPTION_IF_NULL(cus_op);
-    std::unordered_map<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
+    mindspore::HashMap<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
     (void)cus_op->UpdateOutputDesc(output_map[0], *desc);
   } else {
     if (output_map_.empty()) {
@@ -435,7 +435,7 @@ void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfN
     return;
   }
 
-  std::unordered_map<int, std::string> &input_map = (*cus_input_map_)[op->GetOpType()];
+  mindspore::HashMap<int, std::string> &input_map = (*cus_input_map_)[op->GetOpType()];
   auto inputs = node->cast<CNodePtr>()->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (input_map.find(i) != input_map.end()) {

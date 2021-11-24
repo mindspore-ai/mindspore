@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_
 
 #include <vector>
-#include <unordered_map>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/cse.h"
 
 #include "frontend/optimizer/optimizer.h"

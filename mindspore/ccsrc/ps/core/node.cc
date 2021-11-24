@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,8 +159,8 @@ void Node::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const P
     if (it != receive_messages_.end()) {
       it->second[rank_id] = received_data;
     } else {
-      std::unordered_map<uint32_t, VectorPtr> res;
-      (void)res.insert(std::make_pair(rank_id, received_data));
+      mindspore::HashMap<uint32_t, VectorPtr> res;
+      (void)res.emplace(rank_id, received_data);
       receive_messages_[request_id] = res;
     }
   } else {
@@ -176,8 +176,8 @@ void Node::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const P
     if (it != workder_receive_messages_.end()) {
       it->second[rank_id] = received_data;
     } else {
-      std::unordered_map<uint32_t, VectorPtr> res;
-      (void)res.insert(std::make_pair(rank_id, received_data));
+      mindspore::HashMap<uint32_t, VectorPtr> res;
+      (void)res.emplace(rank_id, received_data);
       workder_receive_messages_[request_id] = res;
     }
   }

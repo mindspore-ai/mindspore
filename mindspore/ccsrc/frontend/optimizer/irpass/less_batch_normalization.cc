@@ -17,7 +17,7 @@
 #include "frontend/optimizer/irpass/less_batch_normalization.h"
 
 #include <set>
-#include <unordered_map>
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace opt {
@@ -250,7 +250,7 @@ static const std::vector<std::vector<kStructureTuple>> kNeedMatchPattern = {Resi
 const std::set<PrimitivePtr> kNeedRemoveNodeSet{
   prim::kPrimLoad,      prim::kPrimRefToEmbed, prim::kPrimApplyMomentum, prim::kPrimMomentum,
   prim::kPrimApplyFtrl, prim::kPrimSGD,        prim::kPrimApplyRMSProp,  prim::kPrimAdam};
-static std::unordered_map<RemoveNodeType, std::unordered_set<size_t>> kRemoveIndex{
+static mindspore::HashMap<RemoveNodeType, mindspore::HashSet<size_t>> kRemoveIndex{
   {RemoveNodeType::kOtherNode, {2}}, {RemoveNodeType::kOptimizerNode, {3, 5, 6}}};
 
 bool NeedRemove(const ParameterPtr &a, const std::vector<AnfNodePtr> &parameter_list) {

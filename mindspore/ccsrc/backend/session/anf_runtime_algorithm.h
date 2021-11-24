@@ -23,7 +23,6 @@
 #include <tuple>
 #include <utility>
 #include <memory>
-#include <unordered_set>
 #include <map>
 #include <optional>
 #include "ir/anf.h"

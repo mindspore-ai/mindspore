@@ -24,7 +24,7 @@ usage()
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 10.1|11.1|310|910] [-I arm64|arm32|x86_64] [-K on|off] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-H on|off] \\"
   echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|avx512|off] \\"
-  echo "              [-L Tensor-RT path] [-y on|off]  \\"
+  echo "              [-L Tensor-RT path] [-y on|off] [-F on|off] \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -62,4 +62,5 @@ usage()
   echo "    -H Enable hidden"
   echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
   echo "    -y Compile the symbol table switch and save the symbol table to the directory output"
+  echo "    -F Use fast hash table in mindspore compiler, default on"
 }

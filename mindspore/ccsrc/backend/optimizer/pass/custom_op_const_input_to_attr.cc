@@ -16,8 +16,8 @@
 #include "backend/optimizer/pass/custom_op_const_input_to_attr.h"
 
 #include <memory>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
@@ -38,7 +38,7 @@ const AnfNodePtr CustomOpConstInputToAttr::Process(const FuncGraphPtr &, const A
   }
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
-  std::unordered_set<size_t> attr_indices;
+  mindspore::HashSet<size_t> attr_indices;
   GetCustomOpAttrIndex(primitive, &attr_indices);
   if (attr_indices.empty()) {
     return nullptr;

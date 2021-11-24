@@ -19,10 +19,10 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <utility>
+#include "utils/hash_map.h"
 #include "debug/env_config_parser.h"
 
 namespace mindspore {
@@ -83,7 +83,7 @@ class RecorderManager {
 
   mutable std::mutex mtx_;
   // <module, name>, BaserRecorderPtr
-  std::unordered_map<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash> recorder_container_;
+  mindspore::HashMap<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash> recorder_container_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RECORDER_MANAGER_H_

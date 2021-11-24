@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 
 #include <memory>
 #include <set>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_node.h"
 #include "frontend/parallel/status.h"
@@ -60,7 +60,7 @@ class AllreduceGraph {
   void PrintAllredueGraphInfo() const;
   void PrintArnodeVec() const;
   void PrintArnodeSet() const;
-  const std::unordered_set<CNodePtr> &cnode_set() const { return cnode_set_; }
+  const mindspore::HashSet<CNodePtr> &cnode_set() const { return cnode_set_; }
   CNodePtr head_cnode() const { return head_cnode_; }
   Status set_head_cnode(const CNodePtr &node);
   double max() const { return max_; }
@@ -69,14 +69,14 @@ class AllreduceGraph {
   CNodePtr head_cnode_;
   std::set<AllreduceNodePtr> arnode_set_;
   std::vector<AllreduceNode> arnode_vec_;
-  std::unordered_set<CNodePtr> cnode_set_;
+  mindspore::HashSet<CNodePtr> cnode_set_;
   // If One ParameterPtr is used by multiple CNode, the last node for backward computation is saved.
-  std::unordered_map<AnfNodePtr, std::vector<CNodePtr>> para_cnode_map_;
+  mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> para_cnode_map_;
   // One ParameterPtr may be used by multiple CNode
-  std::unordered_map<AnfNodePtr, std::unordered_set<CNodePtr>> para_cnodeset_map_;
+  mindspore::HashMap<AnfNodePtr, mindspore::HashSet<CNodePtr>> para_cnodeset_map_;
   // Multiple Parameter may be inputs to the same CNode
-  std::unordered_map<CNodePtr, std::unordered_set<AnfNodePtr>> cnode_paraset_map_;
-  std::unordered_map<CNodePtr, AllreduceNodePtr> cnode_arnode_map_;
+  mindspore::HashMap<CNodePtr, mindspore::HashSet<AnfNodePtr>> cnode_paraset_map_;
+  mindspore::HashMap<CNodePtr, AllreduceNodePtr> cnode_arnode_map_;
   double max_;
 };
 }  // namespace parallel

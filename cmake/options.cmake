@@ -27,6 +27,7 @@ option(MODE_ASCEND_ALL "supports all ascend platform" OFF)
 option(MODE_ASCEND_ACL "supports ascend acl mode only" OFF)
 option(ENABLE_SYM_FILE "enable sym file" OFF)
 option(BUILD_DEV_MODE "MindSpore build nightly dev mode" OFF)
+option(ENABLE_FAST_HASH_TABLE "Enable use fast hash table instead of std ones" ON)
 
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")

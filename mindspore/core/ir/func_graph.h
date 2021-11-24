@@ -25,11 +25,12 @@
 #include <vector>
 #include <list>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <functional>
 #include <utility>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "utils/ordered_set.h"
@@ -238,8 +239,8 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   void set_is_bprop(bool is_brop) { is_bprop_ = is_brop; }
   bool is_bprop() const { return is_bprop_; }
 
-  std::unordered_map<std::string, ValuePtr> &attrs() { return attrs_; }
-  void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+  mindspore::HashMap<std::string, ValuePtr> &attrs() { return attrs_; }
+  void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
       attrs_[attr.first] = attr.second;
     }
@@ -252,8 +253,8 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   ValuePtr get_attr(const std::string &key) const final;
   void set_attr(const std::string &key, const ValuePtr &value) final { attrs_[key] = value; }
 
-  std::unordered_map<std::string, FuncGraphTransform> &transforms() { return transforms_; }
-  void set_transforms(const std::unordered_map<std::string, FuncGraphTransform> &transforms) {
+  mindspore::HashMap<std::string, FuncGraphTransform> &transforms() { return transforms_; }
+  void set_transforms(const mindspore::HashMap<std::string, FuncGraphTransform> &transforms) {
     transforms_ = transforms;
   }
 
@@ -312,7 +313,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   bool DropFuncGraphUsed(const FuncGraphPtr &fg);
 
   // Get all value nodes in the inputs of J directly used by this func graph.
-  const std::unordered_map<AnfNodePtr, int> &j_value_nodes() const;
+  const mindspore::HashMap<AnfNodePtr, int> &j_value_nodes() const;
   void CopyJValueNodes(const FuncGraphPtr &source);
   void ClearJValueNodes();
   void AddJValueNode(const AnfNodePtr &value_node, int count = 1);
@@ -356,22 +357,22 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   }
   void GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count, int pos_args_input_count,
                          std::vector<AnfNodePtr> *specialized_parameter_list,
-                         std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
+                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   void GenerateKwParams(const FuncGraphPtr &specialized_graph,
                         const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
                         std::vector<AnfNodePtr> *specialized_parameter_list,
-                        std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
+                        mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   void GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
                             const std::vector<AnfNodePtr> &specialized_parameter_list,
-                            std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
+                            mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   const std::vector<AnfNodePtr> &paramter_obj_nodes() const { return paramter_obj_nodes_; }
   void add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
 
-  std::unordered_map<std::string, ValuePtr> attrs_;
-  std::unordered_map<std::string, FuncGraphTransform> transforms_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, FuncGraphTransform> transforms_;
   // Parameter default value.
   std::map<std::string, AnfNodePtr> parameter_default_value_;
   size_t seen_;
@@ -415,7 +416,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 
   bool modify_output() const { return modify_output_; }
   void set_modify_output(bool modify_output) { modify_output_ = modify_output; }
-  const std::unordered_set<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
+  const mindspore::HashSet<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
   void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
   void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
 
@@ -443,7 +444,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   AnfNodeCounterMap free_variables_;
 
   // All value nodes calling J in the function.
-  std::unordered_map<AnfNodePtr, int> j_value_nodes_;
+  mindspore::HashMap<AnfNodePtr, int> j_value_nodes_;
 
   // All user value nodes of this func graph, recording by CNode and its input's index.
   CNodeIndexCounterMap func_graph_cnodes_index_;
@@ -483,7 +484,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
                              const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
                              const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes,
-                             std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
+                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
@@ -507,7 +508,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   // If the graph is decorated by @ms_function and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.
   bool modify_output_ = false;
-  std::unordered_set<AnfNodePtr> used_forward_nodes_;
+  mindspore::HashSet<AnfNodePtr> used_forward_nodes_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

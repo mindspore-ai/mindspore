@@ -19,10 +19,10 @@
 
 #include <algorithm>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,9 +223,9 @@ bool NodeManager::IsAllNodesScaleOutDone() const {
 
 bool NodeManager::IsAllNodesScaleInDone() const { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
 
-const std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() const { return nodes_info_; }
+const mindspore::HashMap<std::string, NodeInfo> &NodeManager::nodes_info() const { return nodes_info_; }
 
-const std::unordered_map<std::string, NodeInfo> &NodeManager::registered_nodes_info() const {
+const mindspore::HashMap<std::string, NodeInfo> &NodeManager::registered_nodes_info() const {
   return registered_nodes_info_;
 }
 

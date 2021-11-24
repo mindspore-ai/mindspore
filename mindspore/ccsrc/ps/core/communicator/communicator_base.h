@@ -19,10 +19,10 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <functional>
 #include <thread>
 
+#include "utils/hash_map.h"
 #include "ps/core/communicator/message_handler.h"
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"
@@ -87,7 +87,7 @@ class CommunicatorBase {
   bool running() const;
 
  protected:
-  std::unordered_map<std::string, MessageCallback> msg_callbacks_;
+  mindspore::HashMap<std::string, MessageCallback> msg_callbacks_;
   std::thread running_thread_;
   bool running_;
 };

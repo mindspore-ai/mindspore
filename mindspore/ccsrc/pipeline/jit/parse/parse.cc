@@ -21,9 +21,9 @@
 #include <utility>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <sstream>
 #include <algorithm>
+#include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -1920,7 +1920,7 @@ FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::obje
   return block;
 }
 
-AnfNodePtr FindPhis(const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis, const AnfNodePtr &node) {
+AnfNodePtr FindPhis(const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inp = node->cast<ParameterPtr>();
   const auto &iter = removable_phis.find(inp);
@@ -1932,13 +1932,13 @@ AnfNodePtr FindPhis(const std::unordered_map<ParameterPtr, AnfNodePtr> &removabl
 
 void Parser::RemoveUnnecessaryPhis() {
   // Merge all removable phis to one map;
-  std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis;
+  mindspore::HashMap<ParameterPtr, AnfNodePtr> removable_phis;
   std::vector<ParameterPtr> phis;
   for (FunctionBlockPtr &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
     removable_phis.insert(block->removable_phis().begin(), block->removable_phis().end());
     std::transform(block->removable_phis().begin(), block->removable_phis().end(), std::back_inserter(phis),
-                   [](const std::pair<ParameterPtr, AnfNodePtr> &pair) { return pair.first; });
+                   [](const auto &pair) { return pair.first; });
   }
   if (removable_phis.empty()) {
     return;

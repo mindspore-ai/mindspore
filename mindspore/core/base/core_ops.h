@@ -20,15 +20,15 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/flags.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {
 inline const ValuePtr kValueOne = std::make_shared<Int64Imm>(1);
-inline const std::unordered_map<std::string, ValuePtr> kSideEffectPropagate = {
+inline const mindspore::HashMap<std::string, ValuePtr> kSideEffectPropagate = {
   {mindspore::GRAPH_FLAG_SIDE_EFFECT_PROPAGATE, kValueOne},
 };
 

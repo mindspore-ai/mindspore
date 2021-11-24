@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <unordered_set>
+#include "utils/hash_set.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
@@ -164,7 +164,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data));
   new_cnode->set_input(kTopkIndexK + 1, new_value_node);
 
-  std::unordered_set<size_t> attr_index{kTopkIndexK};
+  mindspore::HashSet<size_t> attr_index{kTopkIndexK};
   ConstInputToAttr(new_cnode, attr_index);
   auto indices_const = CreateValueNode();
   new_cnode->add_input(indices_const);

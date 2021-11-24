@@ -21,9 +21,9 @@
 #include <set>
 #include <string>
 #include <tuple>
-#include <unordered_set>
 #include <utility>
 #include <vector>
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"

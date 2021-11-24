@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_RECOMPUTE_PREPARE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_RECOMPUTE_PREPARE_H_
 
-#include <unordered_set>
+#include "utils/hash_set.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -43,7 +43,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       return nullptr;
     }
     if (output->isa<CNode>()) {
-      std::unordered_set<CNodePtr> real_outputs;
+      mindspore::HashSet<CNodePtr> real_outputs;
       GetRealOutputNodes(output, &real_outputs);
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
@@ -61,7 +61,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
     return nullptr;
   }
 
-  void GetRealOutputNodes(const AnfNodePtr &output, std::unordered_set<CNodePtr> *real_outputs) {
+  void GetRealOutputNodes(const AnfNodePtr &output, mindspore::HashSet<CNodePtr> *real_outputs) {
     MS_EXCEPTION_IF_NULL(output);
     MS_EXCEPTION_IF_NULL(real_outputs);
     if (!output->isa<CNode>()) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_FUSION_BASE_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_FUSION_BASE_PASS_H_
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <string>
 #include <utility>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/pass.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
@@ -45,7 +45,7 @@ const int8_t MULTI_ELTWISE_SIZE = 4;
 
 constexpr int64_t kBNTrainingUpdateOutputUsedTotalNum = 5;
 constexpr int64_t kConvOutputUsedTotalNum = 4;
-using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
+using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
 
 struct BufferFusionInfo_t {
   std::string full_name;
@@ -66,7 +66,7 @@ class FusionBasePass : public PassWithSwitch {
   bool RunPass(const FuncGraphPtr &graph) override;
   virtual void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                         FusedNodeRecord *candidate_fusion) = 0;
-  void SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record);
+  void SetRecordFusionId(const mindspore::HashSet<AnfNodePtr> &record);
   bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
 #define MINDSPORE_CCSRC_VM_VMIMPL_H_
 
 #include <set>
-#include <unordered_map>
 #include <memory>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
@@ -33,10 +33,10 @@ namespace mindspore {
 namespace compile {
 
 using AnfNodePtrList = std::vector<AnfNodePtr>;
-using AnfNodePtrToBaseRefMap = std::unordered_map<AnfNodePtr, BaseRef>;
-using AnfNodePtrToAnfNodePtrMap = std::unordered_map<AnfNodePtr, AnfNodePtr>;
+using AnfNodePtrToBaseRefMap = mindspore::HashMap<AnfNodePtr, BaseRef>;
+using AnfNodePtrToAnfNodePtrMap = mindspore::HashMap<AnfNodePtr, AnfNodePtr>;
 
-using FuncGraphPtrToBaseRefMap = std::unordered_map<FuncGraphPtr, BaseRef>;
+using FuncGraphPtrToBaseRefMap = mindspore::HashMap<FuncGraphPtr, BaseRef>;
 
 using TensorList = std::vector<tensor::TensorPtr>;
 

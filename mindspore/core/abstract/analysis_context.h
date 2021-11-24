@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <list>
+#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/meta_func_graph.h"
 
@@ -69,10 +70,10 @@ class AnalysisContext {
   AbstractBasePtrList args_spec_list_;
   // Record all created context for each func graph.
   // `extant_context_cache_` is copied from its parent context.
-  std::unordered_map<FuncGraphPtr, AnalysisContextWeakPtr> extant_context_cache_;
+  mindspore::HashMap<FuncGraphPtr, AnalysisContextWeakPtr> extant_context_cache_;
   // Record all created child contexts from this context.
   // Like: key: [func_graph & arguments], value: [child_context]
-  std::unordered_map<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
+  mindspore::HashMap<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
 
   // There may may be shared_ptr loop like:
   // FuncGraphAbstactClosur->AnalysisContext->children_cache_->ArgsSpec->FuncGraphAbstactClosur.

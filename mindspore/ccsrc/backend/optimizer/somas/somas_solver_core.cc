@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@
 #include <ctime>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <map>
+#include "utils/hash_map.h"
 #include "backend/optimizer/somas/somas_solver_alg.h"
 #include "backend/optimizer/somas/somas_solver_core.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
 
+using mindspore::HashMap;
 using std::sort;
-using std::unordered_map;
 using std::vector;
 
 namespace mindspore {
@@ -266,7 +266,7 @@ static bool GreaterSizeGreaterConstraintsGreaterIndex(const BlockTensor &t1, con
 void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heuristic
   MS_LOG(DEBUG) << "Sorting Blocks of tensor, strategy: " << sortingNames[sort_strategy_];
   typedef bool (*SortingFunction)(const BlockTensor &, const BlockTensor &);
-  std::unordered_map<SortingType, SortingFunction> sort_map;
+  mindspore::HashMap<SortingType, SortingFunction> sort_map;
   sort_map[kGreaterSizeSmallerIndex] = &GreaterSizeSmallerIndex;
 #ifdef SOMAS_DEBUG
   sort_map[kGreaterSizeGreaterIndex] = &GreaterSizeGreaterIndex;
@@ -327,13 +327,13 @@ void SomasSolverCore::AppendLifelongTensors() {
   MS_LOG(DEBUG) << "Appending lifelong tensors to solution";
   size_t offset = upperbound_;
   std::map<size_t, SomasSolverTensorDescPtr> lifelongTensors;
-  for (auto t_ : tensors_) {
-    if (t_.second->lifelong_) {
-      lifelongTensors.insert(t_);
+  for (auto &t : tensors_) {
+    if (t.second->lifelong_) {
+      (void)lifelongTensors.emplace(t.first, t.second);
     }
   }
-  for (auto t_ : lifelongTensors) {
-    SomasSolverTensorDescPtr pTensor = t_.second;
+  for (auto &t : lifelongTensors) {
+    auto &pTensor = t.second;
     pTensor->offset_ = offset;
     offset += pTensor->size_;
   }

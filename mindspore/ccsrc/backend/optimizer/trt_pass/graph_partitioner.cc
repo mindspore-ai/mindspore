@@ -20,10 +20,10 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <unordered_map>
 #include <algorithm>
 #include <utility>
 #include <string>
+#include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
@@ -61,8 +61,8 @@ bool WeightCheck(const AnfNodePtr &node) {
   return true;
 }
 
-std::unordered_map<AnfNodePtr, NodeInfo> CollectNodeInfo(const FuncGraphPtr &func_graph) {
-  std::unordered_map<AnfNodePtr, NodeInfo> res;
+mindspore::HashMap<AnfNodePtr, NodeInfo> CollectNodeInfo(const FuncGraphPtr &func_graph) {
+  mindspore::HashMap<AnfNodePtr, NodeInfo> res;
 
   const std::vector<AnfNodePtr> &node_list = TopoSort(func_graph->get_return());
   for (size_t i = 0; i < node_list.size(); i++) {

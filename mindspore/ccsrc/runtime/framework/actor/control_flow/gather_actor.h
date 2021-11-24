@@ -20,11 +20,10 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <map>
-#include <unordered_map>
 #include <stack>
 #include <utility>
 #include <algorithm>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
 
@@ -37,7 +36,7 @@ class GatherActor : public ControlActor {
  public:
   GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
   ~GatherActor() override = default;
-  const std::unordered_map<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
+  const mindspore::HashMap<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
     return output_data_with_branch_id_arrows_;
   }
 
@@ -49,7 +48,7 @@ class GatherActor : public ControlActor {
   friend class ControlNodeScheduler;
 
   // There will be multiple output branches for gather actor according the funcgraph in partial.
-  std::unordered_map<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;
+  mindspore::HashMap<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;
 };
 
 using GatherActorPtr = std::shared_ptr<GatherActor>;

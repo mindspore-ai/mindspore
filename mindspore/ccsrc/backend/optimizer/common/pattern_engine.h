@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@
 #include <sstream>
 #include <memory>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <initializer_list>
 #include <iostream>
 #include <algorithm>
@@ -33,6 +31,8 @@
 #include <list>
 #include <utility>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/common/visit.h"
 #include "base/base.h"
 #include "utils/log_adapter.h"
@@ -158,7 +158,7 @@ std::ostream &operator<<(std::ostream &os, const VarPtr &var);
 
 using Equiv = std::map<VarPtr, BaseRef>;
 using EquivPtr = std::shared_ptr<Equiv>;
-using PrimitiveVarMap = std::unordered_map<PrimitivePtr, VarPtr>;
+using PrimitiveVarMap = mindspore::HashMap<PrimitivePtr, VarPtr>;
 using PrimitiveVarMapPtr = std::shared_ptr<PrimitiveVarMap>;
 
 inline bool DefaultTypeEq(const BaseRef &x, const BaseRef &y) { return x.type() == y.type(); }

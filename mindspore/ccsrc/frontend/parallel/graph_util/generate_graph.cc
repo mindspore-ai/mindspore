@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
   return value_node->cast<AnfNodePtr>();
 }
 
-static std::unordered_map<int64_t, AnfNodePtr> int_tensor_map = {};
+static mindspore::HashMap<int64_t, AnfNodePtr> int_tensor_map = {};
 AnfNodePtr CreateInt32Tensor(int64_t value) {
   auto it = int_tensor_map.find(value);
   if (it != int_tensor_map.end()) {

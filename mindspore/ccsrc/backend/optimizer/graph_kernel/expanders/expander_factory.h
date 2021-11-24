@@ -16,11 +16,11 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_
 
-#include <unordered_map>
 #include <functional>
 #include <string>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/graph_kernel/expanders/utils.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -44,7 +44,7 @@ class OpExpanderFactory {
   void Register(const std::string &op, const RegFunc &func) { creators[op] = func; }
 
  private:
-  std::unordered_map<std::string, RegFunc> creators;
+  mindspore::HashMap<std::string, RegFunc> creators;
 };
 
 class OpExpanderRegister {

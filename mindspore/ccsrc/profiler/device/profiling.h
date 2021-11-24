@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace profiler {

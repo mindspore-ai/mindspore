@@ -20,8 +20,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
 
 #include <vector>
-#include <unordered_map>
 #include <memory>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 
@@ -46,7 +46,7 @@ class CSE {
  private:
   bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;
   bool DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
-                 std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const;
+                 mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups) const;
 };
 
 BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id = false);

@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_PARAMETER_ELIMINATE_H
 #include <vector>
 #include <utility>
-#include <unordered_set>
 #include <memory>
 
+#include "utils/hash_set.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -99,11 +99,11 @@ class ParameterEliminator {
     return {nullptr, {}};
   }
 
-  static std::unordered_set<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
+  static mindspore::HashSet<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
     MS_EXCEPTION_IF_NULL(fg->manager());
     const auto &manager_node_users = fg->manager()->node_users();
     const auto &parameters = fg->parameters();
-    std::unordered_set<size_t> unused_parameter_indexes;
+    mindspore::HashSet<size_t> unused_parameter_indexes;
     // Traverse to find all unused parameters.
     size_t index = 0;
     for (const auto &parameter : parameters) {
@@ -126,7 +126,7 @@ class ParameterEliminator {
     return unused_parameter_indexes;
   }
 
-  static void EraseArgs(const CNodePtr &caller, const std::unordered_set<size_t> &unused_parameter_indexes,
+  static void EraseArgs(const CNodePtr &caller, const mindspore::HashSet<size_t> &unused_parameter_indexes,
                         const FuncGraphManagerPtr &manager) {
     std::vector<AnfNodePtr> new_args = {caller->inputs()[0]};
     for (size_t i = 0; i < caller->inputs().size() - 1; i++) {

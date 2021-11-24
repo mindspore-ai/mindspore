@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 #define MINDSPORE_TENSOR_SUMMARY_H
 
 #include <vector>
-#include <unordered_map>
 #include <tuple>
 #include <memory>
 #include <string>
 
+#include "utils/hash_map.h"
 #include "debug/debug_services.h"
 
 #ifdef ONLINE_DBG_MODE
@@ -155,9 +155,9 @@ class TensorSummary : public ITensorSummary {
   double epsilon_;
   bool mean_sd_cal_enabled_;
   VarianceAndMeanCalculator current_mean_variance_;
-  std::unordered_map<std::string, std::unique_ptr<MeanCalculator>> means_;
-  std::unordered_map<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
-  std::unordered_map<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
+  mindspore::HashMap<std::string, std::unique_ptr<MeanCalculator>> means_;
+  mindspore::HashMap<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
+  mindspore::HashMap<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
   double_t StatLookup(const DebugServices::watchpoint_t &);
   double_t StatLookup(const std::string &, const DebugServices::watchpoint_t &);
   double_t GetZeroValPercent();

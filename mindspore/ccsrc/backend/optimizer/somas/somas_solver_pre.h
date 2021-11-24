@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 #include <map>
 #include <memory>
 #include <stack>
-#include <unordered_map>
 #include <vector>
+#include "utils/hash_map.h"
 #include "backend/session/kernel_graph.h"
 
-using std::unordered_map;
+using mindspore::HashMap;
 using std::vector;
 
 namespace mindspore {
@@ -175,7 +175,7 @@ struct SomasSolverTensorDesc {
   }
 };
 using SomasSolverTensorDescPtr = std::shared_ptr<SomasSolverTensorDesc>;
-typedef std::unordered_map<size_t, SomasSolverTensorDescPtr> TensorsDescMap;
+typedef mindspore::HashMap<size_t, SomasSolverTensorDescPtr> TensorsDescMap;
 class SomasSolverPre {
  public:
   SomasSolverPre() = default;

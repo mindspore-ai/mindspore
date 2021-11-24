@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <map>
 #include <set>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"

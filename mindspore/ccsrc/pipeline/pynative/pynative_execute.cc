@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@
 #include <set>
 #include <memory>
 #include <sstream>
-#include <unordered_set>
 #include <algorithm>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "debug/trace.h"
 #include "debug/anf_ir_dump.h"
 #include "pybind_api/api_register.h"
@@ -178,11 +179,11 @@ std::string GetId(const py::handle &obj) {
   }
 
   if (py::isinstance<Cell>(obj) || py::isinstance<py::function>(obj)) {
-    const auto &it = g_pyobj_id_cache.find(obj);
+    auto it = g_pyobj_id_cache.find(obj);
     if (it == g_pyobj_id_cache.end()) {
-      auto &&id = GetPyObjId(obj);
-      g_pyobj_id_cache[obj] = id;
-      return std::move(id);
+      auto id = GetPyObjId(obj);
+      g_pyobj_id_cache.emplace(obj, id);
+      return id;
     } else {
       return it->second;
     }
@@ -192,7 +193,7 @@ std::string GetId(const py::handle &obj) {
 }
 
 void GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
-                  std::unordered_map<SignatureEnumDType, std::vector<size_t>> *type_indexes) {
+                  mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) {
   MS_EXCEPTION_IF_NULL(type_indexes);
   for (size_t i = 0; i < dtypes.size(); ++i) {
     auto it = type_indexes->find(dtypes[i]);
@@ -224,8 +225,8 @@ TypeId JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_in
 }
 
 void GetDstType(const py::tuple &py_args,
-                const std::unordered_map<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                std::unordered_map<SignatureEnumDType, TypeId> *dst_type) {
+                const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
+                mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
   for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
     const auto &type = it->first;
     const auto &indexes = it->second;
@@ -393,7 +394,7 @@ py::list FilterTensorArgs(const py::args &args, bool has_sens = false) {
 }
 
 bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_index, const PrimitivePtr &op_prim,
-                                  const std::unordered_set<size_t> &input_attrs) {
+                                  const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(op_prim);
   const auto &input_names_value = op_prim->GetAttr(kAttrInputNames);
   if (input_names_value == nullptr) {
@@ -512,7 +513,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   bool reg_exist = false;
   if (op_run_info->op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
-    std::unordered_set<size_t> attr_indexes;
+    mindspore::HashSet<size_t> attr_indexes;
     opt::GetCustomOpAttrIndex(op_prim, &attr_indexes);
     if (!attr_indexes.empty()) {
       reg_exist = true;
@@ -1238,7 +1239,7 @@ py::object ForwardExecutor::DoParamMixPrecisionCastTuple(bool *is_cast, const py
 }
 
 void ForwardExecutor::DoSignatureCast(const PrimitivePyPtr &prim,
-                                      const std::unordered_map<SignatureEnumDType, TypeId> &dst_type,
+                                      const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                                       const std::vector<SignatureEnumDType> &dtypes,
                                       const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -1353,10 +1354,10 @@ void ForwardExecutor::SetImplicitCast(const OpExecInfoPtr &op_exec_info) {
                                << "signature size " << sig_size;
     }
     std::vector<SignatureEnumDType> dtypes;
-    std::unordered_map<SignatureEnumDType, std::vector<size_t>> type_indexes;
+    mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
     bool has_dtype_sig = GetSignatureType(op_exec_info->py_primitive, &dtypes);
     if (has_dtype_sig) {
-      std::unordered_map<SignatureEnumDType, TypeId> dst_type;
+      mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
       GetTypeIndex(dtypes, &type_indexes);
       GetDstType(op_exec_info->op_inputs, type_indexes, &dst_type);
       DoSignatureCast(op_exec_info->py_primitive, dst_type, dtypes, op_exec_info);
@@ -1369,7 +1370,7 @@ void ForwardExecutor::SetImplicitCast(const OpExecInfoPtr &op_exec_info) {
       return;
     }
     MS_LOG(DEBUG) << "Do signature for " << op_exec_info->op_name << " with cache";
-    std::unordered_map<SignatureEnumDType, TypeId> dst_type;
+    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
     GetDstType(op_exec_info->op_inputs, it->second.type_indexes, &dst_type);
     DoSignatureCast(op_exec_info->py_primitive, dst_type, it->second.dtypes, op_exec_info);
   }
@@ -1834,7 +1835,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
 void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const {
   MS_EXCEPTION_IF_NULL(resource);
   // Get all tensors id of forward op
-  std::unordered_set<std::string> forward_op_tensor_id;
+  mindspore::HashSet<std::string> forward_op_tensor_id;
   const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
   for (const auto &record : op_info_with_tensor_id) {
     std::for_each(record.second.begin(), record.second.end(),
@@ -2939,8 +2940,8 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
   auto second_graph_info = top_cell()->graph_info_map().at(second_df_builder);
   MS_EXCEPTION_IF_NULL(second_graph_info);
 
-  std::unordered_set<std::string> params_weights_set;
-  std::unordered_set<std::string> params_inputs_set;
+  mindspore::HashSet<std::string> params_weights_set;
+  mindspore::HashSet<std::string> params_inputs_set;
   for (const auto &sec : second_graph_info->params) {
     if (sec.second->has_default()) {
       params_weights_set.emplace(sec.first);

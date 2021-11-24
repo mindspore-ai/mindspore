@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include <unordered_set>
 #include <mutex>
 #include <stack>
 #include <set>
 #include <map>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include "pybind_api/ir/base_ref_py.h"
@@ -41,9 +41,9 @@
 
 namespace mindspore::pynative {
 namespace py = pybind11;
-using OpInfoWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
-using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
-using OpInfoWithMsFuncForwardTensors = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
+using OpInfoWithTensorId = mindspore::HashMap<std::string, std::vector<std::string>>;
+using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
+using OpInfoWithMsFuncForwardTensors = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
 
 py::object RealRunOp(const py::args &args);
 
@@ -51,7 +51,7 @@ struct GraphInfo {
   std::string cell_id;
   AnfNodePtr output;
   OrderedMap<std::string, ParameterPtr> params;  // hold input parameters and cell weights
-  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
+  mindspore::HashMap<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
   GraphInfo() = default;
   explicit GraphInfo(std::string id) : cell_id(std::move((id))) {}
 };
@@ -99,7 +99,7 @@ class TopCellInfo {
   std::string &all_op_info() { return all_op_info_; }
   const std::string &grad_operation() const { return grad_operation_; }
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
-  std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
+  mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
   OpInfoWithTensorId &op_info_with_tensor_id() { return op_info_with_tensor_id_; }
@@ -138,7 +138,7 @@ class TopCellInfo {
   std::string all_op_info_;
   std::string grad_operation_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
-  std::unordered_set<std::string> sub_cell_list_;
+  mindspore::HashSet<std::string> sub_cell_list_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
@@ -310,7 +310,7 @@ class GradExecutor {
   // Use vector for keep order
   std::vector<TopCellInfoPtr> top_cell_list_;
   // Record all top cell which has been ran
-  std::unordered_map<std::string, TopCellInfoPtr> already_run_top_cell_;
+  mindspore::HashMap<std::string, TopCellInfoPtr> already_run_top_cell_;
   // Use vector for keep order
   ForwardExecutorWeakPtr forward_executor_;
 };
@@ -327,7 +327,7 @@ class ForwardExecutor {
   void RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_info);
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
-  std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
   CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
@@ -356,14 +356,14 @@ class ForwardExecutor {
                                           size_t index);
   py::object DoAutoCastTuple(const py::tuple &tuple, const TypeId &type_id, const std::string &op_name, size_t index);
   py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
-  void DoSignatureCast(const PrimitivePyPtr &prim, const std::unordered_map<SignatureEnumDType, TypeId> &dst_type,
+  void DoSignatureCast(const PrimitivePyPtr &prim, const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
 
  private:
   GradExecutorWeakPtr grad_executor_;
   PrimAbsCache prim_abs_list_;
   ImplicitCastCache implicit_cast_map_;
-  std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> node_abs_map_;
   bool lazy_build_{false};
 };
 

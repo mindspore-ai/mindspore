@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,17 +51,16 @@ bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std:
       return false;
     }
 
-    auto all = std::all_of(main_attrs.begin(), main_attrs.end(),
-                           [&node_attrs](const std::pair<std::string, ValuePtr> &item) -> bool {
-                             if (item.second == nullptr) {
-                               return false;
-                             }
-                             auto iter = node_attrs.find(item.first);
-                             if (iter == node_attrs.end()) {
-                               return false;
-                             }
-                             return *item.second == *iter->second;
-                           });
+    auto all = std::all_of(main_attrs.begin(), main_attrs.end(), [&node_attrs](const auto &item) -> bool {
+      if (item.second == nullptr) {
+        return false;
+      }
+      auto iter = node_attrs.find(item.first);
+      if (iter == node_attrs.end()) {
+        return false;
+      }
+      return *item.second == *iter->second;
+    });
     return all;
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ bool List::operator==(const Type &other) const {
 }
 
 Class::Class(const Named &tag, const ClassAttrVector &attributes,
-             const std::unordered_map<std::string, ValuePtr> &methods)
+             const mindspore::HashMap<std::string, ValuePtr> &methods)
     : Object(kObjectTypeClass, false), attributes_(attributes), tag_(tag), methods_(methods) {}
 
 std::string List::DumpContent(bool is_dumptext) const {

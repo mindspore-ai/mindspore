@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_SWAP_MANAGER_H_
 
-#include <unordered_map>
-#include <unordered_set>
 #include <map>
 #include <memory>
 #include <vector>
 #include <utility>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/mem_reuse/mem_copy_manager.h"
 
 using PerformPair = std::pair<float, float>;
@@ -141,10 +141,10 @@ class MemSwapManager {
 
   std::vector<CNodePtr> execution_order_;
   std::vector<TensorInfo> ordered_tensors_;
-  std::unordered_map<void *, KernelExecutionInfo> kernel_execution_info_;
-  std::unordered_map<void *, std::map<size_t, PerformPair>> kernel_swap_perform_;
+  mindspore::HashMap<void *, KernelExecutionInfo> kernel_execution_info_;
+  mindspore::HashMap<void *, std::map<size_t, PerformPair>> kernel_swap_perform_;
   // Key: trigger swap kernel, value: MemSwapInfoSet of kernel need to be swapped
-  std::unordered_map<void *, MemSwapInfoSet> mem_swap_info_map_;
+  mindspore::HashMap<void *, MemSwapInfoSet> mem_swap_info_map_;
   std::vector<HostAddress> host_addrs_list_;
 
   // Key: cache kernel address, value: lists of first time move pos or not

@@ -19,8 +19,6 @@
 #ifndef MINDSPORE_CORE_IR_MANAGER_H_
 #define MINDSPORE_CORE_IR_MANAGER_H_
 
-#include <unordered_set>
-#include <unordered_map>
 #include <set>
 #include <map>
 #include <list>
@@ -33,6 +31,8 @@
 #include "utils/any.h"
 #include "utils/misc.h"
 #include "utils/signal.h"
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
 #include "ir/anf.h"
@@ -137,7 +137,7 @@ class FuncGraphParentsTotalComputer final : public DepComputer {
   void RealRecompute(FuncGraphPtr fg) override;
 
  private:
-  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, std::unordered_map<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs);
+  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs);
 };
 
 using FuncGraphToFuncGraphMap = OrderedMap<FuncGraphPtr, FuncGraphPtr>;

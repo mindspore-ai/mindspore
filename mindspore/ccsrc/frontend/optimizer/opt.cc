@@ -18,9 +18,9 @@
 
 #include <deque>
 #include <memory>
-#include <unordered_map>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "frontend/optimizer/optimizer.h"
@@ -262,7 +262,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   return changes;
 }
 
-void SubstitutionList::DisplayStatusOfSubstitution(const std::unordered_map<std::string, std::vector<bool>> &status,
+void SubstitutionList::DisplayStatusOfSubstitution(const mindspore::HashMap<std::string, std::vector<bool>> &status,
                                                    const OptimizerPtr &optimizer, size_t space) const {
   constexpr int pad_width = 4;
   std::stringstream ss;
@@ -283,7 +283,7 @@ void SubstitutionList::DisplayStatusOfSubstitution(const std::unordered_map<std:
 bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
   // Add for substitution status counting
   size_t space = 0;
-  std::unordered_map<std::string, std::vector<bool>> status;
+  mindspore::HashMap<std::string, std::vector<bool>> status;
   if (optimizer->is_on_debug_) {
     for (size_t i = 0; i < list_.size(); i++) {
       status[list_[i]->name_ + std::to_string(i)] = {};

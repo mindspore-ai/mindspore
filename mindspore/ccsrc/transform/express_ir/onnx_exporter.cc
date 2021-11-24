@@ -17,11 +17,11 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include <functional>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/func_graph.h"
@@ -353,14 +353,14 @@ class OpConvertRegistry {
     return registry;
   }
 
-  static const std::unordered_map<std::string, OpNameInfo> &GetOpConvertMap() { return GetSingleton().op_map_; }
+  static const mindspore::HashMap<std::string, OpNameInfo> &GetOpConvertMap() { return GetSingleton().op_map_; }
 
   void Clear() noexcept { op_map_.clear(); }
 
  private:
   OpConvertRegistry() {}
 
-  std::unordered_map<std::string, OpNameInfo> op_map_;
+  mindspore::HashMap<std::string, OpNameInfo> op_map_;
 };
 
 class OnnxExporter {
@@ -385,8 +385,8 @@ class OnnxExporter {
   void SetTensorProtoInfo(const ParameterPtr &param, onnx::TensorProto *tensor_proto);
 
   void MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
-                    std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
-  void MatchAndMarkCNode(const CNodePtr &cnode, std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
+                    mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
+  void MatchAndMarkCNode(const CNodePtr &cnode, mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, size_t> *node_map_ptr,
                    onnx::GraphProto *graph_proto);
 
@@ -540,7 +540,7 @@ void OnnxExporter::ExportParameters(const FuncGraphPtr &func_graph, onnx::GraphP
 
 onnx::TensorProto_DataType OnnxExporter::GetOnnxDataType(TypeId type_id) {
   // clang-format off
-  static std::unordered_map<int, onnx::TensorProto_DataType> type_map = {
+  static mindspore::HashMap<int, onnx::TensorProto_DataType> type_map = {
     {kNumberTypeBool, onnx::TensorProto_DataType_BOOL},
     {kNumberTypeInt8, onnx::TensorProto_DataType_INT8},
     {kNumberTypeInt16, onnx::TensorProto_DataType_INT16},
@@ -602,7 +602,7 @@ void OnnxExporter::SetTensorProtoInfo(const ParameterPtr &param, onnx::TensorPro
 }
 
 void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
-                                std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+                                mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
   auto &op_merged_infos = *op_merged_infos_ptr;
 
   for (auto &node : nodes) {
@@ -631,7 +631,7 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
 }
 
 void OnnxExporter::MatchAndMarkCNode(const CNodePtr &cnode,
-                                     std::unordered_map<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+                                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
   auto &op_merged_infos = *op_merged_infos_ptr;
   // MindSpore Conv + BiasAdd --> ONNX Conv
   if (cnode->IsApply(std::make_shared<Primitive>("BiasAdd")) && IsPrimitiveCNode(cnode->input(1), prim::kPrimConv2D)) {
@@ -675,7 +675,7 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
                                onnx::GraphProto *const graph_proto) {
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
 
-  std::unordered_map<AnfNodePtr, OpMergedInfo> op_merged_infos;
+  mindspore::HashMap<AnfNodePtr, OpMergedInfo> op_merged_infos;
   MatchAndMark(func_graph, nodes, &op_merged_infos);
   int count = -1;
   for (const AnfNodePtr &node : nodes) {

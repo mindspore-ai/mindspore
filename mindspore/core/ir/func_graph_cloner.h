@@ -21,11 +21,11 @@
 #include <list>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
@@ -34,7 +34,7 @@
 namespace mindspore {
 class Cloner;
 using ClonerPtr = std::shared_ptr<Cloner>;
-using NodeToNodeMap = std::unordered_map<AnfNodePtr, AnfNodePtr, PointerHash<AnfNodePtr>>;
+using NodeToNodeMap = mindspore::HashMap<AnfNodePtr, AnfNodePtr, PointerHash<AnfNodePtr>>;
 
 enum CloneType { kBasic = 0, kInline = 1, kLifting = 2, kDropping = 3 };
 
@@ -62,7 +62,7 @@ class Cloner {
 
   // Map of replicate nodes and graphs
   const NodeToNodeMap &cloned_nodes() const { return repl_node_; }
-  const std::unordered_map<FuncGraphPtr, FuncGraphPtr> &cloned_func_graphs() const { return repl_func_graph_; }
+  const mindspore::HashMap<FuncGraphPtr, FuncGraphPtr> &cloned_func_graphs() const { return repl_func_graph_; }
 
   // Scope of cloned graphs
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
@@ -107,16 +107,16 @@ class Cloner {
   TraceInfoPtr relation_;
   TraceInfoPtr target_relation_;
   NodeToNodeMap repl_node_;
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
+  mindspore::HashMap<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
   FuncGraphManagerPtr manager_;
   FuncGraphSet graph_set_;
   ScopePtr scope_;
   CloneType type_;
   std::vector<CloneInfo> todo_;
-  std::unordered_map<FuncGraphPtr, bool> status_;
-  std::unordered_map<FuncGraphPtr, NodeToNodeMap> repl_map_node_;
-  std::unordered_map<FuncGraphPtr, std::unordered_map<FuncGraphPtr, AnfNodePtr>> repl_map_func_graph_;
-  std::unordered_map<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;
+  mindspore::HashMap<FuncGraphPtr, bool> status_;
+  mindspore::HashMap<FuncGraphPtr, NodeToNodeMap> repl_map_node_;
+  mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<FuncGraphPtr, AnfNodePtr>> repl_map_func_graph_;
+  mindspore::HashMap<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;
 };
 
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,

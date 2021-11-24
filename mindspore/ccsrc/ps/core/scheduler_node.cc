@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 #include "ps/core/scheduler_node.h"
+#include <unordered_map>
+#include <utility>
 
 namespace mindspore {
 namespace ps {
@@ -635,7 +637,7 @@ void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &re
 
   MS_LOG(WARNING) << "The scale in node ids:" << scale_in_node_ids_;
 
-  std::unordered_map<std::string, bool> scale_in_nodes;
+  mindspore::HashMap<std::string, bool> scale_in_nodes;
 
   int32_t scale_worker_num = 0;
   int32_t scale_server_num = 0;
@@ -709,7 +711,7 @@ void SchedulerNode::ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler
     res["node_id"] = kvs.second.node_id_;
     res["rank_id"] = std::to_string(kvs.second.rank_id_);
     res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
-    js["node_ids"].push_back(res);
+    js["node_ids"].push_back(std::move(res));
   }
 
   resp->AddRespString(js.dump());
@@ -763,7 +765,7 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  std::unordered_map<uint32_t, VectorPtr> outputs;
+  mindspore::HashMap<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
@@ -817,7 +819,7 @@ void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandle
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  std::unordered_map<uint32_t, VectorPtr> outputs;
+  mindspore::HashMap<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
@@ -871,7 +873,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  std::unordered_map<uint32_t, VectorPtr> outputs;
+  mindspore::HashMap<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
@@ -927,7 +929,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  std::unordered_map<uint32_t, VectorPtr> outputs;
+  mindspore::HashMap<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();

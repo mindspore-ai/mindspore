@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ TEST_F(TestData, test_clone) {
 
   std::vector<AbstractAttribute> attr = {{"x", std::make_shared<AbstractScalar>(kAnyValue, kInt64)},
                                          {"y", std::make_shared<AbstractScalar>(kAnyValue, kInt64)}};
-  std::unordered_map<std::string, ValuePtr> methods;
+  mindspore::HashMap<std::string, ValuePtr> methods;
   AbstractBasePtr c1 = std::make_shared<AbstractClass>(Named("Point"), attr, methods);
   AbstractBasePtr c2 = c1->Clone();
   ASSERT_EQ(*c1, *c2);

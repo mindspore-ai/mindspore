@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "base/base.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
@@ -47,7 +47,7 @@ using VirtualDivOp = OperatorVector;
 using TensorMaps = std::vector<Shape>;
 using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int64_t>::difference_type;
-using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
+using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
 
 class Edge;
@@ -188,7 +188,7 @@ class OperatorInfo {
   const std::string &type() const { return type_; }
   void set_last_node_flag(const bool &is_last_node) { is_last_node_ = is_last_node; }
   const bool &is_last_node() const { return is_last_node_; }
-  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
@@ -238,7 +238,7 @@ class OperatorInfo {
   std::string name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
-  std::unordered_map<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
   std::vector<ValuePtr> input_value_;
   TypePtr outputs_dtype_;
 

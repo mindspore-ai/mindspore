@@ -139,14 +139,14 @@ std::vector<FuncGraphPtr> TopoSortForFuncGraph(const FuncGraphPtr &root, FuncGra
       auto &sub_edges = iter->second;
       for (auto sub_iter = sub_edges.begin(); sub_iter != sub_edges.end();) {
         if (sub_iter->find(node) != sub_iter->end()) {
-          sub_edges.erase(sub_iter);
+          sub_iter = sub_edges.erase(sub_iter);
         } else {
           ++sub_iter;
         }
       }
       if (sub_edges.empty()) {
         que.push(iter->first);
-        edges->erase(iter++);
+        iter = edges->erase(iter);
       } else {
         ++iter;
       }
@@ -381,7 +381,7 @@ void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<AnfNode
                                                        const std::vector<KernelGraphPtr> &kernel_graphs,
                                                        const std::vector<DeviceContext *> &device_contexts,
                                                        const FuncGraphToKernelGraph &func_graph_to_kernel_graphs) {
-  std::unordered_map<KernelGraphPtr, DeviceContext *> kernel_graph_to_device_context;
+  mindspore::HashMap<KernelGraphPtr, DeviceContext *> kernel_graph_to_device_context;
   for (size_t i = 0; i < kernel_graphs.size(); ++i) {
     kernel_graph_to_device_context[kernel_graphs[i]] = device_contexts[i];
   }
@@ -392,7 +392,7 @@ void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<AnfNode
     const auto &func_graph = func_graph_to_kernel_graph.first;
     const auto &front_parameters = func_graph->parameters();
     std::vector<const DeviceContext *> parameter_device_contexts(front_parameters.size(), default_context);
-    std::unordered_map<AnfNodePtr, DeviceContext *> front_parameter_to_device_context;
+    mindspore::HashMap<AnfNodePtr, DeviceContext *> front_parameter_to_device_context;
 
     for (const auto &kernel_graph : func_graph_to_kernel_graph.second) {
       const auto &backend_parameters = kernel_graph->parameters();
@@ -691,7 +691,7 @@ void ControlNodeParser::FetchFrontValueNode(DeviceContext *default_context) {
 }
 
 void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr> &control_nodes) {
-  std::unordered_map<AnfNodePtr, std::set<KernelWithIndex>> formal_to_real_parameters;
+  mindspore::HashMap<AnfNodePtr, std::set<KernelWithIndex>> formal_to_real_parameters;
 
   // The actual parameters of the function are divided into two parts:
   // 1. Input of partial node.

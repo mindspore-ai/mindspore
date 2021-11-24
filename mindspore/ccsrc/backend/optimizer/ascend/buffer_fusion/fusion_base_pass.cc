@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &ker
   return not_updatestate_users;
 }
 
-void FusionBasePass::SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record) {
+void FusionBasePass::SetRecordFusionId(const mindspore::HashSet<AnfNodePtr> &record) {
   auto id = fusion_id_allocator->AllocateFusionId();
   for (auto node : record) {
     fusion_id_allocator->SetFusionId(node, id);

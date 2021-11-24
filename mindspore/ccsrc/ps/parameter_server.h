@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PS_PARAMETER_SERVER_H_
 
 #include <unistd.h>
-#include <unordered_map>
 #include <string>
 #include <iostream>
 #include <memory>
@@ -34,6 +33,7 @@
 #include <functional>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -111,11 +111,11 @@ class ParameterServer {
    private:
     ParameterServer *ps_;
     typedef void (ServerHandler::*RequestHandler)(const DataPtr &data, size_t size, const VectorPtr &res);
-    std::unordered_map<int, RequestHandler> handlers_;
-    std::unordered_map<int, std::string> commands_;
-    std::unordered_map<Key, bool> init_weights_;
-    std::unordered_map<Key, bool> init_weight_to_optim_;
-    std::unordered_map<Key, bool> init_optim_info_;
+    mindspore::HashMap<int, RequestHandler> handlers_;
+    mindspore::HashMap<int, std::string> commands_;
+    mindspore::HashMap<Key, bool> init_weights_;
+    mindspore::HashMap<Key, bool> init_weight_to_optim_;
+    mindspore::HashMap<Key, bool> init_optim_info_;
   };
 
   bool Init(const FuncGraphPtr &func_graph);
@@ -156,19 +156,19 @@ class ParameterServer {
   // Used to cache embedding table parameter, key: parameter name, value: parameter node pointer
   std::map<std::string, ParameterPtr> embedding_parameter_tables_;
 
-  std::unordered_map<Key, std::shared_ptr<PServerKernel>> optimizers_;
-  std::unordered_map<Key, InputsShapePtr> optim_inputs_shape_;
-  std::unordered_map<Key, InputsShapePtr> original_optim_inputs_shape_;
-  std::unordered_map<Key, std::shared_ptr<OptimizerInfo>> optim_infos_;
-  std::unordered_map<std::string, std::shared_ptr<OptimizerInfoBuilder>> optim_info_builders_;
-  std::unordered_map<Key, std::string> weight_key_to_optims_;
-  std::unordered_map<Key, std::string> weight_key_to_optim_op_;
-  std::unordered_map<Key, WeightPtr> weights_;
-  std::unordered_map<Key, bool> is_embedding_;
-  std::unordered_map<Key, WeightPtr> grads_;
-  std::unordered_map<Key, size_t> grads_accum_counter_;
-  std::unordered_map<Key, std::shared_ptr<PServerKernel>> embedding_lookup_ops_;
-  std::unordered_map<Key, uint64_t> tokens_;
+  mindspore::HashMap<Key, std::shared_ptr<PServerKernel>> optimizers_;
+  mindspore::HashMap<Key, InputsShapePtr> optim_inputs_shape_;
+  mindspore::HashMap<Key, InputsShapePtr> original_optim_inputs_shape_;
+  mindspore::HashMap<Key, std::shared_ptr<OptimizerInfo>> optim_infos_;
+  mindspore::HashMap<std::string, std::shared_ptr<OptimizerInfoBuilder>> optim_info_builders_;
+  mindspore::HashMap<Key, std::string> weight_key_to_optims_;
+  mindspore::HashMap<Key, std::string> weight_key_to_optim_op_;
+  mindspore::HashMap<Key, WeightPtr> weights_;
+  mindspore::HashMap<Key, bool> is_embedding_;
+  mindspore::HashMap<Key, WeightPtr> grads_;
+  mindspore::HashMap<Key, size_t> grads_accum_counter_;
+  mindspore::HashMap<Key, std::shared_ptr<PServerKernel>> embedding_lookup_ops_;
+  mindspore::HashMap<Key, uint64_t> tokens_;
 
   std::mutex mutex_;
   std::condition_variable apply_grads_cv_;

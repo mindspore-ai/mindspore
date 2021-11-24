@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ void TestPReLUInfo::SetUp() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
   Shapes inputs_shape = {{64, 4, 8, 16}, {4}};
   Shapes outputs_shape = {{64, 4, 8, 16}};
-  std::unordered_map<std::string, ValuePtr> attr;
+  mindspore::HashMap<std::string, ValuePtr> attr;
   prelu = std::make_shared<PReLUInfo>("prelu_info", inputs_shape, outputs_shape, attr);
 
   Shapes inputs_shape_2d = {{1024, 4}, {4}};
   Shapes outputs_shape_2d = {{1024, 4}};
-  std::unordered_map<std::string, ValuePtr> attr_2d;
+  mindspore::HashMap<std::string, ValuePtr> attr_2d;
   prelu_2d = std::make_shared<PReLUInfo>("prelu_info", inputs_shape_2d, outputs_shape_2d, attr_2d);
 }
 

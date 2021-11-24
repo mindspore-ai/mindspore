@@ -504,7 +504,7 @@ void ParameterServer::GetEmbeddingTableParamPtr() {
       MS_EXCEPTION_IF_NULL(embedding_table);
       if (embedding_table->isa<Parameter>()) {
         MS_LOG(INFO) << "Embedding table name is " << embedding_table->fullname_with_scope() << ", key is " << count;
-        embedding_tables_.insert(std::make_pair(count, embedding_table->cast<ParameterPtr>()));
+        (void)embedding_tables_.emplace(count, embedding_table->cast<ParameterPtr>());
         count++;
       }
     }

@@ -21,13 +21,13 @@
 #include <functional>
 #include <sstream>
 #include <vector>
-#include <unordered_map>
 #include <set>
 #include <iostream>
 #include <utility>
 #include <string>
 #include <stdexcept>
 
+#include "utils/hash_map.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "mindspore/core/ir/value.h"
 #include "mindspore/core/ir/tensor.h"
@@ -45,7 +45,7 @@ enum class NType {
 
 using DFormat = std::string;
 using DShape = ShapeVector;
-using DAttrs = std::unordered_map<std::string, ValuePtr>;
+using DAttrs = mindspore::HashMap<std::string, ValuePtr>;
 
 struct NodeBase {
   DShape shape;
@@ -95,13 +95,13 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   const DAttrs &attrs() const { return attrs_; }
   const NodePtr &input(size_t i) const { return inputs_[i]; }
   const NodePtrList &inputs() const { return inputs_; }
-  const std::unordered_map<Node *, std::set<size_t>> &users() const { return users_; }
+  const mindspore::HashMap<Node *, std::set<size_t>> &users() const { return users_; }
 
  protected:
   std::string name_;
   DAttrs attrs_;
   NodePtrList inputs_;
-  std::unordered_map<Node *, std::set<size_t>> users_;
+  mindspore::HashMap<Node *, std::set<size_t>> users_;
 
  private:
   // the nodes' users are only maintained by AddInput/SetInput.

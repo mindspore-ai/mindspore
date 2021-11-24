@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,16 @@
 #include <numeric>
 #include <set>
 #include <stack>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
 #include "utils/ms_context.h"
 
 using std::pair;
 using std::set;
 using std::stack;
-using std::unordered_map;
 using std::vector;
 
 namespace mindspore {
@@ -85,12 +84,12 @@ class Interval {
 class BlockTensor {
  public:
   SomasSolverTensorDescPtr m_start_tensor_;
-  unordered_map<uint32_t,
-                std::set<pair<size_t, size_t>, bool (*)(const pair<size_t, size_t> &, const pair<size_t, size_t> &)>>
+  mindspore::HashMap<
+    uint32_t, std::set<pair<size_t, size_t>, bool (*)(const pair<size_t, size_t> &, const pair<size_t, size_t> &)>>
     offsets_candidates_;
   uint32_t m_current_sol_;
   bool m_bre_allocate_;
-  unordered_map<uint32_t, size_t> offsets_;
+  mindspore::HashMap<uint32_t, size_t> offsets_;
   size_t m_size_;
   BlockTensor()
       : m_start_tensor_(nullptr),

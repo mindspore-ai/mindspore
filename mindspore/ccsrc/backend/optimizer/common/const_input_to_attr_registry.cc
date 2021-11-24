@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,17 +94,17 @@ ConstInputToAttrInfoRegistry &ConstInputToAttrInfoRegistry::Instance() {
 void ConstInputToAttrInfoRegistry::Register(const ConstInputToAttrInfoRegister &reg) {
   auto op_name = reg.GetOpName();
   if (op_input_to_attr_map_.find(op_name) == op_input_to_attr_map_.end()) {
-    (void)op_input_to_attr_map_.insert(make_pair(op_name, reg));
+    (void)op_input_to_attr_map_.emplace(op_name, reg);
     MS_LOG(DEBUG) << op_name << " const2attr register successfully!";
   }
 }
 
 void ConstInputToAttrInfoRegistry::Register(const std::string &op_name,
-                                            const std::unordered_set<size_t> &input_attr_set) {
+                                            const mindspore::HashSet<size_t> &input_attr_set) {
   if (op_input_to_attr_map_.find(op_name) == op_input_to_attr_map_.end()) {
     ConstInputToAttrInfoRegister reg(op_name);
     (void)reg.SetConstInputToAttr(input_attr_set);
-    (void)op_input_to_attr_map_.insert(make_pair(op_name, reg));
+    (void)op_input_to_attr_map_.emplace(op_name, reg);
     MS_LOG(DEBUG) << op_name << " const2attr register successfully!";
   }
 }

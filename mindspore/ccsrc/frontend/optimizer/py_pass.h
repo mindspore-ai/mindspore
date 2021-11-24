@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PASS_H_
 #include <string>
 #include <memory>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "frontend/optimizer/pattern.h"
 #include "pybind_api/api_register.h"
@@ -29,7 +29,7 @@ namespace opt {
 namespace python_pass {
 class PythonPass;
 using PythonPassPtr = std::shared_ptr<PythonPass>;
-using NodeEquiv = std::unordered_map<std::string, AnfNodePtr>;
+using NodeEquiv = mindspore::HashMap<std::string, AnfNodePtr>;
 using NodeEquivPtr = std::shared_ptr<NodeEquiv>;
 
 class PythonPass {

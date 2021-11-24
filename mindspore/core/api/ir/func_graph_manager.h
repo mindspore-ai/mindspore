@@ -19,10 +19,10 @@
 
 #include <memory>
 #include <utility>
-#include <unordered_map>
 
 #include "utils/visible.h"
 #include "utils/compact_set.h"
+#include "utils/hash_map.h"
 #include "utils/hashing.h"
 #include "ir/anf.h"
 
@@ -35,7 +35,7 @@ class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
 using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
-using NodeUsersMap = std::unordered_map<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
+using NodeUsersMap = mindspore::HashMap<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
 
 /// \brief FuncGraphManager defines interface for function graph management.
 class MS_CORE_API FuncGraphManager {

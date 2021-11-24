@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #include "frontend/optimizer/irpass/grad_var_prepare.h"
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
 #include <memory>
 
+#include "utils/hash_map.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"

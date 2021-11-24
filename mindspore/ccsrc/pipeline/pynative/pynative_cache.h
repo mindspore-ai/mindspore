@@ -20,13 +20,14 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 
 namespace mindspore::pynative {
 struct AbsCacheKey {
   std::string prim_name_;
   size_t prim_hash_value_;
-  std::unordered_map<std::string, ValuePtr> prim_attrs_;
+  mindspore::HashMap<std::string, ValuePtr> prim_attrs_;
 };
 
 struct AbsCacheKeyHasher {
@@ -42,19 +43,18 @@ struct AbsCacheKeyEqual {
       return false;
     }
 
-    auto all = std::all_of(lk.prim_attrs_.begin(), lk.prim_attrs_.end(),
-                           [&rk](const std::pair<std::string, ValuePtr> &item) -> bool {
-                             auto iter = rk.prim_attrs_.find(item.first);
-                             if (iter == rk.prim_attrs_.end()) {
-                               return false;
-                             }
-                             if (item.second == iter->second) {
-                               return true;
-                             }
-                             MS_EXCEPTION_IF_NULL(item.second);
-                             MS_EXCEPTION_IF_NULL(iter->second);
-                             return *item.second == *iter->second;
-                           });
+    auto all = std::all_of(lk.prim_attrs_.begin(), lk.prim_attrs_.end(), [&rk](const auto &item) -> bool {
+      auto iter = rk.prim_attrs_.find(item.first);
+      if (iter == rk.prim_attrs_.end()) {
+        return false;
+      }
+      if (item.second == iter->second) {
+        return true;
+      }
+      MS_EXCEPTION_IF_NULL(item.second);
+      MS_EXCEPTION_IF_NULL(iter->second);
+      return *item.second == *iter->second;
+    });
     return all;
   }
 };
@@ -62,7 +62,7 @@ struct AbsCacheKeyEqual {
 struct PrimAbsInfo {
   abstract::AbstractBasePtr abs;
   bool is_dynamic_shape = false;
-  std::unordered_map<std::string, ValuePtr> attrs;
+  mindspore::HashMap<std::string, ValuePtr> attrs;
 };
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
@@ -81,8 +81,8 @@ using PyObjectIdCache = std::unordered_map<py::handle, std::string, PyObjectHash
 struct PrimSignature {
   bool has_dtype_sig;
   std::vector<SignatureEnumDType> dtypes;
-  std::unordered_map<SignatureEnumDType, std::vector<size_t>> type_indexes;
+  mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
 };
-using ImplicitCastCache = std::unordered_map<std::string, PrimSignature>;
+using ImplicitCastCache = mindspore::HashMap<std::string, PrimSignature>;
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_ABS_CACHE_H

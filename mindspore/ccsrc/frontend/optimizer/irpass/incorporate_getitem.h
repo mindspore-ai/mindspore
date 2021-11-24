@@ -20,10 +20,10 @@
 #include <algorithm>
 #include <memory>
 #include <set>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 
+#include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/optimizer_caller.h"
@@ -75,7 +75,7 @@ class GetitemTransform {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, std::unordered_map<int64_t, FuncGraphPtr>> cache_;
+  mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<int64_t, FuncGraphPtr>> cache_;
 };
 
 class GetItemTransformACrossGraph {
@@ -127,7 +127,7 @@ class GetItemTransformACrossGraph {
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, std::unordered_map<int64_t, FuncGraphPtr>> cache_;
+  mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<int64_t, FuncGraphPtr>> cache_;
 };
 
 bool HasMoreJ(const OptimizerPtr &optimizer) {
@@ -516,7 +516,7 @@ class IncorporateGetitem : public AnfVisitor {
   CNodePtr fg_call_cnode_{nullptr};
   std::vector<AnfNodePtr> args_{};
   std::set<AnfNodePtr> processed_nodes_;
-  std::unordered_map<std::pair<FuncGraphPtr, std::vector<int64_t>>, FuncGraphPtr,
+  mindspore::HashMap<std::pair<FuncGraphPtr, std::vector<int64_t>>, FuncGraphPtr,
                      internal::FuncGraphIntVectorPairHasher>
     processed_fgs_;
   internal::GetitemTransform getitem_transform_;
@@ -865,7 +865,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
   bool is_in_get_{false}, is_in_switch_{false};
   std::vector<AnfNodePtr> args_{};
   std::set<AnfNodePtr> processed_nodes_;
-  std::unordered_map<std::pair<FuncGraphPtr, std::vector<int64_t>>, FuncGraphPtr,
+  mindspore::HashMap<std::pair<FuncGraphPtr, std::vector<int64_t>>, FuncGraphPtr,
                      internal::FuncGraphIntVectorPairHasher>
     processed_fgs_;
   internal::GetitemTransform getitem_transform_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 namespace python_pass {
 PyPassManagerPtr PyPassManager::global_instance = nullptr;
-std::unordered_map<Phase, PassGroupPtr> PyPassManager::phase_to_group_;
+mindspore::HashMap<Phase, PassGroupPtr> PyPassManager::phase_to_group_;
 
 PassGroupPtr PyPassManager::GetPassGroup(Phase phase) {
   auto pm = phase_to_group_.find(phase);

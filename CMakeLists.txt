@@ -57,6 +57,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/securec/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include/flatbuffers)
 
+if(ENABLE_FAST_HASH_TABLE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_FAST_HASH_TABLE=1")
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/robin_hood/include)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_utils.cmake)
 find_package(Python3 COMPONENTS Interpreter Development)
 if(Python3_FOUND)

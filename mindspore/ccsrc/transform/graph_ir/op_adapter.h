@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,26 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter_util.h"
 #include "utils/utils.h"
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {
  public:
-  OpAdapterImpl(const std::unordered_map<int, InputDesc> &input_map,
-                const std::unordered_map<int, DynInputDesc> &dyn_input_map,
-                const std::unordered_map<int, OutputDesc> &output_map,
-                const std::unordered_map<int, DynOutputDesc> &dyn_output_map,
-                const std::unordered_map<int, DynSubGraphDesc> &dyn_subgraph_map,
-                const std::unordered_map<std::string, AttrDesc> &attr_map,
-                const std::unordered_map<std::string, int> &enum_map,
-                const std::unordered_map<unsigned int, AttrDesc> &input_attr_map,
-                std::unordered_map<std::string, std::unordered_map<int, std::string>> *cus_input_map,
-                std::unordered_map<std::string, std::unordered_map<int, std::string>> *cus_output_map,
-                std::unordered_map<std::string, ValuePtr> *extra_attr,
-                std::unordered_map<std::string, int> *name_counts, BaseOpAdapter *adpt)
+  OpAdapterImpl(const mindspore::HashMap<int, InputDesc> &input_map,
+                const mindspore::HashMap<int, DynInputDesc> &dyn_input_map,
+                const mindspore::HashMap<int, OutputDesc> &output_map,
+                const mindspore::HashMap<int, DynOutputDesc> &dyn_output_map,
+                const mindspore::HashMap<int, DynSubGraphDesc> &dyn_subgraph_map,
+                const mindspore::HashMap<std::string, AttrDesc> &attr_map,
+                const mindspore::HashMap<std::string, int> &enum_map,
+                const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map,
+                mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_input_map,
+                mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_output_map,
+                mindspore::HashMap<std::string, ValuePtr> *extra_attr,
+                mindspore::HashMap<std::string, int> *name_counts, BaseOpAdapter *adpt)
       : input_map_(input_map),
         dyn_input_map_(dyn_input_map),
         output_map_(output_map),
@@ -95,18 +95,18 @@ class OpAdapterImpl {
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node);
 
  private:
-  const std::unordered_map<int, InputDesc> &input_map_;
-  const std::unordered_map<int, DynInputDesc> &dyn_input_map_;
-  const std::unordered_map<int, OutputDesc> &output_map_;
-  const std::unordered_map<int, DynOutputDesc> &dyn_output_map_;
-  const std::unordered_map<int, DynSubGraphDesc> &dyn_subgraph_map_;
-  const std::unordered_map<std::string, AttrDesc> &attr_map_;
-  const std::unordered_map<std::string, int> &enum_map_;
-  const std::unordered_map<unsigned int, AttrDesc> &input_attr_map_;
-  std::unordered_map<std::string, std::unordered_map<int, std::string>> *const cus_input_map_;
-  std::unordered_map<std::string, std::unordered_map<int, std::string>> *const cus_output_map_;
-  std::unordered_map<std::string, ValuePtr> *const extra_attr_;
-  std::unordered_map<std::string, int> *const name_counts_;
+  const mindspore::HashMap<int, InputDesc> &input_map_;
+  const mindspore::HashMap<int, DynInputDesc> &dyn_input_map_;
+  const mindspore::HashMap<int, OutputDesc> &output_map_;
+  const mindspore::HashMap<int, DynOutputDesc> &dyn_output_map_;
+  const mindspore::HashMap<int, DynSubGraphDesc> &dyn_subgraph_map_;
+  const mindspore::HashMap<std::string, AttrDesc> &attr_map_;
+  const mindspore::HashMap<std::string, int> &enum_map_;
+  const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map_;
+  mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_input_map_;
+  mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_output_map_;
+  mindspore::HashMap<std::string, ValuePtr> *const extra_attr_;
+  mindspore::HashMap<std::string, int> *const name_counts_;
   BaseOpAdapter *const adpt_;
 };
 
@@ -183,11 +183,11 @@ class OpAdapter : public BaseOpAdapter {
 
   OperatorPtr generate(const std::string &op_name) override { return std::make_shared<OpType>(op_name); }
 
-  const std::unordered_map<int, InputDesc> &getInputMap() override { return input_map_; }
-  const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
-  const std::unordered_map<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
-  const std::unordered_map<int, OutputDesc> &getOutputMap() override { return output_map_; }
-  const std::unordered_map<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
+  const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
+  const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
+  const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
+  const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
+  const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) {
     return impl_->SetOpSubgraphFunc(op, index, branches);
@@ -279,7 +279,7 @@ class OpAdapter : public BaseOpAdapter {
 
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node) override { return impl_->setAttr(op, node); }
 
-  std::unordered_map<std::string, ValuePtr> GetExtraAttr() override { return extra_attr_; }
+  mindspore::HashMap<std::string, ValuePtr> GetExtraAttr() override { return extra_attr_; }
 
  private:
   template <typename S>
@@ -423,42 +423,42 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsValue);
   }
 
-  static const std::unordered_map<int, InputDesc> input_map_;
-  static const std::unordered_map<int, DynInputDesc> dyn_input_map_;
-  static const std::unordered_map<int, OutputDesc> output_map_;
-  static const std::unordered_map<int, DynOutputDesc> dyn_output_map_;
-  static const std::unordered_map<int, DynSubGraphDesc> dyn_subgraph_map_;
-  static const std::unordered_map<std::string, AttrDesc> attr_map_;
-  static const std::unordered_map<std::string, int> enum_map_;
+  static const mindspore::HashMap<int, InputDesc> input_map_;
+  static const mindspore::HashMap<int, DynInputDesc> dyn_input_map_;
+  static const mindspore::HashMap<int, OutputDesc> output_map_;
+  static const mindspore::HashMap<int, DynOutputDesc> dyn_output_map_;
+  static const mindspore::HashMap<int, DynSubGraphDesc> dyn_subgraph_map_;
+  static const mindspore::HashMap<std::string, AttrDesc> attr_map_;
+  static const mindspore::HashMap<std::string, int> enum_map_;
   // convert input from anf graph to Attr in Operators
-  static const std::unordered_map<unsigned int, AttrDesc> input_attr_map_;
-  static std::unordered_map<std::string, std::unordered_map<int, std::string>> cus_input_map_;
-  static std::unordered_map<std::string, std::unordered_map<int, std::string>> cus_output_map_;
-  std::unordered_map<std::string, ValuePtr> extra_attr_;
-  std::unordered_map<std::string, int> name_counts_;
+  static const mindspore::HashMap<unsigned int, AttrDesc> input_attr_map_;
+  static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_input_map_;
+  static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_output_map_;
+  mindspore::HashMap<std::string, ValuePtr> extra_attr_;
+  mindspore::HashMap<std::string, int> name_counts_;
   const std::shared_ptr<OpAdapterImpl> impl_;
 };
 
 template <typename T>
-const std::unordered_map<int, InputDesc> OpAdapter<T>::input_map_;
+const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_;
 template <typename T>
-const std::unordered_map<int, DynInputDesc> OpAdapter<T>::dyn_input_map_;
+const mindspore::HashMap<int, DynInputDesc> OpAdapter<T>::dyn_input_map_;
 template <typename T>
-const std::unordered_map<int, OutputDesc> OpAdapter<T>::output_map_;
+const mindspore::HashMap<int, OutputDesc> OpAdapter<T>::output_map_;
 template <typename T>
-const std::unordered_map<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
+const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
 template <typename T>
-const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
+const mindspore::HashMap<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
 template <typename T>
-const std::unordered_map<std::string, AttrDesc> OpAdapter<T>::attr_map_;
+const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
 template <typename T>
-const std::unordered_map<std::string, int> OpAdapter<T>::enum_map_;
+const mindspore::HashMap<std::string, int> OpAdapter<T>::enum_map_;
 template <typename T>
-const std::unordered_map<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
+const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
 template <typename T>
-std::unordered_map<std::string, std::unordered_map<int, std::string>> OpAdapter<T>::cus_input_map_;
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<T>::cus_input_map_;
 template <typename T>
-std::unordered_map<std::string, std::unordered_map<int, std::string>> OpAdapter<T>::cus_output_map_;
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<T>::cus_output_map_;
 
 // specialization for method
 }  // namespace transform

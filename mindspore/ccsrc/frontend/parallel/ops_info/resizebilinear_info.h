@@ -19,9 +19,9 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"

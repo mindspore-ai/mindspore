@@ -20,10 +20,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <memory>
-#include <unordered_set>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 
@@ -47,7 +47,7 @@ const char kPynativeGraphId[] = "graph_id";
 
 class InferenceResource;
 
-using BuiltInTypeMap = std::unordered_map<int64_t, std::unordered_map<std::string, Any>>;
+using BuiltInTypeMap = mindspore::HashMap<int64_t, mindspore::HashMap<std::string, Any>>;
 
 BuiltInTypeMap &GetMethodMap();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name
   return false;
 }
 
-bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cache) {
+bool FindReshape(const CNodePtr &cnode, mindspore::HashSet<std::string> *op_cache) {
   if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
@@ -404,7 +404,7 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
   return false;
 }
 
-void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim) {
+void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim) {
   MS_EXCEPTION_IF_NULL(self_prim);
   for (auto attr_name : filter_attrs) {
     auto iter = origin_prim_attrs.find(attr_name);

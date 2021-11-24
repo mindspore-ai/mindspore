@@ -19,9 +19,9 @@
 #include <map>
 #include <queue>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "base/core_ops.h"
 
 namespace mindspore::pipeline {
@@ -203,7 +203,7 @@ class OrderEnforcer {
       for (auto &load : loads) {
         // Find user nodes of the Load.
         auto load_users = FindLoadUsers(load);
-        std::unordered_set<AnfNodePtr> real_users;
+        mindspore::HashSet<AnfNodePtr> real_users;
         for (auto &load_user : load_users) {
           // Check the special operator, only one level of user is considered for now.
           if (IsSpecialPrimitive(load_user)) {
@@ -240,7 +240,7 @@ class OrderEnforcer {
   }
 
   // Add load users as input edges of the update_state node.
-  void AddInputEdges(const CNodePtr &update_state, const std::unordered_set<AnfNodePtr> &load_users) {
+  void AddInputEdges(const CNodePtr &update_state, const mindspore::HashSet<AnfNodePtr> &load_users) {
     auto sorted_load_users = SortLoadUsers(load_users);
     for (auto &load_user : sorted_load_users) {
       if (IsPrimitiveCNode(load_user, prim::kPrimMakeTuple) || IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
@@ -256,7 +256,7 @@ class OrderEnforcer {
   }
 
   // Sort load users by their topo sort order.
-  std::vector<AnfNodePtr> SortLoadUsers(const std::unordered_set<AnfNodePtr> &load_users) {
+  std::vector<AnfNodePtr> SortLoadUsers(const mindspore::HashSet<AnfNodePtr> &load_users) {
     std::vector<AnfNodePtr> vec{load_users.begin(), load_users.end()};
     std::sort(vec.begin(), vec.end(), [this](const AnfNodePtr &a, const AnfNodePtr &b) { return IsBefore(a, b); });
     return vec;
@@ -309,13 +309,13 @@ class OrderEnforcer {
   using PredFunc = std::function<bool(const AnfNodePtr &)>;
 
   // Find user nodes for the given node.
-  std::unordered_set<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, PredFunc pred = nullptr) {
+  mindspore::HashSet<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, PredFunc pred = nullptr) {
     auto &node_users = manager_->node_users();
     auto iter = node_users.find(node);
     if (iter == node_users.end()) {
       return {};
     }
-    std::unordered_set<AnfNodePtr> users;
+    mindspore::HashSet<AnfNodePtr> users;
     for (auto &user : iter->second) {
       auto &user_node = user.first;
       if (pred == nullptr || pred(user_node)) {
@@ -326,7 +326,7 @@ class OrderEnforcer {
   }
 
   // Find Load or parameter users as the candidate nodes to enforce order of execution.
-  std::unordered_set<AnfNodePtr> FindLoadUsers(const AnfNodePtr &load_or_param) {
+  mindspore::HashSet<AnfNodePtr> FindLoadUsers(const AnfNodePtr &load_or_param) {
     return FindNodeUsers(load_or_param, [this](const AnfNodePtr &user_node) {
       // Skip processed nodes.
       return processed_nodes_.find(user_node) == processed_nodes_.end();
@@ -334,7 +334,7 @@ class OrderEnforcer {
   }
 
   // Find Load nodes for a parameter.
-  std::unordered_set<AnfNodePtr> FindLoadNodes(const AnfNodePtr &param) {
+  mindspore::HashSet<AnfNodePtr> FindLoadNodes(const AnfNodePtr &param) {
     return FindNodeUsers(param, [this](const AnfNodePtr &user_node) {
       // Search for Load nodes only.
       return IsPrimitiveCNode(user_node, prim::kPrimLoad);
@@ -343,8 +343,8 @@ class OrderEnforcer {
 
   const FuncGraphPtr &func_graph_;
   FuncGraphManagerPtr manager_;
-  std::unordered_map<AnfNodePtr, size_t> topo_sort_map_;
-  std::unordered_set<AnfNodePtr> processed_nodes_;
+  mindspore::HashMap<AnfNodePtr, size_t> topo_sort_map_;
+  mindspore::HashSet<AnfNodePtr> processed_nodes_;
 };
 }  // namespace
 

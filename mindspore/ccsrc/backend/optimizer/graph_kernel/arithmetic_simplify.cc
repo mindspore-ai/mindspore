@@ -18,12 +18,12 @@
 #include <algorithm>
 #include <list>
 #include <string>
-#include <unordered_set>
 #include <functional>
 #include <set>
 #include <vector>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/core/graph_builder.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -32,7 +32,7 @@
 
 namespace mindspore::graphkernel {
 // operator which follows commutative rules
-static std::unordered_set<std::string> commutative_ops{"Add", "Mul"};
+static mindspore::HashSet<std::string> commutative_ops{"Add", "Mul"};
 
 class PatternNode;
 using PatternNodePtr = std::shared_ptr<PatternNode>;
@@ -51,8 +51,8 @@ class PatternNode {
   std::vector<PatternNodePtr> inputs_;
 };
 
-using ParaMap = std::unordered_map<char, inner::NodePtr>;
-using ConstMap = std::unordered_map<std::string, inner::NodePtr>;
+using ParaMap = mindspore::HashMap<char, inner::NodePtr>;
+using ConstMap = mindspore::HashMap<std::string, inner::NodePtr>;
 
 /* This class works to store a kind of pattern tree; it needs a string expression to construct;
  Ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
@@ -86,10 +86,10 @@ class PatternTree {
 
  protected:
   // set attributes for certain pattern node if needed;
-  virtual std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &) {
+  virtual mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &) {
     auto right_pattern = std::make_shared<PatternNodePtrList>();
     DfsTraverse(right_pattern, rhs_root_);
-    std::unordered_map<PatternNodePtr, inner::DAttrs> attrs_map;
+    mindspore::HashMap<PatternNodePtr, inner::DAttrs> attrs_map;
     for (auto &i : (*right_pattern)) {
       attrs_map[i] = {};
     }
@@ -319,7 +319,7 @@ inner::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_r
   DfsTraverse(res, rhs_root_);
   auto all_attrs = SetAttributes(origin_root);
   inner::LiteGraph::GraphBuilder gb("");
-  std::unordered_map<PatternNodePtr, inner::NodePtr> pattern_to_ref;
+  mindspore::HashMap<PatternNodePtr, inner::NodePtr> pattern_to_ref;
   for (auto &n : (*res)) {
     if (PatternNodeType(n->op()) != inner::NType::Primitive) continue;
     inner::NodePtrList inputs;
@@ -367,7 +367,7 @@ class ExtraReduce1PatternTree : public PatternTree {
     return (GetValue<bool>((origin_root->inputs()[0])->attrs().find("keep_dims")->second) ==
             GetValue<bool>(origin_root->attrs().find("keep_dims")->second));
   }
-  std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     std::vector<int64_t> axis;
     std::set<int64_t> axis_set;
@@ -384,7 +384,7 @@ class ExtraReduce1PatternTree : public PatternTree {
       auto first_axis = GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second);
       auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
       std::set<int64_t> st(first_axis.begin(), first_axis.end());
-      std::unordered_map<int64_t, int64_t> mp;
+      mindspore::HashMap<int64_t, int64_t> mp;
       int64_t shift = 0;
       for (int64_t n = 0; n < SizeToLong(first_reduce->inputs()[0]->shape.size()); n++) {
         if (st.find(n) != st.end()) {
@@ -409,7 +409,7 @@ class ExtraReduce2PatternTree : public PatternTree {
   ~ExtraReduce2PatternTree() = default;
 
  protected:
-  std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
     auto axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
@@ -427,7 +427,7 @@ class ExtraReduce2PatternTree : public PatternTree {
  this case.
  */
 bool OutsideRely(const inner::NodePtrList &nodes, const inner::NodePtr &root) {
-  std::unordered_set<inner::Node *> nodes_can_simplify;
+  mindspore::HashSet<inner::Node *> nodes_can_simplify;
   std::for_each(nodes.begin(), nodes.end(), [&nodes_can_simplify](auto n) { nodes_can_simplify.insert(n.get()); });
   for (auto &n : nodes) {
     if (n == root) {
@@ -526,12 +526,12 @@ static std::vector<Expression> expressions = {
   {62, "CImag(Complex(A,B))=B", EXPR_PATTERN(PatternTree)},
 };
 
-std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
+mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();
-  std::unordered_map<std::string, std::vector<PatternTreePtr>> expression_map;
-  std::unordered_set<std::string> enable_ids{flags.enable_simplify_exprs_only.begin(),
+  mindspore::HashMap<std::string, std::vector<PatternTreePtr>> expression_map;
+  mindspore::HashSet<std::string> enable_ids{flags.enable_simplify_exprs_only.begin(),
                                              flags.enable_simplify_exprs_only.end()};
-  std::unordered_set<std::string> disable_ids{flags.disable_simplify_exprs.begin(), flags.disable_simplify_exprs.end()};
+  mindspore::HashSet<std::string> disable_ids{flags.disable_simplify_exprs.begin(), flags.disable_simplify_exprs.end()};
   for (auto &e : expressions) {
     if (!enable_ids.empty()) {
       if (enable_ids.count(std::to_string(e.id)) == 0) continue;

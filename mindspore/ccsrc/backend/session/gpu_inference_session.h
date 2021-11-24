@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_GPU_INFERENCE_SESSION_H
 #define MINDSPORE_CCSRC_BACKEND_SESSION_GPU_INFERENCE_SESSION_H
-#include <unordered_map>
 #include <string>
 #include <memory>
 #include <vector>
@@ -24,6 +23,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include "utils/hash_map.h"
 #include "backend/session/gpu_session.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"

@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <unordered_set>
 
+#include "utils/hash_set.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace opt {
-const std::unordered_set<std::string> kConv3DKernel = {prim::kPrimConv3DBackpropInput->name(),
+const mindspore::HashSet<std::string> kConv3DKernel = {prim::kPrimConv3DBackpropInput->name(),
                                                        prim::kPrimConv3DBackpropFilter->name(),
                                                        prim::kPrimConv3D->name(), prim::kPrimConv3DTranspose->name()};
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CORE_IR_PRIMITIVE_H_
 #define MINDSPORE_CORE_IR_PRIMITIVE_H_
 
-#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
 #include <tuple>
 
+#include "utils/hash_map.h"
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
 #include "base/base_ref.h"
@@ -46,7 +46,7 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] is_base True means the basic Primitive without BProp function inside.
   /// \param[in] prim_type The type of primitive.
   explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn);
-  Primitive(const std::string &name, const std::unordered_map<std::string, ValuePtr> &attrs);
+  Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs);
   /// \brief The constructor for Primitive, create a primitive for another primitive.
   ///
   /// \param[in] prim The input primitive.
@@ -88,7 +88,7 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] attrs The attribute map needs to be added in the primitive attribute.
   /// \return The primitive to which attribute has been added.
-  Primitive &SetAttrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+  Primitive &SetAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
       attrs_[attr.first] = attr.second;
     }
@@ -114,15 +114,15 @@ class MS_CORE_API Primitive : public Named {
   /// \brief Get Primitive's all attributes.
   ///
   /// \return The Primitive's all attribute.
-  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
   /// \brief Get the attributes added in MindSpore renormalize stage.
   ///
   /// \return Attributes which have been added in MindSpore renormalize stage.
-  const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
   /// \brief Use add attribute using a map,all elements of the map will be added in the primitive's attribute map.
   ///
   /// \param[in] attrs The attribute map needs to be added in the primitive attribute.
-  void set_evaluate_added_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+  void set_evaluate_added_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
       MS_LOG(DEBUG) << " set evalu attrl " << name() << attr.first;
       attrs_[attr.first] = attr.second;
@@ -220,8 +220,8 @@ class MS_CORE_API Primitive : public Named {
   uint64_t id() const { return id_; }
 
  protected:
-  std::unordered_map<std::string, ValuePtr> attrs_;
-  std::unordered_map<std::string, ValuePtr> evaluate_added_attrs_;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
+  mindspore::HashMap<std::string, ValuePtr> evaluate_added_attrs_;
 
  private:
   std::string instance_name_;

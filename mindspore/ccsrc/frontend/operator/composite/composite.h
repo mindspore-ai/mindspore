@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <map>
 #include <set>
 #include <memory>
+#include "utils/hash_map.h"
 #include "frontend/operator/composite/zip_operation.h"
 #include "frontend/operator/composite/list_append_operation.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -43,7 +43,7 @@ namespace prim {
 using AbstractSlicePtr = abstract::AbstractSlicePtr;
 using AbstractScalarPtr = abstract::AbstractScalarPtr;
 using AbstractTensorPtr = abstract::AbstractTensorPtr;
-using ElemwiseMap = std::unordered_map<std::string, PrimitivePtr>;
+using ElemwiseMap = mindspore::HashMap<std::string, PrimitivePtr>;
 using ArgsPairList = std::vector<std::pair<AnfNodePtr, TypePtr>>;
 
 class HyperMap : public MetaFuncGraph {

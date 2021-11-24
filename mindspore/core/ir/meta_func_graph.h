@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@
 #ifndef MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
 #define MINDSPORE_CORE_IR_META_FUNC_GRAPH_H_
 
-#include <unordered_map>
 #include <string>
 #include <map>
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 #include "ir/dtype.h"
 #include "ir/anf.h"

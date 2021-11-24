@@ -17,7 +17,7 @@
 #include "backend/optimizer/pass/eliminate_redundant_op.h"
 #include <memory>
 #include <utility>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"

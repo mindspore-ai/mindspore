@@ -21,12 +21,12 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include <unordered_map>
-#include <unordered_set>
 #include <map>
 #include <set>
 #include <algorithm>
 #include <fstream>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "runtime/framework/control_node_scheduler.h"
 #include "runtime/framework/actor/actor_set.h"
 #include "runtime/framework/graph_compiler.h"
@@ -180,7 +180,7 @@ class GraphScheduler {
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
 
   // The global maps, only be cleared in the deconstruction.
-  std::unordered_map<ActorInfo, ActorSetPtr> actors_;
+  mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
 
   // The local maps and vectors, will be cleared at the end of each graph transform:
   // 1.The second element of pair represents the output index of op actor corresponding to the graph output front node.

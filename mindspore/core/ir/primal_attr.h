@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include <stack>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "ir/anf.h"
 
 namespace mindspore {
@@ -35,20 +35,20 @@ class PrimalAttrManager {
   PrimalAttrManager(const PrimalAttrManager &) = delete;
   PrimalAttrManager &operator=(const PrimalAttrManager &) = delete;
   ~PrimalAttrManager() = default;
-  void SetPrimalAttr(const std::unordered_map<std::string, ValuePtr> &primal_attrs) { primal_attrs_ = primal_attrs; }
+  void SetPrimalAttr(const mindspore::HashMap<std::string, ValuePtr> &primal_attrs) { primal_attrs_ = primal_attrs; }
   void ClearPrimalAttr() { primal_attrs_.clear(); }
-  std::unordered_map<std::string, ValuePtr> GetCurrentPrimalAttr() { return primal_attrs_; }
+  mindspore::HashMap<std::string, ValuePtr> GetCurrentPrimalAttr() { return primal_attrs_; }
 
  private:
   PrimalAttrManager() = default;
-  std::unordered_map<std::string, ValuePtr> primal_attrs_;
+  mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
 };
 
 // PrimalAttrGuard is a class that help generate the back propagation cnode
 // with specified primal attrs in the current c++ action scope.
 class PrimalAttrGuard {
  public:
-  explicit PrimalAttrGuard(const std::unordered_map<std::string, ValuePtr> &primal_attrs) {
+  explicit PrimalAttrGuard(const mindspore::HashMap<std::string, ValuePtr> &primal_attrs) {
     PrimalAttrManager::GetInstance().SetPrimalAttr(primal_attrs);
   }
   ~PrimalAttrGuard() { PrimalAttrManager::GetInstance().ClearPrimalAttr(); }

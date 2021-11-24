@@ -28,7 +28,7 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  std::unordered_set<AnfNodePtr> record{cnode};
+  mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
   while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);

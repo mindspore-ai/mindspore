@@ -17,11 +17,11 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <queue>
 #include <map>
-#include <unordered_map>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -178,7 +178,7 @@ bool SplitNodesDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
 
 namespace {
 void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(AnfNodePtr &)> &callback) {
-  std::unordered_set<AnfNodePtr> visited;
+  mindspore::HashSet<AnfNodePtr> visited;
   std::queue<AnfNodePtr> que;
   que.push(cnode);
   visited.insert(cnode);
@@ -219,8 +219,8 @@ class Area {
   ~Area() = default;
 
   // Set the external inputs of spy as a Parameter.
-  void CreateParameters(const FuncGraphPtr &func_graph, std::unordered_map<ParameterPtr, AnfNodePtr> *param_node_map) {
-    std::unordered_map<AnfNodePtr, ParameterPtr> node_param_map;
+  void CreateParameters(const FuncGraphPtr &func_graph, mindspore::HashMap<ParameterPtr, AnfNodePtr> *param_node_map) {
+    mindspore::HashMap<AnfNodePtr, ParameterPtr> node_param_map;
     for (auto node : this->spy_cnodes_) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -232,7 +232,7 @@ class Area {
           auto new_param = std::make_shared<Parameter>(func_graph);
           new_param->set_abstract(in_node->abstract());
           func_graph->add_parameter(new_param);
-          node_param_map.insert(std::make_pair(in_node, new_param));
+          (void)node_param_map.emplace(in_node, new_param);
           cnode->set_input(i, new_param);
         } else {
           cnode->set_input(i, it->second);
@@ -241,13 +241,13 @@ class Area {
     }
     this->spy_cnodes_.clear();  // spy list is not useful anymore
     for (auto &&elem : node_param_map) {
-      param_node_map->insert(std::make_pair(elem.second, elem.first));
+      (void)param_node_map->emplace(elem.second, elem.first);
     }
     return;
   }
 
   // Make a return node for traitor nodes.
-  void CreateReturnNode(const FuncGraphPtr &func_graph, std::unordered_map<AnfNodePtr, size_t> *tuple_node_index) {
+  void CreateReturnNode(const FuncGraphPtr &func_graph, mindspore::HashMap<AnfNodePtr, size_t> *tuple_node_index) {
     // If there's no traitor in the area, it means that this area is the last part
     // of the original FuncGraph, it already contains the original Return node.
     if (traitor_nodes_.empty()) {
@@ -268,7 +268,7 @@ class Area {
       AbstractBasePtrList abstracts;
       size_t i = 0;
       for (auto &traitor : traitor_nodes_) {
-        tuple_node_index->insert(std::make_pair(traitor, i++));
+        (void)tuple_node_index->emplace(traitor, i++);
         maketuple_inputs.emplace_back(traitor);
         abstracts.emplace_back(traitor->abstract());
       }
@@ -293,7 +293,7 @@ class Area {
     }
   }
 
-  const std::unordered_set<AnfNodePtr> &nodes() const { return nodes_; }
+  const mindspore::HashSet<AnfNodePtr> &nodes() const { return nodes_; }
   const std::vector<AnfNodePtr> &spy_cnodes() const { return spy_cnodes_; }
 
  private:
@@ -301,7 +301,7 @@ class Area {
   bool IsExternalCNode(const AnfNodePtr &node) const { return node->isa<CNode>() && this->nodes_.count(node) == 0; }
 
   // nodes in this area
-  std::unordered_set<AnfNodePtr> nodes_;
+  mindspore::HashSet<AnfNodePtr> nodes_;
   // if a node's output is used by other Area, it's a traitor
   std::vector<AnfNodePtr> traitor_nodes_;
   // if a node use other Area's output, it's a spy
@@ -339,7 +339,7 @@ class AreaGraph {
     for (auto index : topo_order_) {
       auto &current_area = areas_[index];
       auto sub_func_graph = std::make_shared<FuncGraph>();
-      std::unordered_map<ParameterPtr, AnfNodePtr> param_node_map;
+      mindspore::HashMap<ParameterPtr, AnfNodePtr> param_node_map;
 
       current_area.CreateParameters(sub_func_graph, &param_node_map);
       current_area.CreateReturnNode(sub_func_graph, &node_index_in_returned_tuple_);
@@ -407,7 +407,7 @@ class AreaGraph {
   // Make a CNode in main graph to hold the sub_func_graph.
   CNodePtr CreateMainCNode(const FuncGraphPtr &main_func_graph, const FuncGraphPtr &sub_func_graph,
                            const std::vector<CNodePtr> &main_cnodes,
-                           const std::unordered_map<ParameterPtr, AnfNodePtr> &param_node_map) {
+                           const mindspore::HashMap<ParameterPtr, AnfNodePtr> &param_node_map) {
     TraceGuard guard(std::make_shared<TraceOpt>(sub_func_graph->debug_info()));
     AnfNodePtrList main_cnode_inputs = {NewValueNode(sub_func_graph)};
     for (const auto &param : sub_func_graph->parameters()) {
@@ -452,9 +452,9 @@ class AreaGraph {
   // Topological order of areas
   std::vector<size_t> topo_order_;
   // Map AnfNode to Area id
-  std::unordered_map<AnfNodePtr, size_t> node_area_map_;
+  mindspore::HashMap<AnfNodePtr, size_t> node_area_map_;
   // Map the nodes to their index if there are multiple value in an area
-  std::unordered_map<AnfNodePtr, size_t> node_index_in_returned_tuple_;
+  mindspore::HashMap<AnfNodePtr, size_t> node_index_in_returned_tuple_;
 };
 
 class SplitSchemer {
@@ -545,7 +545,8 @@ class Splitter {
         if (param == nullptr) return;
         auto it = this->param_to_main_graph_node_map_.find(param);
         if (it != this->param_to_main_graph_node_map_.end()) {
-          cnode->add_input(it->second);
+          auto input = it->second;
+          cnode->add_input(input);
           sub_func_graph->add_parameter(param);
           // Avoid repeating parameters.
           this->param_to_main_graph_node_map_.erase(it);
@@ -561,7 +562,7 @@ class Splitter {
     auto output = func_graph->output()->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output);
     const auto &parameters = func_graph->parameters();
-    std::unordered_map<AnfNodePtr, AnfNodePtr> param_input;
+    mindspore::HashMap<AnfNodePtr, AnfNodePtr> param_input;
     for (size_t i = 0; i < parameters.size(); ++i) {
       param_input[parameters[i]] = inputs[i + 1];
     }
@@ -590,7 +591,7 @@ class Splitter {
     // For multiple output kernel, to avoid returning Parameter, the last MakeTuple was distribute to
     //  a new FuncGraph, just inline the last MakeTuple node.
     std::vector<CNodePtr> tmp_subgraph_cnodes;
-    std::unordered_map<AnfNodePtr, AnfNodePtr> replace_map;
+    mindspore::HashMap<AnfNodePtr, AnfNodePtr> replace_map;
 
     for (size_t i = 0; i < new_subgraph_cnodes_.size(); ++i) {
       if (split_schemer_->NeedInline(cnodes_group_id[i])) {
@@ -646,7 +647,7 @@ class Splitter {
 
   // Copy all Parameter and ValueNode that the area used.
   void AreaExpand(const Area &area) {
-    std::unordered_map<AnfNodePtr, AnfNodePtr> old_valuenode_and_param_map;
+    mindspore::HashMap<AnfNodePtr, AnfNodePtr> old_valuenode_and_param_map;
     for (auto sub_node : area.nodes()) {
       auto sub_cnode = sub_node->cast<CNodePtr>();
       if (sub_cnode == nullptr) continue;
@@ -682,7 +683,8 @@ class Splitter {
     ParameterPtr param_c = std::make_shared<Parameter>(func);
     param_c->set_name(param->name());
     param_c->set_abstract(param->abstract());
-    param_to_main_graph_node_map_[param_c] = param_to_main_graph_node_map_[param];
+    auto node = param_to_main_graph_node_map_[param];
+    param_to_main_graph_node_map_[param_c] = node;
     return param_c;
   }
 
@@ -691,7 +693,7 @@ class Splitter {
   std::vector<CNodePtr> new_subgraph_cnodes_;  // The cnode list that hold the new sub_func_graph
   std::vector<AnfNodePtr> inlined_nodes_;
   SplitSchemerPtr split_schemer_;
-  std::unordered_map<ParameterPtr, AnfNodePtr> param_to_main_graph_node_map_;
+  mindspore::HashMap<ParameterPtr, AnfNodePtr> param_to_main_graph_node_map_;
 };
 
 class CostModelSplitSchemer : public SplitSchemer {
@@ -837,7 +839,8 @@ class CostModelSplitSchemer : public SplitSchemer {
     MS_EXCEPTION_IF_NULL(output);
 
     if (IsValidKernelNode(output)) {
-      auto group_id = node_group_[ret_node] = node_group_[output];
+      auto group_id = node_group_[output];
+      node_group_[ret_node] = group_id;
       split_plan_[group_id].emplace_back(ret_node);
       return;
     }
@@ -846,7 +849,8 @@ class CostModelSplitSchemer : public SplitSchemer {
       auto group_id = split_plan_.size();
       split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
       need_inline_.emplace_back(1);
-      node_group_[ret_node] = node_group_[output] = group_id;
+      node_group_[output] = group_id;
+      node_group_[ret_node] = group_id;
       return;
     }
   }
@@ -861,8 +865,9 @@ class CostModelSplitSchemer : public SplitSchemer {
       for (const auto &input : cnode->inputs()) {
         auto iter = node_group_.find(input);
         if (iter != node_group_.end()) {
-          node_group_[node] = iter->second;
-          split_plan_[iter->second].emplace_back(node);
+          auto group_id = iter->second;
+          node_group_[node] = group_id;
+          split_plan_[group_id].emplace_back(node);
           found = true;
           break;
         }
@@ -885,7 +890,7 @@ class CostModelSplitSchemer : public SplitSchemer {
   std::shared_ptr<FuncGraph> func_graph_;
   AnfNodePtrList topo_all_nodes_;
   AnfNodePtrList topo_valid_nodes_;
-  std::unordered_map<AnfNodePtr, size_t> node_group_;
+  mindspore::HashMap<AnfNodePtr, size_t> node_group_;
   std::vector<int> need_inline_;
 };
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ InputToOutputRegistry &InputToOutputRegistry::Instance() {
 void InputToOutputRegistry::Register(const InputToOutputRegister &reg) {
   auto op_name = reg.op_name();
   if (op_input_to_output_map_.find(op_name) == op_input_to_output_map_.end()) {
-    (void)op_input_to_output_map_.insert(make_pair(op_name, reg));
+    (void)op_input_to_output_map_.emplace(op_name, reg);
     MS_LOG(DEBUG) << op_name << " input2output register successfully!";
   }
 }
@@ -105,7 +105,7 @@ void InputToOutputRegistry::Register(const std::string &op_name, const std::vect
   if (op_input_to_output_map_.find(op_name) == op_input_to_output_map_.end()) {
     InputToOutputRegister reg(op_name, pre_check_func);
     reg.set_input_indices(input_indices);
-    (void)op_input_to_output_map_.insert(make_pair(op_name, reg));
+    (void)op_input_to_output_map_.emplace(op_name, reg);
     MS_LOG(DEBUG) << op_name << " input2output register successfully!";
   }
 }

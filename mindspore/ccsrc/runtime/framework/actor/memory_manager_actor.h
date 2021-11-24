@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <set>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"

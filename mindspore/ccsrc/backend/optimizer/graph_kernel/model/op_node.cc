@@ -22,10 +22,10 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <unordered_map>
-#include <unordered_set>
 #include <numeric>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::inner {
@@ -122,7 +122,7 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     return *static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(i)->data()->data_c());
   });
 
-  std::unordered_map<std::string, std::function<TM(const std::vector<TM> &)>> func_map = {
+  mindspore::HashMap<std::string, std::function<TM(const std::vector<TM> &)>> func_map = {
     {"Add", [](const std::vector<TM> &n) { return n[0] + n[1]; }},
     {"Sub", [](const std::vector<TM> &n) { return n[0] - n[1]; }},
     {"Mul", [](const std::vector<TM> &n) { return n[0] * n[1]; }},

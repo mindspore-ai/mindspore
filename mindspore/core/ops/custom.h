@@ -21,7 +21,6 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <unordered_map>
 #include "ops/primitive_c.h"
 #include "ops/op_utils.h"
 #include "ir/anf.h"

@@ -25,8 +25,8 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
 
+#include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/ssl_http.h"
@@ -46,7 +46,7 @@ class HttpRequestHandler {
   HttpRequestHandler() : evbase_(nullptr) {}
   virtual ~HttpRequestHandler();
 
-  bool Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers);
+  bool Initialize(int fd, const mindspore::HashMap<std::string, OnRequestReceive *> &handlers);
   void Run();
   bool Stop();
   static bufferevent *BuffereventCallback(event_base *base, void *arg);

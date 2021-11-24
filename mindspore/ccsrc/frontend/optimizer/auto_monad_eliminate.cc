@@ -17,21 +17,20 @@
 #include "frontend/optimizer/auto_monad_eliminate.h"
 
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <optional>
 
+#include "utils/hash_map.h"
+#include "utils/ordered_map.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
-#include "utils/ordered_map.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-using ParamUserMap = std::unordered_map<std::string, std::vector<size_t>>;
+using ParamUserMap = mindspore::HashMap<std::string, std::vector<size_t>>;
 using LoadGraphMap = OrderedMap<std::string, std::vector<size_t>>;
 
 std::optional<std::string> GetRefKey(const AnfNodePtr &node) {

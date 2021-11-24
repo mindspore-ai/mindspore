@@ -20,7 +20,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "runtime/device/kernel_info.h"
@@ -319,7 +319,7 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
   gsub->buffer << " }";
 }
 
-void DumpAttrs(const std::unordered_map<std::string, ValuePtr> &attrs, const std::shared_ptr<SubGraphIRInfo> &gsub,
+void DumpAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::shared_ptr<SubGraphIRInfo> &gsub,
                bool check_strategy = false) {
   int i = 0;
   for (const auto &attr : attrs) {
@@ -572,7 +572,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
 }
 
 void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
-  static std::unordered_map<std::string, enum LocDumpMode> dump_level_map = {
+  static mindspore::HashMap<std::string, enum LocDumpMode> dump_level_map = {
     {std::to_string(kOff), kOff}, {std::to_string(kTopStack), kTopStack}, {std::to_string(kWholeStack), kWholeStack}};
   static const auto dump_level_in_env = common::GetEnv("ENV_DUMP_IR_LINE_LEVEL");
   auto it = dump_level_map.find(dump_level_in_env);

@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <algorithm>
 
+#include "utils/hash_map.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/resource.h"
@@ -524,7 +524,7 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
-static std::unordered_map<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
+static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &res) {
   if (g_pass_opts.size() == 0) {

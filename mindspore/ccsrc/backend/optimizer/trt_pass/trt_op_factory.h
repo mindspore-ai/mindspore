@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTITIMIZER_TRT_PASS_OP_FACTORY_H_
 
 #include <functional>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <string>
 #include <memory>
 #include <NvInfer.h>
+#include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
 
@@ -45,7 +45,7 @@ class TrtOpFactory {
     if (op_convert_map_.count(op_name)) {
       MS_LOG(EXCEPTION) << "Operator: " << op_name << " re-registered.";
     }
-    op_convert_map_.insert(std::make_pair(op_name, func));
+    (void)op_convert_map_.emplace(op_name, func);
   }
 
   ConvertFunc GetConvertFunc(const std::string &op_name) const {
@@ -62,7 +62,7 @@ class TrtOpFactory {
   ~TrtOpFactory() = default;
   DISABLE_COPY_AND_ASSIGN(TrtOpFactory)
 
-  std::unordered_map<std::string, ConvertFunc> op_convert_map_;
+  mindspore::HashMap<std::string, ConvertFunc> op_convert_map_;
 };
 
 class TrtOpRegister {

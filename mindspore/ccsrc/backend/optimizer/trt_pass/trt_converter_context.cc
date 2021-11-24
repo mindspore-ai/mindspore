@@ -16,6 +16,8 @@
 
 #include "backend/optimizer/trt_pass/trt_converter_context.h"
 
+#include <utility>
+#include <algorithm>
 #include "runtime/device/gpu/trt_loader.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"
@@ -219,7 +221,7 @@ bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<Lay
 
 std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
   // Get Anf-graph inputs without weights. All weights were binded to Trt-graph.
-  std::unordered_map<std::string, AnfNodePtr> graph_inputs;
+  mindspore::HashMap<std::string, AnfNodePtr> graph_inputs;
   for (const auto &input_node : func_graph_->parameters()) {
     if (!input_node->isa<Parameter>()) {
       continue;
@@ -227,7 +229,7 @@ std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
 
     auto input = input_node->cast<ParameterPtr>();
     if (!AnfAlgo::IsParameterWeight(input)) {
-      graph_inputs.insert(std::make_pair(input->name(), input_node));
+      (void)graph_inputs.emplace(input->name(), input_node);
     }
   }
 
@@ -260,7 +262,7 @@ std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> TrtC
       size_t pos = name.find_first_not_of("return_output_");
       size_t anf_index = atoi(name.substr(pos).c_str());
 
-      anf_trt_index_map.insert(std::make_pair(anf_index, trt_index));
+      (void)anf_trt_index_map.emplace(anf_index, trt_index);
       trt_output_list[trt_index] = anf_output_list[anf_index];
       trt_index++;
     }

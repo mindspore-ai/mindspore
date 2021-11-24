@@ -248,7 +248,7 @@ std::vector<std::shared_ptr<RunGraphTask>> Executor::GetReadyTasksFromPendingLis
     auto task = *iter;
     if (IsTaskReady(task)) {
       (void)ready_tasks.emplace_back(task);
-      pending_tasks_.erase(iter++);
+      iter = pending_tasks_.erase(iter);
     } else {
       ++iter;
     }

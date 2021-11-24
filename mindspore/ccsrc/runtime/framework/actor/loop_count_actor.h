@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <map>
 #include <utility>
+#include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/framework/device_tensor_store.h"

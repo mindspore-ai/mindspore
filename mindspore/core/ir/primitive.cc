@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ Primitive::Primitive(const std::string &name, const bool is_base, const PrimType
       is_const_prim_(false),
       id_(MakeId()) {}
 
-Primitive::Primitive(const std::string &name, const std::unordered_map<std::string, ValuePtr> &attrs)
+Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs)
     : Named(name),
       attrs_(attrs),
       is_base_(true),
@@ -76,7 +76,7 @@ bool Primitive::operator==(const Primitive &other) const {
   if (attrs_.size() != other.attrs_.size()) {
     return false;
   }
-  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const std::pair<std::string, ValuePtr> &item) -> bool {
+  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const auto &item) {
     if (item.second == nullptr) {
       return false;
     }

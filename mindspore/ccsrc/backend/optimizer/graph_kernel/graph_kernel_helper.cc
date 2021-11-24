@@ -19,9 +19,9 @@
 #include <map>
 #include <set>
 #include <tuple>
-#include <unordered_set>
 #include <utility>
 
+#include "utils/hash_set.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"

@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "proto/ps.pb.h"
 #include "ps/core/server_node.h"
 #include "ps/core/cluster_metadata.h"
@@ -36,7 +36,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
+const mindspore::HashMap<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kPush, "push"},
   {TcpUserCommand::kPull, "pull"},
   {TcpUserCommand::kCount, "count"},

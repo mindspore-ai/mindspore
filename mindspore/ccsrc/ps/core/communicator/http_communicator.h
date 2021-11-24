@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
+#include "utils/hash_map.h"
 #include "ps/core/communicator/http_server.h"
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/task_executor.h"
@@ -46,7 +46,7 @@ class HttpCommunicator : public CommunicatorBase {
  private:
   std::shared_ptr<TaskExecutor> task_executor_;
   std::shared_ptr<HttpServer> http_server_;
-  std::unordered_map<std::string, HttpMsgCallback> http_msg_callbacks_;
+  mindspore::HashMap<std::string, HttpMsgCallback> http_msg_callbacks_;
 
   std::string ip_;
   uint16_t port_;

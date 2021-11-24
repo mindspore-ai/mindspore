@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ELEMENTARY_FUNCTION_INFO_H_
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <memory>
+#include "utils/hash_map.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/activation_info.h"

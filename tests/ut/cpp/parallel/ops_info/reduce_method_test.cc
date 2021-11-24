@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ void TestReduceSumInfo::SetUp() {
   ValuePtr value0;
   std::vector<ValuePtr> val = {value0, value};
   ValuePtr keep_dims = MakeValue(false);
-  std::unordered_map<std::string, ValuePtr> attr = {{KEEP_DIMS, keep_dims}};
+  mindspore::HashMap<std::string, ValuePtr> attr = {{KEEP_DIMS, keep_dims}};
 
   reduce_sum = std::make_shared<ReduceSumInfo>("sum_info", inputs_shape, outputs_shape, attr);
   reduce_sum->set_input_value(val);

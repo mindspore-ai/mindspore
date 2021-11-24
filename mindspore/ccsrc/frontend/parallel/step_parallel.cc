@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
+#include "utils/hash_map.h"
 #include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
@@ -487,12 +487,12 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
   }
 }
 
-bool StrategyFound(const std::unordered_map<std::string, ValuePtr> &attrs) {
+bool StrategyFound(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
   auto iter = attrs.find(IN_STRATEGY);
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
-bool AttrFound(const std::unordered_map<std::string, ValuePtr> &attrs, const std::string &target) {
+bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &target) {
   auto iter = attrs.find(target);
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
@@ -797,7 +797,7 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
   // However, the segment_sum operation needs two inputs, To solve this
   // We maintain a dict to count the times of the same operations,
   // and bind the inputs according to the times of the op appears.
-  std::unordered_map<AnfNodePtr, int> input_map = {};
+  mindspore::HashMap<AnfNodePtr, int> input_map = {};
   static int appear_count = 0;
   for (auto &replace_input : replace_graph->first) {
     auto pre_node = node->input(LongToSize(replace_input.second));

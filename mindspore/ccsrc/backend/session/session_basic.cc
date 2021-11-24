@@ -18,10 +18,10 @@
 #include <algorithm>
 #include <set>
 #include <queue>
-#include <unordered_map>
 #include <utility>
 #include <functional>
 
+#include "utils/hash_map.h"
 #include "ops/primitive_c.h"
 #include "ir/manager.h"
 #include "abstract/utils.h"
@@ -503,7 +503,7 @@ void SessionBasic::ClearGraph() {
   auto graph_iter = graphs_.begin();
   while (graph_iter != graphs_.end()) {
     graph_iter->second.reset();
-    graphs_.erase(graph_iter++);
+    graph_iter = graphs_.erase(graph_iter);
   }
   graph_sum_ = 0;
 }
@@ -656,7 +656,7 @@ void SessionBasic::GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *
 }
 
 void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                                     std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
+                                     mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
@@ -707,7 +707,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
 }
 
 CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                                      std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
+                                      mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
@@ -1101,7 +1101,7 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
 
 KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
                                                   bool common_opt) {
-  std::unordered_map<AnfNodePtr, AnfNodePtr> other_graph_cnode;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();

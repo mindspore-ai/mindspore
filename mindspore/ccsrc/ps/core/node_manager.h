@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 #include <condition_variable>
-#include <unordered_set>
 #include <deque>
 #include <algorithm>
 
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -86,8 +86,8 @@ class NodeManager {
   // nodes and Determine whether the nodes are equal to total_node_num_.
   bool IsAllNodesScaleInDone() const;
 
-  const std::unordered_map<std::string, NodeInfo> &nodes_info() const;
-  const std::unordered_map<std::string, NodeInfo> &registered_nodes_info() const;
+  const mindspore::HashMap<std::string, NodeInfo> &nodes_info() const;
+  const mindspore::HashMap<std::string, NodeInfo> &registered_nodes_info() const;
   // After all the nodes are registered successfully, the nodes info can be updated.
   void UpdateNodesInfo();
 
@@ -124,22 +124,22 @@ class NodeManager {
   std::atomic<int> next_server_rank_id_;
 
   // Whenever a node is registered, it will be stored in this map.
-  std::unordered_map<std::string, NodeInfo> registered_nodes_info_;
+  mindspore::HashMap<std::string, NodeInfo> registered_nodes_info_;
   // When all nodes are registered successfully, then all nodes info will be stored in this map. In other words, the
   // nodes_info_ is a snapshot of the registered_nodes_info_.
-  std::unordered_map<std::string, NodeInfo> nodes_info_;
+  mindspore::HashMap<std::string, NodeInfo> nodes_info_;
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
 
-  std::unordered_map<std::string, timeval> heartbeats_;
+  mindspore::HashMap<std::string, timeval> heartbeats_;
   // timeout nodes
-  std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
-  std::unordered_set<std::string> finish_nodes_id_;
+  mindspore::HashMap<std::string, NodeInfo> timeout_nodes_info_;
+  mindspore::HashSet<std::string> finish_nodes_id_;
 
   // The scheduler aggregates scale_out_done messages from workers/servers
-  std::unordered_set<std::string> scale_out_done_nodes_id_;
+  mindspore::HashSet<std::string> scale_out_done_nodes_id_;
   // The scheduler aggregates scale_in_done messages from workers/servers
-  std::unordered_set<std::string> scale_in_done_nodes_id_;
+  mindspore::HashSet<std::string> scale_in_done_nodes_id_;
 
   // Cluster metadata information can be dynamically changed
   std::unique_ptr<ClusterMetadata> meta_data_;
