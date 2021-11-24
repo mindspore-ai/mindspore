@@ -35,6 +35,9 @@ Status ConnectorSize::Sample() {
   Qrow cur_row;
   (void)std::transform(tree_->begin(), tree_->end(), std::back_inserter(cur_row),
                        [](DatasetOp &op) { return op.ConnectorSize(); });
+  // Tree Iterator is in PostOrder (leaf first, e.g., 3,2,1)
+  // reverse the order of the vector to get the root first.
+  std::reverse(cur_row.begin(), cur_row.end());
   std::lock_guard<std::mutex> guard(lock_);
   // Push new row of sample
   sample_table_.push_back(cur_row);
@@ -103,6 +106,9 @@ Status ConnectorSize::Init() {
     json json_node = ParseOpInfo(node);
     initial_nodes_data["op_info"].push_back(json_node);
   }
+  // Tree Iterator is in PostOrder (leaf first, e.g., 3,2,1)
+  // reverse the order of the vector to get the root first.
+  std::reverse(initial_nodes_data["op_info"].begin(), initial_nodes_data["op_info"].end());
 
   return Status::OK();
 }
