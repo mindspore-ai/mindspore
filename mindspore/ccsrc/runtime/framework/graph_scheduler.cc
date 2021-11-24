@@ -529,6 +529,10 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
+    if (graph->execution_order().empty()) {
+      MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips linking.";
+      continue;
+    }
     if (graph->is_executing_sink()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {
@@ -706,6 +710,11 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
       continue;
     }
 
+    if (graph->execution_order().empty()) {
+      MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips building.";
+      continue;
+    }
+
     auto actor_name = graph->ToString() + "_SuperKernelActor";
     auto super_kernel_actor =
       std::make_shared<SuperKernelActor>(actor_name, graph, device_context, memory_manager_aid_, nullptr, nullptr);
@@ -828,21 +837,6 @@ std::vector<AbstractActorPtr> GraphScheduler::BuildNoInputKernelActor(const Acto
     }
 
     if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
-      // Check whether the kernel actor belongs to the root graph.
-      // In general, all no input nodes belong to the root funcgraph, and the corresponding gather actor should be
-      // empty. In control flow, the control arrow of the no input node in the sub funcgraph should be sent by the
-      // gather actor and should not be placed in the no input list.
-      MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
-      const auto &graph = kernel_actor->kernel_->func_graph();
-      if (graph != nullptr) {
-        const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
-        MS_EXCEPTION_IF_NULL(kernel_graph);
-        const auto func_graph = kernel_graph->GetFuncGraph();
-        if (func_graph != nullptr && FetchActor(func_graph->ToString()) != nullptr) {
-          continue;
-        }
-      }
-
       (void)no_input_kernel_actors.emplace_back(kernel_actor);
     }
   }
@@ -1784,7 +1778,11 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   DumpDSActors(actor_set->data_source_actors_, ofs);
   DumpKernelActors(actor_set->kernel_actors_, ofs);
   DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
-  DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
+  // The on input kernel actors are taken over by control actor in the control flow scene.
+  if ((graph_compiler_info.control_node_parser_ == nullptr) ||
+      (!graph_compiler_info.control_node_parser_->IsInited())) {
+    DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
+  }
   DumpCopyActors(actor_set->copy_actors_, ofs);
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);
