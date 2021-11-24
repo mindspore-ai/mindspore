@@ -27,6 +27,8 @@
 #include "utils/ms_context.h"
 #include "utils/utils.h"
 
+#include "google/protobuf/util/json_util.h"
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_context.h"
 #include "ps/util.h"
@@ -71,7 +73,7 @@ bool StringToInt(std::string *str, int32_t *value) {
   return true;
 }
 
-std::string GetProfilingParallelString(const FuncGraphPtr &func_graph) {
+irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
   irpb::ProfilingParallel profiling_parallel;
   irpb::GraphProto *graph_proto = profiling_parallel.mutable_graph();
   MS_EXCEPTION_IF_NULL(graph_proto);
@@ -115,8 +117,7 @@ std::string GetProfilingParallelString(const FuncGraphPtr &func_graph) {
     }
     config->set_rank_id(rank_id_int);
   }
-
-  return profiling_parallel.SerializeAsString();
+  return profiling_parallel;
 }
 
 void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
@@ -133,7 +134,7 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   if (rank_id.empty()) {
     rank_id = "0";
   }
-  std::string file_path = dir_path + std::string("/parallel_strategy_") + std::string(rank_id) + std::string(".pb");
+  std::string file_path = dir_path + std::string("/parallel_strategy_") + std::string(rank_id) + std::string(".json");
 
   MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << file_path;
   std::ofstream ofs(file_path);
@@ -142,8 +143,13 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
                   << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return;
   }
-  ofs << GetProfilingParallelString(func_graph);
+
+  irpb::ProfilingParallel profiling_parallel = GetProfilingParallel(func_graph);
+  std::string profiling_parallel_str;
+  google::protobuf::util::MessageToJsonString(profiling_parallel, &profiling_parallel_str);
+  ofs << profiling_parallel_str;
   ofs.close();
+
   ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
   MS_LOG(INFO) << "Save profile parallel strategy success.";
 }
