@@ -112,7 +112,7 @@ int ConfigFileParser::ParseCommonQuantString(const std::map<std::string, std::ma
       {"bit_num", common_quant_string_.bit_num},
       {"min_quant_weight_size", common_quant_string_.min_quant_weight_size},
       {"min_quant_weight_channel", common_quant_string_.min_quant_weight_channel},
-      {"skip_node", common_quant_string_.skip_node},
+      {"skip_quant_node", common_quant_string_.skip_quant_node},
       {"debug_info_save_path", common_quant_string_.debug_info_save_path},
     };
     return SetMapData(map, parse_map, kCommonQuantParam);

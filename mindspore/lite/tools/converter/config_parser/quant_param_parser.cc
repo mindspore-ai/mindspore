@@ -49,10 +49,10 @@ int QuantParamParser::ParseFilter(const CommonQuantString &common_quant_string, 
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  if (!common_quant_string.skip_node.empty()) {
-    std::vector<std::string> nodes = SplitStringToVector(common_quant_string.skip_node, ',');
+  if (!common_quant_string.skip_quant_node.empty()) {
+    std::vector<std::string> nodes = SplitStringToVector(common_quant_string.skip_quant_node, ',');
     for (const auto &node : nodes) {
-      common_quant->skip_node.insert(node);
+      common_quant->skip_quant_node.insert(node);
     }
   }
   return RET_OK;

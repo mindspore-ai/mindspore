@@ -35,15 +35,23 @@
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/quantizer/calibrator.h"
 #include "tools/converter/quantizer/data_distribution.h"
+#include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
 enum OperationType {
   STORE,
   FETCH,
 };
+
+enum QuantRuntimeDevice {
+  CPU,
+  KIRIN,
+};
+
 class FullQuantQuantizer : public Quantizer {
  public:
-  FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8);
+  FullQuantQuantizer(FuncGraphPtr graph, int bit_num) : Quantizer(std::move(graph)), bit_num_(bit_num) {}
+
   ~FullQuantQuantizer() override;
 
   int DoQuantize(FuncGraphPtr func_graph) override;
@@ -82,9 +90,20 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetAfterCallBack(bool int8_op);
   KernelCallBack GetInt8AfterCallBack();
   KernelCallBack GetFloatAfterCallBack();
+  void InitQMinMax();
+  void InitCpuConfig();
+  int MarkQuantNode();
 
  private:
+  // Config
   TypeId target_data_type_{kNumberTypeInt8};
+  size_t bit_num_{8};
+  int q_max_{INT8_MAX};
+  int q_min_{INT8_MIN};
+  bool activation_symmetry_{true};
+  bool weight_symmetry_{true};
+  QuantRuntimeDevice device_ = CPU;
+
   std::unique_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
@@ -96,10 +115,6 @@ class FullQuantQuantizer : public Quantizer {
   std::map<std::string, std::vector<float>> op_bias_diff_map_;            // only use by int8 model
   std::mutex mutex_op_input_;
   std::mutex mutex_op_output_;
-
-  size_t bit_num_;
-  int q_max_{INT8_MAX};
-  int q_min_{INT8_MIN};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H

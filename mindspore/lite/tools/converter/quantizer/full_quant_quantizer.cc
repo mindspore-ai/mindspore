@@ -40,6 +40,7 @@
 #include "src/common/utils.h"
 #include "tools/common/node_util.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 using std::string;
 using std::vector;
@@ -125,22 +126,6 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
   return RET_ERROR;
 }
 }  // namespace
-
-FullQuantQuantizer::FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type)
-    : Quantizer(std::move(graph)) {
-  MS_ASSERT(graph != nullptr);
-  this->bit_num_ = bit_num;
-  this->target_data_type_ = target_type;
-  if (target_type == kNumberTypeInt8) {
-    q_max_ = (1 << (this->bit_num_ - 1)) - 1;  // 127
-    q_min_ = -q_max_;                          // -127
-  } else if (target_type == kNumberTypeUInt8) {
-    q_max_ = (1 << this->bit_num_) - 1;  // 255
-    q_min_ = 0;
-  } else {
-    MS_LOG(ERROR) << "unsupported quant value type: " << target_type;
-  }
-}
 
 FullQuantQuantizer::~FullQuantQuantizer() {
   delete fp32_session_;
@@ -507,37 +492,79 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
   return RET_OK;
 }
 
-int FullQuantQuantizer::PreProcess() {
-  calibrator_ =
-    std::make_unique<Calibrator>(this->bit_num_, q_max_, q_min_, this->flags.fullQuantParam.activation_quant_method,
-                                 this->flags.dataPreProcessParam);
-  if (calibrator_ == nullptr) {
-    MS_LOG(ERROR) << "create calibrator failed!";
-    return RET_NULL_PTR;
+void FullQuantQuantizer::InitCpuConfig() {
+  this->target_data_type_ = kNumberTypeInt8;
+  activation_symmetry_ = true;
+  weight_symmetry_ = false;
+}
+
+void FullQuantQuantizer::InitQMinMax() {
+  if (this->target_data_type_ == kNumberTypeInt8) {
+    q_max_ = QuantMax(this->bit_num_, false);        // 127
+    q_min_ = QuantMin(this->bit_num_, false, true);  // -127
+  } else if (target_data_type_ == kNumberTypeUInt8) {
+    q_max_ = QuantMax(this->bit_num_, true);         // 255
+    q_min_ = QuantMin(this->bit_num_, true, false);  // 0
+  } else {
+    MS_LOG(ERROR) << "unsupported quant value type: " << target_data_type_;
   }
+}
+
+int FullQuantQuantizer::MarkQuantNode() {
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto anode = cnode->cast<AnfNodePtr>();
     if (anode == nullptr) {
-      MS_LOG(ERROR) << " cnode is null";
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " cnode is null";
       return RET_NULL_PTR;
     }
+    auto quant_strategy = std::make_unique<QuantStrategy>(flags.commonQuantParam.min_quant_weight_size,
+                                                          flags.commonQuantParam.min_quant_weight_channel,
+                                                          flags.commonQuantParam.skip_quant_node);
     //  Mark quantifiable nodes
-    if (mindspore::lite::quant::QuantStrategy::CanOpFullQuantized(anode)) {
+    auto is_support_op = quant_strategy->CanOpFullQuantized(anode);
+    auto is_skip_op = quant_strategy->IsSkipOp(anode);
+    if (is_support_op && !is_skip_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Add Quantized Op failed.";
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " add quantized op failed.";
         return ret;
       }
     }
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is null";
-      continue;
+      return RET_ERROR;
     }
     auto quant_param_holder = GetCNodeQuantHolder(primitive);
-    MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
+    if (quant_param_holder == nullptr) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " quant_param_holder is null";
+      return RET_ERROR;
+    }
     quant_param_holder->ClearInputOutputQuantParam();
+  }
+  return RET_OK;
+}
+
+int FullQuantQuantizer::PreProcess() {
+  switch (device_) {
+    case CPU:
+      InitCpuConfig();
+      break;
+    default:
+      MS_LOG(ERROR) << " Unsupported device " << device_;
+      return RET_ERROR;
+      break;
+  }
+  InitQMinMax();
+  calibrator_ =
+    std::make_unique<Calibrator>(this->bit_num_, q_max_, q_min_, this->flags.fullQuantParam.activation_quant_method,
+                                 this->flags.dataPreProcessParam, activation_symmetry_);
+  MSLITE_CHECK_PTR(calibrator_);
+  auto ret = MarkQuantNode();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Mark quant node failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -943,9 +970,10 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
         }
         auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
+        // op can be skipped.
         if (tensor->data_type() != kNumberTypeInt8) {
-          MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
-          return false;
+          MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+          return true;
         }
         // do quantization: activation is always per layer quantized
         std::vector<int8_t> quant_datas;
@@ -999,9 +1027,10 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
+      // op can be skipped.
       if (tensor->data_type() != kNumberTypeInt8) {
-        MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
-        return false;
+        MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+        return true;
       }
       const int8_t *tensor_data = static_cast<int8_t *>(tensor->data());
       size_t elem_count = tensor->ElementsNum();

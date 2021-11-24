@@ -31,7 +31,8 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
     mixed_bit_init_scale_ = config.mixedBitWeightQuantParam.init_scale;
   }
   quant_strategy_ = std::make_unique<QuantStrategy>(config.commonQuantParam.min_quant_weight_size,
-                                                    config.commonQuantParam.min_quant_weight_channel);
+                                                    config.commonQuantParam.min_quant_weight_channel,
+                                                    config.commonQuantParam.skip_quant_node);
   // parse param for fixed bit quant.
   if (!this->is_mixed_bit_) {
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;

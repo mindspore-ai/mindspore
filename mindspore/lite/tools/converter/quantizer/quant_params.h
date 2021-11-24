@@ -35,7 +35,7 @@ struct CommonQuantParam {
   int min_quant_weight_channel = 16;
   bool is_debug = false;
   std::string debug_info_save_path;
-  std::set<std::string> skip_node;
+  std::set<std::string> skip_quant_node;
   int thread_num = 4;
 };
 

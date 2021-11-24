@@ -17,22 +17,29 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_STRATEGY_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_STRATEGY_H
 #include <cstddef>
+#include <utility>
+#include <set>
+#include <string>
 #include "ir/anf.h"
 
 namespace mindspore::lite::quant {
 class QuantStrategy {
  public:
-  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel)
-      : min_quant_weight_size_(min_quant_weight_size), min_quant_weight_channel_(min_quant_weight_channel) {}
+  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel, std::set<std::string> skip_node)
+      : min_quant_weight_size_(min_quant_weight_size),
+        min_quant_weight_channel_(min_quant_weight_channel),
+        skip_node_(std::move(skip_node)) {}
 
   ~QuantStrategy() = default;
 
-  static bool CanOpFullQuantized(const AnfNodePtr &node);
+  bool CanOpFullQuantized(const AnfNodePtr &node);
   bool CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim);
+  bool IsSkipOp(const AnfNodePtr &input_node);
 
  private:
   size_t min_quant_weight_size_;
   size_t min_quant_weight_channel_;
+  std::set<std::string> skip_node_;
 };
 }  // namespace mindspore::lite::quant
 

@@ -180,7 +180,7 @@ float DataDistribution::CalculateScale(float min_value, float max_value) {
   this->encode_max_ = max_value;
   // Optimize Handle 0.
   MS_ASSERT(quant_max_ - quant_min_ > 0);
-  return (max_value - min_value) / (quant_max_ - quant_min_);
+  return (encode_max_ - encode_min_) / (quant_max_ - quant_min_);
 }
 
 float DataDistribution::CalculateKLScale() { return CalculateScale(this->best_T_, this->real_max_); }
