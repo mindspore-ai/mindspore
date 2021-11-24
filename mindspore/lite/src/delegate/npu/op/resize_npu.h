@@ -46,8 +46,6 @@ class ResizeNPUOp : public NPUOp {
 
  private:
   schema::ResizeMethod resize_method_ = schema::ResizeMethod_UNKNOWN;
-  int new_height_ = 0;
-  int new_width_ = 0;
   bool is_support_v2_ = false;
   ge::Operator *resize_ = nullptr;
   hiai::op::Const *out_size_ = nullptr;
