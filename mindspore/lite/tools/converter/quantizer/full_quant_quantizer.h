@@ -41,10 +41,6 @@ enum OperationType {
   STORE,
   FETCH,
 };
-enum CollectType {
-  MIN_MAX,
-  KL_BIN,
-};
 class FullQuantQuantizer : public Quantizer {
  public:
   FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8);
@@ -77,11 +73,6 @@ class FullQuantQuantizer : public Quantizer {
                     bool per_channel, int input_index) const;
 
   int DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
-
-  int CollectDataDistribution(
-    const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
-    std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
-    CollectType collect_type);
 
   int DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
   int Int8Inference();

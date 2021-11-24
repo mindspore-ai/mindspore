@@ -161,5 +161,28 @@ inline float GetCosSimilarity(const void *vector_a, const void *vector_b, size_t
     return 0;
   }
 }
+
+template <typename T>
+float KLDivergence(std::vector<T> p, std::vector<T> q) {
+  auto sum = 0.0f;
+  std::for_each(p.begin(), p.end(), [&sum](T item) { sum += item; });
+  std::for_each(p.begin(), p.end(), [sum](T &item) { item /= sum; });
+  sum = 0.0f;
+  std::for_each(q.begin(), q.end(), [&sum](T item) { sum += item; });
+  std::for_each(q.begin(), q.end(), [sum](T &item) { item /= sum; });
+
+  float result = 0.0f;
+  const int size = p.size();
+  for (int i = 0; i < size; ++i) {
+    if (p[i] != 0) {
+      if (q[i] == 0) {
+        result += 1.0f;
+      } else {
+        result += (p[i] * std::log((p[i]) / (q[i])));
+      }
+    }
+  }
+  return result;
+}
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_STATISTIC_UTILS_H_

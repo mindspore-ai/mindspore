@@ -25,20 +25,19 @@ class DataDistribution {
  public:
   DataDistribution() = default;
   DataDistribution(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
-                   ActivationQuantizedMethod activation_quant_method) {
+                   ActivationQuantizedMethod activation_quant_method, bool symmetry = true) {
     this->activation_quant_method_ = activation_quant_method;
     this->cnode_ = std::move(cnode);
     this->bin_num_ = bins;
     this->bit_num_ = bits;
     histogram_.resize(bin_num_);
-    max_ = -FLT_MAX;
-    min_ = FLT_MAX;
+    real_max_ = -FLT_MAX;
+    real_min_ = FLT_MAX;
     this->quant_max_ = quant_max;
     this->quant_min_ = quant_min;
     std::fill(histogram_.begin(), histogram_.end(), 1.0e-7);
+    symmetry_ = symmetry;
   }
-
-  int RecordMaxMinValue(const std::vector<float> &data);
 
   int RecordMaxMinValueArray(const std::vector<float> &data);
 
@@ -57,21 +56,33 @@ class DataDistribution {
 
   int32_t GetZeroPoint();
 
-  float GetMax() { return this->max_; }
+  float GetRealMax() { return this->real_max_; }
 
-  float GetMin() { return this->min_; }
+  float GetRealMin() { return this->real_min_; }
+
+  float GetEncodeMin() { return this->encode_min_; }
+
+  float GetEncodeMax() { return this->encode_max_; }
 
   CNodePtr GetCNode() { return this->cnode_; }
+
+ private:
+  float CalculateMinMaxScale();
+  float CalculateRemovalOutlierScale();
+  float CalculateKLScale();
+  float CalculateScale(float min_value, float max_value);
 
  private:
   std::vector<float> histogram_;
   CNodePtr cnode_;
   int bin_num_ = 0;
   float interval_ = 0;
-  float max_ = 0.0f;
-  float min_ = 0.0f;
+  float real_max_ = 0.0f;
+  float real_min_ = 0.0f;
   float best_T_ = 0.0f;
   size_t bit_num_ = 0;
+  float encode_min_ = 0.0f;
+  float encode_max_ = 0.0f;
   int quant_max_ = 255;
   int quant_min_ = 0;
   ActivationQuantizedMethod activation_quant_method_ = MAX_MIN;
@@ -79,6 +90,7 @@ class DataDistribution {
   std::vector<float> max_datas_;
   std::pair<float, float> percent_result_{0.0, 0.0};
   float scale_ = 0;
+  bool symmetry_ = true;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_DATA_DISTRIBUTION_H
