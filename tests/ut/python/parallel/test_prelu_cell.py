@@ -18,18 +18,14 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.ops import functional as F
-from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
+from mindspore.nn import PReLU
 from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)
-
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
@@ -55,33 +51,6 @@ class Dataset(MindData):
         self.index = 0
 
 
-class PReLU(nn.Cell):
-    def __init__(self, channel=1, w=0.25):
-        super(PReLU, self).__init__()
-        if isinstance(w, (np.float32, float)):
-            tmp = np.empty((channel,), dtype=np.float32)
-            tmp.fill(w)
-            w = Tensor(tmp)
-        elif isinstance(w, list):
-            w = Tensor(w)
-
-        if not isinstance(w, Tensor):
-            raise TypeError("w only support np.float32, float or Tensor type.")
-
-        self.w = Parameter(initializer(w, [channel,]), name='a')
-        self.prelu = P.PReLU()
-        self.relu = P.ReLU().shard(((1,),))
-        self.sub = P.Sub().shard(((1,), (1,)))
-        self.assign_sub = P.AssignSub().shard(((1,), (1,)))
-
-    def construct(self, x):
-        u = self.relu(self.w)
-        tmp = self.sub(self.w, u)
-        x = F.depend(x, self.assign_sub(self.w, tmp))
-        v = self.prelu(x, u)
-        return v
-
-
 class PReLUNet(nn.Cell):
     def __init__(self):
         super(PReLUNet, self).__init__()
@@ -90,11 +59,6 @@ class PReLUNet(nn.Cell):
     def construct(self, x):
         x = self.prelu(x)
         return x
-
-
-def prelu_net():
-    return PReLUNet()
-
 
 def reshape_common(parallel_mode):
     learning_rate = 0.1
@@ -106,7 +70,7 @@ def reshape_common(parallel_mode):
     predict = Tensor(np.ones([32, 256]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)
-    net = prelu_net()
+    net = PReLUNet()
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
@@ -115,4 +79,9 @@ def reshape_common(parallel_mode):
 
 
 def test_prelu_cell():
+    """
+    Feature: distribute operator prelu in auto parallel.
+    Description: prelu net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     reshape_common(ParallelMode.SEMI_AUTO_PARALLEL)
