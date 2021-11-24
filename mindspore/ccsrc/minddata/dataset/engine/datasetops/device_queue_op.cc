@@ -409,7 +409,7 @@ Status DeviceQueueOp::PushDataToGPU() {
 #ifndef ENABLE_SECURITY
   uint64_t batch_start_time = 0;
   uint64_t end_time = 0;
-  int32_t push_cost = 0;
+  uint64_t push_cost = 0;
   std::shared_ptr<DeviceQueueTracing> profiling_node;
   bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable(tree_);
   if (is_profiling_enable) {
@@ -449,7 +449,7 @@ Status DeviceQueueOp::PushDataToGPU() {
         return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
                       "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
-      RETURN_IF_NOT_OK(RetryPushData(handle, items));
+      RETURN_IF_NOT_OK(RetryPushData(handle, items, is_profiling_enable, &push_cost));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
                         gpu_connector_->capacity(), gpu_connector_->size());
@@ -498,8 +498,15 @@ Status DeviceQueueOp::PushDataToGPU() {
   return Status::OK();
 }
 
-Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &items) {
+Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &items, const bool profiling,
+                                    uint64_t *push_time) {
   bool flag_log = false;
+#ifndef ENABLE_SECURITY
+  uint64_t start_time = 0;
+  if (profiling) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
+#endif
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
@@ -522,6 +529,11 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
       break;
     }
   }
+#ifndef ENABLE_SECURITY
+  if (profiling) {
+    *push_time = ProfilingTime::GetCurMilliSecond() - start_time;
+  }
+#endif
   return Status::OK();
 }
 
