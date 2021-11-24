@@ -61,9 +61,10 @@ class NetMissConstruct(nn.Cell):
 
 def test_net_without_construct():
     """ test_net_without_construct """
-    net = NetMissConstruct()
-    inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    _cell_graph_executor.compile(net, inp)
+    with pytest.raises(TypeError, match="Function should not 'Return None'"):
+        net = NetMissConstruct()
+        inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
+        _cell_graph_executor.compile(net, inp)
 
 
 class NetWithRaise(nn.Cell):
