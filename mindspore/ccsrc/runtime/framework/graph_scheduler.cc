@@ -392,7 +392,8 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
   }
 
   if ((actor_set->copy_actors_.size() > 0) ||
-      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
+      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum) ||
+      (actor_set->loop_count_actor_->loop_count_ > 1)) {
     return;
   }
 
@@ -403,7 +404,6 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
     if (actor_set->execution_count_ == ActorDispatcher::kMultiThreadExecutionCountEnd) {
       actor_set->multi_thread_execution_time_ /=
         (ActorDispatcher::kMultiThreadExecutionCountEnd - ActorDispatcher::kMultiThreadExecutionCountBegin + 1);
-      actor_set->multi_thread_execution_time_ /= actor_set->loop_count_actor_->loop_count_;
       actor_set->is_multi_thread_execution_ = false;
     }
     return;
@@ -416,7 +416,6 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
     if (actor_set->execution_count_ == ActorDispatcher::kSingleThreadExecutionCountEnd) {
       actor_set->single_thread_execution_time_ /=
         (ActorDispatcher::kSingleThreadExecutionCountEnd - ActorDispatcher::kSingleThreadExecutionCountBegin + 1);
-      actor_set->single_thread_execution_time_ /= actor_set->loop_count_actor_->loop_count_;
       actor_set->is_multi_thread_execution_ =
         (actor_set->multi_thread_execution_time_ <= actor_set->single_thread_execution_time_) ? true : false;
       MS_LOG(INFO) << "Multi thread execution time cost: " << actor_set->multi_thread_execution_time_
