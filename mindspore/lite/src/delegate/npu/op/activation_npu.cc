@@ -27,7 +27,8 @@ int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   act_type_ = act_prim->activation_type();
   if (act_type_ != schema::ActivationType_RELU && act_type_ != schema::ActivationType_RELU6 &&
       act_type_ != schema::ActivationType_SIGMOID && act_type_ != schema::ActivationType_TANH &&
-      act_type_ != schema::ActivationType_HSIGMOID && act_type_ != schema::ActivationType_LEAKY_RELU) {
+      act_type_ != schema::ActivationType_HSIGMOID && act_type_ != schema::ActivationType_LEAKY_RELU &&
+      act_type_ != schema::ActivationType_SWISH) {
     MS_LOG(WARNING) << "Unsupported activation type for activation op " << name_ << "when running npu";
     return RET_NOT_SUPPORT;
   }
@@ -46,23 +47,25 @@ int ActivationNPUOp::Init(const schema::Primitive *primitive, const std::vector<
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  auto act_mode = ConverterToNPUActivationMode(act_type_);
+  auto real_act_type = act_type_;
+  if (act_type_ == schema::ActivationType_SWISH) {
+    real_act_type = schema::ActivationType_SIGMOID;
+    mul_ = new (std::nothrow) hiai::op::Mul(name_ + "_mul");
+    if (mul_ == nullptr) {
+      MS_LOG(ERROR) << "New Mul npu operator for activation op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+  }
+  auto act_mode = ConverterToNPUActivationMode(real_act_type);
   if (act_mode == ACTIVATION_INVALID) {
     MS_LOG(ERROR) << "Unsupported activation type for activation op " << name_ << "when running npu";
     return RET_ERROR;
   }
   act_->set_attr_mode(act_mode);
 
-  if (act_type_ == schema::ActivationType_LEAKY_RELU) {
+  if (real_act_type == schema::ActivationType_LEAKY_RELU) {
     act_->set_attr_negative_slope(act_prim->alpha());
   }
-  return RET_OK;
-}
-
-int ActivationNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                                  const std::vector<mindspore::MSTensor> &out_tensors,
-                                  const std::vector<ge::Operator *> &npu_inputs) {
-  act_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }
 
@@ -75,18 +78,37 @@ int ActivationNPUOp::SetNPUInputs(
     auto in_op = itr->second.first;
     MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
     act_->SetInput(itr->first, *in_op, itr->second.second);
+    if (act_type_ == schema::ActivationType_SWISH) {
+      MS_ASSERT(mul_ != nullptr);
+      mul_->set_input_x1(*act_);
+      mul_->SetInput(1, *in_op, itr->second.second);
+    }
   } else {
     act_->set_input_x(*npu_inputs[0]);
+    if (act_type_ == schema::ActivationType_SWISH) {
+      MS_ASSERT(mul_ != nullptr);
+      mul_->set_input_x1(*act_);
+      mul_->set_input_x2(*npu_inputs[0]);
+    }
   }
   return RET_OK;
 }
 
-ge::Operator *ActivationNPUOp::GetNPUOp() { return act_; }
+ge::Operator *ActivationNPUOp::GetNPUOp() {
+  if (act_type_ == schema::ActivationType_SWISH) {
+    return mul_;
+  }
+  return act_;
+}
 
 ActivationNPUOp::~ActivationNPUOp() {
   if (act_ != nullptr) {
     delete act_;
     act_ = nullptr;
+  }
+  if (mul_ != nullptr) {
+    delete mul_;
+    mul_ = nullptr;
   }
 }
 }  // namespace mindspore

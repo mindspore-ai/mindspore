@@ -17,11 +17,10 @@
 #include "src/delegate/npu/op/resize_npu.h"
 #include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "src/delegate/npu/pass/npu_pass_manager.h"
+#include "src/delegate/npu/npu_manager.h"
 
 namespace mindspore {
-constexpr int RESIZE_INPUT_SIZE = 2;
-constexpr int SHAPE_SIZE = 2;
+constexpr int SHAPE_SIZE = 4;
 
 int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -47,31 +46,15 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
 
 int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
-  auto resize_prim = primitive->value_as_Resize();
-  if (resize_prim == nullptr) {
-    MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
-    return RET_ERROR;
-  }
-  if (in_tensors.size() == 1) {
-    new_height_ = resize_prim->new_height();
-    new_width_ = resize_prim->new_width();
-  } else if (in_tensors.size() == RESIZE_INPUT_SIZE) {
-    auto out_size = in_tensors.at(1).Data();
-    if (out_size == nullptr) {
-      MS_LOG(ERROR) << "Out size is not assigned";
-      return RET_ERROR;
-    }
-    new_height_ = out_tensors.at(0).Shape().at(NHWC_H);
-    new_width_ = out_tensors.at(0).Shape().at(NHWC_W);
-  } else {
-    MS_LOG(ERROR) << "Get resize op new_height and new_width error.";
-    return RET_ERROR;
-  }
+  auto org_height = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_H));
+  auto org_width = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_W));
+  auto new_height = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_H));
+  auto new_width = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_W));
 
-  ge::TensorDesc sizeTensorDesc(ge::Shape({SHAPE_SIZE}), ge::FORMAT_NCHW, ge::DT_INT32);
+  ge::TensorDesc sizeTensorDesc(ge::Shape({SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_FLOAT);
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
-  vector<int32_t> dataValue = {static_cast<int32_t>(new_height_), static_cast<int32_t>(new_width_)};
-  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SHAPE_SIZE * sizeof(int32_t));
+  vector<float> dataValue = {1, 1, new_height / org_height, new_width / org_width};
+  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SHAPE_SIZE * sizeof(float));
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
   if (out_size_ == nullptr) {
     MS_LOG(ERROR) << "create const NPU op failed for " << name_;
@@ -79,6 +62,11 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   }
   out_size_->set_attr_value(sizeTensor);
 
+  auto resize_prim = primitive->value_as_Resize();
+  if (resize_prim == nullptr) {
+    MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
+    return RET_ERROR;
+  }
   auto ret = SelectResizeOp(resize_prim);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Select Resize op failed!";
