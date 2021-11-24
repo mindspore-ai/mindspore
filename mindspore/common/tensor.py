@@ -517,7 +517,7 @@ class Tensor(Tensor_):
         Check all tensor elements along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)): Dimensions of reduction,
+            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
                 when the axis is None or empty tuple, reduce all dimensions. Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
@@ -549,7 +549,7 @@ class Tensor(Tensor_):
         Check any tensor element along a given axis evaluate to True.
 
         Args:
-            axis (Union[None, int, tuple(int)): Dimensions of reduction,
+            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
                 when the axis is None or empty tuple, reduce all dimensions. Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 

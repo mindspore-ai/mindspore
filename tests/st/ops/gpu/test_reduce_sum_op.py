@@ -58,7 +58,7 @@ axis7 = (1, 2)
 keep_dims7 = True
 
 x8 = np.random.rand(2, 1, 1, 4).astype(np.float32)
-axis8 = (1, 2)
+axis8 = (1, 2, 2, 1, 1, 2)
 keep_dims8 = True
 
 x9 = np.random.rand(2, 1, 1, 4).astype(np.float32)
@@ -70,7 +70,7 @@ axis10 = (0, 1, 2, 3)
 keep_dims10 = False
 
 x11 = np.random.rand(1, 1, 1, 1).astype(np.float32)
-axis11 = (0, 1, 2, 3)
+axis11 = (0, 1, 1, 2, 3, 2, 2, 0, 3)
 keep_dims11 = False
 
 x12 = np.random.rand(2, 3, 4, 4).astype(np.float32)
@@ -226,7 +226,7 @@ def test_ReduceSum():
     assert np.all(diff7 < error7)
     assert output[7].shape == expect7.shape
 
-    expect8 = np.sum(x8, axis=axis8, keepdims=keep_dims8)
+    expect8 = np.sum(x8, axis=tuple(set(axis8)), keepdims=keep_dims8)
     diff8 = abs(output[8].asnumpy() - expect8)
     error8 = np.ones(shape=expect8.shape) * 1.0e-5
     assert np.all(diff8 < error8)
@@ -244,7 +244,7 @@ def test_ReduceSum():
     assert np.all(diff10 < error10)
     assert output[10].shape == expect10.shape
 
-    expect11 = np.sum(x11, axis=axis11, keepdims=keep_dims11)
+    expect11 = np.sum(x11, axis=tuple(set(axis11)), keepdims=keep_dims11)
     diff11 = abs(output[11].asnumpy() - expect11)
     error11 = np.ones(shape=expect11.shape) * 1.0e-5
     assert np.all(diff11 < error11)

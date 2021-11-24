@@ -480,10 +480,11 @@ class _Reduce(PrimitiveWithInfer):
             if np_reduce_func is not None:
                 value = input_x['value'].asnumpy()
                 if isinstance(axis_v, int):
-                    axis_v = (axis_v,)
-                elif not axis_v:
-                    axis_v = [i for i in range(len(input_x['shape']))]
-                    axis_v = tuple(axis_v)
+                    pass
+                elif axis_v:
+                    axis_v = tuple(set(axis_v))
+                else:
+                    axis_v = tuple(range(len(input_x['shape'])))
                 value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
                 value = np.array(value)
                 value = Tensor(value)
