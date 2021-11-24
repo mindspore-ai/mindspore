@@ -38,6 +38,12 @@ std::string SlicePatchesOperation::Name() const { return kSlicePatchesOperation;
 Status SlicePatchesOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("SlicePatches", "num_height", num_height_));
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("SlicePatches", "num_width", num_width_));
+  // SliceMode
+  if (slice_mode_ != SliceMode::kPad && slice_mode_ != SliceMode::kDrop) {
+    std::string err_msg = "SlicePatches: Invalid SliceMode, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
