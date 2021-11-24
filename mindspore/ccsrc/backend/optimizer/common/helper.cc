@@ -32,6 +32,7 @@
 #include "utils/convert_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
+#include "utils/trace_base.h"
 #include "backend/optimizer/common/const_input_to_attr_registry.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -151,7 +152,8 @@ void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
   auto real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode);
   if (real_input_tensor_num != input_tensor_size) {
     MS_LOG(EXCEPTION) << "The input tensor size[" << real_input_tensor_num
-                      << "] of node " + cnode->DebugString() + " is not equal to " << input_tensor_size;
+                      << "] of node [" + cnode->DebugString() + "] is not equal to " << input_tensor_size
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
 }
 
@@ -606,7 +608,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &i
       MS_EXCEPTION_IF_NULL(value_node);
       MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
       if (i >= input_names_vec.size()) {
-        MS_LOG(EXCEPTION) << "index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
       }
       auto value = value_node->value();
       if (value->isa<tensor::Tensor>()) {
@@ -654,20 +656,20 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
       auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
       if (a_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+        MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
       }
       auto a_value_ptr = a_value_node_ptr->value();
       if (a_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+        MS_LOG(EXCEPTION) << "Value ptr is nullptr.";
       }
 
       auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
       if (b_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+        MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
       }
       auto b_value_ptr = b_value_node_ptr->value();
       if (b_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+        MS_LOG(EXCEPTION) << "Value ptr is nullptr.";
       }
 
       return (*a_value_ptr) == (*b_value_ptr);
@@ -808,8 +810,7 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
       continue;
     }
     if (ori_index > input_abstract.size()) {
-      MS_LOG(EXCEPTION) << "index is out of range input abstract size " << input_abstract.size()
-                        << " get index :" << ori_index;
+      MS_LOG(EXCEPTION) << "Index " << ori_index << " is out of range in input abstract size " << input_abstract.size();
     }
     rectify_abs_list[index] = input_abstract[ori_index++];
   }
@@ -829,18 +830,18 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitiv
   for (auto item : dynamic_inputs_index) {
     if (item == kNotDynamicFlag) {
       if (input_index >= input_abstract.size()) {
-        MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract " << input_abstract.size();
+        MS_LOG(EXCEPTION) << "Index " << input_index << " is out of range in input abstract " << input_abstract.size();
       }
       (void)rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
     } else {
       if (item < 0) {
-        MS_LOG(EXCEPTION) << " the dynamic input size check error the index should be -1 or positive number but got "
+        MS_LOG(EXCEPTION) << "The dynamic input size check error the index should be -1 or positive number but got "
                           << item;
       }
       AbstractBasePtrList dynamic_inputs_abs;
       for (auto index = item; index > 0; --index) {
         if (input_index >= input_abstract.size()) {
-          MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract "
+          MS_LOG(EXCEPTION) << "Index " << input_index << " is out of range in input abstract "
                             << input_abstract.size();
         }
         (void)dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
@@ -877,7 +878,7 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
   }
   auto value_node = CreateValueNodeWithSexp(sexp, primitive_vars);
   if (value_node == nullptr) {
-    MS_LOG(EXCEPTION) << "sexp cannot converted. sexp: " + sexp.ToString();
+    MS_LOG(EXCEPTION) << "Sexp cannot converted, sexp: " + sexp.ToString();
   }
   return value_node;
 }

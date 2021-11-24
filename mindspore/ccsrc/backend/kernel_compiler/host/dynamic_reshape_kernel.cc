@@ -19,6 +19,7 @@
 #include <functional>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "abstract/utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,12 +30,14 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
   auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   if (shape_x.size() != 1) {
-    MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but " << shape_x.size() << "-D.";
+    MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size()
+                      << "-D. trace: " << trace::DumpSourceLines(cnode);
   }
   session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(cnode, index);
   auto type_x = AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
   if (type_x != TypeId::kNumberTypeInt64 && type_x != TypeId::kNumberTypeInt32) {
-    MS_LOG(EXCEPTION) << "Input x type must be int64 or int32, but :" << TypeIdToType(type_x);
+    MS_LOG(EXCEPTION) << "Input x type must be int64 or int32, but got " << TypeIdToType(type_x)
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
 
   size_t x_num = shape_x[0];
@@ -67,7 +70,8 @@ void DynamicReshapeKernel::Execute() {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "Invalid Input Num:" << input_num;
+    MS_LOG(EXCEPTION) << "Invalid input num, should be " << kInputNum << ", but got " << input_num
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
 
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, 0);

@@ -23,6 +23,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "base/core_ops.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -70,7 +71,7 @@ bool GetKernelSize(const AnfNodePtr &node, int64_t *kd, int64_t *kh, int64_t *kw
       *kh = kernel_size[kDim3];
       *kw = kernel_size[kDim4];
     } else {
-      MS_LOG(EXCEPTION) << "Unknown kernel size " << kernel_size.size();
+      MS_LOG(EXCEPTION) << "Unknown kernel size " << kernel_size.size() << ", trace: " << trace::DumpSourceLines(node);
     }
     return true;
   }
@@ -83,22 +84,22 @@ bool GetStrideSize(const AnfNodePtr &node, int64_t *sd, int64_t *sh, int64_t *sw
   MS_EXCEPTION_IF_NULL(sh);
   MS_EXCEPTION_IF_NULL(sw);
   if (AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
-    auto kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
-    if (kernel_size.size() == 1) {
-      *sd = kernel_size[kDim0];
-      *sh = kernel_size[kDim0];
-      *sw = kernel_size[kDim0];
-    } else if (kernel_size.size() == kDHWDimNum) {
-      *sd = kernel_size[kDim0];
-      *sh = kernel_size[kDim1];
-      *sw = kernel_size[kDim2];
-    } else if (kernel_size.size() == kNCDHWDimNum) {
+    auto stride_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
+    if (stride_size.size() == 1) {
+      *sd = stride_size[kDim0];
+      *sh = stride_size[kDim0];
+      *sw = stride_size[kDim0];
+    } else if (stride_size.size() == kDHWDimNum) {
+      *sd = stride_size[kDim0];
+      *sh = stride_size[kDim1];
+      *sw = stride_size[kDim2];
+    } else if (stride_size.size() == kNCDHWDimNum) {
       // NCDHW
-      *sd = kernel_size[kDim2];
-      *sh = kernel_size[kDim3];
-      *sw = kernel_size[kDim4];
+      *sd = stride_size[kDim2];
+      *sh = stride_size[kDim3];
+      *sw = stride_size[kDim4];
     } else {
-      MS_LOG(EXCEPTION) << "Unknown strides size " << kernel_size.size();
+      MS_LOG(EXCEPTION) << "Unknown strides size " << stride_size.size() << ", trace: " << trace::DumpSourceLines(node);
     }
     return true;
   }
@@ -109,7 +110,7 @@ void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *pad_list, bool *coun
               int64_t *divisor_override) {
   MS_EXCEPTION_IF_NULL(node);
   if (!AnfAlgo::HasNodeAttr("pad_list", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list";
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list, trace: " << trace::DumpSourceLines(node);
   }
   *pad_list = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
   if (AnfAlgo::HasNodeAttr("count_include_pad", node->cast<CNodePtr>())) {
@@ -259,7 +260,9 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   auto dims_in = AnfAlgo::GetPrevNodeOutputInferShape(avg_pool_3d_node, 0);
   auto dims_out = AnfAlgo::GetOutputInferShape(avg_pool_3d_node, 0);
   if (dims_in.size() < k5DInferDims || dims_out.size() < k5DInferDims) {
-    MS_LOG(EXCEPTION) << "AvgPool3D's in_out infer shape dims can not be less " << k5DInferDims;
+    MS_LOG(EXCEPTION) << "AvgPool3D's in_out infer shape dims can not be less " << k5DInferDims
+                      << ", but got in_shape is " << dims_in.size() << "-D, out_shape is " << dims_out.size()
+                      << "-D. trace: " << trace::DumpSourceLines(node);
   }
   auto fn = SizeToLong(dims_in[kDim0]);
   auto fc = SizeToLong(dims_in[kDim1]);
@@ -274,14 +277,14 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   int64_t kh;
   int64_t kw;
   if (!GetKernelSize(avg_pool_3d_node, &kd, &kh, &kw)) {
-    MS_LOG(EXCEPTION) << "GetK kernel size failed";
+    MS_LOG(EXCEPTION) << "Get kernel size failed, trace: " << trace::DumpSourceLines(node);
   }
   // strides
   int64_t sd;
   int64_t sh;
   int64_t sw;
   if (!GetStrideSize(avg_pool_3d_node, &sd, &sh, &sw)) {
-    MS_LOG(EXCEPTION) << "GetK stride size failed";
+    MS_LOG(EXCEPTION) << "Get stride size failed, trace: " << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> pad_list;
   bool count_include_pad = false;

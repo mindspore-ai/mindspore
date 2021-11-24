@@ -25,6 +25,7 @@
 #include <string>
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
+#include "utils/trace_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
 #include "vm/segment_runner.h"
@@ -47,7 +48,7 @@ bool WeightCheck(const AnfNodePtr &node) {
     for (auto index : iter->second) {
       if (index >= real_inputs.size()) {
         MS_LOG(EXCEPTION) << "index out of range. node: " << node->DebugString() << ", index: " << index
-                          << real_inputs.size();
+                          << real_inputs.size() << ". trace: " << trace::DumpSourceLines(node);
       }
 
       if (real_inputs[index].first->isa<Parameter>() &&

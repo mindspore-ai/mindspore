@@ -161,7 +161,7 @@ BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_outpu
   }
   for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
     if (input_idx >= input_tensors.size()) {
-      MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
+      MS_LOG(EXCEPTION) << "Input idx:" << input_idx << " is out of range:" << input_tensors.size();
     }
     if (graph->inputs()[input_idx] == node) {
       return input_tensors[input_idx];
@@ -373,7 +373,7 @@ BaseRef CreateNodeOutputPlaceholder(const session::KernelWithIndex &node_output_
   if (node->isa<Parameter>()) {
     for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
       if (input_idx >= input_tensors.size()) {
-        MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
+        MS_LOG(EXCEPTION) << "Input idx:" << input_idx << " is out of range:" << input_tensors.size();
       }
       if (graph->inputs()[input_idx] == node) {
         return input_tensors[input_idx];
@@ -424,13 +424,15 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
   if (tensor_shape.size() != input_shape.size()) {
     MS_LOG(EXCEPTION) << "The input tensor's shape size: " << tensor_shape.size()
                       << " is not equal to expected size: " << input_shape.size() << " for input[" << input_index
-                      << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
+                      << "] of kernel: " << AnfAlgo::GetCNodeName(kernel)
+                      << ", trace: " << trace::DumpSourceLines(kernel);
   }
   for (size_t i = 0; i < tensor_shape.size(); i++) {
     if (tensor_shape[i] < 0 || static_cast<size_t>(tensor_shape[i]) != input_shape[i]) {
       MS_LOG(EXCEPTION) << "The input tensor's shape: " << tensor_shape
                         << " is not equal to expected shape: " << input_shape << " for input[" << input_index
-                        << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
+                        << "] of kernel: " << AnfAlgo::GetCNodeName(kernel)
+                        << ", trace: " << trace::DumpSourceLines(kernel);
     }
   }
 }
@@ -1377,6 +1379,7 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
     }
   }
 }
+
 TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
@@ -1840,7 +1843,8 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least!";
+        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << cnode->inputs().size() - 1
+                          << ". trace: " << trace::DumpSourceLines(cnode);
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);

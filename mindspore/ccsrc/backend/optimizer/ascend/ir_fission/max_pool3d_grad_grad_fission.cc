@@ -20,6 +20,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/common/helper.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -38,7 +39,8 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
     MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW format, but got " << data_format;
   }
   if (ksize.size() != kKernelSizeNum) {
-    MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got :" << ksize;
+    MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got " << ksize
+                      << ". trace: " << trace::DumpSourceLines(node);
   }
   int64_t d = ksize[kDim2];
   int64_t h = ksize[kDim3];

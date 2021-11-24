@@ -103,7 +103,7 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
     auto default_value = attr->default_value();
     if (default_value.empty()) {
       MS_LOG(EXCEPTION) << "attr [" << attr_name << "] in the registration information of op [" << op_name
-                        << "] does not have a value.";
+                        << "] does not have a value. trace: " << trace::DumpSourceLines(cnode);
     }
     ParseAttrDefaultValue(op_name, attr_name, default_value, attr->type(), primitive);
     need_update = true;

@@ -16,6 +16,7 @@
 
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include <fstream>
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace memreuse {
@@ -376,7 +377,8 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
     for (size_t i = 0; i < input_num; ++i) {
       if (i + 1 >= node->inputs().size()) {
         MS_LOG(EXCEPTION) << "Input index: " << i
-                          << " is larger than input number: " << AnfAlgo::GetInputTensorNum(node);
+                          << " is larger than input number: " << AnfAlgo::GetInputTensorNum(node)
+                          << ". trace: " << trace::DumpSourceLines(node);
       }
       auto real_input_index = AnfAlgo::GetRealInputIndex(node, i);
       auto input = node->input(real_input_index + 1);

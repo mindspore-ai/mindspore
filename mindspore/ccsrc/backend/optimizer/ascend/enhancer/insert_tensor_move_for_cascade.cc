@@ -46,7 +46,7 @@ bool IsPartOutputsOfHcclOp(const AnfNodePtr &node, const CNodePtr &cur_hccl, con
   auto &node_users = manager->node_users();
   auto iter = node_users.find(prev_hccl_op);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager"
+    MS_LOG(EXCEPTION) << "Node has no output in manager"
                       << " trace: " << trace::DumpSourceLines(cur_hccl);
   }
   for (const auto &node_index : iter->second) {

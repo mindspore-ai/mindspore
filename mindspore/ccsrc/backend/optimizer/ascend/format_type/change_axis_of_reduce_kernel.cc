@@ -21,6 +21,7 @@
 #include <map>
 
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 
@@ -40,11 +41,12 @@ const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRA
 void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (reduce_axis.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector";
+    MS_LOG(EXCEPTION) << "The node " << cnode->DebugString()
+                      << "'s reduce axis got a empty vector, trace: " << trace::DumpSourceLines(cnode);
   }
   if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "the kind of reduce node [" << cnode->DebugString()
-                      << "] is not single input or single output.";
+    MS_LOG(EXCEPTION) << "The kind of reduce node [" << cnode->DebugString()
+                      << "] is not single input or single output. trace: " << trace::DumpSourceLines(cnode);
   }
   for (auto elem : reduce_axis) {
     if (elem > kAxisDim) {

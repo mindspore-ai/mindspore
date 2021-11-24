@@ -20,6 +20,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
@@ -38,7 +39,9 @@ bool CheckSupported(const CNodePtr &conv_back_filter) {
   auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(conv_back_filter, 1);
   auto out_shape = AnfAlgo::GetOutputInferShape(conv_back_filter, 0);
   if (y_shape.size() != kNCHWShapeSize || x_shape.size() != kNCHWShapeSize || out_shape.size() != kNCHWShapeSize) {
-    MS_LOG(EXCEPTION) << "The dim of Conv2dBackpropFilter's input and output should be 4";
+    MS_LOG(EXCEPTION) << "The dim of Conv2dBackpropFilter's input and output should be 4, but got y_shape is "
+                      << y_shape.size() << "-D, x_shape is " << x_shape.size() << "-D, out_shape is "
+                      << out_shape.size() << "-D. trace: " << trace::DumpSourceLines(conv_back_filter);
   }
   const std::set<size_t> kSupportedBatchSize = {32, 256};
   if (kSupportedBatchSize.find(x_shape[0]) == kSupportedBatchSize.end()) {

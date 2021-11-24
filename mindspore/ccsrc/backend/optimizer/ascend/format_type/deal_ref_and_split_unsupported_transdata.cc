@@ -42,7 +42,7 @@ session::KernelWithIndex DealRefAndSpiltUnSupportedTransdata::FindRefOriginNode(
       if (ref_infos.count(cur_out_index) != 0) {
         auto in_index = ref_infos.at(cur_out_index);
         if (in_index > cnode->inputs().size()) {
-          MS_LOG(EXCEPTION) << "ref op has wrong inputs: op inputs num is " << cnode->inputs().size()
+          MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size()
                             << ", ref info is " << cur_out_index;
         }
         AnfNodePtr next_node = cnode->input(in_index + 1);
@@ -84,7 +84,7 @@ void DealRefAndSpiltUnSupportedTransdata::AddRefPairToKernelGraph(const FuncGrap
   auto final_ref = (final_node == get_item ? cnode : final_node);
   session::AnfWithOutIndex final_pair = std::make_pair(final_ref, final_index);
   if (kernel_graph->IsInRefOutputMap(final_pair)) {
-    MS_LOG(EXCEPTION) << "ref_pair is already in ref map, node is " << final_ref->DebugString() << ", index is "
+    MS_LOG(EXCEPTION) << "Ref_pair is already in ref map, node is " << final_ref->DebugString() << ", index is "
                       << final_index;
   }
   MS_LOG(DEBUG) << "Add Ref pair, final {node ptr " << final_pair.first.get() << " , info is "
@@ -214,7 +214,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefSingleOutput(
   }
   auto ref_info = *(ref_infos.begin());
   if (ref_info.second > cnode->inputs().size()) {
-    MS_LOG(EXCEPTION) << "ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
+    MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
                       << ref_info.second;
   }
   return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);

@@ -317,7 +317,7 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   std::vector<AnfNodePtr> fusion_inputs = {NewValueNode(prim)};
   // get all inputs of current segment
   if (end_index >= communication_op_info.communication_op_nodes.size()) {
-    MS_LOG(EXCEPTION) << "end index out of communication_op_nodes size";
+    MS_LOG(EXCEPTION) << "End index is out of communication_op_nodes size";
   }
   std::vector<AnfNodePtr> orig_nodes;
   for (size_t idx = start_index; idx <= end_index; ++idx) {
@@ -440,7 +440,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
         kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, LongToSize(offset));
       }
       if (!manager->Replace(communication_op_node_item, tuple_getitem)) {
-        MS_LOG(EXCEPTION) << "manager replace node failed";
+        MS_LOG(EXCEPTION) << "Manager replace node failed";
       }
     }
     start_index = end_index + 1;

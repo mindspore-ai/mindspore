@@ -52,7 +52,7 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
 std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &, uint32_t stream_id) {
   if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "inputs size is not two, got " << inputs.size();
+    MS_LOG(EXCEPTION) << "Inputs size should be 2, but got " << inputs.size();
   }
   stream_id_ = stream_id;
 
