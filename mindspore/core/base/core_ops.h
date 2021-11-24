@@ -174,6 +174,7 @@ inline const PrimitivePtr kPrimStackPop = std::make_shared<Primitive>("StackPop"
 
 // Arrays
 inline const PrimitivePtr kPrimDynamicBroadcastTo = std::make_shared<Primitive>(kDynamicBroadcastTo);
+inline const PrimitivePtr kPrimCummin = std::make_shared<Primitive>("Cummin");
 inline const PrimitivePtr kPrimBroadcastTo = std::make_shared<Primitive>("BroadcastTo");
 inline const PrimitivePtr kPrimScalarToArray = std::make_shared<Primitive>("scalar_to_array");
 inline const PrimitivePtr kPrimTopK = std::make_shared<Primitive>("TopK");
