@@ -249,14 +249,18 @@ class ForwardValueAndGrad(Cell):
     def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
         super(ForwardValueAndGrad, self).__init__(auto_prefix=False)
         if not isinstance(network, (Cell, FunctionType, MethodType)):
-            raise TypeError(f"The type of training network should be cell, function type or method type, "
+            raise TypeError(f"For 'ForwardValueAndGrad', "
+                            f"the argument 'network' should be cell, function type or method type, "
                             f"but got '{type(network)}'")
         if not isinstance(get_all, bool):
-            raise TypeError(f"The type of get_all should be bool, but got '{type(get_all)}'")
+            raise TypeError(f"For 'ForwardValueAndGrad', "
+                            f"the type of 'get_all' should be bool, but got '{type(get_all)}'")
         if not isinstance(get_by_list, bool):
-            raise TypeError(f"The type of get_by_list should be bool, but got '{type(get_by_list)}'")
+            raise TypeError(f"For 'ForwardValueAndGrad', "
+                            f"the type of 'get_by_list' should be bool, but got '{type(get_by_list)}'")
         if get_by_list and not isinstance(weights, ParameterTuple):
-            raise TypeError(f"When get_by_list is set to True, the parameters of training network should be "
+            raise TypeError(f"For 'ForwardValueAndGrad', "
+                            f"when 'get_by_list' is set to True, the argument 'network' should be "
                             f"ParameterTuple type, but got '{type(weights)}'")
         self.network = network
         if isinstance(network, Cell):
@@ -671,7 +675,7 @@ class ParameterUpdate(Cell):
     def __init__(self, param):
         super(ParameterUpdate, self).__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
-            raise TypeError("`param` must be `Parameter`, but got {}".format(param))
+            raise TypeError("For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(param))
         self._param = param
 
     def construct(self, x):

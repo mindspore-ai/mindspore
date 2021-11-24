@@ -319,9 +319,13 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             if scale_sense.shape == (1,) or scale_sense.shape == ():
                 self.scale_sense = Parameter(scale_sense, name='scale_sense')
             else:
-                raise ValueError("The shape of scale_sense must be (1,) or (), but got {}".format(scale_sense.shape))
+                raise ValueError("For 'TrainOneStepWithLossScaleCell', "
+                                 "the shape of 'scale_sense' must be (1,) or (), but got {}."
+                                 .format(scale_sense.shape))
         else:
-            raise TypeError("The scale_sense must be Cell or Tensor, but got {}".format(type(scale_sense)))
+            raise TypeError("For 'TrainOneStepWithLossScaleCell', "
+                            "the 'scale_sense' must be Cell or Tensor, but got 'scale_sense' type: {}."
+                            .format(type(scale_sense)))
 
     def construct(self, *inputs):
         weights = self.weights
@@ -355,7 +359,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)
         else:
-            raise TypeError("The input type must be Tensor, but got {}".format(type(sens)))
+            raise TypeError("For 'TrainOneStepWithLossScaleCell', "
+                            "the input type must be Tensor, but got {}".format(type(sens)))
 
     def start_overflow_check(self, pre_cond, compute_input):
         """
@@ -505,9 +510,12 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
             if scale_sense.shape == (1,) or scale_sense.shape == ():
                 self.scale_sense = Parameter(scale_sense, name='scale_sense')
             else:
-                raise ValueError("The shape of scale_sense must be (1,) or (), but got {}".format(scale_sense.shape))
+                raise ValueError("For '_TrainPipelineWithLossScaleCell', "
+                                 "the shape of 'scale_sense' must be (1,) or (), but got {}"
+                                 .format(scale_sense.shape))
         else:
-            raise TypeError("The scale_sense must be Cell or Tensor, but got {}".format(type(scale_sense)))
+            raise TypeError("For '_TrainPipelineWithLossScaleCell', "
+                            "the 'scale_sense' must be Cell or Tensor, but got {}".format(type(scale_sense)))
         self.opt_shard = _get_enable_parallel_optimizer()
 
     def construct(self, *inputs):

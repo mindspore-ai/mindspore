@@ -125,20 +125,25 @@ class RootMeanSquareDistance(Metric):
             ValueError: If y_pred and y have different shapes.
         """
         if len(inputs) != 3:
-            raise ValueError('MeanSurfaceDistance need 3 inputs (y_pred, y, label), but got {}.'.format(len(inputs)))
+            raise ValueError("For 'RootMeanSquareDistance.update', it needs 3 inputs"
+                             "(predicted value, true value, label index), but got {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         label_idx = inputs[2]
 
         if not isinstance(label_idx, (int, float)):
-            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
-
+            raise TypeError("For 'RootMeanSquareDistance.update', the label index (input[2]) must be int or float, "
+                            "but got label index type: {}.".format(type(label_idx)))
         if label_idx not in y_pred and label_idx not in y:
-            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
-
+            raise ValueError("For 'RootMeanSquareDistance.update', the label index (input[2]) "
+                             "should be in predicted value (input[0]) or true value (input[1]), "
+                             "but {} is not.".format(label_idx))
         if y_pred.size == 0 or y_pred.shape != y.shape:
-            raise ValueError("y_pred and y should have same shape, but got {}, {}.".format(y_pred.shape, y.shape))
-
+            raise ValueError("For 'RootMeanSquareDistance.update', the size of predicted value (input[0]) "
+                             "and true value (input[1]) should be greater than 0, in addition to that, "
+                             "predicted value and true value should have the same shape, "
+                             "but got predicted value size: {}, shape: {}, true value size: {}, shape: {}. "
+                             .format(y_pred.size, y_pred.shape, y.size, y.shape))
         if y_pred.dtype != bool:
             y_pred = y_pred == label_idx
         if y.dtype != bool:
@@ -160,7 +165,7 @@ class RootMeanSquareDistance(Metric):
 
         """
         if self._is_update is False:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
 
         residual_mean_square_distance = self._get_surface_distance(self._y_pred_edges, self._y_edges)
 

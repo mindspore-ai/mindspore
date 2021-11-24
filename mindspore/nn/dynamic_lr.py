@@ -47,15 +47,20 @@ def piecewise_constant_lr(milestone, learning_rates):
     validator.check_value_type('milestone', milestone, (tuple, list))
     validator.check_value_type('learning_rates', learning_rates, (tuple, list))
     if len(milestone) != len(learning_rates):
-        raise ValueError('The size of `milestone` must be same with the size of `learning_rates`.')
-
+        raise ValueError("For 'piecewise_constant_lr', "
+                         "the size of 'milestone' must be same with the size of 'learning_rates', "
+                         "but got 'milestone' size: {}, 'learning_rates' size: {}."
+                         .format(len(milestone), len(learning_rates)))
     lr = []
     last_item = 0
     for i, item in enumerate(milestone):
         validator.check_positive_int(item, f'milestone[{i}]')
         validator.check_is_float(learning_rates[i], f'learning_rates[{i}]')
         if item < last_item:
-            raise ValueError(f'The value of milestone[{i}] must be greater than milestone[{i - 1}]')
+            raise ValueError(f"For 'piecewise_constant_lr', "
+                             f"the value of milestone[{i}] must be greater than milestone[{i - 1}], "
+                             f"but got milestone[{i}]: {milestone[i]}, "
+                             f"milestone[{i - 1}]: {milestone[i - 1]}.")
         lr += [learning_rates[i]] * (item - last_item)
         last_item = item
 
@@ -236,7 +241,8 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
     """
     if not isinstance(min_lr, float):
-        raise TypeError("min_lr must be float.")
+        raise TypeError("For 'cosine_decay_lr', the argument 'min_lr' must be type of float, "
+                        "but got 'min_lr' type: {}.".format(type(min_lr)))
     validator.check_non_negative_float(min_lr, "min_lr", None)
     validator.check_positive_float(max_lr, 'max_lr')
     validator.check_is_float(max_lr, 'max_lr')
@@ -244,8 +250,8 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')
     validator.check_positive_int(decay_epoch, 'decay_epoch')
     if min_lr >= max_lr:
-        raise ValueError('The `max_lr` should be greater than the `min_lr`.')
-
+        raise ValueError("For 'cosine_decay_lr', the 'max_lr' should be greater than the 'min_lr', "
+                         "but got 'max_lr' value: {}, 'min_lr' value: {}.".format(max_lr, min_lr))
     delta = 0.5 * (max_lr - min_lr)
     lr = []
     for i in range(total_step):
@@ -307,7 +313,8 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     validator.check_positive_float(learning_rate, 'learning_rate')
     validator.check_is_float(learning_rate, 'learning_rate')
     if not isinstance(end_learning_rate, float):
-        raise TypeError("end_learning_rate must be float.")
+        raise TypeError("For 'polynomial_decay_lr', the argument 'end_learning_rate' must be type of float, "
+                        "but got 'end_learning_rate' type: {}.".format(type(end_learning_rate)))
     validator.check_non_negative_float(end_learning_rate, "end_learning_rate", None)
     validator.check_positive_float(power, 'power')
     validator.check_is_float(power, 'power')
@@ -360,7 +367,8 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
     """
     if not isinstance(learning_rate, float):
-        raise TypeError("learning_rate must be float.")
+        raise TypeError("For 'warmup_lr', the argument 'learning_rate' must be type of float, "
+                        "but got 'learning_rate' type: {}.".format(type(learning_rate)))
     validator.check_non_negative_float(learning_rate, "learning_rate", None)
     validator.check_positive_int(warmup_epoch, 'warmup_epoch')
     validator.check_positive_int(total_step, 'total_step')

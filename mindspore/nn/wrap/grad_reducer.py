@@ -372,7 +372,9 @@ class DistributedGradReducer(Cell):
             self.degree = get_group_size()
         else:
             if not isinstance(degree, int) or degree <= 0:
-                raise ValueError("Parameter 'degree' in DistributedGradReducer should large than 0 and be int")
+                raise ValueError("For 'DistributedGradReducer', "
+                                 "parameter 'degree' in DistributedGradReducer "
+                                 "should large than 0 and be int, degree: {}.".format(degree))
             self.degree = degree
         self.degree = Tensor(1.0 / self.degree, mstype.float32)
         self.mean = mean
