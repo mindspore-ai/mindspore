@@ -83,7 +83,7 @@ TEST_F(TensorCTest, common_test) {
   ASSERT_EQ(MSTensorGetDataSize(clone), MSTensorGetDataSize(tensor));
   ASSERT_TRUE(MSTensorGetData(clone) != MSTensorGetData(tensor));
 
-  MSTensorDestroy(tensor);
-  MSTensorDestroy(clone);
+  MSTensorDestroy(&tensor);
+  MSTensorDestroy(&clone);
 }
 }  // namespace mindspore

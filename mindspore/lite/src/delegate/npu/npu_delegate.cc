@@ -160,7 +160,7 @@ Status NPUDelegate::Init() {
   return mindspore::kSuccess;
 }
 
-Status NPUDelegate::Build(DelegateModel *model) {
+Status NPUDelegate::Build(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<NPUOp *> npu_ops;
   int graph_index = 0;
@@ -243,7 +243,8 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
   return npu_op;
 }
 
-std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
+std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops,
+                                                 DelegateModel<schema::Primitive> *model, KernelIter from,
                                                  KernelIter end) {
   auto out_tensors = NPUGraphUtils::GetGraphOutTensors(ops);
   std::vector<mindspore::MSTensor> all_out_tensors;
@@ -270,8 +271,8 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
   return out_tensors;
 }
 
-kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
-                                            KernelIter end) {
+kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel<schema::Primitive> *model,
+                                            KernelIter from, KernelIter end) {
   auto in_tensors = NPUGraphUtils::GetGraphInTensors(ops);
   auto out_tensors = GraphOutTensors(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);

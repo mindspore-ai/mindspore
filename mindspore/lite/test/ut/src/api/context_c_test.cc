@@ -60,7 +60,7 @@ TEST_F(ContextCTest, common_test) {
   ASSERT_EQ(MSContextGetEnableParallel(context), true);
 
   MSDeviceInfoHandle cpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeCPU);
-  MSDeviceInfoDestroy(cpu_device_info);
+  MSDeviceInfoDestroy(&cpu_device_info);
   cpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeCPU);
 
   MSDeviceInfoSetEnableFP16(cpu_device_info, true);
@@ -68,6 +68,6 @@ TEST_F(ContextCTest, common_test) {
 
   MSContextAddDeviceInfo(context, cpu_device_info);
   MSContextAddDeviceInfo(context, npu_device_info);
-  MSContextDestroy(context);
+  MSContextDestroy(&context);
 }
 }  // namespace mindspore
