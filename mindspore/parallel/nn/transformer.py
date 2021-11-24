@@ -487,7 +487,7 @@ class VocabEmbedding(Cell):
 
         - **output** (Tensor) - The embedding vector for the input with shape (batch_size,
           seq_length, embedding_size).
-        - **weight** (Tensor) - The embedding table with shape (vocab_size, embedding_size).
+        - **embedding_table** (Tensor) - The embedding table with shape (vocab_size, embedding_size).
 
     Raises:
         ValueError: If the parallel_config.vocab_emb_dp is True, the vocab size is not a multiple of
