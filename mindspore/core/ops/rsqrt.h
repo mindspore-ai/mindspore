@@ -16,13 +16,12 @@
 
 #ifndef MINDSPORE_CORE_OPS_RSQRT_H_
 #define MINDSPORE_CORE_OPS_RSQRT_H_
-#include <map>
 #include <vector>
-#include <string>
 #include <memory>
+#include <set>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

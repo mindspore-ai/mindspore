@@ -2022,10 +2022,10 @@ class Rsqrt(Primitive):
         Tensor, has the same type and shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor([[4, 4], [9, 9]], mindspore.float32)
