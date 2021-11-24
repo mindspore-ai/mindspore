@@ -42,8 +42,8 @@ MS_API MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const in
 
 /// \brief Destroy the tensor object.
 ///
-/// \param[in] tensor Tensor object handle.
-MS_API void MSTensorDestroy(MSTensorHandle tensor);
+/// \param[in] tensor Tensor object handle address.
+MS_API void MSTensorDestroy(MSTensorHandle *tensor);
 
 /// \brief Obtain a deep copy of the tensor.
 ///

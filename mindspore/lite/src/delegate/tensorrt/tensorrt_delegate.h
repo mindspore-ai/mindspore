@@ -40,13 +40,13 @@ class TensorRTDelegate : public Delegate {
 
   Status Init() override;
 
-  Status Build(DelegateModel *model) override;
+  Status Build(DelegateModel<schema::Primitive> *model) override;
 
  private:
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
 
-  TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel *model, KernelIter from,
-                                        KernelIter end);
+  TensorRTSubGraph *CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel<schema::Primitive> *model,
+                                        KernelIter from, KernelIter end);
 
   std::unordered_map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
 
