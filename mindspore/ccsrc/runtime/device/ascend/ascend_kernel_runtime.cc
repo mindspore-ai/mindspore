@@ -28,6 +28,7 @@
 #include "utils/mpi/mpi_config.h"
 #include "common/trans.h"
 #include "runtime/rt.h"
+#include "acl/acl_rt.h"
 #include "runtime/device/ascend/ascend_stream_manager.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "runtime/device/ascend/ge_runtime/model_runner.h"

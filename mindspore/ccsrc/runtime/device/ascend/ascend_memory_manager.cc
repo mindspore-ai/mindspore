@@ -19,6 +19,7 @@
 #include "runtime/device/ascend/ascend_memory_adapter.h"
 #include "utils/ms_context.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "profiler/device/ascend/memory_profiling.h"
@@ -136,14 +137,14 @@ size_t AscendMemoryManager::GetAvailableMemSize() {
 
 void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = rtMemcpy(device_ptr, mem_size, host_ptr, mem_size, RT_MEMCPY_HOST_TO_DEVICE);
+    auto ret_rt_memcpy = aclrtMemcpy(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "SwapIn rtMemcpy failed.";
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = rtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, RT_MEMCPY_HOST_TO_DEVICE, stream);
+    auto ret_rt_memcpy = aclrtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "SwapIn rtMemcpyAsync failed.";
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
     if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
@@ -153,14 +154,14 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
 
 void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = rtMemcpy(host_ptr, mem_size, device_ptr, mem_size, RT_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy = aclrtMemcpy(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "SwapOut rtMemcpy failed.";
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = rtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, RT_MEMCPY_DEVICE_TO_HOST, stream);
+    auto ret_rt_memcpy = aclrtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "SwapOut rtMemcpyAsync failed.";
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }
     if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";

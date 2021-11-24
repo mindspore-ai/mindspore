@@ -29,6 +29,7 @@
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
 #include "common/trans.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
@@ -207,14 +208,14 @@ bool AiCoreDynamicKernel::CopyTilingToDevice() {
   }
 
   if (tiling_data_.empty() || tiling_data_ptr_ == nullptr) {
-    MS_LOG(INFO) << "Tiling size is 0, skip rtMemcpyAsync";
+    MS_LOG(INFO) << "Tiling size is 0, skip aclrtMemcpyAsync";
     return true;
   }
 
-  auto ret = rtMemcpyAsync(tiling_data_ptr_, tiling_data_.size(), tiling_data_.c_str(), tiling_data_.size(),
-                           RT_MEMCPY_HOST_TO_DEVICE_EX, stream_);
+  auto ret = aclrtMemcpyAsync(tiling_data_ptr_, tiling_data_.size(), tiling_data_.c_str(), tiling_data_.size(),
+                              ACL_MEMCPY_HOST_TO_DEVICE, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Tiling rtMemcpyAsync failed, ret:" << ret;
+    MS_LOG(EXCEPTION) << "Tiling aclrtMemcpyAsync failed, ret:" << ret;
   }
   return true;
 }

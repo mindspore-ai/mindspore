@@ -16,6 +16,7 @@
 
 #include "runtime/device/ascend/ge_runtime/task/memcpy_async_task.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
@@ -39,10 +40,10 @@ void MemcpyAsyncTask::Distribute() {
   MS_LOG(INFO) << "MemcpyAsyncTask Distribute start.";
   MS_LOG(INFO) << "dst_max: " << task_info_->dst_max() << ", count: " << task_info_->count()
                << ", kind: " << task_info_->kind();
-  rtError_t rt_ret = rtMemcpyAsync(task_info_->dst(), task_info_->dst_max(), task_info_->src(), task_info_->count(),
-                                   static_cast<rtMemcpyKind_t>(task_info_->kind()), stream_);
+  rtError_t rt_ret = aclrtMemcpyAsync(task_info_->dst(), task_info_->dst_max(), task_info_->src(), task_info_->count(),
+                                      static_cast<aclrtMemcpyKind>(task_info_->kind()), stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpyAsync failed, ret: " << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpyAsync failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "DistributeTask end";
 }
