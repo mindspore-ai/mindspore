@@ -38,7 +38,7 @@ class Recall(EvaluationBase):
 
     Args:
         eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
-        Default: 'classification'.
+            Default: 'classification'.
 
     Examples:
         >>> import numpy as np
