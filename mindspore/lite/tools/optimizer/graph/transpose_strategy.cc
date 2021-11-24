@@ -120,7 +120,7 @@ int TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
   }
   auto param_node = BuildIntVecParameterNode(func_graph, cur_input, cnode->input(input_index)->fullname_with_scope());
   MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "BuildIntVecParameterNode failed");
-  func_graph->manager()->Replace(cnode->input(input_index), param_node);
+  func_graph->manager()->SetEdge(cnode, input_index, param_node);
   return lite::RET_OK;
 }
 
@@ -334,7 +334,7 @@ STATUS ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "BuildIntVecParameterNode failed");
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  manager->Replace(cnode->input(kInputIndexFour), param_node);
+  manager->SetEdge(cnode, kInputIndexFour, param_node);
   return lite::RET_OK;
 }
 }  // namespace

@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/npu/op/gather_npu.h"
+#include "src/delegate/npu/npu_manager.h"
 
 namespace mindspore {
 constexpr int AXIS_INDEX = 2;
@@ -24,6 +25,12 @@ int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
+    return RET_NOT_SUPPORT;
+  }
+  // npu rom version lower than that specified below has compatibility problem. The version threshold is not absolute
+  // and may need to be adjusted later.
+  if (in_tensors[1].ElementNum() > 1 && !NPUManager::CheckDDKVersion("100.320.012.043")) {
+    MS_LOG(WARNING) << "Gather indices number larger than 1 is not supported for current NPU ddk version.";
     return RET_NOT_SUPPORT;
   }
   if (in_tensors.size() >= GATHER_INPUT_SIZE && in_tensors[AXIS_INDEX].ElementNum() == 1) {
