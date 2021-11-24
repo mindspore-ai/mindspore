@@ -6571,7 +6571,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
         return var_dtype, m_dtype
 
 
-class ApplyGradientDescent(PrimitiveWithInfer):
+class ApplyGradientDescent(Primitive):
     r"""
     Updates relevant entries according to the following.
 
@@ -6631,21 +6631,6 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     def __init__(self):
         """Initialize ApplyGradientDescent."""
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, alpha_shape, delta_shape):
-        validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
-        alpha_shape_len = len(alpha_shape)
-        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
-        if alpha_shape_len == 1:
-            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
-        return var_shape
-
-    def infer_dtype(self, var_dtype, alpha_dtype, delta_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args = {'var': var_dtype, 'delta': delta_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"alpha": alpha_dtype}, valid_dtypes, self.name)
-        return var_dtype
 
 
 class ApplyProximalGradientDescent(PrimitiveWithInfer):
