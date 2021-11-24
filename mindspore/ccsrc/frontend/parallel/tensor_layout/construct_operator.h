@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace parallel {
 using Args = std::vector<std::int64_t>;
-
+Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &end, const Shape &strides);
 class ConstructOperator {
  public:
   const int64_t DEFAULT = 0;

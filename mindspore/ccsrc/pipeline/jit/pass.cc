@@ -40,6 +40,7 @@
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
+#include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -594,6 +595,12 @@ bool AddRecomputationPass(const ResourcePtr &res) {
   return true;
 }
 
+bool SliceRecomputeActivationPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  opt::SliceRecomputedActivationNodes(res->func_graph());
+  return true;
+}
+
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
@@ -734,7 +741,8 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"tuple_transform", OptPassTransformGraphGroup},
                                    {"add_cache_embedding", AddCacheEmbeddingPass},
                                    {"add_recomputation", AddRecomputationPass},
-                                   {"cse_after_recomputation", OptAfterRecomputeGroup}};
+                                   {"cse_after_recomputation", OptAfterRecomputeGroup},
+                                   {"slice_recompute_activation", SliceRecomputeActivationPass}};
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},

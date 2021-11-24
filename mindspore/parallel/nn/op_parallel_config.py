@@ -78,7 +78,6 @@ class OpParallelConfig(_Config):
         Validator.check_positive_int(value, "model_parallel")
         self._model_parallel = value
 
-
 class _PipeLineConfig(_Config):
     r"""
         PPConfig for the setting data parallel, model parallel
