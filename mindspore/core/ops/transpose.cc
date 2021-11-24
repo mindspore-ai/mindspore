@@ -34,7 +34,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   ShapeVector p_value;
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
-      MS_EXCEPTION(ValueError) << "The value of perm is required!";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is required!";
     }
     ValuePtr perm = primitive->GetAttr("perm");
     auto perm_val = perm->cast<ValueTuplePtr>();
