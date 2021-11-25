@@ -480,7 +480,7 @@ class Dataset:
         A length function is called on each row in the dataset. The row is then
         bucketed based on its length and bucket boundaries. When a bucket reaches its
         corresponding size specified in bucket_batch_sizes, the entire bucket will be
-        padded according to batch_info, and then form a batch.
+        padded according to pad_info, and then form a batch.
         Each batch will be full, except one special case: the last batch for each bucket may not be full.
 
         Args:
@@ -1314,8 +1314,6 @@ class Dataset:
     def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
         """
         Function to create a SentencePieceVocab from source dataset
-
-        Build a SentencePieceVocab from a dataset.
 
         Args:
 
