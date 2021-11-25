@@ -102,9 +102,11 @@ class AutoTune {
   Status GetOpsCpuUtil(std::map<int32_t, double> *ops_cpu_util);
 
   /// Get the queue utilization of each operator in the pipeline
-  /// \param[out] ops_queue_util map from op_id to queue utilization
+  /// \param[out] ops_queue_util map from op_id to output queue utilization
+  /// \param[out] ops_queue_util map from op_id to input queue utilization
+  /// \note inline ops would report -1 in both input and output queue utilization
   /// \return Status code
-  Status GetOpsQueueUtil(std::map<int32_t, double> *ops_queue_util);
+  Status GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util, std::map<int32_t, double> *in_ops_queue_util);
 
   /// Get the number of workers for each operator in the pipeline
   /// \param[out] ops_num_workers map from op_id to num_workers
@@ -138,7 +140,7 @@ class AutoTune {
   /// \param items vector of T
   /// \return double the calculated mean
   template <typename T>
-  double Mean(std::vector<T> items);
+  double Mean(const std::vector<T> &items);
 
   /// Pointer to the tree adapter to get tree info
   TreeAdapter *tree_adapter_;
