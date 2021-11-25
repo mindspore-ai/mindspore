@@ -1305,6 +1305,12 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
   MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id()
                << ", Memory Statistics:" << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
+  MS_LOG(INFO) << "The dynamic memory pool total size is "
+               << device::ascend::AscendMemoryPool::GetInstance().total_mem_statistics() / kMBToByte
+               << "M, total used size is "
+               << device::ascend::AscendMemoryPool::GetInstance().used_mem_statistics() / kMBToByte
+               << "M, used peak size is "
+               << device::ascend::AscendMemoryPool::GetInstance().used_mem_peak_statistics() / kMBToByte << "M.";
 }
 
 void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,

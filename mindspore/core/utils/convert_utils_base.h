@@ -23,6 +23,9 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
+const size_t kGBToByte = 1024 << 20;
+const size_t kMBToByte = 1024 << 10;
+
 inline int SizeToInt(size_t u) {
   if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
     MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";

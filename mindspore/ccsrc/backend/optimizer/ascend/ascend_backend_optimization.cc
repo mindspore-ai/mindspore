@@ -488,7 +488,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
 
   if (kernel_graph->is_dynamic_shape()) {
-    MS_LOG(WARNING) << "Dynamic shape skip fusion";
+    MS_LOG(INFO) << "Dynamic shape skip fusion";
     return;
   }
   auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");

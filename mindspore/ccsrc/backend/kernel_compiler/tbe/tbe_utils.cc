@@ -58,7 +58,6 @@ constexpr auto kJOpTuneList = "op_tune_list";
 constexpr auto kJPassList = "pass_list";
 constexpr auto kRankID = "RANK_ID";
 constexpr auto kCOMPILER_OP_LEVEL = "MS_COMPILER_OP_LEVEL";
-constexpr auto kCOMPILER_CACHE_PATH = "MS_COMPILER_CACHE_PATH";
 
 uintptr_t KernelManager::kernel_stub_gen_ = 0;
 std::unordered_map<string, KernelMetaPtr> KernelManager::info_table_ = {};
@@ -109,13 +108,7 @@ std::string TbeUtils::GetOpDebugPath() {
   if (debug_path != "") {
     return debug_path;
   }
-  auto config_path = GetCompilerCachePath();
-  std::string rank_id_str = common::GetEnv(kRankID);
-  if (rank_id_str.empty()) {
-    MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
-    rank_id_str = "0";
-  }
-  debug_path = config_path + "rank_" + rank_id_str + "/";
+  debug_path = Common::GetCompilerCachePath();
   return debug_path;
 }
 
