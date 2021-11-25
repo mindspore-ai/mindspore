@@ -125,8 +125,8 @@ bool Somas::LoadSomasCache(const session::KernelGraph *graph) {
 
   bool ret = CalcSomasModelHash(graph);
   if (ret) {
-    std::string filename = GetSaveGraphsPathName(
-      "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json", save_graphs_path_);
+    std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+                           std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
     ret = LoadSomasResult(graph, filename);
     if (ret) {
       MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
@@ -142,8 +142,8 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   auto model_str = SomasInfo(true);
   hash_id_ = std::to_string(std::hash<std::string>()(model_str));
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
-  std::string filename = GetSaveGraphsPathName(
-    "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info", save_graphs_path_);
+  std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+                         std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
   return Common::SaveStringToFile(filename, model_str);
 }
 
@@ -179,17 +179,13 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
   }
   somas_json[kTensors] = tensors_json;
 
-  std::string filename = GetSaveGraphsPathName(
-    "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json", save_graphs_path_);
+  std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
+                         std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
   (void)Common::SaveStringToFile(filename, somas_json.dump());
   return true;
 }
 
 bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string &filename) {
-  if (filename.length() <= strlen(".json")) {
-    MS_LOG(WARNING) << "please check somas cache file path.";
-    return false;
-  }
   std::ifstream somas_json_fs(filename);
   if (!somas_json_fs.is_open()) {
     MS_LOG(INFO) << "Open json file: " << filename << " error, Somas Cache Missed.";
@@ -200,7 +196,7 @@ bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string &fil
     somas_json_fs >> somas_json;
     somas_json_fs.close();
   } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
+    MS_LOG(INFO) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
     somas_json_fs.close();
     std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalSeconds));
     std::ifstream retry_tmp(filename);

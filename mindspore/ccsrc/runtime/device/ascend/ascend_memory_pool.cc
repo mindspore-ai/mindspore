@@ -19,6 +19,7 @@
 #include "runtime/device/ascend/ascend_memory_adapter.h"
 #include "runtime/mem.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -31,6 +32,12 @@ static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
+    MS_LOG(WARNING) << "The dynamic memory pool total size is "
+                    << device::ascend::AscendMemoryPool::GetInstance().total_mem_statistics() / kMBToByte
+                    << "M, total used size is "
+                    << device::ascend::AscendMemoryPool::GetInstance().used_mem_statistics() / kMBToByte
+                    << "M, used peak size is "
+                    << device::ascend::AscendMemoryPool::GetInstance().used_mem_peak_statistics() / kMBToByte << "M.";
     MS_LOG(WARNING) << "Out of Memory. Request memory size: " << size
                     << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
                     << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "

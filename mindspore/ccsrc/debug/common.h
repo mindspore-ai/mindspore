@@ -28,6 +28,8 @@ namespace mindspore {
 static const int MAX_DIRECTORY_LENGTH = 1024;
 static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
+static const char kCOMPILER_CACHE_PATH[] = "MS_COMPILER_CACHE_PATH";
+
 class Common {
  public:
   Common() = default;
@@ -43,9 +45,11 @@ class Common {
   static bool SaveStringToFile(const std::string filename, const std::string string_info);
   static bool FileExists(const std::string &filepath);
   static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value);
+  static std::string GetCompilerCachePath();
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);
+  static string GetUserDefineCachePath();
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {

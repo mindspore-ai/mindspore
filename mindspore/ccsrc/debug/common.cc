@@ -271,6 +271,31 @@ bool Common::FileExists(const std::string &filepath) {
   return cache_file_existed;
 }
 
+std::string Common::GetUserDefineCachePath() {
+  static std::string config_path = "";
+  if (config_path != "") {
+    return config_path;
+  }
+  const char *value = ::getenv(kCOMPILER_CACHE_PATH);
+  if (value == nullptr) {
+    config_path = "./";
+  } else {
+    config_path = std::string(value);
+    FileUtils::CreateNotExistDirs(config_path);
+    if (config_path[config_path.length() - 1] != '/') {
+      config_path += "/";
+    }
+  }
+  return config_path;
+}
+
+std::string Common::GetCompilerCachePath() {
+  static const std::string user_defined_path = GetUserDefineCachePath();
+  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const std::string compile_cache_dir = user_defined_path + "rank_" + std::to_string(rank_id) + "/";
+  return compile_cache_dir;
+}
+
 struct GlogLogDirRegister {
   GlogLogDirRegister() {
     const char *logtostderr = std::getenv("GLOG_logtostderr");
