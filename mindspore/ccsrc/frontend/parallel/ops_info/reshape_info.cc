@@ -534,7 +534,7 @@ int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &o
   }
   std::sort(
     index_computation.begin(), index_computation.end(),
-    [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
+    [](const std::pair<int64_t, double> &a, const std::pair<int64_t, double> &b) { return a.second < b.second; });
   return index_computation[0].first;
 }
 
@@ -555,7 +555,7 @@ int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &o
   }
   std::sort(
     index_comm.begin(), index_comm.end(),
-    [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
+    [](const std::pair<int64_t, double> &a, const std::pair<int64_t, double> &b) { return a.second < b.second; });
   return index_comm[0].first;
 }
 
@@ -577,7 +577,7 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &in
   }
   std::sort(
     index_computation.begin(), index_computation.end(),
-    [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
+    [](const std::pair<int64_t, double> &a, const std::pair<int64_t, double> &b) { return a.second < b.second; });
   return index_computation[0].first;
 }
 
@@ -598,7 +598,7 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &in
   }
   std::sort(
     index_comm.begin(), index_comm.end(),
-    [](const std::pair<size_t, double> &a, const std::pair<size_t, double> &b) { return a.second <= b.second; });
+    [](const std::pair<int64_t, double> &a, const std::pair<int64_t, double> &b) { return a.second < b.second; });
   return index_comm[0].first;
 }
 
