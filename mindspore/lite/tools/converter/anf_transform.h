@@ -37,8 +37,6 @@ class AnfTransform {
   FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
  private:
-  std::unique_ptr<quant::Quantizer> m_quantizer_ = nullptr;
-
   FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
   static int RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config);

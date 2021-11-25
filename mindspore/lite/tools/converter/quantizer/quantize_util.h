@@ -56,7 +56,8 @@ enum WeightQuantType {
   MIXED_BIT_PER_LAYER = 2,
 };
 constexpr size_t kUint8Quantization = 8;
-constexpr size_t kMaxBit = 8;
+constexpr size_t k8Bit = 8;
+constexpr size_t k16Bit = 16;
 constexpr size_t kMaxNum1024 = 1024;
 constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;

@@ -43,14 +43,11 @@ enum OperationType {
   FETCH,
 };
 
-enum QuantRuntimeDevice {
-  CPU,
-  KIRIN,
-};
-
 class FullQuantQuantizer : public Quantizer {
  public:
-  FullQuantQuantizer(FuncGraphPtr graph, int bit_num) : Quantizer(std::move(graph)), bit_num_(bit_num) {}
+  explicit FullQuantQuantizer(const converter::Flags &flags) : Quantizer(flags) {
+    bit_num_ = flags.commonQuantParam.bit_num;
+  }
 
   ~FullQuantQuantizer() override;
 
@@ -60,7 +57,7 @@ class FullQuantQuantizer : public Quantizer {
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
 
-  int PreProcess();
+  int PreProcess(const FuncGraphPtr &func_graph);
 
   int CheckFp32TensorVec(const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
 
@@ -72,7 +69,7 @@ class FullQuantQuantizer : public Quantizer {
 
   int QuantNodeSimpleOp(const CNodePtr &cnode);
 
-  int QuantNode();
+  int QuantNode(const FuncGraphPtr &func_graph);
 
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
@@ -92,7 +89,7 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetFloatAfterCallBack();
   void InitQMinMax();
   void InitCpuConfig();
-  int MarkQuantNode();
+  int MarkQuantNode(const FuncGraphPtr &func_graph);
 
  private:
   // Config

@@ -31,16 +31,14 @@
 namespace mindspore::lite::quant {
 class Quantizer {
  public:
-  explicit Quantizer(FuncGraphPtr graph) : funcGraph(std::move(graph)) {}
+  explicit Quantizer(const converter::Flags &config) : flags_(config) {}
 
   virtual ~Quantizer() = default;
 
   virtual int DoQuantize(FuncGraphPtr func_graph) = 0;
 
-  converter::Flags flags;
-
  protected:
-  FuncGraphPtr funcGraph = nullptr;
+  converter::Flags flags_;
 };
 }  // namespace mindspore::lite::quant
 #endif

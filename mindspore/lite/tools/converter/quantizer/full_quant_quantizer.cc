@@ -405,11 +405,11 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-int FullQuantQuantizer::QuantNode() {
+int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
   auto outputs_diverg_info = calibrator_->GetOutputDivergInfo();
 
-  auto cnodes = funcGraph->GetOrderedCnodes();
+  auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto op_name = cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -510,17 +510,17 @@ void FullQuantQuantizer::InitQMinMax() {
   }
 }
 
-int FullQuantQuantizer::MarkQuantNode() {
-  auto cnodes = funcGraph->GetOrderedCnodes();
+int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto anode = cnode->cast<AnfNodePtr>();
     if (anode == nullptr) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " cnode is null";
       return RET_NULL_PTR;
     }
-    auto quant_strategy = std::make_unique<QuantStrategy>(flags.commonQuantParam.min_quant_weight_size,
-                                                          flags.commonQuantParam.min_quant_weight_channel,
-                                                          flags.commonQuantParam.skip_quant_node);
+    auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
+                                                          flags_.commonQuantParam.min_quant_weight_channel,
+                                                          flags_.commonQuantParam.skip_quant_node);
     //  Mark quantifiable nodes
     auto is_support_op = quant_strategy->CanOpFullQuantized(anode);
     auto is_skip_op = quant_strategy->IsSkipOp(anode);
@@ -546,7 +546,7 @@ int FullQuantQuantizer::MarkQuantNode() {
   return RET_OK;
 }
 
-int FullQuantQuantizer::PreProcess() {
+int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
   switch (device_) {
     case CPU:
       InitCpuConfig();
@@ -558,10 +558,10 @@ int FullQuantQuantizer::PreProcess() {
   }
   InitQMinMax();
   calibrator_ =
-    std::make_unique<Calibrator>(this->bit_num_, q_max_, q_min_, this->flags.fullQuantParam.activation_quant_method,
-                                 this->flags.dataPreProcessParam, activation_symmetry_);
+    std::make_unique<Calibrator>(this->bit_num_, q_max_, q_min_, this->flags_.fullQuantParam.activation_quant_method,
+                                 this->flags_.dataPreProcessParam, activation_symmetry_);
   MSLITE_CHECK_PTR(calibrator_);
-  auto ret = MarkQuantNode();
+  auto ret = MarkQuantNode(func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Mark quant node failed.";
     return ret;
@@ -804,21 +804,21 @@ int FullQuantQuantizer::ComputeThreshold() { return this->calibrator_->ComputeTh
 
 int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to parse config file";
-  if (flags.dataPreProcessParam.calibrate_path.empty()) {
+  if (flags_.dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  int status = PreProcess();
+  int status = PreProcess(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
   }
 
   // anf -- fb
-  flags.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+  flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  auto sm = CreateSessionByFuncGraph(func_graph, flags, this->flags.commonQuantParam.thread_num);
+  auto sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
   fp32_session_ = sm.session;
   fp32_model_ = sm.model;
   if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
@@ -850,7 +850,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
   MS_LOG(INFO) << "start to generate quant param and quantize tensor's data";
-  status = QuantNode();
+  status = QuantNode(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Quant node failed.";
     return status;
@@ -865,11 +865,11 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return RET_ERROR;
   }
   SessionModel int8_sm;
-  if (this->flags.fullQuantParam.bias_correction) {
+  if (this->flags_.fullQuantParam.bias_correction) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
-    flags.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-    int8_sm = CreateSessionByFuncGraph(func_graph, flags, this->flags.commonQuantParam.thread_num);
+    flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
+    int8_sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
     int8_session_ = int8_sm.session;
     int8_model_ = int8_sm.model;
     if (int8_session_ == nullptr || int8_model_ == nullptr) {
