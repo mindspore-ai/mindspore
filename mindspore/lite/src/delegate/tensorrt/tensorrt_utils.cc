@@ -21,6 +21,7 @@
 namespace mindspore::lite {
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   nvinfer1::Dims dims{};
+  dims.nbDims = -1;
   if (size > static_cast<size_t>(dims.MAX_DIMS)) {
     MS_LOG(ERROR) << "invalid shape size: " << size;
     return dims;
@@ -34,6 +35,7 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
 
 nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
   nvinfer1::Dims dims{};
+  dims.nbDims = -1;
   if (size > static_cast<int64_t>(dims.MAX_DIMS)) {
     MS_LOG(ERROR) << "invalid shape size: " << size;
     return dims;
@@ -130,6 +132,11 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
     return nullptr;
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
+  if (dims.nbDims == -1) {
+    MS_LOG(WARNING) << "ConvertCudaDims failed for " << op_name;
+    dims.nbDims = 1;
+    dims.d[0] = 1;
+  }
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
   if (ms_tensor.Data() == nullptr) {
     MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data: " << ms_tensor.Name();
@@ -149,6 +156,10 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name) {
   nvinfer1::Dims dims = ConvertCudaDims(1, shape_size);
+  if (dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name;
+    return nullptr;
+  }
   nvinfer1::Weights weights{ConvertDataType(data_type), value, 1};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
@@ -202,6 +213,10 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
     }
   }
   nvinfer1::Dims dims = ConvertCudaDims(shape);
+  if (dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name;
+    return nullptr;
+  }
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
   if (ms_tensor.Data() == nullptr) {
     MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";

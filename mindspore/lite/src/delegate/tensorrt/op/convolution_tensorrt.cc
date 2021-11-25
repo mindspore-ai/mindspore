@@ -83,7 +83,10 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   nvinfer1::Dims kernelSize = lite::ConvertCudaDims(std::vector<int64_t>(kernel_size->begin(), kernel_size->end()));
-
+  if (kernelSize.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return RET_ERROR;
+  }
   // bias
   nvinfer1::Weights biasWeights{};
   if (in_tensors_.size() >= INPUT_SIZE3) {
@@ -129,6 +132,10 @@ void ConvolutionTensorRT::SetAttributes(const schema::Conv2DFusion *conv_op, nvi
   if (stride != nullptr) {
     auto stride_val = std::vector<int64_t>(stride->begin(), stride->end());
     auto dims = ConvertCudaDims(stride_val);
+    if (dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return;
+    }
     conv_layer->setStrideNd(dims);
   }
 
@@ -136,6 +143,10 @@ void ConvolutionTensorRT::SetAttributes(const schema::Conv2DFusion *conv_op, nvi
   if (dilation != nullptr) {
     auto dilation_val = std::vector<int64_t>(dilation->begin(), dilation->end());
     auto dims = ConvertCudaDims(dilation_val);
+    if (dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return;
+    }
     conv_layer->setDilationNd(dims);
   }
   int nbGroups = conv_op->group();

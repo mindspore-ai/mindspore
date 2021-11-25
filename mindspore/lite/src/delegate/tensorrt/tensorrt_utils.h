@@ -114,6 +114,7 @@ bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
 template <typename T>
 nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
   nvinfer1::Dims dims{};
+  dims.nbDims = -1;
   if (!shape.empty() && shape.size() <= static_cast<size_t>(dims.MAX_DIMS)) {
     dims.nbDims = shape.size();
     for (int i = 0; i < dims.nbDims; i++) {

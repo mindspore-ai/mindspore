@@ -210,6 +210,10 @@ nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *n
     }
   }
   nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(unsqueeze_shape);
+  if (unsqueeze_dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return nullptr;
+  }
   unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
   return unsqueeze_layer->getOutput(0);
 }

@@ -69,6 +69,10 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // pooling layer
   nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_);
+  if (windowSize.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return RET_ERROR;
+  }
   nvinfer1::IPoolingLayer *pooling_layer = network->addPoolingNd(*pool_input, pooling_type_, windowSize);
   if (pooling_layer == nullptr) {
     MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
@@ -185,6 +189,10 @@ int PoolTensorRT::ParseParams() {
 
 void PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
   nvinfer1::Dims stride_dims = ConvertCudaDims(stride_);
+  if (stride_dims.nbDims == -1) {
+    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    return;
+  }
   pooling_layer->setStrideNd(stride_dims);
   if (pad_mode_ == schema::PadMode::PadMode_SAME) {
     pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);

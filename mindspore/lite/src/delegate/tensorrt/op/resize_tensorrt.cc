@@ -136,7 +136,12 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
       }
       if (SameDims(out_shape, out_tensors_[0].Shape())) {
         // static dims
-        resize_layer->setOutputDimensions(ConvertCudaDims(out_shape));
+        auto dims = ConvertCudaDims(out_shape);
+        if (dims.nbDims == -1) {
+          MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+          return RET_ERROR;
+        }
+        resize_layer->setOutputDimensions(dims);
       } else if (IsScaleOutputDim(in_tensors_[0].Shape(), out_tensors_[0].Shape(), out_shape)) {
         // scale dims
         if (out_shape.size() > DIMENSION_4D) {
