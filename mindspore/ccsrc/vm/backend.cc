@@ -1183,9 +1183,16 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
 
   auto device_context = graph_compiler_info->device_contexts_.front();
   auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
+  // Disable lazy build when:
+  // 1. Execute Dynamic shape operator. The output shape depends on the calculation result of the operator.
+  // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
+  // 3. Not in nn.Cell construct.
   bool lazy_build_disabled = graph_compiler_info->need_erase_ ||
                              (single_op_cache_hit && op_lazy_builder.QueueEmpty()) || !op_run_info->lazy_build;
   if (lazy_build_disabled) {
+    if (!op_lazy_builder.QueueEmpty()) {
+      op_lazy_builder.ExecuteRemainingTasks();
+    }
     if (!single_op_cache_hit) {
       CompileSingleOpGraph(graph, device_context, graph_compiler_info);
     }
