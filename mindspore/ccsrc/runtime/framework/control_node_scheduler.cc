@@ -640,15 +640,27 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
 
   // Link control arrows from no output kernel actor to the corresponding exit actor.
   for (auto &kernel_actor : actor_set->kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_actor);
     if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
-      const auto &kernel = kernel_actor->kernel();
-      MS_EXCEPTION_IF_NULL(kernel);
-      const auto &graph = kernel->func_graph();
-      MS_EXCEPTION_IF_NULL(graph);
-      auto actor_name = graph->ToString() + kExitActorNameSuffix;
-      auto to_actor = FetchActor(actor_name);
+      auto kernel_graph = FetchKernelGraph(kernel_actor->kernel());
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto to_actor_name = kernel_graph->ToString() + kExitActorNameSuffix;
+      auto to_actor = FetchActor(to_actor_name);
       MS_EXCEPTION_IF_NULL(to_actor);
       LinkControlArrow(kernel_actor.get(), to_actor);
+    }
+  }
+
+  // Link control arrows from no super kernel actor to the corresponding exit actor.
+  for (auto &super_actor : actor_set->super_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(super_actor);
+    if ((super_actor->output_data_arrows_.size() == 0) && (super_actor->output_control_arrows_.size() == 0)) {
+      auto kernel_graph = super_actor->graph();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto to_actor_name = kernel_graph->ToString() + kExitActorNameSuffix;
+      auto to_actor = FetchActor(to_actor_name);
+      MS_EXCEPTION_IF_NULL(to_actor);
+      LinkControlArrow(super_actor.get(), to_actor);
     }
   }
 }
@@ -713,6 +725,9 @@ void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &
 
     for (const auto &kernel_graph : func_graph_to_kernel_graphs.second) {
       MS_EXCEPTION_IF_NULL(kernel_graph);
+      if (kernel_graph->execution_order().empty()) {
+        continue;
+      }
       LinkDataArrowByKernelGraph(kernel_graph, parser->IsCallInputKernelGraph(kernel_graph.get()), entrance_actor);
     }
   }
