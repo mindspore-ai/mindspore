@@ -259,7 +259,8 @@ class ConfusionMatrixMetric(Metric):
         if self.calculation_method is True:
             if self._class_num == 0:
                 raise RuntimeError("The 'ConfusionMatrixMetric' can not be calculated, because the number of samples "
-                                   "is 0, please check whether your inputs(predicted value, true value) are correct.")
+                                   "is 0, please check whether your inputs(predicted value, true value) are empty, or "
+                                   "has called update method before calling eval method.")
 
             return self._total_num / self._class_num
 
@@ -589,7 +590,8 @@ def _compute_confusion_matrix_metric(metric_name, confusion_matrix):
     if input_dim == 1:
         confusion_matrix = np.expand_dims(confusion_matrix, 0)
     if confusion_matrix.shape[-1] != 4:
-        raise ValueError("The size of the last dimension of confusion_matrix should be 4.")
+        raise ValueError(f"The size of the last dimension of confusion_matrix should be 4, "
+                         f"but got {confusion_matrix.shape[-1]}.")
 
     tp = confusion_matrix[..., 0]
     fp = confusion_matrix[..., 1]

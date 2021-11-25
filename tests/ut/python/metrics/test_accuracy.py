@@ -49,7 +49,9 @@ def test_classification_accuracy_indexes_awareness():
 
 @pytest.mark.parametrize('indexes', [0, [0., 2.], [0., 1], ['1', '0']])
 def test_set_indexes(indexes):
-    with pytest.raises(ValueError, match="indexes should be a list and all its elements should be int"):
+    pat_str = "For 'set_indexes', the argument 'indexes' should be a list and all its elements should " \
+              "be int, please check whether it is correct."
+    with pytest.raises(ValueError, match=pat_str):
         _ = Accuracy('classification').set_indexes(indexes)
 
 

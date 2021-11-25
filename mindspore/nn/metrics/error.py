@@ -87,7 +87,8 @@ class MAE(Metric):
         """
         if self._samples_num == 0:
             raise RuntimeError("The 'MAE' can not be calculated, because the number of samples is 0, "
-                               "please check whether your inputs(predicted value, true value) are correct.")
+                               "please check whether your inputs(predicted value, true value) are empty, "
+                               "or has called update method before calling eval method.")
         return self._abs_error_sum / self._samples_num
 
 
@@ -157,5 +158,6 @@ class MSE(Metric):
         """
         if self._samples_num == 0:
             raise RuntimeError("The 'MSE' can not be calculated, because the number of samples is 0, "
-                               "please check whether your inputs(predicted value, true value) are correct.")
+                               "please check whether your inputs(predicted value, true value) are empty, "
+                               "or has called update method before calling eval method.")
         return self._squared_error_sum / self._samples_num

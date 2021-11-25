@@ -94,7 +94,7 @@ class Metric(metaclass=ABCMeta):
         elif isinstance(data, np.ndarray):
             pass
         else:
-            raise TypeError('The input data type must be a tensor, list or numpy.ndarray')
+            raise TypeError(f'The Input data type must be tensor, list or numpy.ndarray, but got {type(data)}.')
         return data
 
     def _check_onehot_data(self, data):
@@ -181,7 +181,8 @@ class Metric(metaclass=ABCMeta):
             0.3333333333333333
         """
         if not isinstance(indexes, list) or not all(isinstance(i, int) for i in indexes):
-            raise ValueError("The indexes should be a list and all its elements should be int")
+            raise ValueError("For 'set_indexes', the argument 'indexes' should be a list and all its elements should "
+                             "be int, please check whether it is correct.")
         self._indexes = indexes
         return self
 
@@ -249,7 +250,7 @@ class EvaluationBase(Metric):
     def __init__(self, eval_type):
         super(EvaluationBase, self).__init__()
         if eval_type not in _eval_types:
-            raise TypeError('Type must be in {}, but got {}'.format(_eval_types, eval_type))
+            raise TypeError("The argument 'eval_type' must be in {}, but got {}".format(_eval_types, eval_type))
         self._type = eval_type
 
     def _check_shape(self, y_pred, y):
@@ -262,18 +263,23 @@ class EvaluationBase(Metric):
         """
         if self._type == 'classification':
             if y_pred.ndim != y.ndim + 1:
-                raise ValueError('Classification case, dims of y_pred equal dims of y add 1, '
-                                 'but got y_pred: {} dims and y: {} dims'.format(y_pred.ndim, y.ndim))
+                raise ValueError("In classification case, the dimension of y_pred (predicted value) should equal to "
+                                 "the dimension of y (true value) add 1, but got y_pred dimension: {} and y "
+                                 "dimension: {}.".format(y_pred.ndim, y.ndim))
             if y.shape != (y_pred.shape[0],) + y_pred.shape[2:]:
-                raise ValueError('Classification case, y_pred shape and y shape can not match. '
-                                 'got y_pred shape is {} and y shape is {}'.format(y_pred.shape, y.shape))
+                raise ValueError("In classification case, y_pred (predicted value) shape and y (true value) shape "
+                                 "can not match, y shape should be equal to y_pred shape that the value at index 1 "
+                                 "is deleted. Such as y_pred shape (1, 2, 3), then y shape should be (1, 3). "
+                                 "But got y_pred shape {} and y shape {}".format(y_pred.shape, y.shape))
         else:
             if y_pred.ndim != y.ndim:
-                raise ValueError('{} case, dims of y_pred must be equal to dims of y, but got y_pred: {} '
-                                 'dims and y: {} dims.'.format(self._type, y_pred.ndim, y.ndim))
+                raise ValueError("In {} case, the dimension of y_pred (predicted value) should equal to the dimension"
+                                 " of y (true value), but got y_pred dimension: {} and y dimension: {}."
+                                 .format(self._type, y_pred.ndim, y.ndim))
             if y_pred.shape != y.shape:
-                raise ValueError('{} case, y_pred shape must be equal to y shape, but got y_pred: {} and y: {}'.
-                                 format(self._type, y_pred.shape, y.shape))
+                raise ValueError("In {} case, the shape of y_pred (predicted value) should equal to the shape of y "
+                                 "(true value), but got y_pred shape: {} and y shape: {}."
+                                 .format(self._type, y_pred.shape, y.shape))
 
     def _check_value(self, y_pred, y):
         """
@@ -284,7 +290,8 @@ class EvaluationBase(Metric):
             y (Tensor): Target array.
         """
         if self._type != 'classification' and not (np.equal(y_pred ** 2, y_pred).all() and np.equal(y ** 2, y).all()):
-            raise ValueError('For multilabel case, input value must be 1 or 0.')
+            raise ValueError("In multilabel case, all elements in y_pred (predicted value) and y (true value) should "
+                             "be 0 or 1.Please check whether your inputs y_pred and y are correct.")
 
     def clear(self):
         """

@@ -187,7 +187,7 @@ class Cell(Cell_):
             value (bool): Specifies whether to enable bprop debug. Default: False.
         """
         if not isinstance(value, bool):
-            raise TypeError("The 'bprop debug' value must be a bool type.")
+            raise TypeError(f"For 'Cell', the property 'bprop_debug' must be bool type, but got type {type(value)}.")
         self._bprop_debug = value
 
     def update_cell_prefix(self):
@@ -215,7 +215,8 @@ class Cell(Cell_):
     @cell_init_args.setter
     def cell_init_args(self, value):
         if not isinstance(value, str):
-            raise TypeError("The 'cell_init_args' must be a string type.")
+            raise TypeError(f"For 'Cell', the property 'cell_init_args' must be bool type, "
+                            f"but got type {type(value)}.")
         self._cell_init_args = value
 
     @property
@@ -225,7 +226,7 @@ class Cell(Cell_):
     @phase.setter
     def phase(self, value):
         if not isinstance(value, str):
-            raise TypeError("The 'phase' must be a string type.")
+            raise TypeError(f"For 'Cell', the property 'phase' must be string type, but got type {type(value)}.")
         self._phase = value
 
     @property

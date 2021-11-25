@@ -139,8 +139,8 @@ class OcclusionSensitivity(Metric):
             RuntimeError: If the number of labels is different from the number of batches.
         """
         if len(inputs) != 3:
-            raise ValueError('The occlusion_sensitivity needs 3 inputs (model, y_pred, y), '
-                             'but got {}'.format(len(inputs)))
+            raise ValueError("For 'OcclusionSensitivity.update', it needs 3 inputs (classification model, "
+                             "predicted value, label), but got {}.".format(len(inputs)))
 
         model = inputs[0]
         y_pred = self._convert_data(inputs[1])
@@ -148,7 +148,8 @@ class OcclusionSensitivity(Metric):
         model = validator.check_value_type("model", model, [nn.Cell])
 
         if y_pred.shape[0] > 1:
-            raise RuntimeError("Expected batch size of 1.")
+            raise RuntimeError(f"For 'OcclusionSensitivity.update', the shape at index 0 of the predicted value "
+                               f"(input[1]) should be 1, but got {y_pred.shape[0]}.")
 
         if isinstance(label, int):
             label = np.array([[label]], dtype=int)
@@ -204,7 +205,7 @@ class OcclusionSensitivity(Metric):
 
         """
         if not self._is_update:
-            raise RuntimeError('Call the update method before calling eval.')
+            raise RuntimeError('Please call the update method before calling eval method.')
 
         sensitivity = self._baseline - np.squeeze(self._sensitivity_im)
 

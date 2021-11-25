@@ -117,7 +117,8 @@ class Fbeta(Metric):
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         if self._class_num == 0:
             raise RuntimeError("The 'Fbeta' can not be calculated, because the number of samples is 0, "
-                               "please check whether your inputs(predicted value, true value) are correct.")
+                               "please check whether your inputs(predicted value, true value) are empty, "
+                               "or has called update method before calling eval method.")
 
         fbeta = (1.0 + self.beta ** 2) * self._true_positives / \
                 (self.beta ** 2 * self._actual_positives + self._positives + self.eps)

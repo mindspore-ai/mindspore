@@ -46,7 +46,8 @@ def _make_directory(path):
     """Make directory."""
     real_path = None
     if path is None or not isinstance(path, str) or path.strip() == "":
-        raise ValueError(f"Input path `{path}` is invalid type")
+        raise ValueError(f"For 'context.set_context', the 'save_graphs_path' or the 'print_file_path' is invalid "
+                         f"type, it should be Non-empty string, but got '{path}'.")
 
     # convert the relative paths
     path = os.path.realpath(path)
@@ -62,8 +63,8 @@ def _make_directory(path):
             os.makedirs(path)
             real_path = path
         except PermissionError as e:
-            logger.critical(f"No write permission on the directory `{path}`, error = {e}")
-            raise ValueError(f"No write permission on the directory `{path}`.")
+            logger.critical(f"No write permission on the directory '{path}'', error = {e}")
+            raise ValueError(e.__str__() + f"\nNo write permission on the directory '{path}'.")
     return real_path
 
 
@@ -95,8 +96,8 @@ class _ThreadLocalInfo(threading.local):
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Set whether to save the network class name in the scope."""
         if not isinstance(reserve_class_name_in_scope, bool):
-            raise ValueError(
-                "Set reserve_class_name_in_scope value must be bool!")
+            raise ValueError("For '_ThreadLocalInfo', the type of the property 'reserve_class_name_in_scope' must "
+                             "be bool, but got {}.".format(type(reserve_class_name_in_scope)))
         self._reserve_class_name_in_scope = reserve_class_name_in_scope
 
 
@@ -195,13 +196,15 @@ class _Context:
                 self.set_backend_policy("ge")
             self._context_switches.push(False, None)
         else:
-            raise ValueError(f'The execution mode {mode} is invalid!')
+            raise ValueError(f"For 'context.set_context', the argument 'mode' should be context.GRAPH_MODE (0) "
+                             f"or context.PYNATIVE_MODE (1), but got {mode}.")
         self.set_param(ms_ctx_param.mode, mode)
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
-            raise RuntimeError("Backend policy must be one of ge, vm, ms.")
+            raise RuntimeError("Backend policy must be one of values in ['ge', 'vm', 'ms']. "
+                               "But got {}.".format(policy))
 
     def set_save_graphs_path(self, save_graphs_path):
         self.set_param(ms_ctx_param.save_graphs_path, _make_directory(save_graphs_path))
@@ -209,7 +212,8 @@ class _Context:
     def set_device_target(self, target):
         valid_targets = ["CPU", "GPU", "Ascend", "Davinci"]
         if not target in valid_targets:
-            raise ValueError(f"Target device name {target} is invalid! It must be one of {valid_targets}")
+            raise ValueError(f"For 'context.set_context', the argument 'device_target' must be one of "
+                             f"{valid_targets}, but got {target}.")
         if target == "Davinci":
             target = "Ascend"
         self.set_param(ms_ctx_param.device_target, target)
@@ -221,29 +225,37 @@ class _Context:
         if tune_mode in candidate:
             self.set_param(ms_ctx_param.tune_mode, tune_mode)
         else:
-            raise ValueError(f"Tune mode must be in ['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}")
+            raise ValueError(f"For 'context.set_context', the argument 'auto_tune_mode' must be in "
+                             f"['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}.")
 
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
-            raise ValueError(f"Device id must be in [0, 4095], but got {device_id}")
+            raise ValueError(f"For 'context.set_context', the argument 'device_id' must be in range [0, 4095], "
+                             f"but got {device_id}.")
         self.set_param(ms_ctx_param.device_id, device_id)
 
     def set_max_call_depth(self, max_call_depth):
         if max_call_depth <= 0:
-            raise ValueError(f"Max call depth must be greater than 0, but got {max_call_depth}")
+            raise ValueError(f"For 'context.set_context', the argument 'max_call_depth' must be greater than 0, "
+                             f"but got {max_call_depth}.")
         self.set_param(ms_ctx_param.max_call_depth, max_call_depth)
 
     def set_profiling_options(self, option):
         if not isinstance(option, str):
-            raise TypeError("The parameter option must be str.")
+            raise TypeError("For 'context.set_context', the argument 'profiling_option' must be string, "
+                            "but got {}.".format(type(option)))
         self.set_param(ms_ctx_param.profiling_options, option)
 
     def set_variable_memory_max_size(self, variable_memory_max_size):
         """set values of variable_memory_max_size and graph_memory_max_size"""
         if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
-            raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
+            raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should be in correct"
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(variable_memory_max_size))
         if int(variable_memory_max_size[:-2]) > _DEVICE_APP_MEMORY_SIZE:
-            raise ValueError("Context param variable_memory_max_size should be not greater than 31GB.")
+            raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should not be "
+                             "greater than 31GB, but got {}.".format(variable_memory_max_size))
         variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
         graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
         graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
@@ -252,17 +264,21 @@ class _Context:
 
     def set_max_device_memory(self, max_device_memory):
         if not Validator.check_str_by_regular(max_device_memory, _re_pattern):
-            raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
+            raise ValueError("For 'context.set_context', the argument 'max_device_memory' should be in correct "
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(max_device_memory))
         max_device_memory_value = float(max_device_memory[:-2])
         if max_device_memory_value == 0:
-            raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
+            raise ValueError("For 'context.set_context', the argument 'max_device_memory' should not be \"0GB\".")
         self.set_param(ms_ctx_param.max_device_memory, max_device_memory_value)
 
     def set_print_file_path(self, file_path):
         """Add timestamp suffix to file name. Sets print file path."""
         print_file_path = os.path.realpath(file_path)
         if os.path.isdir(print_file_path):
-            raise IOError("Print_file_path should be file path, but got {}.".format(file_path))
+            raise IOError("For 'context.set_context', the argument 'print_file_path' should be file path, "
+                          "but got directory {}.".format(file_path))
 
         if os.path.exists(print_file_path):
             _path, _file_name = os.path.split(print_file_path)
@@ -280,13 +296,15 @@ class _Context:
                              "with '-D on' and recompile source.")
         env_config_path = os.path.realpath(env_config_path)
         if not os.path.isfile(env_config_path):
-            raise ValueError("The %r set by 'env_config_path' should be an existing json file." % env_config_path)
+            raise ValueError("For 'context.set_context', the 'env_config_path' file %r is not exists, "
+                             "please check whether 'env_config_path' is correct." % env_config_path)
         try:
             with open(env_config_path, 'r') as f:
                 json.load(f)
         except (TypeError, ValueError) as exo:
-            raise ValueError("The %r set by 'env_config_path' should be a json file. "
-                             "Detail: %s." % (env_config_path, str(exo)))
+            raise ValueError(str(exo) + "\nFor 'context.set_context', open or load the 'env_config_path' file {} "
+                             "failed, please check whether 'env_config_path' is json file and correct, or may not "
+                             "have permission to read it.".format(env_config_path))
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
     setters = {
@@ -813,7 +831,8 @@ def set_context(**kwargs):
         if key in ms_ctx_param.__members__ and key[0] != '_':
             ctx.set_param(ms_ctx_param.__members__[key], value)
             continue
-        raise ValueError("Set context keyword %s is not recognized!" % key)
+        raise ValueError(f"For 'context.set_context', the keyword argument {key} is not recognized! For detailed "
+                         f"usage of 'set_context', please refer to the Mindspore official website.")
 
 
 def get_context(attr_key):
@@ -841,7 +860,8 @@ def get_context(attr_key):
     # enum variables beginning with '_' are for internal use
     if attr_key in ms_ctx_param.__members__ and attr_key[0] != '_':
         return ctx.get_param(ms_ctx_param.__members__[attr_key])
-    raise ValueError("Get context keyword %s is not recognized!" % attr_key)
+    raise ValueError(f"For 'context.get_context', the argument {attr_key} is not recognized! For detailed "
+                     f"usage of 'get_context', please refer to the Mindspore official website.")
 
 
 def _get_mode():

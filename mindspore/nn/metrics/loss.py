@@ -57,7 +57,7 @@ class Loss(Metric):
             ValueError: If the dimension of loss is not 1 or 0.
         """
         if len(inputs) != 1:
-            raise ValueError('The length of inputs must be 1, but got {}'.format(len(inputs)))
+            raise ValueError("For 'Loss.update', it needs 1 input (loss), but got {}".format(len(inputs)))
 
         loss = self._convert_data(inputs[0])
 
@@ -65,7 +65,8 @@ class Loss(Metric):
             loss = loss.reshape(1)
 
         if loss.ndim != 1:
-            raise ValueError("The dimension of loss must be 1, but got {}".format(loss.ndim))
+            raise ValueError("For 'Loss.update', the dimension of your input (loss) must be 1, "
+                             "but got {}.".format(loss.ndim))
 
         loss = loss.mean(-1)
         self._sum_loss += loss
@@ -82,5 +83,6 @@ class Loss(Metric):
             RuntimeError: If the total number is 0.
         """
         if self._total_num == 0:
-            raise RuntimeError('The total number can not be 0.')
+            raise RuntimeError("The 'Loss' can not be calculated, because the number of samples is 0, please "
+                               "check whether has called update method before calling eval method.")
         return self._sum_loss / self._total_num

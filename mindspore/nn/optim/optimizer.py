@@ -132,7 +132,8 @@ class Optimizer(Cell):
         super(Optimizer, self).__init__(auto_prefix=False)
         parameters = self._parameters_base_check(parameters, "parameters")
         if not all(isinstance(x, Parameter) for x in parameters) and not all(isinstance(x, dict) for x in parameters):
-            raise TypeError("All elements of the optimizer parameters must be of type `Parameter` or `dict`.")
+            raise TypeError("For 'Optimizer', all elements of the argument 'parameters' must be "
+                            "'Parameter' or 'dict'.")
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
@@ -213,7 +214,8 @@ class Optimizer(Cell):
                 self.use_parallel = True
             elif _get_parallel_mode() == ParallelMode.DATA_PARALLEL \
                     and context.get_context("device_target") != "Ascend":
-                raise RuntimeError("Parallel optimizer only supports Ascend in data parallel mode.")
+                raise RuntimeError("Parallel optimizer only supports 'Ascend' in data parallel mode, "
+                                   "but got {}.".format(context.get_context("device_target")))
             elif _get_parallel_mode() in (ParallelMode.STAND_ALONE, ParallelMode.HYBRID_PARALLEL):
                 raise RuntimeError("Parallel optimizer is not supported in {}.".format(_get_parallel_mode()))
             else:
@@ -222,7 +224,8 @@ class Optimizer(Cell):
             self.use_parallel = False
         if self.use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecay", "AdaFactor"]:
-                raise RuntimeError("Parallel optimizer does not support optimizer {}".format(self.cls_name))
+                raise RuntimeError("Parallel optimizer only support optimizer 'Lamb', 'AdamWeightDecay' or "
+                                   "'AdaFactor', but got {}.".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Parallel optimizer can not be applied when the number of parameters {} is"
@@ -249,7 +252,8 @@ class Optimizer(Cell):
     def unique(self, value):
         """Set the `unique` attribute."""
         if not isinstance(value, bool):
-            raise TypeError("The value type must be bool, but got value type is {}".format(type(value)))
+            raise TypeError("For 'Optimizer', the property 'unique' must be bool, "
+                            "but got {}".format(type(value)))
         self._unique = value
 
     @property
@@ -274,19 +278,23 @@ class Optimizer(Cell):
         optimizer operation.
         """
         if not isinstance(value, str):
-            raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
+            raise TypeError("For 'Optimizer', the property 'target' must be string, but got {}".format(type(value)))
 
         if value not in ('CPU', 'Ascend', 'GPU'):
-            raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
+            raise ValueError("For 'Optimizer', the property 'target' must be one of ['CPU', 'Ascend' ,'GPU'], "
+                             "but got {}".format(value))
 
         if self._target == "CPU" and value in ('Ascend', 'GPU'):
-            raise ValueError("In the CPU environment, target cannot be set to 'GPU' or 'Ascend'.")
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' or 'Ascend' "
+                             "in the 'CPU' environment.")
 
         if self._target == "Ascend" and value == 'GPU':
-            raise ValueError("In the Ascend environment, target cannot be set to 'GPU'.")
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' "
+                             "in the 'Ascend' environment.")
 
         if self._target == "GPU" and value == 'Ascend':
-            raise ValueError("In the GPU environment, target cannot be set to 'Ascend'.")
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'Ascend' "
+                             "in the 'GPU' environment.")
 
         self._is_device = (value != 'CPU')
         self._target = value
@@ -515,8 +523,9 @@ class Optimizer(Cell):
             for param in group_param['params']:
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                 if param.name in params_store:
-                    raise RuntimeError(f"The {param.name} parameter already exists in parameter groups, "
-                                       f"duplicate parameters are not supported.")
+                    raise RuntimeError(f"The {param.name} parameter already exists, it does not support "
+                                       f"repeated setting. Please check whether the optimizer parameter "
+                                       f"has been set multiple times.")
 
                 params_store.append(param.name)
                 self.group_lr.append(lr)
@@ -788,7 +797,8 @@ class _ConvertToCell(LearningRateSchedule):
     def __init__(self, learning_rate):
         super(_ConvertToCell, self).__init__()
         if not isinstance(learning_rate, Parameter):
-            raise TypeError('Learning rate must be Parameter.')
+            raise TypeError("For '_ConvertToCell', the argument 'learning_rate' must be Parameter, "
+                            "but got {}.".format(type(learning_rate)))
         self.learning_rate = learning_rate
 
     def construct(self, global_step):
@@ -801,10 +811,11 @@ class _IteratorLearningRate(LearningRateSchedule):
         super(_IteratorLearningRate, self).__init__()
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim != 1:
-                raise ValueError("The dim of `Tensor` type dynamic learning rate should be 1, "
-                                 f"but got {learning_rate.ndim}.")
+                raise ValueError(f"For '_IteratorLearningRate', the dimension of the argument 'learning_rate' should "
+                                 f"be 1, but got {learning_rate.ndim}.")
         else:
-            raise TypeError("Learning rate should be Tensor.")
+            raise TypeError("For '_IteratorLearningRate', the argument 'learning_rate' should be Tensor, "
+                            "but got {}.".format(type(learning_rate)))
 
         self.learning_rate = Parameter(learning_rate, name)
         self.gather = P.Gather()
