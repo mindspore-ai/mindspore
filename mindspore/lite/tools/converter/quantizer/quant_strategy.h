@@ -33,7 +33,7 @@ class QuantStrategy {
   ~QuantStrategy() = default;
 
   bool CanOpFullQuantized(const AnfNodePtr &node);
-  bool CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim);
+  bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim);
   bool IsSkipOp(const AnfNodePtr &input_node);
 
  private:

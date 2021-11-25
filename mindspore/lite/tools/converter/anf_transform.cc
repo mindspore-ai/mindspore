@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <deque>
+#include <map>
 #include "nnacl/op_base.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/optimizer_manager.h"
@@ -363,29 +364,29 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 }
 
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  constexpr int thread_num = 2;
   // quant
   if (config->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL &&
       config->commonQuantParam.quant_type != schema::QuantType_QUANT_WEIGHT) {
     return RET_OK;
   }
   int status;
+  std::unique_ptr<quant::Quantizer> quantizer;
+
   quant::SessionModel origin;
   quant::SessionModel quant;
   if (config->commonQuantParam.is_debug) {
     converter::Flags new_flag = *config;
     new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, thread_num);
+    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, config->commonQuantParam.thread_num);
   }
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
-    this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
-    if (m_quantizer_ == nullptr) {
+    quantizer = std::make_unique<quant::FullQuantQuantizer>(*config);
+    if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New FullQuantQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
-    m_quantizer_->flags = *config;
-    status = m_quantizer_->DoQuantize(old_graph);
+    status = quantizer->DoQuantize(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantization failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -400,38 +401,35 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
         MS_LOG(ERROR) << "Grid search with scale failed.";
         return status;
       }
-      this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
-      if (m_quantizer_ == nullptr) {
+      quantizer = std::make_unique<quant::WeightQuantizer>(*config);
+      if (quantizer == nullptr) {
         MS_LOG(ERROR) << "New WeightQuantizer failed";
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
         return RET_ERROR;
       }
-      status = static_cast<quant::WeightQuantizer *>(m_quantizer_.get())->DoQuantize(old_graph, init_scale);
+      status = static_cast<quant::WeightQuantizer *>(quantizer.get())->DoQuantize(old_graph, init_scale);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "DoQuantization failed " << status;
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
         return RET_ERROR;
       }
     } else {
-      this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
-      if (m_quantizer_ == nullptr) {
+      quantizer = std::make_unique<quant::WeightQuantizer>(*config);
+      if (quantizer == nullptr) {
         MS_LOG(ERROR) << "New WeightQuantizer failed";
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
         return RET_ERROR;
       }
-      if (m_quantizer_ != nullptr) {
-        m_quantizer_->flags = *config;
-        status = m_quantizer_->DoQuantize(old_graph);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "DoQuantization failed " << status;
-          ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-          return RET_ERROR;
-        }
+      status = quantizer->DoQuantize(old_graph);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "DoQuantization failed " << status;
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+        return RET_ERROR;
       }
     }
   }
   if (config->commonQuantParam.is_debug) {
-    quant = quant::CreateSessionByFuncGraph(old_graph, *config, thread_num);
+    quant = quant::CreateSessionByFuncGraph(old_graph, *config, config->commonQuantParam.thread_num);
     std::map<std::string, OpParameter *> op_parameters;
     FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
     DebugInfoManager manager;

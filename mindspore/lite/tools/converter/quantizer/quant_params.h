@@ -28,6 +28,11 @@ enum ActivationQuantizedMethod {
   REMOVAL_OUTLIER = 2,
 };
 
+enum QuantRuntimeDevice {
+  CPU,
+  KIRIN,
+};
+
 struct CommonQuantParam {
   schema::QuantType quant_type = schema::QuantType_QUANT_NONE;
   int bit_num = 8;
@@ -36,6 +41,7 @@ struct CommonQuantParam {
   bool is_debug = false;
   std::string debug_info_save_path;
   std::set<std::string> skip_quant_node;
+  QuantRuntimeDevice device = CPU;
   int thread_num = 4;
 };
 

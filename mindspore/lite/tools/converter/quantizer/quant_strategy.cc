@@ -24,7 +24,7 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::quant {
-bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim) {
+bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim) {
   if (input_node == nullptr) {
     MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
     return false;
@@ -65,8 +65,9 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &input_node, int preferr
     return false;
   }
 
-  // min_quant_weight_channel_ only supports convolution
-  if (weight_shape.size() > DIMENSION_2D &&
+  static const std::set<PrimitivePtr> check_channel_ops = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+
+  if (CheckNodeInSet(cnode, check_channel_ops) && weight_shape.size() >= DIMENSION_2D &&
       weight_shape[preferred_dim] <= static_cast<int>(min_quant_weight_channel_)) {
     MS_LOG(INFO) << "preferred_dim shape:" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
                  << min_quant_weight_channel_;
@@ -80,7 +81,7 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   if (!node->isa<mindspore::CNode>()) {
     return false;
   }
-  const auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
+  const auto cnode = node->cast<mindspore::CNodePtr>();
   MS_ASSERT(cnode != nullptr);
   auto type = NodePrimitiveType(cnode);
   static const std::set<PrimitivePtr> support_int8_ops = {prim::kPrimAddFusion,     prim::kPrimActivation,

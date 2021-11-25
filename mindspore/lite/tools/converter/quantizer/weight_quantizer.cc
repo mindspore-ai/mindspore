@@ -22,32 +22,6 @@
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite::quant {
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(std::move(graph)) {
-  this->flags = config;
-  this->bit_num_ = config.commonQuantParam.bit_num;
-  if (this->bit_num_ == 0) {
-    type_id_ = kNumberTypeInt16;
-    this->is_mixed_bit_ = true;
-    mixed_bit_init_scale_ = config.mixedBitWeightQuantParam.init_scale;
-  }
-  quant_strategy_ = std::make_unique<QuantStrategy>(config.commonQuantParam.min_quant_weight_size,
-                                                    config.commonQuantParam.min_quant_weight_channel,
-                                                    config.commonQuantParam.skip_quant_node);
-  // parse param for fixed bit quant.
-  if (!this->is_mixed_bit_) {
-    quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
-    quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
-    // parse type_id_
-    if (this->bit_num_ > 0 && this->bit_num_ <= kMaxBit) {
-      type_id_ = kNumberTypeInt8;
-    } else if (this->bit_num_ <= (kMaxBit * 2)) {
-      type_id_ = kNumberTypeInt16;
-    } else {
-      MS_LOG(ERROR) << "invalid input bits";
-    }
-  }
-}
-
 WeightQuantizer::~WeightQuantizer() {
   for (const auto &fp32_output_tensor : fp32_output_tensors_) {
     for (const auto &kv : fp32_output_tensor) {
@@ -56,12 +30,12 @@ WeightQuantizer::~WeightQuantizer() {
   }
 }
 
-int WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
+int WeightQuantizer::DoWeightQuantize(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
-  auto manager = api::FuncGraphManager::Manage(funcGraph, true);
+  auto manager = api::FuncGraphManager::Manage(func_graph, true);
   CHECK_NULL_RETURN(manager);
   std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
   if (CheckNodeInSet(cnode, per_layer_primitive_types)) {
@@ -89,11 +63,14 @@ int WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
       continue;
     }
     int preferred_dim = GetPreferredDim(primitive, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
-    if (!quant_strategy_->CanTensorQuantized(input, preferred_dim)) {
-      MS_LOG(INFO) << "Input " << idx << "of Optimizer is not quantizable";
+    auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
+                                                          flags_.commonQuantParam.min_quant_weight_channel,
+                                                          flags_.commonQuantParam.skip_quant_node);
+    if (!quant_strategy->CanTensorQuantized(cnode, input, preferred_dim)) {
+      MS_LOG(INFO) << input->fullname_with_scope() << " is not quantizable";
       continue;
     }
-    // support for shared weight
+    // support for matmul shared weight
     auto node_map = manager->node_users();
     auto node_user = node_map[input];
     auto tmp_weight_quant_type = weight_quant_type;
@@ -170,12 +147,8 @@ int WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_grap
   return RET_OK;
 }
 
-int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph, double init_scale) {
+int WeightQuantizer::DoQuantize(const FuncGraphPtr &func_graph, double init_scale) {
   mixed_bit_init_scale_ = init_scale;
-  return DoQuantize(std::move(func_graph));
-}
-
-int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
 
@@ -192,7 +165,7 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
                                                       prim::kPrimAdam,         prim::kPrimSGD,
                                                       prim::kPrimApplyMomentum};
     if (CheckNodeInSet(cnode, support_primitive_types)) {
-      auto status = DoWeightQuantize(cnode);
+      auto status = DoWeightQuantize(func_graph, cnode);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "DoWeightQuantize error";
         return RET_ERROR;
@@ -203,4 +176,6 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
   return MarkWeightQuantizationInNodes(func_graph);
 }
+
+int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) { return DoQuantize(func_graph, mixed_bit_init_scale_); }
 }  // namespace mindspore::lite::quant
