@@ -19,6 +19,7 @@ high performance and parses data precisely. Some of the operations that are
 provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
 """
 import atexit
+import builtins
 import glob
 import json
 import math
@@ -4900,7 +4901,11 @@ class GeneratorDataset(MappableDataset):
                  python_multiprocessing=True, max_rowsize=6):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id)
-        self.source = source
+        if isinstance(source, builtins.zip):
+            # Although zip is iteratable, it does not have the feature of repeated iteration, so pass it to the array.
+            self.source = [item for item in source]
+        else:
+            self.source = source
         self.prepared_source = None  # source to be sent to C++
 
         self.python_multiprocessing = python_multiprocessing

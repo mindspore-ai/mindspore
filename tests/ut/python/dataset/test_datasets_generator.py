@@ -922,6 +922,39 @@ def test_func_generator_dataset_005():
         i += 1
     assert i == 2
 
+def test_func_generator_dataset_with_zip_source():
+    """
+    Feature: verify the source is zip
+    Description: the source input is zip
+    Expectation: success
+    """
+    def synthetic_data(w, b, num_examples):
+        """生成 y = Xw + b + 噪声。"""
+        X = np.random.normal(0, 1, (num_examples, len(w)))
+        y = np.matmul(X, w) + b
+        y += np.random.normal(0, 0.01, y.shape)
+        return X.astype(np.float32), y.reshape((-1, 1)).astype(np.float32)
+
+    true_w = np.array([2, -3.4])
+    true_b = 4.2
+    features, labels = synthetic_data(true_w, true_b, 10)
+
+    def load_array(data_arrays, column_names, batch_size, is_train=True):
+        """构造一个MindSpore数据迭代器。"""
+        dataset = ds.GeneratorDataset(data_arrays, column_names, shuffle=is_train)
+        dataset = dataset.batch(batch_size)
+        return dataset
+
+    batch_size = 2
+    dataset = load_array(zip(features, labels), ['features', 'labels'], batch_size)
+
+    count = 0
+    epochs = 10
+    dataset_iter = dataset.create_dict_iterator(num_epochs=epochs, output_numpy=True)
+    for _ in range(epochs):
+        for _ in dataset_iter:
+            count += 1
+    assert count == 50
 
 if __name__ == "__main__":
     test_generator_0()
@@ -962,3 +995,4 @@ if __name__ == "__main__":
     test_generator_dataset_size_5()
     test_explicit_deepcopy()
     test_func_generator_dataset_005()
+    test_func_generator_dataset_with_zip_source()
