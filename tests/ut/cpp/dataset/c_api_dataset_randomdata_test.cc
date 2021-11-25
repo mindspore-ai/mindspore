@@ -475,6 +475,53 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+// Feature: Test Repeat and Shuffle on RandomData
+// Description: Apply operations, iterate through dataset and count rows
+// Expectation: There should  be 30 rows in the dataset
+TEST_F(MindDataTestPipeline, TestRandomDatasetBasic8) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic8.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+
+  std::string SCHEMA_FILE = datasets_root_path_ + "/testRandomData/datasetSchema2.json";
+  std::shared_ptr<Dataset> ds = RandomData(10, SCHEMA_FILE);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Shuffle operation on ds
+  int32_t shuffle_size = 4;
+  ds = ds->Shuffle(shuffle_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 3;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  // Check if RandomData() read correct columns
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 30);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
 TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetUInt8.";
 

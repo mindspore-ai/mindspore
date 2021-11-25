@@ -419,3 +419,38 @@ TEST_F(MindDataTestPipeline, TestManifestWithNullSamplerError) {
   // Expect failure: invalid Manifest input, sampler cannot be nullptr
   EXPECT_EQ(iter, nullptr);
 }
+
+// Feature: Test SubsetRandomSampler with Manifest
+// Description: Use SubsetRandomSampler with 1 index given, iterate through dataset and count rows
+// Expectation: There should  be 1 row in the dataset
+TEST_F(MindDataTestPipeline, TestManifestSubsetRandomSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestSubsetRandomSampler.";
+
+  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  std::vector<int64_t> indices = {1};
+  // Create a Manifest Dataset
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", std::make_shared<SubsetRandomSampler>(indices));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}

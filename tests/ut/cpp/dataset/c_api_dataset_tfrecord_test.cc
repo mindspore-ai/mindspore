@@ -520,3 +520,69 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
   auto itr = ds->CreateIterator();
   EXPECT_EQ(itr, nullptr);
 }
+
+// Feature: Test TFRecord with a schema file
+// Description: Create TFRecord with datasetSchema1Row.json
+// Expectation: There should  be 1 row in the dataset
+TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic1Row) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasic.";
+
+  // Create a TFRecord Dataset
+  std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+  std::string schema_path = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema1Row.json";
+  std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema_path, {}, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+// Feature: Test TFRecord with a schema file
+// Description: Create TFRecord with datasetSchema7Rows.json
+// Expectation: There should  be 7 rows in the dataset
+TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic7Row) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasic.";
+
+  // Create a TFRecord Dataset
+  std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+  std::string schema_path = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema7Rows.json";
+  std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema_path, {}, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}

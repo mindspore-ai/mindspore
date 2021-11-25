@@ -944,3 +944,94 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShareFailure1) {
   std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
   EXPECT_EQ(iter2, nullptr);
 }
+
+// Feature: Test RandomData with Cache and Repeat
+// Description: Iterate through dataset and count rows
+// Expectation: There should  be 200 rows in the dataset
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi1) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {640, 480, 3}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema, {}, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 4;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 200);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+// Feature: Test RandomData with Cache and Repeat
+// Description: Set mem_sz such that spill occurs, iterate through dataset and count rows
+// Expectation: There should  be 40 rows in the dataset
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataSpillCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create cache with mem_sz=4 and spill=true
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 4, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {640, 480, 3}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema, {}, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 4;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 40);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
