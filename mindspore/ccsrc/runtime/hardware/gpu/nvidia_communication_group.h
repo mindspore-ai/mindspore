@@ -37,7 +37,7 @@ class NvidiaCommunicationGroup : public CommunicationGroup {
   bool Initialize(void *root_info) override;
   bool Finalize() override;
 
-  void *GenerateRootInfo() override;
+  void *GenerateRootInfo(size_t *root_info_size) override;
 
  private:
   // The NCCL unique id for this group. Used to initialize this group's communicator.
