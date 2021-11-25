@@ -56,6 +56,7 @@ class AbstractBase;
 using BaseShapePtr = std::shared_ptr<abstract::BaseShape>;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
 using AbstractBasePtrList = std::vector<AbstractBasePtr>;
+using NodeDebugInfoSet = std::set<NodeDebugInfoPtr, DebugInfoCompare>;
 
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
@@ -616,14 +617,17 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Get primal debug information.
   ///
   /// \return The primal debug information.
-  std::vector<NodeDebugInfoPtr> primal_debug_infos() { return primal_debug_infos_; }
+  NodeDebugInfoSet primal_debug_infos() const;
 
   /// \brief Set primal debug information.
   ///
   /// \param[in] debug_infos Debug information of this CNode.
-  void set_primal_debug_infos(const std::vector<NodeDebugInfoPtr> &debug_infos) {
-    primal_debug_infos_.insert(primal_debug_infos_.end(), debug_infos.begin(), debug_infos.end());
-  }
+  void set_primal_debug_infos(const NodeDebugInfoSet &debug_infos);
+
+  /// \brief Add a primal debug information.
+  ///
+  /// \param[in] debug_info A debug information.
+  void AddPrimalDebugInfo(const NodeDebugInfoPtr &debug_info);
 
   void CloneCNodeInfo(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
@@ -657,24 +661,32 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Get the debug infos of fused nodes.
   ///
   /// \return A vector of debug infos.
-  std::vector<NodeDebugInfoPtr> fused_debug_infos() const { return fused_debug_infos_; }
+  NodeDebugInfoSet fused_debug_infos() const { return fused_debug_infos_; }
 
   /// \brief Set the debug infos for CNode.
   ///
-  /// \param fused_debug_infos The debuf infos to be set.
-  void set_fused_debug_infos(const std::vector<NodeDebugInfoPtr> &fused_debug_infos) {
-    fused_debug_infos_ = fused_debug_infos;
-  }
+  /// \param fused_debug_infos The debug infos to be set.
+  void set_fused_debug_infos(const NodeDebugInfoSet &fused_debug_infos) { fused_debug_infos_ = fused_debug_infos; }
 
   /// \brief Add a node's debug info or fused debug info.
   ///
   /// \param node An anf node.
-  void AddFusedDebugInfo(const AnfNodePtr &node) {}
+  void AddFusedDebugInfo(const AnfNodePtr &node);
 
   /// \brief Add a vector of nodes' debug info or fused debug info.
   ///
   /// \param nodes A vector of anf nodes.
-  void AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes) {}
+  void AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes);
+
+  /// \brief Add a node debug info.
+  ///
+  /// \param node A node debug info of an anf node.
+  void AddFusedDebugInfo(const NodeDebugInfoPtr &debug_info);
+
+  /// \brief Add a list of node debug infos.
+  ///
+  /// \param node A node debug info of an anf node.
+  void AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos);
 
  private:
   std::vector<AnfNodePtr> inputs_;
@@ -689,8 +701,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   std::pair<ValueNodePtr, std::string> output_value_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
-  std::vector<NodeDebugInfoPtr> primal_debug_infos_;
-  std::vector<NodeDebugInfoPtr> fused_debug_infos_;
+  NodeDebugInfoSet primal_debug_infos_;
+  NodeDebugInfoSet fused_debug_infos_;
   ssize_t input_tensor_num_ = -1;
 };
 

@@ -48,6 +48,17 @@ bool IsSetRecomputed(const CNodePtr &a, const CNodePtr &b) {
          (WithRecomputedScope(b) && !b->HasAttr(kAttrNeedCseAfterRecompute));
 }
 
+void UpdateDebugInfoAndDumpFlag(const AnfNodePtr &main, const AnfNodePtr &node) {
+  if (main == nullptr || !main->isa<CNode>()) {
+    return;
+  }
+  if (AnfUtils::GetDumpFlag(node) && !AnfUtils::GetDumpFlag(main)) {
+    AnfUtils::SetDumpFlag(main);
+  }
+  auto main_cnode = main->cast<CNodePtr>();
+  main_cnode->AddFusedDebugInfo(node);
+}
+
 BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   MS_EXCEPTION_IF_NULL(node);
   auto node_abs = node->abstract();
@@ -247,9 +258,7 @@ bool CSE::DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::si
           }
           if (CheckReplace(node, main)) {
             changes = true;
-            if (AnfUtils::GetDumpFlag(node) && !AnfUtils::GetDumpFlag(main)) {
-              AnfUtils::SetDumpFlag(main);
-            }
+            UpdateDebugInfoAndDumpFlag(main, node);
             (void)manager->Replace(node, main);
             (void)clear_set.insert(i);
           }

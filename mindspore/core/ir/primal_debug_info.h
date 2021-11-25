@@ -20,6 +20,7 @@
 #include <memory>
 #include <stack>
 #include <vector>
+#include <set>
 #include "utils/hash_map.h"
 #include "utils/info.h"
 
@@ -34,14 +35,15 @@ class PrimalDebugInfoManager {
   PrimalDebugInfoManager &operator=(const PrimalDebugInfoManager &) = delete;
   ~PrimalDebugInfoManager() = default;
   void SetPrimalDebugInfo(const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
-    primal_debug_infos_ = primal_debug_infos;
+    std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
+                  [this](const NodeDebugInfoPtr &debug_info) { primal_debug_infos_.emplace(debug_info); });
   }
   void ClearPrimalDebugInfo() { primal_debug_infos_.clear(); }
-  std::vector<NodeDebugInfoPtr> GetCurrentPrimalDebugInfo() { return primal_debug_infos_; }
+  std::set<NodeDebugInfoPtr, DebugInfoCompare> GetCurrentPrimalDebugInfo() { return primal_debug_infos_; }
 
  private:
   PrimalDebugInfoManager() = default;
-  std::vector<NodeDebugInfoPtr> primal_debug_infos_;
+  std::set<NodeDebugInfoPtr, DebugInfoCompare> primal_debug_infos_;
 };
 
 // PrimalDebugInfoGuard is a class that help generate the back propagation cnode
