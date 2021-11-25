@@ -28,6 +28,7 @@ from ..._checkparam import Validator
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
 from ._summary_adapter import get_event_file_name, package_graph_event
 from ._writer_pool import WriterPool
+from .enums import PluginEnum
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
@@ -283,6 +284,8 @@ class SummaryRecord:
         elif plugin == 'graph':
             package_graph_event(value)
             self._data_pool[plugin].append(dict(value=value))
+        elif plugin == PluginEnum.LANDSCAPE.value:
+            self._data_pool[plugin].append(dict(tag=name, value=value.SerializeToString()))
         else:
             raise ValueError(f'No such plugin of {repr(plugin)}')
 

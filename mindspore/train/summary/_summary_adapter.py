@@ -141,6 +141,8 @@ def package_summary_event(data_list, step, wall_time):
                 del summary.value[-1]
         elif summary_type == 'Histogram':
             _fill_histogram_summary(tag, data, summary_value.histogram)
+        elif summary_type == 'Landscape':
+            summary_value.loss_landscape.ParseFromString(data)
         else:
             # The data is invalid ,jump the data
             logger.error(f"Summary type({summary_type}) is error, tag = {tag}")
