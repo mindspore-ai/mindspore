@@ -192,8 +192,7 @@ def test_missing_construct():
         def construct1(self, inp):
             return 5
 
-    with pytest.raises(TypeError, match="Function should not 'Return None'"):
-        np_input = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.bool_)
-        tensor = Tensor(np_input)
-        net = NetMissConstruct()
-        assert net(tensor) is None
+    np_input = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.bool_)
+    tensor = Tensor(np_input)
+    net = NetMissConstruct()
+    assert net(tensor) is None

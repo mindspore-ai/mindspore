@@ -14,7 +14,7 @@
 # ============================================================================
 """ test super"""
 import numpy as np
-import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -104,11 +104,10 @@ def test_mul_super():
 
 
 def test_super_cell():
-    with pytest.raises(TypeError, match="Function should not 'Return None'"):
-        net = Net(2)
-        x = Tensor(np.ones([1, 2, 3], np.int32))
-        y = Tensor(np.ones([1, 2, 3], np.int32))
-        assert net(x, y) is None
+    net = Net(2)
+    x = Tensor(np.ones([1, 2, 3], np.int32))
+    y = Tensor(np.ones([1, 2, 3], np.int32))
+    assert net(x, y) is None
 
 
 def test_single_super_in():
