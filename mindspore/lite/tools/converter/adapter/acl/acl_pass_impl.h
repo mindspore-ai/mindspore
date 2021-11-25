@@ -65,6 +65,7 @@ class AclPassImpl {
   void SetAclModelInitOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
   void SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
   std::string AdjustCnodeName(const PrimitivePtr &prim);
+  bool IsDynamicInput();
 
   std::string device_type_;
   FmkType fmk_type_;
