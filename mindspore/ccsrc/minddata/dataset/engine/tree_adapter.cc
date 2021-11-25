@@ -232,6 +232,13 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   if (!launched_) {
     RETURN_IF_NOT_OK(Launch());
   }
+  // Record profiling info
+#ifndef ENABLE_SECURITY
+  uint64_t start_time = 0;
+  if (tracing_ != nullptr) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
+#endif
 
   RETURN_IF_NOT_OK(tree_->root()->GetNextRow(row));  // first buf can't be eof or empty buf with none flag
   if (row->eoe()) {                                  // return empty tensor if 1st buf is a ctrl buf (no rows)
@@ -257,6 +264,10 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     cur_batch_num_++;
     cur_connector_size_ = tree_->root()->ConnectorSize();
     cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
+    // push time is 0ms in dataset iterator since no devices are involved
+    tracing_->Record(TIME, TDT_PUSH_TIME, cur_batch_num_, 0, end_time);
+    tracing_->Record(TIME, BATCH_TIME, cur_batch_num_, end_time - start_time, end_time);
+    tracing_->Record(TIME, PIPELINE_TIME, cur_batch_num_, end_time - start_time, end_time);
     tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time);
   }
 #endif

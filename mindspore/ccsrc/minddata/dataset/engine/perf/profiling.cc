@@ -36,6 +36,11 @@
 namespace mindspore {
 namespace dataset {
 
+constexpr int32_t PUSH_TIME_OFFSET = 0;
+constexpr int32_t BATCH_TIME_OFFSET = 1;
+constexpr int32_t PIPELINE_TIME_OFFSET = 2;
+constexpr int32_t CONNECTOR_DEPTH_OFFSET = 3;
+
 Status Profiling::Start() {
   CHECK_FAIL_RETURN_UNEXPECTED(active_ == false, "Profiling node is already active.");
   active_ = true;
@@ -106,7 +111,8 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
   (void)records_.emplace_back(record);
   (void)value_.emplace_back(record.ToString());
   // save timestamp per batch
-  if (records_.size() % records_per_step_ == 0) {
+  constexpr int32_t RECORDS_PER_STEP = 4;
+  if (records_.size() % RECORDS_PER_STEP == 0) {
     (void)ts_.emplace_back(time_stamp);
   }
 }
@@ -150,9 +156,10 @@ Status Tracing::StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int
 }
 
 Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset,
-                                         const std::string field, std::vector<int32_t> *result) {
+                                         const std::string &field, std::vector<int32_t> *result) {
   std::lock_guard<std::mutex> guard(lock_);
-  auto total_steps = records_.size() / records_per_step_;
+  constexpr int32_t RECORDS_PER_STEP = 4;
+  auto total_steps = records_.size() / RECORDS_PER_STEP;
   MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
   CHECK_FAIL_RETURN_UNEXPECTED(start_step <= total_steps,
                                "Expected start_step <= total_steps. Got start_step: " + std::to_string(start_step) +
@@ -165,7 +172,7 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
                                  " end_step: " + std::to_string(end_step));
 
   for (auto step_num = start_step; step_num <= end_step; step_num++) {
-    auto idx = (step_num - 1) * records_per_step_ + record_offset;
+    auto idx = (step_num - 1) * RECORDS_PER_STEP + record_offset;
     if (field == "value") {
       (void)result->emplace_back(records_[idx].value);
     } else if (field == "extra_info") {
@@ -178,7 +185,40 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
   return Status::OK();
 }
 
-Tracing::Tracing(int32_t records_per_step) : records_per_step_(records_per_step) {}
+Status Tracing::GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, PIPELINE_TIME_OFFSET, "value", result);
+}
+
+Status Tracing::GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, PUSH_TIME_OFFSET, "value", result);
+}
+
+Status Tracing::GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, BATCH_TIME_OFFSET, "value", result);
+}
+
+Status Tracing::GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "value", result);
+}
+
+Status Tracing::GetConnectorCapacity(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntryFieldValue(start_step, end_step, CONNECTOR_DEPTH_OFFSET, "extra_info", result);
+}
+
+Status Tracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) {
+  std::vector<int32_t> sizes;
+  RETURN_IF_NOT_OK(GetConnectorSize(start_step, end_step, &sizes));
+  int32_t total = end_step - start_step + 1;
+  CHECK_FAIL_RETURN_UNEXPECTED(total <= 0, "Start step is greater than end step.");
+  uint32_t count = std::count(sizes.begin(), sizes.end(), 0);
+  *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
+  return Status::OK();
+}
+
+Status Tracing::Init() {
+  (void)ts_.emplace_back(0);
+  return Status::OK();
+}
 
 // Constructor
 ProfilingManager::ProfilingManager()

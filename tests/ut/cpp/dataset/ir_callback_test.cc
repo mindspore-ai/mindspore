@@ -257,9 +257,9 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   // config EpochCtrlOp
   std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(num_repeats);
   // start build then launch tree
-  leaf->SetTotalRepeats(-2);
+  leaf->SetTotalRepeats(4);
   leaf->SetNumRepeatsPerEpoch(2);
-  map_op->SetTotalRepeats(-2);
+  map_op->SetTotalRepeats(4);
   map_op->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op, epoch_ctrl_op});
   rc = tree->Prepare();
@@ -328,9 +328,9 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(2);
 
   // start build then launch tree
-  leaf->SetTotalRepeats(-2);
+  leaf->SetTotalRepeats(4);
   leaf->SetNumRepeatsPerEpoch(2);
-  map_op->SetTotalRepeats(-2);
+  map_op->SetTotalRepeats(4);
   map_op->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op, epoch_ctrl_op});
   rc = tree->Prepare();

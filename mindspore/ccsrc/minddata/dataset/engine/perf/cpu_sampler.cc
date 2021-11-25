@@ -129,8 +129,8 @@ Status SystemCpuInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemS
 Status SystemCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint8_t> *result) const {
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " sys_cpu_util.size: " << sys_cpu_util_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
-                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
+                               "Expected start_index <= end_index. Got start_index: " + std::to_string(start_index) +
                                  " end_index: " + std::to_string(end_index));
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_index <= sys_cpu_util_.size(),
@@ -144,8 +144,8 @@ Status SystemCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_index, s
 Status SystemCpuInfo::GetSysCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint8_t> *result) const {
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << "sys_cpu_util.size: " << sys_cpu_util_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
-                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
+                               "Expected start_index <= end_index. Got start_index: " + std::to_string(start_index) +
                                  " end_index: " + std::to_string(end_index));
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_index <= sys_cpu_util_.size(),
@@ -279,8 +279,8 @@ Status MDOperatorCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_inde
                                          std::vector<uint16_t> *result) const {
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " op_cpu_util_.size: " << op_cpu_util_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
-                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
+                               "Expected start_index <= end_index. Got start_index: " + std::to_string(start_index) +
                                  " end_index: " + std::to_string(end_index));
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_index <= op_cpu_util_.size(),
@@ -297,8 +297,8 @@ Status MDOperatorCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_inde
 Status MDOperatorCpuInfo::GetSysCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint16_t> *result) const {
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " op_cpu_util_.size: " << op_cpu_util_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
-                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
+                               "Expected start_index <= end_index. Got start_index: " + std::to_string(start_index) +
                                  " end_index: " + std::to_string(end_index));
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_index <= op_cpu_util_.size(),

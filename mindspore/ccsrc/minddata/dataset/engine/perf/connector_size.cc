@@ -132,8 +132,8 @@ Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uin
   auto start_index = std::distance(ts_.begin(), lower);
   auto end_index = std::distance(ts_.begin(), upper);
   MS_LOG(INFO) << "start_index: " << start_index << " end_index: " << end_index;
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
-                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
+                               "Expected start_index <= end_index. Got start_index: " + std::to_string(start_index) +
                                  " end_index: " + std::to_string(end_index));
   // convert indices to sample_table_ iterator
   auto first_iter = sample_table_.begin() + start_index;
