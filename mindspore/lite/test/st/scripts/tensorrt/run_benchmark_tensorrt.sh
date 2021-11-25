@@ -13,9 +13,13 @@ function Run_TensorRT() {
         if [[ $line_info == \#* || $line_info == "" ]]; then
             continue
         fi
-        #model_name.onnx;2:input1,input2;1,16,16,4;fp16 0.5
+
+        # model_info     accuracy_limit      run_mode
         model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
         spec_acc_limit=`echo ${line_info} | awk -F ' ' '{print $2}'`
+        run_mode=`echo ${line_info} | awk -F ' ' '{print $3}'`
+
+        # model_info detail
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
         input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
@@ -24,6 +28,11 @@ function Run_TensorRT() {
         if [[ ${model_name##*.} == "caffemodel" ]]; then
             model_name=${model_name%.*}
         fi
+
+        # run_mode detail
+        run_mode_name=`echo ${run_mode} | awk -F ';' '{print $1}'`
+        run_mode_size=`echo ${run_mode} | awk -F ';' '{print $2}'`
+
         echo "Benchmarking ${model_name} ......"
         model_file=${basepath}'/'${model_name}'.ms'
         input_files=""
@@ -51,13 +60,23 @@ function Run_TensorRT() {
             enableFp16="true"
         fi
 
-        echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
-        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
-        if [ $? = 0 ]; then
-            run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+
+        # different tensorrt run mode use different cuda command
+        if [[ ${run_mode_name} == "DIS" ]]; then
+            export ENABLE_NEW_API=true
+            echo 'mpirun -np '${run_mode_size}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
+            mpirun -np ${run_mode_size} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
         else
-            run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU' >> "${run_tensorrt_log_file}"
+            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU >> ${run_tensorrt_log_file}
         fi
+
+        if [ $? = 0 ]; then
+            run_result='TensorRT'${run_mode_name}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='TensorRT'${run_mode_name}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+
     done < ${models_tensorrt_config}
 }
 
@@ -120,5 +139,11 @@ Run_benchmark_status=$?
 
 # Check converter result and return value
 echo "Run x86 TensorRT GPU ended on device ${cuda_device_id}"
+
+if [[ ${Run_benchmark_status} != 0 ]];then
+    echo "Run_TensorRT_PID failed"
+    cat ${run_tensorrt_log_file}
+fi
+
 Print_Benchmark_Result $run_benchmark_result_file
 exit ${Run_benchmark_status}
