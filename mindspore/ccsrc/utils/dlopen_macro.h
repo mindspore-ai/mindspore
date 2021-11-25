@@ -16,17 +16,31 @@
 
 #ifndef MINDSPORE_CCSRC_UTILS_DLOPEN_MACRO_H
 #define MINDSPORE_CCSRC_UTILS_DLOPEN_MACRO_H
+
+#ifndef _WIN32
 #include <dlfcn.h>
+#else
+#include <windows.h>
+#undef ERROR
+#undef SM_DEBUG
+#undef Yield
+#endif
 #include <string>
 #include <functional>
 #include "utils/log_adapter.h"
 
-#define PLUGIN_METHOD(name, return_type, params...)                        \
-  extern "C" {                                                             \
-  __attribute__((visibility("default"))) return_type Plugin##name(params); \
-  }                                                                        \
-  constexpr const char *k##name##Name = "Plugin" #name;                    \
-  using name##FunObj = std::function<return_type(params)>;                 \
+#ifndef _WIN32
+#define PORTABLE_EXPORT __attribute__((visibility("default")))
+#else
+#define PORTABLE_EXPORT __declspec(dllexport)
+#endif
+
+#define PLUGIN_METHOD(name, return_type, params...)        \
+  extern "C" {                                             \
+  PORTABLE_EXPORT return_type Plugin##name(params);        \
+  }                                                        \
+  constexpr const char *k##name##Name = "Plugin" #name;    \
+  using name##FunObj = std::function<return_type(params)>; \
   using name##FunPtr = return_type (*)(params);
 
 #define ORIGIN_METHOD(name, return_type, params...)        \
@@ -38,15 +52,23 @@
   using name##FunPtr = return_type (*)(params);
 
 inline static std::string GetDlErrorMsg() {
+#ifndef _WIN32
   const char *result = dlerror();
   return (result == nullptr) ? "Unknown" : result;
+#else
+  return std::to_string(GetLastError());
+#endif
 }
 
 template <class T>
 static T DlsymWithCast(void *handle, const char *symbol_name) {
+#ifndef _WIN32
   T symbol = reinterpret_cast<T>(dlsym(handle, symbol_name));
+#else
+  T symbol = reinterpret_cast<T>(GetProcAddress(reinterpret_cast<HINSTANCE__ *>(handle), symbol_name));
+#endif
   if (symbol == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlsym symbol " << symbol_name << " failed, result = " << GetDlErrorMsg();
+    MS_LOG(EXCEPTION) << "Dynamically load symbol " << symbol_name << " failed, result = " << GetDlErrorMsg();
   }
   return symbol;
 }
