@@ -32,6 +32,8 @@ echo 'run common ut tests'
 
 # test cases of Converter
 ## ./lite-test --gtest_filter="TestTfliteParser*"
+./lite-test --gtest_filter="ConvActFusionInoutTest*"
+./lite-test --gtest_filter="ConvBiasFusionInoutTest*"
 
 # test cases of framework
 
