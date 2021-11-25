@@ -1,15 +1,21 @@
 diff -Npur grpc/..rej grpc-patch/..rej
 --- grpc/..rej	1970-01-01 08:00:00.000000000 +0800
 +++ grpc-patch/..rej	2021-04-22 21:00:17.343178600 +0800
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,28 @@
 +--- CMakeLists.txt	2020-02-27 03:12:33.000000000 +0800
 ++++ CMakeLists.txt	2021-04-07 21:27:12.317207600 +0800
-+@@ -12992,7 +12992,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
++@@ -12992,7 +12992,13 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
 + add_executable(grpc_cpp_plugin
 +   src/compiler/cpp_plugin.cc
 + )
 +-
-++set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
+++if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+++    set(CMAKE_MACOSX_RPATH 1)
+++    set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+++else()
+++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
+++endif()
 + target_include_directories(grpc_cpp_plugin
 +   PRIVATE
 +     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -27,15 +33,21 @@ diff -Npur grpc/..rej grpc-patch/..rej
 diff -Npur grpc/.rej grpc-patch/.rej
 --- grpc/.rej	1970-01-01 08:00:00.000000000 +0800
 +++ grpc-patch/.rej	2021-04-22 21:03:38.192349100 +0800
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,28 @@
 +--- grpc/CMakeLists.txt	2020-02-27 03:12:33.000000000 +0800
 ++++ grpc-patch/CMakeLists.txt	2021-04-07 21:27:12.317207600 +0800
-+@@ -12992,7 +12992,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
++@@ -12992,7 +12992,13 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
 + add_executable(grpc_cpp_plugin
 +   src/compiler/cpp_plugin.cc
 + )
 +-
-++set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
+++if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+++    set(CMAKE_MACOSX_RPATH 1)
+++    set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+++else()
+++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
+++endif()
 + target_include_directories(grpc_cpp_plugin
 +   PRIVATE
 +     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -107,12 +119,18 @@ diff -Npur grpc/CMakeLists.txt grpc-patch/CMakeLists.txt
  if(WIN32 AND MSVC)
    set_target_properties(upb PROPERTIES COMPILE_PDB_NAME "upb"
      COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-@@ -12992,7 +13004,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
+@@ -12992,7 +13004,13 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
  add_executable(grpc_cpp_plugin
    src/compiler/cpp_plugin.cc
  )
 -
-+set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
++if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
++    set(CMAKE_MACOSX_RPATH 1)
++    set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
++else()
++    set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
++endif()
  target_include_directories(grpc_cpp_plugin
    PRIVATE
      ${CMAKE_CURRENT_SOURCE_DIR}

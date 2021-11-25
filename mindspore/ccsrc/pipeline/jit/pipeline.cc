@@ -66,7 +66,7 @@
 #endif
 #endif
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
@@ -881,7 +881,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   const std::string &server_mode = ps::PSContext::instance()->server_mode();
   if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
       ps::PSContext::instance()->is_server()) {
@@ -1442,7 +1442,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
@@ -1661,7 +1661,7 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   RecordExitStatus();
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();

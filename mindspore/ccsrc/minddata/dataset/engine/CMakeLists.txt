@@ -1,8 +1,6 @@
 add_subdirectory(datasetops)
 add_subdirectory(opt)
-if(NOT APPLE)
-    add_subdirectory(gnn)
-endif()
+add_subdirectory(gnn)
 add_subdirectory(ir)
 
 message("ENABLE_SECURITY = ${ENABLE_SECURITY}")
@@ -49,12 +47,10 @@ add_dependencies(engine
     engine-datasetops
     engine-datasetops-source
     engine-opt
+    engine-gnn
     engine-cache-client
     engine-datasetops-mapop
     )
-if(NOT APPLE)
-    add_dependencies(engine engine-gnn)
-endif()
 
 if(NOT ENABLE_SECURITY)
     add_dependencies(engine engine-perf)

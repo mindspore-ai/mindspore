@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _PS_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if(NOT ENABLE_CPU OR WIN32 OR APPLE)
+if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info_builder.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "scheduler.cc")

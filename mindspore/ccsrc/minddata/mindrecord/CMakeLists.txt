@@ -48,4 +48,6 @@ else()
     endif()
 endif()
 
-set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+endif()

@@ -29,11 +29,6 @@ option(ENABLE_SYM_FILE "enable sym file" OFF)
 option(BUILD_DEV_MODE "MindSpore build nightly dev mode" OFF)
 option(ENABLE_FAST_HASH_TABLE "Enable use fast hash table instead of std ones" ON)
 
-
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(ENABLE_DEBUGGER OFF)
-endif()
-
 if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL AND NOT ENABLE_GE)
     set(ENABLE_GLIBCXX ON)
 endif()
@@ -143,7 +138,7 @@ endif()
 if(ENABLE_DEBUGGER OR ENABLE_TESTCASES)
     set(MS_BUILD_GRPC ON)
 endif()
-if(ENABLE_MINDDATA AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+if(ENABLE_MINDDATA AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(MS_BUILD_GRPC ON)
 endif()
 
@@ -155,7 +150,7 @@ if(ENABLE_ACL AND NOT ENABLE_D)
     set(MODE_ASCEND_ACL ON)
 endif()
 
-if(ENABLE_CPU AND NOT WIN32 AND NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+if(ENABLE_CPU AND NOT WIN32)
     add_compile_definitions(ENABLE_ARMOUR)
 endif()
 

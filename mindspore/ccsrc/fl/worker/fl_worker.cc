@@ -104,10 +104,14 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
     std::this_thread::yield();
   }
 
+#ifdef __APPLE__
+  std::shared_ptr<unsigned char> message(new unsigned char[size], std::default_delete<unsigned char[]>());
+#else
   std::shared_ptr<unsigned char[]> message;
   std::unique_ptr<unsigned char[]> message_addr = std::make_unique<unsigned char[]>(size);
   MS_EXCEPTION_IF_NULL(message_addr);
   message = std::move(message_addr);
+#endif
   MS_EXCEPTION_IF_NULL(message);
 
   uint64_t src_size = size;

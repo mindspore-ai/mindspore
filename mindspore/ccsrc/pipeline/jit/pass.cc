@@ -49,7 +49,7 @@
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -218,7 +218,7 @@ namespace {
 bool ReAutoMonadWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return ReAutoMonad(root); }
 
 bool parallel_mode() {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }
@@ -603,7 +603,7 @@ bool SliceRecomputeActivationPass(const ResourcePtr &res) {
 
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
   }

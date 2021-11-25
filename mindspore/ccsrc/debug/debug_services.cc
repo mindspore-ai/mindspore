@@ -37,10 +37,19 @@
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
-#include "linux/limits.h"
+#include "climits"
 #ifdef ONLINE_DBG_MODE
 namespace mindspore {
 #endif
+
+namespace {
+#ifdef __APPLE__
+constexpr int kStrErrorNone = 0;
+#else
+constexpr char *kStrErrorNone = nullptr;
+#endif
+}  // namespace
+
 DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
 
 DebugServices::DebugServices(const DebugServices &other) {
@@ -632,7 +641,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     const int kMaxFilenameLength = 128;
     char err_info[kMaxFilenameLength];
     auto ret = strerror_r(errno, err_info, sizeof(err_info));
-    if (ret != nullptr) {
+    if (ret != kStrErrorNone) {
       MS_LOG(ERROR) << " ErrInfo:" << ret;
     }
     return;
@@ -1059,7 +1068,7 @@ void DebugServices::ReadGraphRunIter(std::string file_path, std::tuple<uint32_t,
     MS_LOG(ERROR) << "Failed to open file (In ReadGraphRunIter) " << file_path << " Errno:" << errno;
     const int kMaxFilenameLength = NAME_MAX;
     char err_info[kMaxFilenameLength];
-    if (strerror_r(errno, err_info, sizeof(err_info)) != nullptr) {
+    if (strerror_r(errno, err_info, sizeof(err_info)) != kStrErrorNone) {
       MS_LOG(ERROR) << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
     }
 
@@ -1190,7 +1199,7 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
                                            std::vector<std::shared_ptr<TensorData>> *result_list) {
   std::string time_stamp = "";
   std::string type_name = "";
-  uint64_t data_size = 0;
+  size_t data_size = 0;
   std::vector<int64_t> shape;
   std::vector<char> *buffer = nullptr;
   if (found) {

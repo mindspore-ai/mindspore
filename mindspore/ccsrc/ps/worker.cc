@@ -227,7 +227,11 @@ bool Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
 
   std::string kv_data = embedding_table_meta.SerializeAsString();
 
+#ifdef __APPLE__
+  std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
   std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
   size_t dest_size = kv_data.length();
   int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
   if (ret != 0) {
@@ -293,8 +297,11 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     if (messages.at(i).first) {
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
-
+#ifdef __APPLE__
+      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
       size_t dest_size = kv_data.length();
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
@@ -382,7 +389,11 @@ bool Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
+#ifdef __APPLE__
+      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
       size_t dest_size = kv_data.length();
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
@@ -403,7 +414,11 @@ void Worker::Finalize() {
     kvs.add_keys(0);
     kvs.add_values(0.0f);
     std::string kv_data = kvs.SerializeAsString();
+#ifdef __APPLE__
+    std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
     std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
     size_t dest_size = kv_data.length();
     int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
     if (ret != 0) {
@@ -644,7 +659,11 @@ void Worker::PushData(const std::vector<Key> &keys, const std::vector<float> &va
       SendForPush(cmd, kvs, worker_init_embedding_partitioner_, {});
     } else {
       std::string kv_data = kvs.SerializeAsString();
+#ifdef __APPLE__
+      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
       size_t dest_size = kv_data.length();
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
@@ -950,7 +969,11 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
+#ifdef __APPLE__
+      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
       size_t dest_size = kv_data.length();
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
@@ -977,7 +1000,11 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
       rank_ids.push_back(i);
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
+#ifdef __APPLE__
+      std::shared_ptr<unsigned char> res(new unsigned char[kv_data.length()], std::default_delete<unsigned char[]>());
+#else
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
+#endif
       size_t dest_size = kv_data.length();
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {

@@ -10,3 +10,8 @@ diff -Npur libevent/CMakeLists.txt libevent-modify/CMakeLists.txt
  endif()
  
  if (NOT EVENT__DISABLE_THREAD_SUPPORT)
+diff -Npur libevent/cmake/AddEventLibrary.cmake libevent-modify/cmake/AddEventLibrary.cmake
+--- libevent/cmake/AddEventLibrary.cmake	2020-07-05 20:02:46.000000000 +0800
++++ libevent-modify/cmake/AddEventLibrary.cmake	2021-04-19 16:36:57.982307500 +0800
+@@ -153,1 +153,0 @@
+-                INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"

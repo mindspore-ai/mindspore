@@ -33,7 +33,7 @@
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
 #include "pipeline/pynative/pynative_profiling.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
@@ -576,7 +576,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
     }
     add_need_alloc_nodes(input_node);
   }
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined(__APPLE__)))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   bool ps_cache_check = false;
 #endif
   for (auto &item : need_alloc_nodes) {
@@ -590,7 +590,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         continue;
       }
       DeviceAddressPtr device_address = nullptr;
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
       const std::string &param_name = item->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         MS_LOG(INFO) << "Parameter(" << param_name << ")"
@@ -1598,7 +1598,7 @@ void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph &graph,
                                              AnfNodePtr *const first_cache_input_index,
                                              size_t *const first_cache_size) {

@@ -31,15 +31,13 @@ Common imported modules in corresponding API examples are as follows:
     from mindspore.dataset.transforms import c_transforms
 """
 
-import platform
 from .core import config
 from .engine import *
 from .engine.cache_client import DatasetCache
 from .engine.datasets import *
+from .engine.graphdata import GraphData
 from .engine.samplers import *
 from .engine.serializer_deserializer import compare, deserialize, serialize, show
-if platform.system().lower() != "darwin":
-    from .engine.graphdata import GraphData
 
 __all__ = []
 __all__.extend(engine.__all__)
