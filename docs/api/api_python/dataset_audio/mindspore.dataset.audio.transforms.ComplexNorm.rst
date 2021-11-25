@@ -7,15 +7,13 @@ mindspore.dataset.audio.transforms.ComplexNorm
 
     **参数：**
 
-        - **power** (float, optional)：范数的幂，取值非负（默认为1.0）。
+    **power** (float, optional)：范数的幂，取值非负（默认为1.0）。
 
     **样例：**
 
-        .. code-block::
-
-            >>> import numpy as np
-            >>>
-            >>> waveform = np.random.random([2, 4, 2])
-            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-            >>> transforms = [audio.ComplexNorm()]
-            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    >>> import numpy as np
+    >>>
+    >>> waveform = np.random.random([2, 4, 2])
+    >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+    >>> transforms = [audio.ComplexNorm()]
+    >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])

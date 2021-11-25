@@ -10,22 +10,18 @@ mindspore.dataset.WaitedDSCallback
 
     **参数：**
 
-       - **step_size** (int, optional)：每个step包含的数据行数。step大小通常与batch大小相等（默认值为1）。
-
+    **step_size** (int, optional)：每个step包含的数据行数。step大小通常与batch大小相等（默认值为1）。
 
     **样例：**
 
-        .. code-block::
-
-            >>> from mindspore.dataset import WaitedDSCallback
-            >>>
-            >>> my_cb = WaitedDSCallback(32)
-            >>> # dataset为任意数据集实例
-            >>> data = data.map(operations=AugOp(), callbacks=my_cb)
-            >>> data = data.batch(32)
-            >>> # 定义网络
-            >>> model.train(epochs, data, callbacks=[my_cb])
-
+    >>> from mindspore.dataset import WaitedDSCallback
+    >>>
+    >>> my_cb = WaitedDSCallback(32)
+    >>> # dataset为任意数据集实例
+    >>> data = data.map(operations=AugOp(), callbacks=my_cb)
+    >>> data = data.batch(32)
+    >>> # 定义网络
+    >>> model.train(epochs, data, callbacks=[my_cb])
 
     .. py:method:: begin(run_context)
 
@@ -33,8 +29,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **run_context** (RunContext)：网络训练运行信息。
-
+        **run_context** (RunContext)：网络训练运行信息。
 
     .. py:method:: ds_begin(ds_run_context)
 
@@ -42,8 +37,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_epoch_begin(ds_run_context)
 
@@ -52,8 +46,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **ds_run_context**：数据处理管道运行信息。
-
+        **ds_run_context**：数据处理管道运行信息。
 
     .. py:method:: ds_epoch_end(ds_run_context)
 
@@ -61,8 +54,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_step_begin(ds_run_context)
 
@@ -71,8 +63,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **ds_run_context**：数据处理管道运行信息。
-
+        **ds_run_context**：数据处理管道运行信息。
 
     .. py:method:: ds_step_end(ds_run_context)
 
@@ -80,8 +71,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: end(run_context)
 
@@ -89,8 +79,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **run_context**：网络训练运行信息。
-
+        **run_context**：网络训练运行信息。
 
     .. py:method:: epoch_begin(run_context)
 
@@ -98,8 +87,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **run_context** (RunContext)：网络训练运行信息。
-
+        **run_context** (RunContext)：网络训练运行信息。
 
     .. py:method:: epoch_end(run_context)
 
@@ -107,8 +95,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **run_context**：网络训练运行信息。
-
+        **run_context**：网络训练运行信息。
 
     .. py:method:: step_begin(run_context)
 
@@ -116,8 +103,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **run_context** (RunContext)：网络训练运行信息。
-
+        **run_context** (RunContext)：网络训练运行信息。
 
     .. py:method:: step_end(run_context)
 
@@ -125,8 +111,7 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            **run_context**：网络训练运行信息。
-
+        **run_context**：网络训练运行信息。
 
     .. py:method:: sync_epoch_begin(train_run_context, ds_run_context)
 
@@ -134,9 +119,8 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **train_run_context**：包含前一个epoch的反馈信息的网络训练运行信息。
-            - **ds_run_context**：数据处理管道运行信息。
-
+        - **train_run_context**：包含前一个epoch的反馈信息的网络训练运行信息。
+        - **ds_run_context**：数据处理管道运行信息。
 
     .. py:method:: sync_step_begin(train_run_context, ds_run_context)
 
@@ -144,5 +128,5 @@ mindspore.dataset.WaitedDSCallback
 
         **参数：**
 
-            - **train_run_context**：包含前一个step的反馈信息的网络训练运行信息。
-            - **ds_run_context**：数据处理管道运行信息。
+        - **train_run_context**：包含前一个step的反馈信息的网络训练运行信息。
+        - **ds_run_context**：数据处理管道运行信息。
