@@ -78,7 +78,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if device_num < 1 or device_num > 4096:
-            raise ValueError("Device num must be in [1, 4096], but got {}".format(device_num))
+            raise ValueError("The context configuration parameter 'device_num' must be in [1, 4096], "
+                             "but got the value of device_num : {}.".format(device_num))
         from mindspore.communication._comm_helper import _HCCL_TEST_AVAILABLE
         self._context_handle.set_hccl_test_avaible(_HCCL_TEST_AVAILABLE)
         self._context_handle.set_device_num(device_num)
@@ -100,7 +101,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if global_rank < 0 or global_rank > 4095:
-            raise ValueError("Global rank must be in [0, 4095], but got {}".format(global_rank))
+            raise ValueError("The context configuration parameter 'global_rank' must be in [0, 4095], "
+                             "but got the value of global_rank : {}.".format(global_rank))
         self._context_handle.set_global_rank(global_rank)
 
     def get_global_rank(self):
@@ -110,12 +112,11 @@ class _AutoParallelContext:
 
     def set_pipeline_stages(self, stages):
         """Set the stages of the pipeline"""
-        if isinstance(stages, bool):
-            raise TypeError("The type of pipeline_stage_num must be int, but got bool.")
-        if not isinstance(stages, int):
-            raise TypeError("The type of pipeline_stage_num must be int.")
+        if isinstance(stages, bool) or not isinstance(stages, int):
+            raise TypeError("The type of pipeline_stage_num must be int, but got the type : {}.".format(type(stages)))
         if stages < 1:
-            raise ValueError("pipeline_stage_num can't be less than 1.")
+            raise ValueError("The parameter pipeline_stage_num be greater or equal 1, "
+                             "but got the value of stages : {}.".format(stages))
         self.check_context_handle()
         self._context_handle.set_pipeline_stage_split_num(stages)
 
@@ -174,7 +175,8 @@ class _AutoParallelContext:
             loss_repeated_mean (bool): The loss_repeated_mean flag.
         """
         if not isinstance(loss_repeated_mean, bool):
-            raise TypeError(f"The type of loss_repeated_mean must be bool, but got {type(loss_repeated_mean)}.")
+            raise TypeError("The type of context configuration parameter 'loss_repeated_mean' must be bool, "
+                            "but got the type : {}.".format(type(loss_repeated_mean)))
         self.check_context_handle()
         self._context_handle.set_loss_repeated_mean(loss_repeated_mean)
 
@@ -201,7 +203,9 @@ class _AutoParallelContext:
                              f"but got {parallel_mode.upper()}.")
         ret = self._context_handle.set_parallel_mode(parallel_mode)
         if ret is False:
-            raise ValueError("Parallel mode does not support {}".format(parallel_mode))
+            raise ValueError("The context configuration parameter 'parallel_mode' only support 'stand_alone', "
+                             "'data_parallel', 'hybrid_parallel', 'semi_auto_parallel' and 'auto_parallel', "
+                             "but got the value : {}.".format(parallel_mode))
 
     def get_parallel_mode(self):
         """Get parallel mode."""
@@ -220,7 +224,9 @@ class _AutoParallelContext:
         self.check_context_handle()
         ret = self._context_handle.set_strategy_search_mode(auto_parallel_search_mode)
         if ret is False:
-            raise ValueError("Strategy search mode does not support {}".format(auto_parallel_search_mode))
+            raise ValueError("The context configuration parameter 'auto_parallel_search_mode' only support "
+                             "'recursive_programming' and 'dynamic_programming', but got the value : {}."
+                             .format(auto_parallel_search_mode))
 
     def get_strategy_search_mode(self):
         """Get search mode of strategy."""
@@ -284,19 +290,21 @@ class _AutoParallelContext:
         self.check_context_handle()
         if isinstance(dataset_strategy, str):
             if dataset_strategy not in ("full_batch", "data_parallel"):
-                raise ValueError("The dataset_strategy string should be 'full_batch' or 'data_parallel', "
-                                 "otherwise, incoming tuple(tuple) type strategy")
+                raise ValueError("The context configuration parameter 'dataset_strategy' must be "
+                                 "'full_batch' or 'data_parallel', but got the value : {}.".format(dataset_strategy))
             self._context_handle.set_full_batch(dataset_strategy == "full_batch")
             self._dataset_strategy_using_str = True
             return
         if not isinstance(dataset_strategy, tuple):
-            raise TypeError(f'strategy must be str or tuple type, but got:{type(dataset_strategy)}')
+            raise TypeError("The type of context configuration parameter 'strategy' must be str or tuple type, "
+                            "but got the type : {}.".format(type(dataset_strategy)))
         for ele in dataset_strategy:
             if not isinstance(ele, tuple):
-                raise TypeError(f'The element of strategy must be tuple type, but got:{type(ele)}')
+                raise TypeError("The element of strategy must be tuple, but got the type : {} .".format(type(ele)))
             for dim in ele:
                 if not isinstance(dim, int):
-                    raise TypeError(f'The dim of each strategy value must be int type, but got:{type(dim)}')
+                    raise TypeError("The dim of each strategy value must be int type, "
+                                    "but got the type : {} .".format(type(dim)))
         self._dataset_strategy_using_str = False
         self._context_handle.set_dataset_strategy(dataset_strategy)
 
@@ -370,20 +378,22 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not indices:
-            raise ValueError('indices can not be empty')
+            raise ValueError("The parameter 'indices' can not be empty")
 
         if isinstance(indices, (list)):
             for index in indices:
                 if not isinstance(index, int) or isinstance(index, bool):
-                    raise TypeError(f"The type of index must be int, but got {type(index)}.")
+                    raise TypeError("The type of parameter 'index' must be int, but got the type : {} ."
+                                    .format(type(index)))
         else:
-            raise TypeError('indices must be a python list')
+            raise TypeError("The type of parameter 'indices' must be a python list, but got the type : {} ."
+                            .format(type(indices)))
 
         if len(set(indices)) != len(indices):
-            raise ValueError('indices has duplicate elements')
+            raise ValueError("The indices has duplicate elements")
 
         if sorted(indices) != indices:
-            raise ValueError('elements in indices must be sorted in ascending order')
+            raise ValueError("The elements in indices must be sorted in ascending order")
 
         new_group = self._check_and_default_group(group)
 
@@ -424,9 +434,10 @@ class _AutoParallelContext:
         if isinstance(sizes, (list)):
             for size in sizes:
                 if not isinstance(size, int) or isinstance(size, bool):
-                    raise TypeError(f"The type of size must be int, but got {type(size)}.")
+                    raise TypeError("The type of size must be int, but got the type : {}.".format(type(size)))
         else:
-            raise TypeError('sizes must be a python list')
+            raise TypeError("The type of parameter 'sizes' must be a python list, but got the type : {}."
+                            .format(type(sizes)))
 
         new_group = self._check_and_default_group(group)
         self._context_handle.set_all_reduce_fusion_split_sizes(sizes, new_group)
@@ -459,7 +470,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_all_reduce_fusion, bool):
-            raise TypeError('enable_all_reduce_fusion is invalid type')
+            raise TypeError("The type of parameter 'enable_all_reduce_fusion' must be bool, "
+                            "but got the type : {}.".format(type(enable_all_reduce_fusion)))
         self._context_handle.set_enable_all_reduce_fusion(enable_all_reduce_fusion)
 
     def get_enable_all_reduce_fusion(self):
@@ -486,7 +498,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_parallel_optimizer, bool):
-            raise TypeError('enable_parallel_optimizer is invalid type')
+            raise TypeError("The type of parameter 'enable_parallel_optimizer' must be bool, "
+                            "but got the type : {}.".format(type(enable_parallel_optimizer)))
         self._context_handle.set_enable_parallel_optimizer(enable_parallel_optimizer)
 
     def get_enable_parallel_optimizer(self):
@@ -541,7 +554,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(sharding_propagation, bool):
-            raise TypeError("'sharding_propagation' is an invalid type.")
+            raise TypeError("The type of parameter 'sharding_propagation' must be bool, "
+                            "but got the type : {}.".format(type(sharding_propagation)))
         self._context_handle.set_sharding_propagation(sharding_propagation)
 
     def get_sharding_propagation(self):
@@ -559,7 +573,8 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         if not isinstance(enable_a2a, bool):
-            raise TypeError("'enable_a2a' is an invalid type.")
+            raise TypeError("The type of parameter 'enable_a2a' must be bool, "
+                            "but got the type : {}.".format(type(enable_a2a)))
         self._context_handle.set_enable_alltoall(enable_a2a)
 
     def get_enable_alltoall(self):
@@ -578,12 +593,14 @@ class _AutoParallelContext:
             ValueError: If parallel mode is not supported.
         """
         if not isinstance(communi_parallel_mode, str):
-            raise TypeError(f"The type of communi_parallel_mode must be str, \
-                but got {type(communi_parallel_mode)}.")
+            raise TypeError("The type of parameter 'communi_parallel_mode' must be str, "
+                            "but got the type : {}.".format(type(communi_parallel_mode)))
         self.check_context_handle()
         ret = self._context_handle.set_communi_parallel_mode(communi_parallel_mode)
         if ret is False:
-            raise ValueError("Communication parallel mode does not support {}".format(communi_parallel_mode))
+            raise ValueError("The parameter 'communi_parallel_mode' only support 'ALL_GROUP_PARALLEL', "
+                             "'SAME_SEVER_GROUP_PARALLEL' and 'NO_GROUP_PARALLEL', but got the value : {}."
+                             .format(communi_parallel_mode))
 
     def get_communi_parallel_mode(self):
         """Get communication parallel mode."""

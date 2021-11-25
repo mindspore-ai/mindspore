@@ -2997,25 +2997,31 @@ Status ParallelInit() {
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (split_stage_num <= 0) {
-    MS_LOG(ERROR) << "Invalid stage num " << split_stage_num << ", expected a positive stage number";
+    MS_LOG(ERROR) << "The parameter 'split_stage_num' must be a positive number, but got the value : "
+                  << split_stage_num;
     return FAILED;
   }
   auto comm_info = GetCommInfo();
   int64_t device_num = comm_info.device_num;
   int64_t global_rank = comm_info.global_rank;
   if ((device_num <= 0) || (device_num > MAX_DEVICE_NUM)) {
-    MS_LOG(ERROR) << "Invalid device num " << device_num;
+    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
+                     "but got the value of device_num: "
+                  << device_num;
     return FAILED;
   }
 
   // the device_num maybe get from communication interface
   if (device_num % split_stage_num != 0) {
-    MS_LOG(ERROR) << "Device num " << device_num << "  can't be divided by stage num " << split_stage_num;
+    MS_LOG(ERROR) << "The parameter 'device_num' must be divided by 'split_stage_num', but got the device_num : "
+                  << device_num << "and the split_stage_num : " << split_stage_num;
     return FAILED;
   }
 
   if ((global_rank < 0) || (global_rank >= device_num)) {
-    MS_LOG(ERROR) << "Global rank " << global_rank << " is out of range, the device num is " << device_num;
+    MS_LOG(ERROR) << "The parameter 'global_rank' must be  greater than 0 and less equal 'device num', "
+                     "but got the global_rank : "
+                  << global_rank << "and the device_num : " << device_num;
     return FAILED;
   }
 
@@ -3034,7 +3040,7 @@ Status ParallelInit() {
     return FAILED;
   }
 
-  MS_LOG(INFO) << "The parallel context: dev num: " << device_num << ", global rank: " << global_rank
+  MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: " << global_rank
                << ", communication_backend: " << comm_info.communication_backend
                << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();

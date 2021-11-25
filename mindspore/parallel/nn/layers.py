@@ -204,7 +204,8 @@ class _LayerNorm(Cell):
     def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32):
         super(_LayerNorm, self).__init__()
         if param_init_type not in [mstype.float32, mstype.float16]:
-            raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
+            raise TypeError("The type of parameter 'param_init_type' should in [float32, float16], "
+                            "but got the type : {}.".format(type(param_init_type)))
         if normalized_shape[0] <= 1024:
             self.layer_norm = P.LayerNorm(begin_norm_axis=-1,
                                           begin_params_axis=-1,
@@ -335,12 +336,14 @@ class _Linear(Cell):
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         if param_init_type not in [mstype.float32, mstype.float16]:
-            raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
+            raise TypeError("The type of parameter 'param_init_type' should in [float32, float16], "
+                            "but got the type : {}.".format(type(param_init_type)))
+
         if activation and not isinstance(activation, str):
-            raise ValueError("Activation can only be str, but found type {}".format(activation))
+            raise TypeError("The type of parameter 'activation' must be str, but got type {}".format(type(activation)))
         if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels):
-            raise ValueError("Weight init shape error.")
+            raise ValueError("The shape of parameter 'weight_init' is error, please check shape of 'weight_init'.")
         weight_shape = [out_channels, in_channels] if transpose_b else [in_channels, out_channels]
         self.expert_num = expert_num
         if self.expert_num > 1:
@@ -356,13 +359,14 @@ class _Linear(Cell):
         self.has_bias = has_bias
         if self.has_bias:
             if isinstance(bias_init, Tensor) and (bias_init.ndim != 1 or bias_init.shape[0] != out_channels):
-                raise ValueError("Bias init shape error.")
+                raise ValueError("The shape of parameter 'bias_init' is error, please check shape of 'bias_init'.")
             self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
             self.bias_add = P.Add()
         self.act_name = activation
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
+            raise TypeError("The type of parameter 'activation' must be str or Cell or Primitive, "
+                            "but got the type {}".format(type(activation)))
         self.activation_flag = self.activation is not None
         self.dtype = compute_dtype
         self.cast = P.Cast()
@@ -409,7 +413,8 @@ class _Linear(Cell):
                 self.activation.rec.shard(strategy_activation)
                 self.activation.log.shard(strategy_activation)
             elif self.act_name.lower() == "logsoftmax":
-                raise ValueError("logsoftmax is not supported.")
+                raise ValueError("The 'LogSoftmax' function is not supported in semi auto parallel "
+                                 "or auto parallel mode.")
             else:
                 getattr(self.activation, self.act_name).shard(strategy_activation)
 
@@ -516,14 +521,15 @@ class FixedSparseAttention(nn.Cell):
         self.parallel_config = parallel_config
         size_per_head_list = [64, 128]
         if self.seq_length != 1024:
-            raise ValueError("seq_length only supports 1024 for now.")
+            raise ValueError("The parameter of 'seq_length' must be 1024, but got the value : {}.".format(seq_length))
         if self.block_size != 64:
-            raise ValueError("block_size only supports 64 for now.")
+            raise ValueError("The parameter of 'block_size' must be 64, but got the value : {}.".format(block_size))
         if num_different_global_patterns != 4:
-            raise ValueError("num_different_global_patterns only supports 4 for now.")
+            raise ValueError("The parameter of 'num_different_global_patterns' must be 4, "
+                             "but got the value : {}".format(num_different_global_patterns))
         if self.size_per_head not in size_per_head_list:
-            raise ValueError(f"size_per_head only supports {size_per_head_list} for now, "
-                             f"but found {self.size_per_head}")
+            raise ValueError("The parameter of 'size_per_head' only supports {}, "
+                             "but got the value : {}.".format(size_per_head_list, self.size_per_head))
         local_ones = np.ones((self.block_size, self.block_size),
                              dtype=np.float16)
         global_mask_original = np.ones((self.seq_length, self.global_size), dtype=np.float16)

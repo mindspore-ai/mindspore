@@ -250,11 +250,11 @@ class _CostModelContext:
             ValueError: If context handle is none, or phase is not in {0, 1}.
         """
         if not isinstance(phase, int) or isinstance(phase, bool):
-            raise TypeError(f"The type of communi_const must be int, but got {type(phase)}.")
+            raise TypeError(f"The type of parameter 'communi_const' must be int, but got {type(phase)}.")
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
         if phase not in (0, 1):
-            raise ValueError("The argument of set_run_phase() must be '0' or '1', but got {}".format(phase))
+            raise ValueError("The parameter of 'phase' must be '0' or '1', but got {}".format(phase))
         self._context_handle.set_run_phase(phase)
 
     def get_run_phase(self):
@@ -279,7 +279,7 @@ class _CostModelContext:
             ValueError: If context handle is none.
         """
         if not isinstance(single_loop, bool):
-            raise TypeError(f"The type of single_loop must be bool, but got {type(single_loop)}.")
+            raise TypeError(f"The type of parameter 'single_loop' must be bool, but got {type(single_loop)}.")
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
         self._context_handle.set_dp_algo_single_loop(single_loop)

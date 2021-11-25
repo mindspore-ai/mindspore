@@ -68,11 +68,11 @@ def _check_parallel_envs():
     import os
     rank_id_str = os.getenv("RANK_ID")
     if not rank_id_str:
-        raise RuntimeError("Environment variables RANK_ID has not been exported")
+        raise RuntimeError("Environment variables RANK_ID has not been exported, please export variables 'RANK_ID'.")
     try:
         int(rank_id_str)
     except ValueError:
-        print("RANK_ID should be number")
+        print("The parameter 'RANK_ID' should be number, but got {}".format(type(rank_id_str)))
     finally:
         pass
     rank_table_file_str = os.getenv("MINDSPORE_HCCL_CONFIG_PATH")
@@ -120,14 +120,16 @@ def init(backend_name=None):
         elif device_target == "GPU":
             backend_name = "nccl"
         else:
-            raise RuntimeError("Device target {} is not supported in parallel initialization, "
-                               "please use Ascend or GPU.".format(device_target))
+            raise RuntimeError("The context configuration parameter 'device_target' {} is not supported in "
+                               "parallel initialization, please use Ascend or GPU.".format(device_target))
     if not isinstance(backend_name, str):
-        raise TypeError("Backend name must be a string, but got {}".format(type(backend_name)))
+        raise TypeError("The context configuration parameter 'backend_name' must be a string, "
+                        "but got the type : {}".format(type(backend_name)))
 
     if backend_name == "hccl":
         if device_target != "Ascend":
-            raise RuntimeError("Device target should be 'Ascend' to init hccl, but got {}".format(device_target))
+            raise RuntimeError("The context configuration parameter 'device_target' should be 'Ascend' to init hccl, "
+                               "but got {}".format(device_target))
         if not mpi_init:
             _check_parallel_envs()
             GlobalComm.BACKEND = Backend("hccl")
@@ -142,7 +144,8 @@ def init(backend_name=None):
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
         GlobalComm.INITED = True
     else:
-        raise RuntimeError("Backend name {} is not supported.".format(backend_name))
+        raise RuntimeError("The context configuration parameter 'backend_name' {} is not supported, "
+                           "please use hccl or nccl.".format(backend_name))
 
 
 def release():
@@ -189,7 +192,8 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     >>> # the result is the rank_id in world_group
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -223,7 +227,8 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         local_rank is: 1, world_rank is 9
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_local_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -256,7 +261,8 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         group_size is: 8
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -289,7 +295,8 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         local_rank_size is: 8
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_local_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
@@ -328,7 +335,8 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         world_rank_id is: 4
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_world_rank_from_group_rank_helper(group=group, group_rank_id=group_rank_id, backend=GlobalComm.BACKEND)
 
 
@@ -367,7 +375,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         group_rank_id is: 1
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     return _get_group_rank_from_world_rank_helper(world_rank_id=world_rank_id, group=group, backend=GlobalComm.BACKEND)
 
 
@@ -405,7 +414,8 @@ def create_group(group, rank_ids):
         >>> allreduce = ops.AllReduce(group)
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the value : {}".format(type(group)))
     _create_group_helper(group, rank_ids, backend=GlobalComm.BACKEND)
 
 
@@ -427,5 +437,6 @@ def destroy_group(group):
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
     """
     if not isinstance(group, str):
-        raise TypeError("Group name must be a string, but got {}".format(type(group)))
+        raise TypeError("The context configuration parameter 'group' must be a string, "
+                        "but got the type : {}".format(type(group)))
     _destroy_group_helper(group, backend=GlobalComm.BACKEND)

@@ -30,32 +30,43 @@ DeviceManagerPtr g_device_manager = nullptr;
 bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &backend,
                 const std::vector<int64_t> &stage) {
   if (device_num <= 0) {
-    MS_LOG(ERROR) << "'device_num' must be positive.";
+    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
+                     "but got the value of device_num: "
+                  << device_num;
     return false;
   }
   if (global_rank < 0) {
-    MS_LOG(ERROR) << "'global_rank' must be nonnegative.";
+    MS_LOG(ERROR) << "The context configuration parameter 'global_rank' must be nonnegative, "
+                     "but got the value of global_rank: "
+                  << global_rank;
     return false;
   }
   if (device_num > MAX_DEVICE_NUM) {
-    MS_LOG(ERROR) << "'device_num' must be no more than " << MAX_DEVICE_NUM << ".";
+    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be no more than " << MAX_DEVICE_NUM
+                  << ", but got the value of device_num: " << device_num;
     return false;
   }
   // 'device_num_converted' must be the power of 2
   if ((LongToUlong(device_num) & LongToUlong(device_num - 1)) != 0) {
-    MS_LOG(ERROR) << "'device_num' must be the power of 2.";
+    MS_LOG(ERROR) << "The context configuration parameter device_num' must be the power of 2, "
+                     "but got the value of device_num: "
+                  << device_num;
     return false;
   }
   if (global_rank >= device_num) {
-    MS_LOG(ERROR) << "'global_rank' must be less than 'device_num'.";
+    MS_LOG(ERROR) << "The context configuration parameter 'global_rank' must be less than 'device_num', "
+                     "but got the value of global_rank: "
+                  << global_rank << ", and the value of device_num: " << device_num;
     return false;
   }
   if ((backend != HCCL_BACKEND) && (backend != NCCL_BACKEND) && (backend != UNDEFINED_BACKEND)) {
-    MS_LOG(ERROR) << "Invalid backend: " << backend;
+    MS_LOG(ERROR) << "The context configuration parameter 'backend' must be hccl, nccl "
+                     "or undefined_backend, but got invalid backend: "
+                  << backend;
     return false;
   }
   if (stage.empty()) {
-    MS_LOG(ERROR) << "The size of stage must be positive";
+    MS_LOG(ERROR) << "The size of parameter 'stage' must be positive, but got the size of stage is empty.";
     return false;
   }
 
@@ -67,7 +78,7 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
   int64_t summed_value = 0;
   for (auto begin = stage.begin(); begin != stage.end(); ++begin) {
     if (*begin <= 0) {
-      MS_LOG(ERROR) << "The value in the pipeline stages should be positive value";
+      MS_LOG(ERROR) << "The value in the pipeline stages should be positive value, but got the value: " << *begin;
       return false;
     }
     summed_value += *begin;
@@ -75,8 +86,9 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
   }
 
   if (summed_value != device_num) {
-    MS_LOG(ERROR) << "The sum of the pipeline stage :" << summed_value << " is not equal to the device_num "
-                  << device_num;
+    MS_LOG(ERROR) << "The sum of the pipeline stage must be equal to the device_num, "
+                     "but got sum of the pipeline stage :"
+                  << summed_value << " and the device_num : " << device_num;
     return false;
   }
 
@@ -144,12 +156,15 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, const RankList &stage_map,
                            const std::string &backend) {
   if ((backend != HCCL_BACKEND) && (backend != NCCL_BACKEND) && (backend != UNDEFINED_BACKEND)) {
-    MS_LOG(ERROR) << "Invalid backend: " << backend;
+    MS_LOG(ERROR) << "The context configuration parameter 'backend' must be hccl, nccl "
+                     "or undefined_backend, but got invalid backend: "
+                  << backend;
     return FAILED;
   }
 
   if (stage_map.empty() || devices.empty()) {
-    MS_LOG(ERROR) << "The size of stage_map and devices must be positive";
+    MS_LOG(ERROR) << "The size of stage_map and devices must be positive, but got the size of stage_map: "
+                  << stage_map.size() << ", and the size of devices : " << devices.size();
     return FAILED;
   }
 
@@ -162,11 +177,12 @@ Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, 
   for (auto &stage : stage_map) {
     int64_t num_device = stage;
     if (num_device > MAX_DEVICE_NUM) {
-      MS_LOG(ERROR) << "The number of 'devices' in a stage must not be greater than " << MAX_DEVICE_NUM;
+      MS_LOG(ERROR) << "The number of 'devices' in a stage must not be greater than " << MAX_DEVICE_NUM
+                    << ", but got the number of 'devices' in a stage: " << num_device;
       return FAILED;
     }
     if (num_device <= 0) {
-      MS_LOG(ERROR) << "The number of 'devices' in a stage must be positive";
+      MS_LOG(ERROR) << "The number of 'devices' in a stage must be positive, but got the num_device: " << num_device;
       return FAILED;
     }
     RankList curr_dev_list;
