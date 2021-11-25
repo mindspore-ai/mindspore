@@ -417,8 +417,9 @@ class ProfilingManager {
   Status RegisterTracingNode(std::shared_ptr<Tracing> node);
 
   /// \brief API to initialize profiling manager
+  /// \param for_autotune flag to indicate if Profiler is initialized for autotuning or profiling purposes
   /// \return Status object with the error code
-  Status Init();
+  Status Init(bool for_autotune = false);
 
   /// \brief API to signal the profiling nodes to start collecting data
   /// \return Status object with the error code
@@ -436,12 +437,13 @@ class ProfilingManager {
   /// \return number of epochs
   int32_t GetNumOfProfiledEpochs() { return epoch_end_step_.size() - 1; }
 
-  /// Determine if the Profiler is being used for autotuning_
+  /// Determine if the Profiler is being used for autotuning.
   /// \return boolean
   bool IsAutotuning() { return autotuning_; }
 
-  /// \brief Setter for autotuning_ bool flag
-  void EnableAutotuneFlag() { autotuning_ = true; }
+  /// Determine if the Profiler is being used for profiling.
+  /// \return boolean
+  bool IsProfiling() { return profiling_; }
 
   // Registration state for the profiler
   enum ProfilingRegistrationState {
@@ -466,13 +468,13 @@ class ProfilingManager {
     kProfilingStateFinished,
   };
   ProfilingState profiling_state_;  // show current state of ProfilingManager (running, or paused)
-  std::atomic<bool> enabled_;
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;
   ExecutionTree *tree_;                   // ExecutionTree pointer
   std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp
   std::vector<uint32_t> epoch_end_step_;  // End of epoch step number
-  bool autotuning_;                       // flag to indicate if Profiler is being used for autotuning_
+  std::atomic<bool> autotuning_;  // flag to indicate if ProfilingManager is being used for auto-tuning the pipeline
+  std::atomic<bool> profiling_;   // flag to indicate if ProfilingManager is being used for profiling the pipeline
 
   // Register profile node to tree
   // @param node - Profiling node

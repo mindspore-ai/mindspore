@@ -226,6 +226,10 @@ Status ProcessCpuInfo::Sample(uint64_t total_time_elapsed) {
 }
 
 Status ThreadCpuInfo::Sample(uint64_t total_time_elapsed) {
+  if (last_sampling_failed_) {
+    // thread is probably terminated
+    return Status::OK();
+  }
   std::ifstream file("/proc/" + std::to_string(pid_) + "/task/" + std::to_string(tid_) + "/stat");
   if (!file.is_open()) {
     MS_LOG(INFO) << "Failed to open /proc/" << pid_ << "/task/" << tid_ << "/stat file";
