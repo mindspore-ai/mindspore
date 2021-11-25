@@ -42,7 +42,12 @@ Status GetNextInfo::InferTensorMap() {
       if (dim == 1) {
         tensor_map_index.push_back(MAP_NONE);
       } else if (dim == shard_num_) {
-        tensor_map_index.push_back(dev_matrix_shape_origin_.size() - 1 - slice_dim);
+        if (repeated_num_in_dev_matrix_right_ && dev_matrix_shape_origin_.size() != dev_matrix_shape_.size() &&
+            is_auto_parallel_) {
+          tensor_map_index.push_back(dev_matrix_shape_origin_.size() - slice_dim);
+        } else {
+          tensor_map_index.push_back(dev_matrix_shape_origin_.size() - 1 - slice_dim);
+        }
       } else {
         MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support fully shard in one dim.";
         return FAILED;
