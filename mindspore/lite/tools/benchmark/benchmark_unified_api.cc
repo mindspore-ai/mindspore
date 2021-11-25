@@ -160,6 +160,23 @@ int BenchmarkUnifiedApi::ReadTensorData(std::ifstream &in_file_stream, const std
   return RET_OK;
 }
 
+void BenchmarkUnifiedApi::UpdateDistributionModelName(const std::shared_ptr<mindspore::Context> &context,
+                                                      std::string *name) {
+  if (flags_->device_ != "GPU") {
+    return;
+  }
+
+  auto device_info = context->MutableDeviceInfo().front();
+  GPUDeviceInfo *gpu_info = reinterpret_cast<GPUDeviceInfo *>(device_info.get());
+  auto rank_id = gpu_info->GetRankID();
+  if (rank_id == 0) {
+    return;
+  }
+
+  *name = name->replace(name->find("."), sizeof('.'), to_string(rank_id) + ".");
+  return;
+}
+
 void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
   context->SetThreadNum(flags_->num_threads_);
   context->SetEnableParallel(flags_->enable_parallel_);
@@ -476,6 +493,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 
   (void)InitMSContext(context);
+  (void)UpdateDistributionModelName(context, &model_name);
 
   if (!flags_->config_file_.empty()) {
     auto config_ret = ms_model_.LoadConfig(flags_->config_file_);
@@ -485,7 +503,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     }
   }
 
-  auto ret = ms_model_.Build(flags_->model_file_, model_type, context);
+  auto ret = ms_model_.Build(model_name, model_type, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
     std::cout << "ms_model_.Build failed while running ", model_name.c_str();

@@ -92,6 +92,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
                                                float *total_cosine_distance, int *total_size);
 
+  void UpdateDistributionModelName(const std::shared_ptr<mindspore::Context> &context, std::string *name);
+
  private:
   mindspore::Model ms_model_;
   std::vector<mindspore::MSTensor> ms_inputs_for_api_;
