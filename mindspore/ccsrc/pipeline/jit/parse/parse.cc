@@ -815,7 +815,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  if (value_node->interpret()) {
+  if (value_node->interpret() || IsPrimitiveCNode(value_node, prim::kPrimPyInterpret)) {
     attr_cnode->set_interpret(true);
   }
   return attr_cnode;
