@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
+#include <utility>
 #include "acl/acl.h"
 #include "acl/acl_mdl.h"
 #include "acl/acl_rt.h"
@@ -61,6 +63,8 @@ class ModelProcess {
 
   void set_model_id(uint32_t model_id) { model_id_ = model_id; }
   uint32_t model_id() const { return model_id_; }
+  std::set<uint64_t> GetDynamicBatch();
+  std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
 
  private:
   STATUS CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
@@ -71,6 +75,7 @@ class ModelProcess {
   STATUS GetOutputs(std::vector<mindspore::MSTensor> *outputs);
   STATUS ConstructTensor(std::vector<mindspore::MSTensor> *outputs);
   STATUS SetBatchSize(const std::vector<mindspore::MSTensor> &inputs);
+  STATUS SetImageSize(const std::vector<mindspore::MSTensor> &inputs);
   STATUS InitInputsBuffer();
   STATUS InitOutputsBuffer();
   STATUS ResetOutputSize();
@@ -78,6 +83,7 @@ class ModelProcess {
   std::string VectorToString(const std::vector<int64_t> &);
   bool IsDynamicShape();
   bool IsDynamicBatchSize();
+  bool IsDynamicImageSize();
   void DestroyInputsDataset();
   void DestroyInputsDataMem();
   void DestroyInputsBuffer();

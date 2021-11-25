@@ -40,8 +40,6 @@ bool ConvertDoubleNum(const std::string &str, double *value);
 bool ConvertBool(std::string str, bool *value);
 
 bool ConvertDoubleVector(const std::string &str, std::vector<double> *value);
-
-std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TOOLS_STRING_UTIL_H_

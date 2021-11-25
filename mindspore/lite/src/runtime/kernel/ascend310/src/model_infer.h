@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <memory>
+#include <set>
+#include <utility>
 #include <string>
 #include "src/runtime/kernel/ascend310/src/model_process.h"
 #include "src/runtime/kernel/ascend310/src/acl_env_guard.h"
@@ -39,6 +41,10 @@ class ModelInfer {
   STATUS Finalize();
   STATUS Load();
   STATUS Inference(const std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs);
+  // need to be called after model load
+  std::set<uint64_t> GetDynamicBatch();
+  // need to be called after model load
+  std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
 
  private:
   STATUS LoadAclModel(const Buffer &om_data);

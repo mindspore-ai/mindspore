@@ -357,6 +357,9 @@ void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceI
   if (acl_model_option_cfg_.dynamic_batch_size.size() > 0) {
     ascend310_info->SetDynamicBatchSize(acl_model_option_cfg_.dynamic_batch_size);
   }
+  if (!acl_model_option_cfg_.dynamic_image_size.empty()) {
+    ascend310_info->SetDynamicImageSize(acl_model_option_cfg_.dynamic_image_size);
+  }
   if (!acl_model_option_cfg_.input_format.empty()) {
     ascend310_info->SetInputFormat(acl_model_option_cfg_.input_format);
   }

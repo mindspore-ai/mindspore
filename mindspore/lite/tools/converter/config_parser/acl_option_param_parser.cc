@@ -70,7 +70,8 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
                 << ", Op_select_impl_mode: " << acl_option_string.op_select_impl_mode
                 << ", Fusion_switch_config_file_path" << acl_option_string.fusion_switch_config_file_path
                 << ", Buffer_optimize: " << acl_option_string.buffer_optimize
-                << ", Insert_op_config_file_path: " << acl_option_string.insert_op_config_file_path;
+                << ", Insert_op_config_file_path: " << acl_option_string.insert_op_config_file_path
+                << ", Dynamic image size: " << acl_option_string.dynamic_image_size;
   acl_option_cfg->input_format = acl_option_string.input_format;
   acl_option_cfg->input_shape = acl_option_string.input_shape;
   acl_option_cfg->precision_mode = acl_option_string.precision_mode;
@@ -78,6 +79,7 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
   acl_option_cfg->fusion_switch_config_file_path = acl_option_string.fusion_switch_config_file_path;
   acl_option_cfg->buffer_optimize = acl_option_string.buffer_optimize;
   acl_option_cfg->insert_op_config_file_path = acl_option_string.insert_op_config_file_path;
+  acl_option_cfg->dynamic_image_size = acl_option_string.dynamic_image_size;
   return RET_OK;
 }
 

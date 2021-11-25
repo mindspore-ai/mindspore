@@ -45,9 +45,10 @@ constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.
 constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
 constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
 constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
+constexpr auto kModelOptionAscend310DynamicImageSize = "mindspore.option.ascend310.dynamic_image_size";
 constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
 
-Context::Context() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
+Context::Context() : data_(std::make_shared<Data>()) {}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
 static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
@@ -406,6 +407,23 @@ std::vector<char> Ascend310DeviceInfo::GetDynamicBatchSizeChar() const {
     return std::vector<char>();
   }
   const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicBatchSize);
+  return StringToChar(ref);
+}
+
+void Ascend310DeviceInfo::SetDynamicImageSize(const std::vector<char> &dynamic_image_size) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionAscend310DynamicImageSize] = CharToString(dynamic_image_size);
+}
+
+std::vector<char> Ascend310DeviceInfo::GetDynamicImageSizeChar() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return std::vector<char>();
+  }
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicImageSize);
   return StringToChar(ref);
 }
 

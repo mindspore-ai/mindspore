@@ -165,6 +165,8 @@ inline bool StartsWithPrefix(const std::string &source, const std::string &prefi
 // split string
 std::vector<std::string> StrSplit(const std::string &str, const std::string &pattern);
 
+bool ConvertStrToInt(const std::string &str, int *value);
+
 // tokenize string
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &maxTokenNum = Option<size_t>(None()));

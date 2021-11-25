@@ -170,7 +170,8 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       {"fusion_switch_config_file_path", acl_option_cfg_string_.fusion_switch_config_file_path},
       {"dynamic_batch_size", acl_option_cfg_string_.dynamic_batch_size},
       {"buffer_optimize", acl_option_cfg_string_.buffer_optimize},
-      {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path}};
+      {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path},
+      {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size}};
     return SetMapData(map, parse_map, kAclOptionParam);
   }
   return RET_OK;

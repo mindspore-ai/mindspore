@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -71,14 +72,20 @@ std::shared_ptr<mindspore::KirinNPUDeviceInfo> NPUDeviceInfoFromNPUDeviceContext
 }
 
 std::vector<size_t> GetBatchSize(const std::string &batch_size) {
-  char *ptr = nullptr;
-  size_t val = strtol(batch_size.c_str(), &ptr, 0);
-  bool ret = (ptr == (batch_size.c_str() + batch_size.size()));
-  if (!ret) {
-    return {};
+  std::vector<size_t> res;
+  std::vector<std::string> batch_size_vec = StrSplit(batch_size, ",");
+  for (const auto &item : batch_size_vec) {
+    int32_t val;
+    if (ConvertStrToInt(item, &val)) {
+      auto tmp_val = static_cast<size_t>(val);
+      res.push_back(tmp_val);
+    } else {
+      MS_LOG(ERROR) << "Convert str to num failed, val = " << item;
+      return res;
+    }
   }
-  MS_LOG(INFO) << "Batch size: " << val;
-  return {val};
+  MS_LOG(INFO) << "Batch size of context: " << batch_size;
+  return res;
 }
 
 std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310DeviceContext(
@@ -95,6 +102,7 @@ std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310
     auto val = GetBatchSize(batch_size);
     ascend310_info->SetDynamicBatchSize(val);
   }
+  ascend310_info->SetDynamicImageSize(ascend310_context.device_info_.ascend310_device_info_.image_size_);
   return ascend310_info;
 }
 }  // namespace

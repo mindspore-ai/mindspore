@@ -99,6 +99,17 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &pat
   return result;
 }
 
+bool ConvertStrToInt(const std::string &str, int *value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Value is nullptr";
+    return false;
+  }
+  char *ptr = nullptr;
+  constexpr int kBase = 10;
+  *value = strtol(str.c_str(), &ptr, kBase);
+  return ptr == (str.c_str() + str.size());
+}
+
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &max_token_num) {
   if (max_token_num.IsSome() && max_token_num.Get() == 0) {

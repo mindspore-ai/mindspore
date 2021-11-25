@@ -350,6 +350,16 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   void SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size);
   inline std::string GetDynamicBatchSize() const;
 
+  /// \brief Set the dynamic image size of model inputs.
+  ///
+  /// \param[in] image size e.g. "66,66;88,88".
+  inline void SetDynamicImageSize(const std::string &dynamic_image_size);
+
+  /// \brief Get dynamic image size of model inputs.
+  ///
+  /// \return The image size of model inputs.
+  inline std::string GetDynamicImageSize() const;
+
   /// \brief Set type of model outputs.
   ///
   /// \param[in] output_type FP32, UINT8 or FP16, default as FP32.
@@ -401,6 +411,9 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
 
   std::vector<char> GetDynamicBatchSizeChar() const;
 
+  void SetDynamicImageSize(const std::vector<char> &dynamic_image_size);
+  std::vector<char> GetDynamicImageSizeChar() const;
+
   void SetPrecisionMode(const std::vector<char> &precision_mode);
   std::vector<char> GetPrecisionModeChar() const;
 
@@ -426,6 +439,14 @@ void Ascend310DeviceInfo::SetInputShape(const std::string &shape) { SetInputShap
 std::string Ascend310DeviceInfo::GetInputShape() const { return CharToString(GetInputShapeChar()); }
 
 std::string Ascend310DeviceInfo::GetDynamicBatchSize() const { return CharToString(GetDynamicBatchSizeChar()); }
+
+void Ascend310DeviceInfo::SetDynamicImageSize(const std::string &dynamic_image_size) {
+  SetDynamicImageSize(StringToChar(dynamic_image_size));
+}
+
+std::string Ascend310DeviceInfo::GetDynamicImageSize() const {
+  return CharToString(GetDynamicImageSizeChar());
+}
 
 void Ascend310DeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
   SetPrecisionMode(StringToChar(precision_mode));

@@ -42,14 +42,16 @@ class CustomAscend310Kernel : public kernel::Kernel {
   STATUS Execute() override;
 
  private:
+  void RecordInputDataIndex();
   STATUS PrepareModelInfer();
-  AclModelOptions GetAclModelOptions(const mindspore::Context *ctx);
-  STATUS ProcDynamicBatchSizeInput(std::vector<mindspore::MSTensor> *input);
-  STATUS ParseBatchSize(const std::string &batch_size, AclModelOptions *options);
+  STATUS ProcDynamicInput(std::vector<mindspore::MSTensor> *input);
+  STATUS GetRealBatchSize(std::vector<mindspore::MSTensor> *inputs, int32_t *batch_size);
+  STATUS GetRealImageSize(std::vector<mindspore::MSTensor> *inputs, int32_t *image_size, int32_t num);
 
   bool load_model_;
   AclModelOptions acl_options_;
   std::shared_ptr<ModelInfer> model_infer_;
+  size_t InputDataIndex_;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
