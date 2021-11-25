@@ -206,9 +206,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to integrated save weight shard when enable parallel optimizer.")
     .def("get_optimizer_weight_shard_aggregated_save", &ParallelContext::optimizer_weight_shard_aggregated_save,
          "Get whether to integrated save weight shard when enable parallel optimizer.")
-    .def("set_sharding_propagation", &ParallelContext::set_sharding_propagation,
-         "Set sharding strategy propagation value.")
-    .def("get_sharding_propagation", &ParallelContext::sharding_propagation, "Get sharding strategy propagation value.")
     .def("set_enable_alltoall", &ParallelContext::set_enable_all2all, "Set the enabling AllToAll value.")
     .def("get_enable_alltoall", &ParallelContext::enable_all2all, "Get the enabling AllToAll value.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");

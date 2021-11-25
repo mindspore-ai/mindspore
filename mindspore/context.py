@@ -352,7 +352,7 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
-                 auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
+                 search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
                  parallel_optimizer_config=dict)
@@ -377,7 +377,7 @@ def set_auto_parallel_context(**kwargs):
     ===========================  ===========================
     device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
-    gradients_mean               auto_parallel_search_mode
+    gradients_mean               search_mode
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
     enable_parallel_optimizer    dataset_strategy
@@ -405,12 +405,14 @@ def set_auto_parallel_context(**kwargs):
                      - semi_auto_parallel: Achieves data and model parallelism by setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
-        auto_parallel_search_mode (str): There are two kinds of shard strategy search modes, "recursive_programming"
-                     and "dynamic_programming". Default: "dynamic_programming".
+        search_mode (str): There are three kinds of shard strategy search modes: "recursive_programming",
+                     "dynamic_programming" and "sharding_propagation". Default: "dynamic_programming".
 
                      - recursive_programming: Recursive programming search mode.
 
                      - dynamic_programming: Dynamic programming search mode.
+
+                     - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
                      the same network initialization parameter values for all devices, broadcast the parameters
                      on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
@@ -464,7 +466,7 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(gradients_mean=True)
         >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
-        >>> context.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
+        >>> context.set_auto_parallel_context(search_mode="dynamic_programming")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
@@ -508,7 +510,7 @@ def reset_auto_parallel_context():
     - gradients_mean: False.
     - gradient_fp32_sync: True.
     - parallel_mode: 'stand_alone'.
-    - auto_parallel_search_mode: 'dynamic_programming'.
+    - search_mode: 'dynamic_programming'.
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: ''.
     - strategy_ckpt_save_file: ''.

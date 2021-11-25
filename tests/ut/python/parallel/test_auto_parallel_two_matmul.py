@@ -68,12 +68,6 @@ def test_two_matmul():
 
     size = 16
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    strategy_pro = context.get_auto_parallel_context("sharding_propagation")
-    assert not strategy_pro
-    context.set_auto_parallel_context(sharding_propagation=True)
-    strategy_pro = context.get_auto_parallel_context("sharding_propagation")
-    assert strategy_pro
-    context.set_auto_parallel_context(sharding_propagation=False)
     cost_model_context.set_cost_model_context(device_memory_capacity=32.0 * 1024.0 * 1024.0 * 1024.0,
                                               costmodel_alpha=1.0,
                                               costmodel_beta=60.0,

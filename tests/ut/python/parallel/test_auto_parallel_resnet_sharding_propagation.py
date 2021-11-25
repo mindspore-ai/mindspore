@@ -290,7 +290,7 @@ class DatasetLenet():
 def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #32768 #8192
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()

@@ -289,7 +289,7 @@ class DatasetLenet():
 def test_train_32k_8p(batch_size=32, num_classes=32768):
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)

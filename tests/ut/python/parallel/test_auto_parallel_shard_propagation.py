@@ -51,7 +51,7 @@ def compile_net(net):
 
 def test_auto_parallel_activation1():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     strategy1 = ((4, 4), (4, 4))
     strategy2 = None
     net = Net(_w1, strategy1, strategy2)
@@ -60,7 +60,7 @@ def test_auto_parallel_activation1():
 
 def test_auto_parallel_activation2():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     strategy1 = None
     strategy2 = ((4, 4),)
     net = Net(_w1, strategy1, strategy2)
@@ -68,7 +68,7 @@ def test_auto_parallel_activation2():
 
 def auto_parallel_activation3():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     strategy1 = ((4, 4), (4, 4))
     strategy2 = None
     strategy3 = ((4, 4),)
@@ -77,7 +77,7 @@ def auto_parallel_activation3():
 
 def test_auto_parallel_activation4():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
-                                      sharding_propagation=True)
+                                      search_mode="sharding_propagation")
     strategy1 = ((4, 4), (4, 4))
     strategy2 = None
     strategy3 = ((8, 2),)

@@ -42,6 +42,7 @@ constexpr char SEMI_AUTO_PARALLEL[] = "semi_auto_parallel";
 
 constexpr char DYNAMIC_PROGRAMMING[] = "dynamic_programming";
 constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
+constexpr char SHARDING_PROPAGATION[] = "sharding_propagation";
 
 constexpr char TRAINING[] = "training";
 constexpr char ACCUMULATION[] = "accumulation";
@@ -134,8 +135,6 @@ class ParallelContext {
 
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
-  void set_sharding_propagation(const bool);
-  bool sharding_propagation() const { return sharding_propagation_; }
   void set_enable_all2all(const bool);
   bool enable_all2all() const { return enable_all2all_; }
   void set_dataset_repeat_dim_right(const bool dataset_repeat_dim_right) {
@@ -179,9 +178,6 @@ class ParallelContext {
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
   bool grad_accumulation_shard_;
-  // In AUTO_PARALLEL mode, 'sharding_propagation_' = True indicates that sharding-configured operators
-  // will propagate the sharding strategies to other operators with minimum redistribution cost.
-  bool sharding_propagation_;
   // Enable AllToAll or not. If false, use AllGather and Split.
   bool enable_all2all_;
   std::vector<std::vector<int64_t>> dataset_strategy_;

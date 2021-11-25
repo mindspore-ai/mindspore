@@ -31,7 +31,7 @@ std::map<std::string, Shape> param_shapes;
 
 std::vector<std::string> PARALLEL_MODE_LIST = {STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL,
                                                AUTO_PARALLEL};
-std::vector<std::string> STRATEGY_SEARCH_MODE_LIST = {DYNAMIC_PROGRAMMING, RECURSIVE_PROGRAMMING};
+std::vector<std::string> STRATEGY_SEARCH_MODE_LIST = {DYNAMIC_PROGRAMMING, RECURSIVE_PROGRAMMING, SHARDING_PROPAGATION};
 
 std::vector<std::string> COMMUNI_PARALLEL_MODE_LIST = {ALL_GROUP_PARALLEL, SAME_SERVER_GROUP_PARALLEL,
                                                        NO_GROUP_PARALLEL};
@@ -72,7 +72,6 @@ void ParallelContext::Reset() {
   communi_parallel_mode_ = ALL_GROUP_PARALLEL;
   optimizer_weight_shard_size_ = -1;
   optimizer_weight_shard_aggregated_save_ = false;
-  sharding_propagation_ = false;
   enable_all2all_ = false;
   grad_accumulation_shard_ = true;
   dataset_strategy_.clear();
@@ -275,8 +274,6 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
 
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
 }
-
-void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 
 void ParallelContext::set_enable_all2all(const bool enable) { enable_all2all_ = enable; }
 }  // namespace parallel
