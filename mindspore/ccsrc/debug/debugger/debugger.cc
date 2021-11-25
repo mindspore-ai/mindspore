@@ -197,13 +197,14 @@ void Debugger::EnableDebugger() {
   debug_services_ = std::make_unique<DebugServices>();
 }
 
-void Debugger::CheckDatasetSinkMode() {
-  if (CheckDebuggerDumpEnabled() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
+  bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
+  if (CheckDebuggerDumpEnabled() && sink_mode) {
     MS_EXCEPTION(NotSupportError)
       << "e2e_dump not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }
 
-  if (CheckDebuggerEnabled() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+  if (CheckDebuggerEnabled() && sink_mode) {
     MS_EXCEPTION(NotSupportError)
       << "Debugger is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }
@@ -330,7 +331,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  CheckDatasetSinkMode();
+  CheckDatasetSinkMode(graph_ptr);
   auto graph_id = graph_ptr->graph_id();
   MS_LOG(DEBUG) << "PreExecute for graph: " << graph_id << " in step: " << num_step_ << ".";
   StoreRunGraphIdList(graph_id);
