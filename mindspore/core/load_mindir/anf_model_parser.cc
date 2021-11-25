@@ -312,14 +312,16 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
       MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
       return false;
     }
-  } else {
+    node->set_default_param(tensor_info);
+  } else if (parameter_proto.has_external_data()) {
     auto ret = GetTensorDataFromExternal(parameter_proto, tensor_info);
     if (!ret) {
       return false;
     }
+    node->set_default_param(tensor_info);
+  } else {
+    MS_LOG(DEBUG) << "Parameter will load initialized data.";
   }
-
-  node->set_default_param(tensor_info);
 
   anfnode_build_map_[parameter_proto.name()] = node;
   return true;
@@ -974,7 +976,7 @@ bool MSANFModelParser::CheckCNodePrim(CNodePtr cnode_ptr) {
 
   // If the operator is not a primitive, the abstract will been set to null.
   // Because there are not some operators in front end, the abstract of primitive should be reserved.
-  if (prim == nullptr) {
+  if (prim == nullptr && need_renormalize()) {
     cnode_ptr->set_abstract(nullptr);
     return true;
   }
@@ -1214,7 +1216,39 @@ bool MSANFModelParser::MSANFParseModelConfigureInfo(const mind_ir::ModelProto &m
   return true;
 }
 
-FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
+bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph,
+                                                    const std::map<std::string, ValuePtr> &weights) {
+  size_t hyper_param_count = 0;
+  auto parameters = topGraph->parameters();
+  for (int i = parameters.size() - 1; i >= 0; --i) {
+    auto parameter = parameters[i]->cast<ParameterPtr>();
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "AnfNode " << parameters[i]->DebugString() << " should be Parameter.";
+      return false;
+    }
+    auto type = parameter->Type();
+    if (type == nullptr) {
+      MS_LOG(ERROR) << "Parameter " << parameter->DebugString() << " has no type.";
+      return false;
+    }
+    if (!type->isa<RefType>()) {
+      break;
+    }
+    auto parameter_name = parameter->name();
+    auto weights_iter = weights.find(parameter_name);
+    if (weights_iter == weights.end()) {
+      MS_LOG(ERROR) << "Find initial weight value for " << parameter_name << " failed.";
+      return false;
+    }
+    parameter->set_default_param(weights_iter->second);
+    hyper_param_count++;
+  }
+  topGraph->set_hyper_param_count(hyper_param_count);
+  return true;
+}
+
+FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
+                                     const std::map<std::string, ValuePtr> &weights) {
   FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
   if (!MSANFParseModelConfigureInfo(model_proto)) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
@@ -1252,6 +1286,14 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
     MS_LOG(ERROR) << "Build funcgraph failed!";
     return nullptr;
   }
+
+  if (!weights.empty()) {
+    if (!SetValueForTopGraphParameter(dstGraph, weights)) {
+      MS_LOG(ERROR) << "Set value for top graph fail.";
+      return nullptr;
+    }
+  }
+
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! " << graphBuild.name();
   top_graph_ = dstGraph;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
@@ -1263,6 +1305,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
     }
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! " << graph_proto.name();
   }
+
   // Release resource
   anfnode_build_map_.clear();
   return dstGraph;

@@ -110,6 +110,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void set_compile_cache_dep_files(const py::list &compile_cache_dep_files) {
     compile_cache_dep_files_ = compile_cache_dep_files;
   }
+  void set_weights_values(const py::dict &weights) { weights_ = weights; }
 #ifdef ENABLE_DEBUGGER
   static bool GetDebugTerminate() { return debugger_terminate_; }
   static void DebugTerminate(bool val, bool exit_success) {
@@ -145,6 +146,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::string queue_name_;
   bool enable_tuple_broaden_{false};
   py::list compile_cache_dep_files_;
+  py::dict weights_;
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 

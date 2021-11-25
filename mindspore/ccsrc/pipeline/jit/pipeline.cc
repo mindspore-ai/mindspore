@@ -282,7 +282,17 @@ bool CheckDepFilesHashConsistency(const std::string &current_dep_files_hash) {
   return true;
 }
 
-FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx) {
+std::map<string, ValuePtr> GenerateWeightsValueMap(const py::dict &weights) {
+  std::map<string, ValuePtr> ret{};
+  for (auto weight = weights.begin(); weight != weights.end(); ++weight) {
+    auto weight_name = py::cast<std::string>(weight->first);
+    auto weight_value = parse::data_converter::PyDataToValue(py::cast<py::object>(weight->second));
+    ret[weight_name] = weight_value;
+  }
+  return ret;
+}
+
+FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx, const py::dict &weights) {
   std::string compile_cache_path = GetCompileCachePath(idx);
   auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
   if (!realpath.has_value()) {
@@ -298,10 +308,11 @@ FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx) {
   }
   MindIRLoader mindir_loader;
   mindir_loader.set_need_renormalize(false);
+  mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
   return mindir_loader.LoadMindIR(realpath.value());
 }
 
-FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_name) {
+FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const py::dict &weights, const std::string &queue_name) {
   MS_EXCEPTION_IF_NULL(resource);
   // Compare the dependency files hash.
   if (!CheckDepFilesHashConsistency(resource->compile_cache_dep_files_hash())) {
@@ -310,7 +321,7 @@ FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const std::string &
   }
 
   // Load the compilation cache file.
-  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource->compile_cache_id());
+  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource->compile_cache_id(), weights);
   if (fg == nullptr) {
     MS_LOG(WARNING) << "Failed to load the compilation cache file. Execute all the compilation actions.";
     return nullptr;
@@ -353,7 +364,7 @@ bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, size_t idx) {
     MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-  ModelProtoPtr fg_model = GetBinaryProto(fg, true);
+  ModelProtoPtr fg_model = GetBinaryProto(fg);
   if (fg_model == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
     fout.close();
@@ -921,7 +932,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     resource->set_enable_compile_cache(true);
     resource->set_compile_cache_id(GetCompileCacheGraphId());
     resource->set_compile_cache_dep_files_hash(GetCompileDepFilesHash(compile_cache_dep_files_));
-    resource->set_func_graph(GetCachedFuncGraph(resource, queue_name_));
+    resource->set_func_graph(GetCachedFuncGraph(resource, weights_, queue_name_));
 #ifdef ENABLE_PROFILE
     double t2 = GetTime();
     MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);

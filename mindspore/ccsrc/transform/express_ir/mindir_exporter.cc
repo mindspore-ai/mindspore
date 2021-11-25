@@ -83,7 +83,7 @@ class IrExporter {
   explicit IrExporter(IrExportBuilderPtr builder) : builder_(std::move(builder)) {}
   virtual ~IrExporter() = default;
   std::string GetDumpString(const FuncGraphPtr &func_graph);
-  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
+  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph);
 
  private:
   IrExportBuilderPtr builder_;
@@ -95,13 +95,11 @@ class IrExportBuilder {
   ~IrExportBuilder() { google::protobuf::ShutdownProtobufLibrary(); }
   std::string GetProtoString() const;
   void BuildModelInfo();
-  bool BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
+  bool BuildModel(const FuncGraphPtr &func_graph);
   ModelProtoPtr Model() { return model_; }
 
-  bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
-                      bool save_tensor_data = false);
-  bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
-                       bool save_tensor_data = false);
+  bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
+  bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
   bool BuildCNode(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
@@ -148,6 +146,7 @@ class IrExportBuilder {
   std::set<std::string> nodeName_;
   size_t node_index_{0};
   size_t shape_index_{0};
+
   bool top_graph{true};
 };
 
@@ -161,7 +160,7 @@ std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   return builder_->GetProtoString();
 }
 
-ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, bool save_tensor_data) {
+ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph) {
   if ((builder_ == nullptr) || (func_graph == nullptr)) {
     MS_LOG(EXCEPTION) << "Input params is null.";
   }
@@ -170,7 +169,7 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, bool save
   builder_->BuildModelInfo();
 
   // Export model and return string
-  if (!builder_->BuildModel(func_graph, save_tensor_data)) {
+  if (!builder_->BuildModel(func_graph)) {
     return nullptr;
   }
   return builder_->Model();
@@ -190,7 +189,7 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_little_endian(common::IsLittleByteOrder());
 }
 
-bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tensor_data) {
+bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   mind_ir::GraphProto *graph_proto = model_->mutable_graph();
   graph_proto->set_name(func_graph->ToString());
@@ -201,7 +200,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   // Build the main funcGraph
   (void)nodeName_.insert(func_graph->ToString());
   top_graph = true;
-  if (!BuildFuncGraph(func_graph, graph_proto, save_tensor_data)) {
+  if (!BuildFuncGraph(func_graph, graph_proto)) {
     MS_LOG(ERROR) << "Build func_graph " << func_graph->ToString() << " failed.";
     return false;
   }
@@ -222,7 +221,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
     (void)nodeName_.insert(fg->ToString());
     (void)graphVisited.insert(fg);
     auto graph = model_->add_functions();
-    if (!BuildFuncGraph(fg, graph, save_tensor_data)) {
+    if (!BuildFuncGraph(fg, graph)) {
       MS_LOG(ERROR) << "Build func_graph " << fg->ToString() << " failed.";
       return false;
     }
@@ -233,14 +232,13 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   return true;
 }
 
-bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
-                                     bool save_tensor_data) {
+bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   // Export funcGraph name.
   graph_proto->set_name(func_graph->ToString());
   // Export parameters
   // 1. parameters should be mapped to ValueInfoProto
   // 2. parameters with default value should be mapped to Initializer
-  if (!BuildParameters(func_graph, graph_proto, save_tensor_data)) {
+  if (!BuildParameters(func_graph, graph_proto)) {
     MS_LOG(ERROR) << "Build parameters failed.";
     return false;
   }
@@ -249,8 +247,7 @@ bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::Gr
   return BuildNodes(func_graph, graph_proto);
 }
 
-bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
-                                      bool save_tensor_data) {
+bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_proto);
   for (auto &item : func_graph->parameters()) {
@@ -268,10 +265,6 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       if (!SetParamToTensorProto(param, parameter_proto)) {
         MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
         return false;
-      }
-      auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
-      if (tensor && save_tensor_data) {
-        parameter_proto->set_raw_data(tensor->data_c(), static_cast<size_t>(tensor->data().nbytes()));
       }
     } else {
       mind_ir::ValueInfoProto *input_proto = graph_proto->add_input();
@@ -1077,9 +1070,9 @@ std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
   return exporter->GetDumpString(func_graph);
 }
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, bool save_tensor_data) {
+ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph) {
   auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
-  auto result = exporter->GetDumpProto(func_graph, save_tensor_data);
+  auto result = exporter->GetDumpProto(func_graph);
   return result;
 }
 }  // namespace mindspore

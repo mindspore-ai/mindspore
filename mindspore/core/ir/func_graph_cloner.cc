@@ -98,6 +98,7 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
     // Default parameter can be shared since it is readonly.
     new_param->set_default_param(old_param->default_param());
   }
+  new_param->set_is_top_graph_param(old_param->is_top_graph_param());
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_param->set_scope(scope);
   repl_node_[node] = std::move(new_param);

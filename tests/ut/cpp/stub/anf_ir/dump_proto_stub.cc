@@ -26,7 +26,7 @@ std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
 std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, bool save_tensor_data) {
+ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph) {
   ModelProtoPtr empty_model;
   return empty_model;
 }

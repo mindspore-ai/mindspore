@@ -229,7 +229,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   if (is_lite_) {
     model_parser.SetLite();
   }
-  FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model);
+  FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_);
   return dstgraph_ptr;
 }
 

@@ -35,7 +35,7 @@ class MSANFModelParser {
   ~MSANFModelParser() = default;
 
   static void LoadTensorMapClear() { load_tensor_map_.clear(); }
-  FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto);
+  FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto, const std::map<std::string, ValuePtr> &weights = {});
   bool MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto);
 
   std::string GetProducerName() { return producer_name_; }
@@ -57,6 +57,7 @@ class MSANFModelParser {
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildParameterForFuncGraph(const ParameterPtr &node, const mind_ir::TensorProto &tensor_proto);
+  bool SetValueForTopGraphParameter(const FuncGraphPtr &topGraph, const std::map<std::string, ValuePtr> &weights);
   bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
   tensor::TensorPtr BuildTensorInfoForFuncGraph(const mind_ir::TensorProto &tensor_proto);
