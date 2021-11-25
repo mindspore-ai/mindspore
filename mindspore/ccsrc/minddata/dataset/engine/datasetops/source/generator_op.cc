@@ -25,7 +25,7 @@ namespace mindspore {
 namespace dataset {
 GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
                          std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
-                         std::shared_ptr<SamplerRT> sampler, uint32_t num_parallel_workers)
+                         std::shared_ptr<SamplerRT> sampler, int32_t num_parallel_workers)
     : PipelineOp(connector_size, std::move(sampler)),
       generator_function_(generator_function),
       column_names_(column_names),

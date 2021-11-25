@@ -209,7 +209,7 @@ Status Tracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, flo
   std::vector<int32_t> sizes;
   RETURN_IF_NOT_OK(GetConnectorSize(start_step, end_step, &sizes));
   int32_t total = end_step - start_step + 1;
-  CHECK_FAIL_RETURN_UNEXPECTED(total <= 0, "Start step is greater than end step.");
+  CHECK_FAIL_RETURN_UNEXPECTED(total > 0, "Start step is greater than end step.");
   uint32_t count = std::count(sizes.begin(), sizes.end(), 0);
   *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
   return Status::OK();
