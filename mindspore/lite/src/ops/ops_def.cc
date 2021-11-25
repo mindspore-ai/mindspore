@@ -1207,9 +1207,11 @@ OP_SCHEMA_DEF_END(ScatterNdUpdate)
 
 OP_SCHEMA_DEF(AllGather)
 OP_ATTR(group, string)
+OP_ATTR(rank_size, int)
 OP_SCHEMA_DEF_END(AllGather)
 
 OP_SCHEMA_DEF(ReduceScatter)
 OP_ATTR(group, string)
 OP_ATTR_ENUM(mode, ReduceMode)
+OP_ATTR(rank_size, int)
 OP_SCHEMA_DEF_END(ReduceScatter)

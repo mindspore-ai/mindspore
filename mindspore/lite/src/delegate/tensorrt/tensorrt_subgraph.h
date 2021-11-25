@@ -24,6 +24,7 @@
 #include "include/api/kernel.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/context.h"
 
 namespace mindspore::lite {
@@ -74,6 +75,8 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int Init();
 
+  void SetCacheManager(const std::shared_ptr<cache::EmbeddingCacheManager> &cache_mgr) { cache_mgr_ = cache_mgr; }
+
  private:
   int BuildEngine();
 
@@ -89,7 +92,7 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   bool IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
-  void FindCacheTensorInfo(TensorRTOp *cur_op);
+  void FindCacheTensorInfo(TensorRTOp *cur_op, mindspore::MSTensor device_cache_tensor);
 
   bool CanOpCache(TensorRTOp *cur_op);
 
@@ -113,7 +116,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::vector<std::string> trt_in_tensor_name_;
   std::vector<std::string> trt_out_tensor_name_;
 
-  std::vector<mindspore::MSTensor> cache_inputs_;
+  std::vector<mindspore::MSTensor> cache_const_inputs_;
   std::map<std::string, CacheTensorInfo> network_cache_tensor_info_;
 
   nvinfer1::INetworkDefinition *network_{nullptr};
@@ -126,6 +129,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   int input_batchsize_index_{0};
   int output_batchsize_index_{0};
   int input_hw_index_{0};
+
+  std::map<std::string, std::vector<mindspore::MSTensor>> model_input_to_cache_tensors_;
+
+  std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_

@@ -18,7 +18,6 @@
 #define MINDSPORE_NNACL_ALL_GATHER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/communication_func.h"
 
 typedef struct AllGatherParameter {
   // primitive parameter
@@ -26,6 +25,6 @@ typedef struct AllGatherParameter {
   char group_[DEFAULT_GROUP_NAME_LEN];
 
   // other parameter
-  int rank_;
+  int rank_size_;
 } AllGatherParameter;
 #endif  // MINDSPORE_NNACL_ALL_GATHER_PARAMETER_H_

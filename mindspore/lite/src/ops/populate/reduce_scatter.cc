@@ -47,10 +47,11 @@ OpParameter *PopulateReduceScatterParameter(const void *prim) {
     return nullptr;
   }
   memset(param, 0, sizeof(ReduceScatterParameter));
-
-  memcpy(param->group_, group->c_str(), group->size());
+  memcpy(param->group_, value->group()->c_str(), value->group()->size());
+  param->rank_size_ = value->rank_size();
   param->mode_ = value->mode();
   param->op_parameter_.type_ = primitive->value_type();
+
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_ReduceScatter, PopulateReduceScatterParameter, SCHEMA_CUR)

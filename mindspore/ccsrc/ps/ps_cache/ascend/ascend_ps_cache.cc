@@ -137,6 +137,10 @@ void *AscendPsCache::MallocMemory(size_t size) {
   return device_addr;
 }
 
+void AscendPsCache::FreeMemory(void *device_addr) {
+  device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);
+}
+
 bool AscendPsCache::MallocConstantMemory(size_t cache_vocab_size) {
   offset_addr_ = reinterpret_cast<int *>(device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(sizeof(int)));
   if (offset_addr_ == nullptr) {

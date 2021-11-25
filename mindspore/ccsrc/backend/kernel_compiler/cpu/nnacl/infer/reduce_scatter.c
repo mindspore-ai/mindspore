@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/errorcode.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/communication_func.h"
 #include "nnacl/reduce_scatter_parameter.h"
 
 int ReduceScatterInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
@@ -31,8 +29,7 @@ int ReduceScatterInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   }
 
   ReduceScatterParameter *param = (ReduceScatterParameter *)parameter;
-  param->rank_ = get_rank(param->group_);
-  if (param->rank_ <= 0) {
+  if (param->rank_size_ <= 0) {
     return NNACL_INFER_INVALID;
   }
 
@@ -40,19 +37,20 @@ int ReduceScatterInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   const int *in_shape = input_tensor->shape_;
   TensorC *out_tensor = outputs[0];
 
-  if (in_shape[0] % param->rank_ != 0) {
+  if (in_shape[0] % param->rank_size_ != 0) {
     return NNACL_INFER_INVALID;
   }
 
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
-  out_shape[0] = in_shape[0] / param->rank_;
+  out_shape[0] = in_shape[0] / param->rank_size_;
   out_shape_size++;
   for (int i = 1; i < input_tensor->shape_size_; i++) {
     out_shape[i] = in_shape[i];
     out_shape_size++;
   }
   SetShapeArray(out_tensor, out_shape, out_shape_size);
+
   return NNACL_OK;
 }
 

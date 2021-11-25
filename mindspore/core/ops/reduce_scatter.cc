@@ -39,6 +39,14 @@ ReduceMode ReduceScatter::get_mode() const {
   return ReduceMode(GetValue<int64_t>(value_ptr));
 }
 
+void ReduceScatter::set_rank_size(int rank_size) {
+  (void)this->AddAttr(kRankSize, MakeValue(static_cast<int64_t>(rank_size)));
+}
+int ReduceScatter::get_rank_size() const {
+  auto value_ptr = GetAttr(kRankSize);
+  return static_cast<int>(GetValue<int64_t>(value_ptr));
+}
+
 REGISTER_PRIMITIVE_C(kNameReduceScatter, ReduceScatter);
 }  // namespace ops
 }  // namespace mindspore

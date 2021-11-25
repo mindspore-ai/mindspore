@@ -30,7 +30,7 @@
 
 namespace mindspore::lite {
 namespace {
-constexpr size_t kModelSizeLimit = 2 * 1024 * 1024;
+constexpr size_t kModelSizeLimit = static_cast<size_t>(2) * 1024 * 1024 * 1024;
 constexpr size_t kExternalDataHeadSize = 4096;
 constexpr size_t kMagicNumberSize = 4;
 constexpr size_t kFlatbuffersBuilderInitSize = 1024;
@@ -241,7 +241,7 @@ int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
-  auto save_together = (size < kModelSizeLimit) || true;
+  auto save_together = (size < kModelSizeLimit);
   MetaGraphSerializer meta_graph_serializer;
   if (!meta_graph_serializer.Init(graph, output_path, save_together)) {
     MS_LOG(ERROR) << "Init MetaGraphSerializer failed";

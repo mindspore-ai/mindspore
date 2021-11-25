@@ -29,6 +29,7 @@
 #include "src/common/version_manager.h"
 #include "src/schema_tensor_wrapper.h"
 #include "nnacl/op_base.h"
+#include "src/common/prim_util.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
@@ -79,6 +80,7 @@ class LiteModel : public Model {
       MS_CHECK_TRUE_MSG(node != nullptr, false, "new node fail!");
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
       MS_CHECK_TRUE_MSG(c_node != nullptr, false, "get as cnode fail!");
+      node->node_type_ = GetPrimitiveType(c_node->primitive(), schema_version_);
 #ifdef ENABLE_MODEL_OBF
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
       auto src_prim_type = src_prim->value_type();
@@ -286,6 +288,8 @@ class LiteModel : public Model {
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
+LiteModel *LiteImportFromPath(const char *model_path);
+Model *ImportFromPath(const char *model_path);
 }  // namespace lite
 }  // namespace mindspore
 

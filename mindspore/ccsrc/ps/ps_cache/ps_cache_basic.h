@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,8 @@
 #include <utility>
 #include <memory>
 
-#include "utils/log_adapter.h"
-
 namespace mindspore {
 namespace ps {
-#define RETURN_IF_FALSE(condition) \
-  do {                             \
-    if (!(condition)) {            \
-      return false;                \
-    }                              \
-  } while (false)
-
-#define RETURN_IF_FALSE_WITH_LOG(condition, message) \
-  do {                                               \
-    if (!(condition)) {                              \
-      MS_LOG(ERROR) << message;                      \
-      return false;                                  \
-    }                                                \
-  } while (false)
-
 class PsCacheBasic {
  public:
   PsCacheBasic() = default;
@@ -45,6 +28,7 @@ class PsCacheBasic {
   virtual bool InitDevice(uint32_t device_id, const void *context) = 0;
   virtual void *MallocMemory(size_t size) = 0;
   virtual bool MallocConstantMemory(size_t cache_vocab_size) { return true; }
+  virtual void FreeMemory(void *buf) = 0;
   virtual bool RecordEvent() = 0;
   virtual bool SynchronizeEvent() = 0;
   virtual bool SynchronizeStream() = 0;

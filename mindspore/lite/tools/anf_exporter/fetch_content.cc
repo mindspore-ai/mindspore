@@ -23,6 +23,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_utils_secure.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
 #include "tools/anf_exporter/anf_exporter.h"
@@ -259,8 +260,9 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
   if (tensor_info != nullptr && tensor_info->Size() != 0) {
     if (data_type != kObjectTypeTensorType || tensor_info->Size() >= kTensorListMinSize) {
       data_info->data_.resize(tensor_info->Size() - offset);
-      if (EOK != memcpy_s(data_info->data_.data(), data_info->data_.size(),
-                          static_cast<uint8_t *>(tensor_info->data_c()) + offset, tensor_info->Size() - offset)) {
+      if (EOK != common::huge_memcpy_s(data_info->data_.data(), data_info->data_.size(),
+                                       static_cast<uint8_t *>(tensor_info->data_c()) + offset,
+                                       tensor_info->Size() - offset)) {
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;
       }

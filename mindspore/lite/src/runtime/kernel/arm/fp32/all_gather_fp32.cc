@@ -34,11 +34,7 @@ int AllGatherCPUKernel::Prepare() {
 int AllGatherCPUKernel::ReSize() { return lite::RET_OK; }
 
 int AllGatherCPUKernel::Run() {
-  int rank = get_rank(param_->group_);
-  if (param_->rank_ != rank) {
-    return lite::RET_ERROR;
-  }
-
+  int rank = param_->rank_size_;
   size_t data_size = in_tensors().front()->Size();
   auto out_tensor = out_tensors().front();
   int8_t *out_data = reinterpret_cast<int8_t *>(out_tensor->data());

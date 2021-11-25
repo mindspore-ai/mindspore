@@ -18,7 +18,6 @@
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/all_gather_parameter.h"
-#include "nnacl/communication_func.h"
 
 int AllGatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
@@ -34,8 +33,7 @@ int AllGatherInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   }
 
   AllGatherParameter *param = (AllGatherParameter *)parameter;
-  param->rank_ = get_rank(param->group_);
-  if (param->rank_ <= 0) {
+  if (param->rank_size_ <= 0) {
     return NNACL_INFER_INVALID;
   }
 
@@ -45,7 +43,7 @@ int AllGatherInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
 
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
-  out_shape[0] = in_shape[0] * param->rank_;
+  out_shape[0] = in_shape[0] * param->rank_size_;
   out_shape_size++;
   for (int i = 1; i < input_tensor->shape_size_; i++) {
     out_shape[i] = in_shape[i];

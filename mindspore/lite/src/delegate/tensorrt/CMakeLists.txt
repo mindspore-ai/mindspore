@@ -37,12 +37,24 @@ else()
 endif()
 add_dependencies(gpu_distribution_collective fbs_src)
 
+
 file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../delegate_utils.cc
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache)
+
+set(TENSORRT_RUNTIME_SRC
+        ${TENSORRT_RUNTIME_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/load_host_cache_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/lfu_cache.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/gpu/gpu_cache_mem.cc
+        )
 
 link_libraries(${CUDA_LIB_PATH}/libcudnn.so)
 link_libraries(${CUDA_LIB_PATH}/libnvrtc.so)
@@ -73,3 +85,4 @@ set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_F
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGES} -std=c++14 -fPIC")
 SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-std=c++14;)
 cuda_add_library(cuda_kernel_mid STATIC ${CUDA_KERNEL_SRC})
+

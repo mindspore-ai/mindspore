@@ -1207,9 +1207,11 @@ table ScatterNdUpdate {
 
 table AllGather {
     group: string;
+    rank_size: int;
 }
 
 table ReduceScatter {
     group: string;
     mode: ReduceMode;
+    rank_size: int;
 }
