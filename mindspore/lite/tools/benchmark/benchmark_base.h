@@ -273,6 +273,7 @@ class MS_API BenchmarkBase {
         sum_a += static_cast<double>(msTensorData[j]) * static_cast<double>(msTensorData[j]);
         sum_b += static_cast<double>(calibTensor->data.at(j)) * static_cast<double>(calibTensor->data.at(j));
       }
+      std::cout << std::endl;
       GetCosError(sum_a, sum_b, dot_sum, cos_sim);
       std::cout << "Mean cosine distance of node/tensor " << nodeName << " : " << *cos_sim * 100 << "%" << std::endl;
       return RET_OK;

@@ -114,7 +114,7 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
   auto size = cnode->inputs().size();
   for (size_t i = 1; i < size; i++) {
     std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
-      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_);
+      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
     MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
     inputs_diverg_info_[node_name].insert({i - 1, std::move(input_diverg)});
   }
@@ -126,13 +126,13 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     MS_ASSERT(elements.size() > 1);
     for (size_t i = 0; i < elements.size(); i++) {
       std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
-        cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_);
+        cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
       MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
       outputs_diverg_info_[node_name].insert({i, std::move(output_diverg)});
     }
   } else {
     std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
-      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_);
+      cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
     MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
     outputs_diverg_info_[node_name].insert({0, std::move(output_diverg)});
   }
