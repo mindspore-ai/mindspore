@@ -1643,7 +1643,7 @@ class AccumulateNV2(Primitive):
                         f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 
 
-class Neg(PrimitiveWithInfer):
+class Neg(Primitive):
     """
     Returns a tensor with negative values of the input tensor element-wise.
 
@@ -1676,22 +1676,6 @@ class Neg(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Neg"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
-        return x_dtype
-
-    def infer_value(self, input_x):
-        if input_x is not None:
-            input_x = input_x.asnumpy()
-            out = np.array(-input_x, input_x.dtype)
-            return Tensor(out)
-
-        return None
-
 
 class InplaceAdd(PrimitiveWithInfer):
     """

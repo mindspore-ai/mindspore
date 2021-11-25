@@ -15,6 +15,7 @@
  */
 
 #include "ops/neg.h"
+#include <complex>
 #include <vector>
 #include <string>
 #include <memory>
@@ -27,13 +28,17 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+template <typename T>
+void ImpleNeg(void *origin, void *target, size_t size) {
+  MS_EXCEPTION_IF_NULL(origin);
+  MS_EXCEPTION_IF_NULL(target);
+  auto origin_data = reinterpret_cast<T *>(origin);
+  auto target_data = reinterpret_cast<T *>(target);
+  for (size_t i = 0; i < size; ++i) {
+    target_data[i] = -origin_data[i];
   }
+}
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_ptr = x->cast<abstract::ShapePtr>();
@@ -42,24 +47,102 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", int64_t(input_args.size()), kEqual, 1, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  const std::set<TypePtr> valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
+                                         kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return input_args[0]->BuildType();
+}
+
+ValuePtr NegInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.empty()) {
+    return nullptr;
   }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  std::set<TypePtr> valid_params_types = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_params_types, op_name);
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+
+  auto x = input_args[kInputIndex0]->BuildValue();
+  if (x == nullptr) {
+    return nullptr;
+  }
+  auto x_tensor = x->cast<tensor::TensorPtr>();
+  if (x_tensor == nullptr) {
+    return nullptr;
+  }
+
+  auto data_size = x_tensor->DataSize();
+  auto dtype = x_tensor->data_type();
+  auto shape = InferShape(prim, input_args)->shape();
+  auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
+  auto x_datac = x_tensor->data_c();
+  auto result_datac = result_tensor->data_c();
+  switch (dtype) {
+    case kNumberTypeInt8: {
+      ImpleNeg<int8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt16: {
+      ImpleNeg<int16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt32: {
+      ImpleNeg<int32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt64: {
+      ImpleNeg<int64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt8: {
+      ImpleNeg<uint8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt16: {
+      ImpleNeg<uint16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt32: {
+      ImpleNeg<uint32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt64: {
+      ImpleNeg<uint64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat16: {
+      ImpleNeg<float16>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat32: {
+      ImpleNeg<float>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      ImpleNeg<double>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeComplex64: {
+      ImpleNeg<std::complex<float>>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeComplex128: {
+      ImpleNeg<std::complex<double>>(x_datac, result_datac, data_size);
+      break;
+    }
+    default: {
+      MS_EXCEPTION(TypeError) << "Neg unsupported data type: " << x_tensor->ToString();
+    }
+  }
+  return result_tensor;
 }
 }  // namespace
 
 AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto infer_type = InferType(primitive, input_args);
+  auto infer_shape = InferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameNeg, Neg);
+REGISTER_PRIMITIVE_EVAL_IMPL(Neg, prim::kPrimNeg, NegInfer, NegInferValue, true);
 }  // namespace ops
 }  // namespace mindspore
