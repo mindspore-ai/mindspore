@@ -27,16 +27,17 @@ class ASGD(Optimizer):
     Implements Average Stochastic Gradient Descent.
 
     Introduction to ASGD can be found at `Acceleration of stochastic approximation by average
-     <http://dl.acm.org/citation.cfm?id=131098>`_.
+    <http://dl.acm.org/citation.cfm?id=131098>`_.
 
     The updating formulas are as follows:
 
-    \begin{gather*}
+    .. math::
+        \begin{gather*}
             w_{t} = w_{t-1} * (1 - \lambda * \eta_{t-1}) - \eta_{t-1} * g_{t} \\
             ax_{t} = (w_t - ax_{t-1}) * \mu_{t-1} \\
             \eta_{t} = \frac{1.}{(1 + \lambda * lr * t)^\alpha} \\
             \mu_{t} = \frac{1}{\max(1, t - t0)}
-    \end{gather*}
+        \end{gather*}
 
     :math:`\lambda` represents the decay term, :math:`\mu` and :math:`\eta` are tracked to
     update :math:`ax` and :math:`w`, :math:`t0` represents the point of starting averaging,

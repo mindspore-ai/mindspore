@@ -440,7 +440,7 @@ class Dirac(Initializer):
     input for convolution layers. For group convolution, each group of channels will be preserved respectively.
 
     Args:
-         groups (int): The number of group in convolution layer. Default: 1.
+        groups (int): The number of group in convolution layer. Default: 1.
 
     Raises:
         ValueError: If the value of group is not in [3, 4, 5] or the first dimension of the initialized

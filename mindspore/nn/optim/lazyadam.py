@@ -139,7 +139,7 @@ class LazyAdam(Optimizer):
         parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
         applied.
 
-   Args:
+    Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
             "order_params" are the keys can be parsed.
