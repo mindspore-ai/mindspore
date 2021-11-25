@@ -81,7 +81,7 @@ std::string TbeUtils::GetBankPath() {
       save_path = real_path;
       return save_path;
     }
-    MS_LOG(EXCEPTION) << "Invalid environment variable 'TUNE_BANK_PATH', the path is " << save_path
+    MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTUNE_BANK_PATH << "', the path is " << save_path
                       << ". Please check (1) whether the path exists, (2) whether the path has the access "
                          "permission, (3) whether the path is too long. ";
   }
@@ -97,7 +97,7 @@ std::string TbeUtils::GetTuneDumpPath() {
       save_path = real_path;
       return save_path;
     }
-    MS_LOG(EXCEPTION) << "Invalid environment variable 'TUNE_DUMP_PATH', the path is " << save_path
+    MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTUNE_DUMP_PATH << "', the path is " << save_path
                       << ". Please check (1) whether the path exists, (2) whether the path has the access "
                          "permission, (3) whether the path is too long. ";
   }
@@ -125,7 +125,7 @@ std::string GetOpDebugLevel() {
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
     if (exp.find(env_level) == exp.end()) {
-      MS_LOG(WARNING) << "Invalid MS_COMPILER_OP_LEVEL env:" << env_level
+      MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
                       << ", the value should be in {0, 1, 2, 3, 4}, now using the default value 0";
     } else {
       op_debug_level = env_level;
