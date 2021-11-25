@@ -183,13 +183,13 @@ uint32_t GetProcessNum() {
   auto env_process_num = common::GetEnv(kMS_BUILD_PROCESS_NUM);
   if (!env_process_num.empty()) {
     if (!IsDigit(env_process_num)) {
-      MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_BUILD_PROCESS_NUM',it should be a digit, but got: "
-                        << env_process_num;
+      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_BUILD_PROCESS_NUM
+                        << "', it should be a digit, but got: " << env_process_num;
     }
     process_num = UlongToUint(std::stoul(env_process_num));
     if (process_num < 1 || process_num > kDEFAULT_PROCESS_NUM) {
-      MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_BUILD_PROCESS_NUM', the value should be in [1, 24], "
-                        << "but got: " << process_num;
+      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_BUILD_PROCESS_NUM
+                        << "', the value should be in [1, 24], but got: " << process_num;
     }
   }
   return process_num;
@@ -202,7 +202,7 @@ std::string GetParaDebugPath() {
     if (realpath(save_path.c_str(), real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid environment variable 'PARA_DEBUG_PATH', the path is " << save_path
+      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_PARA_DEBUG_PATH << "', the path is " << save_path
                         << ". Please check (1) whether the path exists, (2) whether the path has the access "
                            "permission, (3) whether the path is too long.";
     }
@@ -219,7 +219,7 @@ std::string GetTbePath() {
     if (realpath(save_path.c_str(), real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid environment variable 'TBE_IMPL_PATH', the path is " << save_path
+      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTBE_IMPL_PATH << "', the path is " << save_path
                         << ". Please check (1) whether the path exists, (2) whether the path has the access "
                            "permission, (3) whether the path is too long. ";
     }
