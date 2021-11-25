@@ -39,7 +39,10 @@ void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &ad
                    const TypeId &type, bool trans_flag = false);
 // Get time stamp since epoch in microseconds
 uint64_t GetTimeStamp();
-std::string GetOpNameWithoutScope(const std::string &fullname_with_scope);
+std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator = "--");
+
+// dump target string into file
+void DumpToFile(const std::string &file_name, const std::string &dump_str);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_DUMP_UTILS_H_

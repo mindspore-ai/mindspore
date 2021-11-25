@@ -1,0 +1,146 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package debugger.dump;
+
+
+enum OutputDataType {
+  DT_UNDEFINED = 0;
+  DT_FLOAT = 1;
+  DT_FLOAT16 = 2;
+  DT_INT8 = 3;
+  DT_UINT8 = 4;
+  DT_INT16 = 5;
+  DT_UINT16 = 6;
+  DT_INT32 = 7;
+  DT_INT64 = 8;
+  DT_UINT32 = 9;
+  DT_UINT64 = 10;
+  DT_BOOL = 11;
+  DT_DOUBLE = 12;
+  DT_STRING = 13;
+  DT_DUAL_SUB_INT8 = 14;
+  DT_DUAL_SUB_UINT8 = 15;
+  DT_COMPLEX64 = 16;
+  DT_COMPLEX128 = 17;
+  DT_QINT8 = 18;
+  DT_QINT16 = 19;
+  DT_QINT32 = 20;
+  DT_QUINT8 = 21;
+  DT_QUINT16 = 22;
+  DT_RESOURCE = 23;
+  DT_STRING_REF = 24;
+  DT_DUAL = 25;
+}
+
+enum OutputFormat {
+  FORMAT_NCHW = 0;
+  FORMAT_NHWC = 1;
+  FORMAT_ND = 2;
+  FORMAT_NC1HWC0 = 3;
+  FORMAT_FRACTAL_Z = 4;
+  FORMAT_NC1C0HWPAD = 5;
+  FORMAT_NHWC1C0 = 6;
+  FORMAT_FSR_NCHW = 7;
+  FORMAT_FRACTAL_DECONV = 8;
+  FORMAT_C1HWNC0 = 9;
+  FORMAT_FRACTAL_DECONV_TRANSPOSE = 10;
+  FORMAT_FRACTAL_DECONV_SP_STRIDE_TRANS = 11;
+  FORMAT_NC1HWC0_C04 = 12;
+  FORMAT_FRACTAL_Z_C04 = 13;
+  FORMAT_CHWN = 14;
+  FORMAT_FRACTAL_DECONV_SP_STRIDE8_TRANS = 15;
+  FORMAT_HWCN = 16;
+  FORMAT_NC1KHKWHWC0 = 17;
+  FORMAT_BN_WEIGHT = 18;
+  FORMAT_FILTER_HWCK = 19;
+  FORMAT_HASHTABLE_LOOKUP_LOOKUPS = 20;
+  FORMAT_HASHTABLE_LOOKUP_KEYS = 21;
+  FORMAT_HASHTABLE_LOOKUP_VALUE = 22;
+  FORMAT_HASHTABLE_LOOKUP_OUTPUT = 23;
+  FORMAT_HASHTABLE_LOOKUP_HITS = 24;
+  FORMAT_C1HWNCoC0 = 25;
+  FORMAT_MD = 26;
+  FORMAT_NDHWC = 27;
+  FORMAT_FRACTAL_ZZ = 28;
+  FORMAT_FRACTAL_NZ = 29;
+  FORMAT_NCDHW = 30;
+  FORMAT_DHWCN = 31;  // 3D filter input tensor format
+  FORMAT_NDC1HWC0 = 32;
+  FORMAT_FRACTAL_Z_3D=33;
+  FORMAT_CN = 34;
+  FORMAT_NC = 35;
+  FORMAT_DHWNC = 36;
+  FORMAT_FRACTAL_Z_3D_TRANSPOSE = 37; // 3D filter(transpose) input tensor format
+  FORMAT_FRACTAL_ZN_LSTM = 38;
+  FORMAT_FRACTAL_Z_G = 39;
+  FORMAT_RESERVED = 40;
+  // Add new formats definition here
+  FORMAT_MAX = 0xff;
+}
+
+message OriginalOp {
+  string name = 1;
+  uint32 output_index = 2;
+  OutputDataType data_type = 3;
+  OutputFormat format = 4;
+}
+
+message Shape {
+  repeated uint64 dim = 1;
+}
+
+message OpOutput {
+  OutputDataType data_type = 1;
+  OutputFormat format = 2;
+  Shape shape = 3;
+  OriginalOp original_op = 4;  // the original op corresponding to the output
+  bytes data = 5;
+  uint64 size = 6;
+  Shape original_shape = 7;
+  int32 sub_format = 8;
+}
+
+message OpInput {
+  OutputDataType data_type = 1;
+  OutputFormat format = 2;
+  Shape shape = 3;
+  bytes data = 4;
+  uint64 size = 5;
+  Shape original_shape = 6;
+  int32 sub_format = 7;
+}
+
+enum BufferType {
+  L1 = 0;
+}
+
+message OpBuffer {
+  BufferType buffer_type = 1;
+  bytes data = 2;
+  uint64 size = 3;
+}
+
+message DumpData {
+  string version = 1;
+  uint64 dump_time = 2;
+  repeated OpOutput output = 3;
+  repeated OpInput input = 4;
+  repeated OpBuffer buffer = 5;
+  string op_name = 6;
+}

@@ -26,6 +26,9 @@
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 #include "common/trans.h"
+#ifdef ENABLE_D
+#include "debug/dump_data_builder.h"
+#endif
 
 using debugger::Chunk;
 using debugger::DataType;
@@ -170,6 +173,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if dump using debugger backend is enabled
   bool CheckDebuggerDumpEnabled() const;
 
+#ifdef ENABLE_D
+  std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
+
+  void ClearDumpDataBuilder(const std::string &node_name);
+#endif
+
  private:
   // private constructor for singleton
   Debugger();
@@ -288,6 +297,11 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::list<KernelGraphPtr> graph_ptr_list_;
   // The vector of graph pointers that have been run in the current step.
   std::vector<KernelGraphPtr> graph_ptr_step_vec_;
+
+#ifdef ENABLE_D
+  // to construct kernel data for async dump, key is the dump path to the node
+  std::map<std::string, std::shared_ptr<DumpDataBuilder>> dump_data_construct_map_;
+#endif
 
   // singleton
   static std::mutex instance_lock_;
