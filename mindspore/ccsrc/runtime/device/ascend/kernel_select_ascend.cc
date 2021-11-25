@@ -486,7 +486,8 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported func type [" << func_type << "] for Custom op [" << op_name << "] on Ascend";
+    MS_LOG(EXCEPTION) << "Unsupported func type for Custom op on Ascend, it should be 'tbe', 'ir_builder', "
+                      << "'tvm_compute' or 'hybrid', but got [" << func_type << "] for Custom op [" << op_name << "]";
   }
   kernel::OpImplyType imply_type =
     *kernel_type == KernelType::TBE_KERNEL ? kernel::OpImplyType::kTBE : kernel::OpImplyType::kAKG;
@@ -496,7 +497,9 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
     return kNoMatched;
   }
   // If Custom op has not set reg info, then infer info from inputs
-  MS_LOG(WARNING) << "Not find operator information for op[" << op_name << "]. Infer operator information from inputs.";
+  MS_LOG(WARNING) << "Not find operator information for Custom op[" << op_name << "]. "
+                  << "Infer operator information from inputs. For more details, "
+                  << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   builder->SetKernelType(*kernel_type);
   builder->SetProcessor(kernel::Processor::AICORE);

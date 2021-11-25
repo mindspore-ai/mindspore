@@ -431,13 +431,15 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
         kernel::CPUKernelRegistrar(op_name, KernelAttr(),
                                    []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
       } else {
-        MS_LOG(EXCEPTION) << "Unsupported func type [" << tp << "] for Custom op [" << op_name << "] on CPU";
+        MS_LOG(EXCEPTION) << "Unsupported func type for Custom op on CPU, it should be 'pyfunc' or 'aot', but got ["
+                          << tp << "] for Custom op [" << op_name << "]";
       }
     }
     // If Custom op has not set reg info, then infer info from inputs
     if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
-      MS_LOG(WARNING) << "Not find operator information for op[" << op_name
-                      << "]. Infer operator information from inputs.";
+      MS_LOG(WARNING) << "Not find operator information for Custom op[" << op_name << "]. "
+                      << "Infer operator information from inputs. For more details, "
+                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
       return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
     }
   } else if (IsDynamicParamKernel(op_name)) {
@@ -458,7 +460,8 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(DEBUG) << "Operator[" << op_name << "] will get ops attr info.";
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
     if (op_info_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Not find op[" << op_name << "] in cpu";
+      MS_LOG(EXCEPTION) << "Not find op[" << op_name << "] in cpu. For more details, "
+                        << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
     }
     kernel_attrs.clear();
     kernel::CPUKernelFactory::GetInstance().SetKernelAttrs(op_info_ptr, &kernel_attrs);

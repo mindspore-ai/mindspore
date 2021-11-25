@@ -172,7 +172,8 @@ bool OpLib::RegOpFromLocalInfo() {
   }
   char real_path[PATH_MAX] = {0};
   if (dir.size() >= PATH_MAX) {
-    MS_LOG(ERROR) << "Op info path is invalid: " << dir;
+    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path length should be smaller than "
+                  << PATH_MAX << ", but got " << dir;
     return false;
   }
 #if defined(_WIN32) || defined(_WIN64)
@@ -182,11 +183,14 @@ bool OpLib::RegOpFromLocalInfo() {
   }
 #else
   if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
-    MS_LOG(ERROR) << "Op info path is invalid: " << dir;
+    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path is: " << dir
+                  << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
+                  << "(3) whether the path is too long. ";
     return false;
   }
   if (strlen(real_path) >= PATH_MAX) {
-    MS_LOG(ERROR) << "Op info path is invalid, the absolute path length is greater than PATH_MAX";
+    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the absolute path length should be smaller"
+                  << " than " << PATH_MAX << ", but got " << real_path;
     return false;
   }
 #endif
