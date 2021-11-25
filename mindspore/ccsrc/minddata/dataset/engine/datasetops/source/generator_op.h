@@ -42,7 +42,7 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
  public:
   GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
               std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
-              std::shared_ptr<SamplerRT> sampler, uint32_t num_parallel_workers);
+              std::shared_ptr<SamplerRT> sampler, int32_t num_parallel_workers);
 
   ~GeneratorOp() = default;
 
@@ -79,13 +79,17 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
 
   bool IsPython() const override { return true; }
 
+  /// Number of parallel workers getter
+  /// \return Number of parallel workers of the current Op
+  int32_t NumWorkers() const override { return num_parallel_workers_; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;
   std::vector<DataType> column_types_;
   int32_t prefetch_size_;
   int64_t generator_counter_;
-  uint32_t num_parallel_workers_;
+  int32_t num_parallel_workers_;
 
   py::object generator_;
 

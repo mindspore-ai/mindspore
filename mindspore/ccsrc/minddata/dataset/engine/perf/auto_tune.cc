@@ -194,20 +194,18 @@ Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
 Status AutoTune::RequestNumWorkerChange(int32_t op_id, int32_t old_workers, int32_t new_workers) {
   new_workers = std::min(new_workers, max_workers_);
   new_workers = std::max(new_workers, MIN_NUM_WORKERS);
-  MS_LOG(INFO) << "Request to change number of workers of Operator: " << ops_[op_id]->NameWithID()
-               << " New value: " << new_workers << " Old value: " << old_workers;
   RETURN_IF_NOT_OK(tree_modifier_->AddChangeRequest(op_id, std::make_shared<ChangeNumWorkersRequest>(new_workers)));
-
+  MS_LOG(WARNING) << "Added request to change number of workers of Operator: " << ops_[op_id]->NameWithID()
+                  << " New value: " << new_workers << " Old value: " << old_workers;
   return Status::OK();
 }
 Status AutoTune::RequestConnectorCapacityChange(int32_t op_id, int32_t old_size, int32_t new_size) {
   new_size = std::min(new_size, MAX_QUEUE_SIZE);
   new_size = std::max(new_size, MIN_QUEUE_SIZE);
 
-  MS_LOG(INFO) << "Request to change Connector capacity of Operator: " << ops_[op_id]->NameWithID()
-               << " New value: " << new_size << " Old value: " << old_size;
   RETURN_IF_NOT_OK(tree_modifier_->AddChangeRequest(op_id, std::make_shared<ResizeConnectorRequest>(new_size)));
-
+  MS_LOG(WARNING) << "Added request to change Connector capacity of Operator: " << ops_[op_id]->NameWithID()
+                  << " New value: " << new_size << " Old value: " << old_size;
   return Status::OK();
 }
 
