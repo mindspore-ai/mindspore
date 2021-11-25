@@ -30,6 +30,8 @@
 
 namespace mindspore {
 namespace trace {
+constexpr auto kSectionPrefix = " - ";
+
 std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
 std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
                          SourceLineTip tip = kSourceLineTipNextLine);

@@ -58,6 +58,7 @@ class MergeAddN : public AnfVisitor {
 
     auto new_node = fg->NewCNode({addn, make_node});
     UpdateDumpFlag(new_node);
+    new_node->AddFusedDebugInfoList(addn_nodes_);
     return new_node;
   }
 

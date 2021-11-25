@@ -125,6 +125,55 @@ std::string CNode::DebugString(int recursive_level) const {
   return buffer.str();
 }
 
+void CNode::AddFusedDebugInfo(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return;
+  }
+  if (shared_from_this() == node) {
+    this->AddFusedDebugInfo(node->debug_info());
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto node_fused_debug_infos = cnode->fused_debug_infos();
+  if (!node_fused_debug_infos.empty()) {
+    std::for_each(node_fused_debug_infos.begin(), node_fused_debug_infos.end(),
+                  [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
+  } else {
+    this->AddFusedDebugInfo(cnode->debug_info());
+  }
+
+  auto primal_debug_infos = cnode->primal_debug_infos();
+  if (!primal_debug_infos.empty()) {
+    std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
+                  [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
+  }
+}
+
+void CNode::AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes) {
+  std::for_each(nodes.begin(), nodes.end(), [this](const AnfNodePtr &node) { this->AddFusedDebugInfo(node); });
+}
+
+void CNode::AddFusedDebugInfo(const NodeDebugInfoPtr &debug_info) {
+  if (debug_info == nullptr) {
+    return;
+  }
+  (void)fused_debug_infos_.emplace(debug_info);
+}
+
+void CNode::AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos) {
+  std::for_each(debug_infos.begin(), debug_infos.end(),
+                [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
+}
+
+NodeDebugInfoSet CNode::primal_debug_infos() const { return primal_debug_infos_; }
+
+void CNode::set_primal_debug_infos(const NodeDebugInfoSet &debug_infos) {
+  std::for_each(debug_infos.begin(), debug_infos.end(),
+                [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
+}
+
+void CNode::AddPrimalDebugInfo(const NodeDebugInfoPtr &debug_info) { (void)primal_debug_infos_.emplace(debug_info); }
+
 std::string Parameter::DebugString(int recursive_level) const {
   std::ostringstream buffer;
   if (recursive_level > 0) {

@@ -410,6 +410,45 @@ void DumpShape(const AnfNodePtr &nd, const FuncGraphPtr &sub_graph, const std::s
   gsub->buffer << std::endl;
 }
 
+void DumpPrimalDebugInfos(const CNodePtr &nd, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  MS_EXCEPTION_IF_NULL(nd);
+  auto primal_debug_infos = nd->primal_debug_infos();
+  if (!primal_debug_infos.empty()) {
+    gsub->buffer << "      # Corresponding forward node candidate:\n";
+    for (auto &primal_debug_info : primal_debug_infos) {
+      gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "\n";
+    }
+  }
+}
+
+void DumpDebugInfo(const CNodePtr &nd, const std::shared_ptr<SubGraphIRInfo> &gsub, const LocDumpMode &dump_location) {
+  MS_EXCEPTION_IF_NULL(nd);
+  if (dump_location == kTopStack) {
+    auto fused_debug_infos = nd->fused_debug_infos();
+    if (!fused_debug_infos.empty()) {
+      gsub->buffer << "      # Corresponding code candidate:\n";
+      for (const auto &debug_info : fused_debug_infos) {
+        auto debug_info_str = trace::GetDebugInfo(debug_info, "      # ", kSourceLineTipDiscard);
+        if (!debug_info_str.empty()) {
+          gsub->buffer << debug_info_str << "\n";
+        }
+      }
+    } else {
+      auto debug_info_str = trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard);
+      if (!debug_info_str.empty()) {
+        gsub->buffer << debug_info_str << "\n";
+      }
+    }
+
+    DumpPrimalDebugInfos(nd, gsub);
+  } else if (dump_location == kWholeStack) {
+    auto traces = mindspore::trace::GetSourceLineList(nd);
+    for (auto &trace : traces) {
+      gsub->buffer << "      # " << trace;
+    }
+  }
+}
+
 void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<AnfNodePtr, int32_t> *const para_map,
                const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
                LocDumpMode dump_location = kOff) {
@@ -457,34 +496,9 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
   if (dump_full_name) {
     gsub->buffer << "      : (" << nd->fullname_with_scope() << ")" << std::endl;
   }
-  if (dump_location == kTopStack) {
-    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
-      gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
-                   << label_manage::Label(nd->debug_info()) << "\n";
-      auto primal_debug_infos = nd->primal_debug_infos();
-      if (!primal_debug_infos.empty()) {
-        gsub->buffer << "      # Corresponding forward node candidate:\n";
-        for (auto &primal_debug_info : primal_debug_infos) {
-          gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "#"
-                       << label_manage::Label(primal_debug_info) << "\n";
-        }
-      }
-    } else {
-      gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
-      auto primal_debug_infos = nd->primal_debug_infos();
-      if (!primal_debug_infos.empty()) {
-        gsub->buffer << "      # Corresponding forward node candidate:\n";
-        for (auto &primal_debug_info : primal_debug_infos) {
-          gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "\n";
-        }
-      }
-    }
-  } else if (dump_location == kWholeStack) {
-    auto traces = mindspore::trace::GetSourceLineList(nd);
-    for (auto &trace : traces) {
-      gsub->buffer << "      # " << trace;
-    }
-  }
+
+  // print debug info
+  DumpDebugInfo(nd, gsub, dump_location);
 }
 
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,

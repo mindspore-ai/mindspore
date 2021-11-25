@@ -42,6 +42,8 @@ class Location {
   int column() const { return column_; }
   int column_end() const { return column_end_; }
 
+  bool operator<(const Location &other) const;
+
  private:
   std::string file_name_;
   int line_;
@@ -210,7 +212,7 @@ class MS_CORE_API DebugInfo {
   /// \brief Get the location.
   ///
   /// \return The location.
-  virtual LocationPtr location() { return location_; }
+  virtual LocationPtr location() const { return location_; }
 
   /// \brief Get the name.
   ///
@@ -321,7 +323,7 @@ class GraphDebugInfo : public DebugInfo {
   ~GraphDebugInfo() override = default;
 
   std::string debug_name() override;
-  LocationPtr location() override;
+  LocationPtr location() const override;
   LocationPtr deco_location() { return deco_loc_; }
   void set_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
   FuncGraphPtr get_graph() const { return func_graph_.lock(); }
@@ -371,6 +373,9 @@ inline TraceContext::TraceContext(const LocationPtr &loc, const std::string &fun
   }
 }
 
+struct DebugInfoCompare {
+  bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right);
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_INFO_H_

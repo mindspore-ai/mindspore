@@ -81,6 +81,14 @@ std::string Location::ToString(SourceLineTip tip) const {
   return debug_info_ss.str();
 }
 
+bool Location::operator<(const Location &other) const {
+  auto ret = file_name_.compare(other.file_name());
+  if (ret != 0) {
+    return ret < 0;
+  }
+  return line_ < other.line();
+}
+
 int64_t DebugInfo::get_id() const {
   // cppcheck-suppress variableScope
   static int64_t current_id = 1;
@@ -121,7 +129,7 @@ std::string GraphDebugInfo::debug_name() {
   return name_;
 }
 
-LocationPtr GraphDebugInfo::location() {
+LocationPtr GraphDebugInfo::location() const {
   // Function may have decorator which is included in its location.
   auto loc = DebugInfo::location();
   if (deco_loc_ != nullptr && loc != nullptr) {
@@ -167,4 +175,36 @@ void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::parse_or_resol
 thread_local std::vector<TraceContext> TraceManager::trace_context_stack_;
 
 thread_local DebugInfoPtr TraceManager::parse_or_resolve_debug_info_ = nullptr;
+
+LocationPtr GetFirstLocation(const DebugInfoPtr &debug_info) {
+  auto tmp = debug_info;
+  while (tmp != nullptr) {
+    if (tmp->location() != nullptr) {
+      return tmp->location();
+    }
+    if (tmp->trace_info() != nullptr) {
+      tmp = tmp->trace_info()->debug_info();
+    } else {
+      break;
+    }
+  }
+  return nullptr;
+}
+
+bool DebugInfoCompare::operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) {
+  MS_EXCEPTION_IF_NULL(left);
+  MS_EXCEPTION_IF_NULL(right);
+  if (left == right) {
+    return false;
+  }
+  auto left_loc = GetFirstLocation(left);
+  auto right_loc = GetFirstLocation(right);
+  if (left_loc == nullptr || right_loc == nullptr) {
+    return left < right;
+  }
+  if (left_loc == right_loc) {
+    return false;
+  }
+  return *left_loc < *right_loc;
+}
 }  // namespace mindspore
