@@ -56,7 +56,12 @@ def _check_uniform(tensor, boundary_a, boundary_b):
     return p > 0.0001
 
 
-def test_init_Initializer():
+def test_init_initializer():
+    """
+    Feature: Test initializer.
+    Description: Test initializer.
+    Expectation: Shape and value is initialized successfully..
+    """
     tensor = init.initializer(InitTwo(), [2, 2], ms.int32)
     assert tensor.shape == (2, 2)
     _check_value(tensor.init_data(), 2, 2)
@@ -201,6 +206,76 @@ def test_init_he_uniform():
 def test_init_he_uniform_error():
     with py.raises(ValueError):
         init.initializer(init.HeUniform(), [6], ms.float32).init_data()
+
+
+def test_init_identity():
+    """
+    Feature: Test identity initializer.
+    Description: Test if error is raised when the shape of the initialized tensor is not correct.
+    Expectation: ValueError is raised.
+    """
+    with py.raises(ValueError):
+        tensor = init.initializer(init.Identity(), [5, 4, 6], ms.float32)
+        tensor.init_data()
+
+
+def test_init_sparse():
+    """
+    Feature: Test sparse initializer.
+    Description: Test if error is raised when the shape of the initialized tensor is not correct.
+    Expectation: ValueError is raised.
+    """
+    with py.raises(ValueError):
+        tensor = init.initializer(init.Sparse(sparsity=0.1), [5, 4, 6], ms.float32)
+        tensor.init_data()
+
+
+def test_init_dirac():
+    """
+    Feature: Test dirac initializer.
+    Description: Test if error is raised when the shape of the initialized tensor is not correct.
+    or shape[0] is not divisible by group.
+    Expectation: ValueError is raised.
+    """
+    with py.raises(ValueError):
+        tensor1 = init.initializer(init.Dirac(groups=2), [5, 4, 6], ms.float32)
+        tensor1.init_data()
+
+    with py.raises(ValueError):
+        tensor2 = init.initializer(init.Dirac(groups=1), [5, 4], ms.float32)
+        tensor2.init_data()
+
+    with py.raises(ValueError):
+        tensor3 = init.initializer(init.Dirac(groups=1), [5, 4, 6, 7, 8, 9], ms.float32)
+        tensor3.init_data()
+
+
+def test_init_orthogonal():
+    """
+    Feature: Test orthogonal initializer.
+    Description: Test if error is raised when the shape of the initialized tensor is not correct.
+    Expectation: ValueError is raised.
+    """
+    with py.raises(ValueError):
+        tensor = init.initializer(init.Orthogonal(), [5,], ms.float32)
+        tensor.init_data()
+
+
+def test_init_variancescaling():
+    """
+    Feature: Test orthogonal initializer.
+    Description: Test if error is raised when scale is less than 0 or mode and distribution are not correct.
+    Expectation: ValueError is raised.
+    """
+    with py.raises(ValueError):
+        init.initializer(init.VarianceScaling(scale=-0.1), [5, 4, 6], ms.float32)
+
+    with py.raises(ValueError):
+        init.initializer(init.VarianceScaling(scale=0.1, mode='fans'), [5, 4, 6], ms.float32)
+
+    with py.raises(ValueError):
+        init.initializer(init.VarianceScaling(scale=0.1, mode='fan_in',
+                                              distribution='uniformal'), [5, 4, 6], ms.float32)
 
 
 def test_conv2d_abnormal_kernel_negative():
