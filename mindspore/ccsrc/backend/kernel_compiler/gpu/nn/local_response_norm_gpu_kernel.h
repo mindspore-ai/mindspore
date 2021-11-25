@@ -97,9 +97,8 @@ class LocalResponseNormGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckParam(kernel_node);
 
     depth_radius_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "depth_radius"));
     bias_ = GetAttr<float>(kernel_node, "bias");
@@ -115,14 +114,14 @@ class LocalResponseNormGpuKernel : public GpuKernel {
     InitResource();
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "LocalResponseNormGpuKernel input is null";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "tensor shape is " << input_shape.size() << ", LocalResponseNormGpuKernel should be 4D";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
+                        << input_shape.size();
     }
 
     if (use_native_) {
@@ -149,6 +148,7 @@ class LocalResponseNormGpuKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     is_null_input_ = false;
+    kernel_name_ = "LocalResponseNorm";
     x_desc_ = nullptr;
     y_desc_ = nullptr;
     norm_desc_ = nullptr;
@@ -211,18 +211,15 @@ class LocalResponseNormGpuKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but LocalResponseNormGpuKernel needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but LocalResponseNormGpuKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    return true;
   }
 
   void SetCUDNNDescriptors(const std::vector<size_t> &shape, int lrnN, double lrnAlpha) {
@@ -248,6 +245,7 @@ class LocalResponseNormGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   bool is_null_input_;
+  std::string kernel_name_;
   cudnnTensorDescriptor_t x_desc_;
   cudnnTensorDescriptor_t y_desc_;
   cudnnLRNDescriptor_t norm_desc_;

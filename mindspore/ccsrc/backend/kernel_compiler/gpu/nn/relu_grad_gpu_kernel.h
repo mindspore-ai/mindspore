@@ -51,16 +51,15 @@ class ReluGradGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReluGradGpuKernel needs 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ReLUGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

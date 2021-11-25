@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -36,6 +37,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
         mode_(CUDNN_SOFTMAX_MODE_INSTANCE),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         is_null_input_(false),
+        kernel_name_("SoftmaxGrad"),
         input_size_(0),
         output_size_(0),
         workspace_size_(0),
@@ -103,29 +105,28 @@ class SoftmaxGradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but softmax grad needs 2 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but softmax grad needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "SoftmaxGradGpuKernel input is null";
       InitSizeLists();
       return true;
     }
     shape_size_ = input_shape.size();
     if (shape_size_ != 2) {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but softmax grad only supports 2-D inputs.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be equal to 2, but got "
+                        << shape_size_;
     }
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "LogSoftmaxGrad") {
@@ -139,8 +140,8 @@ class SoftmaxGradGpuKernel : public GpuKernel {
       (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                            [](const int64_t &value) { return static_cast<int>(value); });
       if (axis.size() < 1) {
-        MS_LOG(EXCEPTION) << "For 'SoftmaxGradGpuKernel', the rank of axis should be greater than or equal to 1, "
-                          << "but got the rank of axis: " << axis.size();
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
+                          << axis.size();
       }
       InitSizeByAxis(input_shape, axis[0]);
     }
@@ -194,7 +195,8 @@ class SoftmaxGradGpuKernel : public GpuKernel {
       transpose_axis_.push_back(1);
       transpose_axis_.push_back(0);
     } else {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but axis(" << axis << ") is invalid.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in range [-" << shape_size_
+                        << ", " << shape_size_ << "), but got " << axis;
     }
 
     height_ = 1;
@@ -210,6 +212,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
   cudnnSoftmaxMode_t mode_;
   cudnnDataType_t cudnn_data_type_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

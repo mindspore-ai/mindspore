@@ -34,6 +34,7 @@ class MirrorPadGpuBackKernel : public GpuKernel {
         num_paddings_(0),
         mode_(0),
         is_null_input_(false),
+        kernel_name_("MirrorPadGrad"),
         input_size_(1),
         output_size_(1),
         workspace_size_(0) {}
@@ -62,16 +63,8 @@ class MirrorPadGpuBackKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but MirrorPadGrad needs 2 input.";
-      return false;
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but MirrorPadGrad needs 1 output.";
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckParam(kernel_node);
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     string mode = GetValue<string>(prim->GetAttr("mode"));
@@ -84,9 +77,10 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(padding_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_x") ||
+                     CHECK_SHAPE_NULL(padding_shape, kernel_name_, "paddings") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MirrorPadGradGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -99,8 +93,8 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       (void)input_shape.insert(it, 2, 1);  // channel padding
     }
     if (input_shape.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'MirrorPadGradGpuKernel', the rank of input should be greater than or equal to 4, "
-                        << "but got the rank of input: " << input_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input_x cannot be less than 4, but "
+                        << "got the " << input_shape.size();
     }
     input_size_ = sizeof(T);
     for (auto in_shape : input_shape) {
@@ -123,8 +117,8 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       (void)output_shape.insert(it, 2, 1);  // channel padding
     }
     if (output_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'MirrorPadGradGpuKernel', the rank of output should be greater than or equal to 2, "
-                        << "but got the rank of output: " << output_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2, but "
+                        << "got the " << output_shape.size();
     }
     output_size_ = sizeof(T);
     for (auto x : output_shape) {
@@ -152,8 +146,9 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     }
     if (output_shape_[(output_shape_.size() - 2) + 0] > max_width ||
         output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
-      MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more DIMS";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
+                        << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
+                        << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
     }
     InitSizeLists();
     return true;
@@ -168,10 +163,22 @@ class MirrorPadGpuBackKernel : public GpuKernel {
   }
 
  private:
+  void CheckParam(const CNodePtr &kernel_node) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 2) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+    }
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    if (output_num != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+    }
+  }
+
   size_t num_input_;
   int num_paddings_;
   int mode_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
   size_t input_size_;

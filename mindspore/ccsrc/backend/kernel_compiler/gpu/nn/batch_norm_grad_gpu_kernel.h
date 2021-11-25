@@ -136,12 +136,12 @@ class BatchNormGradGpuKernel : public GpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
       if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be "
                           << CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
       }
     } else {
       if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be "
                           << NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
       }
     }

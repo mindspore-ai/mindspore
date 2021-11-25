@@ -55,7 +55,7 @@ class DropoutGradGpuBwdKernel : public GpuKernel {
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
 
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);

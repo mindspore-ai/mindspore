@@ -62,15 +62,14 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but MirrorPad needs 2 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but Pad needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
@@ -84,9 +83,10 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(padding_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x") ||
+                     CHECK_SHAPE_NULL(padding_shape, kernel_name, "paddings") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MirrorPadGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -100,8 +100,8 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
       (void)input_shape.insert(it, 2, 1);  // channel padding
     }
     if (input_shape.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'MirrorPadGpuKernel', the rank of input should be greater than or equal to 4, "
-                        << "but got the rank of input: " << input_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x cannot be less than 4, but "
+                        << "got the " << input_shape.size();
     }
 
     for (auto in_shape : input_shape) {
@@ -117,8 +117,8 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     output_size_ = sizeof(T);
 
     if (output_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'MirrorPadGpuKernel', the rank of output should be greater than or equal to 2, "
-                        << "but got the rank of output: " << output_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 2, but "
+                        << "got the " << output_shape.size();
     }
     for (auto x : output_shape) {
       output_size_ *= x;
@@ -137,8 +137,9 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     }
     if (output_shape_[(output_shape_.size() - 2) + 0] > max_width ||
         output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
-      MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more dims";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the output.shape[-1] and output.shape[-2] cannot be greater "
+                        << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
+                        << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
     }
     InitSizeLists();
     return true;

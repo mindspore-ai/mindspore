@@ -49,28 +49,27 @@ class ResizeBilinearGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ResizeBilinear needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeBilinear has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ResizeBilinearGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() != 4 || output_shape.size() != 4) {
-      MS_LOG(ERROR) << "For 'ResizeBilinear', the rank of input and output must be 4, but got the rank of input: "
-                    << input_shape.size() << ", the rank of output: " << output_shape.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input and output should be equal to 4, but "
+                        << "got the dimension of input: " << input_shape.size()
+                        << ", the dimension of output: " << output_shape.size();
     }
     n_ = SizeToInt(input_shape[0]);
     c_ = SizeToInt(input_shape[1]);

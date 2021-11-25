@@ -53,7 +53,7 @@ class FusedWeightDecayMomentumGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of input should be " << INPUT_NUM << ", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
     }
 

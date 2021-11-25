@@ -72,7 +72,7 @@ class AdamGpuKernel : public GpuKernel {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << INPUT_NUM << ", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
     }
 

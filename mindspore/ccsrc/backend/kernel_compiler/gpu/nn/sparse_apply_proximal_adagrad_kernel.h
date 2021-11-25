@@ -62,11 +62,11 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SparseApplyProximalAdagrad needs " << INPUT_NUM
-                    << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
 
     variable_size_ = sizeof(T);
@@ -82,11 +82,12 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
     auto learning_rate_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
     auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
-    is_null_input_ = CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) ||
-                     CHECK_NULL_INPUT(learning_rate_shape) || CHECK_NULL_INPUT(gradient_shape) ||
-                     CHECK_NULL_INPUT(indices_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "var") ||
+                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name, "accum") ||
+                     CHECK_SHAPE_NULL(learning_rate_shape, kernel_name, "lr") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name, "grad") ||
+                     CHECK_SHAPE_NULL(indices_shape, kernel_name, "indices");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SparseApplyProximalAdagradGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

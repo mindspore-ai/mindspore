@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/cross_entropy_impl.cuh"
@@ -37,6 +38,7 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
         mode_(CUDNN_SOFTMAX_MODE_INSTANCE),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         is_null_input_(false),
+        kernel_name_("SoftmaxCrossEntropyWithLogits"),
         logits_size_(0),
         labels_size_(0),
         output1_size_(0),
@@ -75,19 +77,16 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num
-                    << ", but SoftmaxCrossEntropyWithLogitsGpuKernel needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 2) {
-      MS_LOG(ERROR) << "Output number is " << output_num
-                    << ", but SoftmaxCrossEntropyWithLogitsGpuKernel needs 2 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
 
@@ -132,9 +131,9 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   void InferInputOutputSize(const CNodePtr &kernel_node) {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(logits_shape, kernel_name_, "logits") || CHECK_SHAPE_NULL(labels_shape, kernel_name_, "labels");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SoftmaxCrossEntropyWithLogitsGpuKernel', input is null";
       InitSizeLists();
       return;
     }
@@ -165,17 +164,19 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     size_t logits_dim_length = logits_shape.size();
     size_t labels_dim_length = labels_shape.size();
     if (logits_dim_length == 0) {
-      MS_LOG(EXCEPTION) << "Logits shape cannot be empty";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be equal to 0, but got "
+                        << logits_dim_length;
     }
 
     if (labels_dim_length != logits_dim_length) {
-      MS_LOG(EXCEPTION) << "Labels shape length should be equal to Logits shape length for "
-                           "SoftmaxCrossEntropyWithLogits, but got Labels "
-                           "shape length:"
-                        << labels_dim_length << ", Logits shape length:" << logits_dim_length;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits and labels should be the same, but "
+                        << "got the dimension of labels: " << labels_dim_length
+                        << ", the dimension of logits: " << logits_dim_length;
     }
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
-      MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last dimension.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of logits and labels should be the same except "
+                        << "the last dimension, but got the shape of logits: " << CONVERT_VECTOR_TO_STRING(logits_shape)
+                        << ", the shape of labels: " << CONVERT_VECTOR_TO_STRING(labels_shape);
     }
   }
 
@@ -186,6 +187,7 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   cudnnSoftmaxMode_t mode_;
   cudnnDataType_t cudnn_data_type_;
   bool is_null_input_;
+  std::string kernel_name_;
 
   size_t logits_size_;
   size_t labels_size_;
