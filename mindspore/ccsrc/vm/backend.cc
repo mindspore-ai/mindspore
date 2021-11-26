@@ -27,6 +27,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
+#include "pybind_api/pybind_patch.h"
 #include "utils/callbacks.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -1160,6 +1161,18 @@ void MindRTBackend::LazyExecuteTaskCallback() {
 
     ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
     MS_LOG(DEBUG) << "End";
+  } catch (const py::type_error &ex) {
+    op_lazy_builder.Reset();
+    throw py::type_error(ex);
+  } catch (const py::value_error &ex) {
+    op_lazy_builder.Reset();
+    throw py::value_error(ex);
+  } catch (const py::index_error &ex) {
+    op_lazy_builder.Reset();
+    throw py::index_error(ex);
+  } catch (const py::name_error &ex) {
+    op_lazy_builder.Reset();
+    throw py::name_error(ex);
   } catch (const std::exception &ex) {
     op_lazy_builder.Reset();
     throw(std::runtime_error(ex.what()));
