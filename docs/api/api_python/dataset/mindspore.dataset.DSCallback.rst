@@ -1,5 +1,5 @@
 mindspore.dataset.DSCallback
-==============================
+=============================
 
 .. py:class:: mindspore.dataset.DSCallback(step_size=1)
 
@@ -7,22 +7,19 @@ mindspore.dataset.DSCallback
 
     **参数：**
 
-        - **step_size** (int, optional)：调用 `ds_step_begin` 和 `ds_step_end` 之间间隔的step数（默认为1）。
+    **step_size** (int, optional)：调用 `ds_step_begin` 和 `ds_step_end` 之间间隔的step数（默认为1）。
 
     **样例：**
 
-        .. code-block::
-
-            >>> from mindspore.dataset import DSCallback
-            >>>
-            >>> class PrintInfo(DSCallback):
-            ...     def ds_epoch_end(self, ds_run_context):
-            ...         print(cb_params.cur_epoch_num)
-            ...         print(cb_params.cur_step_num)
-            >>>
-            >>> # dataset为任意数据集实例，op为任意数据处理算子
-            >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
-
+    >>> from mindspore.dataset import DSCallback
+    >>>
+    >>> class PrintInfo(DSCallback):
+    ...     def ds_epoch_end(self, ds_run_context):
+    ...         print(cb_params.cur_epoch_num)
+    ...         print(cb_params.cur_step_num)
+    >>>
+    >>> # dataset为任意数据集实例，op为任意数据处理算子
+    >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
 
     .. py:method:: ds_begin(ds_run_context)
 
@@ -30,8 +27,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_epoch_begin(ds_run_context)
 
@@ -39,8 +35,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_epoch_end(ds_run_context)
 
@@ -48,8 +43,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_step_begin(ds_run_context)
 
@@ -57,8 +51,7 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
-
+        **ds_run_context** (RunContext)：数据处理管道运行信息。
 
     .. py:method:: ds_step_end(ds_run_context)
 
@@ -66,4 +59,4 @@ mindspore.dataset.DSCallback
 
         **参数：**
 
-            - **ds_run_context** (RunContext)：数据处理管道运行信息。
+        **ds_run_context** (RunContext)：数据处理管道运行信息。

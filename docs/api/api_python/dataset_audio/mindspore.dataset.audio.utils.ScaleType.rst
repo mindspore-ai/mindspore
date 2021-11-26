@@ -6,5 +6,6 @@ mindspore.dataset.audio.utils.ScaleType
     音频标度枚举类。
 
     可选枚举值为：ScaleType.MAGNITUDE和ScaleType.POWER。
+    
         - **ScaleType.MAGNITUDE**：代表输入音频的标度为振幅。
         - **ScaleType.POWER**：代表输入音频的标度为功率。

@@ -13,12 +13,10 @@ mindspore.dataset.audio.transforms.LowpassBiquad
 
     **样例：**
 
-        .. code-block::
-
-            >>> import numpy as np
-            >>>
-            >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
-            ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
-            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-            >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
-            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    >>> import numpy as np
+    >>>
+    >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
+    ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+    >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+    >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
+    >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
