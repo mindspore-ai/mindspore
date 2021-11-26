@@ -195,7 +195,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
 #ifdef ENABLE_DUMP_IR
-          static const auto enable_dump_pass_ir = (common::GetEnv("ENV_DUMP_PASS_IR") == "1");
+          static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
           if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];

@@ -59,7 +59,7 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto support_fallback = common::GetEnv("ENV_SUPPORT_FALLBACK");
+  static const auto support_fallback = common::GetEnv("DEV_ENV_ENABLE_FALLBACK");
   static const auto use_fallback = (support_fallback != "0");
   if (use_fallback && !IsSupportedCreateInstanceType(obj())) {
     return abs_scalar;

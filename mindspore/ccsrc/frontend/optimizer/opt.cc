@@ -300,7 +300,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       changes = changes || change;
       loop = loop || change;
 #ifdef ENABLE_DUMP_IR
-      static const auto enable_dump_pass_ir = (common::GetEnv("ENV_DUMP_PASS_IR") == "1");
+      static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
       if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->CurPass_.counter) + "_" +
                        optimizer->CurPass_.name + "_" + substitution->name_;
@@ -337,8 +337,8 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   manager->AddFuncGraph(func_graph);
   bool changes = false;
   static const auto traverse_mode =
-    (common::GetEnv("ENV_TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
-                                                              : kOptTraverseFromSubstitutionsToIR);
+    (common::GetEnv("DEV_ENV_TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
+                                                                  : kOptTraverseFromSubstitutionsToIR);
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {

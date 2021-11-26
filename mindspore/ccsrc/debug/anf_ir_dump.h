@@ -21,9 +21,21 @@
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
 #include "debug/common.h"
+#include "utils/hash_set.h"
 
 namespace mindspore {
-enum LocDumpMode { kOff = 0, kTopStack = 1, kWholeStack = 2 };
+enum LocDumpMode { kOff = 0, kTopStack = 1, kWholeStack = 2, kInValid = 3 };
+auto constexpr kDumpConfigLineLevel0 = "LINE_LEVEL0";
+auto constexpr kDumpConfigLineLevel1 = "LINE_LEVEL1";
+auto constexpr kDumpConfigLineLevel2 = "LINE_LEVEL2";
+auto constexpr kDumpConfigDisableBackend = "DISABLE_BACKEND";
+auto constexpr kDumpConfigEnablePassIR = "ENABLE_PASS_IR";
+typedef struct {
+  LocDumpMode dump_line_level = kInValid;
+  bool disable_backend_dump = false;
+  bool enable_dump_pass_ir = false;
+} DumpConfig;
+
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
             LocDumpMode dump_location = kOff, const std::string &target_file = "");
@@ -32,6 +44,7 @@ void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
                   LocDumpMode dump_location = kOff);
 const std::string ToShortString(const TypeId &typeId);
+DumpConfig GetDumpConfig();
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_DUMP_H_

@@ -585,16 +585,96 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   }
 }
 
-void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
+void SetDumpConfigByString(const std::string &str, DumpConfig *dump_config) {
   static mindspore::HashMap<std::string, enum LocDumpMode> dump_level_map = {
-    {std::to_string(kOff), kOff}, {std::to_string(kTopStack), kTopStack}, {std::to_string(kWholeStack), kWholeStack}};
-  static const auto dump_level_in_env = common::GetEnv("ENV_DUMP_IR_LINE_LEVEL");
-  auto it = dump_level_map.find(dump_level_in_env);
-  if (it == dump_level_map.end()) {
+    {kDumpConfigLineLevel0, kOff}, {kDumpConfigLineLevel1, kTopStack}, {kDumpConfigLineLevel2, kWholeStack}};
+  auto it = dump_level_map.find(str);
+  if (it != dump_level_map.end()) {
+    dump_config->enable_dump_pass_ir = it->second;
     return;
   }
-  // Use the env setting instead parameter setting.
-  *dump_location = it->second;
+  if (str == kDumpConfigDisableBackend) {
+    dump_config->disable_backend_dump = true;
+    return;
+  }
+  if (str == kDumpConfigEnablePassIR) {
+    dump_config->enable_dump_pass_ir = true;
+    return;
+  }
+}
+
+DumpConfig GetDumpConfig() {
+  static std::vector<HashSet<std::string>> config_white_list = {
+    {kDumpConfigLineLevel0, kDumpConfigLineLevel1, kDumpConfigLineLevel2},
+    {kDumpConfigDisableBackend},
+    {kDumpConfigEnablePassIR}};
+  static DumpConfig dump_config;
+  static bool parsed = false;
+  if (parsed) {
+    return dump_config;
+  }
+  parsed = true;
+  // Start parse config.
+  std::string str(common::GetEnv("DEV_ENV_DUMP_IR_CONFIG"));
+  std::vector<std::shared_ptr<HashSet<std::string>>> configs = {std::make_shared<HashSet<std::string>>(),
+                                                                std::make_shared<HashSet<std::string>>(),
+                                                                std::make_shared<HashSet<std::string>>()};
+  auto constexpr max_string_len = 100;
+  if (str.size() > max_string_len) {
+    MS_LOG(WARNING) << "Dump ir config length exceed max length: " << max_string_len;
+    return dump_config;
+  }
+  if (str.empty()) {
+    return dump_config;
+  }
+  size_t start_pos = 0;
+  // if '#' is the last char of str, the str is illegal, so we use '<=' but not '<'.
+  while (start_pos <= str.size()) {
+    auto pos = str.find('#', start_pos);
+    if (pos == std::string::npos) {
+      pos = str.size();
+    }
+    auto substr = str.substr(start_pos, pos - start_pos);
+    start_pos = pos + 1;
+    bool is_illegal_config = true;
+    for (size_t i = 0; i < config_white_list.size(); i++) {
+      if (config_white_list[i].find(substr) != config_white_list[i].end()) {
+        is_illegal_config = false;
+        (void)configs[i]->insert(substr);
+        if (configs[i]->size() > 1) {
+          std::ostringstream buffer;
+          std::for_each(configs[i]->begin(), configs[i]->end(), [&buffer](const std::string &config) {
+            buffer << "\n" << config;
+          });
+          MS_LOG(WARNING) << "Dump configs are conflict. Conflict configs: " << buffer.str() << "\n"
+                          << "Please keep only one of them.";
+          return dump_config;
+        }
+      }
+    }
+    if (is_illegal_config) {
+      std::ostringstream buffer;
+      buffer << "Support configs:\n"
+             << "[0]: " << kDumpConfigLineLevel0 << "\n"
+             << "[1]: " << kDumpConfigLineLevel1 << "\n"
+             << "[2]: " << kDumpConfigLineLevel2 << "\n"
+             << "[3]: " << kDumpConfigDisableBackend << "\n"
+             << "[4]: " << kDumpConfigEnablePassIR;
+      MS_LOG(WARNING) << "Illegal dump config:\n" << substr << "\n" << buffer.str();
+      return {};
+    }
+  }
+  for (auto &config : configs) {
+    SetDumpConfigByString(*config->begin(), &dump_config);
+  }
+  return dump_config;
+}
+
+void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
+  const auto &config = GetDumpConfig();
+  if (config.dump_line_level != kInValid) {
+    *dump_location = config.dump_line_level;
+  }
 }
 
 #ifdef ENABLE_DUMP_IR
