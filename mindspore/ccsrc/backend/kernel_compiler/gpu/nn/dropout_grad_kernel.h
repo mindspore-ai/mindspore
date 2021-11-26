@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT_GRAD_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/dropout_impl.cuh"
@@ -27,7 +28,8 @@ namespace kernel {
 template <typename T>
 class DropoutGradGpuBwdKernel : public GpuKernel {
  public:
-  DropoutGradGpuBwdKernel() : cudnn_handle_(nullptr), is_null_input_(false), num_count_(0), keep_prob_(0.0) {}
+  DropoutGradGpuBwdKernel()
+      : cudnn_handle_(nullptr), is_null_input_(false), kernel_name_("DropoutGrad"), num_count_(0), keep_prob_(0.0) {}
   ~DropoutGradGpuBwdKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -48,18 +50,17 @@ class DropoutGradGpuBwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but DropoutGradGpuBwdKernel needs 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
     }
 
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'DropoutGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -89,6 +90,7 @@ class DropoutGradGpuBwdKernel : public GpuKernel {
  private:
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t num_count_;
   float keep_prob_;
   std::vector<size_t> input_size_list_;

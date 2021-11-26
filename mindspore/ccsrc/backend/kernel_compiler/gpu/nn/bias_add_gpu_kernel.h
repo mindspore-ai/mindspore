@@ -61,26 +61,27 @@ class BiasAddGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto num_dims = x_shape.size();
-    is_null_input_ = CHECK_NULL_INPUT(x_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "input_x");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BiasAddGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
 
     if (num_dims < 2) {
-      MS_LOG(EXCEPTION) << "input dims must be at least 2, but got " << num_dims;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input_x cannot be less than 2, but got "
+                        << num_dims;
     }
 
     std::string format = GetAttr<std::string>(kernel_node, "format");
     string::size_type pos = format.find("C");
     if (pos == std::string::npos || pos >= num_dims) {
-      MS_LOG(EXCEPTION) << "format '" << format << "' invalid";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character should be in 'format', but got " << format;
     }
 
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
@@ -118,6 +119,7 @@ class BiasAddGpuKernel : public GpuKernel {
     b_desc_ = nullptr;
     op_desc_ = nullptr;
     is_null_input_ = false;
+    kernel_name_ = "BiasAdd";
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -161,6 +163,7 @@ class BiasAddGpuKernel : public GpuKernel {
   cudnnTensorDescriptor_t b_desc_;
   cudnnOpTensorDescriptor_t op_desc_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

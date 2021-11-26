@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_SCALE_MOMENTUM_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -27,7 +28,8 @@ namespace kernel {
 template <typename T, typename S>
 class CombineMomentumGpuKernel : public GpuKernel {
  public:
-  CombineMomentumGpuKernel() : element_num_(1), num_(0), input_num_(6), is_null_input_(false) {}
+  CombineMomentumGpuKernel()
+      : element_num_(1), num_(0), input_num_(6), is_null_input_(false), kernel_name_("CombineMomentum") {}
   ~CombineMomentumGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -62,6 +64,7 @@ class CombineMomentumGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     num_ = GetAttr<size_t>(kernel_node, "n");
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "CombineMomentum") {
@@ -72,9 +75,9 @@ class CombineMomentumGpuKernel : public GpuKernel {
     for (size_t i = 0; i < num_; i++) {
       element_num_ = 1;
       auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
-      is_null_input_ = CHECK_NULL_INPUT(variable_shape);
+      is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
+                                        "input[" + std::to_string(i * input_num_ + input_num_ - 5) + "]");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'CombineMomentumGpuKernel', input is null";
         InitSizeLists();
         return true;
       }
@@ -107,6 +110,7 @@ class CombineMomentumGpuKernel : public GpuKernel {
   size_t num_;
   int input_num_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

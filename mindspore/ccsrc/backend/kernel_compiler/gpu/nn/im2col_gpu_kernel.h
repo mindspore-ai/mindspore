@@ -48,6 +48,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
         n_(0),
         c_(0),
         is_null_input_(false),
+        kernel_name_("Im2col"),
         input_size_(0),
         output_size_(0),
         padded_size_(0),
@@ -82,21 +83,21 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(in_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'Im2ColGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     if (in_shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of input must be 4, but got " << in_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
+                        << in_shape.size();
     }
     std::vector<int> filter_shape;
     std::vector<int64_t> filter_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
@@ -188,20 +189,17 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but Im2Col needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 1, but got " << input_num;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but Im2Col needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
   void SetPad(const std::vector<size_t> &in_shape, const CNodePtr &kernel_node) {
     std::vector<int> pad_list;
@@ -215,7 +213,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     old_width_ = SizeToInt(in_shape[3]);
 
     if (pad_list.size() != 4) {
-      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the length of pad_list must be 4, but got " << pad_list.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
     }
     pad_height_ = pad_list[0] + pad_list[1];
     pad_width_n = pad_list[2] + pad_list[3];
@@ -267,16 +265,20 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 4) {
-      MS_LOG(EXCEPTION) << "Im2Col's stride must be 4d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 4, but got "
+                        << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Im2Col's stride only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+                        << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != 4) {
-      MS_LOG(EXCEPTION) << "Im2Col's dilation must be 4d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
+                        << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Im2Col's dilation only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
 
@@ -304,6 +306,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   std::vector<int> stride_;
   std::vector<int> dilation_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t output_size_;
   size_t padded_size_;

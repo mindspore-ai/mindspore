@@ -84,33 +84,24 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     return true;
   }
 
-  bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> in_shape) {
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(in_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'Conv3dGradInputGpuKernel', input is null.";
-      InitSizeLists();
-      return true;
-    }
-    return false;
-  }
-
   void CheckSize(const size_t value, const size_t expect_value, const string arg_name) {
     if (value != expect_value) {
-      MS_LOG(EXCEPTION) << "For 'Conv3dGradFilterGpuKernel', the length of " << arg_name << " must be " << expect_value
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of " << arg_name << " should be " << expect_value
                         << ", but got " << value;
     }
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    if (CheckNull(dy_shape, in_shape)) {
+    is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy");
+    if (is_null_input_) {
+      InitSizeLists();
       return true;
     }
     CheckTensorSize({in_shape});
@@ -124,7 +115,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     }
 
     compute_format_ = CUDNN_TENSOR_NCHW;
-    (void)CheckSize(in_shape.size(), 5, "in_shape");
+    (void)CheckSize(in_shape.size(), 5, "input shape");
     n_ = SizeToInt(in_shape[0]);
     c_ = SizeToInt(in_shape[1]);
     old_depth_ = SizeToInt(in_shape[2]);
@@ -138,7 +129,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    (void)CheckSize(pad_list.size(), 6, "pad_list");
+    (void)CheckSize(pad_list.size(), 6, "pad");
     pad_depth_ = pad_list[0];
     pad_height_ = pad_list[2];
     pad_width_ = pad_list[4];
@@ -161,7 +152,8 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
       int dimA[kNumDims];
       int strideApadded[kNumDims];
       if (data_format_ != kOpFormat_NCDHW) {
-        MS_LOG(EXCEPTION) << "Conv3dGradFilterGpuKernel only support NCDHW format right now.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
+                          << ", but got " << data_format_;
       }
       auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
                            IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
@@ -224,6 +216,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     c_ = 0;
     group_ = 1;
     is_null_input_ = false;
+    kernel_name_ = "Conv3dGradFilter";
     input_size_ = 0;
     dy_size_ = 0;
     output_size_ = 0;
@@ -306,18 +299,15 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but Conv3dGradFilterGpuKernel needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but Conv3dGradFilterGpuKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
 
   void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
@@ -375,16 +365,20 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 5) {
-      MS_LOG(EXCEPTION) << "Conv3dGradFilterGpuKernel stride must be 5d, but got " << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 5, but got "
+                        << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv3dGradFilterGpuKernel stride only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+                        << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != 5) {
-      MS_LOG(EXCEPTION) << "Conv3dGradFilterGpuKernel dilation must be 5d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 5, but got "
+                        << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv3dGradFilterGpuKernel dilation only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
 
@@ -418,6 +412,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t dy_size_;
   size_t output_size_;

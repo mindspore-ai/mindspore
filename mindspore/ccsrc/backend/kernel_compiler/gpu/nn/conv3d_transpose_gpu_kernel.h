@@ -68,7 +68,8 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
                      old_width_ + (1 + stride_[4]) * pad_width_, pad_head_, pad_top_, pad_left_, output_addr,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
-        MS_LOG(EXCEPTION) << "ConvTranspose3d only support NCDHW format right now.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
+                          << ", but got " << data_format_;
       }
     } else {
       if (greater_stride_) {
@@ -94,9 +95,9 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
   }
 
   bool CheckNull(const std::vector<size_t> filter_shape, const std::vector<size_t> input_shape) {
-    is_null_input_ = CHECK_NULL_INPUT(filter_shape) || CHECK_NULL_INPUT(input_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") || CHECK_SHAPE_NULL(input_shape, kernel_name_, "dout");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'Conv3dTransposeGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -105,15 +106,16 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
 
   void CheckSize(const size_t value, const size_t expect_value, const string arg_name) {
     if (value != expect_value) {
-      MS_LOG(EXCEPTION) << "For 'Conv3dTransposeGpuKernel', the length of " << arg_name << " must be " << expect_value
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of " << arg_name << " must be " << expect_value
                         << ", but got " << value;
     }
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) return false;
+    (void)CheckParam(kernel_node);
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
@@ -147,8 +149,8 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     std::vector<int> stride_pad_list(6, 0);
-    (void)CheckSize(filter_shape.size(), 5, "filter_shape");
-    (void)CheckSize(pad_list.size(), 6, "pad_list");
+    (void)CheckSize(filter_shape.size(), 5, "weight shape");
+    (void)CheckSize(pad_list.size(), 6, "pad");
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {  // pad_mode_ = same
       UpdatePaddingAndDilation(input_shape, filter_shape, pad_list.data(), stride_pad_list.data());
     }
@@ -255,6 +257,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     dilation_.clear();
     group_ = 1;
     is_null_input_ = false;
+    kernel_name_ = "Conv3dTranspose";
     input_size_ = 0;
     filter_size_ = 0;
     output_size_ = 0;
@@ -355,18 +358,15 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but Conv3dTranspose needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but Conv3dTranspose needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
 
   void SetPad(const std::vector<int> &output_shape, const CNodePtr &kernel_node) {
@@ -430,16 +430,20 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 5) {
-      MS_LOG(EXCEPTION) << "Conv3dTransposeGpuFwdKernel's stride must be 5d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 5, but got "
+                        << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv3dTransposeGpuFwdKernel stride only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+                        << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != 5) {
-      MS_LOG(EXCEPTION) << "Conv3dTransposeGpuFwdKernel's dilation must be 5d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 5, but got "
+                        << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "Conv3dTransposeGpuFwdKernel dilation only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
   void UpdatePaddingAndDilation(const std::vector<size_t> &input_shape, const std::vector<size_t> &filter_shape,
@@ -562,6 +566,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t filter_size_;
   size_t output_size_;

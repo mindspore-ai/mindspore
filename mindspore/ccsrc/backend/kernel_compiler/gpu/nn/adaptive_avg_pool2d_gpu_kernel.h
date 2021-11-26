@@ -38,7 +38,8 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
         output_height(0),
         output_width(0),
         size(0),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        kernel_name_("AdaptiveAvgPool2D") {}
   ~AdaptiveAvgPool2DKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -60,6 +61,7 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto shape_addr = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
     if (shape_addr.size() == 1) {
       output_height = shape_addr[0];
@@ -68,14 +70,13 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
       output_height = static_cast<uint>(shape_addr[0]);
       output_width = static_cast<uint>(shape_addr[1]);
     } else {
-      MS_LOG(ERROR) << "Input Error.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'output_size' should be 1 or 2, but got "
+                        << shape_addr.size();
     }
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but adaptive_avg_pool2d needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 1, but got " << input_num;
     }
 
     input_size_ = sizeof(T);
@@ -83,17 +84,17 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'AdaptiveAvgPool2dGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     len = static_cast<uint>(input_shape.size());
 
     if (len < 2) {
-      MS_LOG(ERROR) << "The input should have rank at least 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
+                        << len;
     }
 
     input_height = static_cast<uint>(input_shape[len - 2]);
@@ -127,6 +128,7 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
   uint output_width;
   uint size;
   bool is_null_input_;
+  std::string kernel_name_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

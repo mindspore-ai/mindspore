@@ -20,8 +20,10 @@
 #include <cublas_v2.h>
 #include <iostream>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include <map>
+#include <sstream>
 #include "utils/log_adapter.h"
 #include "utils/trace_base.h"
 #include "include/curand.h"
@@ -213,6 +215,34 @@ inline bool CheckNullInput(const std::vector<size_t> &input_shape) {
   return false;
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
+
+inline std::string ConvertVectorToString(const std::vector<size_t> &value) {
+  std::stringstream ss;
+  ss << "(";
+  for (auto it = value.begin(); it != value.end(); it++) {
+    if (it == value.begin()) {
+      ss << *it;
+    } else {
+      ss << ", " << *it;
+    }
+  }
+  ss << ")";
+  return ss.str();
+}
+
+#define CONVERT_VECTOR_TO_STRING(value) mindspore::device::gpu::ConvertVectorToString(value)
+
+inline bool CheckShapeNull(const std::vector<size_t> &shape, std::string kernel_name, std::string param_name) {
+  if (CHECK_NULL_INPUT(shape)) {
+    MS_LOG(WARNING) << "For '" << kernel_name << "', the shape of " << param_name << " cannot contain zero, but got "
+                    << CONVERT_VECTOR_TO_STRING(shape);
+    return true;
+  }
+  return false;
+}
+
+#define CHECK_SHAPE_NULL(shape, kernel_name, param_name) \
+  mindspore::device::gpu::CheckShapeNull(shape, kernel_name, param_name)
 
 inline const char *CurandGetErrorString(curandStatus_t status) {
   switch (status) {

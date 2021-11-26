@@ -54,6 +54,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
         c_(0),
         group_(1),
         is_null_input_(false),
+        kernel_name_("Conv2dGradInput"),
         dy_size_(0),
         w_size_(0),
         output_size_(0),
@@ -104,9 +105,9 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   }
 
   bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> filter_shape) {
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(filter_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") || CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'Conv2dGradInputGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -114,11 +115,10 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
@@ -152,7 +152,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (pad_list.size() != 4) {
-      MS_LOG(EXCEPTION) << "For 'Conv2dGradInputGpuKernel', the length of pad_list must be 4.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
     }
     pad_height_ = pad_list[0];
     pad_width_ = pad_list[2];
@@ -279,18 +279,15 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ConvGradInput needs 2 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ConvGradInput needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
   void SetPad(const std::vector<int> &input_shape, const CNodePtr &kernel_node) {
     std::vector<int> pad_list;
@@ -369,13 +366,16 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 2) {
-      MS_LOG(EXCEPTION) << "ConvGradInputGpuBkwKernel's stride must be 2d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 2, but got "
+                        << stride_.size();
     }
     if (dilation_.size() != 4) {
-      MS_LOG(EXCEPTION) << "ConvGradInputGpuBkwKernel's dilation must be 4d!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
+                        << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "ConvGradInputGpuBkwKernel dilation only support 1 in N axis and C axis!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
   cudnnHandle_t cudnn_handle_;
@@ -404,6 +404,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t dy_size_;
   size_t w_size_;
   size_t output_size_;

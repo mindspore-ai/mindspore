@@ -29,7 +29,13 @@ namespace kernel {
 template <typename T>
 class BinaryCrossEntropyGpuKernel : public GpuKernel {
  public:
-  BinaryCrossEntropyGpuKernel() : weight_defined_(false), input_size_(1), reduction_(1), workspace_size_(1) {}
+  BinaryCrossEntropyGpuKernel()
+      : weight_defined_(false),
+        is_null_input_(false),
+        kernel_name_("BinaryCrossEntropy"),
+        input_size_(1),
+        reduction_(1),
+        workspace_size_(1) {}
   ~BinaryCrossEntropyGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -55,10 +61,10 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "logits");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BinaryCrossEntropyGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -95,6 +101,7 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
  private:
   bool weight_defined_;  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   int reduction_;
   size_t workspace_size_;

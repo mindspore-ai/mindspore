@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FTRL_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/ftrl_impl.cuh"
@@ -36,7 +37,8 @@ class FtrlGpuKernel : public GpuKernel {
         l1_regularization_size_(0),
         l2_regularization_size_(0),
         learning_rate_power_size_(0),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        kernel_name_("ApplyFtrl") {}
 
   ~FtrlGpuKernel() override = default;
 
@@ -63,10 +65,11 @@ class FtrlGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ftrl needs " << INPUT_NUM << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
 
     variable_size_ = sizeof(T);
@@ -82,10 +85,11 @@ class FtrlGpuKernel : public GpuKernel {
     auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ = CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) ||
-                     CHECK_NULL_INPUT(linear_shape) || CHECK_NULL_INPUT(gradient_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
+                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
+                     CHECK_SHAPE_NULL(linear_shape, kernel_name_, "linear") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "grad");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'FtrlGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -132,6 +136,7 @@ class FtrlGpuKernel : public GpuKernel {
   size_t l2_regularization_size_;
   size_t learning_rate_power_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

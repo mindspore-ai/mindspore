@@ -43,6 +43,7 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
         outputC_descriptor_(nullptr),
         all_match_(false),
         is_null_input_(false),
+        kernel_name_("L2NormalizeGrad"),
         output_size_(0),
         workspace_size_(0),
         epsilon_(0.0),
@@ -112,28 +113,29 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
   bool CheckInputShape(const std::vector<size_t> &output_shape) {
     for (auto &shape : input_shape_list_) {
       if (output_shape != shape) {
-        MS_LOG(EXCEPTION) << "Input shape and output shape should be same!";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input and output should be the same, but "
+                          << "got the shape of input: " << CONVERT_VECTOR_TO_STRING(shape)
+                          << ", the shape of output: " << CONVERT_VECTOR_TO_STRING(output_shape);
       }
     }
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_list_[0]);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_list_[0], kernel_name_, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "L2NormalizeGPUKernel input is null";
       InitSizeLists();
       return false;
     }
     if (input_shape_list_[0].size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
+                        << ", but got " << input_shape_list_[0].size();
     }
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    if (!CheckIONumber(kernel_node)) {
-      return false;
-    }
+    (void)CheckIONumber(kernel_node);
     int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
     int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
@@ -144,9 +146,8 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
       input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'L2NormalizeGradGpuKernel', output is null.";
       InitSizeLists();
       return true;
     }
@@ -187,18 +188,16 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
   }
 
  protected:
-  bool CheckIONumber(const CNodePtr &kernel_node) {
+  void CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_SIZE) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs " << INPUT_SIZE << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << INPUT_SIZE << ", but got "
+                        << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but l2normalize op needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of output should be 1, but got " << output_num;
     }
-    return true;
   }
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -315,6 +314,7 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
 
   bool all_match_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

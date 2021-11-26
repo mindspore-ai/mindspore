@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ADAM_WEIGHT_DECAY_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/adam_impl.cuh"
@@ -37,7 +38,8 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
         epsilon_size_(0),
         decay_size_(0),
         gradient_size_(0),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        kernel_name_("AdamWeightDecay") {}
 
   ~AdamWeightDecayGpuKernel() override = default;
 
@@ -65,10 +67,11 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but adam needs " << INPUT_NUM << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
 
     variable_size_ = sizeof(T);
@@ -85,10 +88,10 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
     auto m_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto v_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
-    is_null_input_ = CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(m_shape) || CHECK_NULL_INPUT(v_shape) ||
-                     CHECK_NULL_INPUT(gradient_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
+                     CHECK_SHAPE_NULL(m_shape, kernel_name_, "m") || CHECK_SHAPE_NULL(v_shape, kernel_name_, "v") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'AdamWeightDecayGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
@@ -139,6 +142,7 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
   size_t decay_size_;
   size_t gradient_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
