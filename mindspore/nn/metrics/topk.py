@@ -49,9 +49,11 @@ class TopKCategoricalAccuracy(Metric):
     def __init__(self, k):
         super(TopKCategoricalAccuracy, self).__init__()
         if not isinstance(k, int):
-            raise TypeError('k should be integer type, but got {}'.format(type(k)))
+            raise TypeError("For 'TopKCategoricalAccuracy', the type of "
+                            "the argument 'k' should be int, but got 'k' type: {}.".format(type(k)))
         if k < 1:
-            raise ValueError('k must be at least 1, but got {}'.format(k))
+            raise ValueError("For 'TopKCategoricalAccuracy', "
+                             "the argument 'k' must be at least 1, but got 'k' value: {}.".format(k))
         self.k = k
         self.clear()
 
@@ -73,8 +75,9 @@ class TopKCategoricalAccuracy(Metric):
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
-            raise ValueError('The topk needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
-
+            raise ValueError("For 'TopKCategoricalAccuracy.update', "
+                             "it needs 2 inputs (predicted value, true value), "
+                             "but got 'inputs' size: {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -93,7 +96,10 @@ class TopKCategoricalAccuracy(Metric):
             numpy.float64, computed result.
         """
         if self._samples_num == 0:
-            raise RuntimeError('The total number of samples must not be 0.')
+            raise RuntimeError("The 'TopKCategoricalAccuracy' "
+                               "can not be calculated, because the number of samples is 0, "
+                               "please check whether your inputs (predicted value, true value) are empty, "
+                               "or has called update method before calling eval method.")
         return self._correct_num / self._samples_num
 
 

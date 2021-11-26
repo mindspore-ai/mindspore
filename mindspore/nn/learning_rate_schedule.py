@@ -299,13 +299,15 @@ class CosineDecayLR(LearningRateSchedule):
     def __init__(self, min_lr, max_lr, decay_steps):
         super(CosineDecayLR, self).__init__()
         if not isinstance(min_lr, float):
-            raise TypeError("The min_lr must be float.")
+            raise TypeError("For 'CosineDecayLR', the argument 'min_lr' must be type of float, "
+                            "but got 'min_lr' type: {}.".format(type(min_lr)))
         validator.check_non_negative_float(min_lr, "min_lr", self.cls_name)
         validator.check_positive_float(max_lr, 'max_lr', self.cls_name)
         validator.check_is_float(max_lr, 'max_lr', self.cls_name)
         validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
         if min_lr >= max_lr:
-            raise ValueError('The `max_lr` should be greater than the `min_lr`.')
+            raise ValueError("For 'CosineDecayLR', the 'max_lr' should be greater than the 'min_lr', "
+                             "but got 'max_lr' value: {}, 'min_lr' value: {}.".format(max_lr, min_lr))
         self.min_lr = min_lr
         self.max_lr = max_lr
         self.decay_steps = decay_steps
@@ -378,7 +380,10 @@ class PolynomialDecayLR(LearningRateSchedule):
         validator.check_positive_float(learning_rate, 'learning_rate')
         validator.check_is_float(learning_rate, 'learning_rate')
         if not isinstance(end_learning_rate, float):
-            raise TypeError("end_learning_rate must be float.")
+            raise TypeError("For 'PolynomialDecayLR', the argument 'end_learning_rate' "
+                            "must be type of float, but got 'end_learning_rate' type: {}."
+                            .format(type(end_learning_rate)))
+
         validator.check_non_negative_float(end_learning_rate, "end_learning_rate", self.cls_name)
         validator.check_positive_int(decay_steps, 'decay_steps', self.cls_name)
         validator.check_value_type('update_decay_steps', update_decay_steps, [bool], self.cls_name)
@@ -453,7 +458,8 @@ class WarmUpLR(LearningRateSchedule):
     def __init__(self, learning_rate, warmup_steps):
         super(WarmUpLR, self).__init__()
         if not isinstance(learning_rate, float):
-            raise TypeError("The learning_rate must be float.")
+            raise TypeError("For 'WarmUpLR', the argument 'learning_rate' must be type of float, "
+                            "but got 'learning_rate' type: {}.".format(type(learning_rate)))
         validator.check_non_negative_float(learning_rate, "learning_rate", self.cls_name)
         validator.check_positive_int(warmup_steps, 'warmup_steps', self.cls_name)
         self.warmup_steps = warmup_steps
