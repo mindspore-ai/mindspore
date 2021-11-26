@@ -68,7 +68,7 @@ class TopKCategoricalAccuracy(Metric):
         Updates the internal evaluation result `y_pred` and `y`.
 
         Args:
-            inputs: Input `y_pred` and `y`. ` y_pred` and `y` are Tensor, list or numpy.ndarray.
+            inputs: Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray.
                 `y_pred` is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. `y` contains values of integers. The shape is :math:`(N, C)`

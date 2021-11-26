@@ -25,7 +25,7 @@ class MeanSurfaceDistance(Metric):
     on average, the surface varies between the segmentation and the GT (ground truth).
 
     Given two sets A and B, S(A) denotes the set of surface voxels of A. The shortest distance of an arbitrary voxel v
-     to S(A) is defined as:
+    to S(A) is defined as:
 
     .. math::
         {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert \
@@ -36,7 +36,7 @@ class MeanSurfaceDistance(Metric):
         AvgSurDis(B\rightarrow A) = \frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}  \
         left ( s_{B}, S(A) \right )} } {\left | S(B) \right |}
 
-    Where the ||*|| denotes a distance measure. |*| denotes the number of elements.
+    Where the \|\|\*\|\| denotes a distance measure. \|\*\| denotes the number of elements.
 
     The mean of surface distance form set(B) to set(A) and from set(A) to set(B) is:
 

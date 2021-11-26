@@ -162,15 +162,15 @@ class ConfusionMatrixMetric(Metric):
         skip_channel (bool): Whether to skip the measurement calculation on the first channel of the predicted output.
                              Default: True.
         metric_name (str): Names of supported metrics , users can also set the industry common aliases for them.  Choose
-                            from: ["sensitivity", "specificity", "precision", "negative predictive value", "miss rate",
+                           from: ["sensitivity", "specificity", "precision", "negative predictive value", "miss rate",
                            "fall out", "false discovery rate", "false omission rate", "prevalence threshold",
                            "threat score", "accuracy", "balanced accuracy", "f1 score",
                            "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"].
         calculation_method (bool): If true, the measurement for each sample will be calculated first.
-                                   If not, the confusion matrix of all samples will be accumulated first.
-                                   As for classification task, 'calculation_method' should be False. Default: False.
+                           If not, the confusion matrix of all samples will be accumulated first.
+                           As for classification task, 'calculation_method' should be False. Default: False.
         decrease (str): The reduction method on data batch. `decrease` takes effect only when calculation_method
-                            is True. Default: "mean". Choose from:
+                        is True. Default: "mean". Choose from:
                         ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"].
 
     Supported Platforms:
