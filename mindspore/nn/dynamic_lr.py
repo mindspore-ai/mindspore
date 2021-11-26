@@ -22,16 +22,17 @@ def piecewise_constant_lr(milestone, learning_rates):
     r"""
     Get piecewise constant learning rate.
 
-    Calculate learning rate by given `milestone` and `learning_rates`. Let the value of `milestone` be
-    :math:`(M_1, M_2, ..., M_N)` and the value of `learning_rates` be :math:`(x_1, x_2, ..., x_N)`. N is the length of
-    `milestone`. Let the output learning rate be `y`.
+    Calculate learning rate by the given `milestone` and `learning_rates`. Let the value of `milestone` be
+    :math:`(M_1, M_2, ..., M_t, ..., M_N)` and the value of `learning_rates` be :math:`(x_1, x_2, ..., x_t, ..., x_N)`.
+    N is the length of `milestone`. Let the output learning rate be `y`, then for the i-th step, the formula of
+    computing decayed_learning_rate[i] is:
 
     .. math::
         y[i] = x_t,\ for\ i \in [M_{t-1}, M_t)
 
     Args:
         milestone (Union[list[int], tuple[int]]): A list of milestone. This list is a monotone increasing list.
-            Every element is a milestone step, and must be greater than 0.
+            Every element in the list must be greater than 0.
         learning_rates (Union[list[float], tuple[float]]): A list of learning rates.
 
     Returns:
@@ -215,7 +216,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
     .. math::
-        decayed\_learning\_rate[i] = min\_learning\_rate + 0.5 * (max\_learning\_rate - min\_learning\_rate) *
+        decayed\_learning\_rate[i] = min\_lr + 0.5 * (max\_lr - min\_lr) *
         (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
@@ -344,7 +345,7 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     For the i-th step, the formula of computing warmup_learning_rate[i] is:
 
     .. math::
-        warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / tmp\_warmup\_epoch
+        warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / warmup\_epoch
 
     Where :math:`tmp\_epoch=min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
 

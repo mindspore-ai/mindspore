@@ -125,10 +125,10 @@ class NaturalExpDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on natural exponential decay function.
 
-    For the i-th step, the formula of computing decayed_learning_rate[i] is:
+    For current step, the formula of computing decayed_learning_rate[current_step] is:
 
     .. math::
-        decayed\_learning\_rate[i] = learning\_rate * e^{-decay\_rate * p}
+        decayed\_learning\_rate[current_step] = learning\_rate * e^{-decay\_rate * p}
 
     Where :
 
@@ -193,10 +193,10 @@ class InverseDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on inverse-time decay function.
 
-    For the i-th step, the formula of computing decayed_learning_rate[i] is:
+    For current step, the formula of computing decayed_learning_rate[current_step] is:
 
     .. math::
-        decayed\_learning\_rate[i] = learning\_rate / (1 + decay\_rate * p)
+        decayed\_learning\_rate[current\_step] = learning\_rate / (1 + decay\_rate * p)
 
     Where :
 
@@ -326,10 +326,10 @@ class PolynomialDecayLR(LearningRateSchedule):
     r"""
     Calculates learning rate base on polynomial decay function.
 
-    For the i-th step, the formula of computing decayed_learning_rate[i] is:
+    For current step, the formula of computing decayed_learning_rate[current_step] is:
 
     .. math::
-        decayed\_learning\_rate[i] = (learning\_rate - end\_learning\_rate) *
+        decayed\_learning\_rate[current\_step] = (learning\_rate - end\_learning\_rate) *
         (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
 
     Where :
