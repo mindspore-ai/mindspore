@@ -41,7 +41,7 @@ class MS_API BenchmarkCApi : public BenchmarkBase {
  public:
   explicit BenchmarkCApi(BenchmarkFlags *flags) : BenchmarkBase(flags) {}
 
-  virtual ~BenchmarkCApi() { MSModelDestroy(model_); }
+  virtual ~BenchmarkCApi() { MSModelDestroy(&model_); }
 
   int RunBenchmark() override;
 

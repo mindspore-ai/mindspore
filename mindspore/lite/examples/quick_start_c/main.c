@@ -50,7 +50,7 @@ int QuickStart(int argc, const char **argv) {
   MSDeviceInfoHandle cpu_device_info = MSDeviceInfoCreate(kMSDeviceTypeCPU);
   if (cpu_device_info == NULL) {
     printf("MSDeviceInfoCreate failed.\n");
-    MSContextDestroy(context);
+    MSContextDestroy(&context);
     return kMSStatusLiteError;
   }
   MSDeviceInfoSetEnableFP16(cpu_device_info, false);
@@ -60,7 +60,7 @@ int QuickStart(int argc, const char **argv) {
   MSModelHandle model = MSModelCreate();
   if (model == NULL) {
     printf("MSModelCreate failed.\n");
-    MSContextDestroy(context);
+    MSContextDestroy(&context);
     return kMSStatusLiteError;
   }
 
@@ -68,7 +68,7 @@ int QuickStart(int argc, const char **argv) {
   int ret = MSModelBuildFromFile(model, argv[1], kMSModelTypeMindIR, context);
   if (ret != kMSStatusSuccess) {
     printf("MSModelBuildFromFile failed, ret: %d.\n", ret);
-    MSModelDestroy(model);
+    MSModelDestroy(&model);
     return ret;
   }
 
@@ -76,7 +76,7 @@ int QuickStart(int argc, const char **argv) {
   MSTensorHandleArray inputs = MSModelGetInputs(model);
   if (inputs.handle_list == NULL) {
     printf("MSModelGetInputs failed, ret: %d.\n", ret);
-    MSModelDestroy(model);
+    MSModelDestroy(&model);
     return ret;
   }
 
@@ -84,7 +84,7 @@ int QuickStart(int argc, const char **argv) {
   ret = GenerateInputDataWithRandom(inputs);
   if (ret != kMSStatusSuccess) {
     printf("GenerateInputDataWithRandom failed, ret: %d.\n", ret);
-    MSModelDestroy(model);
+    MSModelDestroy(&model);
     return ret;
   }
 
@@ -93,7 +93,7 @@ int QuickStart(int argc, const char **argv) {
   ret = MSModelPredict(model, inputs, &outputs, NULL, NULL);
   if (ret != kMSStatusSuccess) {
     printf("MSModelPredict failed, ret: %d.\n", ret);
-    MSModelDestroy(model);
+    MSModelDestroy(&model);
     return ret;
   }
 
@@ -111,7 +111,7 @@ int QuickStart(int argc, const char **argv) {
   }
 
   // Delete model.
-  MSModelDestroy(model);
+  MSModelDestroy(&model);
   return kMSStatusSuccess;
 }
 

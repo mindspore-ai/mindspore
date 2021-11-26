@@ -52,8 +52,15 @@ MS_API MSModelHandle MSModelCreate();
 
 /// \brief Destroy the model object. Only valid for Lite.
 ///
+/// \param[in] model Model object handle address.
+MS_API void MSModelDestroy(MSModelHandle *model);
+
+/// \brief Set workspace for the model object. Only valid for Iot.
+///
 /// \param[in] model Model object handle.
-MS_API void MSModelDestroy(MSModelHandle model);
+/// \param[in] workspace Define the workspace address.
+/// \param[in] workspace_size Define the workspace size.
+MS_API void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size);
 
 /// \brief Build the model from model file buffer so that it can run on a device. Only valid for Lite.
 ///
