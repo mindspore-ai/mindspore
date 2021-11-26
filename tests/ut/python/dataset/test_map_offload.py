@@ -16,7 +16,9 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+import mindspore.common.dtype as mstype
 import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.transforms.c_transforms as C2
 
 
 DATA_DIR = "../data/dataset/testPK/data"
@@ -53,13 +55,15 @@ def test_auto_offload():
     """
     trans = [C.Decode(), C.HWC2CHW()]
 
-    # Dataset with config.auto_offload not activated
+    # Enable automatic offload
+    ds.config.set_auto_offload(True)
+
+    # Dataset with offload deactivated
     dataset_auto_disabled = ds.ImageFolderDataset(DATA_DIR)
-    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image")
+    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image", offload=False)
     dataset_auto_disabled = dataset_auto_disabled.batch(8, drop_remainder=True)
 
     # Dataset with config.auto_offload activated
-    ds.config.set_auto_offload(True)
     dataset_auto_enabled = ds.ImageFolderDataset(DATA_DIR)
     dataset_auto_enabled = dataset_auto_enabled.map(operations=trans, input_columns="image")
     dataset_auto_enabled = dataset_auto_enabled.batch(8, drop_remainder=True)
@@ -179,6 +183,46 @@ def test_offload_rescale_op():
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
 
 
+def test_offload_different_column_end_of_pipeline():
+    """
+    Feature: Test offload end_of_pipeline check.
+    Description: Input is image dataset.
+    Expectation: The image map op gets offloaded even though it comes before the not-offloaded label map op, since
+                 the end_of_pipeline check looks at columns separately.
+    """
+    image_trans = [C.Decode(), C.HWC2CHW()]
+    ds.config.set_auto_offload(True)
+
+    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_0 = dataset_0.map(operations=image_trans, input_columns="image")
+    dataset_0 = dataset_0.map(operations=[C2.TypeCast(mstype.int32)], input_columns="label", offload=False)
+
+    data_iterator = dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True)
+    # Assert at least one operation has been offloaded
+    np.testing.assert_(len(data_iterator.offload_model.transform_list[0].me_ops) > 0)
+
+    ds.config.set_auto_offload(False)
+
+
+def test_offload_not_end_of_pipeline():
+    """
+    Feature: Test offload end_of_pipeline check.
+    Description: Input is image dataset.
+    Expectation: No operations are offloaded, since the image map op at the end of the pipeline has the
+                 offload flag set to False.
+    """
+    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image", offload=True)
+    dataset_0 = dataset_0.map(operations=[C.RandomHorizontalFlip(prob=0.5)], input_columns="image", offload=True)
+    dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=False)
+
+    dataset_0 = dataset_0.map(operations=[C2.TypeCast(mstype.int32)], input_columns="label", offload=False)
+
+    data_iterator = dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True)
+    # Assert no operations are set to be offloaded
+    np.testing.assert_(data_iterator.offload_model is None)
+
+
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
@@ -186,3 +230,5 @@ if __name__ == "__main__":
     test_offload_concat_dataset_2()
     test_offload_normalize_op()
     test_offload_rescale_op()
+    test_offload_different_column_end_of_pipeline()
+    test_offload_not_end_of_pipeline()

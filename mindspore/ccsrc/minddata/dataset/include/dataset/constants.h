@@ -77,6 +77,13 @@ enum class MS_API NormMode {
   kOrtho = 1  ///< Ortho type norm.
 };
 
+/// \brief The mode for manual offload.
+enum class MS_API ManualOffloadMode {
+  kUnspecified,  ///< Not set, will use auto_offload setting instead.
+  kDisabled,     ///< Do not perform offload.
+  kEnabled       ///< Attempt to offload.
+};
+
 /// \brief Target devices to perform map operation.
 enum class MS_API MapTargetDevice {
   kCpu,       ///< CPU Device.

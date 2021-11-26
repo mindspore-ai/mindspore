@@ -118,13 +118,19 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
 
 
 def _check_add_offload(dataset, dataset_helper, network):
+    """Check if any map operations were removed to be offloaded and apply the transforms if so."""
     from mindspore.dataset.engine import offload
-    if offload.check_map_offload(dataset.__transfer_dataset__):
+    if hasattr(dataset, '__no_send__'):
+        # Dataset was not sent to device. Skip adding offload.
+        return network
+    offload_model = dataset.__transfer_dataset__.get_offload_model()
+    # See if the offload pass identified any operations to be offloaded
+    if offload_model.transform_list != []:
+        offload.check_concat_zip_dataset(dataset.__transfer_dataset__)
         # A temporary solution to ensure there are two columns in dataset.
         dataset_types, _ = dataset_helper.types_shapes()
         if len(dataset_types) != 2:
             raise RuntimeError("Offload can currently only use datasets with two columns.")
-        offload_model = dataset.__transfer_dataset__.get_offload_model()
         network = offload.ApplyPreTransform(offload_model, network)
     return network
 

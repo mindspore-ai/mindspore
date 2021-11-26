@@ -193,7 +193,7 @@ PYBIND_REGISTER(MapNode, 2, ([](const py::module *m) {
                     .def(py::init([](std::shared_ptr<DatasetNode> self, py::list operations, py::list input_columns,
                                      py::list output_columns, py::list project_columns,
                                      std::vector<std::shared_ptr<PyDSCallback>> py_callbacks, int64_t max_rowsize,
-                                     bool offload) {
+                                     ManualOffloadMode offload) {
                       auto map = std::make_shared<MapNode>(
                         self, std::move(toTensorOperations(operations)), toStringVector(input_columns),
                         toStringVector(output_columns), toStringVector(project_columns), nullptr,
@@ -296,6 +296,17 @@ PYBIND_REGISTER(ZipNode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(zip->ValidateParams());
                       return zip;
                     }));
+                }));
+
+// OTHER PYBIND
+// (alphabetical order)
+
+PYBIND_REGISTER(ManualOffloadMode, 0, ([](const py::module *m) {
+                  (void)py::enum_<ManualOffloadMode>(*m, "ManualOffloadMode", py::arithmetic())
+                    .value("UNSPECIFIED", ManualOffloadMode::kUnspecified)
+                    .value("DISABLED", ManualOffloadMode::kDisabled)
+                    .value("ENABLED", ManualOffloadMode::kEnabled)
+                    .export_values();
                 }));
 }  // namespace dataset
 }  // namespace mindspore
