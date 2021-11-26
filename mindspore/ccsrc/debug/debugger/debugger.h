@@ -117,8 +117,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::shared_ptr<TensorData> GetTensor(const std::string &tensor_name) const;
 
-  DebugServices::TensorStat GetTensorStatistics(std::shared_ptr<TensorData> tensor_data) const;
-
   bool debugger_enabled() const;
 
   bool partial_memory() const;

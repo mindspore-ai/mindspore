@@ -30,6 +30,7 @@ constexpr auto kCsvHeader =
   "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count\n";
 constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
+
 namespace mindspore {
 bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   if (file_.is_open() && path == file_path_str_) {
@@ -38,13 +39,20 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   if (file_.is_open()) {
     CloseFile();
   }
+  auto file_path = Common::CreatePrefixPath(path);
+  if (!file_path.has_value()) {
+    MS_LOG(WARNING) << "CreatePrefixPath failed.";
+    return false;
+  }
+  // try to open file
+  std::string file_path_value = file_path.value();
   bool first_time_opening = file_path_str_ != path;
-  ChangeFileMode(path, S_IWUSR);
+  ChangeFileMode(file_path_value, S_IWUSR);
   if (first_time_opening) {
     // remove any possible output from previous runs
-    file_.open(path, std::ios::out | std::ios::trunc | std::ios::binary);
+    file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
   } else {
-    file_.open(path, std::ios::out | std::ios::app | std::ios::binary);
+    file_.open(file_path_value, std::ios::out | std::ios::app | std::ios::binary);
   }
   if (!file_.is_open()) {
     MS_LOG(WARNING) << "Open file " << path << " failed." << ErrnoToString(errno);
@@ -55,7 +63,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
     file_.flush();
     file_path_str_ = path;
   }
-  MS_LOG(INFO) << "Opened statistics file: " << path;
+  MS_LOG(INFO) << "Opened file: " << path;
   return true;
 }
 
@@ -80,16 +88,16 @@ void CsvWriter::WriteToCsv(const T &val, bool end_line) {
 
 CsvWriter::~CsvWriter() { CloseFile(); }
 
-TensorStatDump::TensorStatDump(const std::string &original_kernel_name, const std::string &op_type,
-                               const std::string &op_name, uint32_t task_id, uint32_t stream_id, uint64_t timestamp,
-                               bool input, size_t slot)
-    : original_kernel_name_{original_kernel_name},
-      op_type_{op_type},
+TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op_name, uint32_t task_id,
+                               uint32_t stream_id, uint64_t timestamp, bool input, size_t slot,
+                               size_t tensor_loader_slot)
+    : op_type_{op_type},
       op_name_{op_name},
       task_id_{task_id},
       stream_id_{stream_id},
       timestamp_{timestamp},
-      slot_{slot} {
+      slot_{slot},
+      tensor_loader_slot_{tensor_loader_slot} {
   if (input) {
     io_ = kInput;
   } else {
@@ -97,35 +105,37 @@ TensorStatDump::TensorStatDump(const std::string &original_kernel_name, const st
   }
 }
 
-void TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const Debugger *debugger) {
+bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
   std::string filename = dump_path + "/" + kCsvFileName;
-  auto file_path = Common::CreatePrefixPath(filename);
-  if (!file_path.has_value()) {
-    MS_LOG(WARNING) << "CreatePrefixPath failed.";
-    return;
-  }
   // try to open file
   CsvWriter &csv = CsvWriter::GetInstance();
-  std::string file_path_value = file_path.value();
   int retry = 2;
   while (retry > 0) {
-    if (csv.OpenFile(file_path_value, kCsvHeader)) {
+    if (csv.OpenFile(filename, kCsvHeader)) {
       break;
     }
     retry--;
   }
   if (!retry) {
     MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
-    return;
+    return false;
+  }
+  return true;
+}
+
+bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
+                                           const Debugger *debugger) {
+  if (!OpenStatisticsFile(dump_path)) {
+    return false;
   }
   // get tensor statistics using debugger
-  std::string tensor_loader_name = original_kernel_name_ + ":" + std::to_string(slot_);
+  std::string tensor_loader_name = original_kernel_name + ":" + std::to_string(tensor_loader_slot_);
   std::shared_ptr<TensorData> data = debugger->GetTensor(tensor_loader_name);
   if (data == nullptr) {
-    MS_LOG(WARNING) << "Failed to find tensor in tensor loader, skipping current statistics";
-    return;
+    MS_LOG(WARNING) << "Failed to find " << tensor_loader_name << " in tensor loader, skipping current statistics";
+    return false;
   }
-  const DebugServices::TensorStat &stat = debugger->GetTensorStatistics(data);
+  const DebugServices::TensorStat &stat = DebugServices::GetTensorStatistics(data);
   // write tensor statistics to csv file
   std::ostringstream shape;
   shape << "\"(";
@@ -133,6 +143,7 @@ void TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const D
     shape << (i ? "," : "") << stat.shape[i];
   }
   shape << ")\"";
+  CsvWriter &csv = CsvWriter::GetInstance();
   csv.WriteToCsv(op_type_);
   csv.WriteToCsv(op_name_);
   csv.WriteToCsv(task_id_);
@@ -153,5 +164,6 @@ void TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const D
   csv.WriteToCsv(stat.neg_inf_count);
   csv.WriteToCsv(stat.pos_inf_count);
   csv.WriteToCsv(stat.zero_count, true);
+  return true;
 }
 }  // namespace mindspore

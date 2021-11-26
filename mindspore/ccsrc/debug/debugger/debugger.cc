@@ -1140,7 +1140,7 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
       continue;
     }
     // tensor was found creating tensor summary object.
-    DebugServices::TensorStat tensor_stat = debug_services_->GetTensorStatistics(tensor);
+    DebugServices::TensorStat tensor_stat = DebugServices::GetTensorStatistics(tensor);
     AddTensorStatInfo(tensor_stat, &tensor_summary_list);
   }
   return tensor_summary_list;
@@ -1148,10 +1148,6 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
 
 std::shared_ptr<TensorData> Debugger::GetTensor(const std::string &tensor_name) const {
   return debug_services_->GetTensor(tensor_name);
-}
-
-DebugServices::TensorStat Debugger::GetTensorStatistics(std::shared_ptr<TensorData> tensor_data) const {
-  return DebugServices::GetTensorStatistics(tensor_data);
 }
 
 void Debugger::Exit(bool exit_success) {

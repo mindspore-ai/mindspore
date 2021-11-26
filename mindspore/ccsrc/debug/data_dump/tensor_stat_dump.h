@@ -51,7 +51,6 @@ class TensorStatDump {
   static const char CSV_HEADER[];
   static const char CSV_FILE_NAME[];
 
-  const std::string &original_kernel_name_;
   const std::string &op_type_;
   const std::string &op_name_;
   uint32_t task_id_;
@@ -59,11 +58,15 @@ class TensorStatDump {
   uint64_t timestamp_;
   std::string io_;
   size_t slot_;
+  size_t tensor_loader_slot_;
 
  public:
-  TensorStatDump(const std::string &original_kernel_name, const std::string &op_type, const std::string &op_name,
-                 uint32_t task_id, uint32_t stream_id, uint64_t timestamp, bool input, size_t slot);
-  void DumpTensorStatsToFile(const std::string &dump_path, const Debugger *debugger);
+  static bool OpenStatisticsFile(const std::string &dump_path);
+
+  TensorStatDump(const std::string &op_type, const std::string &op_name, uint32_t task_id, uint32_t stream_id,
+                 uint64_t timestamp, bool input, size_t slot, size_t tensor_loader_slot_);
+  bool DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
+                             const Debugger *debugger);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_

@@ -343,7 +343,7 @@ std::vector<TensorStatData> DbgServices::ReadTensorsStat(const std::vector<tenso
       AddTensorStatInfo(tensor_statistics, &tensors_read_stat);
       continue;
     }
-    DebugServices::TensorStat tensor_statistics = debug_services_->GetTensorStatistics(result);
+    DebugServices::TensorStat tensor_statistics = DebugServices::GetTensorStatistics(result);
     AddTensorStatInfo(tensor_statistics, &tensors_read_stat);
   }
 
