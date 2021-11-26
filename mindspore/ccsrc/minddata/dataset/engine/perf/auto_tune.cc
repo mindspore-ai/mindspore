@@ -102,21 +102,46 @@ Status AutoTune::GetOpsCpuUtil(std::map<int32_t, double> *ops_cpu_util) {
   }
   return Status::OK();
 }
-Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *ops_queue_util) {
+Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util,
+                                 std::map<int32_t, double> *in_ops_queue_util) {
   // loop over all itr keys in the ops_ and get output_queue usage
   for (auto itr = ops_.begin(); itr != ops_.end(); ++itr) {
+    if (itr->second->inlined()) {
+      (*out_ops_queue_util)[itr->first] = -1;
+      continue;
+    }
     std::vector<int32_t> sizes;
     RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(itr->first, cur_epoch_, &sizes));
     double avg_size = Mean(sizes);
     int64_t capacity = itr->second->ConnectorCapacity();
     CHECK_FAIL_RETURN_UNEXPECTED(capacity != 0, "Capacity of connector should not be 0");
-    (*ops_queue_util)[itr->first] = avg_size / capacity;
+    (*out_ops_queue_util)[itr->first] = avg_size / capacity;
   }
+  for (auto itr = ops_.rbegin(); itr != ops_.rend(); ++itr) {
+    // assume that leaf op has 100% input queue util
+    if (itr->first + 1 == ops_.size()) {
+      (*in_ops_queue_util)[itr->first] = 1;
+      continue;
+    }
+    // input queue is the output queue of the child
+    (*in_ops_queue_util)[itr->first] = (*out_ops_queue_util)[itr->first + 1];
+    // if the child is an inlined op, use the prev known utilization
+    if ((*in_ops_queue_util)[itr->first] == -1) {
+      (*in_ops_queue_util)[itr->first] = (*in_ops_queue_util)[itr->first + 1];
+    }
+  }
+
+  for (const auto &op : ops_) {
+    if (op.second->inlined()) {
+      (*in_ops_queue_util)[op.first] = -1;
+    }
+  }
+
   return Status::OK();
 }
 Status AutoTune::GetOpsNumWorker(std::map<int32_t, int32_t> *ops_num_workers) {
-  for (auto itr = ops_.begin(); itr != ops_.end(); ++itr) {
-    (*ops_num_workers)[itr->first] = itr->second->NumWorkers();
+  for (const auto &op : ops_) {
+    (*ops_num_workers)[op.first] = op.second->NumWorkers();
   }
   return Status::OK();
 }
@@ -125,7 +150,7 @@ bool AutoTune::IsSink() {
   return profiling_manager_->GetTracingNode(kDeviceQueueTracingName, &node).IsOk();
 }
 template <typename T>
-double AutoTune::Mean(std::vector<T> items) {
+double AutoTune::Mean(const std::vector<T> &items) {
   if (items.size() == 0) {
     return 0;
   }
@@ -213,19 +238,19 @@ Status AutoTune::Analyse() {
   // collect stats
   std::map<int32_t, int32_t> ops_num_workers;
   RETURN_IF_NOT_OK(GetOpsNumWorker(&ops_num_workers));
-  std::map<int32_t, double> ops_queue_util;
-  RETURN_IF_NOT_OK(GetOpsQueueUtil(&ops_queue_util));
+  std::map<int32_t, double> out_ops_queue_util;
+  std::map<int32_t, double> in_ops_queue_util;
+  RETURN_IF_NOT_OK(GetOpsQueueUtil(&out_ops_queue_util, &in_ops_queue_util));
+
   std::map<int32_t, double> ops_cpu_util;
   RETURN_IF_NOT_OK(GetOpsCpuUtil(&ops_cpu_util));
 
   // check parallel ops in loop
   for (const auto &op_id : parallel_ops_ids_) {
     // op specifics
-    double output_queue_util = ops_queue_util[op_id];
-    double input_queue_util = 1;  // assume that leaf op has 100% input queue util
-    if (op_id + 1 < ops_.size()) {
-      input_queue_util = ops_queue_util[op_id + 1];
-    }
+    double output_queue_util = out_ops_queue_util[op_id];
+    double input_queue_util = in_ops_queue_util[op_id];
+
     double cpu_util = ops_cpu_util[op_id];
     int32_t num_workers = ops_num_workers[op_id];
     CHECK_FAIL_RETURN_UNEXPECTED(num_workers != 0, "ParallelOp with num_workers=0");
