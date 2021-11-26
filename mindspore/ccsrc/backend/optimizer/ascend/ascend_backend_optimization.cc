@@ -492,7 +492,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     return;
   }
   auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
-  if (pre_build.empty()) {
+  if (pre_build.empty() || (pre_build != "true" && pre_build != "True")) {
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
     build_manager.TbePreBuild(kernel_graph);
   }
