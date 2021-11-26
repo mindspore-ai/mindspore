@@ -32,9 +32,8 @@ class ModelC {
     }
   }
 
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const mindspore::Context::Data *model_context);
-  Status Build(const std::string &model_path, ModelType model_type, const mindspore::Context::Data *model_context);
+  Status Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context);
+  Status Build(const std::string &model_path, ModelType model_type, const ContextC *model_context);
   Status Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes);
 
   Status Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorHandle **outputs, size_t *output_num,
@@ -47,7 +46,7 @@ class ModelC {
 
  private:
   std::shared_ptr<session::LiteSession> session_ = nullptr;
-  std::shared_ptr<const Context::Data> context_ = nullptr;
+  std::shared_ptr<const ContextC> context_ = nullptr;
   std::map<mindspore::tensor::MSTensor *, MSTensor::Impl *> tensor_map_;
   std::vector<MSTensor::Impl *> inputs_;
   std::vector<MSTensor::Impl *> outputs_;
@@ -56,8 +55,7 @@ class ModelC {
   MSTensor::Impl *TensorToTensorImpl(mindspore::tensor::MSTensor *tensor);
 };
 
-Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type,
-                     const mindspore::Context::Data *model_context) {
+Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
   context_.reset(model_context);
   lite::Context lite_context;
   auto status = A2L_ConvertContext(model_context, &lite_context);
@@ -73,8 +71,7 @@ Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_t
   return kSuccess;
 }
 
-Status ModelC::Build(const std::string &model_path, ModelType model_type,
-                     const mindspore::Context::Data *model_context) {
+Status ModelC::Build(const std::string &model_path, ModelType model_type, const ContextC *model_context) {
   context_.reset(model_context);
   lite::Context lite_context;
   auto status = A2L_ConvertContext(model_context, &lite_context);
@@ -310,7 +307,7 @@ MSModelHandle MSModelCreate() {
 }
 
 void MSModelDestroy(MSModelHandle *model) {
-  if (*model != nullptr) {
+  if (model != nullptr && *model != nullptr) {
     auto impl = static_cast<mindspore::ModelC *>(*model);
     delete impl;
     *model = nullptr;
@@ -332,7 +329,7 @@ MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_s
     MS_LOG(ERROR) << "param is invalid.";
     return kMSStatusLiteParamInvalid;
   }
-  mindspore::Context::Data *context = static_cast<mindspore::Context::Data *>(model_context);
+  mindspore::ContextC *context = static_cast<mindspore::ContextC *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
   auto ret = impl->Build(model_data, data_size, static_cast<mindspore::ModelType>(model_type), context);
   return static_cast<MSStatus>(ret.StatusCode());
@@ -348,7 +345,7 @@ MSStatus MSModelBuildFromFile(MSModelHandle model, const char *model_path, MSMod
     MS_LOG(ERROR) << "param is invalid.";
     return kMSStatusLiteParamInvalid;
   }
-  mindspore::Context::Data *context = static_cast<mindspore::Context::Data *>(model_context);
+  mindspore::ContextC *context = static_cast<mindspore::ContextC *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
   auto ret = impl->Build(model_path, static_cast<mindspore::ModelType>(model_type), context);
   return static_cast<MSStatus>(ret.StatusCode());
