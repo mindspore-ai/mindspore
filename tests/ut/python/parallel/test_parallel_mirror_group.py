@@ -65,7 +65,7 @@ def auto_parallel_compile_net(strategy1=None, strategy2=None, strategy3=None):
 def test_mirror_group():
     """
     Feature: save and load mirror group
-    Description: semi-auto, disable parallel optimizer.
+    Description: semi-auto parallel, disable parallel optimizer.
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group.pb"
@@ -77,10 +77,25 @@ def test_mirror_group():
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
 
+def test_mirror_group_auto_parallel():
+    """
+    Feature: save and load mirror group
+    Description: auto parallel, disable parallel optimizer.
+    Expectation: group info list match expectation value.
+    """
+    os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_auto_parallel.pb"
+    context.set_auto_parallel_context(parallel_mode="auto_parallel",
+                                      device_num=32, enable_parallel_optimizer=False)
+    auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
+    group_info_list = restore_group_info_list("./test_mirror_group_auto_parallel.pb")
+    assert group_info_list == [0, 4, 8, 12, 16, 20, 24, 28]
+    context.reset_auto_parallel_context()
+    del os.environ['GROUP_INFO_FILE']
+
 def test_data_parallel_group():
     """
     Feature: save and load mirror group
-    Description: data-parallel, disable parallel optimizer.
+    Description: data parallel , disable parallel optimizer.
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_data_parallel_group.pb"
@@ -96,7 +111,7 @@ def test_data_parallel_group():
 def test_mirror_group_parallel_optimizer():
     """
     Feature: save and load mirror group
-    Description: semi-auto, enable parallel optimizer.
+    Description: semi-auto parallel, enable parallel optimizer.
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_parallel_optimizer.pb"
@@ -111,7 +126,7 @@ def test_mirror_group_parallel_optimizer():
 def test_mirror_group_parallel_optimizer_not_full_shard():
     """
     Feature: save and load mirror group
-    Description: semi-auto, enable parallel optimizer but not fully shard.
+    Description: semi-auto parallel, enable parallel optimizer but not fully shard.
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_parallel_optimizer_not_full_shard.pb"
@@ -126,7 +141,7 @@ def test_mirror_group_parallel_optimizer_not_full_shard():
 def test_pipeline_split_stage0_mirror_group():
     """
     Feature: save and load mirror group
-    Description: semi-auto, pipeline parallel.
+    Description: semi-auto parallel, pipeline parallel.
     Expectation: group info list match expectation value.
     """
     import mindspore as ms
@@ -147,3 +162,30 @@ def test_pipeline_split_stage0_mirror_group():
     model.train(2, dataset, dataset_sink_mode=False)
     group_info_list = restore_group_info_list("./test_pipeline_split_stage0_mirror_group.pb")
     assert group_info_list == [0, 8, 16, 24]
+    del os.environ['GROUP_INFO_FILE']
+
+def test_pipeline_split_stage1_mirror_group():
+    """
+    Feature: save and load mirror group
+    Description: semi-auto parallel, pipeline parallel.
+    Expectation: group info list match expectation value.
+    """
+    import mindspore as ms
+    from mindspore import Model
+    from .test_pipeline_split import PipelineCell, PipelineSplit, DatasetLenet
+    os.environ['GROUP_INFO_FILE'] = "./test_pipeline_split_stage1_mirror_group.pb"
+    context.set_auto_parallel_context(device_num=64, global_rank=63, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((4, 1), (1, 8))
+    strategy2 = ((4, 1), (1, 1))
+    net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
+    params = net.network.cell.block[1].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+    group_info_list = restore_group_info_list("./test_pipeline_split_stage1_mirror_group.pb")
+    assert group_info_list == [39, 47, 55, 63]
+    del os.environ['GROUP_INFO_FILE']
