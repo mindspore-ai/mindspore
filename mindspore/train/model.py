@@ -14,12 +14,15 @@
 # ============================================================================
 """Model."""
 from collections.abc import Iterable
+from functools import wraps
 
 import os
 import math
 import numpy as np
 
 from mindspore import log as logger
+from .serialization import save_checkpoint
+from .callback._checkpoint import ModelCheckpoint
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
 from .._checkparam import check_input_data, check_output_data, Validator
@@ -54,6 +57,59 @@ class _StepSync(Callback):
     @staticmethod
     def step_end(run_context):
         _pynative_executor.sync()
+
+
+def _check_bpckpt_file_name_if_same_exist(directory, prefix):
+    """Check if there is a exception checkpoint file with the same name."""
+    files = os.listdir(directory)
+    suffix_num = 0
+    pre_len = len(prefix)
+    for filename in files:
+        if filename[-16:] != "breakpoint.ckpt":
+            continue
+        # find same prefix file
+        if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
+            # add the max suffix + 1
+            index = filename[pre_len:].find("-")
+            if index == 0:
+                suffix_num = max(suffix_num, 1)
+            elif index != -1:
+                num = filename[pre_len+1:pre_len+index]
+                if num.isdigit():
+                    suffix_num = max(suffix_num, int(num)+1)
+    if suffix_num != 0:
+        prefix = prefix + "" + str(suffix_num)
+    return prefix
+
+
+def _save_final_ckpt(func):
+    """
+    Decorator function, which saves the current checkpoint when an exception occurs during training.
+    """
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        obj = None
+        if kwargs['callbacks']:
+            if isinstance(kwargs['callbacks'], ModelCheckpoint):
+                obj = kwargs['callbacks']
+            if isinstance(kwargs['callbacks'], list):
+                for item in kwargs['callbacks']:
+                    if isinstance(item, ModelCheckpoint):
+                        obj = item
+        if obj and obj._config and obj._config.exception_save:
+            try:
+                func(self, *args, **kwargs)
+            except BaseException as e:
+                prefix = self._check_bpckpt_file_name_if_same_exist(obj._directory, obj._exception_prefix)
+                cur_ckpoint_file = prefix + "-" + str(self._current_epoch_num) + "_" \
+                    + str(self._current_step_num) + "_breakpoint.ckpt"
+                cur_file = os.path.join(obj._directory, cur_ckpoint_file)
+                save_checkpoint(self._train_network, cur_file, obj._config.integrated_save, obj._config.async_save,
+                                obj._append_dict, obj._config.enc_key, obj._config.enc_mode)
+                raise e
+        else:
+            func(self, *args, **kwargs)
+    return wrapper
 
 
 class Model:
@@ -159,6 +215,8 @@ class Model:
         self._train_network = self._build_train_network()
         self._build_eval_network(metrics, self._eval_network, eval_indexes)
         self._build_predict_network()
+        self._current_epoch_num = 0
+        self._current_step_num = 0
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -445,6 +503,7 @@ class Model:
                 self._eval_network.compile(*inputs)
                 break
 
+    @_save_final_ckpt
     def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
         Training.
@@ -554,6 +613,8 @@ class Model:
             dataset_helper = train_dataset._dataset_helper
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
+            self._current_epoch_num = cb_params.cur_epoch_num
+            self._current_step_num = 0
             list_callback.epoch_begin(run_context)
             dataset_helper, train_network = self._exec_preprocess(is_train=True,
                                                                   dataset=train_dataset,
@@ -567,13 +628,14 @@ class Model:
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
-                cb_params.train_dataset_element = inputs
-                list_callback.step_begin(run_context)
-                outputs = self._train_network(*inputs)
                 if is_graph:
                     cb_params.cur_step_num += dataset_helper.sink_size()
                 else:
                     cb_params.cur_step_num += 1
+                self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
+                cb_params.train_dataset_element = inputs
+                list_callback.step_begin(run_context)
+                outputs = self._train_network(*inputs)
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
                 if _is_role_pserver():
@@ -615,6 +677,8 @@ class Model:
         should_stop = False
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
+            self._current_epoch_num = cb_params.cur_epoch_num
+            self._current_step_num = 0
 
             list_callback.epoch_begin(run_context)
 
@@ -626,6 +690,7 @@ class Model:
                                      "two elements, but got {}, please check the number of elements "
                                      "returned by 'train_dataset'".format(len_element))
                 cb_params.cur_step_num += 1
+                self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
 
                 cb_params.train_dataset_element = next_element
                 list_callback.step_begin(run_context)
