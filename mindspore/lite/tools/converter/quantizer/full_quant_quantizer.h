@@ -97,7 +97,7 @@ class FullQuantQuantizer : public Quantizer {
   size_t bit_num_{8};
   int q_max_{INT8_MAX};
   int q_min_{INT8_MIN};
-  bool activation_symmetry_{true};
+  bool activation_symmetry_{false};
   bool weight_symmetry_{true};
   QuantRuntimeDevice device_ = CPU;
 

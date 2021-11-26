@@ -370,7 +370,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
     return RET_OK;
   }
   int status;
-  std::unique_ptr<quant::Quantizer> quantizer;
+  std::unique_ptr<quant::Quantizer> quantizer = nullptr;
 
   quant::SessionModel origin;
   quant::SessionModel quant;

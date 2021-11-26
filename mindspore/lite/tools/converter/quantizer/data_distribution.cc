@@ -163,14 +163,14 @@ int DataDistribution::ComputeThreshold() {
   return RET_OK;
 }
 
-float DataDistribution::CalculateMinMaxScale() { return CalculateScale(this->real_min_, this->real_max_); }
+double DataDistribution::CalculateMinMaxScale() { return CalculateScale(this->real_min_, this->real_max_); }
 
-float DataDistribution::CalculateRemovalOutlierScale() {
+double DataDistribution::CalculateRemovalOutlierScale() {
   this->percent_result_ = OutlierMethod(min_datas_, max_datas_);
   return CalculateScale(percent_result_.first, percent_result_.second);
 }
 
-float DataDistribution::CalculateScale(float min_value, float max_value) {
+double DataDistribution::CalculateScale(float min_value, float max_value) {
   if (symmetry_) {
     auto abs_max = std::max(fabs(min_value), fabs(max_value));
     min_value = -abs_max;
@@ -183,9 +183,9 @@ float DataDistribution::CalculateScale(float min_value, float max_value) {
   return (encode_max_ - encode_min_) / (quant_max_ - quant_min_);
 }
 
-float DataDistribution::CalculateKLScale() { return CalculateScale(this->best_T_, this->real_max_); }
+double DataDistribution::CalculateKLScale() { return CalculateScale(this->best_T_, this->real_max_); }
 
-float DataDistribution::GetScale() {
+double DataDistribution::GetScale() {
   switch (this->activation_quant_method_) {
     case MAX_MIN:
       this->scale_ = CalculateMinMaxScale();

@@ -33,7 +33,7 @@ enum CollectType {
 class Calibrator {
  public:
   Calibrator(size_t bit_num, int quant_max, int quant_min, ActivationQuantizedMethod activation_quant_method,
-             const preprocess::DataPreProcessParam &data_pre_process_param, bool symmetry = true)
+             const preprocess::DataPreProcessParam &data_pre_process_param, bool symmetry)
       : bit_num_(bit_num),
         quant_max_(quant_max),
         quant_min_(quant_min),

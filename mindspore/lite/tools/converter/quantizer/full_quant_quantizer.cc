@@ -191,8 +191,9 @@ int FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodeP
     return RET_NULL_PTR;
   }
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_ALL, q_max_, q_min_,
-                                            bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1, true);
+  auto status =
+    FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_ALL, q_max_, q_min_, bit_num_,
+                                weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetry_, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -521,6 +522,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
     auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
                                                           flags_.commonQuantParam.min_quant_weight_channel,
                                                           flags_.commonQuantParam.skip_quant_node);
+    CHECK_NULL_RETURN(quant_strategy);
     //  Mark quantifiable nodes
     auto is_support_op = quant_strategy->CanOpFullQuantized(anode);
     auto is_skip_op = quant_strategy->IsSkipOp(anode);

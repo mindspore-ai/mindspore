@@ -97,8 +97,8 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 template <typename T>
 int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                         QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
-                        WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool narrow_range = false,
-                        bool k_means = false) {
+                        WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool symmetry = false,
+                        bool narrow_range = false, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -121,10 +121,10 @@ int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
   int ret = RET_OK;
   if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
     int preferred_dim = GetPreferredDim(primitive, index, ConvertShapeVectorToInt32(dims));
-    ret =
-      DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
-                           static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max, quant_min,
-                           bit_num, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim, narrow_range, k_means);
+    ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
+                               static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
+                               quant_min, bit_num, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
+                               symmetry, narrow_range, k_means);
     if (ret == RET_NO_CHANGE) {
       return ret;
     } else if (ret != RET_OK) {
@@ -133,7 +133,7 @@ int FixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
     }
   } else if (weight_quant_type == FIXED_BIT_PER_LAYER) {
     ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
-                             quant_min, bit_num, &quant_data, narrow_range, k_means);
+                             quant_min, bit_num, &quant_data, symmetry, narrow_range, k_means);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;

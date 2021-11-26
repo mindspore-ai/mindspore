@@ -26,20 +26,22 @@ namespace lite {
 // `narrow_range` is used to adjust q_min, and symmetric is always true.
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
                           bool symmetric, bool narrow_range) {
+  CHECK_NULL_RETURN(quant_param);
+  int quant_max = QuantMax(num_bits);
+  int quant_min = QuantMin(num_bits, false, narrow_range);
+  return CalQuantizationParams(quant_param, real_min, real_max, num_bits, quant_min, quant_max, symmetric,
+                               narrow_range);
+}
+
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          int quant_min, int quant_max, bool symmetric, bool narrow_range) {
+  CHECK_NULL_RETURN(quant_param);
   if (symmetric) {
     auto abs_max = std::max(std::abs(real_min), std::abs(real_max));
     real_min = -abs_max;
     real_max = abs_max;
     narrow_range = true;
   }
-  int quant_max = QuantMax(num_bits);
-  int quant_min = QuantMin(num_bits, false, narrow_range);
-  return CalQuantizationParams(quant_param, real_min, real_max, num_bits, narrow_range, quant_min, quant_max);
-}
-
-int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
-                          bool narrow_range, int quant_min, int quant_max) {
-  CHECK_NULL_RETURN(quant_param);
   // Handling 0
   // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
   if (real_min > 0.0f) {

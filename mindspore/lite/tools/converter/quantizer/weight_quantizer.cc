@@ -20,6 +20,7 @@
 #include <utility>
 #include <set>
 #include "tools/optimizer/common/gllo_utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::lite::quant {
 WeightQuantizer::~WeightQuantizer() {
@@ -66,6 +67,7 @@ int WeightQuantizer::DoWeightQuantize(const FuncGraphPtr &func_graph, const CNod
     auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
                                                           flags_.commonQuantParam.min_quant_weight_channel,
                                                           flags_.commonQuantParam.skip_quant_node);
+    CHECK_NULL_RETURN(quant_strategy);
     if (!quant_strategy->CanTensorQuantized(cnode, input, preferred_dim)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantizable";
       continue;

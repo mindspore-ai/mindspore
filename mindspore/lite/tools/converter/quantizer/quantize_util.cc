@@ -488,23 +488,21 @@ int MixedBitQuantFilter(const ParameterPtr &parameter, const tensor::TensorPtr &
   }
 
   std::vector<int16_t> quant_data(elem_count);
-  int ret = RET_OK;
   if (weight_quant_type != MIXED_BIT_PER_LAYER) {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
     return RET_ERROR;
   }
   MixedBitWeightQuantizer quantizer(init_scale);
-  ret =
+  auto ret =
     quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
   if (ret == RET_NO_CHANGE) {
-    int quant_max = 127;
-    int quant_min = -128;
-    int bit_num = 8;
+    const int quant_min = QuantMin(k8Bit, false, false);  // -128
+    const int quant_max = QuantMax(k8Bit);                // 127
     MS_LOG(WARNING)
       << parameter->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
     return FixedBitQuantFilter<int8_t>(parameter, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
-                                       bit_num, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
+                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
   }
   if (ret != RET_OK) {
     return ret;

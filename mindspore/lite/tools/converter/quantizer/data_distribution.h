@@ -25,7 +25,7 @@ class DataDistribution {
  public:
   DataDistribution() = default;
   DataDistribution(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
-                   ActivationQuantizedMethod activation_quant_method, bool symmetry = true) {
+                   ActivationQuantizedMethod activation_quant_method, bool symmetry) {
     this->activation_quant_method_ = activation_quant_method;
     this->cnode_ = std::move(cnode);
     this->bin_num_ = bins;
@@ -52,7 +52,7 @@ class DataDistribution {
 
   int ComputeThreshold();
 
-  float GetScale();
+  double GetScale();
 
   int32_t GetZeroPoint();
 
@@ -67,10 +67,10 @@ class DataDistribution {
   CNodePtr GetCNode() { return this->cnode_; }
 
  private:
-  float CalculateMinMaxScale();
-  float CalculateRemovalOutlierScale();
-  float CalculateKLScale();
-  float CalculateScale(float min_value, float max_value);
+  double CalculateMinMaxScale();
+  double CalculateRemovalOutlierScale();
+  double CalculateKLScale();
+  double CalculateScale(float min_value, float max_value);
 
  private:
   std::vector<float> histogram_;
@@ -89,7 +89,7 @@ class DataDistribution {
   std::vector<float> min_datas_;
   std::vector<float> max_datas_;
   std::pair<float, float> percent_result_{0.0, 0.0};
-  float scale_ = 0;
+  double scale_ = 0;
   bool symmetry_ = true;
 };
 }  // namespace mindspore::lite::quant
