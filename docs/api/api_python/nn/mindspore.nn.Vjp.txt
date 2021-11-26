@@ -1,26 +1,33 @@
-Class mindspore.nn.Vjp(fn)
+mindspore.nn.Vjp
+=================
 
-    è®¡ç®—ç»™å®šç½‘ç»œçš„å‘é‡é›…å¯æ¯”ç§¯(vector-Jacobian product, VJP)ã€‚VJPå¯¹åº”åå‘æ¨¡å¼è‡ªåŠ¨å¾®åˆ†ã€‚
+.. py:class:: mindspore.nn.Vjp(fn)
 
-    å‚æ•°ï¼š
-        fn (Cell): åŸºäºŽCellçš„ç½‘ç»œï¼Œç”¨äºŽæŽ¥æ”¶å¼ é‡è¾“å…¥å¹¶è¿”å›žå¼ é‡æˆ–è€…å¼ é‡å…ƒç»„ã€‚
+    ¼ÆËã¸ø¶¨ÍøÂçµÄÏòÁ¿ÑÅ¿É±È»ý(vector-Jacobian product, VJP)¡£VJP¶ÔÓ¦·´ÏòÄ£Ê½×Ô¶¯Î¢·Ö¡£
 
-    è¾“å…¥ï¼š
-        - **inputs** (Tensor) - è¾“å…¥ç½‘ç»œçš„å…¥å‚ï¼Œå•ä¸ªæˆ–å¤šä¸ªå¼ é‡ã€‚
-        - **v** (Tensor or Tuple of Tensor) - ä¸Žé›…å¯æ¯”çŸ©é˜µç‚¹ä¹˜çš„å‘é‡ï¼Œå½¢çŠ¶ä¸Žç½‘ç»œçš„è¾“å‡ºä¸€è‡´ã€‚
+    **²ÎÊý£º**
 
-    è¾“å‡ºï¼š
-        2ä¸ªå¼ é‡æˆ–å¼ é‡å…ƒç»„æž„æˆçš„å…ƒç»„ã€‚
+    **fn** (Cell) - »ùÓÚCellµÄÍøÂç£¬ÓÃÓÚ½ÓÊÕÕÅÁ¿ÊäÈë²¢·µ»ØÕÅÁ¿»òÕßÕÅÁ¿Ôª×é¡£
 
-        - **net_output** (Tensor or Tuple of Tensor) - è¾“å…¥ç½‘ç»œçš„æ­£å‘è®¡ç®—ç»“æžœã€‚
-        - **vjp** (Tensor or Tuple of Tensor) - å‘é‡é›…å¯æ¯”ç§¯çš„ç»“æžœã€‚
+    **ÊäÈë£º**
 
-        ç¤ºä¾‹ï¼š
-        >>> from mindspore.nn import Vjp
-        >>> class Net(nn.Cell):
-        ...     def construct(self, x, y):
-        ...         return x**3 + y
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = Vjp(Net())(x, y, v)
+    - **inputs** (Tensor) - ÊäÈëÍøÂçµÄÈë²Î£¬µ¥¸ö»ò¶à¸öÕÅÁ¿¡£
+    - **v** (Tensor or Tuple of Tensor) - ÓëÑÅ¿É±È¾ØÕóµã³ËµÄÏòÁ¿£¬ÐÎ×´ÓëÍøÂçµÄÊä³öÒ»ÖÂ¡£
+
+    **Êä³ö£º**
+    
+    2¸öÕÅÁ¿»òÕÅÁ¿Ôª×é¹¹³ÉµÄÔª×é¡£
+
+    - **net_output** (Tensor or Tuple of Tensor) - ÊäÈëÍøÂçµÄÕýÏò¼ÆËã½á¹û¡£
+    - **vjp** (Tensor or Tuple of Tensor) - ÏòÁ¿ÑÅ¿É±È»ýµÄ½á¹û¡£
+
+    **ÑùÀý£º**
+
+    >>> from mindspore.nn import Vjp
+    >>> class Net(nn.Cell):
+    ...     def construct(self, x, y):
+    ...         return x**3 + y
+    >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+    >>> output = Vjp(Net())(x, y, v)

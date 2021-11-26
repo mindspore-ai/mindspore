@@ -1,145 +1,143 @@
-Class mindspore.nn.Optimizer(learning_rate, parameters, weight_decay=0.0, loss_scale=1.0)
+mindspore.nn.Optimizer
+======================
+
+.. py:class:: mindspore.nn.Optimizer(learning_rate, parameters, weight_decay=0.0, loss_scale=1.0)
 
     用于参数更新的优化器基类。不要直接使用这个类，请实例化它的一个子类。
 
-    优化器支持参数分组。当参数分组时，每组参数均可配置不同的学习率（`lr`）、权重衰减（`weight_decay`）和梯度中心化（`grad_centralization`）策略。
+    优化器支持参数分组。当参数分组时，每组参数均可配置不同的学习率（`lr` ）、权重衰减（`weight_decay`）和梯度中心化（`grad_centralization`）策略。
 
-    注：
-        在参数未分组时，优化器配置的`weight_decay`应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置`weight_decay`，若未配置，则该组网络参数使用优化器中配置的`weight_decay`。
+    .. note::
+        在参数未分组时，优化器配置的 `weight_decay` 应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置 `weight_decay` ，若未配置，则该组网络参数使用优化器中配置的 `weight_decay`。
 
-    参数：
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
+    **参数：**
 
-            - float: 固定的学习率。必须大于等于零。
+    - **learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
 
-            - int: 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
+      - **float** - 固定的学习率。必须大于等于零。
+      - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
+      - **Tensor** - 可以是标量或一维向量。标量是固定的学习率。一维向量是动态的学习率，第i步将取向量中第i个值作为学习率。
+      - **Iterable** - 动态的学习率。第i步将取迭代器第i个值作为学习率。
+      - **LearningRateSchedule** - 动态的学习率。在训练过程中，优化器将使用步数（step）作为输入，调用 `LearningRateSchedule` 实例来计算当前学习率。
+    
+    - **parameters (Union[list[Parameter], list[dict]])** - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
 
-            - Tensor: 可以是标量或一维向量。标量是固定的学习率。一维向量是动态的学习率，第i步将取向量中第i个值作为学习率。
+      - **params** - 必填。当前组别的权重，该值必须是 `Parameter` 列表。
+      - **lr** - 可选。如果键中存在"lr"，则使用对应的值作为学习率。如果没有，则使用优化器中配置的 `learning_rate` 作为学习率。
+      - **weight_decay** - 可选。如果键中存在"weight_decay”，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的 `weight_decay` 作为权重衰减值。
+      - **grad_centralization** - 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为 `grad_centralization` 为False。该参数仅适用于卷积层。
+      - **order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。
 
-            - Iterable: 动态的学习率。第i步将取迭代器第i个值作为学习率。
+    - **weight_decay** (Union[float, int]) - 权重衰减的整数或浮点值。必须等于或大于0。如果 `weight_decay` 是整数，它将被转换为浮点数。默认值：0.0。
+    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager `的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager`。默认值：1.0。
 
-            - LearningRateSchedule: 动态的学习率。在训练过程中，优化器将使用步数（step）作为输入，调用`LearningRateSchedule`实例来计算当前学习率。
+    **异常：**
 
-        parameters (Union[list[Parameter], list[dict]]): 必须是`Parameter`组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
+    - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
+    - **TypeError** - `parameters` 的元素不是Parameter或字典。
+    - **TypeError** - `loss_scale` 不是float。
+    - **TypeError** - `weight_decay` 不是float或int。
+    - **ValueError** - `loss_scale` 小于或等于0。
+    - **ValueError** - `weight_decay` 小于0。
+    - **ValueError** - `learning_rate` 是一个Tensor，但是Tensor的维度大于1。
 
-            - params: 必填。当前组别的权重，该值必须是`Parameter`列表。
+    **支持平台：**
 
-            - lr: 可选。如果键中存在"lr"，则使用对应的值作为学习率。
-              如果没有，则使用优化器中配置的`learning_rate`作为学习率。
+    ``Ascend``  ``GPU``  ``CPU``
 
-            - weight_decay: 可选。如果键中存在"weight_decay”，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的`weight_decay`作为权重衰减值。
-
-            - grad_centralization: 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为`grad_centralization`为False。
-              该参数仅适用于卷积层。
-
-            - order_params: 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持`parameters`的顺序以提升性能。
-              如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组`params`参数中。
-
-        weight_decay (Union[float, int]): 权重衰减的整数或浮点值。
-            必须等于或大于0。
-            如果`weight_decay`是整数，它将被转换为浮点数。默认值：0.0。
-
-        loss_scale (float): 梯度缩放系数，必须大于0。如果`loss_scale`是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了`FixedLossScaleManager`，且`FixedLossScaleManager`的`drop_overflow_update`属性配置为False时，此值需要与`FixedLossScaleManager`中的`loss_scale`相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager`。
-            默认值：1.0。
-
-    异常：
-        TypeError: `learning_rate`不是int、float、Tensor、Iterable或LearningRateSchedule。
-        TypeError: `parameters`的元素不是Parameter或字典。
-        TypeError: `loss_scale`不是float。
-        TypeError: `weight_decay`不是float或int。
-        ValueError: `loss_scale`小于或等于0。
-        ValueError: `weight_decay`小于0。
-        ValueError: `learning_rate`是一个Tensor，但是Tensor的维度大于1。
-
-    支持的平台：
-        ``Ascend`` ``GPU`` ``CPU``
-
-
-broadcast_params(optim_result)
+    .. py:method:: broadcast_params(optim_result)
 
         按参数组的顺序进行参数广播。
 
-        参数：
-            optim_result (bool): 参数更新结果。该输入用来保证参数更新完成后才执行参数广播。
+        **参数：**
 
-        返回：
-             bool，状态标志。
+        **optim_result** (bool) - 参数更新结果。该输入用来保证参数更新完成后才执行参数广播。
 
+        **返回：**
 
-decay_weight(gradients)
+        bool，状态标志。
+
+    .. py:method:: decay_weight(gradients)
 
         衰减权重。
 
-        一种减少深度学习神经网络模型过拟合的方法。继承 :class:`mindspore.nn.Optimizer`自定义优化器时，可调用该接口进行权重衰减。
+        一种减少深度学习神经网络模型过拟合的方法。继承  :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行权重衰减。
 
-        参数：
-            gradients (tuple[Tensor]): 网络参数的梯度，形状（shape）与网络参数相同。
+        **参数：**
 
-        返回：
-            tuple[Tensor]，衰减权重后的梯度。
+        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
+        **返回：**
 
-get_lr()
+        tuple[Tensor]，衰减权重后的梯度。
 
-        优化器调用该接口获取当前步骤（step）的学习率。继承 :class:`mindspore.nn.Optimizer`自定义优化器时，可在参数更新前调用该接口获取学习率。
+    .. py:method:: get_lr()
 
-        返回：
-            float，当前步骤的学习率。
+        优化器调用该接口获取当前步骤（step）的学习率。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可在参数更新前调用该接口获取学习率。
 
+        **返回：**
 
-get_lr_parameter(param)
+        float，当前步骤的学习率。
+
+    .. py:method:: get_lr_parameter(param)
 
         用于在使用网络参数分组功能，且为不同组别配置不同的学习率时，获取指定参数的学习率。
 
-        参数：
-            param (Union[Parameter, list[Parameter]]): `Parameter`或`Parameter`列表。
+        **参数：**
 
-        返回：
-            Parameter，单个`Parameter`或`Parameter`列表。如果使用了动态学习率，返回用于计算学习率的`LearningRateSchedule`或`LearningRateSchedule`列表。
+        **param** (Union[Parameter, list[Parameter]]) - `Parameter` 或 `Parameter` 列表。
 
-        示例：
-            >>> from mindspore import nn
-            >>> net = Net()
-            >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-            >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-            >>> group_params = [{'params': conv_params, 'lr': 0.05},
-            ...                 {'params': no_conv_params, 'lr': 0.01}]
-            >>> optim = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
-            >>> conv_lr = optim.get_lr_parameter(conv_params)
-            >>> print(conv_lr[0].asnumpy())
-            0.05
+        **返回：**
 
+        Parameter，单个 `Parameter` 或 `Parameter` 列表。如果使用了动态学习率，返回用于计算学习率的 `LearningRateSchedule` 或 `LearningRateSchedule` 列表。
 
-gradients_centralization(gradients)
+        **样例：**
+
+        >>> from mindspore import nn
+        >>> net = Net()
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'lr': 0.05},
+        ...                 {'params': no_conv_params, 'lr': 0.01}]
+        >>> optim = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
+        >>> conv_lr = optim.get_lr_parameter(conv_params)
+        >>> print(conv_lr[0].asnumpy())
+        0.05
+
+    .. py:method:: gradients_centralization(gradients)
 
         梯度中心化。
 
-        一种优化卷积层参数以提高深度学习神经网络模型训练速度的方法。继承 :class:`mindspore.nn.Optimizer`自定义优化器时，可调用该接口进行梯度中心化。
+        一种优化卷积层参数以提高深度学习神经网络模型训练速度的方法。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行梯度中心化。
 
-        参数：
-            gradients (tuple[Tensor]): 网络参数的梯度，形状（shape）与网络参数相同。
+        **参数：**
+        
+        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
-        返回：
-            tuple[Tensor]，梯度中心化后的梯度。
+        **返回：**
 
+        tuple[Tensor]，梯度中心化后的梯度。
 
-scale_grad(gradients)
+    .. py:method:: scale_grad(gradients)
 
         用于在混合精度场景还原梯度。
 
-        继承:class:`mindspore.nn.Optimizer`自定义优化器时，可调用该接口还原梯度。
+        继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口还原梯度。
 
-        参数：
-            gradients (tuple[Tensor]): 网络参数的梯度，形状（shape）与网络参数相同。
+        **参数：**
+        
+        **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
 
-        返回：
-            tuple[Tensor]，还原后的梯度。
+        **返回：**
 
+        tuple[Tensor]，还原后的梯度。
 
-target
+    .. py:method:: target
+        :property:
 
         该属性用于指定在主机（host）上还是设备（device）上更新参数。输入类型为str，只能是'CPU'，'Ascend'或'GPU'。
 
+    .. py:method:: unique
+        :property:
 
-unique
         该属性表示是否在优化器中进行梯度去重，通常用于稀疏网络。如果梯度是稀疏的则设置为True。如果前向稀疏网络已对权重去重，即梯度是稠密的，则设置为False。未设置时默认值为True。

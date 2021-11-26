@@ -1,55 +1,60 @@
-Class mindspore.FixedLossScaleManager(loss_scale=128.0, drop_overflow_update=True)
+mindspore.FixedLossScaleManager
+===============================
 
-    æ¢¯åº¦æ”¾å¤§ç³»æ•°ä¸å˜çš„ç®¡ç†å™¨ï¼Œç»§æ‰¿è‡ª:class:`mindspore.LossScaleManager`ã€‚
+.. py:class:: mindspore.FixedLossScaleManager(loss_scale=128.0, drop_overflow_update=True)
 
-    å‚æ•°ï¼š
-        loss_scale (float)ï¼šæ¢¯åº¦æ”¾å¤§ç³»æ•°ã€‚æ³¨ï¼šå¦‚æœå°†`drop_overflow_update`è®¾ä¸ºFalseï¼Œåˆ™å®šä¹‰ä¼˜åŒ–å™¨æ—¶éœ€è¦å°†ä¼˜åŒ–å™¨çš„`loss_scale`è®¾ä¸ºç›¸åŒçš„å€¼ã€‚é»˜è®¤å€¼ï¼š128.0ã€‚
-        drop_overflow_update (bool)ï¼šå‡ºç°æº¢å‡ºæ—¶ï¼Œæ˜¯å¦æ‰§è¡Œä¼˜åŒ–å™¨ã€‚å¦‚æœå€¼ä¸ºTrueï¼Œåˆ™å‡ºç°æº¢å‡ºæ—¶ä¸ä¼šæ‰§è¡Œä¼˜åŒ–å™¨ã€‚é»˜è®¤å€¼ï¼šTrueã€‚
+    Ìİ¶È·Å´óÏµÊı²»±äµÄ¹ÜÀíÆ÷£¬¼Ì³Ğ×Ô:class: `mindspore.LossScaleManager` ¡£
 
-    æ ·ä¾‹ï¼š
-        >>> from mindspore import Model, nn, FixedLossScaleManager
-        >>>
-        >>> net = Net()
-        >>> # 1) å¦‚æœå­˜åœ¨æº¢å‡ºï¼Œåˆ™ä¸æ‰§è¡Œå‚æ•°æ›´æ–°
-        >>> loss_scale_manager = FixedLossScaleManager()
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
-        >>>
-        >>> # 2) å³ä½¿å‘ç”Ÿæº¢å‡ºï¼Œä¹Ÿæ‰§è¡Œå‚æ•°æ›´æ–°
-        >>> loss_scale = 1024.0
-        >>> loss_scale_manager = FixedLossScaleManager(loss_scale, False)
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+    **²ÎÊı£º**
     
+    - **loss_scale** (float) - Ìİ¶È·Å´óÏµÊı¡£×¢£ºÈç¹û½« `drop_overflow_update` ÉèÎªFalse£¬Ôò¶¨ÒåÓÅ»¯Æ÷Ê±ĞèÒª½«ÓÅ»¯Æ÷µÄ `loss_scale` ÉèÎªÏàÍ¬µÄÖµ¡£Ä¬ÈÏÖµ£º128.0¡£
+    - **drop_overflow_update** (bool) - ³öÏÖÒç³öÊ±£¬ÊÇ·ñÖ´ĞĞÓÅ»¯Æ÷¡£Èç¹ûÖµÎªTrue£¬Ôò³öÏÖÒç³öÊ±²»»áÖ´ĞĞÓÅ»¯Æ÷¡£Ä¬ÈÏÖµ£ºTrue¡£
 
-get_drop_overflow_update()
+    **ÑùÀı£º**
 
-        è¿”å›`drop_overflow_update`ï¼Œè¯¥å€¼è¡¨ç¤ºæ˜¯å¦åœ¨å‘ç”Ÿæº¢å‡ºæ—¶æ”¾å¼ƒæœ¬è½®å‚æ•°æ›´æ–°ã€‚
+    >>> from mindspore import Model, nn, FixedLossScaleManager
+    >>>
+    >>> net = Net()
+    >>> # 1) Èç¹û´æÔÚÒç³ö£¬Ôò²»Ö´ĞĞ²ÎÊı¸üĞÂ
+    >>> loss_scale_manager = FixedLossScaleManager()
+    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+    >>>
+    >>> # 2) ¼´Ê¹·¢ÉúÒç³ö£¬Ò²Ö´ĞĞ²ÎÊı¸üĞÂ
+    >>> loss_scale = 1024.0
+    >>> loss_scale_manager = FixedLossScaleManager(loss_scale, False)
+    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
+    >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+    
+    .. py:method:: get_drop_overflow_update()
 
-        è¿”å›ï¼š
-            bool, `drop_overflow_update`çš„å€¼ã€‚
+        ·µ»Ø `drop_overflow_update` £¬¸ÃÖµ±íÊ¾ÊÇ·ñÔÚ·¢ÉúÒç³öÊ±·ÅÆú±¾ÂÖ²ÎÊı¸üĞÂ¡£
+
+        **·µ»Ø£º**
+
+        bool, `drop_overflow_update` µÄÖµ¡£
         
+    .. py:method:: get_loss_scale()
 
-get_loss_scale()
+        »ñÈ¡loss scaleÖµ¡£
 
-        è·å–loss scaleå€¼ã€‚
+        **·µ»Ø£º**
 
-        è¿”å›ï¼š
-            boolï¼Œ`loss_scale`çš„å€¼ã€‚
+        bool£¬`loss_scale` µÄÖµ¡£
         
+    .. py:method:: get_update_cell()
 
-get_update_cell()
+        ·µ»ØÓÃÓÚ¸üĞÂ `loss_scale` ÖµµÄ `Cell` ÊµÀı£¬¸ÃÊµÀı½«ÔÚ :class:`mindspore.TrainOneStepWithLossScaleCell` ÖĞÖ´ĞĞ¡£
 
-        è¿”å›ç”¨äºæ›´æ–°`loss_scale`å€¼çš„`Cell`å®ä¾‹ï¼Œè¯¥å®ä¾‹å°†åœ¨:class:`mindspore.TrainOneStepWithLossScaleCell`ä¸­æ‰§è¡Œã€‚
+        **·µ»Ø£º**
 
-        è¿”å›ï¼š
-            Noneæˆ–`Cell`ã€‚å½“`drop_overflow_update`ä¸ºTrueæ—¶ï¼Œè¿”å›:class:`mindspore.FixedLossScaleUpdateCell`å®ä¾‹ï¼Œå½“`drop_overflow_update`ä¸ºFalseæ—¶ï¼Œè¿”å›Noneã€‚
+        None»ò `Cell` ¡£µ± `drop_overflow_update` ÎªTrueÊ±£¬·µ»Ø :class:`mindspore.FixedLossScaleUpdateCell` ÊµÀı£¬µ± `drop_overflow_update` ÎªFalseÊ±£¬·µ»ØNone¡£
         
+    .. py:method:: update_loss_scale(overflow)
 
-update_loss_scale(overflow)
+        ¸üĞÂloss scaleÖµ¡£Àà :class:`mindspore.FixedLossScaleManager` ÖĞ£¬¸Ã·½·¨²»Ö´ĞĞÈÎºÎ²Ù×÷¡£
 
-        æ›´æ–°loss scaleå€¼ã€‚ç±»:class:`mindspore.FixedLossScaleManager`ä¸­ï¼Œè¯¥æ–¹æ³•ä¸æ‰§è¡Œä»»ä½•æ“ä½œã€‚
+        **²ÎÊı£º**
 
-        å‚æ•°ï¼š
-            overflow (bool)ï¼šè¡¨ç¤ºæ˜¯å¦æº¢å‡ºã€‚
+        **overflow** (bool) - ±íÊ¾ÊÇ·ñÒç³ö¡£
         

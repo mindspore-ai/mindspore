@@ -1,22 +1,26 @@
-Class mindspore.LossScaleManager
+mindspore.LossScaleManager
+===========================
 
-   æ··åˆç²¾åº¦æ¢¯åº¦æ”¾å¤§ç³»æ•°ï¼ˆloss scaleï¼‰ç®¡ç†å™¨çš„æŠ½è±¡ç±»ã€‚
+.. py:class:: mindspore.LossScaleManager
 
-   æ´¾ç”Ÿç±»éœ€è¦è¯¥ç±»çš„æ‰€æœ‰æ–¹æ³•ã€‚`get_loss_scale`ç”¨äºè·å–å½“å‰çš„æ¢¯åº¦æ”¾å¤§ç³»æ•°ã€‚`update_loss_scale`ç”¨äºæ›´æ–°æ¢¯åº¦æ”¾å¤§ç³»æ•°ï¼Œè¯¥æ–¹æ³•å°†åœ¨è®­ç»ƒè¿‡ç¨‹ä¸­è¢«è°ƒç”¨ã€‚`get_update_cell`ç”¨äºè·å–æ›´æ–°æ¢¯åº¦æ”¾å¤§ç³»æ•°çš„`Cell`å®ä¾‹ï¼Œè¯¥å®ä¾‹åœ¨å°†è®­ç»ƒè¿‡ç¨‹ä¸­è¢«è°ƒç”¨ã€‚ä¸‹æ²‰æ¨¡å¼ä¸‹ä»…`get_update_cell`æ–¹å¼ç”Ÿæ•ˆï¼Œéä¸‹æ²‰æ¨¡å¼ä¸‹ä¸¤ç§æ›´æ–°æ¢¯åº¦æ”¾å¤§ç³»æ•°çš„æ–¹å¼å‡ç”Ÿæ•ˆã€‚
-   ä¾‹å¦‚ï¼š:class:`mindspore.FixedLossScaleManager`å’Œ:class:`mindspore.DynamicLossScaleManager`ã€‚
+   »ìºÏ¾«¶ÈÌİ¶È·Å´óÏµÊı£¨loss scale£©¹ÜÀíÆ÷µÄ³éÏóÀà¡£
+
+   ÅÉÉúÀàĞèÒª¸ÃÀàµÄËùÓĞ·½·¨¡£ `get_loss_scale` ÓÃÓÚ»ñÈ¡µ±Ç°µÄÌİ¶È·Å´óÏµÊı¡£ `update_loss_scale` ÓÃÓÚ¸üĞÂÌİ¶È·Å´óÏµÊı£¬¸Ã·½·¨½«ÔÚÑµÁ·¹ı³ÌÖĞ±»µ÷ÓÃ¡£ `get_update_cell` ÓÃÓÚ»ñÈ¡¸üĞÂÌİ¶È·Å´óÏµÊıµÄ `Cell` ÊµÀı£¬¸ÃÊµÀıÔÚ½«ÑµÁ·¹ı³ÌÖĞ±»µ÷ÓÃ¡£ÏÂ³ÁÄ£Ê½ÏÂ½ö `get_update_cell` ·½Ê½ÉúĞ§£¬·ÇÏÂ³ÁÄ£Ê½ÏÂÁ½ÖÖ¸üĞÂÌİ¶È·Å´óÏµÊıµÄ·½Ê½¾ùÉúĞ§¡£
+   ÀıÈç£º:class:`mindspore.FixedLossScaleManager` ºÍ :class:`mindspore.DynamicLossScaleManager` ¡£
     
+    .. py:method:: get_loss_scale()
 
-get_loss_scale()
-è·å–æ¢¯åº¦æ”¾å¤§ç³»æ•°ï¼ˆloss scaleï¼‰çš„å€¼ã€‚
+      »ñÈ¡Ìİ¶È·Å´óÏµÊı£¨loss scale£©µÄÖµ¡£
 
+    .. py:method:: get_update_cell()
+      
+      »ñÈ¡ÓÃÓÚ¸üĞÂÌİ¶È·Å´óÏµÊıµÄ :class:`mindspore.nn.Cell` ÊµÀı¡£
 
-get_update_cell()
-è·å–ç”¨äºæ›´æ–°æ¢¯åº¦æ”¾å¤§ç³»æ•°çš„:class:`mindspore.nn.Cell`å®ä¾‹ã€‚
+    .. py:method:: update_loss_scale(overflow)
 
-update_loss_scale(overflow)
+      ¸ù¾İ `overflow` ×´Ì¬¸üĞÂÌİ¶È·Å´óÏµÊı£¨loss scale)¡£
 
-æ ¹æ®`overflow`çŠ¶æ€æ›´æ–°æ¢¯åº¦æ”¾å¤§ç³»æ•°ï¼ˆloss scale)ã€‚
+   **²ÎÊı£º**
 
-å‚æ•°ï¼š
-    overflow (bool)ï¼šè¡¨ç¤ºè®­ç»ƒè¿‡ç¨‹æ˜¯å¦æº¢å‡ºã€‚
+   **overflow** (bool) - ±íÊ¾ÑµÁ·¹ı³ÌÊÇ·ñÒç³ö¡£
         
