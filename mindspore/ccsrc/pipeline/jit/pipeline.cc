@@ -59,7 +59,6 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/system/sha256.h"
-#include "proto/compile_cache.pb.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -197,7 +196,7 @@ void SetLoopCount(const ResourcePtr &resource) {
   }
 }
 
-std::string GetUserDefindCachePath() {
+std::string GetUserDefinedCachePath() {
   auto user_defined_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
   if (!user_defined_path.empty()) {
     user_defined_path += "/";
@@ -211,7 +210,7 @@ std::string GetUserDefindCachePath() {
 }
 
 std::string GetCompileCacheDir() {
-  static const std::string user_defined_path = GetUserDefindCachePath();
+  static const std::string user_defined_path = GetUserDefinedCachePath();
   static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
   static const std::string compile_cache_dir =
     user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
@@ -266,16 +265,13 @@ bool CheckDepFilesHashConsistency(const std::string &current_dep_files_hash) {
                     << ErrnoToString(errno);
     return false;
   }
-  compile_cache::CompileCacheProto proto;
-  if (!proto.ParseFromIstream(&input)) {
-    MS_LOG(ERROR) << "Parse the file " << realpath.value() << " from input stream failed.";
-    return false;
-  }
-  if (!proto.has_dep_files_hash()) {
+  std::string checkpoint_hash;
+  input >> checkpoint_hash;
+  if (checkpoint_hash.empty()) {
     MS_LOG(ERROR) << "Get the compilation dependency files hash from " << realpath.value() << " failed.";
     return false;
   }
-  if (proto.dep_files_hash() != current_dep_files_hash) {
+  if (checkpoint_hash != current_dep_files_hash) {
     MS_LOG(WARNING) << "The compilation dependency files are changed.";
     return false;
   }
@@ -394,13 +390,7 @@ bool ExportDepFilesHash(const ResourcePtr &resource) {
     MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-  compile_cache::CompileCacheProto proto;
-  proto.set_dep_files_hash(resource->compile_cache_dep_files_hash());
-  if (!proto.SerializeToOstream(&fout)) {
-    MS_LOG(ERROR) << "Failed to write the dependency files hash to file " << realpath.value();
-    fout.close();
-    return false;
-  }
+  fout << resource->compile_cache_dep_files_hash();
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
   return true;
