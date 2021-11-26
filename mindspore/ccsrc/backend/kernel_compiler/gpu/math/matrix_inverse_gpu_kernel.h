@@ -41,6 +41,8 @@ class MatrixInverseGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                "cublasSetStream failed");
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);

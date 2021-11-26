@@ -51,6 +51,10 @@ class CholeskyGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                  "cusolverDnSetStream failed");
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                "cublasSetStream failed");
     if (!use_split_matrix_) {
       return NoSplitLaunch(inputs, workspace, outputs, stream_ptr);
     }

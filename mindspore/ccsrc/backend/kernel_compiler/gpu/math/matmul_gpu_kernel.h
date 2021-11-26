@@ -43,8 +43,9 @@ class MatMulGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                "cublasSetStream failed");
     VARIABLE_NOT_USED(workspace);
-    VARIABLE_NOT_USED(stream_ptr);
     if (is_null_input_) {
       return true;
     }
