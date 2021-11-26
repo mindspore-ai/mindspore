@@ -29,6 +29,7 @@ parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--local_worker_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--dataset_path", type=str, default="")
+parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -43,6 +44,7 @@ worker_step_num_per_iteration = args.worker_step_num_per_iteration
 local_worker_num = args.local_worker_num
 config_file_path = args.config_file_path
 dataset_path = args.dataset_path
+sync_type = args.sync_type
 
 if local_worker_num == -1:
     local_worker_num = worker_num
@@ -68,6 +70,7 @@ for i in range(local_worker_num):
     cmd_worker += " --worker_step_num_per_iteration=" + str(worker_step_num_per_iteration)
     cmd_worker += " --dataset_path=" + str(dataset_path)
     cmd_worker += " --user_id=" + str(i)
+    cmd_worker += " --sync_type=" + sync_type
     cmd_worker += " > worker.log 2>&1 &"
 
     subprocess.call(['bash', '-c', cmd_worker])

@@ -26,6 +26,7 @@ parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--dataset_path", type=str, default="")
+parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -37,6 +38,7 @@ scheduler_port = args.scheduler_port
 scheduler_manage_port = args.scheduler_manage_port
 config_file_path = args.config_file_path
 dataset_path = args.dataset_path
+sync_type = args.sync_type
 
 cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
 cmd_sched += "mkdir ${execute_path}/scheduler/ &&"
@@ -53,6 +55,7 @@ cmd_sched += " --scheduler_port=" + str(scheduler_port)
 cmd_sched += " --scheduler_manage_port=" + str(scheduler_manage_port)
 cmd_sched += " --dataset_path=" + str(dataset_path)
 cmd_sched += " --user_id=" + str(0)
+cmd_sched += " --sync_type=" + sync_type
 cmd_sched += " > scheduler.log 2>&1 &"
 
 subprocess.call(['bash', '-c', cmd_sched])
