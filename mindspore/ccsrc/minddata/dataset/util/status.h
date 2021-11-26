@@ -91,7 +91,7 @@ namespace dataset {
   } while (false)
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-const float MAX_MEMORY_USAGE_THRESHOLD = 0.95;
+const float MAX_MEMORY_USAGE_THRESHOLD = 0.8;
 float GetMemoryUsage();
 #endif
 }  // namespace dataset
