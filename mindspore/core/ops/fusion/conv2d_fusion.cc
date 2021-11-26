@@ -29,8 +29,8 @@ void Conv2DFusion::Init(int64_t in_channel, int64_t out_channel, const std::vect
   this->set_out_channel(out_channel);
   this->set_kernel_size(kernel_size);
   this->set_mode(mode);
-  this->set_pad_mode(pad_mode);
   this->set_pad(pad);
+  this->set_pad_mode(pad_mode);
   this->set_stride(stride);
   this->set_dilation(dilation);
   this->set_group(group);

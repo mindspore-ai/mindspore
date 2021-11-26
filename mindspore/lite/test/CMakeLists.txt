@@ -112,6 +112,10 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/st/graph_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/fusion_inout_test/conv_act_fusion_inout_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/fusion_inout_test/conv_bias_fusion_inout_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
