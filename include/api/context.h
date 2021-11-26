@@ -352,7 +352,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
 
   /// \brief Set the dynamic image size of model inputs.
   ///
-  /// \param[in] image size e.g. "66,66;88,88".
+  /// \param[in] image size hw e.g. "66,88;32,64" means h1:66,w1:88; h2:32,w2:64.
   inline void SetDynamicImageSize(const std::string &dynamic_image_size);
 
   /// \brief Get dynamic image size of model inputs.
@@ -444,9 +444,7 @@ void Ascend310DeviceInfo::SetDynamicImageSize(const std::string &dynamic_image_s
   SetDynamicImageSize(StringToChar(dynamic_image_size));
 }
 
-std::string Ascend310DeviceInfo::GetDynamicImageSize() const {
-  return CharToString(GetDynamicImageSizeChar());
-}
+std::string Ascend310DeviceInfo::GetDynamicImageSize() const { return CharToString(GetDynamicImageSizeChar()); }
 
 void Ascend310DeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
   SetPrecisionMode(StringToChar(precision_mode));

@@ -213,10 +213,18 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
   return lite::RET_OK;
 }
 
+bool AclPassImpl::IsDynamicInput() {
+  return !acl_model_option_cfg_.dynamic_image_size.empty() || !acl_model_option_cfg_.dynamic_batch_size.empty();
+}
+
 STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
   if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
+  }
+  if (IsDynamicInput()) {
+    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
+    return lite::RET_OK;
   }
   if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
     MS_LOG(ERROR) << "Const fold pass failed.";

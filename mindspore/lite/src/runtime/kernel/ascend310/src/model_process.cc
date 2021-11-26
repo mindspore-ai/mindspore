@@ -207,9 +207,9 @@ STATUS ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
   aclError ret;
   auto free_data_buffer = [this](void *dataMemBuffer) {
     if (!is_run_on_device_) {
-      aclrtFree(dataMemBuffer);
+      (void)aclrtFree(dataMemBuffer);
     } else {
-      aclrtFreeHost(dataMemBuffer);
+      (void)aclrtFreeHost(dataMemBuffer);
     }
   };
 
