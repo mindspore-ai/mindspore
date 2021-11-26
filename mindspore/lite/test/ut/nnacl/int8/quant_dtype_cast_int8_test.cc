@@ -17,6 +17,9 @@
 #include <cmath>
 #include "common/common_test.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
+#ifdef ENABLE_ARM64
+#include "nnacl/fp16/quant_dtype_cast_fp16.h"
+#endif
 
 namespace mindspore {
 
@@ -56,6 +59,155 @@ void Fp32ToInt8Util(const float *real_values, int8_t *quant_values, float scale,
   }
   return;
 }
+
+#ifdef ENABLE_ARM64
+void Fp16ToInt8Util(const float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
+  if (quant_values == NULL || real_values == NULL) {
+    return;
+  }
+  for (int i = 0; i < size; ++i) {
+    if (real_values[i] == INFINITY) {
+      quant_values[i] = INT8_MAX;
+      continue;
+    }
+    if (real_values[i] == -INFINITY) {
+      quant_values[i] = INT8_MIN;
+      continue;
+    }
+    float temp = round(static_cast<float>(real_values[i]) / scale + zp);
+    if (temp > INT8_MAX) {
+      quant_values[i] = INT8_MAX;
+    } else if (temp < INT8_MIN) {
+      quant_values[i] = INT8_MIN;
+    } else {
+      quant_values[i] = (int8_t)temp;
+    }
+  }
+  return;
+}
+
+void ConstructFp16Int8Data(float16_t *real_values, int8_t *benchmark_data, int kSize, int32_t zp, float scale) {
+  constexpr int kDiv = 2;
+  for (int i = 0; i < kSize; ++i) {
+    real_values[i] = static_cast<float16_t>(i - kSize / kDiv);
+  }
+  Fp16ToInt8Util(real_values, benchmark_data, scale, zp, kSize);
+}
+
+TEST_F(QuantCastInt8Test, Fp16Int8Size3) {
+  constexpr int kSize = 8;
+  float16_t real_values[kSize] = {-INFINITY, INFINITY, -0.5, 0.0, 0.5, 1.0, 2.0, 3.5};
+  int32_t zp = -1;
+  float scale = 0.3f;
+
+  int8_t benchmark_data[kSize];
+  Fp16ToInt8Util(real_values, benchmark_data, scale, zp, kSize);
+  int8_t quant_values[kSize];
+  (void)DoQuantizeFp16ToInt8(real_values, quant_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_EQ(quant_values[i], benchmark_data[i]);
+  }
+}
+
+TEST_F(QuantCastInt8Test, Fp16Int8Size32) {
+  constexpr int kSize = 32;
+  int32_t zp = 0;
+  float scale = 0.3f;
+  float16_t real_values[kSize];
+  int8_t benchmark_data[kSize];
+  ConstructFp16Int8Data(real_values, benchmark_data, kSize, zp, scale);
+
+  int8_t quant_values[kSize];
+  (void)DoQuantizeFp16ToInt8(real_values, quant_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_EQ(quant_values[i], benchmark_data[i]);
+  }
+}
+
+TEST_F(QuantCastInt8Test, Fp16Int8Size33) {
+  constexpr int kSize = 33;
+  float16_t real_values[kSize];
+  int32_t zp = 2;
+  float scale = 0.1f;
+  int8_t benchmark_data[kSize];
+  ConstructFp16Int8Data(real_values, benchmark_data, kSize, zp, scale);
+
+  int8_t quant_values[kSize];
+  (void)DoQuantizeFp16ToInt8(real_values, quant_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_EQ(quant_values[i], benchmark_data[i]);
+  }
+}
+
+void Int8ToFp16Util(const int8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
+  if (quant_values == NULL || real_values == NULL) {
+    return;
+  }
+  for (int i = 0; i < size; ++i) {
+    real_values[i] = (quant_values[i] - zp) * scale;
+  }
+  return;
+}
+
+void ConstructInt8ToFp16Data(int8_t *quant_values, float16_t *benchmark_data, int kSize, int32_t zp, float scale) {
+  constexpr int kDiv = 2;
+  for (int i = 0; i < kSize; ++i) {
+    quant_values[i] = (i - kSize / kDiv);
+  }
+  Int8ToFp16Util(quant_values, benchmark_data, scale, zp, kSize);
+}
+
+TEST_F(QuantCastInt8Test, Int8Fp16Size6) {
+  constexpr int kSize = 6;
+  int8_t quant_values[kSize];
+  int32_t zp = 2;
+  float scale = 0.3f;
+  float16_t benchmark_data[kSize];
+  ConstructInt8ToFp16Data(quant_values, benchmark_data, kSize, zp, scale);
+
+  float16_t real_values[kSize];
+  DoDequantizeInt8ToFp16(quant_values, real_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_LE(real_values[i] - benchmark_data[i], float16_t(1e-5));
+  }
+}
+
+TEST_F(QuantCastInt8Test, Int8Fp16Size16) {
+  constexpr int kSize = 16;
+  int8_t quant_values[kSize];
+  int32_t zp = 2;
+  float scale = 0.3f;
+  float16_t benchmark_data[kSize];
+  ConstructInt8ToFp16Data(quant_values, benchmark_data, kSize, zp, scale);
+
+  float16_t real_values[kSize];
+  DoDequantizeInt8ToFp16(quant_values, real_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_LE(real_values[i] - benchmark_data[i], float16_t(1e-5));
+  }
+}
+
+TEST_F(QuantCastInt8Test, Int8Fp16Size18) {
+  constexpr int kSize = 18;
+  int8_t quant_values[kSize];
+  int32_t zp = 2;
+  float scale = 0.3f;
+  float16_t benchmark_data[kSize];
+  ConstructInt8ToFp16Data(quant_values, benchmark_data, kSize, zp, scale);
+
+  float16_t real_values[kSize];
+  DoDequantizeInt8ToFp16(quant_values, real_values, scale, zp, kSize);
+
+  for (int i = 0; i < kSize; ++i) {
+    ASSERT_LE(real_values[i] - benchmark_data[i], float16_t(1e-5));
+  }
+}
+#endif
 
 TEST_F(QuantCastInt8Test, Int8Fp32Size8) {
   constexpr int kSize = 8;
