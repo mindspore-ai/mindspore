@@ -296,13 +296,13 @@ class ParallelStrategySearchFactory:
         newest_ckpt_file = find_newest_ckpt_file(ckpt_path)
         return load_checkpoint(newest_ckpt_file)
 
-    def mindspore_auto_parallel_impl(self, dataset, epoch, device_num, auto_parallel_search_mode="dynamic_programming"):
+    def mindspore_auto_parallel_impl(self, dataset, epoch, device_num, search_mode="dynamic_programming"):
         parallel_mode_net = self.parallel_mode_net
         set_algo_parameters(fully_use_devices=False)
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
                                           device_num=device_num,
-                                          auto_parallel_search_mode=auto_parallel_search_mode)
+                                          search_mode=search_mode)
         self.parallel_ckpt = self._model_train_and_save_ckpt(net=parallel_mode_net,
                                                              dataset=dataset, epoch=epoch)
         context.reset_auto_parallel_context()
@@ -379,5 +379,5 @@ def test_auto_parallel_recursive_strategy_search_axis_1_basic():
                                 image_size=(3, 224, 224), use_parallel=True,
                                 num_classes=12)
     fact.mindspore_auto_parallel_impl(dataset=parallel_dataset,
-                                      epoch=2, device_num=8, auto_parallel_search_mode="recursive_programming")
+                                      epoch=2, device_num=8, search_mode="recursive_programming")
     fact.checkpoint_cmp(inputs_np=inputs_np)

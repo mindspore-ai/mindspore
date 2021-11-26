@@ -214,19 +214,19 @@ class _AutoParallelContext:
             return context.ParallelMode.STAND_ALONE
         return self._context_handle.get_parallel_mode()
 
-    def set_strategy_search_mode(self, auto_parallel_search_mode):
+    def set_strategy_search_mode(self, search_mode):
         """
         Set search mode of strategy.
 
         Args:
-            auto_parallel_search_mode (str): The search mode of strategy.
+            search_mode (str): The search mode of strategy.
         """
         self.check_context_handle()
-        ret = self._context_handle.set_strategy_search_mode(auto_parallel_search_mode)
+        ret = self._context_handle.set_strategy_search_mode(search_mode)
         if ret is False:
-            raise ValueError("The context configuration parameter 'auto_parallel_search_mode' only support "
+            raise ValueError("The context configuration parameter 'search_mode' only support "
                              "'recursive_programming' and 'dynamic_programming', but got the value : {}."
-                             .format(auto_parallel_search_mode))
+                             .format(search_mode))
 
     def get_strategy_search_mode(self):
         """Get search mode of strategy."""
@@ -542,27 +542,6 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_grad_accumulation_shard()
 
-    def set_sharding_propagation(self, sharding_propagation):
-        """
-        Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True, the strategy-configured operators
-        will propagate the strategies to other operators with minimum redistribution cost; otherwise, the algorithm
-        will search the desired strategies.
-        Default: False.
-
-        Args:
-            sharding_propagation (bool): Enable/disable strategy propagation.
-        """
-        self.check_context_handle()
-        if not isinstance(sharding_propagation, bool):
-            raise TypeError("The type of parameter 'sharding_propagation' must be bool, "
-                            "but got the type : {}.".format(type(sharding_propagation)))
-        self._context_handle.set_sharding_propagation(sharding_propagation)
-
-    def get_sharding_propagation(self):
-        """Get the value of sharding strategy propagation."""
-        self.check_context_handle()
-        return self._context_handle.get_sharding_propagation()
-
     def set_enable_alltoall(self, enable_a2a):
         """
         Set the value of enabling AllToAll. If False, AllGather and Split are used to circumvent AllToAll.
@@ -697,7 +676,7 @@ _set_auto_parallel_context_func_map = {
     "loss_repeated_mean": auto_parallel_context().set_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().set_pipeline_stages,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
-    "auto_parallel_search_mode": auto_parallel_context().set_strategy_search_mode,
+    "search_mode": auto_parallel_context().set_strategy_search_mode,
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
@@ -711,7 +690,6 @@ _set_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
-    "sharding_propagation": auto_parallel_context().set_sharding_propagation,
     "enable_alltoall": auto_parallel_context().set_enable_alltoall}
 
 
@@ -723,7 +701,7 @@ _get_auto_parallel_context_func_map = {
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
-    "auto_parallel_search_mode": auto_parallel_context().get_strategy_search_mode,
+    "search_mode": auto_parallel_context().get_strategy_search_mode,
     "parameter_broadcast": auto_parallel_context().get_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
@@ -735,18 +713,16 @@ _get_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
-    "sharding_propagation": auto_parallel_context().get_sharding_propagation,
     "enable_alltoall": auto_parallel_context().get_enable_alltoall}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
-                 loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
+                 loss_repeated_mean=bool, parallel_mode=str, search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
-                 optimizer_weight_shard_aggregated_save=bool,
-                 sharding_propagation=bool, enable_alltoall=bool)
+                 optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -776,12 +752,14 @@ def _set_auto_parallel_context(**kwargs):
                        setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
-        auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
-                     and "dynamic_programming". Default: "dynamic_programming".
+        search_mode (str): There are two kinds of search modes: "recursive_programming", "dynamic_programming"
+                     and "sharding_propagation". Default: "dynamic_programming".
 
                      - recursive_programming: Recursive programming search mode.
 
                      - dynamic_programming: Dynamic programming search mode.
+
+                     - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
@@ -858,7 +836,7 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_load_file: ""
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
-    - auto_parallel_search_mode: dynamic_programming
+    - search_mode: dynamic_programming
     - pipeline_stages: 0
     - gradient_accumulation_shard: True
     """
