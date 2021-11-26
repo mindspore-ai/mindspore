@@ -175,7 +175,19 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
 FuncGraphPtr Parser::ParseFuncGraph() {
   // Get ast FunctionDef node
   py::object node = ast_->GetAstNode();
-  FunctionBlockPtr fn_block = ParseFunction(node);
+  constexpr char function_def_name[] = "FunctionDef";
+  constexpr char lambda_name[] = "Lambda";
+  FunctionBlockPtr fn_block = nullptr;
+  if (ast_->GetNodeType(node)->node_name() == function_def_name) {
+    fn_block = ParseDefFunction(node);
+  } else {
+    auto lambda_node = python_adapter::GetPyObjAttr(node, "value");
+    if (py::isinstance<py::none>(lambda_node) || ast_->GetNodeType(lambda_node)->node_name() != lambda_name) {
+      MS_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
+                              << ast_->GetNodeType(lambda_node)->node_name() << ".";
+    }
+    fn_block = ParseLambdaFunction(lambda_node);
+  }
   if (errcode() != PARSE_SUCCESS) {
     MS_LOG(ERROR) << "Parse function error, code is " << errcode();
     return nullptr;
@@ -259,7 +271,7 @@ ScopePtr Parser::GetScopeForParseFunction() {
   return scope;
 }
 
-FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlockPtr &block) {
+FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const FunctionBlockPtr &block) {
   ScopePtr scope = GetScopeForParseFunction();
   // The node created in the parsefunction context, will inherit the scope created using scope_guard
   ScopeGuard scope_guard(scope);
@@ -319,6 +331,33 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
     MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
                             << ".";
   }
+  GenerateArgsDefaultValueForFunction(func_block, node);
+  return func_block;
+}
+
+FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const FunctionBlockPtr &block) {
+  MS_EXCEPTION_IF_NULL(ast_);
+  ScopePtr scope = GetScopeForParseFunction();
+  ScopeGuard scope_guard(scope);
+  TraceGuard trace_guard(data_converter::GetObjKey(ast_->obj())[0], GetLocation(node));
+
+  FunctionBlockPtr func_block = MakeFunctionBlock(*this);
+  if (block != nullptr) {
+    func_block->AddPrevBlock(block);
+  } else {
+    func_graph_ = func_block->func_graph();
+  }
+  func_block->Mature();
+  auto current_fg = func_block->func_graph();
+
+  auto function_name = ast_->function_name();
+  MS_LOG(DEBUG) << "The function name is " << function_name;
+  current_fg->debug_info()->set_name(function_name);
+  GenerateArgsNodeForFunction(func_block, node);
+
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
+  current_fg->set_output(lambda_body_node);
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
 }
@@ -909,7 +948,7 @@ AnfNodePtr Parser::ParseBoolOp(const FunctionBlockPtr &block, const py::object &
 // Process a function def
 FunctionBlockPtr Parser::ParseFunctionDef(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast FunctionDef";
-  FunctionBlockPtr function_block = ParseFunction(node, block);
+  FunctionBlockPtr function_block = ParseDefFunction(node, block);
   MS_EXCEPTION_IF_NULL(function_block);
 
   // Get function name
@@ -923,26 +962,10 @@ FunctionBlockPtr Parser::ParseFunctionDef(const FunctionBlockPtr &block, const p
 // Process a lambda expression . like lambda x,y: x + y
 AnfNodePtr Parser::ParseLambda(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Lambda";
-  FunctionBlockPtr func_block = MakeFunctionBlock(*this);
-  func_block->AddPrevBlock(block);
-  func_block->Mature();
+  FunctionBlockPtr function_block = ParseLambdaFunction(node, block);
+  MS_EXCEPTION_IF_NULL(function_block);
 
-  // Get lambda args
-  py::list args = ast_->GetArgs(node);
-  auto block_fg = func_block->func_graph();
-  for (std::size_t i = 0; i < args.size(); i++) {
-    std::string arg_name = py::cast<std::string>(args[i].attr("arg"));
-    TraceGuard guard(GetLocation(args[i]));
-    auto para_node = std::make_shared<Parameter>(block_fg);
-    para_node->debug_info()->set_name(arg_name);
-    block_fg->add_parameter(para_node);
-    func_block->WriteVariable(arg_name, para_node);
-    MS_LOG(DEBUG) << "The arg[" << i << "] is " << arg_name;
-  }
-
-  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
-  AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
-  block_fg->set_output(lambda_body_node);
+  auto block_fg = function_block->func_graph();
   ValueNodePtr const_graph = NewValueNode(block_fg);
   return const_graph;
 }

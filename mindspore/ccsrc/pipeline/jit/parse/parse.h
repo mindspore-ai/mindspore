@@ -196,7 +196,9 @@ class Parser {
   // Generate argument default value for ast  function node
   void GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, const py::object &function_node);
   // Parse ast function node
-  FunctionBlockPtr ParseFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
+  FunctionBlockPtr ParseDefFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
+  // Parse lambda function node
+  FunctionBlockPtr ParseLambdaFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
   // Parse ast statements
   FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &stmt_node);
   // Parse one ast statement node
