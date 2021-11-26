@@ -447,6 +447,8 @@ class DebugServices {
   bool CheckOpOverflow(std::string node_name_to_find, unsigned int device_id = 0, unsigned int root_graph_id = 0,
                        unsigned int iteration = 0);
 
+  std::string RemoveKernelGraphPrefix(std::string node_name_to_find);
+
   bool GetAttrsFromAsyncFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
                                  uint64_t *stream_id);
 

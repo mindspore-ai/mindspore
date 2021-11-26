@@ -1653,13 +1653,28 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
 
   overflow_wp_lock_.unlock();
 
+  // remove prefix "kernel_graph_#_" from node_name_to_find before checking it
+  std::string op_name_to_find = RemoveKernelGraphPrefix(node_name_to_find);
+
   // determine if overflow wp has been triggered for node_name_to_find
-  if (find(op_names.begin(), op_names.end(), node_name_to_find) != op_names.end()) {
+  if (find(op_names.begin(), op_names.end(), op_name_to_find) != op_names.end()) {
     MS_LOG(INFO) << "Operation overflow watchpoint triggered for  " << node_name_to_find;
     return true;
   }
 
   return false;
+}
+
+std::string DebugServices::RemoveKernelGraphPrefix(std::string node_name_to_find) {
+  std::string op_name_to_find = node_name_to_find;
+  const std::string kernel_prefix = "kernel_graph_";
+  if (node_name_to_find.rfind(kernel_prefix, 0) == 0) {
+    auto start_of_op_name = node_name_to_find.find("_", kernel_prefix.length());
+    if (start_of_op_name != std::string::npos) {
+      op_name_to_find = node_name_to_find.substr(start_of_op_name + 1);
+    }
+  }
+  return op_name_to_find;
 }
 
 bool DebugServices::GetAttrsFromAsyncFilename(const std::string &file_name, std::string *const node_name,
