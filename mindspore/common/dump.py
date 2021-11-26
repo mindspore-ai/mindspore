@@ -21,11 +21,12 @@ from mindspore._c_expression import security
 
 def set_dump(target, enabled=True):
     """
-    Enable or disable dump for the cell instance and its contents.
+    Enable or disable dump for the target and its contents.
 
-    The default enabled status for a cell is False. Please note that this
-    mode takes effect only when the dump_mode field in dump config file is
-    2. See the `dump document <https://mindspore.cn/docs/programming_guide/zh-CN/master/dump_in_graph_mode.html>`_
+    Target should be an instance of Cell or Primitive. The default enabled
+    status for a cell or primitive is False. Please note that this API takes
+    effect only when the dump_mode field in dump config file is 2. See the
+    `dump document <https://mindspore.cn/docs/programming_guide/zh-CN/master/dump_in_graph_mode.html>`_
     for details.
 
     .. warning::
@@ -35,11 +36,11 @@ def set_dump(target, enabled=True):
     Note:
         1. This API is only effective for GRAPH_MODE with Ascend backend.
         2. When input is a cell, this API is only effective for the members of
-            the cell instance. If an operator is not a member of the cell
-            instance, the dump flag will not be set for this operator (e.g.
-            functional operators used directly in construct method). To make
-            this API effective, please use self.some_op = SomeOp() in cell
-            __init__ method.
+           the cell instance. If an operator is not a member of the cell
+           instance, the dump flag will not be set for this operator (e.g.
+           functional operators used directly in construct method). To make
+           this API effective, please use self.some_op = SomeOp() in your cell's
+           __init__ method.
 
     Args:
         target (Union[Cell, Primitive]): The Cell instance or Primitive instance
