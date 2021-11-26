@@ -55,20 +55,13 @@ void AGNewsNode::Print(std::ostream &out) const {
 
 Status AGNewsNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AGNewsNode", dataset_dir_));
-  RETURN_IF_NOT_OK(ValidateStringValue("AGNewsNode", usage_, {"train", "test", "all"}));
-  if (num_samples_ < 0) {
-    std::string err_msg = "AGNewsNode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (num_shards_ < 1) {
-    std::string err_msg = "AGNewsNode: Invalid number of shards: " + std::to_string(num_shards_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("AGNewsNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AGNewsDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateStringValue("AGNewsDataset", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateScalar("AGNewsDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("AGNewsDataset", num_shards_, shard_id_));
 
   if (!column_names_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AGNewsNode", "column_names", column_names_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AGNewsDataset", "column_names", column_names_));
   }
   return Status::OK();
 }

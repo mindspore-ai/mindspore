@@ -58,9 +58,8 @@ Status RandomSamplerObj::to_json(nlohmann::json *const out_json) {
 
 #ifndef ENABLE_ANDROID
 Status RandomSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("reshuffle_each_epoch") != json_obj.end(),
-                               "Failed to find reshuffle_each_epoch");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "replacement", "RandomSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "reshuffle_each_epoch", "RandomSampler"));
   bool replacement = json_obj["replacement"];
   bool reshuffle_each_epoch = json_obj["reshuffle_each_epoch"];
   *sampler = std::make_shared<RandomSamplerObj>(replacement, num_samples, reshuffle_each_epoch);
@@ -92,7 +91,9 @@ std::shared_ptr<SamplerObj> RandomSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

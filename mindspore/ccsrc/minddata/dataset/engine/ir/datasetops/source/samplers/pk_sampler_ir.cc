@@ -62,8 +62,8 @@ Status PKSamplerObj::to_json(nlohmann::json *const out_json) {
 
 #ifndef ENABLE_ANDROID
 Status PKSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_val") != json_obj.end(), "Failed to find num_val");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_val", "PKSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", "PKSampler"));
   int64_t num_val = json_obj["num_val"];
   bool shuffle = json_obj["shuffle"];
   *sampler = std::make_shared<PKSamplerObj>(num_val, shuffle, num_samples);
@@ -100,7 +100,7 @@ std::shared_ptr<SamplerObj> PKSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
   }
   return sampler;
 }

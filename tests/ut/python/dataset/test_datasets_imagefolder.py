@@ -407,7 +407,7 @@ def test_weighted_random_sampler_exception():
         sampler = ds.WeightedRandomSampler(weights)
         sampler.parse()
 
-    error_msg_4 = "WeightedRandomSampler: weights vector must not contain negative number, got: "
+    error_msg_4 = "WeightedRandomSampler: weights vector must not contain negative numbers, got: "
     with pytest.raises(RuntimeError, match=error_msg_4):
         weights = [1.0, 0.1, 0.02, 0.3, -0.4]
         sampler = ds.WeightedRandomSampler(weights)

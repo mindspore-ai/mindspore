@@ -45,7 +45,7 @@ std::shared_ptr<SamplerObj> MindRecordSamplerObj::SamplerCopy() {
 // Note this function can only be called after SamplerBuild is finished, and can only be called once. Otherwise this
 // function will return error status.
 Status MindRecordSamplerObj::GetShardReader(std::unique_ptr<mindrecord::ShardReader> *shard_reader) {
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_ != nullptr, "Internal error. Attempt to get an empty shard reader.");
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_reader_ != nullptr, "[Internal ERROR] Attempt to get an empty shard reader.");
   *shard_reader = std::move(shard_reader_);
   return Status::OK();
 }

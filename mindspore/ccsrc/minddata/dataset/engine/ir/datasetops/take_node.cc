@@ -52,7 +52,7 @@ Status TakeNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (take_count_ <= 0 && take_count_ != -1) {
     std::string err_msg =
-      "TakeNode: take_count should be either -1 or positive integer, take_count: " + std::to_string(take_count_);
+      "TakeNode: 'take_count' should be either -1 or positive integer, but got: " + std::to_string(take_count_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
@@ -93,7 +93,7 @@ Status TakeNode::to_json(nlohmann::json *out_json) {
 
 Status TakeNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                            std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Failed to find count");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "count", kTakeNode));
   int32_t count = json_obj["count"];
   *result = std::make_shared<TakeNode>(ds, count);
   return Status::OK();

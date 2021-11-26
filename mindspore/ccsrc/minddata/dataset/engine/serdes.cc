@@ -65,8 +65,8 @@ Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &fil
     }
     auto realpath = FileUtils::GetRealPath(dir.value().data());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
-      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
+      RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);
     }
 
     std::optional<std::string> whole_path = "";
@@ -78,7 +78,8 @@ Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &fil
 
     ChangeFileMode(whole_path.value(), S_IRUSR | S_IWUSR);
   } catch (const std::exception &err) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, failed to save json string into file: " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to save json string into file: " + file_name +
+                             ", error message: " + err.what());
   }
   return Status::OK();
 }
@@ -91,7 +92,8 @@ Status Serdes::Deserialize(const std::string &json_filepath, std::shared_ptr<Dat
   try {
     json_in >> json_obj;
   } catch (const std::exception &e) {
-    return Status(StatusCode::kMDSyntaxError, "Invalid file, failed to parse json file: " + json_filepath);
+    return Status(StatusCode::kMDSyntaxError,
+                  "Invalid file, failed to parse json file: " + json_filepath + ", error message: " + e.what());
   }
   RETURN_IF_NOT_OK(ConstructPipeline(json_obj, ds));
   return Status::OK();
@@ -337,7 +339,7 @@ Status Serdes::ParseMindIRPreprocess(const std::string &dataset_json, const std:
   try {
     dataset_js = nlohmann::json::parse(dataset_json);
   } catch (const std::exception &err) {
-    MS_LOG(ERROR) << "Invalid json content, failed to parse JSON data.";
+    MS_LOG(ERROR) << "Invalid json content, failed to parse JSON data, error message: " << err.what();
     RETURN_STATUS_UNEXPECTED("Invalid json content, failed to parse JSON data.");
   }
 

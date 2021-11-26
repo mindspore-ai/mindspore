@@ -72,18 +72,18 @@ void BatchNode::Print(std::ostream &out) const {
 Status BatchNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (batch_size_ <= 0) {
-    std::string err_msg = "BatchNode: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
+    std::string err_msg = "Batch: 'batch_size' should be positive integer, but got: " + std::to_string(batch_size_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
 #ifdef ENABLE_PYTHON
   if (batch_map_func_ && pad_) {
-    std::string err_msg = "BatchNode: per_batch_map and pad should not be used at the same time.";
+    std::string err_msg = "Batch: 'per_batch_map' and 'pad_info' should not be used at the same time.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (batch_map_func_ && in_col_names_.empty()) {
-    std::string err_msg = "BatchNode: in_col_names cannot be empty when per_batch_map is used.";
+    std::string err_msg = "Batch: 'in_col_names' cannot be empty when per_batch_map is used.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 #endif
@@ -169,10 +169,9 @@ Status BatchNode::to_json(nlohmann::json *out_json) {
 
 Status BatchNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                             std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("batch_size") != json_obj.end(), "Failed to find batch_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("drop_remainder") != json_obj.end(), "Failed to find drop_remainder");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kBatchNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "batch_size", kBatchNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "drop_remainder", kBatchNode));
   int32_t batch_size = json_obj["batch_size"];
   bool drop_remainder = json_obj["drop_remainder"];
   *result = std::make_shared<BatchNode>(ds, batch_size, drop_remainder);

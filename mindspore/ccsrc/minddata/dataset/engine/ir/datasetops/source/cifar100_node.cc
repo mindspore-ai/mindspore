@@ -47,11 +47,11 @@ void Cifar100Node::Print(std::ostream &out) const {
 
 Status Cifar100Node::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Node", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar100Node", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar100Dataset", sampler_));
 
-  RETURN_IF_NOT_OK(ValidateStringValue("Cifar100Node", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateStringValue("Cifar100Dataset", usage_, {"train", "test", "all"}));
 
   return Status::OK();
 }
@@ -123,11 +123,10 @@ Status Cifar100Node::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status Cifar100Node::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCifar100Node));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCifar100Node));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kCifar100Node));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kCifar100Node));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;

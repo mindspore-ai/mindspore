@@ -53,21 +53,10 @@ void CocoNode::Print(std::ostream &out) const { out << Name(); }
 
 Status CocoNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoNode", dataset_dir_));
-
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoNode", sampler_));
-
-  Path annotation_file(annotation_file_);
-  if (!annotation_file.Exists()) {
-    std::string err_msg = "CocoNode: annotation_file is invalid or does not exist.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (access(annotation_file_.c_str(), R_OK) == -1) {
-    std::string err_msg = "CocoNode: No access to specified annotation file: " + annotation_file_;
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateStringValue("CocoNode", task_, {"Detection", "Stuff", "Panoptic", "Keypoint"}));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CocoDataset", {annotation_file_}, "annotation file"));
+  RETURN_IF_NOT_OK(ValidateStringValue("CocoDataset", task_, {"Detection", "Stuff", "Panoptic", "Keypoint"}));
 
   return Status::OK();
 }
@@ -164,7 +153,7 @@ Status CocoNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   int64_t num_rows = 0, sample_size;
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(Build(&ops));
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build CocoOp.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "[Internal ERROR] Unable to build CocoOp.");
   auto op = std::dynamic_pointer_cast<CocoOp>(ops.front());
   RETURN_IF_NOT_OK(op->CountTotalRows(&num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
@@ -199,14 +188,13 @@ Status CocoNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status CocoNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Failed to find annotation_file");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extra_metadata") != json_obj.end(), "Failed to find extra_metadata");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "annotation_file", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "task", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kCocoNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "extra_metadata", kCocoNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string annotation_file = json_obj["annotation_file"];
   std::string task = json_obj["task"];

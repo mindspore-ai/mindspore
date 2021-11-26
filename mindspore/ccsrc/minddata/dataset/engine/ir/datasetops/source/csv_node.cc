@@ -66,25 +66,18 @@ Status CSVNode::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
-    std::string err_msg = "CSVNode: Invalid ShuffleMode, check input value of enum.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  if (num_samples_ < 0) {
-    std::string err_msg = "CSVNode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CSVNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateEnum("CSVDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
+  RETURN_IF_NOT_OK(ValidateScalar("CSVDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CSVDataset", num_shards_, shard_id_));
 
   if (find(column_defaults_.begin(), column_defaults_.end(), nullptr) != column_defaults_.end()) {
-    std::string err_msg = "CSVNode: column_default should not be null.";
+    std::string err_msg = "CSVDataset: column_default should not be null.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (!column_names_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("CSVNode", "column_names", column_names_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("CSVDataset", "column_names", column_names_));
   }
 
   return Status::OK();
@@ -187,15 +180,14 @@ Status CSVNode::to_json(nlohmann::json *out_json) {
 }
 
 Status CSVNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("field_delim") != json_obj.end(), "Failed to find field_delim");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("column_names") != json_obj.end(), "Failed to find column_names");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_files", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "field_delim", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "column_names", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_samples", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", kCSVNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", kCSVNode));
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   std::string field_delim = json_obj["field_delim"];
   std::vector<std::shared_ptr<CsvBase>> column_defaults = {};

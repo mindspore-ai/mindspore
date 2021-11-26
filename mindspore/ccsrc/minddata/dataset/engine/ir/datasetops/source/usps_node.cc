@@ -56,15 +56,10 @@ void USPSNode::Print(std::ostream &out) const {
 
 Status USPSNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("USPSNode", dataset_dir_));
-  RETURN_IF_NOT_OK(ValidateStringValue("USPSNode", usage_, {"train", "test", "all"}));
-
-  if (num_samples_ < 0) {
-    std::string err_msg = "USPSNode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("USPSNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("USPSDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateStringValue("USPSDataset", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateScalar("USPSDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("USPSDataset", num_shards_, shard_id_));
   return Status::OK();
 }
 

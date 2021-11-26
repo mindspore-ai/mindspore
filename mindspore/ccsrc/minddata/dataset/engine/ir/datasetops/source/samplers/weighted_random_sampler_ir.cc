@@ -35,8 +35,10 @@ Status WeightedRandomSamplerObj::ValidateParams() {
   int32_t zero_elem = 0;
   for (int32_t i = 0; i < weights_.size(); ++i) {
     if (weights_[i] < 0) {
-      RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: weights vector must not contain negative number, got: " +
-                               std::to_string(weights_[i]));
+      RETURN_STATUS_UNEXPECTED(
+        "WeightedRandomSampler: weights vector must not contain negative numbers, got: "
+        "weights[" +
+        std::to_string(i) + "] = " + std::to_string(weights_[i]));
     }
     if (weights_[i] == 0.0) {
       zero_elem++;
@@ -66,8 +68,8 @@ Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
 #ifndef ENABLE_ANDROID
 Status WeightedRandomSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
                                            std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("weights") != json_obj.end(), "Failed to find weights");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "weights", "WeightedRandomSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "replacement", "WeightedRandomSampler"));
   std::vector<double> weights = json_obj["weights"];
   bool replacement = json_obj["replacement"];
   *sampler = std::make_shared<WeightedRandomSamplerObj>(weights, num_samples, replacement);
@@ -83,11 +85,14 @@ Status WeightedRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sample
   sampler = s.IsOk() ? sampler : nullptr;
   return s;
 }
+
 std::shared_ptr<SamplerObj> WeightedRandomSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

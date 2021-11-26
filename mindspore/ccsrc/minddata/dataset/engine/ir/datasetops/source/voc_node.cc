@@ -57,30 +57,32 @@ Status VOCNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   Path dir(dataset_dir_);
 
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("VOCNode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("VOCDataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("VOCNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("VOCDataset", sampler_));
 
   if (task_ == "Segmentation") {
     if (!class_index_.empty()) {
-      std::string err_msg = "VOCNode: class_indexing is invalid in Segmentation task.";
+      std::string err_msg = "VOCDataset: 'class_indexing' is invalid in Segmentation task.";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     Path imagesets_file = dir / "ImageSets" / "Segmentation" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
-      std::string err_msg = "VOCNode: Invalid usage: " + usage_ + ", file does not exist";
-      MS_LOG(ERROR) << "VOCNode: Invalid usage: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
+      std::string err_msg = "VOCDataset: Invalid 'usage': " + usage_ + ", file does not exist";
+      MS_LOG(ERROR) << "VOCDataset: Invalid 'usage': " << usage_ << ", file \"" << imagesets_file
+                    << "\" does not exist!";
       return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   } else if (task_ == "Detection") {
     Path imagesets_file = dir / "ImageSets" / "Main" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
-      std::string err_msg = "VOCNode: Invalid usage: " + usage_ + ", file does not exist";
-      MS_LOG(ERROR) << "VOCNode: Invalid usage: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
+      std::string err_msg = "VOCDataset: Invalid 'usage': " + usage_ + ", file does not exist";
+      MS_LOG(ERROR) << "VOCDataset: Invalid 'usage': " << usage_ << ", file \"" << imagesets_file
+                    << "\" does not exist!";
       return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   } else {
-    std::string err_msg = "VOCNode: Invalid task: " + task_;
+    std::string err_msg = "VOCDataset: Invalid 'task': " + task_ + ", expected Segmentation or Detection.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -146,7 +148,7 @@ Status VOCNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
   int64_t num_rows = 0, sample_size;
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(Build(&ops));
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build VocOp.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "[Internal ERROR] Unable to build VocOp.");
   auto op = std::dynamic_pointer_cast<VOCOp>(ops.front());
   RETURN_IF_NOT_OK(op->CountTotalRows(&num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
@@ -182,15 +184,14 @@ Status VOCNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status VOCNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extra_metadata") != json_obj.end(), "Failed to find extra_metadata");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "task", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "class_indexing", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "extra_metadata", kTFRecordNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string task = json_obj["task"];
   std::string usage = json_obj["usage"];

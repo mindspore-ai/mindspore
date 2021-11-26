@@ -57,10 +57,7 @@ void TransferNode::Print(std::ostream &out) const {
 // Validator for TransferNode
 Status TransferNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (total_batch_ < 0) {
-    std::string err_msg = "TransferNode: Total batches should be >= 0, value given: " + std::to_string(total_batch_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateScalar("Transfer", "Total batches", total_batch_, {0}, false));
   return Status::OK();
 }
 
@@ -89,7 +86,7 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   } else if (device_type_ == kAscendDevice) {
     type = DeviceQueueOp::DeviceType::Ascend;
   } else {
-    std::string err_msg = "Unknown device target.";
+    std::string err_msg = "Unknown device target, support CPU, GPU or Ascend";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -128,13 +125,12 @@ Status TransferNode::to_json(nlohmann::json *out_json) {
 
 Status TransferNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                                std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("queue_name") != json_obj.end(), "Failed to find queue_name");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_type") != json_obj.end(), "Failed to find device_type");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_id") != json_obj.end(), "Failed to find device_id");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("send_epoch_end") != json_obj.end(), "Failed to find send_epoch_end");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("total_batch") != json_obj.end(), "Failed to find total_batch");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("create_data_info_queue") != json_obj.end(),
-                               "Failed to find create_data_info_queue");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "queue_name", kTransferNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "device_type", kTransferNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "device_id", kTransferNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "send_epoch_end", kTransferNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "total_batch", kTransferNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "create_data_info_queue", kTransferNode));
   std::string queue_name = json_obj["queue_name"];
   std::string device_type = json_obj["device_type"];
   int32_t device_id = json_obj["device_id"];

@@ -23,7 +23,7 @@ Status PythonRuntimeContext::Terminate() {
   if (tree_consumer_ != nullptr) {
     return TerminateImpl();
   }
-  MS_LOG(WARNING) << "Dataset TreeConsumer was not initialized.";
+  MS_LOG(INFO) << "Dataset TreeConsumer was not initialized.";
   return Status::OK();
 }
 
@@ -36,7 +36,9 @@ Status PythonRuntimeContext::TerminateImpl() {
 
 PythonRuntimeContext::~PythonRuntimeContext() {
   Status rc = PythonRuntimeContext::Terminate();
-  if (rc.IsError()) MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
+  }
   {
     py::gil_scoped_acquire gil_acquire;
     tree_consumer_.reset();

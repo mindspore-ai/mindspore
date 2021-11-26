@@ -53,19 +53,11 @@ void TextFileNode::Print(std::ostream &out) const {
 
 Status TextFileNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileNode", dataset_files_));
-
-  if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
-    std::string err_msg = "TextFileNode: Invalid ShuffleMode, check input value of enum.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  if (num_samples_ < 0) {
-    std::string err_msg = "TextFileNode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("TextFileNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileDataset", dataset_files_));
+  RETURN_IF_NOT_OK(ValidateEnum("TextFileDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
+  RETURN_IF_NOT_OK(ValidateScalar("TextFileDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("TextFileDataset", num_shards_, shard_id_));
 
   return Status::OK();
 }
@@ -155,13 +147,12 @@ Status TextFileNode::to_json(nlohmann::json *out_json) {
 }
 
 Status TextFileNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_files", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_samples", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", kTextFileNode));
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   int64_t num_samples = json_obj["num_samples"];
   ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);

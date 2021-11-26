@@ -56,19 +56,19 @@ Status ConcatNode::ValidateParams() {
   constexpr size_t kMinChildrenSize = 2;
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (children_.size() < kMinChildrenSize) {
-    std::string err_msg = "ConcatNode: concatenated datasets are not specified.";
+    std::string err_msg = "Concat: concatenated datasets are not specified.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (find(children_.begin(), children_.end(), nullptr) != children_.end()) {
-    std::string err_msg = "ConcatNode: concatenated datasets should not be null.";
+    std::string err_msg = "Concat: concatenated datasets should not be null.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   // Either one of children_flag_and_nums_ or children_start_end_index_ should be non-empty.
   if ((children_flag_and_nums_.empty() && !children_start_end_index_.empty()) ||
       (!children_flag_and_nums_.empty() && children_start_end_index_.empty())) {
-    std::string err_msg = "ConcatNode: children_flag_and_nums and children_start_end_index should be used together";
+    std::string err_msg = "Concat: 'children_flag_and_nums' and 'children_start_end_index' should be used together";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
@@ -162,11 +162,9 @@ Status ConcatNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status ConcatNode::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<DatasetNode>> datasets,
                              std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children_flag_and_nums") != json_obj.end(),
-                               "Failed to find children_flag_and_nums");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children_start_end_index") != json_obj.end(),
-                               "Failed to find children_start_end_index");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kConcatNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "children_flag_and_nums", kConcatNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "children_start_end_index", kConcatNode));
   std::shared_ptr<SamplerObj> sampler;
   RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
   std::vector<std::pair<int, int>> children_flag_and_nums = json_obj["children_flag_and_nums"];

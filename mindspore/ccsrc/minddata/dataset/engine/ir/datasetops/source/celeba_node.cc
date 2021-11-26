@@ -55,11 +55,11 @@ void CelebANode::Print(std::ostream &out) const {
 
 Status CelebANode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebANode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebADataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("CelebANode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("CelebADataset", sampler_));
 
-  RETURN_IF_NOT_OK(ValidateStringValue("CelebANode", usage_, {"all", "train", "valid", "test"}));
+  RETURN_IF_NOT_OK(ValidateStringValue("CelebADataset", usage_, {"all", "train", "valid", "test"}));
 
   return Status::OK();
 }
@@ -99,8 +99,9 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 
   auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" +
+                             (folder_path / "list_attr_celeba.txt").ToString());
   }
 
   std::ifstream attr_file(realpath.value());
@@ -138,8 +139,10 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     if (!partition_file.is_open()) {
       auto realpath_eval = FileUtils::GetRealPath((folder_path / "list_eval_partition.txt").ToString().data());
       if (!realpath_eval.has_value()) {
-        MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_eval_partition.txt").ToString();
-        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_eval_partition.txt").ToString());
+        MS_LOG(ERROR) << "Invalid file, get real path failed, path="
+                      << (folder_path / "list_eval_partition.txt").ToString();
+        RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" +
+                                 (folder_path / "list_eval_partition.txt").ToString());
       }
 
       partition_file.open(realpath_eval.value());
@@ -188,13 +191,12 @@ Status CelebANode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status CelebANode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Failed to find extension");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCelebANode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCelebANode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kCelebANode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kCelebANode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kCelebANode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "extensions", kCelebANode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;

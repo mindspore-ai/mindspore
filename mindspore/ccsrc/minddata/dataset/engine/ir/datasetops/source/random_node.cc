@@ -41,20 +41,16 @@ void RandomNode::Print(std::ostream &out) const {
 // ValidateParams for RandomNode
 Status RandomNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (total_rows_ < 0) {
-    std::string err_msg =
-      "RandomNode: total_rows must be greater than or equal 0, now get " + std::to_string(total_rows_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateScalar("RandomDataset", "total_rows", total_rows_, {0}, false));
 
   if (!columns_list_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomNode", "columns_list", columns_list_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomDataset", "columns_list", columns_list_));
   }
 
   // allow total_rows == 0 for now because RandomOp would generate a random row when it gets a 0
   CHECK_FAIL_RETURN_UNEXPECTED(total_rows_ == 0 || total_rows_ >= num_workers_,
-                               "RandomNode needs total_rows >= num_workers, total_rows=" + std::to_string(total_rows_) +
-                                 ", num_workers=" + std::to_string(num_workers_) + ".");
+                               "RandomDataset needs 'total_rows' >= 'num_workers', total_rows=" +
+                                 std::to_string(total_rows_) + ", num_workers=" + std::to_string(num_workers_) + ".");
 
   return Status::OK();
 }
@@ -72,7 +68,7 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   if (!schema_path_.empty()) {
     schema_obj = Schema(schema_path_);
     if (schema_obj == nullptr) {
-      std::string err_msg = "RandomNode::Build : Invalid schema path";
+      std::string err_msg = "RandomDataset: Invalid schema path, check schema path:" + schema_path_;
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_UNEXPECTED(err_msg);
     }

@@ -43,8 +43,8 @@ void SBUNode::Print(std::ostream &out) const {
 
 Status SBUNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("SBUNode", dataset_dir_));
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("SBUNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("SBUDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("SBUDataset", sampler_));
 
   Path root_dir(dataset_dir_);
 
@@ -52,9 +52,9 @@ Status SBUNode::ValidateParams() {
   Path caption_path = root_dir / Path("SBU_captioned_photo_dataset_captions.txt");
   Path image_path = root_dir / Path("sbu_images");
 
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("SBUNode", {url_path.ToString()}));
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("SBUNode", {caption_path.ToString()}));
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("SBUNode", {image_path.ToString()}));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("SBUDataset", {url_path.ToString()}, "url file"));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("SBUDataset", {caption_path.ToString()}, "caption file"));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("SBUDataset", {image_path.ToString()}));
 
   return Status::OK();
 }

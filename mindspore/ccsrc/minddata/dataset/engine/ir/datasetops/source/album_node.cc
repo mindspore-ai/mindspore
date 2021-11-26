@@ -54,14 +54,14 @@ void AlbumNode::Print(std::ostream &out) const {
 
 Status AlbumNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumNode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumDataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("AlbumNode", {schema_path_}));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("AlbumDataset", {schema_path_}));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("AlbumNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("AlbumDataset", sampler_));
 
   if (!column_names_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AlbumNode", "column_names", column_names_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AlbumDataset", "column_names", column_names_));
   }
 
   return Status::OK();
@@ -148,13 +148,12 @@ Status AlbumNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status AlbumNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("data_schema") != json_obj.end(), "Failed to find data_schema");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("column_names") != json_obj.end(), "Failed to find column_names");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kAlbumNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kAlbumNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "data_schema", kAlbumNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "column_names", kAlbumNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kAlbumNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kAlbumNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string data_schema = json_obj["data_schema"];
   std::vector<std::string> column_names = json_obj["column_names"];

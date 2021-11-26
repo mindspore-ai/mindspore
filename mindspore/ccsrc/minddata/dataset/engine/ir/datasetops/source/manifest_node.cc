@@ -65,24 +65,18 @@ Status ManifestNode::ValidateParams() {
   for (char c : dataset_file_) {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
     if (p != forbidden_symbols.end()) {
-      std::string err_msg = "ManifestNode: filename should not contain :*?\"<>|`&;\'";
+      std::string err_msg =
+        "ManifestDataset: filename of 'dataset_file' should not contain :*?\"<>|`&;\', check dataset_file: " +
+        dataset_file_;
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
 
-  Path manifest_file(dataset_file_);
-  if (!manifest_file.Exists()) {
-    std::string err_msg = "ManifestNode: dataset file: [" + dataset_file_ + "] is invalid or not exist";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (access(dataset_file_.c_str(), R_OK) == -1) {
-    std::string err_msg = "ManifestNode: No access to specified annotation file: " + dataset_file_;
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("ManifestDataset", {dataset_file_}, "annotation file"));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestDataset", sampler_));
 
-  RETURN_IF_NOT_OK(ValidateStringValue("ManifestNode", usage_, {"train", "eval", "inference"}));
+  RETURN_IF_NOT_OK(ValidateStringValue("ManifestDataset", usage_, {"train", "eval", "inference"}));
 
   return Status::OK();
 }
@@ -125,7 +119,7 @@ Status ManifestNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   int64_t num_rows, sample_size;
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(Build(&ops));
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build op.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "[Internal ERROR] Unable to build op.");
   auto op = std::dynamic_pointer_cast<ManifestOp>(ops.front());
   RETURN_IF_NOT_OK(op->CountTotalRows(&num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
@@ -160,13 +154,12 @@ Status ManifestNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status ManifestNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_file") != json_obj.end(), "Failed to find dataset_file");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_file", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "class_indexing", kManifestNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kManifestNode));
   std::string dataset_file = json_obj["dataset_file"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;

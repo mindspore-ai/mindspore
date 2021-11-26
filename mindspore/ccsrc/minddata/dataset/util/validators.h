@@ -25,11 +25,11 @@
 namespace mindspore {
 namespace dataset {
 // validator Parameter in json file
-inline Status ValidateParamInJson(nlohmann::json op_params, const std::string &param_name,
+inline Status ValidateParamInJson(const nlohmann::json &json_obj, const std::string &param_name,
                                   const std::string &operator_name) {
-  if (op_params.find(param_name) == op_params.end()) {
-    std::string err_msg = "Failed to find parameter '" + param_name + "' of '" + operator_name +
-                          "' operator in input json file or input dict, check input parameter of API 'deserialize.";
+  if (json_obj.find(param_name) == json_obj.end()) {
+    std::string err_msg = "Failed to find key '" + param_name + "' in " + operator_name +
+                          "' JSON file or input dict, check input content of deserialize().";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();

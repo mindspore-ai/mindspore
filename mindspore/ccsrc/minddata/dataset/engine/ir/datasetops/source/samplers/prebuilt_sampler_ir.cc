@@ -62,7 +62,9 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
     auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
     for (const auto &child : children_) {
       Status rc = sampler->AddChildSampler(child);
-      if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+      if (rc.IsError()) {
+        MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+      }
     }
     return sampler;
   }
@@ -70,7 +72,9 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

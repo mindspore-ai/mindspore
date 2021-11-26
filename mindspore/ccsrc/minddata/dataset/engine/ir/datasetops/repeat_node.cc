@@ -60,8 +60,8 @@ Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 Status RepeatNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (repeat_count_ <= 0 && repeat_count_ != -1) {
-    std::string err_msg = "RepeatNode: repeat_count should be either -1 or positive integer, repeat_count_: " +
-                          std::to_string(repeat_count_);
+    std::string err_msg =
+      "Repeat: 'repeat_count' should be either -1 or positive integer, but got: " + std::to_string(repeat_count_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -106,7 +106,7 @@ Status RepeatNode::to_json(nlohmann::json *out_json) {
 
 Status RepeatNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                              std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Failed to find count");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "count", kRepeatNode));
   int32_t count = json_obj["count"];
   *result = std::make_shared<RepeatNode>(ds, count);
   return Status::OK();

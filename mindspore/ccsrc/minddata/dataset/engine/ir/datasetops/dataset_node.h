@@ -38,8 +38,10 @@
 #include "minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 #include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -110,7 +112,8 @@ Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, in
                     int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op);
 
 // Helper function to validate dataset files parameter
-Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files);
+Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files,
+                                 const std::string &file_name = "dataset file");
 
 // Helper function to validate dataset num_shards and shard_id parameters
 Status ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_shards, int32_t shard_id);
