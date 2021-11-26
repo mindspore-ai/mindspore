@@ -23,6 +23,7 @@
 #include "include/lite_types.h"
 #include "src/inner_context.h"
 #include "src/cxx_api/context.h"
+#include "src/c_api/context_c.h"
 
 namespace mindspore {
 
@@ -62,7 +63,7 @@ inline bool IsAffinityModeValid(int affinity_mode) {
 }
 
 Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context);
-Status A2L_ConvertContext(const Context::Data *a_context, lite::Context *l_context);
+Status A2L_ConvertContext(const ContextC *a_context, lite::Context *l_context);
 Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cfg);
 }  // namespace mindspore
 

@@ -149,8 +149,8 @@ int InnerContext::Init() {
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_MEDIUM &&
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_HIGH &&
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_EXTREME) {
-        MS_LOG(INFO) << "NPU frequency set to 3, original value "
-                     << device_ctx.device_info_.npu_device_info_.frequency_;
+        MS_LOG(WARNING) << "NPU frequency set to 3, original value "
+                        << device_ctx.device_info_.npu_device_info_.frequency_;
         device_ctx.device_info_.npu_device_info_.frequency_ = hiai::AiModelDescription_Frequency_HIGH;
       }
     }

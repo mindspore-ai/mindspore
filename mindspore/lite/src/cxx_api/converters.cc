@@ -132,7 +132,7 @@ Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
   return kSuccess;
 }
 
-Status A2L_ConvertContext(const Context::Data *a_context, lite::Context *l_context) {
+Status A2L_ConvertContext(const ContextC *a_context, lite::Context *l_context) {
   if ((a_context == nullptr) || (l_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return kLiteNullptr;
@@ -148,16 +148,16 @@ Status A2L_ConvertContext(const Context::Data *a_context, lite::Context *l_conte
     return kLiteInputParamInvalid;
   }
   l_context->thread_num_ = a_context->thread_num;
-  l_context->enable_parallel_ = a_context->enable_parallel_;
-  l_context->affinity_core_list_ = a_context->affinity_core_list_;
+  l_context->enable_parallel_ = a_context->enable_parallel;
+  l_context->affinity_core_list_ = a_context->affinity_core_list;
   l_context->device_list_.clear();
-  if (device_list[0]->GetDeviceType() != kCPU) {
+  if (device_list[0]->device_type != kMSDeviceTypeCPU) {
     MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
     return kLiteInputParamInvalid;
   }
 
-  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
-  l_context->allocator = cpu_context->GetAllocator();
+  auto cpu_context = device_list[0];
+  l_context->allocator = cpu_context->allocator;
   if (l_context->allocator == nullptr) {
     l_context->allocator = Allocator::Create();
     if (l_context->allocator == nullptr) {
@@ -165,30 +165,30 @@ Status A2L_ConvertContext(const Context::Data *a_context, lite::Context *l_conte
       return kLiteNullptr;
     }
     MS_LOG(DEBUG) << "Set new allocator.";
-    cpu_context->SetAllocator(l_context->allocator);
+    cpu_context->allocator = l_context->allocator;
   }
 
-  if (!IsAffinityModeValid(a_context->affinity_mode_)) {
+  if (!IsAffinityModeValid(a_context->affinity_mode)) {
     MS_LOG(ERROR)
       << "Invalid affinity mode, only supports 0: no affinities, 1: big cores first, 2: little cores first.";
     return kLiteInputParamInvalid;
   }
-  lite::CpuBindMode mode = A2L_ConvertAffinityMode(a_context->affinity_mode_);
+  lite::CpuBindMode mode = A2L_ConvertAffinityMode(a_context->affinity_mode);
 
   lite::DeviceInfo cpu_info = {0};
-  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
-  l_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
-                                     cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
+  cpu_info.cpu_device_info_ = {cpu_context->enable_fp16, mode};
+  l_context->device_list_.push_back(
+    {lite::DT_CPU, cpu_info, cpu_context->provider, cpu_context->provider_device, cpu_context->allocator});
   if (device_list.size() == kMaxNumOfDevices) {
     lite::DeviceInfo device_info = {0};
-    if (device_list[1]->GetDeviceType() == kGPU) {
-      auto gpu_context = device_list[1]->Cast<GPUDeviceInfo>();
-      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
-      l_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
-                                         gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
-    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
-      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
-      device_info.npu_device_info_ = {npu_context->GetFrequency()};
+    if (device_list[1]->device_type == kMSDeviceTypeGPU) {
+      auto gpu_context = device_list[1];
+      device_info.gpu_device_info_ = {gpu_context->enable_fp16};
+      l_context->device_list_.push_back(
+        {lite::DT_GPU, device_info, gpu_context->provider, gpu_context->provider_device, gpu_context->allocator});
+    } else if (device_list[1]->device_type == kMSDeviceTypeKirinNPU) {
+      auto npu_context = device_list[1];
+      device_info.npu_device_info_ = {npu_context->frequency};
       l_context->device_list_.push_back({lite::DT_NPU, device_info});
     } else {
       MS_LOG(ERROR) << "Invalid device.";
