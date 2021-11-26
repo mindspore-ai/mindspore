@@ -147,6 +147,10 @@ std::vector<uint8_t> ExchangeKeysKernel::GetPubicKeyBytes() {
   }
   // pubLen has been updated, now get public_key bytes
   secret_pubkey_ptr = reinterpret_cast<uint8_t *>(malloc(pubLen));
+  if (secret_pubkey_ptr == nullptr) {
+    MS_LOG(ERROR) << "secret_pubkey_ptr is nullptr, malloc failed.";
+    return {};
+  }
   ret = sPriKeyPtr->GetPublicBytes(&pubLen, secret_pubkey_ptr);
   if (ret != 0) {
     free(secret_pubkey_ptr);

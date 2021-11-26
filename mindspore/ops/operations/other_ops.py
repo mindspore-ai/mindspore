@@ -856,9 +856,10 @@ class UpdateModel(PrimitiveWithInfer):
     UpdateModel for federated learning worker.
     """
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, encrypt_mode=""):
         self.add_prim_attr("primitive_target", "CPU")
         self.add_prim_attr('side_effect_mem', True)
+        self.add_prim_attr('encrypt_mode', encrypt_mode)
         self.init_prim_io_names(inputs=["weights"], outputs=["result"])
 
     def infer_shape(self, weights):
