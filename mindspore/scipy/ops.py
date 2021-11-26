@@ -101,7 +101,7 @@ class SolveTriangular(PrimitiveWithInfer):
 
 class Cholesky(PrimitiveWithInfer):
     """
-    Inner API for _Cholesky base class.
+    Cholesky decomposition for A.
     """
 
     @prim_attr_register
@@ -175,14 +175,14 @@ class CholeskySolver(PrimitiveWithInfer):
     def __init__(self, lower=False):
         super().__init__(name="CholeskySolver")
         self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
-        self.init_prim_io_names(inputs=['x', 'b'], outputs=['y'])
+        self.init_prim_io_names(inputs=['A', 'b'], outputs=['y'])
 
-    def __infer__(self, x, b):
+    def __infer__(self, A, b):
         b_shape = b['shape']
-        x_dtype = x['dtype']
+        a_dtype = A['dtype']
         return {
             'shape': tuple(b_shape),
-            'dtype': x_dtype,
+            'dtype': a_dtype,
             'value': None
         }
 
@@ -276,3 +276,53 @@ class EigNet(nn.Cell):
         if self.bv:
             return (r[0], r[1])
         return r[0]
+
+
+class LU(PrimitiveWithInfer):
+    """
+    LU decomposition with partial pivoting
+    A = P.L.U
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        super().__init__(name="LU")
+        self.init_prim_io_names(inputs=['x'], outputs=['lu', 'pivots', 'permutation'])
+
+    def __infer__(self, x):
+        x_shape = list(x['shape'])
+        x_dtype = x['dtype']
+        ndim = len(x_shape)
+
+        if ndim in (1, 2):
+            permutation_shape = (x_shape[0], x_shape[0])
+        else:
+            permutation_shape = (x_shape[0], x_shape[1], x_shape[1])
+        output = {
+            'shape': (x_shape, permutation_shape[:-1], permutation_shape),
+            'dtype': (x_dtype, mstype.int32, mstype.int32),
+            'value': None
+        }
+        return output
+
+
+class LUSolver(PrimitiveWithInfer):
+    """
+    LUSolver for Ax = b
+    """
+
+    @prim_attr_register
+    def __init__(self, trans: str):
+        super().__init__(name="LUSolver")
+        self.init_prim_io_names(inputs=['a', 'b'], outputs=['output'])
+        self.trans = validator.check_value_type("trans", trans, [str], self.name)
+
+    def __infer__(self, a, b):
+        b_shape = list(b['shape'])
+        a_dtype = a['dtype']
+        output = {
+            'shape': tuple(b_shape),
+            'dtype': a_dtype,
+            'value': None
+        }
+        return output

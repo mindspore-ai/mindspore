@@ -15,12 +15,10 @@
  */
 
 #include "backend/kernel_compiler/cpu/eigen/solve_triangular_cpu_kernel.h"
-#define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
 #include <type_traits>
-
 namespace mindspore {
 namespace kernel {
 using Eigen::ColMajor;

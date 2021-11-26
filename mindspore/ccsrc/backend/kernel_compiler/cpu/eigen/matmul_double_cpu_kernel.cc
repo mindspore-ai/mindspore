@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/eigen/matmul_double_cpu_kernel.h"
-#define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 #include <vector>
 
