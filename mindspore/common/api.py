@@ -35,6 +35,7 @@ from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dat
 from ..parallel._ps_context import _is_role_pserver
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
     _get_parameter_broadcast, _get_pipeline_stages
+from .._checkparam import Validator
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
@@ -547,6 +548,11 @@ class _CellGraphExecutor:
         Graph, return the result of pipeline running.
     """
 
+    VALID_JIT_CONFIG_PARAM = ["jit_level"]
+    VALID_JIT_CONFIG_PARAM_VALUE = {
+        "jit_level": ["o0", "o1"]
+    }
+
     def __init__(self):
         # create needed graph by lazy mode
         self.is_init = False
@@ -774,6 +780,17 @@ class _CellGraphExecutor:
             return None
         return self._graph_executor.get_func_graph_proto(exec_id, ir_type)
 
+    def get_optimize_graph_proto(self, obj):
+        """Return optimize graph binary proto."""
+        exec_id = obj.phase + "." + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+        if self._graph_executor.has_compiled(exec_id) is False:
+            return None
+        graph_proto = self._graph_executor.get_optimize_graph_proto(exec_id)
+        if isinstance(graph_proto, str) and graph_proto == "":
+            logger.warning("Can not get optimize graph proto. Instead, try to find function graph.")
+            graph_proto = obj.get_func_graph_proto()
+        return graph_proto
+
     def export(self, file_name, graph_id):
         """
         Export graph.
@@ -790,6 +807,20 @@ class _CellGraphExecutor:
         if self._graph_executor.has_compiled(exec_id) is False:
             return None
         return self._graph_executor.fetch_info_for_quant_export(exec_id)
+
+    def set_jit_config(self, jit_config):
+        """Set jit config."""
+        self._check_jit_config(jit_config)
+        self._graph_executor.set_jit_config(jit_config)
+
+    def _check_jit_config(self, jit_config):
+        """Check the value of jit config."""
+        if not isinstance(jit_config, dict):
+            raise ValueError("The jit_config should be a string.")
+        for param_name, param_value in jit_config.items():
+            Validator.check_string(param_name, self.VALID_JIT_CONFIG_PARAM, "jit_config")
+            Validator.check_string(param_value, self.VALID_JIT_CONFIG_PARAM_VALUE.get(param_name), param_name,
+                                   "jit_config")
 
 
 _cell_graph_executor = _CellGraphExecutor()

@@ -292,6 +292,16 @@ std::map<string, ValuePtr> GenerateWeightsValueMap(const py::dict &weights) {
   return ret;
 }
 
+std::map<string, string> GenerateJitConfigMap(const py::dict &jit_config) {
+  std::map<string, string> ret{};
+  for (auto jit_param = jit_config.begin(); jit_param != jit_config.end(); ++jit_param) {
+    auto param_name = py::cast<std::string>(jit_param->first);
+    auto param_value = py::cast<std::string>(jit_param->second);
+    ret[param_name] = param_value;
+  }
+  return ret;
+}
+
 FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx, const py::dict &weights) {
   std::string compile_cache_path = GetCompileCachePath(idx);
   auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
@@ -613,6 +623,24 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
 
   MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
 }
+
+py::bytes GraphExecutorPy::GetOptimizeGraphProto(const std::string &phase) {
+  if (info_.count(phase) == 0) {
+    MS_LOG(EXCEPTION) << "No phase in executor: " << phase;
+  }
+  FuncGraphPtr fg_ptr = info_[phase]->resource->optimize_graph();
+  if (fg_ptr == nullptr) {
+    MS_LOG(WARNING) << "Can not find optimize graph.";
+    return "";
+  }
+  std::string proto_str = GetFuncGraphProtoString(fg_ptr);
+  if (proto_str.empty()) {
+    MS_LOG(EXCEPTION) << "Export optimize graph proto string failed.";
+  }
+  return proto_str;
+}
+
+void GraphExecutorPy::SetJitConfig(const py::dict &jit_config) { jit_config_ = GenerateJitConfigMap(jit_config); }
 
 py::dict GraphExecutorPy::GetParameterLayout(const std::string &phase) {
   MS_LOG(DEBUG) << "GetParameterLayout!";
@@ -1101,6 +1129,41 @@ void RDRRecordGraph(const size_t action_index, const size_t action_size, const s
 }
 #endif
 
+#ifdef ENABLE_DUMP_IR
+void RecordIR(const size_t action_index, const size_t action_size, const std::string &action_name,
+              const FuncGraphPtr graph, const std::string &phase, FuncGraphPtr *user_graph) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
+    *user_graph = graph;
+    std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
+
+    // generate IR file in dot format, which can be converted to svg file using graphviz dot command
+    draw::Draw(base_name + ".dot", graph);
+    // generate IR file in human readable format
+    if (action_index == action_size - 1) {
+      DumpIR(base_name + ".ir", graph, false, kWholeStack);
+    } else {
+      DumpIR(base_name + ".ir", graph, false, kTopStack);
+    }
+    // generate IR file in a heavily commented format, which can also be reloaded
+    ExportIR(base_name + ".dat", graph);
+  }
+}
+#endif
+
+#ifndef ENABLE_SECURITY
+void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr graph, const std::string &phase,
+                             const ResourcePtr resource) {
+  if (graph != nullptr && action_name.find("optimize") != string::npos) {
+#ifdef ENABLE_DUMP_IR
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+      DumpIRProto(graph, action_name);
+    }
+#endif
+    resource->set_optimize_graph(graph);
+  }
+}
+#endif
+
 void Pipeline::Run(const std::string &phase) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
@@ -1139,22 +1202,10 @@ void Pipeline::Run(const std::string &phase) {
 #ifdef ENABLE_DUMP_IR
       std::string filename = GetBaseNameForIR(SizeToLong(i), action.first);
       RDRRecordGraph(i, actions_.size(), filename, graph);
-
-      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
-        user_graph = graph;
-        std::string base_name = GetBaseNameForIR(SizeToLong(i), action.first);
-
-        // generate IR file in dot format, which can be converted to svg file using graphviz dot command
-        draw::Draw(base_name + ".dot", graph);
-        // generate IR file in human readable format
-        if (i == actions_.size() - 1) {
-          DumpIR(base_name + ".ir", graph, false, kWholeStack);
-        } else {
-          DumpIR(base_name + ".ir", graph, false, kTopStack);
-        }
-        // generate IR file in a heavily commented format, which can also be reloaded
-        ExportIR(base_name + ".dat", graph);
-      }
+      RecordIR(i, actions_.size(), action.first, graph, phase, &user_graph);
+#endif
+#ifndef ENABLE_SECURITY
+      SaveGraphForReadability(action.first, graph, phase, resource_);
 #endif
       i++;
 #ifdef ENABLE_TIMELINE

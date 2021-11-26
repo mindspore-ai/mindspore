@@ -38,6 +38,7 @@ from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
 from ..._c_expression import security
+from ...common.api import _cell_graph_executor
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
 HYPER_CONFIG_LEN_LIMIT = 100000
@@ -685,12 +686,11 @@ class SummaryCollector(Callback):
             return
 
         network = cb_params.train_network if cb_params.mode == ModeEnum.TRAIN.value else cb_params.eval_network
-        graph_proto = network.get_func_graph_proto()
+        graph_proto = _cell_graph_executor.get_optimize_graph_proto(network)
         if graph_proto is None:
             logger.warning("Can not get graph proto, it may not be 'GRAPH_MODE' in context currently, "
                            "so SummaryCollector will not collect graph.")
             return
-
         self._record.add_value(PluginEnum.GRAPH.value, 'train_network/auto', graph_proto)
 
     def _collect_metric(self, cb_params):

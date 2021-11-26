@@ -72,6 +72,9 @@ class Resource : public ResourceBase {
   FuncGraphPtr func_graph() const { return func_graph_; }
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
 
+  FuncGraphPtr optimize_graph() const { return optimize_graph_; }
+  void set_optimize_graph(const FuncGraphPtr &optimize_graph) { optimize_graph_ = optimize_graph; }
+
   const abstract::AbstractBasePtrList &args_spec() const { return args_spec_; }
   void set_args_spec(const abstract::AbstractBasePtrList &args_spec) { args_spec_ = args_spec; }
 
@@ -103,6 +106,7 @@ class Resource : public ResourceBase {
  private:
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
+  FuncGraphPtr optimize_graph_;
   abstract::AbstractBasePtrList args_spec_;
   // The source obj to compile, usually a `Cell` or `ms_function` decorated function.
   py::object source_input_;
