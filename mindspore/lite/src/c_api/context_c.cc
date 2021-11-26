@@ -31,10 +31,11 @@ MSContextHandle MSContextCreate() {
   return static_cast<MSContextHandle>(impl);
 }
 
-void MSContextDestroy(MSContextHandle context) {
-  if (context != nullptr) {
-    auto impl = static_cast<mindspore::Context::Data *>(context);
+void MSContextDestroy(MSContextHandle *context) {
+  if (*context != nullptr) {
+    auto impl = static_cast<mindspore::Context::Data *>(*context);
     delete impl;
+    *context = nullptr;
   }
 }
 
@@ -144,10 +145,11 @@ MSDeviceInfoHandle MSDeviceInfoCreate(MSDeviceType device_type) {
   return static_cast<MSDeviceInfoHandle>(impl);
 }
 
-void MSDeviceInfoDestroy(MSDeviceInfoHandle device_info) {
-  if (device_info != nullptr) {
-    auto impl = static_cast<mindspore::DeviceInfoContext *>(device_info);
+void MSDeviceInfoDestroy(MSDeviceInfoHandle *device_info) {
+  if (*device_info != nullptr) {
+    auto impl = static_cast<mindspore::DeviceInfoContext *>(*device_info);
     delete impl;
+    *device_info = nullptr;
   }
 }
 

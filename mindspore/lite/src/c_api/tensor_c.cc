@@ -40,10 +40,11 @@ MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const int64_t *
   return impl;
 }
 
-void MSTensorDestroy(MSTensorHandle tensor) {
-  auto impl = static_cast<mindspore::MSTensor::Impl *>(tensor);
+void MSTensorDestroy(MSTensorHandle *tensor) {
+  auto impl = static_cast<mindspore::MSTensor::Impl *>(*tensor);
   if (impl != nullptr) {
     delete impl;
+    *tensor = nullptr;
   }
 }
 

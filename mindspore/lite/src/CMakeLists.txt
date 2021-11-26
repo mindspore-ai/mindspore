@@ -197,11 +197,6 @@ set(LITE_SRC
     ${KERNEL_REG_SRC}
     )
 
-set(LITE_SRC
-        ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
-        )
-
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/opencl/*.cc

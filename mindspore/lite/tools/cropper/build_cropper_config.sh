@@ -302,7 +302,6 @@ chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
 
 # support for npu
 npu_files=()
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/delegate.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/op/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/pass/*.cc)

@@ -35,8 +35,8 @@ MS_API MSContextHandle MSContextCreate();
 
 /// \brief Destroy the context object.
 ///
-/// \param[in] context Context object handle.
-MS_API void MSContextDestroy(MSContextHandle context);
+/// \param[in] context Context object handle address.
+MS_API void MSContextDestroy(MSContextHandle *context);
 
 /// \brief Set the number of threads at runtime.
 ///
@@ -110,8 +110,8 @@ MS_API MSDeviceInfoHandle MSDeviceInfoCreate(MSDeviceType device_type);
 
 /// \brief Destroy the device info object.
 ///
-/// \param[in] device_info Device info object handle.
-MS_API void MSDeviceInfoDestroy(MSDeviceInfoHandle device_info);
+/// \param[in] device_info Device info object handle address.
+MS_API void MSDeviceInfoDestroy(MSDeviceInfoHandle *device_info);
 
 /// \brief Set provider's name.
 ///

@@ -309,11 +309,17 @@ MSModelHandle MSModelCreate() {
   return static_cast<MSModelHandle>(impl);
 }
 
-void MSModelDestroy(MSModelHandle model) {
-  if (model != nullptr) {
-    auto impl = static_cast<mindspore::ModelC *>(model);
+void MSModelDestroy(MSModelHandle *model) {
+  if (*model != nullptr) {
+    auto impl = static_cast<mindspore::ModelC *>(*model);
     delete impl;
+    *model = nullptr;
   }
+}
+
+void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return;
 }
 
 MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,
@@ -321,6 +327,10 @@ MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_s
   if (model == nullptr || model_data == nullptr || model_context == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";
     return kMSStatusLiteNullptr;
+  }
+  if (model_type == kMSModelTypeInvalid) {
+    MS_LOG(ERROR) << "param is invalid.";
+    return kMSStatusLiteParamInvalid;
   }
   mindspore::Context::Data *context = static_cast<mindspore::Context::Data *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
@@ -333,6 +343,10 @@ MSStatus MSModelBuildFromFile(MSModelHandle model, const char *model_path, MSMod
   if (model == nullptr || model_path == nullptr || model_context == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";
     return kMSStatusLiteNullptr;
+  }
+  if (model_type == kMSModelTypeInvalid) {
+    MS_LOG(ERROR) << "param is invalid.";
+    return kMSStatusLiteParamInvalid;
   }
   mindspore::Context::Data *context = static_cast<mindspore::Context::Data *>(model_context);
   auto impl = static_cast<mindspore::ModelC *>(model);
