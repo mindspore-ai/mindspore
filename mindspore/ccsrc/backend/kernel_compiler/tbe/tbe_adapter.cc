@@ -194,7 +194,7 @@ bool TbeAdapter::IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &i
     auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "placeholder_index");
     return find(none_index.begin(), none_index.end(), input_ptr->index()) != none_index.end();
   } else {
-    MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << "doesn't has attribute placeholder_index.";
+    MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << " doesn't has attribute placeholder_index.";
   }
 }
 void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *op_info_attrs,
@@ -235,7 +235,7 @@ void TbeAdapter::CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *at
   if (iter != dst_type_map.end()) {
     attrs_json->at(0)[kJValue] = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Invalid type:" << type_id;
+    MS_LOG(EXCEPTION) << "Invalid type: " << type_id;
   }
 }
 void TbeAdapter::LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {

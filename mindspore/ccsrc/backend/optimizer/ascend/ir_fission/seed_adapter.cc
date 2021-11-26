@@ -21,6 +21,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
@@ -70,21 +71,25 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
   std::vector<ValueNodePtr> ret = {};
   auto attrs = op_info->attrs_ptr();
   if (attrs.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs.";
+    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString()
+                      << ") doesn't have any attrs. trace: " << trace::DumpSourceLines(cnode);
   }
   for (const auto &attr : attrs) {
     if (!AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
-      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")";
+      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name()
+                        << "). trace: " << trace::DumpSourceLines(cnode);
     }
     auto attr_value = AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
     auto value_node = CreateValueNode(attr_value);
     if (value_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value;
+      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
+                        << ". trace: " << trace::DumpSourceLines(cnode);
     }
     ret.emplace_back(value_node);
   }
   if (ret.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs.";
+    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString()
+                      << ") doesn't have any matched attrs. trace: " << trace::DumpSourceLines(cnode);
   }
   return ret;
 }

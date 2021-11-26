@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/host/dynamic_broadcast_gradient_args_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -124,10 +125,12 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   auto type_x = AnfAlgo::GetOutputInferDataType(cnode, index);
   if (type_x != TypeId::kNumberTypeInt64) {
-    MS_LOG(EXCEPTION) << "Input x type must be int64, but :" << type_x;
+    MS_LOG(EXCEPTION) << "Input x type must be int64, but got " << type_x
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
   if (shape_x.size() != 1) {
-    MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but " << shape_x.size() << "-D.";
+    MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size()
+                      << "-D. trace: " << trace::DumpSourceLines(cnode);
   }
 
   size_t x_num = shape_x[0];
@@ -184,7 +187,8 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "Invalid Input Num:" << input_num;
+    MS_LOG(EXCEPTION) << "Invalid input num, should be " << kInputNum << ", but got " << input_num
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
 
   std::vector<std::vector<int64_t>> input_shapes(kInputNum);

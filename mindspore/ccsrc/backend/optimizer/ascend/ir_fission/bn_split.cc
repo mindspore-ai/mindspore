@@ -161,11 +161,13 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sync_bn_cnode);
   if (!AnfAlgo::HasNodeAttr(kDeviceNum, sync_bn_cnode)) {
-    MS_LOG(EXCEPTION) << "The node [" << sync_bn_cnode->DebugString() << "] does not have attr device_num.";
+    MS_LOG(EXCEPTION) << "The node [" << sync_bn_cnode->DebugString()
+                      << "] does not have attr device_num. trace: " << trace::DumpSourceLines(sync_bn_cnode);
   }
   auto device_num = AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
   if (device_num == 0) {
-    MS_LOG(EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString() << "] should not be 0";
+    MS_LOG(EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString()
+                      << "] should not be 0. trace: " << trace::DumpSourceLines(sync_bn_cnode);
   }
   MS_LOG(INFO) << "device_num value: " << device_num;
   const float device_num_reciprocal = 1.0 / device_num;
@@ -224,7 +226,8 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   auto sync_bn_opname = sync_bn_cnode->fullname_with_scope();
   auto opid_pos = sync_bn_opname.rfind("-op");
   if (opid_pos == std::string::npos || opid_pos + kPositionOffset >= sync_bn_opname.size()) {
-    MS_LOG(EXCEPTION) << "op[" << sync_bn_cnode->DebugString() << "] has no opid.";
+    MS_LOG(EXCEPTION) << "Op[" << sync_bn_cnode->DebugString()
+                      << "] has no opid. trace: " << trace::DumpSourceLines(sync_bn_cnode);
     return nullptr;
   }
   int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + kPositionOffset));

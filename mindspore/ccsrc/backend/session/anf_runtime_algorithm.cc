@@ -558,7 +558,7 @@ size_t AnfRuntimeAlgorithm::GetInputNum(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t input_num = cnode->size();
   if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero";
+    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero. trace: " << trace::DumpSourceLines(cnode);
   }
   return input_num - 1;
 }
@@ -2122,7 +2122,8 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << anf_node->DebugString();
+    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << anf_node->DebugString()
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
   auto input0 = cnode->input(0);
   if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
@@ -2136,7 +2137,7 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
     GetAllFatherRealNode(cnode->input(kRealInputNodeIndexInTupleGetItem), result, visited);
   } else if (IsPrimitive(input0, prim::kPrimDepend)) {
     if (cnode->inputs().size() != kDependInputSize) {
-      MS_LOG(EXCEPTION) << "Depend node must have 2 inputs!";
+      MS_LOG(EXCEPTION) << "Depend node must have 2 inputs! trace: " << trace::DumpSourceLines(cnode);
     }
     GetAllFatherRealNode(cnode->input(kRealInputIndexInDepend), result, visited);
     GetAllFatherRealNode(cnode->input(kDependAttachNodeIndex), result, visited);
@@ -2148,7 +2149,8 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
   MS_LOG(INFO) << "InferShape start, node:" << node->DebugString();
   auto inputs = node->inputs();
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs";
+    MS_LOG(EXCEPTION) << "Inputs should not be empty! Cnode: " << node->DebugString()
+                      << ". trace: " << trace::DumpSourceLines(node);
   }
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
@@ -2182,7 +2184,8 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
       auto base_shape = real_input->Shape();
       if (!base_shape->isa<abstract::TupleShape>()) {
         MS_LOG(EXCEPTION) << "Node:" << node->DebugString()
-                          << " input is a tuple_get_item but real input node shape is not a TupleShape";
+                          << " input is a tuple_get_item but real input node shape is not a TupleShape. trace: "
+                          << trace::DumpSourceLines(real_input);
       }
       auto abs = real_input->abstract()->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(abs);
@@ -2430,7 +2433,7 @@ bool AnfRuntimeAlgorithm::IsCallNode(const AnfNodePtr &node) {
 
   const auto &inputs = cnode->inputs();
   if (inputs.empty() || inputs[0] == nullptr) {
-    MS_LOG(EXCEPTION) << "Invalid call node:" << node->DebugString();
+    MS_LOG(EXCEPTION) << "Invalid call node:" << node->DebugString() << ". trace: " << trace::DumpSourceLines(cnode);
   }
   return inputs[0]->isa<CNode>() || (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0]));
 }

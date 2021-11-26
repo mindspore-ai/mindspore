@@ -22,6 +22,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "base/core_ops.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -66,7 +67,9 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   auto output_shape = AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
   auto argmax_shape = output_shape;
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(EXCEPTION) << "argmax or kernel_size's shape size not equal to 4";
+    MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
+                      << argmax_shape.size() << ", kernel_size dim: " << ksize.size()
+                      << ". trace: " << trace::DumpSourceLines(node);
   }
   argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
   argmax_shape[kDim3] = (output_shape[kDim2] * output_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
@@ -100,7 +103,9 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
   auto argmax_shape = AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(EXCEPTION) << "argmax or kernel_size's shape size not equal to 4";
+    MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
+                      << argmax_shape.size() << ", kernel_size dim: " << ksize.size()
+                      << ". trace: " << trace::DumpSourceLines(node);
   }
   argmax_shape[kDim3] = (argmax_shape[kDim2] * argmax_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
   argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);

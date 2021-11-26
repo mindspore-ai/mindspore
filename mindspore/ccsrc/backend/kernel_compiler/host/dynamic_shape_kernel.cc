@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/host/dynamic_shape_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,7 +26,8 @@ void DynamicShapeKernel::Execute() {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Invalid Input Num:" << input_num;
+    MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
+                      << ". trace: " << trace::DumpSourceLines(cnode);
   }
 
   auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);

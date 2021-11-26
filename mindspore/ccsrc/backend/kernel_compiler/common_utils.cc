@@ -31,6 +31,7 @@
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
+#include "utils/trace_base.h"
 #include "mindspore/ccsrc/debug/common.h"
 
 namespace mindspore {
@@ -640,7 +641,8 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output.";
+    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString()
+                      << "] is not single input or single output. trace: " << trace::DumpSourceLines(cnode);
   }
   std::vector<int64_t> axis;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
