@@ -35,66 +35,41 @@ std::string GetActorName(const AnfNodePtr &node) {
   }
 }
 
-// Get all the real input of the frontend node, skip the virtual node like maketuple, tuplegetitem.
-std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return {};
+// Fetch the depend nodes according to the monad node.
+void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *depend_nodes) {
+  // Find the real input node, include the monad node and make tuple node.
+  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
+                                                  prim::kPrimMakeTuple};
+  const auto &node_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_types);
+  auto real_node = node_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_node);
+  if (!real_node->isa<CNode>()) {
+    return;
   }
 
-  std::vector<KernelWithIndex> results;
-  // The first input of normal cnode is the primitive of node, and the real input starts from the second input,
-  // but in control flow, the call node has no primitive, and the 0th input is funcgraph or partial.
-  size_t input_start_pos = kCNodeInputStartPos;
-  if (AnfAlgo::IsCallNode(node)) {
-    input_start_pos = 0;
-  }
-  const auto &cnode = node->cast<CNodePtr>();
-  const auto inputs = cnode->inputs();
+  const auto &real_cnode = real_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(real_cnode);
+  const auto &real_inputs = real_cnode->inputs();
 
-  // The first branch of the input of the switch node is the true branch, and the second is the false branch.
-  // But in switch actor, since the false value is 0, it corresponds to the first branch. Therefore, the input
-  // of the switch node needs to exchange the positions of the two branches. So deal separately.
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch)) {
-    if (inputs.size() != kSwitchInputNum) {
-      MS_LOG(EXCEPTION) << "Invalid switch node:" << node->DebugString();
+  // Make tuple node needs to be expanded.
+  if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
+    for (size_t i = 1; i < real_inputs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(real_inputs[i]);
+      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
     }
-    results.emplace_back(AnfAlgo::VisitKernelWithReturnType(inputs[kSwitchCondPos], 0));
-    results.emplace_back(AnfAlgo::VisitKernelWithReturnType(inputs[kSwitchFalseBranchPos], 0));
-    results.emplace_back(AnfAlgo::VisitKernelWithReturnType(inputs[kSwitchTrueBranchPos], 0));
-    return results;
+    return;
   }
 
-  for (size_t i = input_start_pos; i < inputs.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(inputs[i]);
-    // skip monad node.
-    if (HasAbstractMonad(inputs[i])) {
-      continue;
+  if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
+      AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
+    FetchRealDependNodeByAutoMonad(real_inputs[kDependAttachNodeIndex], depend_nodes);
+  } else if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
+    for (size_t i = kUpdateStateRealInput; i < real_inputs.size(); ++i) {
+      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
     }
-
-    const auto &node_with_index =
-      AnfAlgo::VisitKernelWithReturnType(inputs[i], 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple});
-    MS_EXCEPTION_IF_NULL(node_with_index.first);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(node_with_index.first);
-    for (size_t j = 0; j < output_num; ++j) {
-      if (AnfAlgo::CheckPrimitiveType(node_with_index.first, prim::kPrimMakeTuple)) {
-        const auto &make_tuple_cnode = node_with_index.first->cast<CNodePtr>();
-        const auto &make_tuple_inputs = make_tuple_cnode->inputs();
-        if (make_tuple_inputs.size() <= j + kMakeTupleInputStartPos) {
-          MS_LOG(EXCEPTION) << "Invalid input:" << j + kMakeTupleInputStartPos
-                            << " for make tuple node:" << make_tuple_cnode->DebugString();
-        }
-        results.emplace_back(AnfAlgo::VisitKernelWithReturnType(make_tuple_inputs[j + kMakeTupleInputStartPos], 0));
-      } else if (node_with_index.first->isa<ValueNode>()) {
-        // When the value node is a value tuple, the value node will have multiple outputs, which need to be directly
-        // put into the vector, and the output cannot be obtained through the VisitKernelWithReturnType interface.
-        results.emplace_back(node_with_index.first, j);
-      } else {
-        results.emplace_back(AnfAlgo::VisitKernelWithReturnType(node_with_index.first, j));
-      }
-    }
+  } else {
+    depend_nodes->emplace(real_node);
   }
-  return results;
 }
 }  // namespace
 
@@ -283,6 +258,8 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
   // Create a corresponding stack actor for each kernel graph that has a call node as input.
   for (const auto &graph_with_context : parser->call_input_kernel_graphs_) {
     std::vector<KernelWithIndex> formal_parameters;
+    size_t input_parameter_data_num = 0;
+
     const auto &graph = graph_with_context.first;
     const auto &device_context = graph_with_context.second;
     MS_EXCEPTION_IF_NULL(graph);
@@ -303,10 +280,12 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       }
 
       // If the input comes from inside funcgraph, put it at the front of the vector, otherwise put it at the end.
-      if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
+      if (AnfAlgo::IsCallNode(front_node_with_index.first) &&
+          (parser->IsRecursionCallNode(front_node_with_index.first))) {
         formal_parameters.emplace_back(front_node_with_index);
       } else {
         formal_parameters.insert(formal_parameters.begin(), front_node_with_index);
+        input_parameter_data_num++;
       }
     }
 
@@ -315,9 +294,77 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
     stack_actors.emplace_back(stack_actor);
     stack_actor->device_contexts_.insert(stack_actor->device_contexts_.begin(), formal_parameters.size(),
                                          device_context);
+    stack_actor->input_parameter_data_num_ = input_parameter_data_num;
     InsertActor(stack_actor.get());
   }
+  // Create stack actors for control nodes.
+  BuildStackActorForControlNode(graph_compiler_info, &stack_actors);
+
   return stack_actors;
+}
+
+void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
+                                                         std::vector<StackActorPtr> *stack_actors) {
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  for (const auto &need_stack_control_node : parser->need_stack_control_nodes_) {
+    MS_EXCEPTION_IF_NULL(need_stack_control_node);
+    if (!AnfAlgo::IsCallNode(need_stack_control_node)) {
+      continue;
+    }
+
+    std::vector<KernelWithIndex> formal_parameters;
+    std::vector<const DeviceContext *> device_contexts;
+    size_t input_parameter_data_num = 0;
+    size_t input_parameter_partials_num = 0;
+
+    // Fetch the control actor of control node.
+    auto gather_actor_name = GetActorName(need_stack_control_node);
+    auto actor = FetchActor(gather_actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    auto gather_actor = dynamic_cast<GatherActor *>(actor);
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    if (gather_actor->formal_parameters_.size() > gather_actor->device_contexts_.size()) {
+      MS_LOG(EXCEPTION) << "Invalid device context size:" << gather_actor->device_contexts_.size()
+                        << " and formal parameter size:" << gather_actor->formal_parameters_.size()
+                        << " for actor:" << gather_actor->GetAID();
+    }
+
+    // Collect formal parameters and device contexts, skip the value nodes.
+    for (size_t i = 0; i < gather_actor->formal_parameters_.size(); ++i) {
+      const auto &parameter = gather_actor->formal_parameters_[i];
+      auto device_context = gather_actor->device_contexts_[i];
+      if (AnfAlgo::IsCallNode(parameter.first) && (parser->IsRecursionCallNode(parameter.first))) {
+        formal_parameters.emplace_back(parameter);
+        device_contexts.emplace_back(device_context);
+      } else if (parameter.first->isa<ValueNode>()) {
+        continue;
+      } else {
+        formal_parameters.insert(formal_parameters.begin(), parameter);
+        device_contexts.insert(device_contexts.begin(), device_context);
+
+        const auto &abstract = parameter.first->abstract();
+        MS_EXCEPTION_IF_NULL(abstract);
+        const auto &real_abstract = FetchAbstractByIndex(abstract, parameter.second);
+        MS_EXCEPTION_IF_NULL(real_abstract);
+        if (real_abstract->isa<abstract::AbstractFunction>()) {
+          input_parameter_partials_num++;
+        } else {
+          input_parameter_data_num++;
+        }
+      }
+    }
+    // Create stack actor.
+    const auto &stack_actor_name = GetActorName(need_stack_control_node) + kStackActorNameSuffix;
+    const auto &stack_actor = std::make_shared<StackActor>(stack_actor_name, formal_parameters);
+    stack_actor->device_contexts_ = device_contexts;
+    stack_actor->input_parameter_data_num_ = input_parameter_data_num;
+    stack_actor->input_parameter_partial_num_ = input_parameter_partials_num;
+
+    InsertActor(stack_actor.get());
+    stack_actors->emplace_back(stack_actor);
+  }
 }
 
 void ControlNodeScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
@@ -362,11 +409,18 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 
   for (auto &gather_actor : control_actor_set->gather_actors_) {
-    for (size_t i = 0; i < gather_actor->formal_parameters_.size(); ++i) {
-      LinkArrowbyFormalParameter(gather_actor.get(), gather_actor->formal_parameters_[i], {gather_actor->node_, i},
-                                 parser);
+    MS_EXCEPTION_IF_NULL(gather_actor->node_);
+    if (parser->need_stack_control_nodes_.find(gather_actor->node_) == parser->need_stack_control_nodes_.end()) {
+      for (size_t i = 0; i < gather_actor->formal_parameters_.size(); ++i) {
+        LinkArrowbyFormalParameter(gather_actor.get(), gather_actor->formal_parameters_[i], {gather_actor->node_, i},
+                                   parser);
+      }
+    } else {
+      // If the control actor has a corresponding stack actor, the input should be linked to the stack actor.
+      LinkArrowFromStackActor(gather_actor.get());
     }
   }
+
   for (auto &entrance_actor : control_actor_set->entrance_actors_) {
     for (const auto &call_node : entrance_actor->call_nodes_) {
       LinkArrowbyFormalParameter(entrance_actor.get(), call_node, {entrance_actor->node_, 0}, parser);
@@ -387,6 +441,38 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 }
 
+void ControlNodeScheduler::LinkArrowFromStackActor(ControlActor *to_actor) {
+  MS_EXCEPTION_IF_NULL(to_actor->node_);
+  auto stack_actor_name = GetActorName(to_actor->node_) + kStackActorNameSuffix;
+  auto actor = FetchActor(stack_actor_name);
+  MS_EXCEPTION_IF_NULL(actor);
+  auto stack_actor = dynamic_cast<StackActor *>(actor);
+  MS_EXCEPTION_IF_NULL(stack_actor);
+
+  for (size_t to_index = 0; to_index < to_actor->formal_parameters_.size(); ++to_index) {
+    const auto &formal_parameter = to_actor->formal_parameters_[to_index];
+    const auto &from_node = formal_parameter.first;
+    if (from_node->isa<ValueNode>()) {
+      LinkArrowByValueNode(from_node, to_actor, formal_parameter.second, to_index);
+      continue;
+    }
+
+    // Fetch the arrow type of input.
+    size_t from_index = stack_actor->FetchNodePosition(formal_parameter);
+    const auto &abstract = formal_parameter.first->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    const auto &real_abstract = FetchAbstractByIndex(abstract, formal_parameter.second);
+    MS_EXCEPTION_IF_NULL(real_abstract);
+
+    // Link arrow according to abstract.
+    if (real_abstract->isa<abstract::AbstractFunction>()) {
+      LinkPartialArrow(stack_actor, to_actor, from_index, to_index);
+    } else {
+      LinkDataArrow(stack_actor, to_actor, from_index, to_index);
+    }
+  }
+}
+
 void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_actor,
                                                       const KernelWithIndex &from_node_with_index,
                                                       const KernelWithIndex &to_node_with_index,
@@ -394,20 +480,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
   const auto &from_node = from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
   if (from_node->isa<ValueNode>()) {
-    if (IsValueNode<FuncGraph>(from_node)) {
-      // Link local partial.
-      const auto &func_graph = GetValueNode<FuncGraphPtr>(from_node);
-      to_actor->local_partials_[to_node_with_index.second] = OpPartial(func_graph.get(), {});
-    } else {
-      // Link device store value node.
-      if (!AnfAlgo::OutputAddrExist(from_node, from_node_with_index.second)) {
-        MS_LOG(EXCEPTION) << "Invalid output address index:" << from_node_with_index.second
-                          << " for value node:" << from_node->DebugString();
-      }
-      to_actor->local_device_tensors_[to_node_with_index.second] =
-        AnfAlgo::GetMutableOutputAddr(from_node, from_node_with_index.second, false).get();
-      to_actor->local_device_tensors_[to_node_with_index.second]->SetNodeIndex(from_node, from_node_with_index.second);
-    }
+    LinkArrowByValueNode(from_node, to_actor, from_node_with_index.second, to_node_with_index.second);
   } else if (from_node->isa<Parameter>()) {
     LinkArrowByParameter(from_node, to_actor, from_node_with_index, to_node_with_index, parser);
   } else if (AnfAlgo::IsCallNode(from_node)) {
@@ -433,6 +506,26 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
   } else if (from_node->isa<CNode>()) {
     // Link arrow by kernel.
     LinkArrowByKernel(from_node, to_actor, from_node_with_index, to_node_with_index, parser);
+  }
+}
+
+void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, ControlActor *const to_actor,
+                                                size_t from_index, size_t to_index) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(to_actor);
+
+  if (IsValueNode<FuncGraph>(value_node)) {
+    // Link local partial.
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(value_node);
+    to_actor->local_partials_[to_index] = OpPartial(func_graph.get(), {});
+  } else {
+    // Link device store value node.
+    if (!AnfAlgo::OutputAddrExist(value_node, from_index)) {
+      MS_LOG(EXCEPTION) << "Invalid output address index:" << from_index
+                        << " for value node:" << value_node->DebugString();
+    }
+    to_actor->local_device_tensors_[to_index] = AnfAlgo::GetMutableOutputAddr(value_node, from_index, false).get();
+    to_actor->local_device_tensors_[to_index]->SetNodeIndex(value_node, from_index);
   }
 }
 
@@ -467,6 +560,11 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
 
   if (to_actor->type_ != KernelTransformType::kEntranceActor) {
     // Link arrow from exit actor to control actor.
+    const auto &abstract = call_node->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    const auto &real_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
+    MS_EXCEPTION_IF_NULL(real_abstract);
+
     const auto &func_graphs = AnfAlgo::GetFuncGraphbyCallNode(from_node);
     for (const auto &func_graph : func_graphs) {
       MS_EXCEPTION_IF_NULL(func_graph);
@@ -475,10 +573,19 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
       MS_EXCEPTION_IF_NULL(actor);
       auto exit_actor = dynamic_cast<ExitActor *>(actor);
       size_t branch_id = parser->FetchBranchIDByCallNode(from_node);
-      LinkDataArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
-                                branch_id);
+      if (real_abstract->isa<abstract::AbstractFunction>()) {
+        LinkPartialArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
+                                     branch_id);
+      } else {
+        LinkDataArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
+                                  branch_id);
+      }
     }
-    to_actor->input_datas_num_++;
+    if (abstract->isa<abstract::AbstractFunction>()) {
+      to_actor->input_partials_num_++;
+    } else {
+      to_actor->input_datas_num_++;
+    }
   } else {
     // Link arrow from gather actor to entrance actor.
     const auto &actor_name = GetActorName(from_node);
@@ -604,6 +711,34 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       LinkControlArrow(entrance_actor, control_actor);
     }
   }
+
+  // Link auto monad control arrow for control actor.
+  std::vector<ControlActor *> control_actors;
+  (void)std::transform(control_actor_set->switch_actors_.begin(), control_actor_set->switch_actors_.end(),
+                       std::back_inserter(control_actors), [](auto &switch_actor) { return switch_actor.get(); });
+  (void)std::transform(control_actor_set->gather_actors_.begin(), control_actor_set->gather_actors_.end(),
+                       std::back_inserter(control_actors), [](auto &gather_actor) { return gather_actor.get(); });
+  (void)std::transform(control_actor_set->exit_actors_.begin(), control_actor_set->exit_actors_.end(),
+                       std::back_inserter(control_actors), [](auto &exit_actor) { return exit_actor.get(); });
+  for (auto control_actor : control_actors) {
+    MS_EXCEPTION_IF_NULL(control_actor);
+    const auto &node = control_actor->node_;
+    if (node == nullptr) {
+      return;
+    }
+
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &inputs = cnode->inputs();
+    for (const auto &input : inputs) {
+      MS_EXCEPTION_IF_NULL(input);
+      if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimUpdateState) ||
+          AnfAlgo::CheckPrimitiveType(input, prim::kPrimDepend) ||
+          AnfAlgo::CheckPrimitiveType(input, prim::kPrimLoad)) {
+        LinkControlArrowByAutoMonad(control_actor, input, parser);
+      }
+    }
+  }
 }
 
 void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_set,
@@ -613,6 +748,13 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
 
   // Link control arrow from entrance actors or stack actors to no input kernel actors.
   for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+    // In control flow, when the input of the kernel actor is a parameter, this input needs to be linked to the
+    // control actor, so the no-input kernel actor collected in the graph scheduler will also collect this actor,
+    // and it needs to be skipped here.
+    if ((no_input_kernel_actor->input_datas_num_ != 0) || (no_input_kernel_actor->input_controls_num_ != 0)) {
+      continue;
+    }
+
     KernelGraphPtr kernel_graph = nullptr;
     if (no_input_kernel_actor->type_ == KernelTransformType::kSuperKernelActor) {
       const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(no_input_kernel_actor.get());
@@ -661,6 +803,46 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       auto to_actor = FetchActor(to_actor_name);
       MS_EXCEPTION_IF_NULL(to_actor);
       LinkControlArrow(super_actor.get(), to_actor);
+    }
+  }
+}
+
+void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
+                                                       const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(from_node);
+
+  std::set<AnfNodePtr> depend_nodes;
+  FetchRealDependNodeByAutoMonad(from_node, &depend_nodes);
+
+  for (const auto &depend_node : depend_nodes) {
+    MS_EXCEPTION_IF_NULL(depend_node);
+    auto from_actor = FetchActor(depend_node->DebugString());
+    if (AnfAlgo::IsCallNode(depend_node)) {
+      int branch_id = parser->FetchBranchIDByCallNode(depend_node);
+      const auto &func_graphs = parser->FetchFuncGraphbyCallNode(depend_node);
+      if (func_graphs.empty()) {
+        MS_LOG(EXCEPTION) << "Failed to get funcgraph by call node:" << depend_node->DebugString();
+      }
+      for (const auto func_graph : func_graphs) {
+        auto exit_actor_name = func_graph->ToString() + kExitActorNameSuffix;
+        auto actor = FetchActor(exit_actor_name);
+        MS_EXCEPTION_IF_NULL(actor);
+        auto exit_actor = dynamic_cast<ExitActor *>(actor);
+        MS_EXCEPTION_IF_NULL(exit_actor);
+        LinkControlArrowForExitActor(exit_actor, to_actor, branch_id);
+      }
+      to_actor->input_controls_num_ -= (func_graphs.size() - 1);
+    } else if (from_actor != nullptr) {
+      LinkControlArrow(from_actor, to_actor);
+    } else {
+      auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
+      if (graph == nullptr) {
+        MS_LOG(EXCEPTION) << "Failed to find actor for node:" << depend_node->DebugString();
+      }
+      from_actor = FetchActor(graph->ToString() + kExitActorNameSuffix);
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkControlArrow(from_actor, to_actor);
     }
   }
 }
@@ -884,6 +1066,15 @@ void ControlNodeScheduler::LinkDataArrowForExitActor(ExitActor *const exit_actor
   auto data_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
   (void)exit_actor->output_branch_data_arrows_[branch_id].emplace_back(data_arrow);
   (void)to_actor->input_data_arrow_aids_.emplace_back(exit_actor->GetAID());
+}
+
+void ControlNodeScheduler::LinkPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor,
+                                                        size_t from_index, size_t to_index, int branch_id) {
+  MS_EXCEPTION_IF_NULL(exit_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  auto partial_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
+  (void)exit_actor->output_branch_partial_arrows_[branch_id].emplace_back(partial_arrow);
+  (void)to_actor->input_partial_arrow_aids_.emplace_back(exit_actor->GetAID());
 }
 
 void ControlNodeScheduler::LinkControlArrowForExitActor(ExitActor *from_actor, AbstractActor *to_actor, int branch_id) {

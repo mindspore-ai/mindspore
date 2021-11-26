@@ -29,23 +29,22 @@ void GatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
   ControlActor::FetchInput(context);
-  output_partial_ = input_partials_[0];
-  MS_EXCEPTION_IF_NULL(output_partial_.first);
+  MS_EXCEPTION_IF_NULL(input_partials_[0].first);
 
   // Put other real parameter in partial.
   for (const auto &device_tensor : input_device_tensors_) {
     if (device_tensor != nullptr) {
-      output_partial_.second.emplace_back(device_tensor);
+      input_partials_[0].second.emplace_back(device_tensor);
     }
   }
 }
 
 void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send data with branch id.
-  const auto &iter = output_data_with_branch_id_arrows_.find(output_partial_.first);
+  const auto &iter = output_data_with_branch_id_arrows_.find(input_partials_[0].first);
   if (iter != output_data_with_branch_id_arrows_.end()) {
     for (const auto &data_with_branch_id_arrow : iter->second) {
-      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpDataWithBranchID, output_partial_.second,
+      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpDataWithBranchID, input_partials_[0].second,
                             output_branch_id_, context);
     }
   }
