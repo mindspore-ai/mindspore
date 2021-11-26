@@ -45,7 +45,7 @@ bool StrategyCheckpoint::CheckPath(const std::string path) const {
     MS_LOG(ERROR) << "The checkpoit path " << path << " is too long";
     return false;
   }
-  auto realpath = Common::CreatePrefixPath(path);
+  auto realpath = Common::CreatePrefixPath(path, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << path;
     return false;
