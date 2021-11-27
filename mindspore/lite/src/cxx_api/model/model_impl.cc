@@ -74,7 +74,6 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
-    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -103,7 +102,6 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
-    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -159,7 +157,6 @@ Status ModelImpl::Build() {
 
   auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
-    delete lite_context;
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
@@ -640,6 +637,7 @@ session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) 
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
+    delete context;
     return nullptr;
   }
 
