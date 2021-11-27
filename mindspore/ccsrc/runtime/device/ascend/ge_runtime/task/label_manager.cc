@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <string>
 #include "runtime/mem.h"
+#include "runtime/dev.h"
 #include "runtime/rt_model.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/utils/convert_utils_base.h"
@@ -98,7 +99,14 @@ std::shared_ptr<LabelGuard> LabelManager::GetLabelInfo(rtModel_t model, const st
     return nullptr;
   }
   uint32_t label_info_size = SizeToUint(sizeof(rtLabelDevInfo) * label_list.size());
-  rt_ret = rtMalloc(&label_info, label_info_size, RT_MEMORY_HBM);
+  int64_t value = 0;
+  rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, MEMORY_INFO_TS_LIMITED, &value);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rt api rtGetRtCapability failed, ret: " << rt_ret;
+    return nullptr;
+  }
+
+  rt_ret = rtMalloc(&label_info, label_info_size, (value == RT_CAPABILITY_SUPPORT) ? RT_MEMORY_TS : RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rt api rtMalloc failed, ret: " << rt_ret;
     return nullptr;
