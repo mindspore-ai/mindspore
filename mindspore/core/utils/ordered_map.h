@@ -22,13 +22,16 @@
 #include <functional>
 #include <utility>
 #include <memory>
+#include <type_traits>
+#include <unordered_map>
 #include "utils/hashing.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
 // Implementation of OrderedMap that keeps insertion order
 // using hash map to improve the performance of find/erase, and use list to keep insertion order
-template <typename KeyT, typename ValueT, class Hash = std::hash<KeyT>, class Equal = std::equal_to<KeyT>>
+template <typename KeyT, typename ValueT, class Hash = std::hash<KeyT>, class Equal = std::equal_to<KeyT>,
+          bool UseStd = false>
 class OrderedMap {
   using key_ptr_t = const KeyT *;
   struct KeyPtrHash {
@@ -47,7 +50,8 @@ class OrderedMap {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = mindspore::HashMap<key_ptr_t, iterator, KeyPtrHash, KeyPtrEqual>;
+  using map_type = typename std::conditional<UseStd, std::unordered_map<key_ptr_t, iterator, KeyPtrHash, KeyPtrEqual>,
+                                             mindspore::HashMap<key_ptr_t, iterator, KeyPtrHash, KeyPtrEqual>>::type;
   using value_type = typename sequential_type::value_type;
   using size_type = typename sequential_type::size_type;
 
