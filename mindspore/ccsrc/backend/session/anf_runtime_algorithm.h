@@ -199,6 +199,7 @@ class AnfRuntimeAlgorithm {
                                                     bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
+  static size_t GetOutputAddressNum(const AnfNodePtr &node);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // set workspace device addr of anf_node

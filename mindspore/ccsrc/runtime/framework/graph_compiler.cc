@@ -182,7 +182,7 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       continue;
     }
 
-    auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_size = AnfAlgo::GetOutputAddressNum(kernel);
     for (size_t i = 0; i < output_size; ++i) {
       if (AnfAlgo::OutputAddrExist(kernel, i)) {
         continue;
