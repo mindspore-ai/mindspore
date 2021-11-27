@@ -23,11 +23,11 @@ mindspore.dataset.MnistDataset
 
     - **RuntimeError**: `dataset_dir` 路径下不包含数据文件。
     - **RuntimeError**: `num_parallel_workers` 超过系统最大线程数。
-    - **RuntimeError**: 同时指定了`sampler`和`shuffle`参数。
-    - **RuntimeError**: 同时指定了`sampler`和`num_shards`参数。
-    - **RuntimeError**: 指定了`num_shards`参数，但是未指定`shard_id`参数。
-    - **RuntimeError**: 指定了`shard_id`参数，但是未指定`num_shards`参数。
-    - **ValueError**: `shard_id`参数错误（小于0或者大于等于 `num_shards`）。
+    - **RuntimeError**: 同时指定了 `sampler` 和 `shuffle` 参数。
+    - **RuntimeError**: 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **RuntimeError**: 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **RuntimeError**: 指定了 `shard_id` 参数，但是未指定`num_shards` 参数。
+    - **ValueError**: `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note:: 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
 
