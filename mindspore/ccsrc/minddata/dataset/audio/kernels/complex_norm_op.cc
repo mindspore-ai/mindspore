@@ -25,8 +25,7 @@ ComplexNormOp::ComplexNormOp(float power) : power_(power) {}
 // main function
 Status ComplexNormOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2, "ComplexNorm: input tensor is not in shape of <..., 2>.");
-
+  RETURN_IF_NOT_OK(ValidateTensorShape("ComplexNorm", input->IsComplex(), "<..., complex=2>"));
   return ComplexNorm(input, output, power_);
 }
 
@@ -38,11 +37,13 @@ Status ComplexNormOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   TensorShape out = TensorShape(input_size);
   outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kMDUnexpectedError, "ComplexNorm: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError, "ComplexNorm: invalid shape of input tensor.");
 }
 
 Status ComplexNormOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  RETURN_IF_NOT_OK(
+    ValidateTensorType("ComplexNorm", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
   if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
     outputs[0] = DataType(DataType::DE_FLOAT64);
   } else {

@@ -26,14 +26,10 @@ TrebleBiquadOp::TrebleBiquadOp(int32_t sample_rate, float gain, float central_fr
 
 Status TrebleBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "TrebleBiquad: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("TrebleBiquad", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
-                                 input->type() == DataType(DataType::DE_FLOAT16) ||
-                                 input->type() == DataType(DataType::DE_FLOAT64),
-                               "TrebleBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("TrebleBiquad", input));
   // computer a0, a1, a2, b0, b1, b2
   float w0 = 2 * PI * central_freq_ / sample_rate_;
   float alpha = sin(w0) / 2 / Q_;
@@ -63,6 +59,5 @@ Status TrebleBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
                   static_cast<float16>(a0), static_cast<float16>(a1), static_cast<float16>(a2));
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
-
 #include "minddata/dataset/audio/kernels/angle_op.h"
+
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 
@@ -24,10 +23,8 @@ namespace dataset {
 Status AngleOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // if If the last dimension is not 2, then it's not a complex number
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape()[-1] == 2, "Angle: input tensor is not in shape of <..., complex=2>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "Angle: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorShape("Angle", input->IsComplex(), "<..., complex=2>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Angle", input));
   if (input->type() == DataType(DataType::DE_FLOAT64)) {
     return Angle<double>(input, output);
   } else {
@@ -46,7 +43,7 @@ Status AngleOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<
   TensorShape out = TensorShape{shape};
   outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kMDUnexpectedError, "Angle: invalid input wrong shape.");
+  return Status(StatusCode::kMDUnexpectedError, "Angle: invalid shape of input tensor.");
 }
 
 Status AngleOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

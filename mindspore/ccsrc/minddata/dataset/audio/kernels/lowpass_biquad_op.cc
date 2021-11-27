@@ -26,14 +26,10 @@ const float LowpassBiquadOp::kQ = 0.707;
 
 Status LowpassBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "LowpassBiquad: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("LowpassBiquad", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "LowpassBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("LowpassBiquad", input));
   double w0 = 2 * PI * cutoff_freq_ / sample_rate_;
   double alpha = sin(w0) / 2 / Q_;
 

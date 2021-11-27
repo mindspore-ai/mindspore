@@ -24,13 +24,10 @@ namespace mindspore {
 namespace dataset {
 Status ContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "Contrast: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("Contrast", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "Contrast: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Contrast", input));
 
   if (input->type() == DataType(DataType::DE_FLOAT64)) {
     return Contrast(input, output, static_cast<double>(enhancement_amount_));
@@ -43,13 +40,11 @@ Status ContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
 Status ContrastOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
-  if (inputs[0] >= DataType::DE_INT8 && inputs[0] <= DataType::DE_FLOAT32) {
-    outputs[0] = DataType(DataType::DE_FLOAT32);
-  } else if (inputs[0] == DataType::DE_FLOAT64) {
+  RETURN_IF_NOT_OK(ValidateTensorType("Contrast", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
+  if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
     outputs[0] = DataType(DataType::DE_FLOAT64);
   } else {
-    RETURN_STATUS_UNEXPECTED("Contrast: input tensor type should be int, float or double, but got: " +
-                             inputs[0].ToString());
+    outputs[0] = DataType(DataType::DE_FLOAT32);
   }
   return Status::OK();
 }

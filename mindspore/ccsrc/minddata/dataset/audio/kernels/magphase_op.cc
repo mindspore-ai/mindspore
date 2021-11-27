@@ -24,11 +24,8 @@ constexpr float MagphaseOp::kPower = 1.0;
 
 Status MagphaseOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Size() >= 2 && input[0]->shape()[-1] == 2,
-                               "Magphase: input tensor is not in shape of <..., 2>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input[0]->type().IsNumeric(),
-    "Magphase: input tensor type should be int, float or double, but got: " + input[0]->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorShape("Magphase", input[0]->IsComplex(), "<..., complex=2>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Magphase", input[0]));
   RETURN_IF_NOT_OK(Magphase(input, output, power_));
   return Status::OK();
 }
@@ -43,11 +40,12 @@ Status MagphaseOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   if (!outputs.empty()) {
     return Status::OK();
   }
-  return Status(StatusCode::kMDUnexpectedError, "Magphase: invalid input wrong shape.");
+  return Status(StatusCode::kMDUnexpectedError, "Magphase: invalid shape of input tensor.");
 }
 
 Status MagphaseOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  RETURN_IF_NOT_OK(ValidateTensorType("Magphase", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
   if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
     outputs[0] = DataType(DataType::DE_FLOAT64);
   } else {

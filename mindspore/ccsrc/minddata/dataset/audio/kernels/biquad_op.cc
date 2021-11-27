@@ -22,14 +22,10 @@ namespace mindspore {
 namespace dataset {
 Status BiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "Biquad: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("Biquad", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "Biquad: input tensor type should be float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("Biquad", input));
   if (input->type() == DataType(DataType::DE_FLOAT32)) {
     return Biquad(input, output, static_cast<float>(b0_), static_cast<float>(b1_), static_cast<float>(b2_),
                   static_cast<float>(a0_), static_cast<float>(a1_), static_cast<float>(a2_));

@@ -37,6 +37,8 @@ class FrequencyMaskingOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
   std::string Name() const override { return kFrequencyMaskingOp; }
 
  private:

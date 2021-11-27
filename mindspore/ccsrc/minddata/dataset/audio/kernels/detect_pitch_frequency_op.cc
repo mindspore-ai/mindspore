@@ -22,15 +22,10 @@ namespace mindspore {
 namespace dataset {
 Status DetectPitchFrequencyOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0,
-                               "DetectPitchFrequency: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("DetectPitchFrequency", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT16, DE_FLOAT32 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT64) ||
-      input->type() == DataType(DataType::DE_FLOAT16),
-    "DetectPitchFrequency: input tensor type should be float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("DetectPitchFrequency", input));
   return DetectPitchFrequency(input, output, sample_rate_, frame_time_, win_length_, freq_low_, freq_high_);
 }
 }  // namespace dataset

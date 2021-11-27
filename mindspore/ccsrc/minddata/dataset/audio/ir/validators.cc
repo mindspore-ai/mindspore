@@ -21,14 +21,5 @@ Status ValidateIntScalarNonNegative(const std::string &op_name, const std::strin
   RETURN_IF_NOT_OK(ValidateScalar(op_name, scalar_name, scalar, {0}, false));
   return Status::OK();
 }
-
-Status ValidateFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar) {
-  if (std::isnan(scalar)) {
-    std::string err_msg = op_name + ": " + scalar_name + " should be specified, got: Nan";
-    MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
-  }
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

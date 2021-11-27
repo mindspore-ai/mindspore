@@ -18,25 +18,13 @@ import os
 import sys
 import importlib
 import numpy as np
+
 from mindspore import log as logger
 
 
-def imshow_det_bbox(image,
-                    bboxes,
-                    labels,
-                    segm=None,
-                    class_names=None,
-                    score_threshold=0,
-                    bbox_color=(0, 255, 0),
-                    text_color=(203, 192, 255),
-                    mask_color=(128, 0, 128),
-                    thickness=2,
-                    font_size=0.8,
-                    show=True,
-                    win_name="win",
-                    wait_time=2000,
-                    out_file=None
-                    ):
+def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_threshold=0, bbox_color=(0, 255, 0),
+                    text_color=(203, 192, 255), mask_color=(128, 0, 128), thickness=2, font_size=0.8, show=True,
+                    win_name="win", wait_time=2000, out_file=None):
     """Draw an image with given bboxes and class labels (with scores).
 
     Args:
@@ -69,16 +57,17 @@ def imshow_det_bbox(image,
     try:
         cv2 = importlib.import_module("cv2")
     except ModuleNotFoundError:
-        raise ImportError("import cv2 failed, seems you have to run `pip install opencv-python`.")
+        raise ImportError("Importing cv2 failed, try to install it by running `pip install opencv-python`.")
 
     # validation
-    assert isinstance(image, np.ndarray) and image.ndim == 3 and (image.shape[0] == 3 or image.shape[2] == 3),\
+    assert isinstance(image, np.ndarray) and image.ndim == 3 and (image.shape[0] == 3 or image.shape[2] == 3), \
         "image must be a ndarray in (H, W, C) or (C, H, W) format."
     if bboxes is not None:
         assert isinstance(bboxes, np.ndarray) and bboxes.ndim == 2 and (bboxes.shape[1] == 4 or bboxes.shape[1] == 5), \
             "bboxes must be a ndarray in (N, 4) or (N, 5) format."
         assert isinstance(labels, np.ndarray) and labels.ndim == 2 and labels.shape[1] == 1 and \
-            labels.shape[0] == bboxes.shape[0], "labels must be a ndarray in (N, 1) format and has same N with bboxes."
+               labels.shape[0] == bboxes.shape[
+                   0], "labels must be a ndarray in (N, 1) format and has same N with bboxes."
     if segm is not None:
         assert isinstance(segm, np.ndarray) and segm.ndim == 3, "segm must be a ndarray in (M, H, W) format."
         H, W = (image.shape[0], image.shape[1]) if image.shape[2] == 3 else (image.shape[1], image.shape[2])
@@ -122,7 +111,7 @@ def imshow_det_bbox(image,
                     continue
             # bbox
             x1, y1 = int(draw_bbox[0]), int(draw_bbox[1])
-            x2, y2 = int(draw_bbox[0]+draw_bbox[2]), int(draw_bbox[1]+draw_bbox[3])
+            x2, y2 = int(draw_bbox[0] + draw_bbox[2]), int(draw_bbox[1] + draw_bbox[3])
             cv2.rectangle(draw_image, (x1, y1), (x2, y2), bbox_color, thickness)
             # label
             try:

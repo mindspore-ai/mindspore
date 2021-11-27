@@ -24,15 +24,12 @@
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Helper function to positive int scalar
 Status ValidateIntScalarNonNegative(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
-
-// Helper function to non-nan float scalar
-Status ValidateFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar);
 
 // Helper function to validate scalar value
 template <typename T>
@@ -59,7 +56,8 @@ Status ValidateScalarValue(const std::string &op_name, const std::string &scalar
 template <typename T>
 Status ValidateScalarNotZero(const std::string &op_name, const std::string &scalar_name, const T scalar) {
   if (scalar == 0) {
-    std::string err_msg = op_name + ": " + scalar_name + " can't be zero, got: " + std::to_string(scalar);
+    std::string err_msg =
+      op_name + ": " + scalar_name + " can not be equal to zero, but got: " + std::to_string(scalar);
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
@@ -70,7 +68,7 @@ Status ValidateScalarNotZero(const std::string &op_name, const std::string &scal
 template <typename T>
 Status ValidateVectorNotEmpty(const std::string &op_name, const std::string &vec_name, const std::vector<T> &vec) {
   if (vec.empty()) {
-    std::string err_msg = op_name + ": " + vec_name + " can't be empty.";
+    std::string err_msg = op_name + ": " + vec_name + " can not be an empty vector.";
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
@@ -79,16 +77,17 @@ Status ValidateVectorNotEmpty(const std::string &op_name, const std::string &vec
 
 // Helper function to check two vector size equal
 template <typename T>
-Status ValidateVectorSameSize(const std::string &op_name, const std::string &vec1_name, const std::vector<T> &vec1,
-                              const std::string &vec2_name, const std::vector<T> &vec2) {
-  if (vec1.size() != vec2.size()) {
-    std::string err_msg = op_name + ": the size of " + vec1_name + " should be the same as that of " + vec2_name;
+Status ValidateVectorSameSize(const std::string &op_name, const std::string &vec_name, const std::vector<T> &vec,
+                              const std::string &other_vec_name, const std::vector<T> &other_vec) {
+  if (vec.size() != other_vec.size()) {
+    std::string err_msg = op_name + ": the size of '" + vec_name + "' should be the same as that of '" +
+                          other_vec_name + "', but got: '" + vec_name + "' size " + std::to_string(vec.size()) +
+                          " and '" + other_vec_name + "' size " + std::to_string(other_vec.size()) + ".";
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ADUIO_IR_VALIDATORS_H_

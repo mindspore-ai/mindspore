@@ -114,7 +114,8 @@ class DSCallback:
             at_least_one = True
 
         if not at_least_one:
-            raise AttributeError("Provided Callback class did not override any of the 6 callback methods.")
+            raise AttributeError(
+                "Inheriting Callback class without overriding any methods, check the usage of user defined Callback.")
 
         return c_cb
 
@@ -241,7 +242,8 @@ class WaitedDSCallback(Callback, DSCallback):
             at_least_one = True
 
         if not at_least_one:
-            raise AttributeError("Provided Callback class did not override any of the 2 callback methods.")
+            raise AttributeError(
+                "Inheriting Callback class without overriding any methods, check the usage of user defined Callback.")
 
         return c_cb
 

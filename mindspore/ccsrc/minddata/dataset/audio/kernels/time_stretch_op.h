@@ -44,6 +44,8 @@ class TimeStretchOp : public TensorOp {
 
   std::string Name() const override { return kTimeStretchOp; }
 
+  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
  private:

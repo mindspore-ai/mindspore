@@ -27,10 +27,8 @@ constexpr FadeShape FadeOp::kFadeShape = FadeShape::kLinear;
 
 Status FadeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "Fade: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    DataType::DE_INT8 <= input->type().value() && input->type().value() <= DataType::DE_FLOAT64,
-    "Fade: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("Fade", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Fade", input));
   if (fade_in_len_ == 0 && fade_out_len_ == 0) {
     *output = input;
   } else {
@@ -41,13 +39,11 @@ Status FadeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 
 Status FadeOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
-  if (inputs[0] >= DataType::DE_INT8 && inputs[0] <= DataType::DE_FLOAT32) {
-    outputs[0] == DataType(DataType::DE_FLOAT32);
-  } else if (inputs[0] == DataType::DE_FLOAT64) {
-    outputs[0] == DataType(DataType::DE_FLOAT64);
+  RETURN_IF_NOT_OK(ValidateTensorType("Fade", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
+  if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
+    outputs[0] = DataType(DataType::DE_FLOAT64);
   } else {
-    RETURN_STATUS_UNEXPECTED("Fade: input tensor type should be int, float or double, but got: " +
-                             inputs[0].ToString());
+    outputs[0] = DataType(DataType::DE_FLOAT32);
   }
   return Status::OK();
 }

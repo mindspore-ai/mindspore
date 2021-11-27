@@ -23,12 +23,9 @@ namespace mindspore {
 namespace dataset {
 Status DBToAmplitudeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "DBToAmplitude: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "DBToAmplitude: input tensor type should be int, float or double, but got " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("DBToAmplitude", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("DBToAmplitude", input));
 
   std::shared_ptr<Tensor> input_tensor;
   if (input->type() != DataType(DataType::DE_FLOAT64)) {

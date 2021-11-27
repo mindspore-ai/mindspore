@@ -21,7 +21,6 @@
 
 #include "mindspore/core/base/float16.h"
 #include "minddata/dataset/core/type_id.h"
-#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "utils/file_utils.h"
 
@@ -35,10 +34,7 @@ namespace dataset {
 /// \return Status return code.
 template <typename T>
 Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
-  if (start > end) {
-    std::string err = "Linspace: input param end must be greater than start.";
-    RETURN_STATUS_UNEXPECTED(err);
-  }
+  RETURN_IF_NOT_OK(ValidateNoGreaterThan("Linspace", "start", start, "end", end));
   n = std::isnan(n) ? 100 : n;
   TensorShape out_shape({n});
   std::vector<T> linear_vect(n);
@@ -61,10 +57,7 @@ Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
 template <typename T>
 Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
-  if (!input->IsComplex()) {
-    std::string err_msg = "ComplexAngle: input tensor is not in shape of <..., 2>.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateTensorShape("ComplexAngle", input->IsComplex(), "<..., complex=2>"));
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
   std::vector<T> phase(input_shape[0] * input_shape[1] * input_shape[2]);
@@ -92,10 +85,7 @@ Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 template <typename T>
 Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
-  if (!input->IsComplex()) {
-    std::string err_msg = "ComplexAngle: input tensor is not in shape of <..., 2>.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateTensorShape("ComplexAngle", input->IsComplex(), "<..., complex=2>"));
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
   std::vector<T> abs(input_shape[0] * input_shape[1] * input_shape[2]);
@@ -123,7 +113,8 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
              std::shared_ptr<Tensor> *output) {
   // check shape
   if (abs->shape() != angle->shape()) {
-    std::string err_msg = "Polar: input tensor shape of abs and angle must be the same.";
+    std::string err_msg = "Polar: the shape of input tensor abs and angle should be the same, but got: abs " +
+                          abs->shape().ToString() + " and angle " + angle->shape().ToString();
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -340,8 +331,7 @@ Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       RETURN_IF_NOT_OK(TimeStretch<double>(input, output, rate, phase_advance));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("TimeStretch: input tensor type should be float or double, but got: " +
-                               input->type().ToString());
+      RETURN_IF_NOT_OK(ValidateTensorFloat("TimeStretch", input));
   }
   return Status::OK();
 }
@@ -389,7 +379,8 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis) {
   if (axis != 2 && axis != 1) {
-    RETURN_STATUS_UNEXPECTED("MaskAlongAxis: only support Time and Frequency masking, axis should be 1 or 2.");
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
+      "MaskAlongAxis: invalid parameter, 'axis' can only be 1 for Frequency Masking or 2 for Time Masking.");
   }
   TensorShape input_shape = input->shape();
   // squeeze input
@@ -397,10 +388,17 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   (void)input->Reshape(squeeze_shape);
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
-  CHECK_FAIL_RETURN_UNEXPECTED(0 <= mask_start && mask_start <= input_shape[check_dim_ind],
-                               "MaskAlongAxis: mask_start should be less than the length of chosen dimension.");
-  CHECK_FAIL_RETURN_UNEXPECTED(mask_start + mask_width <= input_shape[check_dim_ind],
-                               "MaskAlongAxis: the sum of mask_start and mask_width is out of bounds.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(mask_start >= 0 && mask_start <= input_shape[check_dim_ind],
+                                 "MaskAlongAxis: invalid parameter, 'mask_start' should be less than the length of the "
+                                 "masked dimension, but got: 'mask_start' " +
+                                   std::to_string(mask_start) + " and length " +
+                                   std::to_string(input_shape[check_dim_ind]));
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(
+    mask_start + mask_width <= input_shape[check_dim_ind],
+    "MaskAlongAxis: invalid parameter, the sum of 'mask_start' and 'mask_width' should be no more "
+    "than the length of the masked dimension, but got: 'mask_start' " +
+      std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
+      std::to_string(input_shape[check_dim_ind]));
 
   int32_t cell_size = input->type().SizeInBytes();
 
@@ -451,8 +449,8 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   // calculate the output dimension
   auto input_size = input->shape().AsVector();
   int32_t dim_back = static_cast<int32_t>(input_size.back());
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    dim_back == 2, "ComplexNorm: expect complex input of shape <..., 2>, but got: " + std::to_string(dim_back));
+  RETURN_IF_NOT_OK(
+    ValidateTensorShape("ComplexNorm", input->IsComplex(), "<..., complex=2>", std::to_string(dim_back)));
   input_size.pop_back();
   TensorShape out_shape = TensorShape(input_size);
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), output));
@@ -474,25 +472,20 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 }
 
 Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
-  try {
-    if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT16) {
-      // convert the data type to float
-      std::shared_ptr<Tensor> input_tensor;
-      RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+  if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT16) {
+    // convert the data type to float
+    std::shared_ptr<Tensor> input_tensor;
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
 
-      RETURN_IF_NOT_OK(Norm<float>(input_tensor, output, power));
-    } else if (input->type().value() == DataType::DE_FLOAT32) {
-      RETURN_IF_NOT_OK(Norm<float>(input, output, power));
-    } else if (input->type().value() == DataType::DE_FLOAT64) {
-      RETURN_IF_NOT_OK(Norm<double>(input, output, power));
-    } else {
-      RETURN_STATUS_UNEXPECTED("ComplexNorm: input tensor type should be int, float or double, but got: " +
-                               input->type().ToString());
-    }
-    return Status::OK();
-  } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("ComplexNorm: " + std::string(e.what()));
+    RETURN_IF_NOT_OK(Norm<float>(input_tensor, output, power));
+  } else if (input->type().value() == DataType::DE_FLOAT32) {
+    RETURN_IF_NOT_OK(Norm<float>(input, output, power));
+  } else if (input->type().value() == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(Norm<double>(input, output, power));
+  } else {
+    RETURN_IF_NOT_OK(ValidateTensorNumeric("ComplexNorm", input));
   }
+  return Status::OK();
 }
 
 template <typename T>
@@ -509,7 +502,7 @@ Status Decoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
   while (itr != end) {
     auto x_mu = *itr;
-    CHECK_FAIL_RETURN_SYNTAX_ERROR(mu != 0, "mu can not be zero.");
+    CHECK_FAIL_RETURN_SYNTAX_ERROR(mu != 0, "Decoding: invalid parameter, 'mu' can not be zero.");
     x_mu = ((x_mu) / mu) * 2 - 1.0;
     x_mu = sgn(x_mu) * expm1(fabs(x_mu) * log1p(mu)) / mu;
     *itr_out = x_mu;
@@ -535,8 +528,7 @@ Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
     RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
   } else {
-    RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
-                             input->type().ToString());
+    RETURN_IF_NOT_OK(ValidateTensorNumeric("MuLawDecoding", input));
   }
   return Status::OK();
 }
@@ -578,8 +570,7 @@ Status MuLawEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
     RETURN_IF_NOT_OK(Encoding<double>(input, output, f_mu));
   } else {
-    RETURN_STATUS_UNEXPECTED("MuLawEncoding: input tensor type should be int, float or double, but got: " +
-                             input->type().ToString());
+    RETURN_IF_NOT_OK(ValidateTensorNumeric("MuLawEncoding", input));
   }
   return Status::OK();
 }
@@ -652,8 +643,8 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   const TensorShape input_shape = input->shape();
   int32_t waveform_length = static_cast<int32_t>(input_shape[-1]);
-  CHECK_FAIL_RETURN_UNEXPECTED(fade_in_len <= waveform_length, "Fade: fade_in_len exceeds waveform length.");
-  CHECK_FAIL_RETURN_UNEXPECTED(fade_out_len <= waveform_length, "Fade: fade_out_len exceeds waveform length.");
+  RETURN_IF_NOT_OK(ValidateNoGreaterThan("Fade", "fade_in_len", fade_in_len, "length of waveform", waveform_length));
+  RETURN_IF_NOT_OK(ValidateNoGreaterThan("Fade", "fade_out_len", fade_out_len, "length of waveform", waveform_length));
   int32_t num_waveform = static_cast<int32_t>(input->Size() / waveform_length);
   TensorShape toShape = TensorShape({num_waveform, waveform_length});
   RETURN_IF_NOT_OK((*output)->Reshape(toShape));
@@ -699,8 +690,7 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   } else if (input->type().value() == DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(Fade<double>(input, output, fade_in_len, fade_out_len, fade_shape));
   } else {
-    RETURN_STATUS_UNEXPECTED("Fade: input tensor type should be int, float or double, but got: " +
-                             input->type().ToString());
+    RETURN_IF_NOT_OK(ValidateTensorNumeric("Fade", input));
   }
   return Status::OK();
 }
@@ -857,31 +847,31 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   RETURN_UNEXPECTED_IF_NULL(sample_rate);
   auto wav_realpath = FileUtils::GetRealPath(wav_file_dir.data());
   if (!wav_realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << wav_file_dir;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + wav_file_dir);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Invalid file path, get real path failed: " + wav_file_dir);
   }
 
   const float kMaxVal = 32767.0;
   Path file_path(wav_realpath.value());
   CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
-                               "Invalid file, failed to find metadata file:" + file_path.ToString());
+                               "Invalid file path, failed to find waveform file: " + file_path.ToString());
   std::ifstream in(file_path.ToString(), std::ios::in | std::ios::binary);
-  CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open metadata file:" + file_path.ToString() +
+  CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open waveform file: " + file_path.ToString() +
                                                ", make sure the file not damaged or permission denied.");
   WavHeader *header = new WavHeader();
   in.read(reinterpret_cast<char *>(header), sizeof(WavHeader));
-  *sample_rate = header->sampleRate;
-  float bytesPerSample = header->bitsPerSample / 8;
-  if (bytesPerSample == 0) {
+  *sample_rate = header->sample_rate;
+  float bytes_per_sample = header->bits_per_sample / 8;
+  if (bytes_per_sample == 0) {
     in.close();
     delete header;
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "ReadWaveFile: divide zero error.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "ReadWaveFile: zero division error, bits per sample of the audio can not be zero.");
   }
-  int numSamples = header->subChunk2Size / bytesPerSample;
-  std::unique_ptr<int16_t[]> data = std::make_unique<int16_t[]>(numSamples);
-  in.read(reinterpret_cast<char *>(data.get()), sizeof(int16_t) * numSamples);
-  waveform_vec->resize(numSamples);
-  for (int i = 0; i < numSamples; i++) {
+  int num_samples = header->sub_chunk2_size / bytes_per_sample;
+  std::unique_ptr<int16_t[]> data = std::make_unique<int16_t[]>(num_samples);
+  in.read(reinterpret_cast<char *>(data.get()), sizeof(int16_t) * num_samples);
+  waveform_vec->resize(num_samples);
+  for (int i = 0; i < num_samples; i++) {
     (*waveform_vec)[i] = data[i] / kMaxVal;
   }
   in.close();
@@ -893,10 +883,8 @@ Status ComputeCmnStartAndEnd(int32_t cmn_window, int32_t min_cmn_window, bool ce
                              int32_t *cmn_window_start_p, int32_t *cmn_window_end_p) {
   RETURN_UNEXPECTED_IF_NULL(cmn_window_start_p);
   RETURN_UNEXPECTED_IF_NULL(cmn_window_end_p);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    cmn_window >= 0, "SlidingWindowCmn: cmn_window must be non negative, but got: " + std::to_string(cmn_window));
-  CHECK_FAIL_RETURN_UNEXPECTED(min_cmn_window >= 0, "SlidingWindowCmn: min_cmn_window must be non negative, but got: " +
-                                                      std::to_string(min_cmn_window));
+  RETURN_IF_NOT_OK(ValidateNonNegative("SlidingWindowCmn", "cmn_window", cmn_window));
+  RETURN_IF_NOT_OK(ValidateNonNegative("SlidingWindowCmn", "min_cmn_window", min_cmn_window));
   int32_t cmn_window_start = 0, cmn_window_end = 0;
   constexpr int window_center = 2;
   if (center) {
@@ -1046,9 +1034,7 @@ Status SlidingWindowCmnHelper(const std::shared_ptr<Tensor> &input, std::shared_
 
 Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t cmn_window,
                         int32_t min_cmn_window, bool center, bool norm_vars) {
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() >= kMinAudioRank,
-                               "SlidingWindowCmn: input tensor is not in shape of <..., freq, time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("SlidingWindowCmn", input, kDefaultAudioDim, "<..., freq, time>"));
 
   if (input->type().IsNumeric() && input->type().value() != DataType::DE_FLOAT64) {
     std::shared_ptr<Tensor> temp;
@@ -1057,8 +1043,7 @@ Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   } else if (input->type().value() == DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(SlidingWindowCmnHelper<double>(input, output, cmn_window, min_cmn_window, center, norm_vars));
   } else {
-    RETURN_STATUS_UNEXPECTED("SlidingWindowCmn: input tensor type should be int, float or double, but got: " +
-                             input->type().ToString());
+    RETURN_IF_NOT_OK(ValidateTensorNumeric("SlidingWindowCmn", input));
   }
   return Status::OK();
 }
@@ -1066,13 +1051,10 @@ Status SlidingWindowCmn(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 template <typename T>
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t pad_left, int32_t pad_right,
            BorderType padding_mode, T value = 0) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "Pad: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "Pad: input tensor type should be int, float or double, but got: " + input->type().ToString());
-  CHECK_FAIL_RETURN_UNEXPECTED(pad_left >= 0 && pad_right >= 0,
-                               "Pad: left and right padding values must be non negative, but got pad_left: " +
-                                 std::to_string(pad_left) + " and pad_right: " + std::to_string(pad_right));
+  RETURN_IF_NOT_OK(ValidateLowRank("Pad", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Pad", input));
+  RETURN_IF_NOT_OK(ValidateNonNegative("Pad", "pad_left", pad_left));
+  RETURN_IF_NOT_OK(ValidateNonNegative("Pad", "pad_right", pad_right));
   TensorShape input_shape = input->shape();
   int32_t wave_length = input_shape[-1];
   int32_t num_wavs = static_cast<int32_t>(input->Size() / wave_length);
@@ -1145,7 +1127,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     }
     output_map.block(0, 0, num_wavs, pad_left) = output_map.block(0, pad_left, num_wavs, pad_left).rowwise().reverse();
   } else {
-    RETURN_STATUS_UNEXPECTED("Pad: unsupported border type.");
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Pad: invalid padding_mode value, check the optional value of BorderType.");
   }
   std::vector<dsize_t> shape_vec = input_shape.AsVector();
   shape_vec[shape_vec.size() - 1] = static_cast<dsize_t>(pad_length);
@@ -1176,15 +1158,11 @@ Status ComputeDeltasImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 
 Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length,
                      const BorderType &mode) {
-  constexpr int min_shape_dim = 2;
-  auto raw_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(raw_shape.Size() >= min_shape_dim,
-                               "ComputeDeltas: input tensor is not in shape of <..., freq, time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "ComputeDeltas: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("ComputeDeltas", input, kDefaultAudioDim, "<..., freq, time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("ComputeDeltas", input));
 
   // reshape Tensor from <..., freq, time> to <-1, time>
+  auto raw_shape = input->shape();
   int32_t n_frames = raw_shape[-1];
   int32_t all_freqs = raw_shape.NumOfElements() / n_frames;
   RETURN_IF_NOT_OK(input->Reshape(TensorShape{all_freqs, n_frames}));

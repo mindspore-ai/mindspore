@@ -25,13 +25,9 @@ constexpr float_t EqualizerBiquadOp::kQ = 0.707;
 Status EqualizerBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // check input tensor dimension, it should be greater than 0.
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "EqualizerBiquad: input tensor in not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("EqualizerBiquad", input, kMinAudioDim, "<..., time>"));
   // check input tensor type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "EqualizerBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("EqualizerBiquad", input));
 
   double w0 = 2.0 * PI * center_freq_ / sample_rate_;
   double alpha = sin(w0) / 2.0 / Q_;

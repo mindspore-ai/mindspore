@@ -22,12 +22,8 @@ namespace mindspore {
 namespace dataset {
 Status LFilterOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "LFilter: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
-                                 input->type() == DataType(DataType::DE_FLOAT16) ||
-                                 input->type() == DataType(DataType::DE_FLOAT64),
-                               "LFilter: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("LFilter", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorFloat("LFilter", input));
   if (input->type() == DataType(DataType::DE_FLOAT32)) {
     return LFilter(input, output, a_coeffs_, b_coeffs_, clamp_);
   } else if (input->type() == DataType(DataType::DE_FLOAT64)) {

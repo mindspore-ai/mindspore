@@ -15,8 +15,8 @@
 """
 Enum for audio ops.
 """
-
 from enum import Enum
+
 import mindspore._c_dataengine as cde
 
 
@@ -160,4 +160,3 @@ class BorderType(str, Enum):
     EDGE: str = "edge"
     REFLECT: str = "reflect"
     SYMMETRIC: str = "symmetric"
-    

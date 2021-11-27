@@ -22,24 +22,21 @@ namespace mindspore {
 namespace dataset {
 Status DeemphBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "DeemphBiquad: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
-                                 input->type() == DataType(DataType::DE_FLOAT16) ||
-                                 input->type() == DataType(DataType::DE_FLOAT64),
-                               "DeemphBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("DeemphBiquad", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorFloat("DeemphBiquad", input));
+  const int32_t kSampleRate44100 = 44100;
+  const int32_t kSampleRate48000 = 48000;
   int32_t central_freq = 0;
-  double width_slope = 0.0;
+  double width_slope = 1;
   double gain = 0.0;
-  // central_freq, width_slope and gain value reference sox values
-  if (sample_rate_ == 44100) {
-    central_freq = 5283;
-    width_slope = 0.4845;
-    gain = -9.477;
-  } else if (sample_rate_ == 48000) {
-    central_freq = 5356;
-    width_slope = 0.479;
-    gain = -9.62;
+  if (sample_rate_ == kSampleRate44100) {
+    central_freq = 5283;   // central_freq value from SoX
+    width_slope = 0.4845;  // width_slope value from SoX
+    gain = -9.477;         // gain value from SoX
+  } else if (sample_rate_ == kSampleRate48000) {
+    central_freq = 5356;  // central_freq value from SoX
+    width_slope = 0.479;  // width_slope value from SoX
+    gain = -9.62;         // gain value from SoX
   }
 
   double w0 = 2 * PI * central_freq / sample_rate_;
