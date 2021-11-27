@@ -25,6 +25,7 @@ from mindspore.nn import Cell
 
 from ..._c_expression import Tensor, security
 from ..._checkparam import Validator
+from ...common.api import _cell_graph_executor
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
 from ._summary_adapter import get_event_file_name, package_graph_event
 from ._writer_pool import WriterPool
@@ -324,9 +325,9 @@ class SummaryRecord:
             return False
         # Set the current summary of train step
         if self.network is not None and not self._status.get('has_graph'):
-            graph_proto = self.network.get_func_graph_proto()
+            graph_proto = _cell_graph_executor.get_optimize_graph_proto(self.network)
             if graph_proto is None and train_network is not None:
-                graph_proto = train_network.get_func_graph_proto()
+                graph_proto = _cell_graph_executor.get_optimize_graph_proto(train_network)
             if graph_proto is None:
                 logger.error("Failed to get proto for graph")
             else:

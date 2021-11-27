@@ -112,7 +112,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_compile_cache_dep_files", &GraphExecutorPy::set_compile_cache_dep_files,
          py::arg("compile_cache_dep_files") = py::list(), "Set the compilation cache dependent files.")
     .def("set_weights_values", &GraphExecutorPy::set_weights_values, py::arg("weights") = py::dict(),
-         "Set values of weights.");
+         "Set values of weights.")
+    .def("get_optimize_graph_proto", &GraphExecutorPy::GetOptimizeGraphProto, py::arg("phase") = py::str(""),
+         "Get the optimize graph proto string.")
+    .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 

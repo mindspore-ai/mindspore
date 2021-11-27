@@ -72,6 +72,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   ~GraphExecutorPy();
 
   const std::string &phase() const { return phase_; }
+  std::map<std::string, std::string> &jit_config() { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
   bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
   bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
@@ -85,6 +86,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr GetGradGraph(const std::string &phase);
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
+#ifndef ENABLE_SECURITY
+  py::bytes GetOptimizeGraphProto(const std::string &phase);
+#endif
+  void SetJitConfig(const py::dict &jit_config);
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;
 
@@ -142,6 +147,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 #endif
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
+  std::map<std::string, std::string> jit_config_;
   std::map<std::string, size_t> phase_to_num_op_info_;
   std::string queue_name_;
   bool enable_tuple_broaden_{false};

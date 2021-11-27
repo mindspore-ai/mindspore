@@ -1117,7 +1117,7 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
 
   auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
-  if (!multi_graphs) {
+  if (!multi_graphs && pipeline::GraphExecutorPy::GetInstance()->jit_config()["jit_level"] != "o0") {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 
