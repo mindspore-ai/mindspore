@@ -29,7 +29,7 @@ const std::vector<size_t> &EnvCreateKernel::GetWorkspaceSizeList() const { retur
 bool EnvCreateKernel::Init(const CNodePtr &cnode) {
   const auto &name = AnfAlgo::GetNodeAttr<std::string>(cnode, kEnvTypeName);
   std::tie(handle_, env_) = EnvironmentFactory::GetInstance().Create(name);
-  MS_LOG(EXCEPTION) << "Create environment " << name << " failed.";
+  MS_EXCEPTION_IF_NULL(env_);
   env_->Init(cnode, nullptr);
   InitSizeLists();
   return true;
@@ -53,7 +53,7 @@ const std::vector<size_t> &EnvResetKernel::GetWorkspaceSizeList() const { return
 bool EnvResetKernel::Init(const CNodePtr &cnode) {
   handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
-  MS_LOG(EXCEPTION) << "Get environment handle " << handle_ << " failed.";
+  MS_EXCEPTION_IF_NULL(env_);
   InitSizeLists();
   return true;
 }
@@ -72,7 +72,7 @@ const std::vector<size_t> &EnvStepKernel::GetWorkspaceSizeList() const { return 
 bool EnvStepKernel::Init(const CNodePtr &cnode) {
   handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
-  MS_LOG(EXCEPTION) << "Get environment handle " << handle_ << " failed.";
+  MS_EXCEPTION_IF_NULL(env_);
   InitSizeLists();
   return true;
 }
@@ -82,6 +82,7 @@ void EnvStepKernel::InitSizeLists() {
   output_size_list_.push_back(env_->StateSizeInBytes());
   output_size_list_.push_back(env_->RewardSizeInBytes());
   output_size_list_.push_back(env_->DoneSizeInBytes());
+  workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
 }
 
 bool EnvStepKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

@@ -60,8 +60,7 @@ class TagEnvironment : public Environment {
   GameSetting game_setting_host_;
   GameSetting *game_setting_device_ = nullptr;
   AgentState agent_state_host_;
-  AgentState *agent_state_device_;
-  float *team_reward_ = nullptr;
+  AgentState *agent_state_device_ = nullptr;
 
   enum StepKernelType { kBindBlock = 0, kCrossBlock };
   void StepKernelProfiling(const int *action, float *state, float *reward, bool *done, float *team_reward,
