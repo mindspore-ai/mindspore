@@ -67,7 +67,7 @@ mindspore.dataset.WaitedDSCallback
 
     .. py:method:: ds_step_end(ds_run_context)
 
-         用于定义在每个数据step结束后执行的回调方法。
+        用于定义在每个数据step结束后执行的回调方法。
 
         **参数：**
 
@@ -107,7 +107,7 @@ mindspore.dataset.WaitedDSCallback
 
     .. py:method:: step_end(run_context)
 
-        内部方法，不能被调用或重写。通过重写mindspore.train.callback.Callback.step_end来释放ds_step_begin的等待。
+        内部方法，不能被调用或重写。通过重写mindspore.train.callback.Callback.step_end来释放 `ds_step_begin` 的等待。
 
         **参数：**
 
