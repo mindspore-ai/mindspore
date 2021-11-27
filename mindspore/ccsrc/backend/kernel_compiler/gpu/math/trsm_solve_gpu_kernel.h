@@ -43,6 +43,8 @@ class TrsmGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                "cublasSetStream failed");
     auto inputA_addr = GetDeviceAddress<T>(inputs, 0);
     auto inputb_addr = GetDeviceAddress<T>(inputs, 1);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);

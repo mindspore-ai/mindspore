@@ -55,6 +55,10 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                "cublasSetStream failed");
+    CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                  "cusolverDnSetStream failed");
     if (!use_split_matrix_) {
       LaunchNonSplitMatrix(inputs, workspace, outputs, stream_ptr);
     } else {

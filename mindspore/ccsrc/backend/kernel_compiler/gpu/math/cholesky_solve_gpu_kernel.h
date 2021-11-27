@@ -49,6 +49,8 @@ class CholeskySolveGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                  "cusolverDnSetStream failed");
     auto input_a_addr = GetDeviceAddress<T>(inputs, kDim0);
     auto input_b_addr = GetDeviceAddress<T>(inputs, kDim1);
     auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
