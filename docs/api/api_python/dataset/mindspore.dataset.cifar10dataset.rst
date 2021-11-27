@@ -10,7 +10,7 @@ mindspore.dataset.Cifar10Dataset
     **参数：**
 
     - **dataset_dir** (str): 包含数据集文件的根目录路径。
-    - **usage** (str, 可选): 指定数据集的子集，可取值为 `train`，`test`或`all`。使用`train`参数将会读取50,000个训练样本，`test` 将会读取10,000个测试样本，`all` 将会读取全部60,000个样本（默认值为None，即全部样本图片）。
+    - **usage** (str, 可选): 指定数据集的子集，可取值为 `train`，`test 或`all`。使用 `train` 参数将会读取50,000个训练样本，`test` 将会读取10,000个测试样本， `all` 将会读取全部60,000个样本（默认值为None，即全部样本图片）。
     - **num_samples** (int, 可选): 指定从数据集中读取的样本数（可以小于数据集总数，默认值为None，即全部样本图片)。
     - **num_parallel_workers** (int, 可选): 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
     - **shuffle** (bool, 可选): 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
@@ -23,20 +23,20 @@ mindspore.dataset.Cifar10Dataset
 
     - **RuntimeError:** `dataset_dir` 路径下不包含数据文件。
     - **RuntimeError:** `num_parallel_workers` 超过系统最大线程数。
-    - **RuntimeError:** 同时指定了`sampler`和`shuffle`参数。
-    - **RuntimeError:** 同时指定了`sampler`和`num_shards`参数。
-    - **RuntimeError:** 指定了`num_shards`参数，但是未指定`shard_id`参数。
-    - **RuntimeError:** 指定了`shard_id`参数，但是未指定`num_shards`参数。
-    - **ValueError:**  `shard_id`参数错误（小于0或者大于等于 `num_shards`）。
+    - **RuntimeError:** 同时指定了 `sampler` 和 `shuffle` 参数。
+    - **RuntimeError:** 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **RuntimeError:** 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **RuntimeError:** 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError:**  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
-    .. note:: 此数据集可以通过`sampler`指定任意采样器，但参数`sampler` 和 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数及预期的行为。
+    .. note:: 此数据集可以通过 `sampler` 指定任意采样器，但参数 `sampler` 和 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数及预期的行为。
 
-    .. list-table:: 配置`sampler`和`shuffle`的不同组合得到的预期排序结果
+    .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
        :widths: 25 25 50
        :header-rows: 1
 
-       * - 参数`sampler`
-         - 参数`shuffle`
+       * - 参数 `sampler`
+         - 参数 `shuffle`
          - 预期数据顺序
        * - None
          - None
@@ -47,13 +47,13 @@ mindspore.dataset.Cifar10Dataset
        * - None
          - False
          - 顺序排列
-       * - 参数`sampler`
+       * - 参数 `sampler`
          - None
-         - 由`sampler`行为定义的顺序
-       * - 参数`sampler`
+         - 由 `sampler` 行为定义的顺序
+       * - 参数 `sampler`
          - True
          - 不允许
-       * - 参数`sampler`
+       * - 参数 `sampler`
          - False
          - 不允许
 
