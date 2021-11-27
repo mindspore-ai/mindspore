@@ -268,6 +268,7 @@ def vm_impl_sum(self):
 
 
 @vm_impl_getters.register(P.Select)
+@vm_impl_getters.register(P.Select.__name__)
 def vm_impl_select(self):
     """Generate vm_impl function for Select"""
 

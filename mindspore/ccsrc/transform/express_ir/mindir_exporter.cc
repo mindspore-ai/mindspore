@@ -619,7 +619,13 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   // Add primitive attrs
   if (IsValueNode<Primitive>(op)) {
     auto prim = GetValueNode<PrimitivePtr>(op);
-    for (auto attr : prim->attrs()) {
+    if (prim->isa<prim::DoSignaturePrimitive>()) {
+      auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
+      if (func != nullptr && func->isa<Primitive>()) {
+        prim = func->cast<PrimitivePtr>();
+      }
+    }
+    for (const auto &attr : prim->attrs()) {
       MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
       auto iter = g_export_attr_blacklist.find(attr.first);
       if (iter != g_export_attr_blacklist.end()) {

@@ -74,6 +74,7 @@ def get_bprop_zeros(self):
 
 
 @bprop_getters.register(P.DType)
+@bprop_getters.register(P.DType.__name__)
 def get_bprop_dtype(self):
     """Generate bprop for DType"""
 
@@ -134,6 +135,7 @@ def get_bprop_cast(self):
 
 
 @bprop_getters.register(P.Shape)
+@bprop_getters.register(P.Shape.__name__)
 def get_bprop_shape(self):
     """Generate bprop for Shape"""
 
@@ -144,6 +146,7 @@ def get_bprop_shape(self):
 
 
 @bprop_getters.register(P.DynamicShape)
+@bprop_getters.register(P.DynamicShape.__name__)
 def get_bprop_dynamicshape(self):
     """Generate bprop for Shape"""
 
@@ -167,6 +170,7 @@ def get_bprop_split(self):
 
 
 @bprop_getters.register(P.Rank)
+@bprop_getters.register(P.Rank.__name__)
 def get_bprop_rank(self):
     """Generate bprop for Rank"""
 
@@ -620,6 +624,7 @@ def get_bprop_sort(self):
 
 
 @bprop_getters.register(P.Identity)
+@bprop_getters.register(P.Identity.__name__)
 def get_bprop_identity(self):
     """Generate bprop for Identity"""
 
@@ -630,6 +635,7 @@ def get_bprop_identity(self):
 
 
 @bprop_getters.register(inner.Range)
+@bprop_getters.register(inner.Range.__name__)
 def get_bprop_range(self):
     """Generate bprop for Range"""
 
@@ -714,6 +720,7 @@ def get_bprop_eye(self):
 
 
 @bprop_getters.register(P.Select)
+@bprop_getters.register(P.Select.__name__)
 def get_bprop_select(self):
     """Generate bprop for Select"""
     select = P.Select()
@@ -725,6 +732,7 @@ def get_bprop_select(self):
 
 
 @bprop_getters.register(P.OnesLike)
+@bprop_getters.register(P.OnesLike.__name__)
 def get_bprop_oneslike(self):
     """Generate bprop for OnesLike"""
 
@@ -735,6 +743,7 @@ def get_bprop_oneslike(self):
 
 
 @bprop_getters.register(P.ZerosLike)
+@bprop_getters.register(P.ZerosLike.__name__)
 def get_bprop_zeroslike(self):
     """Generate bprop for ZerosLike"""
 
@@ -830,6 +839,7 @@ def get_bprop_tensor_scatter_add(self):
 
 
 @bprop_getters.register(P.ScatterMax)
+@bprop_getters.register(P.ScatterMax.__name__)
 def get_bprop_scatter_max(self):
     """Generate bprop for ScatterMax"""
     gather = P.Gather()
@@ -841,6 +851,7 @@ def get_bprop_scatter_max(self):
 
 
 @bprop_getters.register(P.Argmax)
+@bprop_getters.register(P.Argmax.__name__)
 def get_bprop_argmax(self):
     """Generate bprop for Argmax"""
 
@@ -851,6 +862,7 @@ def get_bprop_argmax(self):
 
 
 @bprop_getters.register(P.Argmin)
+@bprop_getters.register(P.Argmin.__name__)
 def get_bprop_argmin(self):
     """Generate bprop for Argmin"""
 
