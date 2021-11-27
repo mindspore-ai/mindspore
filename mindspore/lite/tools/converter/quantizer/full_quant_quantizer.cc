@@ -495,8 +495,8 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
 
 void FullQuantQuantizer::InitCpuConfig() {
   this->target_data_type_ = kNumberTypeInt8;
-  activation_symmetry_ = true;
-  weight_symmetry_ = false;
+  activation_symmetry_ = false;
+  weight_symmetry_ = true;
 }
 
 void FullQuantQuantizer::InitQMinMax() {

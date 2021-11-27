@@ -116,7 +116,7 @@ int MatmulBaseInt8CPUKernel::Arm64SdotImpl(int task_id) {
   int32_t *cur_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
 
   MatmulInt8DpOpt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, batch_c_ptr_ + cur_stride, param_->row_,
-                  cur_oc, param_->deep_align_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
+                  cur_oc, param_->deep_align_, input_sums_, batch_sums_ + cur_stride, quant_param_->out_act_min_,
                   quant_param_->out_act_max_, quant_param_->output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
                   filter_per_channel_, cur_zp);
 
@@ -140,7 +140,7 @@ int MatmulBaseInt8CPUKernel::RunImpl(int task_id) {
   int32_t *cur_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
 
   MatmulInt8Opt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, batch_c_ptr_ + cur_stride, param_->row_,
-                cur_oc, param_->deep_align_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
+                cur_oc, param_->deep_align_, input_sums_, batch_sums_ + cur_stride, quant_param_->out_act_min_,
                 quant_param_->out_act_max_, quant_param_->output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
                 filter_per_channel_, cur_zp);
 
