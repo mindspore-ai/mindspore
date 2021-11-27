@@ -58,7 +58,11 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
 
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  HandleControlFlow(NOT_NULL(graph));
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
+    HandleControlFlow(NOT_NULL(graph));
+  }
 
   // add all graphs to manager first, so that don't have to make new manager in following passes.
   auto manager = Manage(graph, true);

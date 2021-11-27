@@ -360,7 +360,8 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
-  if (real_input_node->isa<CNode>() || AnfAlgo::OutputAddrExist(real_input_node, 0)) {
+  if (real_input_node->isa<CNode>() || (AnfAlgo::OutputAddrExist(real_input_node, 0) &&
+                                        AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown)) {
     return;
   }
   auto context_ptr = MsContext::GetInstance();
