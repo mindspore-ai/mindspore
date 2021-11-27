@@ -45,8 +45,8 @@ static std::map<aclDataType, size_t> acl_data_type_size_map = {
 
 std::string GetParseType(const aclDataType &acl_data_type) {
   static const std::map<aclDataType, std::string> print_tensor_parse_map = {
-    {ACL_INT8, "Int8"},       {ACL_UINT8, "Uint8"},   {ACL_INT16, "Int16"},    {ACL_UINT16, "Uint16"},
-    {ACL_INT32, "Int32"},     {ACL_UINT32, "Uint32"}, {ACL_INT64, "Int64"},    {ACL_UINT64, "Uint64"},
+    {ACL_INT8, "Int8"},       {ACL_UINT8, "UInt8"},   {ACL_INT16, "Int16"},    {ACL_UINT16, "UInt16"},
+    {ACL_INT32, "Int32"},     {ACL_UINT32, "UInt32"}, {ACL_INT64, "Int64"},    {ACL_UINT64, "UInt64"},
     {ACL_FLOAT16, "Float16"}, {ACL_FLOAT, "Float32"}, {ACL_DOUBLE, "Float64"}, {ACL_BOOL, "Bool"}};
   auto type_iter = print_tensor_parse_map.find(acl_data_type);
   if (type_iter == print_tensor_parse_map.end()) {

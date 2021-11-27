@@ -58,7 +58,7 @@ class LossMonitor(Callback):
                 loss = loss[0]
 
         if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
-            loss = np.mean(loss.asnumpy())
+            loss = float(np.mean(loss.asnumpy()))
 
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
 
