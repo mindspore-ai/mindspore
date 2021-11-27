@@ -4991,7 +4991,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     """
 
 
-class BesselI0e(PrimitiveWithInfer):
+class BesselI0e(Primitive):
     r"""
     Computes BesselI0e of input element-wise.
 
@@ -5012,6 +5012,7 @@ class BesselI0e(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend``
@@ -5027,13 +5028,7 @@ class BesselI0e(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize BesselI0e"""
-
-    def infer_shape(self, x):
-        return x
-
-    def infer_dtype(self, x):
-        validator.check_tensor_dtype_valid('x', x, mstype.number_type, self.name)
-        return x
+        self.init_prim_io_names(inputs=['x'], outputs='output')
 
 
 class BesselI1e(Primitive):
