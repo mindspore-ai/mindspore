@@ -48,7 +48,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), node);
   } else {
     MS_LOG(EXCEPTION) << "Kernel " << kernel_builder_info->ToString() << "is not supported in AiCPU & AiCore : node ["
-                      << node->DebugString() << "]. trace:" << trace::DumpSourceLines(node);
+                      << node->DebugString() << "]" << trace::DumpSourceLines(node);
   }
   return nullptr;
 }

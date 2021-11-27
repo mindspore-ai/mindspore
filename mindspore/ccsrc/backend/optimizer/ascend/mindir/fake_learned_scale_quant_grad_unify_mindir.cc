@@ -36,7 +36,7 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerGra
   if (lsq_perlayer_grad_inputs.size() < kFakeLearnedScaleQuantGradInputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perlayer_grad_node has wrong inputs size, should be not less than "
                       << kFakeLearnedScaleQuantGradInputNum << ", but got " << lsq_perlayer_grad_inputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perlayer_grad_node);
+                      << trace::DumpSourceLines(lsq_perlayer_grad_node);
   }
   std::vector<AnfNodePtr> lsq_perlayer_grad_d_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDOpName)),
@@ -68,12 +68,12 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerRed
   if (lsq_perlayer_grad_inputs.size() < kFakeLearnedScaleQuantGradInputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perlayer_grad_node has wrong inputs size, should be not less than "
                       << kFakeLearnedScaleQuantGradInputNum << ", but got " << lsq_perlayer_grad_inputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perlayer_grad_node);
+                      << trace::DumpSourceLines(lsq_perlayer_grad_node);
   }
   if (lsq_perlayer_grad_d_outputs.size() != kFakeLearnedScaleQuantGradDOutputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perlayer_grad_d_outputs has wrong inputs size, should be "
                       << kFakeLearnedScaleQuantGradDOutputNum << ", but got " << lsq_perlayer_grad_d_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perlayer_grad_node);
+                      << trace::DumpSourceLines(lsq_perlayer_grad_node);
   }
   std::vector<AnfNodePtr> lsq_perlayer_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDReduceOpName)),
@@ -98,7 +98,7 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   if (lsq_perchannel_grad_inputs.size() < kFakeLearnedScaleQuantGradInputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perchannel_grad_node has wrong inputs size, should be not less than "
                       << kFakeLearnedScaleQuantGradInputNum << ", but got " << lsq_perchannel_grad_inputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perchannel_grad_node);
+                      << trace::DumpSourceLines(lsq_perchannel_grad_node);
   }
   std::vector<AnfNodePtr> lsq_perchannel_grad_d_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDOpName)),
@@ -131,12 +131,12 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   if (lsq_perchannel_grad_inputs.size() < kFakeLearnedScaleQuantGradInputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perchannel_grad_node has wrong inputs size, should be not less than "
                       << kFakeLearnedScaleQuantGradInputNum << ", but got " << lsq_perchannel_grad_inputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perchannel_grad_node);
+                      << trace::DumpSourceLines(lsq_perchannel_grad_node);
   }
   if (lsq_perchannel_grad_d_outputs.size() != kFakeLearnedScaleQuantGradDOutputNum) {
     MS_LOG(EXCEPTION) << "Lsq_perchannel_grad_d_outputs has wrong inputs size, should be "
                       << kFakeLearnedScaleQuantGradDOutputNum << ", but got " << lsq_perchannel_grad_inputs.size()
-                      << ". trace: " << trace::DumpSourceLines(lsq_perchannel_grad_node);
+                      << trace::DumpSourceLines(lsq_perchannel_grad_node);
   }
   std::vector<AnfNodePtr> lsq_perchannel_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDReduceOpName)),
@@ -172,7 +172,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerLayerGradUnifyMindIR::Process(const Fun
   if (lsq_perlayer_grad_d_outputs.size() != kFakeLearnedScaleQuantGradOutputNum) {
     MS_LOG(EXCEPTION) << "Fake_learned_scale_quant_perlayer_grad_d_outputs has wrong inputs size, should be "
                       << kFakeLearnedScaleQuantGradOutputNum << ", but got " << lsq_perlayer_grad_d_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> lsq_perlayer_reduce_grad_outputs;
@@ -181,7 +181,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerLayerGradUnifyMindIR::Process(const Fun
   if (lsq_perlayer_reduce_grad_outputs.size() != kSingleOutputNum) {
     MS_LOG(EXCEPTION) << "Fake_learned_scale_quant_perlayer_reduce_grad_outputs has wrong inputs size, should be "
                       << kSingleOutputNum << ", but got " << lsq_perlayer_reduce_grad_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), lsq_perlayer_grad_d_outputs[0],
@@ -211,7 +211,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerChannelGradUnifyMindIR::Process(const F
   if (lsq_perchannel_grad_d_outputs.size() != kFakeLearnedScaleQuantGradOutputNum) {
     MS_LOG(EXCEPTION) << "Fake_learned_scale_quant_perchannel_grad_d_outputs has wrong inputs size, should be "
                       << kFakeLearnedScaleQuantGradOutputNum << ", but got " << lsq_perchannel_grad_d_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> lsq_perchannel_reduce_grad_outputs;
@@ -220,7 +220,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerChannelGradUnifyMindIR::Process(const F
   if (lsq_perchannel_reduce_grad_outputs.size() != kSingleOutputNum) {
     MS_LOG(EXCEPTION) << "Fake_learned_scale_quant_perchannel_reduce_grad_outputs has wrong inputs size, should be "
                       << kSingleOutputNum << ", but got " << lsq_perchannel_reduce_grad_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), lsq_perchannel_grad_d_outputs[0],

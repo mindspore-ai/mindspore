@@ -110,8 +110,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(square_anf) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "Square node has no output in NodeUsersMap"
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Square node has no output in NodeUsersMap" << trace::DumpSourceLines(node);
   }
   AnfNodePtr ret_node = nullptr;
   if (manager->node_users()[square_anf].size() == 1) {
@@ -122,8 +121,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
     std::vector<AnfNodePtr> square_sumv2_outputs;
     CreateMultipleOutputsOfAnfNode(graph, square_sumv2, kSquareSumv2OutputNum, &square_sumv2_outputs);
     if (square_sumv2_outputs.size() != kSquareSumv2OutputNum) {
-      MS_LOG(EXCEPTION) << "make SquareSumV2 outputs fail"
-                        << " trace: " << trace::DumpSourceLines(square_sumv2);
+      MS_LOG(EXCEPTION) << "make SquareSumV2 outputs fail" << trace::DumpSourceLines(square_sumv2);
     }
     (void)manager->Replace(square, square_sumv2_outputs[1]);
     ret_node = square_sumv2_outputs[0];

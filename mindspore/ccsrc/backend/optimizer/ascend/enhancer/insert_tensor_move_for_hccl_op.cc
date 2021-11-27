@@ -47,7 +47,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
   auto &node_users = manager->node_users();
   auto iter = node_users.find(input);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager, trace: " << trace::DumpSourceLines(input);
+    MS_LOG(EXCEPTION) << "node has no output in manager." << trace::DumpSourceLines(input);
   }
   auto user_items = iter->second;
   if (user_items.size() == 1) {

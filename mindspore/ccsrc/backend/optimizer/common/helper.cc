@@ -153,7 +153,7 @@ void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
   if (real_input_tensor_num != input_tensor_size) {
     MS_LOG(EXCEPTION) << "The input tensor size[" << real_input_tensor_num
                       << "] of node [" + cnode->DebugString() + "] is not equal to " << input_tensor_size
-                      << ". trace: " << trace::DumpSourceLines(cnode);
+                      << trace::DumpSourceLines(cnode);
   }
 }
 

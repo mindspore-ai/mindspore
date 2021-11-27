@@ -144,7 +144,7 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, 0);
   if (output_format == kOpFormat_NC1KHKWHWC0) {
     MS_LOG(EXCEPTION) << "Got the hw format " << output_format << "when insert the transdata node "
-                      << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
+                      << node->DebugString() << trace::DumpSourceLines(node);
   }
   if (NeedInsertTransData(origin_shape, output_format)) {
     MS_LOG(DEBUG) << "Inserted transdata " << output_format << " to default , index :0";
@@ -173,7 +173,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
       MS_LOG(EXCEPTION) << "Got the special format" << output_format << " when insert the transdata node "
-                        << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
+                        << node->DebugString() << trace::DumpSourceLines(node);
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);

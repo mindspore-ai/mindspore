@@ -398,7 +398,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   CreateMultipleOutputsOfAnfNode(func_graph, splitv, kSplitVOutputNum, &splitv_outputs);
   if (splitv_outputs.size() != kSplitVOutputNum) {
     MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
-                      << " trace: " << trace::DumpSourceLines(dynamic_rnn_grad_cnode);
+                      << trace::DumpSourceLines(dynamic_rnn_grad_cnode);
   }
   auto origin_input4 = dynamic_rnn_grad_cnode->input(kIndex5);
   auto origin_input4_shape = AnfAlgo::GetOutputInferShape(origin_input4, 0);

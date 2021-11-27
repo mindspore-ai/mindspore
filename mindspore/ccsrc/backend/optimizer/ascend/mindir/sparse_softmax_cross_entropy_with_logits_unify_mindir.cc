@@ -63,8 +63,8 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     size_t index = logits_shape.size() - 1;
     depth = SizeToLong(logits_shape[index]);
   } else {
-    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString()
-                      << "] is empty. trace: " << trace::DumpSourceLines(sparse_softmax_node);
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
   }
 
   auto value_on = std::make_shared<tensor::Tensor>(1.0, kFloat32);
@@ -127,7 +127,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   if (!labels_shape.empty()) {
     loss_shape.emplace_back(labels_shape[0]);
   } else {
-    MS_LOG(EXCEPTION) << "One_hot output's shape is empty. trace: " << trace::DumpSourceLines(one_hot_node);
+    MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
 
   auto shapes = {loss_shape, AnfAlgo::GetOutputInferShape(one_hot_node, 0)};
@@ -141,8 +141,7 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<size_t> output_shape = AnfAlgo::GetOutputInferShape(node, 0);
   if (output_shape.empty()) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope()
-                      << "'s output shape is empty. trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << "'s output shape is empty" << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> range;
   for (size_t i = 0; i < output_shape.size(); i++) {
@@ -311,7 +310,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   std::vector<size_t> labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   if (labels_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
-                      << ". trace: " << trace::DumpSourceLines(sparse_softmax_node);
+                      << trace::DumpSourceLines(sparse_softmax_node);
   }
   auto y_value = static_cast<float>(labels_shape[0]);
   auto y = std::make_shared<tensor::Tensor>(y_value, kFloat32);
@@ -360,14 +359,13 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   if (softmax_output_shape.size() != softmax_output_shape_size) {
     MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits the second output shape size should be "
                       << softmax_output_shape_size << ", but got " << softmax_output_shape.size()
-                      << ". trace: " << trace::DumpSourceLines(softmax_output_node);
+                      << trace::DumpSourceLines(softmax_output_node);
   }
   ShapeVector tensor_shape;
   tensor_shape.emplace_back(softmax_output_shape[0]);
   tensor_shape.emplace_back(1);
   if (softmax_output_shape[0] == 0) {
-    MS_LOG(EXCEPTION) << "output_shape[0] of softmax should not be 0. trace: "
-                      << trace::DumpSourceLines(softmax_output_node);
+    MS_LOG(EXCEPTION) << "output_shape[0] of softmax should not be 0" << trace::DumpSourceLines(softmax_output_node);
   }
   std::vector<float> tensor_value(softmax_output_shape[0], 1.0 / softmax_output_shape[0]);
   auto buf_size = sizeof(float) * tensor_value.size();
@@ -413,13 +411,13 @@ bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse, string pa
   if (AnfAlgo::GetCNodeName(sparse) != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
     MS_LOG(EXCEPTION) << "The pass of " << pass_name << "'s input node should be "
                       << kSparseSoftmaxCrossEntropyWithLogitsOpName << ", but got " << AnfAlgo::GetCNodeName(sparse)
-                      << ". trace: " << trace::DumpSourceLines(sparse);
+                      << trace::DumpSourceLines(sparse);
   }
   if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse)) {
     return AnfAlgo::GetNodeAttr<bool>(sparse, kAttrIsGrad);
   } else {
     MS_LOG(EXCEPTION) << "Node of " << sparse->fullname_with_scope() << " does not have the attr " << kAttrIsGrad
-                      << ", related pass: " << pass_name << ", trace: " << trace::DumpSourceLines(sparse);
+                      << ", related pass: " << pass_name << trace::DumpSourceLines(sparse);
   }
 }
 }  // namespace

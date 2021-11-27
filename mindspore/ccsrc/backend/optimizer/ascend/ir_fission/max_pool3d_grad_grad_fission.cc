@@ -40,7 +40,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   }
   if (ksize.size() != kKernelSizeNum) {
     MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got " << ksize
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
   int64_t d = ksize[kDim2];
   int64_t h = ksize[kDim3];

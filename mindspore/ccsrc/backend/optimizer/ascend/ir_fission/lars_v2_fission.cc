@@ -53,8 +53,7 @@ CNodePtr LarsV2Fission::CreateLarsV2Update(const FuncGraphPtr &graph, const CNod
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
   if (square_sum_all_outputs.size() != kSquareSumOutputNum) {
-    MS_LOG(EXCEPTION) << "square_sum_all_outputs' size not equal 2"
-                      << " trace: " << trace::DumpSourceLines(lars_v2);
+    MS_LOG(EXCEPTION) << "square_sum_all_outputs' size not equal 2" << trace::DumpSourceLines(lars_v2);
   }
   CheckCNodeInputSize(lars_v2, kLarsV2InputTensorNum);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kLarsV2UpdateOpName)),

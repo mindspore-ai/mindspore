@@ -1966,8 +1966,7 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
 
   MS_EXCEPTION_IF_NULL(in_strategy);
   if (op_info->Init(in_strategy, out_strategy) == FAILED) {
-    MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed"
-                      << " trace: " << trace::DumpSourceLines(cnode);
+    MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed" << trace::DumpSourceLines(cnode);
   }
 }
 

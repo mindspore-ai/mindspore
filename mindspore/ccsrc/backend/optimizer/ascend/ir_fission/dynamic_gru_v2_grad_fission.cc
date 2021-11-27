@@ -270,7 +270,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
   CreateMultipleOutputsOfAnfNode(func_graph, splitv, kSplitVOutputNum, &splitv_outputs);
   if (splitv_outputs.size() != kSplitVOutputNum) {
     MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
-                      << " trace: " << trace::DumpSourceLines(splitv);
+                      << trace::DumpSourceLines(splitv);
   }
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   auto init_h_reshape = CreateHReshape(func_graph, dynamic_gru_v2_grad_cnode->input(input_index["init_h"]));

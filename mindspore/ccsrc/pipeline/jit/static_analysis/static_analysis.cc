@@ -689,7 +689,7 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBa
       }
     }
   }
-  buffer << ". trace: " << trace::DumpSourceLines(node);
+  buffer << trace::DumpSourceLines(node);
   return buffer.str();
 }
 

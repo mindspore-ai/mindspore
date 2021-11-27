@@ -44,7 +44,7 @@ inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const Abst
       << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   auto node = GetTraceNode(abstract1);
   if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
   }
   MS_EXCEPTION(TypeError) << oss.str();
 }
@@ -57,7 +57,7 @@ inline void TypeJoinLogging(const TypePtr &type1, const TypePtr &type2, const Ab
       << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   auto node = GetTraceNode(abstract1);
   if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
   }
   MS_EXCEPTION(TypeError) << oss.str();
 }
@@ -70,7 +70,7 @@ inline void ShapeJoinLogging(const BaseShapePtr &shape1, const BaseShapePtr &sha
       << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   auto node = GetTraceNode(abstract1);
   if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
   }
   MS_EXCEPTION(ValueError) << oss.str();
 }

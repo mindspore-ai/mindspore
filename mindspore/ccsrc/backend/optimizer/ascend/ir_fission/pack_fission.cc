@@ -46,7 +46,7 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   }
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
-                      << " trace: " << trace::DumpSourceLines(origin_pack_cnode);
+                      << trace::DumpSourceLines(origin_pack_cnode);
   }
   std::vector<size_t> new_shape = output_shape;
   auto axis_l = LongToSize(axis);

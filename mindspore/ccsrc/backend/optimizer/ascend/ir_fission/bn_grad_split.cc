@@ -59,8 +59,7 @@ void BnGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNo
   CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be " << kBNTrainingUpdateGradOutputNum
-                      << ", but got " << bn_update_grad_outputs.size()
-                      << ". trace: " << trace::DumpSourceLines(bn_grad_node);
+                      << ", but got " << bn_update_grad_outputs.size() << trace::DumpSourceLines(bn_grad_node);
   }
   std::vector<AnfNodePtr> bn_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceGradOpName)),
@@ -90,14 +89,14 @@ CNodePtr BnGradSplit::BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CN
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be " << kBNTrainingUpdateGradOutputNum
-                      << ", but got " << bn_update_grad_outputs.size() << ". trace: " << trace::DumpSourceLines(cnode);
+                      << ", but got " << bn_update_grad_outputs.size() << trace::DumpSourceLines(cnode);
   }
 
   std::vector<AnfNodePtr> bn_reduce_grad_outputs;
   CreateOutputsOfReduceGrad(func_graph, cnode, bn_update_grad_outputs, &bn_reduce_grad_outputs);
   if (bn_reduce_grad_outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "Outputs of bn_reduce_grad has wrong size, should be " << 1 << ", but got "
-                      << bn_reduce_grad_outputs.size() << ". trace: " << trace::DumpSourceLines(cnode);
+                      << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(cnode);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],
@@ -115,7 +114,7 @@ CNodePtr SyncBnGradSplit::SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, 
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be " << kBNTrainingUpdateGradOutputNum
-                      << ", but got " << bn_update_grad_outputs.size() << ". trace: " << trace::DumpSourceLines(cnode);
+                      << ", but got " << bn_update_grad_outputs.size() << trace::DumpSourceLines(cnode);
   }
 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
@@ -128,7 +127,7 @@ CNodePtr SyncBnGradSplit::SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, 
   CreateOutputsOfReduceGrad(func_graph, cnode, allreduce_mul_outputs, &bn_reduce_grad_outputs);
   if (bn_reduce_grad_outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "Outputs of bn_reduce_grad has wrong size, should be " << 1 << ", but got "
-                      << bn_reduce_grad_outputs.size() << ". trace: " << trace::DumpSourceLines(cnode);
+                      << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(cnode);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],

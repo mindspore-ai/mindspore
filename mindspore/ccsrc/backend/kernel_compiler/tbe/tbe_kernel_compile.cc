@@ -283,8 +283,7 @@ void TbeKernelCompileManager::PrintCompileResult(const nlohmann::json &json) {
       PrintProcessLog(json);
       auto task_id = GetJsonValue<int>(json, kJobId);
       auto target_node = job_id_to_node_[task_id];
-      MS_LOG(EXCEPTION) << json_name << " " << job_type
-                        << " running failed, trace: " << trace::DumpSourceLines(target_node);
+      MS_LOG(EXCEPTION) << json_name << " " << job_type << " running failed." << trace::DumpSourceLines(target_node);
     }
   }
 }
@@ -490,8 +489,7 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
         auto target_node = job_id_to_node_[target_status.target_job_id];
         ClearOldTask();
         MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
-                          << "\n except_msg : " << target_status.except_msg
-                          << "\n Trace: " << trace::DumpSourceLines(target_node);
+                          << "\n except_msg: " << target_status.except_msg << trace::DumpSourceLines(target_node);
       } else {
         MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
         (void)success_job->emplace_back(target_status.target_job_id);
@@ -546,7 +544,7 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
       kernel_pack = bin_map->SearchInFile(json_name);
       if (kernel_pack == nullptr) {
         MS_LOG(EXCEPTION) << "Can not find .json file or the .o file for op:" << json_name
-                          << ", trace: " << trace::DumpSourceLines(node);
+                          << trace::DumpSourceLines(node);
       }
     }
     auto kernel_info_json = kernel_pack->kernel_json_info();
@@ -555,8 +553,7 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
 
     auto iter = kernel_io_size_info_.find(json_name);
     if (iter == kernel_io_size_info_.end() || iter->second.json_name != json_name) {
-      MS_LOG(EXCEPTION) << "Can not find node io size info for: " << full_name
-                        << ", trace: " << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Can not find node io size info for: " << full_name << trace::DumpSourceLines(node);
     }
     kernel_mod_ptr->SetInputSizeList(iter->second.input_size_list);
     kernel_mod_ptr->SetOutputSizeList(iter->second.output_size_list);
@@ -612,7 +609,7 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
       auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
       auto except_msg = FilterExceptionMessage(all_logs);
       MS_LOG(EXCEPTION) << job_type << " running failed, op: " << json_name << "\nexception message:" << except_msg
-                        << "\ntrace: " << trace::DumpSourceLines(node);
+                        << trace::DumpSourceLines(node);
     }
   }
   MS_LOG(DEBUG) << json_name << " " << job_type << " success, get: " << res;
@@ -653,8 +650,8 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
       continue;  // kernel mode exist, no need build
     }
     if (!json_creator->GenJson(node, &kernel_json)) {
-      MS_LOG(EXCEPTION) << "Generate compile json failed, [" << node->fullname_with_scope()
-                        << "], trace: " << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Generate compile json failed, [" << node->fullname_with_scope() << "]"
+                        << trace::DumpSourceLines(node);
     }
     auto json_name = json_creator->GetJsonName();
     full_name_to_json_name_[full_name] = json_name;
@@ -770,7 +767,7 @@ std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) {
   nlohmann::json kernel_info;
   nlohmann::json select_json;
   if (!json_creator->GenJson(node, &kernel_info)) {
-    MS_LOG(EXCEPTION) << "Gen select json failed. [" << full_name << "], trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Gen select json failed. [" << full_name << "]" << trace::DumpSourceLines(node);
   }
   JsonAssemble(kSelectFormat, kernel_info, &select_json);
   auto select_ret = DispatchCompileTask(select_json);
@@ -787,7 +784,7 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node) {
   nlohmann::json kernel_info;
   nlohmann::json check_json;
   if (!json_creator->GenJson(node, &kernel_info)) {
-    MS_LOG(EXCEPTION) << "Gen check json failed.[" << full_name << "], trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Gen check json failed.[" << full_name << "]" << trace::DumpSourceLines(node);
   }
   JsonAssemble(kCheckSupport, kernel_info, &check_json);
   auto check_ret = DispatchCompileTask(check_json);

@@ -65,19 +65,19 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
   auto param_abstract_shape = origin_node->input(1)->Shape();
   MS_EXCEPTION_IF_NULL(param_abstract_shape);
   if (!param_abstract_shape->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "The node [" << origin_node->DebugString()
-                      << "]'s first input has wrong shape type. trace: " << trace::DumpSourceLines(origin_node);
+    MS_LOG(EXCEPTION) << "The node [" << origin_node->DebugString() << "]'s first input has wrong shape type."
+                      << trace::DumpSourceLines(origin_node);
   }
   auto param_dyn_shape = param_abstract_shape->cast<abstract::ShapePtr>();
   ShapeVector shape(param_dyn_shape->shape());
   if (shape.empty()) {
-    MS_LOG(EXCEPTION) << "The shape of node [" << origin_node->DebugString()
-                      << "]'s first input is empty. trace: " << trace::DumpSourceLines(origin_node);
+    MS_LOG(EXCEPTION) << "The shape of node [" << origin_node->DebugString() << "]'s first input is empty."
+                      << trace::DumpSourceLines(origin_node);
   }
   if (shape[shape.size() - 1] == -1) {
     MS_LOG(EXCEPTION) << "The node [" << origin_node->DebugString()
                       << "]'s first input should not be dynamic, but got shape:" << shape
-                      << ". trace: " << trace::DumpSourceLines(origin_node);
+                      << trace::DumpSourceLines(origin_node);
   }
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
@@ -118,7 +118,7 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(pad);
   if (origin_node->size() != kGatherInputNum) {
     MS_LOG(EXCEPTION) << "In dynamic shape scene, gatherv2 should have 3 inputs, but got " << origin_node->size()
-                      << ". trace: " << trace::DumpSourceLines(origin_node);
+                      << trace::DumpSourceLines(origin_node);
   }
   std::vector<AnfNodePtr> gatherv2_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimGather->name())), pad,
                                              origin_node->input(kGatherInputIndicesIndex),

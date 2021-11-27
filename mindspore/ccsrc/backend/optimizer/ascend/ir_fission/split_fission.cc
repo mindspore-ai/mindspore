@@ -35,11 +35,11 @@ size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_
     split_dim += SizeToLong(input_shape.size());
   }
   if (LongToSize(split_dim) >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0. trace: "
+    MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0."
                       << trace::DumpSourceLines(split_node);
   }
   if (num_split == 0) {
-    MS_LOG(EXCEPTION) << "Divisor 'num_split' should not be 0. trace: " << trace::DumpSourceLines(split_node);
+    MS_LOG(EXCEPTION) << "Divisor 'num_split' should not be 0." << trace::DumpSourceLines(split_node);
   }
   return input_shape[LongToSize(split_dim)] / LongToSize(num_split);
 }
@@ -93,7 +93,7 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
     split_dim += SizeToLong(output_shape.size());
   }
   if (split_dim < 0) {
-    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim << ", trace: " << trace::DumpSourceLines(origin_cnode);
+    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
   }
   auto split_dim_l = LongToSize(split_dim);
   auto num_split_l = LongToSize(num_split);

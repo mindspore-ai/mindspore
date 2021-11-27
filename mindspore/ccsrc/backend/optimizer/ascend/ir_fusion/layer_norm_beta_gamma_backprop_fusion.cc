@@ -36,7 +36,7 @@ void GetOutputCastNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, 
     MS_EXCEPTION_IF_NULL(output_cnode);
     if (AnfAlgo::GetCNodeName(output_cnode) != prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "The output of node " << node->DebugString() << " should be "
-                        << prim::kPrimTupleGetItem->name() << " trace: " << trace::DumpSourceLines(node);
+                        << prim::kPrimTupleGetItem->name() << trace::DumpSourceLines(node);
     }
     if (manager->node_users().find(output) == manager->node_users().end() ||
         manager->node_users()[output].size() != 1) {

@@ -69,11 +69,11 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1: get keep_prob
   if (!AnfAlgo::HasNodeAttr(kKeepProb, cnode)) {
-    MS_LOG(EXCEPTION) << "Dropout node does not have attr: keep_prob. trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Dropout node does not have attr: keep_prob." << trace::DumpSourceLines(node);
   }
   if (AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
     if (!AnfAlgo::HasNodeAttr(kSeed0, cnode) || !AnfAlgo::HasNodeAttr(kSeed1, cnode)) {
-      MS_LOG(EXCEPTION) << "Dropout node does not have attr: seed0 or seed1. trace: " << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Dropout node does not have attr: seed0 or seed1." << trace::DumpSourceLines(node);
     }
   }
   auto keep_prob = AnfAlgo::GetNodeAttr<float>(node, kKeepProb);

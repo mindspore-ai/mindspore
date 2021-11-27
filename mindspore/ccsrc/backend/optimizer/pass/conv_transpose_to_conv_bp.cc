@@ -42,7 +42,7 @@ const AnfNodePtr ConvTransposeToConvBackpropInputPass::Process(const FuncGraphPt
 
   if (conv_transpose->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Cnode inputs should not be empty, cnode: " << node->DebugString()
-                      << ", trace: " << trace::DumpSourceLines(conv_transpose);
+                      << trace::DumpSourceLines(conv_transpose);
   }
 
   auto prim = GetValueNode<PrimitivePtr>(conv_transpose->input(kCNodePrimitiveIdx));

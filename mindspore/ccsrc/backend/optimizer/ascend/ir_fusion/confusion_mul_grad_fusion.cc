@@ -36,8 +36,7 @@ AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const An
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(input2) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager"
-                      << " trace: " << trace::DumpSourceLines(input2);
+    MS_LOG(EXCEPTION) << "node has no output in manager" << trace::DumpSourceLines(input2);
   }
 
   AnfNodePtr mul0 = nullptr;

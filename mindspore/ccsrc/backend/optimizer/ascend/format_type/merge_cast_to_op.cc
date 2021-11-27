@@ -181,8 +181,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
   AnfAlgo::SetSelectKernelBuildInfo(*alternative_kernel_info, next_cnode.get());
   if (AnfAlgo::GetInputTensorNum(node) < kCastInputTensorNum) {
     MS_LOG(EXCEPTION) << "Op[" << node->DebugString() << "] has wrong input num:" << AnfAlgo::GetInputTensorNum(node)
-                      << ", should be not less than " << kCastInputTensorNum
-                      << ". trace: " << trace::DumpSourceLines(node);
+                      << ", should be not less than " << kCastInputTensorNum << trace::DumpSourceLines(node);
   }
   return node->input(1);
 }
