@@ -15,6 +15,8 @@
  */
 
 #include "backend/kernel_compiler/kernel_build_info.h"
+
+#include <algorithm>
 #include "utils/log_adapter.h"
 #include "debug/anf_ir_dump.h"
 namespace mindspore {
@@ -64,6 +66,11 @@ const std::vector<TypeId> &KernelBuildInfo::GetAllOutputDeviceTypes() const { re
 size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
+
+size_t KernelBuildInfo::GetOutputNumWithoutMonad() const {
+  return std::count_if(outputs_device_type_.begin(), outputs_device_type_.end(),
+                       [](TypeId type) { return type != TypeId::kObjectTypeUMonad; });
+}
 
 std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   if (input_reshape_type_.empty()) {

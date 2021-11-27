@@ -94,6 +94,8 @@ class KernelBuildInfo {
 
   size_t GetOutputNum() const;
 
+  size_t GetOutputNumWithoutMonad() const;
+
   std::string ToString() const;
 
   bool IsSimilarityKernelBuildInfo(const KernelBuildInfo &other) const;
