@@ -53,7 +53,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::IShapeLayer *shape_layer = network->addShape(*shape_input);
 
   if (shape_layer == nullptr) {
-    MS_LOG(DEBUG) << "add shape op failed for TensorRT.";
+    MS_LOG(ERROR) << "add shape op failed for TensorRT.";
     return RET_ERROR;
   }
   shape_layer->setName(op_name_.c_str());

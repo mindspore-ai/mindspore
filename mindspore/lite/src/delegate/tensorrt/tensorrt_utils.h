@@ -95,12 +95,13 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
                         size_t thread_count);
 
-std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format = Format::NHWC);
 
 nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
 
 nvinfer1::ITensor *PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network,
                                             const ITensorHelper &input_tensor_helper);
+int GetDimsVolume(const nvinfer1::Dims &dims);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {

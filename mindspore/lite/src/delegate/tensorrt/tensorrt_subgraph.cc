@@ -212,6 +212,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
   int ret;
 
   for (auto cur_op : all_ops_) {
+    cur_op->SetRuntime(runtime_);
     for (auto in_tensor : cur_op->inputs()) {
       // Data From CPU
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
@@ -370,7 +371,13 @@ int TensorRTSubGraph::Prepare() {
     MS_LOG(ERROR) << "input dims need to be specified.";
     return RET_ERROR;
   }
-
+  for (auto op : all_ops_) {
+    ret = op->Prepare(tensor_bindings_, engine_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "prepare op failed of " << op->GetOpName();
+      return RET_ERROR;
+    }
+  }
   for (auto tensor : outputs_) {
     tensor.MutableData();
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());

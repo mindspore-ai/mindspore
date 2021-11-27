@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
+#include "src/delegate/tensorrt/tensorrt_runtime.h"
 
 namespace mindspore::lite {
 const schema::Primitive *TensorRTOp::GetPrimitive() { return this->op_primitive_; }
@@ -43,10 +44,19 @@ const std::vector<TensorRTOp *> &TensorRTOp::in_ops() const { return this->in_op
 
 const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_ops_; }
 
+void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) { this->runtime_ = runtime; }
+
 bool TensorRTOp::IsShapeKnown() {
   if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {
     return false;
   }
   return true;
+}
+int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
+  if (op_binding_tensor_.size() != 0) {
+    MS_LOG(ERROR) << "need special op Prepare for " << op_name_;
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite
