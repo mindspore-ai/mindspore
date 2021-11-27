@@ -397,6 +397,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
     auto depend_node = graph->NewCNode(depend_inputs);
     MS_EXCEPTION_IF_NULL(depend_node);
     depend_node->set_abstract(first_input->abstract());
+    depend_node->AddAttr("recompute_depend", MakeValue(true));
     new_inputs[1] = depend_node;
   }
   auto recomputed_node = CreateNewRecomputedNode(graph, origin_node, new_inputs);
