@@ -20,7 +20,6 @@
 #include <x86intrin.h>
 #endif
 #include "nnacl/fp32/common_func_fp32.h"
-#endif
 
 void TiledC8MatmulFp32(float *dst, const float *src, const float *weight, size_t cal_num, size_t ic8, size_t oc8) {
   const float *src_tmp = src;
@@ -242,3 +241,4 @@ void TiledC8MatmulFp32(float *dst, const float *src, const float *weight, size_t
     dst += cal_num;
   }
 }
+#endif
