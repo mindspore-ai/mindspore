@@ -17,7 +17,6 @@
 #include "backend/kernel_compiler/cpu/eigen/matrix_inverse_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
 #include "Eigen/Dense"
-#define EIGEN_NO_MALLOC
 
 namespace mindspore {
 namespace kernel {

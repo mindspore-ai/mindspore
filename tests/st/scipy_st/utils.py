@@ -44,7 +44,7 @@ def match_array(actual, expected, error=0, err_msg=''):
 
 
 def create_full_rank_matrix(shape, dtype):
-    if len(shape) < 2 and shape[-1] != shape[-2]:
+    if len(shape) < 2 or shape[-1] != shape[-2]:
         raise ValueError(
             'Full rank matrix must be a square matrix, but has shape: ', shape)
 
@@ -61,8 +61,15 @@ def create_full_rank_matrix(shape, dtype):
     return a
 
 
+def create_random_rank_matrix(shape, dtype):
+    if len(shape) < 2:
+        raise ValueError(
+            'random rank matrix must shape bigger than two dims, but has shape: ', shape)
+    return onp.random.random(shape).astype(dtype)
+
+
 def create_sym_pos_matrix(shape, dtype):
-    if len(shape) != 2 and shape[0] != shape[1]:
+    if len(shape) != 2 or shape[0] != shape[1]:
         raise ValueError(
             'Symmetric positive definite matrix must be a square matrix, but has shape: ', shape)
 

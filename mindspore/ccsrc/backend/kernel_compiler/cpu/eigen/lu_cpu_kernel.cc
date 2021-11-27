@@ -16,10 +16,10 @@
 
 #include "backend/kernel_compiler/cpu/eigen/lu_cpu_kernel.h"
 #include <vector>
-#include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
+#include <algorithm>
+#include <utility>
+#include <unordered_map>
 #include "utils/ms_utils.h"
-#include "Eigen/Dense"
-#include "Eigen/LU"
 
 namespace mindspore {
 namespace kernel {
@@ -33,6 +33,7 @@ constexpr size_t kPermutationIndex = 2;
 constexpr size_t kLUDefaultShape = 1;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
+constexpr int kZeroThreshold = INT32_MIN;
 }  // namespace
 
 template <typename T>
@@ -70,51 +71,145 @@ void LUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+void LUCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  size_t lu_size = lu_col_ * sizeof(T);
+  (void)workspace_size_list_.emplace_back(lu_size);
+  (void)workspace_size_list_.emplace_back(lu_size);
+}
+
+template <typename T>
+T LUCPUKernel<T>::GetPermutatedValue(const T *lu_value, const int *per, size_t i, size_t j) {
+  const T *pered_lu_value = lu_value + per[i] * lu_col_ + j;
+  return *pered_lu_value;
+}
+
+template <typename T>
+bool LUCPUKernel<T>::UpdateMajorPermutation(T *lu_value, int *per, size_t k, size_t rows) {
+  T max_major_value = static_cast<T>(kZeroThreshold);
+  int max_major_index = 0;
+  for (size_t i = k; i < rows; ++i) {
+    T value = GetPermutatedValue(lu_value, per, i, k);
+    T abs_value = std::abs(value);
+    if (abs_value > max_major_value) {
+      max_major_value = abs_value;
+      max_major_index = i;
+    }
+  }
+  size_t per_k = per[k];
+  per[k] = per[max_major_index];
+  per[max_major_index] = per_k;
+  return max_major_value != static_cast<T>(kZeroThreshold);
+}
+
+template <typename T>
+void LUCPUKernel<T>::SetPermutatedValue(T *lu_value, const int *per, size_t i, size_t j, const T &value) {
+  T *pered_lu_value = lu_value + per[i] * lu_col_ + j;
+  *pered_lu_value = value;
+}
+
+template <typename T>
+bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                            const std::vector<kernel::AddressPtr> &workspace,
                             const std::vector<kernel::AddressPtr> &outputs) {
+  // input matrix of (m,n) PA = LU
   T *a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
-  Map<Matrix<T, RowMajor>> input_a(a_value, a_row_, a_col_);
-
   T *lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);
-  Map<Matrix<T, RowMajor>> output_lu(lu_value, lu_row_, lu_col_);
-  int *pivots_value = reinterpret_cast<int *>(outputs[kPivotsIndex]->addr);
+  // pivots permutation value
+  int *per_value = reinterpret_cast<int *>(outputs[kPivotsIndex]->addr);
+  // permutation matrix value
   int *permutation_value = reinterpret_cast<int *>(outputs[kPermutationIndex]->addr);
-  Map<Matrix<int, RowMajor>> output_permutation(permutation_value, permutation_row_, permutation_col_);
-
-  if (a_row_ == a_col_) {
-    // partial_piv_lu
-    auto partial_lu = input_a.lu();
-    auto partial_p = partial_lu.permutationP();
-    output_lu.noalias() = partial_lu.matrixLU();
-    output_permutation.noalias() = partial_p.toDenseMatrix();
-  } else {
-    // full_piv_lu
-    auto full_piv_lu = input_a.fullPivLu();
-    auto full_piv_p = full_piv_lu.permutationP();
-    output_lu.noalias() = full_piv_lu.matrixLU();
-    output_permutation.noalias() = full_piv_p.toDenseMatrix();
+  T *lu_ori_wk = reinterpret_cast<T *>(workspace[kLuIndex]->addr);
+  T *lu_trans_wk = reinterpret_cast<T *>(workspace[kPivotsIndex]->addr);
+  // init pivots
+  for (size_t i = 0; i < pivots_row_; ++i) {
+    per_value[i] = i;
   }
 
-  // calculate permutation array from permutation matrix to indicate scipy's pivots.
-  for (int i = 0; i < static_cast<int>(output_permutation.rows()); ++i) {
-    if (output_permutation(i, i) != 0) {
-      pivots_value[i] = i;
+  // 1. memcpy input to output, do full lu inplace.
+  (void)memcpy_s(lu_value, lu_row_ * lu_col_ * sizeof(T), a_value, a_row_ * a_col_ * sizeof(T));
+
+  int s = std::min(a_row_, a_col_);
+  // 2. do lu decompose inplace
+  for (int k = 0; k < s; ++k) {
+    // 2.1 choose major element of current col if return false means current col elements are all zero, just continue.
+    if (!UpdateMajorPermutation(lu_value, per_value, k, lu_row_)) {
       continue;
     }
-    for (int j = 0; j < static_cast<int>(output_permutation.cols()); ++j) {
-      if (output_permutation(i, j) != 0) {
-        pivots_value[i] = j;
-        break;
+    // 2.2 major element x --> (1/x), get inplace origin lu matrix value.
+    T value = static_cast<T>(1.0 / GetPermutatedValue(lu_value, per_value, k, k));
+    // 2.3 change major col values
+    for (size_t i = k + 1; i < lu_row_; ++i) {
+      T y = static_cast<T>(GetPermutatedValue(lu_value, per_value, i, k) * value);
+      // set inplace new lu matrix value.
+      SetPermutatedValue(lu_value, per_value, i, k, y);
+    }
+
+    // 2.4 Gauss elimination core
+    for (size_t i = k + 1; i < lu_row_; ++i) {
+      for (size_t j = k + 1; j < lu_col_; ++j) {
+        T y =
+          static_cast<T>(GetPermutatedValue(lu_value, per_value, i, j) -
+                         GetPermutatedValue(lu_value, per_value, i, k) * GetPermutatedValue(lu_value, per_value, k, j));
+        SetPermutatedValue(lu_value, per_value, i, j, y);
       }
     }
   }
-  // here, we note that eigen calculate permutation matrix is col major, so transpose it to row major,
-  // but permutation array is based on permutation matrix before transposed, which is consistent to scipy and jax.
-  output_permutation.transposeInPlace();
-  if (output_lu.RowsAtCompileTime != 0 && output_lu.ColsAtCompileTime != 0 && output_permutation.size() != 0) {
-    return true;
+
+  // 3. calculate final lu by permutation list
+  std::unordered_map<int, std::pair<int, bool>> pivots_map;
+  for (int i = 0; i < static_cast<int>(lu_row_); ++i) {
+    pivots_map[per_value[i]] = {i, false};
   }
-  MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
+  int pivots_count = 0;
+  for (const auto &pivot : pivots_map) {
+    pivots_count++;
+    int key = pivot.first;
+    int index = pivot.second.first;
+    bool is_visited = pivot.second.second;
+    if (is_visited || index == (pivots_count - 1)) {
+      continue;
+    }
+
+    T *lu_ori_row = lu_value + index * lu_col_;
+    T *lu_trans_row = lu_value + key * lu_col_;
+    // copy ori data to trans lu
+    (void)memcpy_s(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
+    // copy new data to ori data ptr
+    (void)memcpy_s(lu_ori_row, lu_col_ * sizeof(T), lu_trans_row, lu_col_ * sizeof(T));
+    // update pivot map
+    pivots_map[key] = {index, true};
+    // put ori data which stored in workspace to mapped new place
+    is_visited = pivots_map[index].second;
+    while (!is_visited) {
+      key = index;
+      index = pivots_map[key].first;
+      is_visited = pivots_map[key].second;
+      lu_ori_row = lu_value + index * lu_col_;
+      T *tmp_wk = lu_trans_wk;
+      lu_trans_wk = lu_ori_wk;
+      lu_ori_wk = tmp_wk;
+      // copy new ori data to trans workspace
+      (void)memcpy_s(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
+      // copy new data to ori data place
+      (void)memcpy_s(lu_ori_row, lu_col_ * sizeof(T), lu_ori_wk, lu_col_ * sizeof(T));
+      pivots_map[key] = {index, true};
+    }
+  }
+
+  // 4. calculate final permutation matrix
+  // for PA = LU get: base + row * permutation_row_ + col
+  // for A = PLU  get: base + col * permutation_row_ + row
+  // here, we do A = PLU which is same as scipy.
+  size_t count = permutation_col_ * permutation_row_ * sizeof(int);
+  (void)memset_s(reinterpret_cast<void *>(permutation_value), count, 0, count);
+  for (size_t i = 0; i < pivots_row_; ++i) {
+    int position = per_value[i];
+    int *per_addr = permutation_value + position * permutation_row_ + i;
+    *per_addr = 1;
+  }
+
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

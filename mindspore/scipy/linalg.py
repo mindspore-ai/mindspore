@@ -18,10 +18,13 @@ from .. import ops
 from .ops import SolveTriangular
 from .ops import CholeskySolver
 from .ops import Cholesky
+from .ops import LU
+from .ops import LUSolver
 from .ops import EighNet
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh']
+__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu',
+           'lu_solve']
 
 
 def block_diag(*arrs):
@@ -102,14 +105,10 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
             Default is to use upper triangle.
         trans (0, 1, 2, 'N', 'T', 'C', optional):
             Type of system to solve:
-
-            ========  =========
-            trans     system
-            ========  =========
-            0 or 'N'  a x  = b
-            1 or 'T'  a^T x = b
-            2 or 'C'  a^H x = b
-            ========  =========
+            trans:        system:
+                0 or 'N'        a x  = b
+                1 or 'T'        a^T x = b
+                2 or 'C'        a^H x = b
         unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
             will not be referenced.
         overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance)
@@ -160,21 +159,18 @@ def inv(a, overwrite_a=False, check_finite=True):
     Compute the inverse of a matrix.
 
     Args:
-        a (Tensor): Tensor
-            Square matrix to be inverted.
-        overwrite_a (bool, optional): Discard data in `a` (may improve performance).
-            Default is False.
-        check_finite (bool, optional): Whether to check that the input matrix contains
-            only finite numbers.
-            Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+        a (Tensor): Square matrix to be inverted.
+        overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default is False.
+        check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
+            Disabling may give a performance gain, but may result in problems (crashes, non-termination)
+            if the inputs do contain infinities or NaNs.
 
     Returns:
         ainv (Tensor): Inverse of the matrix `a`.
 
     Raises:
-        LinAlgError: If `a` is singular.
-        ValueError: If `a` is not square, or not 2D.
+        LinAlgError: If :math:'a' is singular.
+        ValueError: If :math:'a' is not square, or not 2D.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -328,52 +324,40 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Solve a standard or generalized eigenvalue problem for a complex
     Hermitian or real symmetric matrix.
 
-    Find eigenvalues Tensor ``w`` and optionally eigenvectors Tensor ``v`` of
-    Tensor ``a``, where ``b`` is positive definite such that for every
-    eigenvalue λ (i-th entry of w) and its eigenvector ``vi`` (i-th column of
-    ``v``) satisfies::
-
-                      a @ vi = λ * b @ vi
+    Find eigenvalues Tensor ``w`` and optionally eigenvectors Tensor ``v`` of Tensor ``a``,
+    where ``b`` is positive definite such that for every eigenvalue λ (i-th entry of w) and
+    its eigenvector ``vi`` (i-th column of``v``) satisfies::
+        a @ vi = λ * b @ vi
         vi.conj().T @ a @ vi = λ
         vi.conj().T @ b @ vi = 1
-
     In the standard problem, ``b`` is assumed to be the identity matrix.
 
     Args:
-        a (Tensor): (M, M) Tensor
-            A complex Hermitian or real symmetric matrix whose eigenvalues and
+        a (Tensor): A (M, M) complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
-        b (Tensor, optional): (M, M) Tensor
-            A complex Hermitian or real symmetric definite positive matrix in.
+        b (Tensor, optional): A (M, M) complex Hermitian or real symmetric definite positive matrix in.
             If omitted, identity matrix is assumed.
-        lower (bool, optional): Whether the pertinent Tensor data is taken from
-            the lower or upper triangle of ``a`` and, if applicable, ``b``. (Default: lower)
-        eigvals_only (bool, optional): Whether to calculate only eigenvalues
-            and no eigenvectors. (Default: both are calculated)
-        _type (int, optional): For the generalized problems, this keyword specifies
-            the problem type to be solved for ``w`` and ``v`` (only takes 1, 2, 3 as possible
-            inputs)::
-
+        lower (bool, optional): Whether the pertinent Tensor data is taken from the lower or upper
+            triangle of ``a`` and, if applicable, ``b``. (Default: lower)
+        eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
+            (Default: both are calculated)
+        _type (int, optional): For the generalized problems, this keyword specifies the problem type
+            to be solved for ``w`` and ``v`` (only takes 1, 2, 3 as possible inputs)::
                 1 =>     a @ v = w @ b @ v
                 2 => a @ b @ v = w @ v
                 3 => b @ a @ v = w @ v
-
             This keyword is ignored for standard problems.
-        overwrite_a (bool, optional): Whether to overwrite data in ``a``
-            (may improve performance). Default is False.
-        overwrite_b (bool, optional): Whether to overwrite data in ``b``
-            (may improve performance). Default is False.
-        check_finite (bool, optional): Whether to check that the input matrices
-            contain only finite numbers.
-            Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
-        turbo (bool, optional): use divide and conquer algorithm (faster but
-            expensive in memory, only for generalized eigenvalue problem and
-            if full set of eigenvalues are requested.). Has no significant
-            effect if eigenvectors are not requested.
-        eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order)
-            eigenvalues and corresponding eigenvectors to be returned: 0 <= lo <= hi <= M-1.
-            If omitted, all eigenvalues and eigenvectors are returned.
+        overwrite_a (bool, optional): Whether to overwrite data in ``a`` (may improve performance). Default is False.
+        overwrite_b (bool, optional): Whether to overwrite data in ``b`` (may improve performance). Default is False.
+        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems (crashes, non-termination)
+            if the inputs do contain infinities or NaNs.
+        turbo (bool, optional): use divide and conquer algorithm (faster but expensive in memory, only
+            for generalized eigenvalue problem and if full set of eigenvalues are requested.).
+            Has no significant effect if eigenvectors are not requested.
+            eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
+            and corresponding eigenvectors to be returned: 0 <= lo <= hi <= M-1. If omitted, all eigenvalues
+            and eigenvectors are returned.
 
     Returns:
         w (Tensor): (N,) Tensor, The N (1<=N<=M) selected eigenvalues, in ascending order,
@@ -381,10 +365,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         v (Tensor): (M, N) Tensor, (if ``eigvals_only == False``)
 
     Raises:
-        LinAlgError: If eigenvalue computation does not converge, an error occurred, or
-            b matrix is not definite positive. Note that if input matrices are
-            not symmetric or Hermitian, no error will be reported but results will
-            be wrong.
+        LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
+            definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
+            be reported but results will be wrong.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -400,3 +383,227 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     """
     eigh_net = EighNet(not eigvals_only, lower=True)
     return eigh_net(a)
+
+
+def lu_pivots_to_permutation(pivots, permutation_size: int):
+    """transfer pivots to permutation"""
+    batch_dims = pivots.shape[:-1]
+    k = pivots.shape[-1]
+    per = mnp.arange(0, permutation_size)
+    permutation = mnp.broadcast_to(per, batch_dims + (permutation_size,))
+    permutation = mnp.array(permutation)
+    if permutation_size == 0:
+        return permutation
+
+    for i in range(k):
+        j = pivots[..., i]
+        loc = mnp.ix_(*(mnp.arange(0, b) for b in batch_dims))
+        x = permutation[..., i]
+        y = permutation[loc + (j,)]
+        permutation[..., i] = y
+        permutation[loc + (j,)] = x
+    return permutation
+
+
+def lu_solve_core(in_lu, permutation, b, trans):
+    """ core implementation of lu solve"""
+    m = in_lu.shape[0]
+    res_shape = b.shape[1:]
+    prod_result = 1
+    for sh in res_shape:
+        prod_result *= sh
+    x = mnp.reshape(b, (m, prod_result))
+    if trans == 0:
+        trans_str = "N"
+        x = x[permutation, :]
+    elif trans == 1:
+        trans_str = "T"
+    elif trans == 2:
+        trans_str = "C"
+    else:
+        raise ValueError("trans error, it's value must be 0, 1, 2")
+    ms_lu_solve = LUSolver(trans_str)
+    output = ms_lu_solve(in_lu, x)
+    return mnp.reshape(output, b.shape)
+
+
+def check_lu_shape(in_lu, b):
+    """ check lu input shape"""
+    if len(in_lu.shape) < 2 or in_lu.shape[-1] != in_lu.shape[-2]:
+        raise ValueError("last two dimensions of LU decomposition must be equal.")
+
+    if b.shape is None:
+        raise ValueError(" LU decomposition input b's rank must >=1.")
+    rhs_vector = in_lu.ndim == b.ndim + 1
+    if rhs_vector:
+        if b.shape[-1] != in_lu.shape[-1]:
+            raise ValueError("LU decomposition: lu matrix and b must have same number of dimensions")
+        mnp.expand_dims(b, axis=1)
+    else:
+        if b.shape[-2] != in_lu.shape[-1]:
+            raise ValueError("LU decomposition: lu matrix and b must have same number of dimensions")
+
+
+def lu_factor(a, overwrite_a=False, check_finite=True):
+    """
+    Compute pivoted LU decomposition of a matrix.
+    The decomposition is::
+        A = P L U
+    where P is a permutation matrix, L lower triangular with unit diagonal elements, and U upper triangular.
+
+    Args:
+        a (Tensor): square matrix of (M, M) to decompose
+        overwrite_a (bool, optional): Whether to overwrite data in A (may increase performance)
+        check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        lu (Tensor): a square matrix of (N, N) containing U in its upper triangle, and L in its lower triangle.
+            The unit diagonal elements of L are not stored.
+        piv (Tensor): (N,) Pivot indices representing the permutation matrix P:
+            row i of matrix was interchanged with row piv[i].
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import lu_factor
+        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> lu, piv = lu_factor(A)
+        >>> lu
+        [[ 7.        ,  5.        ,  6.        ,  6.        ],
+        [ 0.28571429,  3.57142857,  6.28571429,  5.28571429],
+        [ 0.71428571,  0.12      , -1.04      ,  3.08      ],
+        [ 0.71428571, -0.44      , -0.46153846,  7.46153846]]
+        >>> piv
+        [2, 0, 3, 1]
+    """
+    del overwrite_a, check_finite
+    msp_lu = LU()
+    m_lu, pivots, _ = msp_lu(a)
+    return m_lu, pivots
+
+
+def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
+    """
+    Compute pivoted LU decomposition of a matrix.
+
+    The decomposition is::
+
+        A = P L U
+
+    where P is a permutation matrix, L lower triangular with unit
+    diagonal elements, and U upper triangular.
+
+    Args:
+        a (Tensor): a (M, N) matrix to decompose
+        permute_l (bool, optional): Perform the multiplication P*L (Default: do not permute)
+        overwrite_a (bool, optional): Whether to overwrite data in a (may improve performance)
+        check_finite (bool, optional):  Whether to check that the input matrix contains
+            only finite numbers. Disabling may give a performance gain, but may result
+            in problems (crashes, non-termination) if the inputs do contain infinities or NaNs.
+
+    Returns:
+        **(If permute_l == False)**
+
+        p (Tensor): (M, M) Permutation matrix
+        l (Tensor): (M, K) Lower triangular or trapezoidal matrix with unit diagonal.
+            K = min(M, N)
+        u (Tensor): (K, N) Upper triangular or trapezoidal matrix
+
+        **(If permute_l == True)**
+
+        pl (Tensor): (M, K) Permuted L matrix.
+            K = min(M, N)
+        u (Tensor): (K, N) Upper triangular or trapezoidal matrix
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import lu
+        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> p, l, u = lu(A)
+        >>> p
+        [[0., 1., 0., 0.],
+         [0., 0., 0., 1.],
+         [1., 0., 0., 0.],
+         [0., 0., 1., 0.]]
+        >>> l
+        [[ 1.        ,  0.        ,  0.        ,  0.        ],
+         [ 0.28571429,  1.        ,  0.        ,  0.        ],
+         [ 0.71428571,  0.12      ,  1.        ,  0.        ],
+         [ 0.71428571, -0.44      , -0.46153846,  1.        ]]
+        >>> u
+        [[ 7.        ,  5.        ,  6.        ,  6.        ],
+         [ 0.        ,  3.57142857,  6.28571429,  5.28571429],
+         [ 0.        ,  0.        , -1.04      ,  3.08      ],
+         [ 0.        ,  0.        ,  0.        ,  7.46153846]]
+    """
+    del overwrite_a, check_finite
+    msp_lu = LU()
+    m_lu, _, p = msp_lu(a)
+    m = a.shape[-2]
+    n = a.shape[-1]
+    k = min(m, n)
+    a_dtype = a.dtype
+    l = mnp.tril(m_lu, -1)[:, :k] + mnp.eye(m, k, dtype=a_dtype)
+    u = mnp.triu(m_lu)[:k, :]
+    if permute_l:
+        return mnp.dot(p, l), u
+    return p, l, u
+
+
+def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
+    """Solve an equation system, a x = b, given the LU factorization of a
+
+    Args:
+        lu_and_piv (Tensor, Tensor): Factorization of the coefficient matrix a, as given by lu_factor
+        b (Tensor): Right-hand side
+        trans (int, optional): {0, 1, 2}
+            Type of system to solve:
+            =====  =========
+            trans  system
+            =====  =========
+            0      a x   = b
+            1      a^T x = b
+            2      a^H x = b
+            =====  =========
+        overwrite_b (bool, optional): Whether to overwrite data in b (may increase performance)
+        check_finite ( bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems (crashes, non-termination)
+            if the inputs do contain infinities or NaNs.
+
+    Returns:
+        x (Tesnor): Solution to the system
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.linalg import lu_factor, lu_solve
+        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float64))
+        >>> lu, piv = lu_factor(A)
+        >>> lu_solve((lu, piv), b)
+        [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
+    """
+
+    del overwrite_b, check_finite
+    m_lu, pivots = lu_and_piv
+    # 1. check shape
+    check_lu_shape(m_lu, b)
+    # here permutation array has been calculated, just use it.
+    # 2. calculate permutation
+    permutation = pivots
+    # 3. rhs_vector
+    rhs_vector = m_lu.ndim == b.ndim + 1
+    x = lu_solve_core(m_lu, permutation, b, trans)
+    return x[..., 0] if rhs_vector else x

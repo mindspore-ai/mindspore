@@ -22,7 +22,8 @@ import scipy as osp
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
-from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix
+from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix, \
+    create_random_rank_matrix
 
 onp.random.seed(0)
 context.set_context(mode=context.PYNATIVE_MODE)
@@ -227,3 +228,82 @@ def test_eigh_solver(n: int):
     msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_Au).astype(onp.complex128)), lower=False, eigvals_only=True)
     assert onp.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(4, 4), (4, 5), (10, 5), (20, 20)])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_lu(shape: (int, int), dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    a = create_random_rank_matrix(shape, dtype)
+    s_p, s_l, s_u = osp.linalg.lu(a)
+    tensor_a = Tensor(a)
+    m_p, m_l, m_u = msp.linalg.lu(tensor_a)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(m_p.asnumpy(), s_p, rtol=rtol, atol=atol)
+    assert onp.allclose(m_l.asnumpy(), s_l, rtol=rtol, atol=atol)
+    assert onp.allclose(m_u.asnumpy(), s_u, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [4, 5, 10, 20])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_lu_factor(n: int, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    a = create_full_rank_matrix((n, n), dtype)
+    s_lu, _ = osp.linalg.lu_factor(a)
+    tensor_a = Tensor(a)
+    m_lu, pivots = msp.linalg.lu_factor(tensor_a)
+    m_l, m_u = onp.tril(m_lu.asnumpy(), k=-1) + onp.eye(n), onp.triu(m_lu.asnumpy())
+    s_l, s_u = onp.tril(s_lu, k=-1) + onp.eye(n), onp.triu(s_lu)
+    rtol = 1.e-5
+    atol = 1.e-5
+    assert onp.allclose(m_lu.asnumpy(), s_lu, rtol=rtol, atol=atol)
+    assert onp.allclose(a[pivots.asnumpy()], onp.dot(m_l, m_u), rtol=rtol, atol=atol)
+    assert onp.allclose(a[pivots.asnumpy()], onp.dot(s_l, s_u), rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [4, 5, 10, 20])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_lu_solve(n: int, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu_solve test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    a = create_full_rank_matrix((n, n), dtype)
+    b = onp.random.random((n, 1)).astype(dtype)
+    s_lu, s_piv = osp.linalg.lu_factor(a)
+
+    tensor_a = Tensor(a)
+    tensor_b = Tensor(b)
+
+    m_lu, m_piv = msp.linalg.lu_factor(tensor_a)
+
+    lu_factor_x = (s_lu, s_piv)
+    msp_lu_factor = (m_lu, m_piv)
+
+    osp_x = osp.linalg.lu_solve(lu_factor_x, b)
+    msp_x = msp.linalg.lu_solve(msp_lu_factor, tensor_b)
+    real_b = mnp.dot(tensor_a, msp_x)
+    expected_b = onp.dot(a, osp_x)
+    rtol = 1.e-3
+    atol = 1.e-3
+    assert onp.allclose(real_b.asnumpy(), expected_b, rtol=rtol, atol=atol)
+    assert onp.allclose(msp_x.asnumpy(), osp_x, rtol=rtol, atol=atol)
