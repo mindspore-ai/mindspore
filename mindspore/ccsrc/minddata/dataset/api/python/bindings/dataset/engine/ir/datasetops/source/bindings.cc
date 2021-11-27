@@ -43,6 +43,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 
@@ -385,6 +386,17 @@ PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
                       auto sbu = std::make_shared<SBUNode>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(sbu->ValidateParams());
                       return sbu;
+                    }));
+                }));
+
+PYBIND_REGISTER(SpeechCommandsNode, 2, ([](const py::module *m) {
+                  (void)py::class_<SpeechCommandsNode, DatasetNode, std::shared_ptr<SpeechCommandsNode>>(
+                    *m, "SpeechCommandsNode", "to create a SpeechCommandsNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
+                      auto speech_commands =
+                        std::make_shared<SpeechCommandsNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(speech_commands->ValidateParams());
+                      return speech_commands;
                     }));
                 }));
 

@@ -69,7 +69,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
-    check_yes_no_dataset
+    check_yes_no_dataset, check_speech_commands_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -7920,6 +7920,130 @@ class _SBDataset:
 
     def __getitem__(self, idx):
         return self._get_item(idx)
+
+
+class SpeechCommandsDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the SpeechCommands dataset.
+
+    The generated dataset has five columns :py:obj:`[waveform, sample_rate, label, speaker_id, utterance_number]`.
+    The tensor of column :py:obj:`waveform` is a vector of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
+    The tensor of column :py:obj:`label` is a scalar of the string type.
+    The tensor of column :py:obj:`speaker_id` is a scalar of the string type.
+    The tensor of column :py:obj:`utterance_number` is a scalar of the int32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train`
+            will read from 84,843 samples, `test` will read from 11,005 samples, `valid` will read from 9,981
+            test samples and `all` will read from all 105,829 samples (default=None, will read all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will read all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only be specified
+            when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> speech_commands_dataset_dir = "/path/to/speech_commands_dataset_directory"
+        >>>
+        >>> # Read 3 samples from SpeechCommands dataset
+        >>> dataset = ds.SpeechCommandsDataset(dataset_dir=speech_commands_dataset_dir, num_samples=3)
+        >>>
+        >>> # Note: In SpeechCommands dataset, each dictionary has keys "waveform", "sample_rate", "label",
+        >>> # "speaker_id" and "utterance_number".
+
+    About SpeechCommands dataset:
+
+    The SpeechCommands is database for limited_vocabulary speech recognition, containing 105,829 audio samples of
+    '.wav' format.
+
+    Here is the original SpeechCommands dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── speech_commands_dataset_dir
+             ├── cat
+                  ├── b433eff_nohash_0.wav
+                  ├── 5a33edf_nohash_1.wav
+                  └──....
+             ├── dog
+                  ├── b433w2w_nohash_0.wav
+                  └──....
+             ├── four
+             └── ....
+
+    Citation:
+
+    .. code-block::
+        @article{2018Speech,
+        title={Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition},
+        author={Warden, P.},
+        year={2018}
+        }
+    """
+
+    @check_speech_commands_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.SpeechCommandsNode(self.dataset_dir, self.usage, self.sampler)
 
 
 class DeserializedDataset(Dataset):
