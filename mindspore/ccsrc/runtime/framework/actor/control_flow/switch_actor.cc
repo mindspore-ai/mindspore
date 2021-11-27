@@ -50,9 +50,9 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
   // Call the base class interface to get input data and input partial.
   ControlActor::FetchInput(context);
   size_t index = GetIndex(context);
-
   if (!output_partial_arrows_.empty()) {
-    auto func_graph = input_partials_[index + kSwitchCondPos].first;
+    MS_EXCEPTION_IF_NULL(input_partials_[index + kSwitchCondPos]);
+    auto func_graph = input_partials_[index + kSwitchCondPos]->func_graph_;
     MS_EXCEPTION_IF_NULL(func_graph);
     input_partials_[0] = input_partials_[index + kSwitchCondPos];
   }

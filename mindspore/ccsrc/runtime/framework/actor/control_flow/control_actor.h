@@ -31,11 +31,23 @@
 
 namespace mindspore {
 namespace runtime {
-// Op data with branch ID represents the data sent by gather actor to entrance actor, including all real
+// Op partial represents the partial structure, including a funcgraph and its real parameters, maybe device tensors
+// or partials.
+struct OpPartial;
+using OpPartialPtr = std::shared_ptr<OpPartial>;
+struct OpPartial {
+  FuncGraph *func_graph_{nullptr};
+  std::vector<std::pair<size_t, DeviceTensor *>> device_tensors_;
+  std::vector<std::pair<size_t, OpPartialPtr>> partials_;
+};
+
+// Op real parameters with branch ID represents the data sent by gather actor to entrance actor, including all real
 // parameters and the id of the caller.
-using OpDataWithBranchID = std::pair<std::vector<DeviceTensor *>, int>;
-// Op partial represents the partial structure, including a funcgraph and its real parameters.
-using OpPartial = std::pair<FuncGraph *, std::vector<DeviceTensor *>>;
+struct OpRealParameterWithBranchID {
+  std::vector<std::pair<size_t, DeviceTensor *>> device_tensors_;
+  std::vector<std::pair<size_t, OpPartialPtr>> partials_;
+  int branch_id_;
+};
 // The control actor is the base class of control flow actor.
 class ControlActor : public AbstractActor {
  public:
@@ -46,15 +58,14 @@ class ControlActor : public AbstractActor {
   void Init() override;
 
   // Receive partial.
-  virtual void RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
-                            OpContext<DeviceTensor> *const context);
+  virtual void RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context);
 
   // Receive branch id.
   virtual void RunBranchID(int branch_id, OpContext<DeviceTensor> *const context);
 
   const std::vector<DataArrowPtr> &output_partial_arrows() const { return output_partial_arrows_; }
   const std::vector<AID> &output_branch_id_arrows() const { return output_branch_id_arrows_; }
-  const std::unordered_map<size_t, OpPartial> &local_partials() const { return local_partials_; }
+  const std::unordered_map<size_t, OpPartialPtr> &local_partials() const { return local_partials_; }
   const std::vector<AID> &input_partial_arrow_aids() const { return input_partial_arrow_aids_; }
   const std::vector<AID> &input_branch_id_arrow_aids() const { return input_branch_id_arrow_aids_; }
   size_t branch_id() const { return output_branch_id_; }
@@ -74,7 +85,7 @@ class ControlActor : public AbstractActor {
   // Input data.
   // 1.Input partial.
   // Record the partial received by each step, the key of the pair indicates the location of the partial.
-  std::unordered_map<int, std::vector<std::pair<size_t, OpPartial>>> input_op_partials_;
+  std::unordered_map<int, std::vector<std::pair<size_t, OpPartialPtr>>> input_op_partials_;
   // 2. Branch ids is used to record the id corresponding to the output branch.
   // In control flow, sub funcgraph may be called in multiple places, and the output must be return to different
   // places. Therefore, the output of each subgraph will be connected to a exit actor, and the caller will send
@@ -85,7 +96,7 @@ class ControlActor : public AbstractActor {
   std::unordered_map<int, std::stack<int>> input_branch_ids_;
 
   // Fetch data. After fetch input, all the input collected is saved here.
-  std::vector<OpPartial> input_partials_;
+  std::vector<OpPartialPtr> input_partials_;
   std::vector<DeviceTensor *> input_device_tensors_;
 
   // Input num.
@@ -98,7 +109,6 @@ class ControlActor : public AbstractActor {
 
   // Output Arrows.
   std::vector<DataArrowPtr> output_partial_arrows_;
-  OpPartial output_partial_;
 
   std::vector<AID> output_branch_id_arrows_;
   // The branch id is the unique identifier of the control actor. In the control flow, there are multiple control
@@ -107,7 +117,7 @@ class ControlActor : public AbstractActor {
   int output_branch_id_{0};
 
   // Partial data in local. When partial is only funcgraph without real parameter, it is stored inside the actor.
-  std::unordered_map<size_t, OpPartial> local_partials_;
+  std::unordered_map<size_t, OpPartialPtr> local_partials_;
   // Device tensor in control node, but not in kernel graph.
   std::unordered_map<size_t, DeviceTensor *> local_device_tensors_;
 

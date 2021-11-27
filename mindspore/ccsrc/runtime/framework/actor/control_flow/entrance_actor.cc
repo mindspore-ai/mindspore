@@ -21,11 +21,11 @@ namespace mindspore {
 namespace runtime {
 constexpr size_t kEntranceInputStartPos = 1;
 
-void EntranceActor::RunOpDataWithBranchID(std::vector<DeviceTensor *> input_data, int branch_id,
-                                          OpContext<DeviceTensor> *const context) {
+void EntranceActor::RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
+                                                   OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_data_with_branch_id_[sequential_num].emplace(input_data, branch_id);
+  real_parameters_with_branch_id_[sequential_num].emplace(real_parameter_with_branch_id);
 
   if (CheckRunningCondition(context)) {
     Run(context);
@@ -61,12 +61,31 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
     output_branch_id_ = 0;
   } else {
     // 2.Data comes from the gather actor, it is in the form of data with branch id.
-    output_branch_id_ = input_op_data_with_branch_id_[sequential_num].front().second;
-    const auto &device_tensors = input_op_data_with_branch_id_[sequential_num].front().first;
-    if (device_tensors.size() != formal_parameters_.size()) {
-      MS_LOG(ERROR) << "Invalid input num, need:" << formal_parameters_.size() << " current:" << device_tensors.size();
+    output_branch_id_ = real_parameters_with_branch_id_[sequential_num].front().branch_id_;
+    const auto &device_tensors = real_parameters_with_branch_id_[sequential_num].front().device_tensors_;
+    const auto &partials = real_parameters_with_branch_id_[sequential_num].front().partials_;
+
+    // Collect the device tensors.
+    if (device_tensors.size() + partials.size() != formal_parameters_.size()) {
+      MS_LOG(ERROR) << "Invalid input num, need:" << formal_parameters_.size()
+                    << " device tensor num:" << device_tensors.size() << " partial num:" << partials.size();
     }
-    input_device_tensors_ = device_tensors;
+    for (const auto &device_tensor : device_tensors) {
+      if (device_tensor.first >= input_device_tensors_.size()) {
+        MS_LOG(ERROR) << "Invalid device tensor index:" << device_tensor.first
+                      << " vector size:" << input_device_tensors_.size() << " for actor:" << GetAID();
+      }
+      input_device_tensors_[device_tensor.first] = device_tensor.second;
+    }
+
+    // Collect the partials.
+    for (const auto &partial : partials) {
+      if (partial.first >= input_partials_.size()) {
+        MS_LOG(ERROR) << "Invalid partial index:" << partial.first << " vector size:" << partials.size()
+                      << " for actor:" << GetAID();
+      }
+      input_partials_[partial.first] = partial.second;
+    }
   }
 
   // Init the device tensor in output data.
@@ -75,7 +94,7 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
       continue;
     }
     const auto &data = input_device_tensors_[i];
-    if (data == nullptr && (!output_data_by_output_index_[i].empty())) {
+    if (data == nullptr) {
       MS_LOG(ERROR) << "Input data index:" << i << " for actor:" << GetAID() << " is empty!";
     }
     for (auto &output_data : output_data_by_output_index_[i]) {
@@ -116,8 +135,8 @@ bool EntranceActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
   }
 
   // Data comes from the gather actor.
-  const auto &iter = input_op_data_with_branch_id_.find(context->sequential_num_);
-  if (iter == input_op_data_with_branch_id_.end() || iter->second.empty()) {
+  const auto &iter = real_parameters_with_branch_id_.find(context->sequential_num_);
+  if (iter == real_parameters_with_branch_id_.end() || iter->second.empty()) {
     return false;
   }
   return true;
@@ -138,14 +157,14 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     input_op_controls_.erase(control_iter);
   }
 
-  const auto &iter = input_op_data_with_branch_id_.find(sequential_num);
-  if (iter == input_op_data_with_branch_id_.end() || iter->second.empty()) {
+  const auto &iter = real_parameters_with_branch_id_.find(sequential_num);
+  if (iter == real_parameters_with_branch_id_.end() || iter->second.empty()) {
     MS_LOG(ERROR) << "Cannot find input in batch op result for actor:" << GetAID();
   }
 
   iter->second.pop();
   if (iter->second.empty()) {
-    input_op_data_with_branch_id_.erase(sequential_num);
+    real_parameters_with_branch_id_.erase(sequential_num);
   }
 }
 }  // namespace runtime

@@ -40,9 +40,8 @@ class EntranceActor : public ControlActor {
     input_device_tensors_.resize(parameters.size());
   }
   ~EntranceActor() override = default;
-
-  void RunOpDataWithBranchID(std::vector<DeviceTensor *> input_data, int branch_id,
-                             OpContext<DeviceTensor> *const context);
+  void RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
+                                      OpContext<DeviceTensor> *const context);
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -62,7 +61,7 @@ class EntranceActor : public ControlActor {
   bool is_actor_ready_{true};
 
   // Input data with branch id.
-  mindspore::HashMap<int, std::queue<OpDataWithBranchID>> input_op_data_with_branch_id_;
+  mindspore::HashMap<int, std::queue<OpRealParameterWithBranchID>> real_parameters_with_branch_id_;
 
   // Call nodes are used to record the caller of the subgraph, and are used to connect the data arrow
   // and branch id arrow in the link process.

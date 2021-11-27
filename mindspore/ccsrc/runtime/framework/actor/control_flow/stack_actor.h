@@ -42,8 +42,7 @@ class StackActor : public ControlActor {
   // The input data and partial of the stack actor needs to be pushed into the stack according to the input index,
   // so it is implemented separately.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
-  void RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
-                    OpContext<DeviceTensor> *const context) override;
+  void RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) override;
 
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
@@ -61,7 +60,7 @@ class StackActor : public ControlActor {
   // The input data and partials records that the stack actor is copied from the input nodes and needs to be
   // stored in the device tensor in the stack.
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_parameter_data_;
-  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartial>>> input_parameter_partial_;
+  mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartialPtr>>> input_parameter_partial_;
 
   // Input parameter num represents the number of actor's input come from funcgraph itself, these inputs will
   // be ranked at the front of input.

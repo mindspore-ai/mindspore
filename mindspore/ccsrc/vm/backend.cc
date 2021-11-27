@@ -720,9 +720,12 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
                      size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   const size_t position = iter - parameters.begin();
+  // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
+  // and there is no need to input a tensor.
   if (position >= args.size()) {
-    MS_LOG(EXCEPTION) << "Position out of args range, position value is " << position << " and args size is "
-                      << args.size() << ".";
+    MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
+                 << ".";
+    return;
   }
   auto value_tuple = utils::cast<ValueTuplePtr>(args[position]);
   MS_EXCEPTION_IF_NULL(value_tuple);
