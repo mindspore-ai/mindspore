@@ -19,6 +19,8 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+MPICollectiveCommLib::MPICollectiveCommLib() { global_group_name_ = kMPIGlobalGroupName; }
+
 bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
   if (initialized_) {
     return false;
@@ -56,49 +58,7 @@ bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_nam
 }
 }  // namespace cpu
 
-// The exported APIs for 'dlsym' to load.
 using MPICollectiveCommLib = mindspore::device::cpu::MPICollectiveCommLib;
-
 CollectiveCommunicationLib *communication_lib_instance() { return &MPICollectiveCommLib::GetInstance(); }
-
-bool InitializeCollectiveLib(uint32_t, uint32_t) { return MPICollectiveCommLib::GetInstance().Initialize(); }
-
-bool FinalizeCollectiveLib() { return MPICollectiveCommLib::GetInstance().Finalize(); }
-
-bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
-  return MPICollectiveCommLib::GetInstance().CreateCommunicationGroup(group_name, group_ranks);
-}
-
-bool DestroyCommunicationGroup(const std::string &group_name) {
-  return MPICollectiveCommLib::GetInstance().DestroyCommunicationGroup(group_name);
-}
-
-uint32_t GetRankId(const std::string &group_name) { return MPICollectiveCommLib::GetInstance().GetRankId(group_name); }
-
-uint32_t GetCommunicationGroupSize(const std::string &group_name) {
-  return MPICollectiveCommLib::GetInstance().GetGroupSize(group_name);
-}
-
-bool AssignLocalRank() { return MPICollectiveCommLib::GetInstance().AssignLocalRank(); }
-
-CommunicationGroupPtr GetGroup(const std::string &group_name) {
-  return MPICollectiveCommLib::GetInstance().GetGroup(group_name);
-}
-
-bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-               const std::string &group_name, void *stream) {
-  return MPICollectiveCommLib::GetInstance().AllGather(send_buff, recv_buff, send_count, data_type, group_name, stream);
-}
-bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, mindspore::TypeId data_type,
-               uint32_t root_rank, const std::string &group_name, void *stream) {
-  return MPICollectiveCommLib::GetInstance().Broadcast(send_buff, recv_buff, send_count, data_type, root_rank,
-                                                       group_name, stream);
-}
-
-uint32_t global_rank_id() { return MPICollectiveCommLib::GetInstance().global_rank_id(); }
-
-uint32_t local_rank_id() { return MPICollectiveCommLib::GetInstance().local_rank_id(); }
-
-uint32_t global_rank_size() { return MPICollectiveCommLib::GetInstance().global_rank_size(); }
 }  // namespace device
 }  // namespace mindspore

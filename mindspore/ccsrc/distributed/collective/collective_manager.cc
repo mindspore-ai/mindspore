@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace distributed {
@@ -27,9 +28,7 @@ CollectiveManager::CollectiveManager()
       finalized_(true),
       host_ctx_(nullptr),
       device_ctx_(nullptr),
-      host_comm_lib_(nullptr),
       host_comm_lib_instance_(nullptr),
-      device_comm_lib_(nullptr),
       device_comm_lib_instance_(nullptr),
       global_rank_id_(0),
       local_rank_id_(0),
@@ -51,11 +50,13 @@ std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
   return instance;
 }
 
-bool CollectiveManager::Initialize(const std::string &backend, const std::string &global_group_name) {
+bool CollectiveManager::Initialize() {
   if (inited_) {
     return true;
   }
-  MS_LOG(INFO) << "Start initializing collective communication for backend: " << backend << "...";
+
+  device_type_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type_ << "...";
 
   // Step 1: Initialize host side collective communication.
   if (!InitHostCommlib()) {
@@ -66,24 +67,25 @@ bool CollectiveManager::Initialize(const std::string &backend, const std::string
   // Step 2, 3 and 4 are for device communication library. So if the training job is only launched on CPU, they will not
   // be necessary.
   // Step 2: Assign local rank id(device id) for this process.
-  if (!AssignLocalRank(global_group_name)) {
+  if (!AssignLocalRank()) {
     MS_LOG(ERROR) << "Failed to assign local rank id.";
     return false;
   }
 
   // Step 3: Initialize device side collective communication.
-  if (!InitDeviceCommLib(backend)) {
+  if (!InitDeviceCommLib()) {
     MS_LOG(ERROR) << "Failed to initialize device communication library.";
     return false;
   }
 
   // Step 4: Create global communication group.
-  if (!CreateCommunicationGroup(global_group_name, global_group_ranks_)) {
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  if (!CreateCommunicationGroup(device_comm_lib_instance_->global_group_name(), global_group_ranks_)) {
     MS_LOG(ERROR) << "Failed to initialize host communication library.";
     return false;
   }
 
-  MS_LOG(INFO) << "End initializing collective communication for backend: " << backend << ".";
+  MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type_;
   return true;
 }
 
@@ -91,7 +93,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                                                  const std::vector<uint32_t> &group_ranks) {
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  // Step 1: Create communication group on host side.
+  // Step 1: Create communication group on host side if.
   if (!host_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks)) {
     MS_LOG(ERROR) << "Failed to create communication group " << group_name << " on host side.";
     return false;
@@ -167,6 +169,12 @@ bool CollectiveManager::Finalize() {
   return true;
 }
 
+void CollectiveManager::set_global_rank_id(uint32_t global_rank_id) { global_rank_id_ = global_rank_id; }
+
+void CollectiveManager::set_global_rank_size(uint32_t global_rank_size) { global_rank_size_ = global_rank_size; }
+
+uint32_t CollectiveManager::local_rank_id() const { return local_rank_id_; }
+
 bool CollectiveManager::InitHostCommlib() {
   device::DeviceContextKey host_key = {"CPU", 0};
   host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
@@ -175,10 +183,7 @@ bool CollectiveManager::InitHostCommlib() {
     MS_LOG(ERROR) << "Failed to load communication library on the host side.";
     return false;
   }
-  host_comm_lib_ = host_ctx_->collective_comm_lib();
-  MS_EXCEPTION_IF_NULL(host_comm_lib_);
-  auto instance_func = DlsymFuncObj(communication_lib_instance, host_comm_lib_);
-  host_comm_lib_instance_ = instance_func();
+  host_comm_lib_instance_ = host_ctx_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
 
   // For some communication libraries, global_rank_id_', 'global_rank_size_' should be set by caller, e.g., when using
@@ -197,33 +202,30 @@ bool CollectiveManager::InitHostCommlib() {
     global_group_ranks_.push_back(i);
   }
 
+  // Create world group on host side for AllGather operation of host name while assigning local rank.
+  host_global_group_name_ = host_comm_lib_instance_->global_group_name();
+  if (!host_comm_lib_instance_->CreateCommunicationGroup(host_global_group_name_, global_group_ranks_)) {
+    MS_LOG(ERROR) << "Failed to create communication group " << host_global_group_name_ << " on host side.";
+    return false;
+  }
+
   MS_LOG(INFO) << "Communication library on host side is successfully initialized. Global rank id: " << global_rank_id_
                << ", global rank size: " << global_rank_size_;
   return true;
 }
 
-bool CollectiveManager::InitDeviceCommLib(const std::string &backend) {
-  std::string device_name;
-  if (backend == "nccl") {
-    device_name = "GPU";
-  } else if (backend == "hccl") {
-    device_name = "Ascend";
-  } else {
-    MS_LOG(ERROR) << "Backend " << backend << " is not supported.";
-    return false;
-  }
-
-  device::DeviceContextKey device_key = {device_name, local_rank_id_};
+bool CollectiveManager::InitDeviceCommLib() {
+  device::DeviceContextKey device_key = {device_type_, local_rank_id_};
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
+  // We can initialize device context now because device id(local_rank_id_) is already assigned.
+  device_ctx_->Initialize();
+
   if (!device_ctx_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the device side.";
     return false;
   }
-  device_comm_lib_ = device_ctx_->collective_comm_lib();
-  MS_EXCEPTION_IF_NULL(device_comm_lib_);
-  auto instance_func = DlsymFuncObj(communication_lib_instance, device_comm_lib_);
-  device_comm_lib_instance_ = instance_func();
+  device_comm_lib_instance_ = device_ctx_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
 
   MS_LOG(INFO) << "Start initializing communication library on device side...";
@@ -235,7 +237,7 @@ bool CollectiveManager::InitDeviceCommLib(const std::string &backend) {
   return true;
 }
 
-bool CollectiveManager::AssignLocalRank(const std::string &global_group_name) {
+bool CollectiveManager::AssignLocalRank() {
   char host_name[MAX_HOSTNAME_LEN] = {0};
 #ifndef _WIN32
   if (gethostname(host_name, MAX_HOSTNAME_LEN) != 0) {
@@ -259,8 +261,8 @@ bool CollectiveManager::AssignLocalRank(const std::string &global_group_name) {
 
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   // AllGather host names across the global communication group.
-  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, sizeof(size_t), TypeId::kNumberTypeInt,
-                                          global_group_name, nullptr)) {
+  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, 1, TypeId::kNumberTypeInt,
+                                          host_global_group_name_, nullptr)) {
     MS_LOG(ERROR) << "AllGather for host names failed.";
     return false;
   }
@@ -274,7 +276,10 @@ bool CollectiveManager::AssignLocalRank(const std::string &global_group_name) {
       local_rank_id_++;
     }
   }
-  MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_;
+
+  MsContext::GetInstance()->set_param<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
+  MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_
+               << ". device_id of ms_context is set.";
   return true;
 }
 }  // namespace collective

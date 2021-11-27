@@ -57,6 +57,8 @@ class CPUDeviceContext : public DeviceContext {
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                     bool is_dynamic_shape = false) const override;
 
+  bool LoadCollectiveCommLib() override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
 

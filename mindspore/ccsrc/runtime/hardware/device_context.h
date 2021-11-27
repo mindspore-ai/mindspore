@@ -50,7 +50,7 @@ struct DeviceContextKey {
 class DeviceContext {
  public:
   explicit DeviceContext(const DeviceContextKey &device_context_key)
-      : device_context_key_(device_context_key), collective_comm_lib_ptr_(nullptr) {}
+      : device_context_key_(device_context_key), collective_comm_lib_(nullptr) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -150,7 +150,7 @@ class DeviceContext {
   virtual bool LoadCollectiveCommLib() { return true; }
 
   // Return collective communication object for caller to access
-  void *collective_comm_lib() const { return collective_comm_lib_ptr_; }
+  CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
   // TODO(jiaorui): will be delete
   // Dump all graphs.
@@ -159,8 +159,8 @@ class DeviceContext {
  protected:
   DeviceContextKey device_context_key_;
 
-  // The dynamically loaded handle for collective communication library by 'dlopen'.
-  void *collective_comm_lib_ptr_;
+  // The collective communication library.
+  CollectiveCommunicationLib *collective_comm_lib_;
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 }  // namespace device

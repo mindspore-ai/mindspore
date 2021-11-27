@@ -90,6 +90,16 @@ static inline bool IsLittleByteOrder() {
   return false;
 }
 
+static inline bool CheckUseMPI() {
+  // If these OpenMPI environment variables are set, we consider this process is launched by OpenMPI.
+  std::string ompi_command_env = GetEnv("OMPI_COMMAND");
+  std::string pmix_rank_env = GetEnv("PMIX_RANK");
+  if (!ompi_command_env.empty() && !pmix_rank_env.empty()) {
+    return true;
+  }
+  return false;
+}
+
 template <typename T>
 bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
   if (a == b) {

@@ -47,5 +47,11 @@ uint32_t CommunicationGroup::GetGlobalRank(uint32_t group_rank) {
 }
 
 uint32_t CommunicationGroup::group_size() const { return size_; }
+
+const std::vector<uint32_t> &CommunicationGroup::group_ranks() const { return group_ranks_; }
+
+const std::map<uint32_t, uint32_t> &CommunicationGroup::global_to_group_ranks() const { return global_to_group_ranks_; }
+
+const std::map<uint32_t, uint32_t> &CommunicationGroup::group_to_global_ranks() const { return group_to_global_ranks_; }
 }  // namespace device
 }  // namespace mindspore

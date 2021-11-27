@@ -49,7 +49,8 @@ class ClusterContext {
   // Finalize the cluster and process exits.
   bool Finalize();
 
-  std::string node_role() const;
+  // Return node object of this process.
+  const std::shared_ptr<ps::core::Node> &node() const;
 
  private:
   ClusterContext();

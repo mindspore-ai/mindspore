@@ -534,8 +534,12 @@ bool GPUDeviceContext::LoadCollectiveCommLib() {
     MS_LOG(EXCEPTION) << "Loading NCCL collective library failed.";
     return false;
   }
-  collective_comm_lib_ptr_ = loader->collective_comm_lib_ptr();
-  MS_EXCEPTION_IF_NULL(collective_comm_lib_ptr_);
+  void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+
+  auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
+  collective_comm_lib_ = instance_func();
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_);
   return true;
 #else
   return false;

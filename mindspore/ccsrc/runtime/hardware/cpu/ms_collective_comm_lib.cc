@@ -19,6 +19,8 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+MsCollectiveCommLib::MsCollectiveCommLib() { global_group_name_ = kMSGlobalGroupName; }
+
 bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
   if (initialized_) {
     return false;
@@ -29,8 +31,6 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   initialized_ = true;
   return true;
 }
-
-bool MsCollectiveCommLib::Finalize() { return true; }
 
 bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                    const std::vector<uint32_t> &group_ranks) {

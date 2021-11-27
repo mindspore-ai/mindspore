@@ -23,10 +23,15 @@
 #include "runtime/hardware/collective/collective_communication_lib.h"
 #include "runtime/hardware/cpu/mpi_communication_group.h"
 
+#ifndef EXPORT_MPI_WRAPPER
+#define EXPORT_MPI_WRAPPER __attribute__((visibility("default")))
+#endif
+
 namespace mindspore {
 namespace device {
 namespace cpu {
-class MPICollectiveCommLib : public CollectiveCommunicationLib {
+constexpr char kMPIGlobalGroupName[] = "mpi_world_group";
+class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLib {
  public:
   static MPICollectiveCommLib &GetInstance() {
     static MPICollectiveCommLib instance;
@@ -49,35 +54,14 @@ class MPICollectiveCommLib : public CollectiveCommunicationLib {
   }
 
  private:
-  MPICollectiveCommLib() = default;
+  MPICollectiveCommLib();
   ~MPICollectiveCommLib() override = default;
 
   MPI_Group world_group_;
 };
 }  // namespace cpu
 
-#ifndef EXPORT_MPI_WRAPPER
-#define EXPORT_MPI_WRAPPER __attribute__((visibility("default")))
-#endif
 extern "C" EXPORT_MPI_WRAPPER CollectiveCommunicationLib *communication_lib_instance();
-extern "C" EXPORT_MPI_WRAPPER bool InitializeCollectiveLib(uint32_t global_rank = UINT32_MAX,
-                                                           uint32_t global_rank_size = UINT32_MAX);
-extern "C" EXPORT_MPI_WRAPPER bool FinalizeCollectiveLib();
-extern "C" EXPORT_MPI_WRAPPER bool CreateCommunicationGroup(const std::string &group_name,
-                                                            const std::vector<uint32_t> &group_ranks);
-extern "C" EXPORT_MPI_WRAPPER bool DestroyCommunicationGroup(const std::string &group_name);
-extern "C" EXPORT_MPI_WRAPPER uint32_t GetRankId(const std::string &group_name);
-extern "C" EXPORT_MPI_WRAPPER uint32_t GetGroupSize(const std::string &group_name);
-extern "C" EXPORT_MPI_WRAPPER bool AssignLocalRank();
-extern "C" EXPORT_MPI_WRAPPER CommunicationGroupPtr GetGroup(const std::string &group_name);
-extern "C" EXPORT_MPI_WRAPPER bool AllGather(const void *send_buff, void *recv_buff, size_t send_count,
-                                             mindspore::TypeId data_type, const std::string &group_name, void *stream);
-extern "C" EXPORT_MPI_WRAPPER bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count,
-                                             mindspore::TypeId data_type, uint32_t root_rank,
-                                             const std::string &group_name, void *stream);
-extern "C" EXPORT_MPI_WRAPPER uint32_t global_rank_id();
-extern "C" EXPORT_MPI_WRAPPER uint32_t local_rank_id();
-extern "C" EXPORT_MPI_WRAPPER uint32_t global_rank_size();
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MPI_COLLECTIVE_COMM_LIB_H_
