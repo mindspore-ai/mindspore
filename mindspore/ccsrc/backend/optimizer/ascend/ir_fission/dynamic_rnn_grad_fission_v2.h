@@ -50,26 +50,30 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
                               size_t num_split_x) const;
   void CreateTLoopNodeWithEdge(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                                const std::vector<std::vector<AnfNodePtr>> &result_nodes, size_t num_split_x,
-                               bool shape_need_align, std::vector<std::vector<AnfNodePtr>> *loop_node_outputs) const;
+                               const RNNShapeSpecs &specs,
+                               std::vector<std::vector<AnfNodePtr>> *loop_node_outputs) const;
   AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                                   const RNNShapeSpecs &specs, std::vector<AnfNodePtr> *outputs) const;
-  AnfNodePtr CreateSplitV(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode) const;
+  AnfNodePtr CreateSplitV(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
+                          const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateHConcat(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                           const AnfNodePtr &splitv) const;
+                           const AnfNodePtr &splitv, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateConcat(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                          const AnfNodePtr &h_concat) const;
-  AnfNodePtr CreateConcatNodeT1(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode) const;
-  AnfNodePtr CreateBatchMatMul(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
-                               const AnfNodePtr &concat) const;
-  AnfNodePtr CreateBatchMatMul2(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
-                                const AnfNodePtr &node) const;
+                          const AnfNodePtr &h_concat, const RNNShapeSpecs &specs) const;
+  AnfNodePtr CreateConcatNodeT1(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
+                                const RNNShapeSpecs &specs) const;
+  AnfNodePtr CreateMatMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
+                              const AnfNodePtr &concat, const RNNShapeSpecs &specs) const;
+  AnfNodePtr CreateMatMulNode2(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
+                               const AnfNodePtr &node, const RNNShapeSpecs &specs) const;
   CNodePtr CreateTranspose(const FuncGraphPtr &func_graph, const AnfNodePtr &dw_reduce_sum,
                            const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDwReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                               const AnfNodePtr &batch_matmul, const RNNShapeSpecs &specs) const;
+                               const AnfNodePtr &matmul, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDwReshape(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                             const AnfNodePtr &batch_matmul, const RNNShapeSpecs &specs) const;
-  AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode) const;
+                             const AnfNodePtr &matmul, const RNNShapeSpecs &specs) const;
+  AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
+                             const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDbReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &, const AnfNodePtr &lstm_input_grad,
                                const AnfNodePtr &value_node, const RNNShapeSpecs &specs) const;
 };

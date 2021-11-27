@@ -156,7 +156,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateLSTMSPlitV(const FuncGraphPtr &func_gr
 void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_graph,
                                                       const CNodePtr &dynamic_rnn_grad_cnode,
                                                       const std::vector<std::vector<AnfNodePtr>> &result_nodes,
-                                                      size_t num_split_x, bool shape_need_align,
+                                                      size_t num_split_x, const RNNShapeSpecs &specs,
                                                       std::vector<std::vector<AnfNodePtr>> *loop_node_outputs) const {
   auto &basic_lstm_cell_c_state_grad_nodes = result_nodes[kIndex0];
   auto &matmul_nodes = result_nodes[kIndex1];
@@ -180,8 +180,8 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
     std::vector<AnfNodePtr> basic_lstm_cell_c_state_grad_inputs = {
       NewValueNode(std::make_shared<Primitive>(kBasicLSTMCellCStateGradV2OpName))};
     if (i == num_split_x - 1) {
-      std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
-                                                dynamic_rnn_grad_cnode->input(6)};
+      std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)),
+                                                dynamic_rnn_grad_cnode->input(kIndex6)};
       auto reshape = NewCNode(reshape_inputs, func_graph);
       auto reshape_out_shape = {IntToSize(1),
                                 AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kIndex6), 0)[0],
@@ -214,21 +214,16 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
     pre_basic_lstm_cell_c_state_grad_outputs = basic_lstm_cell_c_state_grad_outputs;
 
     // Create MatMul
-    std::vector<AnfNodePtr> matmul_inputs;
-    if (shape_need_align) {
-      matmul_inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMulV2->name())));
-    } else {
-      matmul_inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimMatMul->name())));
-    }
-    (void)matmul_inputs.emplace_back(basic_lstm_cell_c_state_grad_outputs[0]);
-    (void)matmul_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex2));
+    auto matmul_type = specs.shape_need_align ? prim::kPrimBatchMatMulV2->name() : prim::kPrimMatMul->name();
+    std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(matmul_type)),
+                                             basic_lstm_cell_c_state_grad_outputs[0],
+                                             dynamic_rnn_grad_cnode->input(kIndex2)};
     auto matmul = NewCNode(matmul_inputs, func_graph);
     matmul->set_abstract(matmul_nodes[i]->abstract());
     AnfAlgo::CopyNodeAttrs(matmul_nodes[i], matmul);
 
     // Create splitv
-    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
-                                            matmul};
+    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(kSplitVOpName)), matmul};
     auto split_v = NewCNode(splitv_input, func_graph);
     split_v->set_abstract(split_nodes[i]->abstract());
     AnfAlgo::CopyNodeAttrs(split_nodes[i], split_v);
@@ -240,21 +235,23 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
 
     lstm_x_concat_input[idx + 1] = split_outputs[0];
 
-    auto basic_lstm_cell_c_state_grad_outputs_0_shape =
-      AnfAlgo::GetOutputInferShape(basic_lstm_cell_c_state_grad_outputs[0], 0);
-    std::vector<size_t> temp_shape;
-    if (basic_lstm_cell_c_state_grad_outputs_0_shape.size() == kBasicLstmCStateGradOutput0DimNum) {
-      temp_shape = basic_lstm_cell_c_state_grad_outputs_0_shape;
+    if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+      lstm_gage_concat_input[idx + 1] = basic_lstm_cell_c_state_grad_outputs[0];
     } else {
-      temp_shape = {1, basic_lstm_cell_c_state_grad_outputs_0_shape[0],
-                    basic_lstm_cell_c_state_grad_outputs_0_shape[1]};
+      auto basic_lstm_cell_output_0_shape = AnfAlgo::GetOutputInferShape(basic_lstm_cell_c_state_grad_outputs[0], 0);
+      std::vector<size_t> temp_shape;
+      if (basic_lstm_cell_output_0_shape.size() == kBasicLstmCStateGradOutput0DimNum) {
+        temp_shape = basic_lstm_cell_output_0_shape;
+      } else {
+        temp_shape = {1, basic_lstm_cell_output_0_shape[0], basic_lstm_cell_output_0_shape[1]};
+      }
+      std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
+                                               basic_lstm_cell_c_state_grad_outputs[0]};
+      auto reshape = NewCNode(reshape_input, func_graph);
+      AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(basic_lstm_cell_c_state_grad_outputs[0], 0)},
+                                          {temp_shape}, reshape.get());
+      lstm_gage_concat_input[idx + 1] = reshape;
     }
-    std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
-                                             basic_lstm_cell_c_state_grad_outputs[0]};
-    auto reshape = NewCNode(reshape_input, func_graph);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(basic_lstm_cell_c_state_grad_outputs[0], 0)},
-                                        {temp_shape}, reshape.get());
-    lstm_gage_concat_input[idx + 1] = reshape;
   }
   loop_node_outputs->push_back(pre_basic_lstm_cell_c_state_grad_outputs);
   loop_node_outputs->push_back(pre_split_outputs);
@@ -295,101 +292,141 @@ AnfNodePtr DynamicRnnGradFissionV2::AddLSTMInputGradNode(const FuncGraphPtr &fun
   CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_dy, num_split_x, &lstm_split_dy_outputs);
   result_nodes.push_back(lstm_split_dy_outputs);
 
-  // Create lstm_split_i
-  auto lstm_split_i = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex12), split_shapes, split_types,
-                                       size_split, num_split_x);
-  std::vector<AnfNodePtr> lstm_split_i_outputs;
-  CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_i, num_split_x, &lstm_split_i_outputs);
-  result_nodes.push_back(lstm_split_i_outputs);
+  if (specs.t_size != 1) {
+    // Create lstm_split_i
+    auto lstm_split_i = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex12), split_shapes, split_types,
+                                         size_split, num_split_x);
+    std::vector<AnfNodePtr> lstm_split_i_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_i, num_split_x, &lstm_split_i_outputs);
+    result_nodes.push_back(lstm_split_i_outputs);
 
-  // Create lstm_split_j
-  auto lstm_split_j = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex13), split_shapes, split_types,
-                                       size_split, num_split_x);
-  std::vector<AnfNodePtr> lstm_split_j_outputs;
-  CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_j, num_split_x, &lstm_split_j_outputs);
-  result_nodes.push_back(lstm_split_j_outputs);
+    // Create lstm_split_j
+    auto lstm_split_j = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex13), split_shapes, split_types,
+                                         size_split, num_split_x);
+    std::vector<AnfNodePtr> lstm_split_j_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_j, num_split_x, &lstm_split_j_outputs);
+    result_nodes.push_back(lstm_split_j_outputs);
 
-  // Create lstm_split_f
-  auto lstm_split_f = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex14), split_shapes, split_types,
-                                       size_split, num_split_x);
-  std::vector<AnfNodePtr> lstm_split_f_outputs;
-  CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_f, num_split_x, &lstm_split_f_outputs);
-  result_nodes.push_back(lstm_split_f_outputs);
+    // Create lstm_split_f
+    auto lstm_split_f = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex14), split_shapes, split_types,
+                                         size_split, num_split_x);
+    std::vector<AnfNodePtr> lstm_split_f_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_f, num_split_x, &lstm_split_f_outputs);
+    result_nodes.push_back(lstm_split_f_outputs);
 
-  // Create lstm_split_o
-  auto lstm_split_o = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex15), split_shapes, split_types,
-                                       size_split, num_split_x);
-  std::vector<AnfNodePtr> lstm_split_o_outputs;
-  CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_o, num_split_x, &lstm_split_o_outputs);
-  result_nodes.push_back(lstm_split_o_outputs);
+    // Create lstm_split_o
+    auto lstm_split_o = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex15), split_shapes, split_types,
+                                         size_split, num_split_x);
+    std::vector<AnfNodePtr> lstm_split_o_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_o, num_split_x, &lstm_split_o_outputs);
+    result_nodes.push_back(lstm_split_o_outputs);
 
-  // Create lstm_split_tanh
-  auto lstm_split_tanh = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex16), split_shapes,
-                                          split_types, size_split, num_split_x);
-  std::vector<AnfNodePtr> lstm_split_tanh_outputs;
-  CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_tanh, num_split_x, &lstm_split_tanh_outputs);
-  result_nodes.push_back(lstm_split_tanh_outputs);
+    // Create lstm_split_tanh
+    auto lstm_split_tanh = CreateLSTMSPlitV(func_graph, dynamic_rnn_grad_cnode->input(kIndex16), split_shapes,
+                                            split_types, size_split, num_split_x);
+    std::vector<AnfNodePtr> lstm_split_tanh_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_tanh, num_split_x, &lstm_split_tanh_outputs);
+    result_nodes.push_back(lstm_split_tanh_outputs);
+  } else {
+    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex12)});
+    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex13)});
+    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex14)});
+    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex15)});
+    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex16)});
+  }
 
   // Add edges
   std::vector<std::vector<AnfNodePtr>> loop_node_outputs;
-  CreateTLoopNodeWithEdge(func_graph, dynamic_rnn_grad_cnode, result_nodes, num_split_x, specs.shape_need_align,
-                          &loop_node_outputs);
+  CreateTLoopNodeWithEdge(func_graph, dynamic_rnn_grad_cnode, result_nodes, num_split_x, specs, &loop_node_outputs);
   auto &pre_basic_lstm_cell_c_state_grad_outputs = loop_node_outputs[kIndex0];
   auto &pre_split_outputs = loop_node_outputs[kIndex1];
   auto &lstm_x_concat_input = loop_node_outputs[kIndex2];
   auto &lstm_gage_concat_input = loop_node_outputs[kIndex3];
 
-  // Create lstm_x_concat
-  auto lstm_x_concat = NewCNode(lstm_x_concat_input, func_graph);
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, 2)},
-                                      lstm_x_concat.get());
-  AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(num_split_x)), lstm_x_concat);
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(num_split_x)}), lstm_x_concat);
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), lstm_x_concat);
+  if (specs.t_size != 1) {
+    // Create lstm_x_concat
+    auto lstm_x_concat = NewCNode(lstm_x_concat_input, func_graph);
+    AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, 2)},
+                                        lstm_x_concat.get());
+    AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(num_split_x)), lstm_x_concat);
+    AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(num_split_x)}), lstm_x_concat);
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), lstm_x_concat);
 
-  // Create lstm_gage_concat
-  auto lstm_gage_concat = NewCNode(lstm_gage_concat_input, func_graph);
-  AnfAlgo::SetOutputInferTypeAndShape(
-    {kNumberTypeFloat16}, {{specs.t_size, specs.batch_size, kDimMultiNum * specs.hidden_nz_size * kCubeSize}},
-    lstm_gage_concat.get());
-  AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(num_split_x)), lstm_gage_concat);
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(num_split_x)}), lstm_gage_concat);
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), lstm_gage_concat);
+    // Create lstm_gage_concat
+    auto lstm_gage_concat = NewCNode(lstm_gage_concat_input, func_graph);
+    std::vector<size_t> gage_concat_shape;
+    if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+      gage_concat_shape = {specs.t_size * specs.batch_size, kDimMultiNum * specs.hidden_nz_size * kCubeSize};
+    } else {
+      gage_concat_shape = {specs.t_size, specs.batch_size, kDimMultiNum * specs.hidden_nz_size * kCubeSize};
+    }
+    AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {gage_concat_shape}, lstm_gage_concat.get());
+    AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(num_split_x)), lstm_gage_concat);
+    AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(num_split_x)}),
+                         lstm_gage_concat);
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), lstm_gage_concat);
 
-  outputs->emplace_back(lstm_x_concat);
-  outputs->emplace_back(pre_split_outputs[1]);
-  outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
-  return lstm_gage_concat;
+    outputs->emplace_back(lstm_x_concat);
+    outputs->emplace_back(pre_split_outputs[1]);
+    outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
+    return lstm_gage_concat;
+  } else {
+    outputs->emplace_back(lstm_x_concat_input[1]);
+    outputs->emplace_back(pre_split_outputs[1]);
+    outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
+    return lstm_gage_concat_input[1];
+  }
 }
 
-AnfNodePtr DynamicRnnGradFissionV2::CreateSplitV(const FuncGraphPtr &func_graph,
-                                                 const CNodePtr &dynamic_rnn_grad_cnode) const {
+AnfNodePtr DynamicRnnGradFissionV2::CreateSplitV(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
+                                                 const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   // Create node
   auto origin_input6 = dynamic_rnn_grad_cnode->input(kIndex7);
-  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
-                                          origin_input6};
+  auto origin_input6_dtype = AnfAlgo::GetOutputInferDataType(origin_input6, 0);
+  auto origin_input6_shape = AnfAlgo::GetOutputInferShape(origin_input6, 0);
+  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), origin_input6};
+    auto reshape = NewCNode(reshape_input, func_graph);
+    std::vector<size_t> shape = {origin_input6_shape[kDim0] * origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+    AnfAlgo::SetOutputInferTypeAndShape({origin_input6_dtype}, {shape}, reshape.get());
+    splitv_input.push_back(reshape);
+  } else {
+    splitv_input.push_back(origin_input6);
+  }
   auto split_v = NewCNode(splitv_input, func_graph);
   // Set infer data type and shape
-  auto dtypes = {AnfAlgo::GetOutputInferDataType(origin_input6, 0), AnfAlgo::GetOutputInferDataType(origin_input6, 0)};
-  auto origin_input6_shape = AnfAlgo::GetOutputInferShape(origin_input6, 0);
-  std::vector<size_t> shape1 = {origin_input6_shape[kDim0] - 1, origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
-  std::vector<size_t> shape2 = {1, origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+  std::vector<size_t> shape1, shape2;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape1 = {(origin_input6_shape[kDim0] - 1) * origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+    shape2 = {origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+  } else {
+    shape1 = {origin_input6_shape[kDim0] - 1, origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+    shape2 = {1, origin_input6_shape[kDim1], origin_input6_shape[kDim2]};
+  }
+  auto dtypes = {origin_input6_dtype, origin_input6_dtype};
   std::vector<std::vector<size_t>> shapes = {shape1, shape2};
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
   // Set attr
   AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue(SizeToLong(0)), split_v);
   AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(SizeToLong(kAttrNumSplitValue)), split_v);
-  AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(std::vector<int64_t>{SizeToLong(origin_input6_shape[0] - 1), 1}),
-                       split_v);
+  std::vector<int64_t> size_splits;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    size_splits = {SizeToLong((origin_input6_shape[kDim0] - 1) * origin_input6_shape[kDim1]),
+                   SizeToLong(origin_input6_shape[kDim1])};
+  } else {
+    size_splits = {SizeToLong(origin_input6_shape[kDim0] - 1), 1};
+  }
+  AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(size_splits), split_v);
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
   return split_v;
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph,
-                                                  const CNodePtr &dynamic_rnn_grad_cnode,
-                                                  const AnfNodePtr &splitv) const {
+                                                  const CNodePtr &dynamic_rnn_grad_cnode, const AnfNodePtr &splitv,
+                                                  const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   MS_EXCEPTION_IF_NULL(splitv);
@@ -404,10 +441,14 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   auto origin_input4_shape = AnfAlgo::GetOutputInferShape(origin_input4, 0);
   // Create reshape to change shape
   std::vector<size_t> shape_tmp;
-  if (origin_input4_shape.size() == kShape4dDims) {
-    shape_tmp = origin_input4_shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape_tmp = {origin_input4_shape[0], origin_input4_shape[1]};
   } else {
-    shape_tmp = {1, origin_input4_shape[0], origin_input4_shape[1]};
+    if (origin_input4_shape.size() == kShape3dDims) {
+      shape_tmp = origin_input4_shape;
+    } else {
+      shape_tmp = {1, origin_input4_shape[0], origin_input4_shape[1]};
+    }
   }
   std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
                                            origin_input4};
@@ -418,7 +459,12 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
   auto splitv_output0_shape = AnfAlgo::GetOutputInferShape(splitv, 0);
-  std::vector<size_t> shape = {splitv_output0_shape[0] + 1, origin_input4_shape[0], origin_input4_shape[1]};
+  std::vector<size_t> shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape = {splitv_output0_shape[0] + origin_input4_shape[0], origin_input4_shape[1]};
+  } else {
+    shape = {splitv_output0_shape[0] + 1, origin_input4_shape[0], origin_input4_shape[1]};
+  }
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape}, concat.get());
   // Set attr
   AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
@@ -429,100 +475,156 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateConcat(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                                                 const AnfNodePtr &h_concat) const {
+                                                 const AnfNodePtr &h_concat, const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   // Create node
   auto origin_input0 = dynamic_rnn_grad_cnode->input(1);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
-                                           origin_input0, h_concat};
+  auto origin_input0_dtype = AnfAlgo::GetOutputInferDataType(origin_input0, 0);
+  auto origin_input0_shape = AnfAlgo::GetOutputInferShape(origin_input0, 0);
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), origin_input0};
+    auto reshape = NewCNode(reshape_input, func_graph);
+    std::vector<size_t> shape = {origin_input0_shape[kDim0] * origin_input0_shape[kDim1], origin_input0_shape[kDim2]};
+    AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, reshape.get());
+    concat_inputs.push_back(reshape);
+  } else {
+    concat_inputs.push_back(origin_input0);
+  }
+  concat_inputs.push_back(h_concat);
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
-  auto origin_output0_shape = AnfAlgo::GetOutputInferShape(origin_input0, 0);
   auto h_concat_output_shape = AnfAlgo::GetOutputInferShape(h_concat, 0);
-  std::vector<size_t> shape = {origin_output0_shape[kDim0], origin_output0_shape[kDim1],
-                               origin_output0_shape[kDim2] + h_concat_output_shape[kDim2]};
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_input0, 0)}, {shape}, concat.get());
+  std::vector<size_t> shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape = {origin_input0_shape[kDim0] * origin_input0_shape[kDim1],
+             origin_input0_shape[kDim2] + h_concat_output_shape[kDim1]};
+  } else {
+    shape = {origin_input0_shape[kDim0], origin_input0_shape[kDim1],
+             origin_input0_shape[kDim2] + h_concat_output_shape[kDim2]};
+  }
+  AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
+  }
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
   return concat;
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_graph,
-                                                       const CNodePtr &dynamic_rnn_grad_cnode) const {
+                                                       const CNodePtr &dynamic_rnn_grad_cnode,
+                                                       const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   // Create node
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   auto origin_input0 = dynamic_rnn_grad_cnode->input(kIndex1);
+  auto origin_input0_dtype = AnfAlgo::GetOutputInferDataType(origin_input0, 0);
+  auto origin_input0_shape = AnfAlgo::GetOutputInferShape(origin_input0, 0);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), origin_input0};
+    auto reshape_in0 = NewCNode(reshape_inputs, func_graph);
+    std::vector<size_t> shape = {origin_input0_shape[kDim0] * origin_input0_shape[kDim1], origin_input0_shape[kDim2]};
+    AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, reshape_in0.get());
+    concat_inputs.push_back(reshape_in0);
+  } else {
+    concat_inputs.push_back(origin_input0);
+  }
+
   auto origin_input4 = dynamic_rnn_grad_cnode->input(kIndex5);
   auto origin_input4_shape = AnfAlgo::GetOutputInferShape(origin_input4, 0);
-  // Create reshape to change shape
   std::vector<size_t> shape_tmp;
-  if (origin_input4_shape.size() == kShape3dDims) {
-    shape_tmp = origin_input4_shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape_tmp = {origin_input4_shape[0], origin_input4_shape[1]};
   } else {
-    shape_tmp = {1, origin_input4_shape[0], origin_input4_shape[1]};
+    if (origin_input4_shape.size() == kShape3dDims) {
+      shape_tmp = origin_input4_shape;
+    } else {
+      shape_tmp = {1, origin_input4_shape[0], origin_input4_shape[1]};
+    }
   }
   std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
                                            origin_input4};
-  auto reshape = NewCNode(reshape_input, func_graph);
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape_tmp}, reshape.get());
-
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
-                                           origin_input0, reshape};
+  auto reshape_in4 = NewCNode(reshape_input, func_graph);
+  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape_tmp},
+                                      reshape_in4.get());
+  concat_inputs.push_back(reshape_in4);
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
-  auto origin_input0_shape = AnfAlgo::GetOutputInferShape(origin_input0, 0);
-  std::vector<size_t> shape = {origin_input0_shape[kDim0], origin_input0_shape[kDim1],
-                               origin_input0_shape[kDim2] + shape_tmp[kDim2]};
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_input0, 0)}, {shape}, concat.get());
+  std::vector<size_t> shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape = {origin_input0_shape[kDim0] * origin_input0_shape[kDim1], origin_input0_shape[kDim2] + shape_tmp[kDim1]};
+  } else {
+    shape = {origin_input0_shape[kDim0], origin_input0_shape[kDim1], origin_input0_shape[kDim2] + shape_tmp[kDim2]};
+  }
+  AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
+  }
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
   return concat;
 }
 
-AnfNodePtr DynamicRnnGradFissionV2::CreateBatchMatMul(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
-                                                      const AnfNodePtr &concat) const {
+AnfNodePtr DynamicRnnGradFissionV2::CreateMatMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
+                                                     const AnfNodePtr &concat, const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
-  std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name())),
-                                           concat, lstm_input_grad};
-  auto batch_matmul = NewCNode(matmul_inputs, func_graph);
+  auto matmul_type = (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) ? prim::kPrimMatMulV2->name()
+                                                                                    : prim::kPrimBatchMatMul->name();
+  std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(matmul_type)), concat,
+                                           lstm_input_grad};
+  auto matmul = NewCNode(matmul_inputs, func_graph);
   // Set infer data type and shape
   auto concat_shape = AnfAlgo::GetOutputInferShape(concat, 0);
   auto lstm_input_grad_shape = AnfAlgo::GetOutputInferShape(lstm_input_grad, 0);
-  std::vector<size_t> shape = {concat_shape[kDim0], concat_shape[kDim2], lstm_input_grad_shape[kDim2]};
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, batch_matmul.get());
+  std::vector<size_t> shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape = {concat_shape[kDim1], lstm_input_grad_shape[kDim1]};
+  } else {
+    shape = {concat_shape[kDim0], concat_shape[kDim2], lstm_input_grad_shape[kDim2]};
+  }
+  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {shape}, matmul.get());
   // Set attr
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), batch_matmul);
-  AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(true), batch_matmul);
-  AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), batch_matmul);
-  return batch_matmul;
+  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), matmul);
+  AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(true), matmul);
+  AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), matmul);
+  return matmul;
 }
 
-AnfNodePtr DynamicRnnGradFissionV2::CreateBatchMatMul2(const FuncGraphPtr &func_graph,
-                                                       const AnfNodePtr &lstm_input_grad,
-                                                       const AnfNodePtr &node) const {
+AnfNodePtr DynamicRnnGradFissionV2::CreateMatMulNode2(const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_input_grad,
+                                                      const AnfNodePtr &node, const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
-  std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name())),
-                                           node, lstm_input_grad};
-  auto batch_matmul = NewCNode(matmul_inputs, func_graph);
+  auto matmul_type = (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) ? prim::kPrimMatMulV2->name()
+                                                                                    : prim::kPrimBatchMatMul->name();
+  std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(matmul_type)), node,
+                                           lstm_input_grad};
+  auto matmul = NewCNode(matmul_inputs, func_graph);
   // Set infer data type and shape
-  auto out_shape = {AnfAlgo::GetOutputInferShape(lstm_input_grad, 0)[kIndex0], IntToSize(1),
-                    AnfAlgo::GetOutputInferShape(lstm_input_grad, 0)[kIndex2]};
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {out_shape}, batch_matmul.get());
+  auto lstm_input_grad_shape = AnfAlgo::GetOutputInferShape(lstm_input_grad, 0);
+  std::vector<size_t> out_shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    out_shape = {IntToSize(1), lstm_input_grad_shape[kDim1]};
+  } else {
+    out_shape = {lstm_input_grad_shape[kDim0], IntToSize(1), lstm_input_grad_shape[kDim2]};
+  }
+  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {out_shape}, matmul.get());
   // Set attr
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), batch_matmul);
-  AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), batch_matmul);
-  AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), batch_matmul);
-  return batch_matmul;
+  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), matmul);
+  AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), matmul);
+  AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), matmul);
+  return matmul;
 }
 
 CNodePtr DynamicRnnGradFissionV2::CreateTranspose(const FuncGraphPtr &func_graph, const AnfNodePtr &dw_reduce_sum,
@@ -543,13 +645,12 @@ CNodePtr DynamicRnnGradFissionV2::CreateTranspose(const FuncGraphPtr &func_graph
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateDwReduceSum(const FuncGraphPtr &func_graph,
-                                                      const CNodePtr &dynamic_rnn_grad_cnode,
-                                                      const AnfNodePtr &batch_matmul,
+                                                      const CNodePtr &dynamic_rnn_grad_cnode, const AnfNodePtr &matmul,
                                                       const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
   std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
-                                               batch_matmul};
+                                               matmul};
   auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
   // Set infer data type and shape
   std::vector<size_t> out_shape = {specs.input_size + specs.hidden_size,
@@ -569,12 +670,12 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReduceSum(const FuncGraphPtr &func_g
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateDwReshape(const FuncGraphPtr &func_graph,
-                                                    const CNodePtr &dynamic_rnn_grad_cnode,
-                                                    const AnfNodePtr &batch_matmul, const RNNShapeSpecs &specs) const {
+                                                    const CNodePtr &dynamic_rnn_grad_cnode, const AnfNodePtr &matmul,
+                                                    const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
   std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
-                                            batch_matmul};
+                                            matmul};
   auto reshape = NewCNode(reshape_inputs, func_graph);
   // Set infer data type and shape
   std::vector<size_t> out_shape = {specs.input_size + specs.hidden_size,
@@ -591,15 +692,16 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReshape(const FuncGraphPtr &func_gra
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateValueNode(const FuncGraphPtr &func_graph,
-                                                    const CNodePtr &dynamic_rnn_grad_cnode) const {
-  auto origin_input7 = dynamic_rnn_grad_cnode->input(kIndex8);
-  auto origin_input7_shape = AnfAlgo::GetOutputInferShape(origin_input7, 0);
-  auto t_size = origin_input7_shape[0];
-  auto n_size = origin_input7_shape[1];
-
-  std::vector<size_t> shape = {t_size, IntToSize(1), n_size};
-  std::vector<int64_t> output_shape = {SizeToLong(t_size), SizeToLong(1), SizeToLong(n_size)};
-  std::vector<int64_t> output_tensor = {SizeToLong(t_size) * SizeToLong(n_size)};
+                                                    const CNodePtr &dynamic_rnn_grad_cnode,
+                                                    const RNNShapeSpecs &specs) const {
+  std::vector<size_t> shape;
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    shape = {IntToSize(1), specs.t_size * specs.batch_size};
+  } else {
+    shape = {specs.t_size, IntToSize(1), specs.batch_size};
+  }
+  std::vector<int64_t> output_shape = Convert2Long(shape);
+  std::vector<int64_t> output_tensor = {SizeToLong(specs.t_size) * SizeToLong(specs.batch_size)};
   auto tensor = TensorConstructUtils::CreateOnesTensor(kFloat32, output_tensor);
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, output_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -614,24 +716,34 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDbReduceSum(const FuncGraphPtr &func_g
                                                       const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
-  auto batch_matmul = CreateBatchMatMul2(func_graph, lstm_input_grad, value_node);
-  std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
-                                               batch_matmul};
-  auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
-  // Set infer data type and shape
-  std::vector<size_t> out_shape = {kDimMultiNum * specs.hidden_size};
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {out_shape}, reduce_sum.get());
-  // Set attr
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{0}), reduce_sum);
-  AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(false), reduce_sum);
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reduce_sum);
-  if (specs.shape_need_align) {
-    AnfAlgo::SetNodeAttr(kAttrInputSize, MakeValue(SizeToLong(specs.input_size)), reduce_sum);
-    AnfAlgo::SetNodeAttr(kAttrHiddenSize, MakeValue(SizeToLong(specs.hidden_size)), reduce_sum);
-    AnfAlgo::SetNodeAttr(kAttrFixedInputFormat, MakeValue(std::vector<string>{kOpFormat_DEFAULT}), reduce_sum);
-    AnfAlgo::SetNodeAttr(kAttrFixedOutputFormat, MakeValue(std::vector<string>{kOpFormat_ND_RNN_BIAS}), reduce_sum);
+  auto matmul = CreateMatMulNode2(func_graph, lstm_input_grad, value_node, specs);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
+                                              matmul};
+    auto reshape = NewCNode(reshape_inputs, func_graph);
+    std::vector<size_t> out_shape = {kDimMultiNum * specs.hidden_size};
+    AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {out_shape}, reshape.get());
+    AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reshape);
+    return reshape;
+  } else {
+    std::vector<AnfNodePtr> reduce_sum_inputs = {
+      NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), matmul};
+    auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
+    // Set infer data type and shape
+    std::vector<size_t> out_shape = {kDimMultiNum * specs.hidden_size};
+    AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {out_shape}, reduce_sum.get());
+    // Set attr
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{0}), reduce_sum);
+    AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(false), reduce_sum);
+    AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reduce_sum);
+    if (specs.shape_need_align) {
+      AnfAlgo::SetNodeAttr(kAttrInputSize, MakeValue(SizeToLong(specs.input_size)), reduce_sum);
+      AnfAlgo::SetNodeAttr(kAttrHiddenSize, MakeValue(SizeToLong(specs.hidden_size)), reduce_sum);
+      AnfAlgo::SetNodeAttr(kAttrFixedInputFormat, MakeValue(std::vector<string>{kOpFormat_DEFAULT}), reduce_sum);
+      AnfAlgo::SetNodeAttr(kAttrFixedOutputFormat, MakeValue(std::vector<string>{kOpFormat_ND_RNN_BIAS}), reduce_sum);
+    }
+    return reduce_sum;
   }
-  return reduce_sum;
 }
 
 const BaseRef DynamicRnnGradFissionV2::DefinePattern() const {
@@ -673,24 +785,26 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   auto lstm_input_grad = AddLSTMInputGradNode(func_graph, dynamic_rnn_grad_cnode, specs, &new_outputs);
   AnfNodePtr concat = nullptr;
   if (specs.t_size != 1) {
-    auto splitv = CreateSplitV(func_graph, dynamic_rnn_grad_cnode);
-    auto h_concat = CreateHConcat(func_graph, dynamic_rnn_grad_cnode, splitv);
-    concat = CreateConcat(func_graph, dynamic_rnn_grad_cnode, h_concat);
+    auto splitv = CreateSplitV(func_graph, dynamic_rnn_grad_cnode, specs);
+    auto h_concat = CreateHConcat(func_graph, dynamic_rnn_grad_cnode, splitv, specs);
+    concat = CreateConcat(func_graph, dynamic_rnn_grad_cnode, h_concat, specs);
   } else {
-    concat = CreateConcatNodeT1(func_graph, dynamic_rnn_grad_cnode);
+    concat = CreateConcatNodeT1(func_graph, dynamic_rnn_grad_cnode, specs);
   }
 
-  auto batch_matmul = CreateBatchMatMul(func_graph, lstm_input_grad, concat);
+  auto matmul = CreateMatMulNode(func_graph, lstm_input_grad, concat, specs);
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  if (specs.t_size != 1) {
-    auto dw_reduce_sum = CreateDwReduceSum(func_graph, dynamic_rnn_grad_cnode, batch_matmul, specs);
-    make_tuple_inputs.emplace_back(dw_reduce_sum);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    make_tuple_inputs.push_back(matmul);
+  } else if (specs.t_size != 1) {
+    auto dw_reduce_sum = CreateDwReduceSum(func_graph, dynamic_rnn_grad_cnode, matmul, specs);
+    make_tuple_inputs.push_back(dw_reduce_sum);
   } else {
-    auto dw_reshape = CreateDwReshape(func_graph, dynamic_rnn_grad_cnode, batch_matmul, specs);
-    make_tuple_inputs.emplace_back(dw_reshape);
+    auto dw_reshape = CreateDwReshape(func_graph, dynamic_rnn_grad_cnode, matmul, specs);
+    make_tuple_inputs.push_back(dw_reshape);
   }
 
-  auto value_node = CreateValueNode(func_graph, dynamic_rnn_grad_cnode);
+  auto value_node = CreateValueNode(func_graph, dynamic_rnn_grad_cnode, specs);
   // create reduce_sum_2
   auto db_reduce_sum = CreateDbReduceSum(func_graph, dynamic_rnn_grad_cnode, lstm_input_grad, value_node, specs);
   make_tuple_inputs.emplace_back(db_reduce_sum);
