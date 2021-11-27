@@ -114,6 +114,7 @@ if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         list(APPEND AKG_SRC_LIST ${AKG_D_SRC_LIST})
     endif()
     if(ENABLE_CPU)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
         file(GLOB_RECURSE AKG_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "akg/cpu/*.cc"
         )

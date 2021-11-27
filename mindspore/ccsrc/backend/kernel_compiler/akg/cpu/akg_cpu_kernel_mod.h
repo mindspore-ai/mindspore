@@ -43,10 +43,9 @@ class CpuKernelManager {
   mutable std::shared_mutex mutex_;
 };
 using CpuKernelManagerPtr = std::shared_ptr<CpuKernelManager>;
-
 class CpuKernelMod : public KernelMod {
  public:
-  explicit CpuKernelMod(const KernelPackPtr &kp) : kernel_pack_(kp) {}
+  explicit CpuKernelMod(const KernelPackPtr &kp);
   ~CpuKernelMod() = default;
 
   void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
@@ -61,10 +60,11 @@ class CpuKernelMod : public KernelMod {
   static CpuKernelManagerPtr kernelmanager_;
 
  private:
-  KernelPackPtr kernel_pack_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;  // workspace is not used in cpu kernel.
+  void *launch_func_;
+  std::string kernel_name_;
 };
 
 using CpuKernelModPtr = std::shared_ptr<CpuKernelMod>;

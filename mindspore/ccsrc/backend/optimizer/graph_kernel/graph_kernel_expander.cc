@@ -46,6 +46,7 @@ constexpr size_t kAssignInputIdx = 1;
 constexpr size_t kLambOptimizerInputIdx = 12;
 constexpr size_t kLambWeightInputIdx = 4;
 constexpr size_t kRandomInputIdx = 1;
+constexpr size_t kAdamInputIdx = 10;
 
 std::vector<PrimitivePtr> GetExpandOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
@@ -94,6 +95,13 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kGPUDevice, OpLevel_0, prim::kPrimIdentityMath},
     {kGPUDevice, OpLevel_0, prim::kPrimOnesLike},
     {kGPUDevice, OpLevel_0, prim::kPrimStandardNormal},
+    {kCPUDevice, OpLevel_0, prim::kPrimOnesLike},
+    {kCPUDevice, OpLevel_0, prim::kPrimBiasAdd},
+    {kCPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
+    {kCPUDevice, OpLevel_0, prim::kPrimRelu},
+    {kCPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimAdam},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
@@ -199,6 +207,7 @@ ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &node) {
     {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambOptimizerInputIdx)},
     {prim::kLambApplyWeightAssign, std::make_shared<OpUMonadExpander>(kLambWeightInputIdx)},
     {prim::kPrimStandardNormal, std::make_shared<OpUMonadExpander>(kRandomInputIdx)},
+    {prim::kPrimAdam, std::make_shared<OpUMonadExpander>(kAdamInputIdx)},
   };
 
   for (auto &e : expanders) {

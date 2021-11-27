@@ -1198,8 +1198,8 @@ class GraphSplitCpu(GraphSplitByPattern):
 
     def get_default_mode(self, op):
         """Get default mode in CPU"""
-        pattern = PrimLib.iter_type(op)
-        return self.Area.MODE_BASIC if pattern == PrimLib.RESHAPE else self.Area.MODE_COMPOSITE
+        del op
+        return self.Area.MODE_COMPOSITE
 
     def pattern_fuse(self, fuse_func=None):
         """fuse Areas by pattern"""
