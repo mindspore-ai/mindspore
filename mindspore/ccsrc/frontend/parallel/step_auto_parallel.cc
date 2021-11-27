@@ -1088,6 +1088,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     }
   }
   ReshapeCostCompute(all_nodes);
+  ConstructCostGraphEdges(all_nodes);
 
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
