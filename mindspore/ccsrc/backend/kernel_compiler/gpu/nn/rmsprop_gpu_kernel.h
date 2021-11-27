@@ -77,9 +77,8 @@ class RMSPropGpuKernel : public GpuKernel {
       epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "var");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'RMSPropGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

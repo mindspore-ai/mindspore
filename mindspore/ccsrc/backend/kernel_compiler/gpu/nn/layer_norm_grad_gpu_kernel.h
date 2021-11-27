@@ -54,13 +54,13 @@ class LayerNormGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     int begin_norm_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_norm_axis"));
     int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'LayerNormGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -73,9 +73,9 @@ class LayerNormGradGpuKernel : public GpuKernel {
     }
 
     if (IntToSize(begin_norm_axis) > input_shape.size()) {
-      MS_LOG(EXCEPTION) << "For 'LayerNormGradGpuKernel', begin_norm_axis should be less than or equal to "
-                        << "the rank of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
-                        << ", rank of input: " << input_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'begin_norm_axis' should be less than or equal "
+                        << "to the dimension of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
+                        << ", the dimension of input: " << input_shape.size();
     }
     for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
       input_row_ *= input_shape[i];

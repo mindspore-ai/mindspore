@@ -61,24 +61,23 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but MaxPoolGradWithArgmax needs 3 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but MaxPoolGradWithArgmax needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(x_shape) || CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(index_shape) ||
-                     CHECK_NULL_INPUT(dx_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") ||
+                     CHECK_SHAPE_NULL(index_shape, kernel_name, "index") ||
+                     CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MaxPoolWithArgmaxGradGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -99,9 +98,8 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
       dx_size_ *= x;
     }
     if (x_shape.size() < 4 || dy_shape.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGradGpuKernel', the rank of x or dy should be greater than "
-                        << "or equal to 4, but got the rank of x: " << x_shape.size()
-                        << ", the rank of dy: " << dy_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x and dy cannot be less than 4, but got "
+                        << "the dimension of x: " << x_shape.size() << ", the dimension of dy: " << dy_shape.size();
     }
     n_ = SizeToInt(x_shape[0]);
     c_ = SizeToInt(x_shape[1]);

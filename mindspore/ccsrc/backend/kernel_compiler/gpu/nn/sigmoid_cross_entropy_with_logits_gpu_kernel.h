@@ -52,11 +52,11 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SigmoidCrossEntropyWithLogits needs " << INPUT_NUM
-                    << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
     logits_size_ = sizeof(T);
     labels_size_ = sizeof(S);
@@ -65,9 +65,10 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits") ||
+                     CHECK_SHAPE_NULL(labels_shape, kernel_name, "labels") ||
+                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'SigmoidCrossEntropyWithLogitsGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }

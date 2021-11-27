@@ -74,7 +74,7 @@ class AdagradGpuKernel : public GpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     update_slots = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
     if (input_num != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be 4, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << input_num;
     }
     variable_size_ = sizeof(T);
     accumulation_size_ = sizeof(T);

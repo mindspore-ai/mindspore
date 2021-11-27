@@ -55,10 +55,11 @@ class MomentumGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but momentum needs " << INPUT_NUM << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
     use_nesterov_ = GetAttr<bool>(kernel_node, "use_nesterov");
 
@@ -71,10 +72,10 @@ class MomentumGpuKernel : public GpuKernel {
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ =
-      CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) || CHECK_NULL_INPUT(gradient_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "variable") ||
+                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name, "accumulation") ||
+                     CHECK_SHAPE_NULL(gradient_shape, kernel_name, "gradient");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MomentumGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

@@ -59,16 +59,16 @@ class NLLLossGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'NllLossGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'NllLossGpuKernel', the rank of input cannot less than 2, but got "
-                        << input_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of logits cannot be less than 2, but "
+                        << "got the " << input_shape.size();
     }
     n_ = static_cast<int>(input_shape[0]);
     c_ = static_cast<int>(input_shape[1]);

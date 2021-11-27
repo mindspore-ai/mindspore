@@ -89,19 +89,19 @@ class LstmGradWeightGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'LstmGradWeightGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
     if (input_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'LstmGradWeightGpuKernel', the rank of input should be greater than or equal to 2, "
-                        << "but got the rank of input: " << input_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
+                        << input_shape.size();
     }
     seq_len_ = SizeToInt(input_shape[0]);
     batch_size_ = SizeToInt(input_shape[1]);
@@ -143,15 +143,14 @@ class LstmGradWeightGpuKernel : public GpuKernel {
                                 "set rnn_desc failed");
 #endif
     auto weight_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(weight_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'LstmGradWeightGpuKernel', weight is null.";
       InitSizeLists();
       return true;
     }
     if (weight_shape.size() < 3) {
-      MS_LOG(EXCEPTION) << "For 'LstmGradWeightGpuKernel', the rank of weight should be greater than or equal to 3, "
-                        << "but got the rank of weight: " << weight_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
+                        << weight_shape.size();
     }
     size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
 
@@ -159,7 +158,8 @@ class LstmGradWeightGpuKernel : public GpuKernel {
                                 cudnnGetRNNParamsSize(handle_, rnn_desc_, x_desc_[0], &weight_size_, cudnn_data_type_),
                                 "get weight_size_ failed");
     if (weight_size != weight_size_) {
-      MS_LOG(EXCEPTION) << "weight size: " << weight_size << " error, expect: " << weight_size_ << " .";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of weight should be equal to " << weight_size_
+                        << " but got " << weight_size;
     }
     int w_dims[3] = {SizeToInt(weight_size_ / sizeof(T)), 1, 1};
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,

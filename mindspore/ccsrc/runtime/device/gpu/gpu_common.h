@@ -216,7 +216,8 @@ inline bool CheckNullInput(const std::vector<size_t> &input_shape) {
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
 
-inline std::string ConvertVectorToString(const std::vector<size_t> &value) {
+template <typename T>
+inline std::string ConvertVectorToString(const std::vector<T> &value) {
   std::stringstream ss;
   ss << "(";
   for (auto it = value.begin(); it != value.end(); it++) {

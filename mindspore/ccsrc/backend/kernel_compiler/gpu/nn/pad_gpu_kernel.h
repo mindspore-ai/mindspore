@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 #include <algorithm>
 
 #include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
@@ -75,15 +76,14 @@ class PadGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    if (!CheckIONumber(kernel_node)) {
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckIONumber(kernel_node);
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PadGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -93,12 +93,15 @@ class PadGpuFwdKernel : public GpuKernel {
     MS_EXCEPTION_IF_NULL(prim);
     std::vector<std::vector<int64_t>> paddings = GetValue<std::vector<std::vector<int64_t>>>(prim->GetAttr("paddings"));
     if (paddings.size() != input_rank_) {
-      MS_LOG(EXCEPTION) << "PadGpuFwdKernel: paddings' size must be equal to the rank of the input.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'paddings' should be equal to the dimension of "
+                        << "input, but got the length of 'paddings': " << paddings.size()
+                        << " the dimension of input: " << input_rank_;
     }
 
     for (size_t i = 0; i < paddings.size(); i++) {
       if (paddings[i].size() != 2) {
-        MS_LOG(EXCEPTION) << "PadGpuFwdKernel: each element in paddings must have size 2.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'paddings' should be equal to 2, "
+                          << "but got the size of paddings[" << i << "]: " << paddings[i].size();
       }
       flattened_paddings_.push_back(paddings[i][0]);
       flattened_paddings_.push_back(paddings[i][1]);
@@ -111,14 +114,14 @@ class PadGpuFwdKernel : public GpuKernel {
       output_size_ *= (input_shape_[i] + flattened_paddings_[2 * i] + flattened_paddings_[(2 * i) + 1]);
     }
 
-    if (input_rank_ < 1) {
-      MS_LOG(EXCEPTION) << "For 'PadGpuKernel', the rank of input should be greater than or equal to 1, "
-                        << "but got the rank of input: " << input_rank_;
+    if (input_rank_ == 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to 0, but "
+                        << "got the " << input_rank_;
     }
     if (output_shape.size() != input_rank_) {
-      MS_LOG(EXCEPTION) << "For 'PadGpuKernel', the rank of input should be equal to the rank of output, "
-                        << "but got the rank of input: " << input_rank_
-                        << ", the rank of output: " << output_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output should be the same, but "
+                        << "got the dimension of input: " << input_rank_
+                        << ", the dimension of output: " << output_shape.size();
     }
     strides_.resize(input_rank_);
     strides_[input_rank_ - 1] = 1;
@@ -136,6 +139,7 @@ class PadGpuFwdKernel : public GpuKernel {
     output_size_ = 0;
     workspace_size_ = 0;
     is_null_input_ = false;
+    kernel_name_ = "Pad";
     flattened_paddings_.clear();
     input_shape_.clear();
     strides_.clear();
@@ -154,18 +158,15 @@ class PadGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  bool CheckIONumber(const CNodePtr &kernel_node) {
+  void CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but Pad needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but Pad needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    return true;
   }
 
   size_t input_rank_;
@@ -178,6 +179,7 @@ class PadGpuFwdKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
+  std::string kernel_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

@@ -51,23 +51,22 @@ class PReLUGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     ResetResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "PReLU needs 2 inputs, but got " << input_num;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "ReLU should have 1 output, but got " << input_num;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(weight_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "x") || CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PReLUGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
@@ -86,9 +85,10 @@ class PReLUGpuKernel : public GpuKernel {
     }
 
     if (weight_shape.size() != 1 || (weight_shape[0] != 1 && weight_shape[0] != channel_num)) {
-      MS_LOG(EXCEPTION) << "PReLU requires the rank of weight should be 1, and the elements number should be "
-                           "1 or channels number "
-                        << channel_num << ", but got weight shape " << weight_shape;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight should be equal to 1 and "
+                        << "weight.shape[0] should be equal to 1 or the channel number, but got the dimension of "
+                        << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
+                        << ", the channel num: " << channel_num;
     }
     weight_length_ = weight_shape[0];
     InitSizeLists();

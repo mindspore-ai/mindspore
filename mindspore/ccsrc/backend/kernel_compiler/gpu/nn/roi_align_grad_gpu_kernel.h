@@ -64,34 +64,32 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     // Get the number of input args
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ROIAlignGrad needs 2 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
 
     // Get the number of output args
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ROIAlignGrad needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
     // Get the input shapes
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(rois_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") || CHECK_SHAPE_NULL(rois_shape, kernel_name, "rois");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ROIAlignGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
 
     auto dy_shape_size = dy_shape.size();
     if (dy_shape_size != 4) {
-      MS_LOG(ERROR) << "dy shape size is " << dy_shape_size << ", but should be 4.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dy should be equal to 4, but got "
+                        << dy_shape_size;
     }
 
     // Parse y diff
@@ -100,8 +98,8 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
     dy_size_ = dy_shape_[0] * dy_shape_[1] * dy_shape_[2] * dy_shape_[3] * sizeof(T);
 
     if (rois_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For 'ROIAlignGradGpuKernel', the rank of rois_shape should be greater than or equal to 2, "
-                        << "but got the rank of rois_shape: " << rois_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of rois cannot be less than 2, but got "
+                        << rois_shape.size();
     }
     // Get rois rows and cols
     roi_rows_ = rois_shape[0];
@@ -120,8 +118,8 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
     roi_end_mode_ = 1;
 
     if (xdiff_shape_.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'ROIAlignGradGpuKernel', the rank of xdiff_shape_ should be greater than or equal to "
-                        << "4, but got the rank of xdiff_shape_: " << xdiff_shape_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of xdiff_shape cannot be less than 4, but got "
+                        << xdiff_shape_.size();
     }
     // Get channels, height & width
     batch_size_ = xdiff_shape_[0];

@@ -68,21 +68,20 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but MaxPoolWithArgmax needs 1 inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 2) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but MaxPoolWithArgmax needs 2 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'MaxPoolWithArgmaxGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -95,9 +94,9 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
       output_size_ *= x;
     }
     if (input_shape.size() < 4 || output_shape.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of input or output should be greater than "
-                        << "or equal to 4, but got the rank of input: " << input_shape.size()
-                        << ", the rank of output: " << output_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input and output cannot be less than 4, but "
+                        << "got the dimension of input: " << input_shape.size()
+                        << ", the dimension of output: " << output_shape.size();
     }
     n_ = SizeToInt(input_shape[0]);
     c_ = SizeToInt(input_shape[1]);
@@ -112,8 +111,8 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (window.size() < 3) {
-      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of window should be greater than "
-                        << "or equal to 3, but got the rank of window: " << window.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'kernel_size' cannot be less than 3, but got "
+                        << window.size();
     }
     window_height_ = window[1];
     window_width_ = window[2];
@@ -122,8 +121,8 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride.size() < 3) {
-      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of stride should be greater than "
-                        << "or equal to 3, but got the rank of stride: " << stride.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'strides' cannot be less than 3, but got "
+                        << stride.size();
     }
     stride_height_ = stride[1];
     stride_width_ = stride[2];

@@ -54,6 +54,7 @@ class PoolingGradGpuKernel : public GpuKernel {
         c_(0),
         pad_value_(0),
         is_null_input_(false),
+        kernel_name_("PoolingGrad"),
         input_size_(0),
         output_size_(0),
         workspace_size_(0) {}
@@ -94,10 +95,10 @@ class PoolingGradGpuKernel : public GpuKernel {
       data_format = format_attr_;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask) || CHECK_NULL_INPUT(dout_shape) ||
-                     CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(input_mask, kernel_name_, "mask") ||
+      CHECK_SHAPE_NULL(dout_shape, kernel_name_, "dout") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PoolingGradGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -119,11 +120,10 @@ class PoolingGradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     int nbDims = SizeToInt(input_shape.size());
 
@@ -210,14 +210,12 @@ class PoolingGradGpuKernel : public GpuKernel {
   }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PoolingGradGpuKernel needs " << INPUT_NUM
-                    << " inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
+                        << input_num;
     }
-    return true;
   }
   void SetPad(const CNodePtr &kernel_node) {
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
@@ -229,14 +227,14 @@ class PoolingGradGpuKernel : public GpuKernel {
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (window.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of window should be greater than or equal to 4 "
-                        << "for 2D, but got the rank of window: " << window.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 4, but got "
+                        << window.size();
     }
     int window_height = window[2];
     int window_width = window[3];
     if (stride_.size() < 4) {
-      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of stride_ should be greater than or equal to 4 "
-                        << "for 2D, but got the rank of stride_: " << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 4, but got "
+                        << stride_.size();
     }
     int stride_h = stride_[2];
     int stride_w = stride_[3];
@@ -278,15 +276,15 @@ class PoolingGradGpuKernel : public GpuKernel {
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (window.size() < 5) {
-      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of window should be greater than or equal to 5 "
-                        << "for 3D, but got the rank of window: " << window.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 5, but got "
+                        << window.size();
     }
     int window_depth = window[2];
     int window_height = window[3];
     int window_width = window[4];
     if (stride_.size() < 5) {
-      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of stride_ should be greater than or equal to 5 "
-                        << "for 3D, but got the rank of stride_: " << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 5, but got "
+                        << stride_.size();
     }
     int stride_d = stride_[2];
     int stride_h = stride_[3];
@@ -366,6 +364,7 @@ class PoolingGradGpuKernel : public GpuKernel {
   int c_;
   float pad_value_;
   bool is_null_input_;
+  std::string kernel_name_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
