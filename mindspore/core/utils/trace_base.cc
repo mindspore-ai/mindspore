@@ -146,11 +146,13 @@ std::string DumpSourceLines(const AnfNodePtr &node) {
     return "";
   }
   std::ostringstream oss;
-  oss << "\n";
   for (auto &src_info : vec_source) {
     oss << src_info;
   }
-  return oss.str();
+  if (oss.str().empty()) {
+    return "";
+  }
+  return "\nThe function call stack:\n" + oss.str();
 }
 
 std::string DumpSourceLines(AnfNode *node) {
