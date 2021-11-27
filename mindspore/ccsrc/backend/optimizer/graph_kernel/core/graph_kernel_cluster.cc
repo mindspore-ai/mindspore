@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_cluster.h"
 
 #include <algorithm>
 #include <set>
