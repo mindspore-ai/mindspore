@@ -5041,7 +5041,7 @@ class BesselI0e(PrimitiveWithInfer):
         return x
 
 
-class BesselI1e(PrimitiveWithInfer):
+class BesselI1e(Primitive):
     r"""
     Computes BesselI1e of input element-wise.
 
@@ -5062,6 +5062,7 @@ class BesselI1e(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend``
@@ -5077,13 +5078,8 @@ class BesselI1e(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize BesselI1e"""
+        self.init_prim_io_names(inputs=['x'], outputs='output')
 
-    def infer_shape(self, x):
-        return x
-
-    def infer_dtype(self, x):
-        validator.check_tensor_dtype_valid('x', x, mstype.number_type, self.name)
-        return x
 
 
 class Inv(PrimitiveWithInfer):

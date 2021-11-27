@@ -330,6 +330,7 @@ from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
 from .bessel_i0e import _bessel_i0e_tbe
 from .bessel_i1e import _bessel_i1e_tbe
+from .bessel_i1e_ds import _bessel_i1e_ds_tbe
 from .batch_to_space_nd import _batch_to_space_nd_tbe
 from .space_to_batch_nd import _space_to_batch_nd_tbe
 from .bitwise_and import _bitwise_and_tbe
