@@ -41,8 +41,8 @@ class SpaceToBatchCPUKernel : public InnerKernel {
 
  protected:
   SpaceToBatchParameter *param_;
-  float *input_ptr_ = nullptr;
-  float *output_ptr_ = nullptr;
+  void *input_ptr_ = nullptr;
+  void *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

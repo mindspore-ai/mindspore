@@ -26,14 +26,6 @@ using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore::kernel {
 void SpaceToBatchCPUKernel::ProcessInput() {
-  auto input_tensor = in_tensors_.at(FIRST_INPUT);
-  auto output_tensor = out_tensors_.at(FIRST_INPUT);
-  for (size_t i = 0; i < DIMENSION_4D; i++) {
-    param_->input_shape_[i] = input_tensor->shape().at(i);
-    param_->output_shape_[i] = output_tensor->shape().at(i);
-  }
-  ComputeStrides(param_->input_shape_, param_->in_stride_, DIMENSION_4D);
-  ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
   auto block_shape_data = in_tensors_.at(SECOND_INPUT)->data();
   auto block_shape = static_cast<int *>(block_shape_data);
   MS_ASSERT(block_shape != nullptr);
@@ -50,7 +42,11 @@ void SpaceToBatchCPUKernel::ProcessInput() {
 
 int SpaceToBatchCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[kInputIndex]);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
+  param_->data_type_len =
+    in_tensors_[kInputIndex]->data_type() == kNumberTypeFloat16 ? FP16_DATA_TYPE_LEN : sizeof(float);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -82,29 +78,29 @@ int SpaceToBatchCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int SpaceToBatchCPUKernel::DoRun(int task_id) {
-  auto ret =
-    DoSpaceToBatch(input_ptr_, output_ptr_, param_->input_shape_, param_->output_shape_, param_->in_stride_,
-                   param_->out_stride_, param_->block_sizes_, param_->paddings_, op_parameter_->thread_num_, task_id);
-  return ret;
-}
+int SpaceToBatchCPUKernel::DoRun(int task_id) { return DoSpaceToBatch(input_ptr_, output_ptr_, param_, task_id); }
 
 int SpaceToBatchCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
-  MS_ASSERT(input_ptr_ != nullptr);
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
-  MS_ASSERT(output_ptr_ != nullptr);
+  input_ptr_ = in_tensors_[FIRST_INPUT]->data();
+  CHECK_NULL_RETURN(input_ptr_);
+  output_ptr_ = out_tensors_[FIRST_INPUT]->data();
+  CHECK_NULL_RETURN(output_ptr_);
   if (in_tensors_.size() == DIMENSION_3D) {
     if (!in_tensors_.at(SECOND_INPUT)->IsConst() || !in_tensors_.at(THIRD_INPUT)->IsConst()) {
       ProcessInput();
     }
   }
-
-  ParallelLaunch(this->ms_context_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
-
-  return RET_OK;
+  auto ret = ParallelLaunch(this->ms_context_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParallelLaunch failed, ret: " << ret;
+  }
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, LiteKernelCreator<SpaceToBatchCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, LiteKernelCreator<SpaceToBatchCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatch, LiteKernelCreator<SpaceToBatchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatchND, LiteKernelCreator<SpaceToBatchCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

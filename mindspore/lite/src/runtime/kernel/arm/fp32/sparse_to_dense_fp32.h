@@ -30,9 +30,8 @@ class SparseToDenseCPUKernel : public InnerKernel {
  public:
   SparseToDenseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    s2d_param = (reinterpret_cast<SparseToDenseParameter *>(op_parameter_));
-    s2d_param->thread_num_ = thread_count_;
+      : InnerKernel(parameter, inputs, outputs, ctx) {
+    param_ = (reinterpret_cast<SparseToDenseParameter *>(parameter));
   }
   ~SparseToDenseCPUKernel() = default;
 
@@ -40,25 +39,15 @@ class SparseToDenseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
-  int GenerateIndices();
-  int IndicesValidCheck() const;
-
- protected:
-  const InnerContext *ctx_;
-  int thread_count_;
-  SparseToDenseParameter *s2d_param;
+  int SetDefaultValue(int task_id);
 
  private:
-  int **sparse_indices_vect = nullptr;
-  float *sparse_values = nullptr;
-  float default_value = 0;
-  bool isScalar = false;
-  int index_num = 0;
-  int index_dim = 0;
-  float *output_data = nullptr;
-  int output_shape[4] = {0};
-  int output_num = 0;
-  int64_t count_unit_ = 0;
+  int GenerateIndices();
+  void FreeRunBuff();
+  SparseToDenseParameter *param_;
+  int *indices_vec_ = nullptr;
+  void *sparse_values_ = nullptr;
+  void *default_value_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSETODENSE_H_

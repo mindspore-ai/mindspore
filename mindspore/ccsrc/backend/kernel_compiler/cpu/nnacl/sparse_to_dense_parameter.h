@@ -23,9 +23,10 @@ typedef struct SparseToDenseParameter {
   // primitive parameter
   OpParameter op_parameter_;
   bool validate_indices_;
-
-  // other parameter
-  int thread_num_;
+  bool is_scalar;
+  int index_num;
+  int output_num;
+  int output_stride[DIMENSION_4D];
 } SparseToDenseParameter;
 
 #endif  // MINDSPORE_NNACL_SPARSE_TO_DENSE_PARAMETER_H_

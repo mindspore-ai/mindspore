@@ -33,19 +33,17 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest4) {
   const size_t kOutSize = 16;
   std::vector<float> expect_out = {1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8, 13, 14, 15, 16};
   float out[kOutSize];
-  std::vector<int> in_shape = {1, 4, 4, 1};
-  std::vector<int> out_shape = {2, 2, 4, 1};
+  SpaceToBatchParameter param;
+  param.op_parameter_.thread_num_ = 1;
+  SetShape(param.input_shape_, {1, 4, 4, 1}, 4);
+  SetShape(param.output_shape_, {2, 2, 4, 1}, 4);
+  SetShape(param.in_stride_, {16, 4, 1, 1}, 4);
+  SetShape(param.out_stride_, {8, 4, 1, 1}, 4);
+  SetShape(param.block_sizes_, {2, 1}, 2);
+  SetShape(param.paddings_, {0, 0, 0, 0}, 4);
+  param.data_type_len = sizeof(float);
 
-  int in_stride[] = {16, 4, 1, 1};
-  int out_stride[] = {8, 4, 1, 1};
-  int blocks[] = {2, 1};
-  int paddings[] = {0, 0, 0, 0};
-
-  DoSpaceToBatch(input.data(), out, in_shape.data(), out_shape.data(), in_stride, out_stride, blocks, paddings, 1, 0);
-  for (float i : out) {
-    std::cout << i << " ";
-  }
-  std::cout << "\n";
+  DoSpaceToBatch(input.data(), out, &param, 0);
   ASSERT_EQ(0, CompareOutputData(out, expect_out.data(), kOutSize, 0.000001));
 }
 
@@ -54,19 +52,18 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest5) {
   size_t kOutSize = 16;
   std::vector<float> expect_out = {1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16};
   float out[kOutSize];
-  std::vector<int> in_shape = {1, 4, 4, 1};
-  std::vector<int> out_shape = {2, 4, 2, 1};
 
-  int in_stride[] = {16, 4, 1, 1};
-  int out_stride[] = {8, 2, 1, 1};
-  int blocks[] = {1, 2};
-  int paddings[] = {0, 0, 0, 0};
+  SpaceToBatchParameter param;
+  param.op_parameter_.thread_num_ = 1;
+  SetShape(param.input_shape_, {1, 4, 4, 1}, 4);
+  SetShape(param.output_shape_, {2, 4, 2, 1}, 4);
+  SetShape(param.in_stride_, {16, 4, 1, 1}, 4);
+  SetShape(param.out_stride_, {8, 2, 1, 1}, 4);
+  SetShape(param.block_sizes_, {1, 2}, 2);
+  SetShape(param.paddings_, {0, 0, 0, 0}, 4);
+  param.data_type_len = sizeof(float);
 
-  DoSpaceToBatch(input.data(), out, in_shape.data(), out_shape.data(), in_stride, out_stride, blocks, paddings, 1, 0);
-  for (unsigned int i = 0; i < kOutSize; ++i) {
-    std::cout << out[i] << " ";
-  }
-  std::cout << "\n";
+  DoSpaceToBatch(input.data(), out, &param, 0);
   ASSERT_EQ(0, CompareOutputData(out, expect_out.data(), kOutSize, 0.000001));
 }
 
@@ -75,19 +72,18 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest6) {
   size_t kOutSize = 16;
   std::vector<float> expect_out = {1, 3, 9, 11, 2, 4, 10, 12, 5, 7, 13, 15, 6, 8, 14, 16};
   float out[kOutSize];
-  std::vector<int> in_shape = {1, 4, 4, 1};
-  std::vector<int> out_shape = {4, 2, 2, 1};
 
-  int in_stride[] = {16, 4, 1, 1};
-  int out_stride[] = {4, 2, 1, 1};
-  int blocks[] = {2, 2};
-  int paddings[] = {0, 0, 0, 0};
+  SpaceToBatchParameter param;
+  param.op_parameter_.thread_num_ = 1;
+  SetShape(param.input_shape_, {1, 4, 4, 1}, 4);
+  SetShape(param.output_shape_, {4, 2, 2, 1}, 4);
+  SetShape(param.in_stride_, {16, 4, 1, 1}, 4);
+  SetShape(param.out_stride_, {4, 2, 1, 1}, 4);
+  SetShape(param.block_sizes_, {2, 2}, 2);
+  SetShape(param.paddings_, {0, 0, 0, 0}, 4);
+  param.data_type_len = sizeof(float);
 
-  DoSpaceToBatch(input.data(), out, in_shape.data(), out_shape.data(), in_stride, out_stride, blocks, paddings, 1, 0);
-  for (unsigned int i = 0; i < kOutSize; ++i) {
-    std::cout << out[i] << " ";
-  }
-  std::cout << "\n";
+  DoSpaceToBatch(input.data(), out, &param, 0);
   ASSERT_EQ(0, CompareOutputData(out, expect_out.data(), kOutSize, 0.000001));
 }
 }  // namespace mindspore

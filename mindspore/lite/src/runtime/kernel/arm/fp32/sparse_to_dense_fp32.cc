@@ -18,6 +18,9 @@
 #include <limits>
 #include "include/errorcode.h"
 #include "nnacl/fp32/sparse_to_dense_fp32.h"
+#ifdef ENABLE_FP16
+#include "nnacl/fp16/sparse_to_dense_fp16.h"
+#endif
 #include "schema/model_generated.h"
 #include "schema/ops_generated.h"
 #include "src/kernel_registry.h"
@@ -30,21 +33,19 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore::kernel {
 int SparseToDenseCPUKernel::Prepare() {
-  MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize2, RET_ERROR);
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[DIMENSION_2D]);
-  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
-  CHECK_NULL_RETURN(out_tensors_.front());
-  auto input2 = in_tensors_.at(2);
-  auto input3 = in_tensors_.at(3);
-  sparse_values = reinterpret_cast<float *>(input2->MutableData());
-  CHECK_NULL_RETURN(sparse_values);
-  CHECK_NULL_RETURN(input3->MutableData());
-  default_value = reinterpret_cast<float *>(input3->MutableData())[0];
-  if (input2->ElementsNum() == 1) {
-    isScalar = true;
-  }
+  MS_CHECK_TRUE_RET(in_tensors_.size() == C4NUM, RET_ERROR);
+  CHECK_NULL_RETURN(in_tensors_[FIRST_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[SECOND_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[THIRD_INPUT]);
+  CHECK_NULL_RETURN(in_tensors_[FOURTH_INPUT]);
+  MS_CHECK_TRUE_RET(out_tensors_.size() == C1NUM, RET_ERROR);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
+  sparse_values_ = in_tensors_[THIRD_INPUT]->data();
+  CHECK_NULL_RETURN(sparse_values_);
+  param_->is_scalar = in_tensors_[THIRD_INPUT]->ElementsNum() == C1NUM ? true : false;
+
+  default_value_ = in_tensors_[FOURTH_INPUT]->data();
+  CHECK_NULL_RETURN(default_value_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -52,94 +53,115 @@ int SparseToDenseCPUKernel::Prepare() {
 }
 
 int SparseToDenseCPUKernel::ReSize() {
-  auto output0 = out_tensors_.at(0);
-  std::vector<int> out_shape_tensor = output0->shape();
-  auto output_shape_tmp = reinterpret_cast<int *>(out_shape_tensor.data());
-  int output_dim = static_cast<int>(output0->shape().size());
+  auto output = out_tensors_[kOutputIndex];
+  int output_dim = static_cast<int>(output->shape().size());
   MS_CHECK_TRUE_MSG(output_dim <= DIMENSION_4D, RET_ERROR, "output_dim should <= 4");
-  for (int i = 0; i < DIMENSION_4D - output_dim; i++) {
-    output_shape[i] = 1;
+
+  int expand_shape[4] = {1, 1, 1, 1};
+  for (int i = 0; i < DIMENSION_4D; i++) {
+    int pad_dims = DIMENSION_4D - output_dim;
+    expand_shape[i] = i >= pad_dims ? output->DimensionSize(i - pad_dims) : 1;
   }
-  for (int i = 0; i < output_dim; i++) {
-    output_shape[i + DIMENSION_4D - output_dim] = output_shape_tmp[i];
-  }
-  output_num = output0->ElementsNum();
+  param_->output_stride[DIMENSION_0D] =
+    expand_shape[DIMENSION_1D] * expand_shape[DIMENSION_2D] * expand_shape[DIMENSION_3D];
+  param_->output_stride[DIMENSION_1D] = expand_shape[DIMENSION_2D] * expand_shape[DIMENSION_3D];
+  param_->output_stride[DIMENSION_2D] = expand_shape[DIMENSION_3D];
   return RET_OK;
+}
+
+int SparseToDenseCPUKernel::SetDefaultValue(int task_id) {
+  CHECK_NULL_RETURN(indices_vec_);
+  CHECK_NULL_RETURN(sparse_values_);
+  void *output_data = out_tensors_[kOutputIndex]->data();
+  CHECK_NULL_RETURN(output_data);
+  int ret = 0;
+  if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    float16_t default_value = *static_cast<float16_t *>(default_value_);
+    ret = SparseToDenseSetDefaultFp16(static_cast<float16_t *>(output_data), default_value, param_, task_id);
+#endif
+  } else {
+    float default_value = *static_cast<float *>(default_value_);
+    ret = SparseToDenseSetDefault(static_cast<float *>(output_data), default_value, param_, task_id);
+  }
+  return ret;
 }
 
 int SparseToDenseCPUKernel::DoExcute(int task_id) {
-  int real_dst_count = MSMIN(index_num - task_id * count_unit_, count_unit_);
-  if (real_dst_count <= 0) {
-    return RET_OK;
-  }
-  int index_start = task_id * count_unit_;
-  int index_end = index_start + real_dst_count;
-  MS_CHECK_FALSE_MSG(index_num == 0, RET_ERROR, "div zero");
-  int out_width = output_num / index_num;
-  CHECK_NULL_RETURN(sparse_indices_vect);
-  CHECK_NULL_RETURN(sparse_values);
+  CHECK_NULL_RETURN(indices_vec_);
+  CHECK_NULL_RETURN(sparse_values_);
+  void *output_data = out_tensors_[kOutputIndex]->data();
   CHECK_NULL_RETURN(output_data);
-  SparseToDense(sparse_indices_vect, output_shape, sparse_values, default_value, output_data, isScalar, index_start,
-                index_end, out_width);
-  return RET_OK;
+  int ret = 0;
+  if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    float16_t default_value = *static_cast<float16_t *>(default_value_);
+    ret = SparseToDenseFp16(indices_vec_, static_cast<float16_t *>(sparse_values_), default_value,
+                            static_cast<float16_t *>(output_data), param_, task_id);
+#endif
+  } else {
+    float default_value = *static_cast<float *>(default_value_);
+    ret = SparseToDense(indices_vec_, static_cast<float *>(sparse_values_), default_value,
+                        static_cast<float *>(output_data), param_, task_id);
+  }
+  return ret;
+}
+
+int SparseToDenseSetDefaultRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto kernel = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
+  auto ret = kernel->SetDefaultValue(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SparseToDenseRun error task_id[" << task_id << "] error_code[" << ret << "]";
+  }
+  return ret;
 }
 
 int SparseToDenseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto s2ddata = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
-  auto ret = s2ddata->DoExcute(task_id);
+  auto kernel = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
+  auto ret = kernel->DoExcute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SparseToDenseRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
   }
-  return RET_OK;
+  return ret;
 }
 
 int SparseToDenseCPUKernel::GenerateIndices() {
-  auto input0 = in_tensors_.at(0);
-  index_num = input0->shape().at(0);
-  if (index_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int *))) {
-    MS_LOG(ERROR) << "Input dim is invalid, dim: " << index_num;
+  auto input0 = in_tensors_[kInputIndex];
+  param_->index_num = input0->DimensionSize(DIMENSION_0D);
+  MS_CHECK_TRUE_MSG(param_->index_num != 0, RET_ERROR, "div zero");
+  param_->output_num = out_tensors_[kOutputIndex]->ElementsNum();
+
+  if (SIZE_MUL_OVERFLOW(static_cast<size_t>(param_->index_num), sizeof(int) * DIMENSION_4D)) {
+    MS_LOG(ERROR) << "Input dim is invalid, dim: " << param_->index_num;
     return RET_ERROR;
   }
-  sparse_indices_vect =
-    reinterpret_cast<int **>(ctx_->allocator->Malloc(sizeof(int *) * static_cast<size_t>(index_num)));
-  if (sparse_indices_vect == nullptr) {
-    MS_LOG(ERROR) << "Null pointer reference: sparse_indices_vect.";
+  indices_vec_ = static_cast<int *>(
+    ms_context_->allocator->Malloc(static_cast<size_t>(param_->index_num) * sizeof(int) * DIMENSION_4D));
+  if (indices_vec_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
     return RET_ERROR;
   }
-  index_dim = static_cast<int>(input0->shape().size());
-  int *sparse_indices = reinterpret_cast<int *>(input0->MutableData());
+  int *sparse_indices = static_cast<int *>(input0->data());
   CHECK_NULL_RETURN(sparse_indices);
+
+  size_t index_dim = input0->shape().size();
   switch (index_dim) {
     case 0:
     case 1: {
-      for (int i = 0; i < index_num; i++) {
-        sparse_indices_vect[i] = new int[DIMENSION_4D];
-        if (sparse_indices_vect[i] == nullptr) {
-          MS_LOG(ERROR) << "Null pointer reference: sparse_indices_vect[" << i << "].";
-          return RET_ERROR;
+      for (int i = 0; i < param_->index_num; i++) {
+        for (int j = 0; j < DIMENSION_4D; j++) {
+          indices_vec_[i * DIMENSION_4D + j] = j >= DIMENSION_3D ? sparse_indices[i] : 0;
         }
-        for (int j = 0; j < DIMENSION_4D - 1; j++) {
-          sparse_indices_vect[i][j] = 0;
-        }
-        sparse_indices_vect[i][DIMENSION_4D - 1] = sparse_indices[i];
       }
       break;
     }
     case 2: {
-      int true_dims = input0->shape().at(1);
-      MS_ASSERT(true_dims <= DIMENSION_4D);
-      for (int i = 0; i < index_num; i++) {
-        sparse_indices_vect[i] = new int[DIMENSION_4D];
-        if (sparse_indices_vect[i] == nullptr) {
-          MS_LOG(ERROR) << "Null pointer reference: sparse_indices_vect[" << i << "].";
-          return RET_ERROR;
-        }
-        for (int j = 0; j < DIMENSION_4D - true_dims; j++) {
-          sparse_indices_vect[i][j] = 0;
-        }
-        for (int j = 0; j < true_dims; j++) {
-          sparse_indices_vect[i][j + DIMENSION_4D - true_dims] = sparse_indices[i * true_dims + j];
+      int real_dims = input0->shape().at(1);
+      MS_CHECK_TRUE_MSG(real_dims <= DIMENSION_4D, RET_ERROR, "shape invalid.");
+      for (int i = 0; i < param_->index_num; i++) {
+        for (int j = 0; j < DIMENSION_4D; j++) {
+          int pad_dims = DIMENSION_4D - real_dims;
+          indices_vec_[i * DIMENSION_4D + j] = j >= pad_dims ? sparse_indices[i * real_dims + j - pad_dims] : 0;
         }
       }
       break;
@@ -152,58 +174,38 @@ int SparseToDenseCPUKernel::GenerateIndices() {
   return RET_OK;
 }
 
-int SparseToDenseCPUKernel::IndicesValidCheck() const {
-  int d1 = output_shape[1] * output_shape[2] * output_shape[3];
-  int d2 = output_shape[2] * output_shape[3];
-  int d3 = output_shape[3];
-  int index_before = -1;
-  for (int i = 0; i < index_num; i++) {
-    int index = d1 * sparse_indices_vect[i][0] + d2 * sparse_indices_vect[i][1] + d3 * sparse_indices_vect[i][2] +
-                sparse_indices_vect[i][3];
-    if (index <= index_before) {
-      return RET_ERROR;
-    }
-    index_before = index;
-  }
-  return RET_OK;
-}
-
 int SparseToDenseCPUKernel::Run() {
   auto ret = GenerateIndices();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Generate Indices failed.";
+    FreeRunBuff();
     return RET_ERROR;
   }
-  if (s2d_param->validate_indices_ == true) {
-    auto ret2 = IndicesValidCheck();
-    if (ret2 != RET_OK) {
-      MS_LOG(ERROR) << "The sparse indices is not valid.";
-      return RET_ERROR;
-    }
-  }
-  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  CHECK_NULL_RETURN(output_data);
-  MS_CHECK_FALSE_MSG(thread_count_ == 0, RET_ERROR, "div zero");
-  count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
-  ret = ParallelLaunch(this->ms_context_, SparseToDenseRun, this, s2d_param->thread_num_);
+  // int SparseToDenseSetDefault(float *output, float default_value, SparseToDenseParameter *param, int task_id)
+  ret = ParallelLaunch(this->ms_context_, SparseToDenseSetDefaultRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SparseToDenseRun error: error_code[" << ret << "]";
-    return RET_ERROR;
+    FreeRunBuff();
+    return ret;
   }
-
-  if (sparse_indices_vect != nullptr) {
-    for (int i = 0; i < index_num; i++) {
-      if (sparse_indices_vect[i] != nullptr) {
-        delete[] sparse_indices_vect[i];
-      }
-    }
-    ctx_->allocator->Free(sparse_indices_vect);
-    sparse_indices_vect = nullptr;
+  ret = ParallelLaunch(this->ms_context_, SparseToDenseRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SparseToDenseRun error: error_code[" << ret << "]";
   }
+  FreeRunBuff();
+  return ret;
+}
 
-  return RET_OK;
+void SparseToDenseCPUKernel::FreeRunBuff() {
+  if (indices_vec_ != nullptr) {
+    ms_context_->allocator->Free(indices_vec_);
+    indices_vec_ = nullptr;
+  }
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseToDense, LiteKernelCreator<SparseToDenseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SparseToDense, LiteKernelCreator<SparseToDenseCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SparseToDense, LiteKernelCreator<SparseToDenseCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

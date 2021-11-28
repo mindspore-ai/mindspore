@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp32/space_to_depth_fp32.h"
 #include <limits>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/space_to_depth_parameter.h"
 #include "nnacl/base/space_to_depth_base.h"
 #include "include/errorcode.h"
 
@@ -34,12 +32,15 @@ namespace mindspore::kernel {
 int SpaceToDepthCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
-  CHECK_NULL_RETURN(param);
-  if (param->block_size_ <= 0) {
+  CHECK_NULL_RETURN(in_tensors_[kInputIndex]);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
+
+  if (param_->block_size_ <= 0) {
     MS_LOG(ERROR) << "Input block_size should > 0!";
     return RET_PARAM_INVALID;
   }
+  param_->date_type_len =
+    in_tensors_[kInputIndex]->data_type() == kNumberTypeFloat16 ? FP16_DATA_TYPE_LEN : sizeof(float);
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -48,68 +49,46 @@ int SpaceToDepthCPUKernel::Prepare() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-  if (in_tensors_.at(0)->format() != mindspore::NHWC) {
+  if (in_tensors_[kInputIndex]->format() != mindspore::NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }
-
-  num_unit_ = static_cast<int>(out_tensors_.at(0)->shape().at(kNHWC_H));
-  thread_h_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
-  if (thread_h_num_ == 0) {
-    return RET_ERROR;
-  }
-  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
 }
 
 int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, thread_h_stride_, RET_ERROR);
-  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
-  }
-  int thread_offset = task_id * thread_h_stride_;
-  auto in_shape = in_tensors_.at(0)->shape();
-  auto out_shape = out_tensors_.at(0)->shape();
-  SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
-  CHECK_NULL_RETURN(param);
-  CHECK_NULL_RETURN(input_ptr_);
-  CHECK_NULL_RETURN(output_ptr_);
-  auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
-                                 param->block_size_, thread_offset, thread_offset + num_unit_thread, sizeof(float));
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SpaceToDepth error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  auto input = in_tensors_[kInputIndex];
+  auto output = out_tensors_[kOutputIndex];
+  auto in_shape = input->shape();
+  auto out_shape = output->shape();
+  auto input_data = input->data();
+  auto output_data = output->data();
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
+  return SpaceToDepthForNHWC(input_data, output_data, in_shape.data(), out_shape.data(), in_shape.size(), param_,
+                             task_id);
 }
 
 int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto g_kernel = reinterpret_cast<SpaceToDepthCPUKernel *>(cdata);
-  CHECK_NULL_RETURN(g_kernel);
-  auto ret = g_kernel->SpaceToDepth(task_id);
+  auto kernel = static_cast<SpaceToDepthCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
+  auto ret = kernel->SpaceToDepth(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SpaceToDepthRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "SpaceToDepth failed, ret: " << ret;
   }
-  return RET_OK;
+  return ret;
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
-  if (in_tensors_.at(0)->format() == mindspore::NHWC) {
-    auto ret = ParallelLaunch(this->ms_context_, SpaceToDepthRun, this, thread_h_num_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
-      return ret;
-    }
-  } else {
-    MS_LOG(ERROR) << "Only support NHWC now!";
-    return RET_ERROR;
+  auto ret = ParallelLaunch(ms_context_, SpaceToDepthRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParallelLaunch failed, ret: " << ret;
   }
-  return RET_OK;
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SpaceToDepth, LiteKernelCreator<SpaceToDepthCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SpaceToDepth, LiteKernelCreator<SpaceToDepthCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

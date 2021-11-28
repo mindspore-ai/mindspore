@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,25 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
+#include "nnacl/space_to_depth_parameter.h"
 
 namespace mindspore::kernel {
 class SpaceToDepthCPUKernel : public InnerKernel {
  public:
   SpaceToDepthCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
+  }
   ~SpaceToDepthCPUKernel() = default;
 
-  int SpaceToDepth(int task_id);
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  int SpaceToDepth(int task_id);
 
  private:
-  int thread_h_stride_ = 0;
-  int thread_h_num_ = 0;
-  int num_unit_ = 0;
-  float *input_ptr_ = nullptr;
-  float *output_ptr_ = nullptr;
+  SpaceToDepthParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -28,69 +28,46 @@ namespace mindspore {
 class TestSparseToDenseFp32 : public mindspore::CommonTest {
  public:
   TestSparseToDenseFp32() {}
+  template <typename T>
+  lite::Tensor *CreateTensor(TypeId dtype, std::vector<int> shape, std::vector<T> data) {
+    auto tensor = new (std::nothrow) lite::Tensor(dtype, shape);
+    if (!data.empty()) {
+      memcpy(tensor->MutableData(), data.data(), tensor->Size());
+    } else {
+      (void)tensor->MallocData();
+    }
+    return tensor;
+  }
+  void DestroyTensors(std::vector<lite::Tensor *> tensors) {
+    for (auto &tensor : tensors) {
+      delete tensor;
+    }
+  }
 };
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
-  std::vector<int> input1 = {0, 0, 1, 2, 2, 3, 3, 6, 4, 7, 5, 9};
-  std::vector<int> shape1 = {6, 2};
-  std::vector<int> input2 = {6, 10};
-  std::vector<int> shape2 = {2};
-  std::vector<float> input3 = {1};
-  std::vector<int> shape3 = {1};
-  std::vector<float> input4 = {0};
-  std::vector<int> shape4 = {1};
+  std::vector<lite::Tensor *> inputs;
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {6, 2}, {0, 0, 1, 2, 2, 3, 3, 6, 4, 7, 5, 9}));
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {2}, {6, 10}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {1}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {0}));
 
-  TypeId tid = kNumberTypeFloat32;
-  lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->set_data(input1.data());
-  input_tensor1->set_shape(shape1);
-  input_tensor1->set_data_type(tid);
+  std::vector<lite::Tensor *> outputs;
+  outputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {6, 10}, {}));
 
-  lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->set_data(input2.data());
-  input_tensor2->set_shape(shape2);
-  input_tensor2->set_data_type(tid);
-
-  lite::Tensor *input_tensor3 = new lite::Tensor;
-  input_tensor3->set_data(input3.data());
-  input_tensor3->set_shape(shape3);
-  input_tensor3->set_data_type(tid);
-
-  lite::Tensor *input_tensor4 = new lite::Tensor;
-  input_tensor4->set_data(input4.data());
-  input_tensor4->set_shape(shape4);
-  input_tensor4->set_data_type(tid);
-
-  std::vector<lite::Tensor *> inputs_tensor(4);
-  inputs_tensor[0] = input_tensor1;
-  inputs_tensor[1] = input_tensor2;
-  inputs_tensor[2] = input_tensor3;
-  inputs_tensor[3] = input_tensor4;
-
-  const int output_size = 60;
-  float output[60];
-  std::vector<int> output_shape = {6, 10};
-
-  lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->set_data(output);
-  output0_tensor->set_shape(output_shape);
-  output0_tensor->set_data_type(tid);
-  std::vector<lite::Tensor *> outputs_tensor(1);
-  outputs_tensor[0] = output0_tensor;
-
-  SparseToDenseParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.validate_indices_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
+  auto op_param = static_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  memset(op_param, 0, sizeof(SparseToDenseParameter));
+  op_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  op_param->validate_indices_ = false;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor->shape();
-  ASSERT_EQ(output_tensor_shape, output_shape);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -99,85 +76,36 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
   std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
                                       0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-  PrintData("output data", output, output_size);
-  PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
-
-  input_tensor1->set_data(nullptr);
-  input_tensor2->set_data(nullptr);
-  input_tensor3->set_data(nullptr);
-  input_tensor4->set_data(nullptr);
-  output0_tensor->set_data(nullptr);
-  delete input_tensor1;
-  delete input_tensor2;
-  delete input_tensor3;
-  delete input_tensor4;
-  delete output0_tensor;
-  delete ctx;
+  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
+                                 outputs[0]->ElementsNum(), 0.000001));
   delete kernel;
+  DestroyTensors(inputs);
+  DestroyTensors(outputs);
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
-  std::vector<int> input1 = {0, 0, 1, 2, 2, 3, 3, 6, 4, 7, 5, 9};
-  std::vector<int> shape1 = {6, 2};
-  std::vector<int> input2 = {6, 10};
-  std::vector<int> shape2 = {2};
-  std::vector<float> input3 = {1, 2, 3, 4, 5, 6};
-  std::vector<int> shape3 = {6};
-  std::vector<float> input4 = {0};
-  std::vector<int> shape4 = {1};
+  std::vector<lite::Tensor *> inputs;
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {6, 2}, {0, 0, 1, 2, 2, 3, 3, 6, 4, 7, 5, 9}));
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {2}, {6, 10}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {6}, {1, 2, 3, 4, 5, 6}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {0}));
 
-  TypeId tid = kNumberTypeFloat32;
-  lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->set_data(input1.data());
-  input_tensor1->set_shape(shape1);
-  input_tensor1->set_data_type(tid);
+  std::vector<lite::Tensor *> outputs;
+  outputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {6, 10}, {}));
 
-  lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->set_data(input2.data());
-  input_tensor2->set_shape(shape2);
-  input_tensor2->set_data_type(tid);
-
-  lite::Tensor *input_tensor3 = new lite::Tensor;
-  input_tensor3->set_data(input3.data());
-  input_tensor3->set_shape(shape3);
-  input_tensor3->set_data_type(tid);
-
-  lite::Tensor *input_tensor4 = new lite::Tensor;
-  input_tensor4->set_data(input4.data());
-  input_tensor4->set_shape(shape4);
-  input_tensor4->set_data_type(tid);
-
-  std::vector<lite::Tensor *> inputs_tensor(4);
-  inputs_tensor[0] = input_tensor1;
-  inputs_tensor[1] = input_tensor2;
-  inputs_tensor[2] = input_tensor3;
-  inputs_tensor[3] = input_tensor4;
-
-  const int output_size = 60;
-  float output[60];
-  std::vector<int> output_shape = {6, 10};
-
-  lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->set_data(output);
-  output0_tensor->set_shape(output_shape);
-  output0_tensor->set_data_type(tid);
-  std::vector<lite::Tensor *> outputs_tensor(1);
-  outputs_tensor[0] = output0_tensor;
-
-  SparseToDenseParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.validate_indices_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
+  auto op_param = static_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  memset(op_param, 0, sizeof(SparseToDenseParameter));
+  op_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  op_param->validate_indices_ = false;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor->shape();
-  ASSERT_EQ(output_tensor_shape, output_shape);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -186,255 +114,109 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
   std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
                                       0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-  PrintData("output data", output, output_size);
-  PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
-
-  input_tensor1->set_data(nullptr);
-  input_tensor2->set_data(nullptr);
-  input_tensor3->set_data(nullptr);
-  input_tensor4->set_data(nullptr);
-  output0_tensor->set_data(nullptr);
-  delete input_tensor1;
-  delete input_tensor2;
-  delete input_tensor3;
-  delete input_tensor4;
-  delete output0_tensor;
-  delete ctx;
+  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
+                                 outputs[0]->ElementsNum(), 0.000001));
   delete kernel;
+  DestroyTensors(inputs);
+  DestroyTensors(outputs);
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
-  std::vector<int> input1 = {1, 3, 4};
-  std::vector<int> shape1 = {3};
-  std::vector<int> input2 = {1, 10};
-  std::vector<int> shape2 = {2};
-  std::vector<float> input3 = {1};
-  std::vector<int> shape3 = {1};
-  std::vector<float> input4 = {0};
-  std::vector<int> shape4 = {1};
+  std::vector<lite::Tensor *> inputs;
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {3}, {1, 3, 4}));
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {2}, {1, 10}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {1}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {0}));
 
-  TypeId tid = kNumberTypeFloat32;
-  lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->set_data(input1.data());
-  input_tensor1->set_shape(shape1);
-  input_tensor1->set_data_type(tid);
+  std::vector<lite::Tensor *> outputs;
+  outputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1, 10}, {}));
 
-  lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->set_data(input2.data());
-  input_tensor2->set_shape(shape2);
-  input_tensor2->set_data_type(tid);
-
-  lite::Tensor *input_tensor3 = new lite::Tensor;
-  input_tensor3->set_data(input3.data());
-  input_tensor3->set_shape(shape3);
-  input_tensor3->set_data_type(tid);
-
-  lite::Tensor *input_tensor4 = new lite::Tensor;
-  input_tensor4->set_data(input4.data());
-  input_tensor4->set_shape(shape4);
-  input_tensor4->set_data_type(tid);
-
-  std::vector<lite::Tensor *> inputs_tensor(4);
-  inputs_tensor[0] = input_tensor1;
-  inputs_tensor[1] = input_tensor2;
-  inputs_tensor[2] = input_tensor3;
-  inputs_tensor[3] = input_tensor4;
-
-  const int output_size = 10;
-  float output[10];
-  std::vector<int> output_shape = {1, 10};
-
-  lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->set_data(output);
-  output0_tensor->set_shape(output_shape);
-  output0_tensor->set_data_type(tid);
-  std::vector<lite::Tensor *> outputs_tensor(1);
-  outputs_tensor[0] = output0_tensor;
-
-  SparseToDenseParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
+  auto op_param = static_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  memset(op_param, 0, sizeof(SparseToDenseParameter));
+  op_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  op_param->validate_indices_ = true;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor->shape();
-  ASSERT_EQ(output_tensor_shape, output_shape);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   std::vector<float> except_result = {0, 1, 0, 1, 1, 0, 0, 0, 0, 0};
-  PrintData("output data", output, output_size);
-  PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
-
-  input_tensor1->set_data(nullptr);
-  input_tensor2->set_data(nullptr);
-  input_tensor3->set_data(nullptr);
-  input_tensor4->set_data(nullptr);
-  output0_tensor->set_data(nullptr);
-  delete input_tensor1;
-  delete input_tensor2;
-  delete input_tensor3;
-  delete input_tensor4;
-  delete output0_tensor;
-  delete ctx;
+  PrintData("output data", static_cast<float *>(outputs[0]->data()), outputs[0]->ElementsNum());
+  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
+                                 outputs[0]->ElementsNum(), 0.000001));
   delete kernel;
+  DestroyTensors(inputs);
+  DestroyTensors(outputs);
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
-  std::vector<int> input1 = {5};
-  std::vector<int> shape1 = {1};
-  std::vector<int> input2 = {10};
-  std::vector<int> shape2 = {1};
-  std::vector<float> input3 = {1};
-  std::vector<int> shape3 = {1};
-  std::vector<float> input4 = {0};
-  std::vector<int> shape4 = {1};
+  std::vector<lite::Tensor *> inputs;
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {1}, {5}));
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {1}, {10}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {1}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {0}));
 
-  TypeId tid = kNumberTypeFloat32;
-  lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->set_data(input1.data());
-  input_tensor1->set_shape(shape1);
-  input_tensor1->set_data_type(tid);
+  std::vector<lite::Tensor *> outputs;
+  outputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1, 10}, {}));
 
-  lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->set_data(input2.data());
-  input_tensor2->set_shape(shape2);
-  input_tensor2->set_data_type(tid);
-
-  lite::Tensor *input_tensor3 = new lite::Tensor;
-  input_tensor3->set_data(input3.data());
-  input_tensor3->set_shape(shape3);
-  input_tensor3->set_data_type(tid);
-
-  lite::Tensor *input_tensor4 = new lite::Tensor;
-  input_tensor4->set_data(input4.data());
-  input_tensor4->set_shape(shape4);
-  input_tensor4->set_data_type(tid);
-
-  std::vector<lite::Tensor *> inputs_tensor(4);
-  inputs_tensor[0] = input_tensor1;
-  inputs_tensor[1] = input_tensor2;
-  inputs_tensor[2] = input_tensor3;
-  inputs_tensor[3] = input_tensor4;
-
-  const int output_size = 10;
-  float output[10];
-  std::vector<int> output_shape = {1, 10};
-
-  lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->set_data(output);
-  output0_tensor->set_shape(output_shape);
-  output0_tensor->set_data_type(tid);
-  std::vector<lite::Tensor *> outputs_tensor(1);
-  outputs_tensor[0] = output0_tensor;
-
-  SparseToDenseParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
+  auto op_param = static_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  memset(op_param, 0, sizeof(SparseToDenseParameter));
+  op_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  op_param->validate_indices_ = true;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor->shape();
-  ASSERT_EQ(output_tensor_shape, output_shape);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   std::vector<float> except_result = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
-  PrintData("output data", output, output_size);
-  PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
-
-  input_tensor1->set_data(nullptr);
-  input_tensor2->set_data(nullptr);
-  input_tensor3->set_data(nullptr);
-  input_tensor4->set_data(nullptr);
-  output0_tensor->set_data(nullptr);
-  delete input_tensor1;
-  delete input_tensor2;
-  delete input_tensor3;
-  delete input_tensor4;
-  delete output0_tensor;
-  delete ctx;
+  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
+                                 outputs[0]->ElementsNum(), 0.000001));
   delete kernel;
+  DestroyTensors(inputs);
+  DestroyTensors(outputs);
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
-  std::vector<int> input1 = {0, 0, 1, 2, 2, 3, 2, 3, 4, 7, 5, 9};
-  std::vector<int> shape1 = {6, 2};
-  std::vector<int> input2 = {6, 10};
-  std::vector<int> shape2 = {2};
-  std::vector<float> input3 = {1, 2, 3, 4, 5, 6};
-  std::vector<int> shape3 = {6};
-  std::vector<float> input4 = {0};
-  std::vector<int> shape4 = {1};
+  std::vector<lite::Tensor *> inputs;
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {6, 2}, {0, 0, 1, 2, 2, 3, 3, 6, 4, 7, 5, 9}));
+  inputs.push_back(CreateTensor<int>(kNumberTypeInt32, {2}, {6, 10}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {6}, {1, 2, 3, 4, 5, 6}));
+  inputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {1}, {0}));
 
-  TypeId tid = kNumberTypeFloat32;
-  lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->set_data(input1.data());
-  input_tensor1->set_shape(shape1);
-  input_tensor1->set_data_type(tid);
+  std::vector<lite::Tensor *> outputs;
+  outputs.push_back(CreateTensor<float>(kNumberTypeFloat32, {6, 10}, {}));
 
-  lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->set_data(input2.data());
-  input_tensor2->set_shape(shape2);
-  input_tensor2->set_data_type(tid);
-
-  lite::Tensor *input_tensor3 = new lite::Tensor;
-  input_tensor3->set_data(input3.data());
-  input_tensor3->set_shape(shape3);
-  input_tensor3->set_data_type(tid);
-
-  lite::Tensor *input_tensor4 = new lite::Tensor;
-  input_tensor4->set_data(input4.data());
-  input_tensor4->set_shape(shape4);
-  input_tensor4->set_data_type(tid);
-
-  std::vector<lite::Tensor *> inputs_tensor(4);
-  inputs_tensor[0] = input_tensor1;
-  inputs_tensor[1] = input_tensor2;
-  inputs_tensor[2] = input_tensor3;
-  inputs_tensor[3] = input_tensor4;
-
-  const int output_size = 60;
-  float output[60];
-  std::vector<int> output_shape = {6, 10};
-
-  lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->set_data(output);
-  output0_tensor->set_shape(output_shape);
-  output0_tensor->set_data_type(tid);
-  std::vector<lite::Tensor *> outputs_tensor(1);
-  outputs_tensor[0] = output0_tensor;
-
-  SparseToDenseParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
+  auto op_param = static_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  memset(op_param, 0, sizeof(SparseToDenseParameter));
+  op_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  op_param->validate_indices_ = true;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor->shape();
-  ASSERT_EQ(output_tensor_shape, output_shape);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -443,21 +225,11 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
   std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
                                       0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-  PrintData("output data", output, output_size);
-  PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
-
-  input_tensor1->set_data(nullptr);
-  input_tensor2->set_data(nullptr);
-  input_tensor3->set_data(nullptr);
-  input_tensor4->set_data(nullptr);
-  output0_tensor->set_data(nullptr);
-  delete input_tensor1;
-  delete input_tensor2;
-  delete input_tensor3;
-  delete input_tensor4;
-  delete output0_tensor;
-  delete ctx;
+  PrintData("output data", static_cast<float *>(outputs[0]->data()), outputs[0]->ElementsNum());
+  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
+                                 outputs[0]->ElementsNum(), 0.000001));
   delete kernel;
+  DestroyTensors(inputs);
+  DestroyTensors(outputs);
 }
 }  // namespace mindspore
