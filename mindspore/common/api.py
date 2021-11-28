@@ -118,6 +118,7 @@ def _check_all_tensor(sequence):
     return True
 
 def _get_filename_from_trace(trace):
+    # format: File "xxx.py", line x, in <module>
     strings = trace.strip().split(' ')
     filename = strings[1].rstrip(',').strip('"')
     return filename
@@ -172,19 +173,17 @@ def _get_compile_cache_dep_files():
     else:
         return []
     tb = traceback.format_stack()
-    tb.reverse()
     compile_cache_dep_files = []
     filename = None
     # Get the entry script file.
-    for i in range(1, len(tb)):
-        # format: File "xxx.py", line x, in <module>
-        filename = _get_filename_from_trace(tb[i])
-        if i + 1 < len(tb):
-            next_filename = _get_filename_from_trace(tb[i + 1])
-            if next_filename.startswith(python_bin_dir):
-                break
+    entry_id = 0
+    while entry_id < len(tb) and _get_filename_from_trace(tb[entry_id]).startswith(python_bin_dir):
+        logger.debug(f"trace: {tb[entry_id]}")
+        entry_id += 1
+    if entry_id < len(tb):
+        filename = _get_filename_from_trace(tb[entry_id])
     if filename is None:
-        return None
+        return []
     file_path = os.path.realpath(filename)
     logger.debug(f"entry script file path: {file_path}")
     compile_cache_dep_files.append(file_path)
