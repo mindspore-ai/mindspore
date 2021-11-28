@@ -14,32 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_TENSOR_ARRAY_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_TENSOR_ARRAY_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_TENSOR_ARRAY_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_TENSOR_ARRAY_H_
 
 #include <vector>
 #include <string>
 #include <memory>
-#include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "runtime/device/tensor_array.h"
 
 namespace mindspore {
 namespace device {
-namespace gpu {
-class GPUTensorArray : public TensorArray {
+namespace cpu {
+class CPUTensorArray : public TensorArray {
  public:
-  GPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
+  CPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
-  ~GPUTensorArray() override = default;
+  ~CPUTensorArray() override = default;
 
-  // Add tensor to the TensorArray and increase the size.
   bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) override;
-
-  // FreeTensorArray() will free the memory in TensorArray.
   void Free() override;
-
-  // ClearTensorArray() will only set the valid size of TensorArray to zero. The memory in TensorArray is still
-  // kept, In this situation， we can reuse the memory for next use.
   void Clear() override { valid_size_ = 0; }
 
   size_t GetValidSize() const override { return valid_size_; }
@@ -58,10 +51,10 @@ class GPUTensorArray : public TensorArray {
   int64_t max_size_;
   bool is_dynamic_;
 };
-using GPUTensorArray = GPUTensorArray;
-using GPUTensorArrayPtr = std::shared_ptr<GPUTensorArray>;
-}  // namespace gpu
+using CPUTensorArray = CPUTensorArray;
+using CPUTensorArrayPtr = std::shared_ptr<CPUTensorArray>;
+}  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_TENSOR_ARRAY_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_TENSOR_ARRAY_H_

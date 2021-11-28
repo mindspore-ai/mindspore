@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#include "runtime/device/gpu/gpu_tensor_array.h"
-#include <cuda_runtime_api.h>
+#include "runtime/device/cpu/cpu_tensor_array.h"
 #include <vector>
 #include <string>
 #include <memory>
-#include "runtime/device/gpu/gpu_common.h"
-#include "runtime/device/gpu/gpu_memory_allocator.h"
+#include "runtime/hardware/cpu/cpu_memory_pool.h"
 
 namespace mindspore {
 namespace device {
-namespace gpu {
+namespace cpu {
 // Add tensor to the TensorArray and increase the size.
 // Cast 1: is_dynamic = False and index > max_size_, error.
 // Case 2: index > valid_size, fill the rest dev_value with zeros, and set valid_size to index + 1.
@@ -32,7 +30,7 @@ namespace gpu {
 // the new dev_value to tensors_.
 // Case 4: tensors_size() > index > valid_size, we can reuse the memory in tensors_[index], so
 // only increase the valid_size.
-bool GPUTensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) {
+bool CPUTensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) {
   MS_LOG(DEBUG) << "Write dev_value to " << name_;
   if (!is_dynamic_ && (index >= max_size_)) {
     MS_LOG(ERROR) << name_ << " is not in dynamic size, the max_size is " << max_size_ << ", but get index " << index;
@@ -46,15 +44,15 @@ bool GPUTensorArray::Write(const int64_t index, const mindspore::kernel::Address
     size_t create_size = (LongToSize(index) > tensors_.size()) ? (LongToSize(index) - tensors_.size()) : 0;
     for (size_t i = 0; i < create_size; i++) {
       kernel::AddressPtr create_dev = std::make_shared<kernel::Address>();
-      create_dev->addr = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(dev_value->size);
+      create_dev->addr = CPUMemoryPool::GetInstance().AllocTensorMem(dev_value->size);
       create_dev->size = dev_value->size;
       tensors_.push_back(create_dev);
     }
     tensors_.push_back(dev_value);
     // FillZeros(valid_size_, index);
     for (size_t i = valid_size_; i < LongToSize(index); i++) {
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(tensors_[i]->addr, 0, tensors_[i]->size),
-                                         "failed to set cuda memory with zeros.")
+      auto tensor_size = tensors_[i]->size;
+      (void)memset_s(tensors_[i]->addr, tensor_size, 0, tensors_[i]->size);
     }
     valid_size_ = LongToSize(index) + 1;
   } else if (LongToSize(index) == tensors_.size()) {
@@ -67,15 +65,16 @@ bool GPUTensorArray::Write(const int64_t index, const mindspore::kernel::Address
   }
   return true;
 }
+
 // Free() will free the memory in TensorArray.
-void GPUTensorArray::Free() {
+void CPUTensorArray::Free() {
   MS_LOG(DEBUG) << "Free device memory for " << name_;
   for (const auto &addr : tensors_) {
     if (addr != nullptr) {
-      device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(addr->addr));
+      CPUMemoryPool::GetInstance().FreeTensorMem(static_cast<void *>(addr->addr));
     }
   }
 }
-}  // namespace gpu
+}  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

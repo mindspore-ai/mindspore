@@ -28,7 +28,7 @@ using mindspore::device::TensorArrayMgr;
 using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
 TensorArrayStackKernel::TensorArrayStackKernel()
-    : handle_(nullptr), value_size_(0), ele_size_(0), stream_ptr_(nullptr) {
+    : handle_(nullptr), value_size_(0), ele_size_(0), stream_ptr_(nullptr), type_(nullptr) {
   ResetResource();
 }
 

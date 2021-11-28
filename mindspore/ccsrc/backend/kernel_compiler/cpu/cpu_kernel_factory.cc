@@ -61,18 +61,16 @@ void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_i
   MS_EXCEPTION_IF_NULL(op_info);
   auto inputs_ptr = op_info->inputs_ptr();
   auto outputs_ptr = op_info->outputs_ptr();
-  if (inputs_ptr.empty()) {
-    MS_LOG(EXCEPTION) << "op " << op_info->op_name() << " input size is zero.";
+  if (outputs_ptr.empty()) {
+    MS_LOG(EXCEPTION) << "op " << op_info->op_name() << " output size is zero.";
   }
-  auto first_input_dtypes = inputs_ptr[0]->dtypes();
-  auto input_formats = inputs_ptr[0]->formats();
+  auto first_output_dtypes = outputs_ptr[0]->dtypes();
 
-  for (size_t i = 0; i < first_input_dtypes.size(); i++) {
+  for (size_t i = 0; i < first_output_dtypes.size(); i++) {
     KernelAttr kernel_attr;
-    (void)kernel_attr.AddInputAttr(kernel::DtypeToTypeId(first_input_dtypes[i]), input_formats[i]);
-    for (size_t j = 1; j < inputs_ptr.size(); j++) {
+    for (size_t j = 0; j < inputs_ptr.size(); j++) {
       auto input_dtypes = inputs_ptr[j]->dtypes();
-      input_formats = inputs_ptr[j]->formats();
+      auto input_formats = inputs_ptr[j]->formats();
       (void)kernel_attr.AddInputAttr(kernel::DtypeToTypeId(input_dtypes[i]), input_formats[i]);
     }
     for (size_t j = 0; j < outputs_ptr.size(); j++) {

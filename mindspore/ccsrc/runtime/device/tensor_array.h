@@ -33,11 +33,16 @@ class TensorArray {
       : name_(name), dtype_(dtype), shapes_(shapes), valid_size_(0) {}
   virtual ~TensorArray() = default;
 
+  // Check the index in valid range. Used in Read().
+  virtual bool CheckReadIndexLogical(const int64_t index);
+  // Check the dtype and shape of the input data. Used in Write().
+  virtual bool CheckValue(const TypeId &dtype, const std::vector<size_t> &shape);
+
   // Function Write() is used to insert or append dev_value to the position of index.
   virtual bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) = 0;
 
   // Function Read() can get the tensors in the scope of tensors_.
-  virtual mindspore::kernel::AddressPtr Read(const int64_t index) = 0;
+  virtual mindspore::kernel::AddressPtr Read(const int64_t index);
 
   // Free() will free the memory in TensorArray.
   virtual void Free() = 0;

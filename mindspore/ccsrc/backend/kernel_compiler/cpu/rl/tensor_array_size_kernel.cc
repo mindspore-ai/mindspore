@@ -14,46 +14,39 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/rl/tensor_array_size_kernel.h"
+#include "backend/kernel_compiler/cpu/rl/tensor_array_size_kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "runtime/device/gpu/gpu_tensor_array.h"
+#include "runtime/device/cpu/cpu_tensor_array.h"
 #include "runtime/device/tensor_array_manager.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-TensorArraySizeKernel::TensorArraySizeKernel() {}
+TensorArrayCPUSizeKernel::TensorArrayCPUSizeKernel() {}
 
-const std::vector<size_t> &TensorArraySizeKernel::GetInputSizeList() const { return input_size_list_; }
+const std::vector<size_t> &TensorArrayCPUSizeKernel::GetInputSizeList() const { return input_size_list_; }
 
-const std::vector<size_t> &TensorArraySizeKernel::GetOutputSizeList() const { return output_size_list_; }
+const std::vector<size_t> &TensorArrayCPUSizeKernel::GetOutputSizeList() const { return output_size_list_; }
 
-const std::vector<size_t> &TensorArraySizeKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
+const std::vector<size_t> &TensorArrayCPUSizeKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-bool TensorArraySizeKernel::Init(const CNodePtr &kernel_node) {
+void TensorArrayCPUSizeKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  InitSizeLists();
-  return true;
-}
-
-void TensorArraySizeKernel::InitSizeLists() {
   input_size_list_.push_back(sizeof(int64_t));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArraySizeKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorArrayCPUSizeKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                      const std::vector<AddressPtr> &outputs) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(handle_addr);
+  MS_EXCEPTION_IF_NULL(out_addr);
   auto tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
   MS_ERROR_IF_NULL(tensors_);
   int64_t valid_size = SizeToLong(tensors_->GetValidSize());
-  MS_LOG(DEBUG) << "Launch TensorArraySize, valid size is " << valid_size;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(out_addr, &valid_size, sizeof(int64_t), cudaMemcpyHostToDevice,
-                                             reinterpret_cast<cudaStream_t>(stream_ptr)),
-                             "Get valid size failed");
-
+  out_addr[0] = valid_size;
+  MS_LOG(DEBUG) << "Launch TensorArraySize, valid size is " << out_addr[0];
   return true;
 }
 }  // namespace kernel

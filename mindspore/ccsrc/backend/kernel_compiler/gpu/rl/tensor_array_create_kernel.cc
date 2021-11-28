@@ -24,7 +24,7 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
-TensorArrayCreateKernel::TensorArrayCreateKernel() : is_dynamic_(true), size_(0) {}
+TensorArrayCreateKernel::TensorArrayCreateKernel() : is_dynamic_(true), size_(0), type_(nullptr) {}
 
 const std::vector<size_t> &TensorArrayCreateKernel::GetInputSizeList() const { return input_size_list_; }
 
