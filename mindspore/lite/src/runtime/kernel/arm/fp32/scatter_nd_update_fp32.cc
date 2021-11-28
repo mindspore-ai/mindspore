@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/fp32/scatter_nd_update_fp32.h"
 #include <cstring>
-#include "src/runtime/kernel/arm/fp32/scatter_nd_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -48,9 +47,7 @@ int ScatterNdUpdateCPUKernel::ReSize() {
   auto indices = in_tensors_.at(kScatterIndicesIndex);
   auto update = in_tensors_.at(kScatterUpdateIndex);
   auto output = out_tensors_.front();
-
-  output_ptr_ = reinterpret_cast<float *>(output->MutableData());
-  MS_ASSERT(output_ptr_ != nullptr);
+  output_ptr_ = output->data();
 
   // check indices shape
   int input_rank = static_cast<int>(input->shape().size());
@@ -69,55 +66,50 @@ int ScatterNdUpdateCPUKernel::ReSize() {
   int update_rank = static_cast<int>(update->shape().size());
   auto indices_shape = indices->shape();
   auto update_shape = update->shape();
-  unit_size_ = 1;
+  param_->unit_size = 1;
   for (int i = indices_shape.size() - 1; i < update_rank; i++) {
-    unit_size_ *= update_shape.at(i);
+    param_->unit_size *= update_shape.at(i);
   }
 
   // calculate offsets
   int out_stride = 1;
-  out_strides_.push_back(1);
+  std::vector<int> out_strides;
+  out_strides.push_back(1);
   for (int i = indice_unit_rank - 2; i >= 0; i--) {
     out_stride *= input->shape()[i + 1];
-    out_strides_.push_back(out_stride);
+    out_strides.push_back(out_stride);
   }
-  std::reverse(out_strides_.begin(), out_strides_.end());
+  std::reverse(out_strides.begin(), out_strides.end());
 
-  num_unit_ = 1;
-  num_unit_ *= update_shape.at(indices_shape.size() - 2);
+  param_->num_unit = 1;
+  param_->num_unit *= update_shape.at(indices_shape.size() - C2NUM);
   for (int i = indices_shape.size() - 3; i >= 0; i--) {
-    num_unit_ *= update_shape.at(i);
+    param_->num_unit *= update_shape.at(i);
   }
 
   int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
   MS_ASSERT(indices_ptr != nullptr);
   output_unit_offsets_.clear();
-  for (int i = 0; i < num_unit_; i++) {
+  for (int i = 0; i < param_->num_unit; i++) {
     int tmp_stride = 0;
     for (int j = 0; j < indice_unit_rank; j++) {
-      tmp_stride += indices_ptr[i * indice_unit_rank + j] * out_strides_.at(j) * unit_size_;
+      tmp_stride += indices_ptr[i * indice_unit_rank + j] * out_strides.at(j) * param_->unit_size;
     }
     output_unit_offsets_.push_back(tmp_stride);
   }
-
-  thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
-  if (thread_n_num_ == 0) {
-    return RET_ERROR;
-  }
-  thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
 
 int ScatterNdUpdateCPUKernel::ScatterNdUpdate(int task_id) {
-  int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
-  }
-  int offset = task_id * thread_n_stride_;
-  auto ret = DoScatterND(output_ptr_, update_ptr_ + offset * unit_size_, output_unit_offsets_.data() + offset,
-                         unit_size_, num_unit_thread);
+  void *update_data = in_tensors_[kScatterUpdateIndex]->data();
+  auto output_tensor = out_tensors_[kOutputIndex];
+  void *output_data = output_tensor->data();
+  CHECK_NULL_RETURN(update_data);
+  CHECK_NULL_RETURN(output_data);
+  param_->data_type_len = output_tensor->data_type() == kNumberTypeFloat16 ? FP16_DATA_TYPE_LEN : sizeof(float);
+  auto ret = DoScatterND(output_data, update_data, output_unit_offsets_.data(), param_, task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScatterNdUpdate error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "DoScatterND failed, ret: " << ret;
     return RET_ERROR;
   }
   in_tensors_.at(kScatterUpdateInputIndex)->IncRefCount();
@@ -125,14 +117,9 @@ int ScatterNdUpdateCPUKernel::ScatterNdUpdate(int task_id) {
 }
 
 int ScatterNdUpdateRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto g_kernel = reinterpret_cast<ScatterNdUpdateCPUKernel *>(cdata);
-  MS_ASSERT(g_kernel != nullptr);
-  auto ret = g_kernel->ScatterNdUpdate(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScatterNdUpdateRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
-  }
-  return RET_OK;
+  auto kernel = static_cast<ScatterNdUpdateCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
+  return kernel->ScatterNdUpdate(task_id);
 }
 
 int ScatterNdUpdateCPUKernel::Run() {
@@ -147,25 +134,23 @@ int ScatterNdUpdateCPUKernel::Run() {
     in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
     out_tensor->set_data(in_tensor->data());
     out_tensor->set_own_data(in_tensor->own_data());
-    output_ptr_ = reinterpret_cast<float *>(out_tensor->data());
+    output_ptr_ = out_tensor->data();
   }
   auto indices = in_tensors_.at(kScatterIndicesIndex);
   if (!indices->IsConst() && ReSize() != RET_OK) {
     MS_LOG(ERROR) << "ScatterNdUpdate resize failed.";
     return RET_ERROR;
   }
-  auto update = in_tensors_.at(kScatterUpdateIndex);
-  update_ptr_ = reinterpret_cast<float *>(update->MutableData());
-  MS_ASSERT(update_ptr_ != nullptr);
 
-  auto ret = ParallelLaunch(this->ms_context_, ScatterNdUpdateRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(ms_context_, ScatterNdUpdateRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScatterNdUpdate error error_code[" << ret << "]";
-    return RET_ERROR;
   }
-
-  return RET_OK;
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
+#endif
 }  // namespace mindspore::kernel

@@ -16,19 +16,20 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/fp32/scatter_nd_fp32.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateScatterNDParameter(const void *prim) {
-  OpParameter *scatter_nd_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (scatter_nd_param == nullptr) {
+  auto *param = static_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
     return nullptr;
   }
-  memset(scatter_nd_param, 0, sizeof(OpParameter));
-  scatter_nd_param->type_ = schema::PrimitiveType_ScatterNd;
-  return reinterpret_cast<OpParameter *>(scatter_nd_param);
+  memset(param, 0, sizeof(ScatterNDParameter));
+  param->op_parameter.type_ = schema::PrimitiveType_ScatterNd;
+  return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
 

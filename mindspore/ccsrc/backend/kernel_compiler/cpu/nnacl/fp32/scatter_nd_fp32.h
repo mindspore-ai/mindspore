@@ -19,10 +19,17 @@
 
 #include "nnacl/op_base.h"
 
+typedef struct ScatterNDParameter {
+  OpParameter op_parameter;
+  int num_unit;
+  int unit_size;
+  int data_type_len;
+} ScatterNDParameter;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units);
+int DoScatterND(void *output, const void *update, int *output_unit_offsets, ScatterNDParameter *param, int task_id);
 #ifdef __cplusplus
 }
 #endif
