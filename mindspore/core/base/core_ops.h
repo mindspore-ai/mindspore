@@ -590,6 +590,7 @@ inline const PrimitivePtr kPrimXdivy = std::make_shared<Primitive>("Xdivy");
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
+inline const PrimitivePtr kPrimUnroll = std::make_shared<Primitive>("Unroll");
 inline const PrimitivePtr kPrimSwitch = std::make_shared<Primitive>("Switch");
 inline const PrimitivePtr kPrimSwitchLayer = std::make_shared<Primitive>("switch_layer");
 inline const PrimitivePtr kPrimAssign = std::make_shared<Primitive>("Assign");

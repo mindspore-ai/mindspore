@@ -39,7 +39,7 @@ const std::string ToShortString(const TypeId &typeId) {
     return label;
   }
   auto position = label.find(prefix);
-  // position is 0 when label begins with prefix
+  // Position is 0 when label begins with prefix
   if (position != 0) {
     return label;
   }
@@ -59,18 +59,18 @@ void PrintKernelFormatAndType(std::ostringstream &buffer, const std::string &fmt
   buffer << ">";
 }
 
-void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
-  if (nd == nullptr) {
+void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
     return;
   }
 
   ValuePtr tensor_value = nullptr;
-  auto abstract = nd->abstract();
+  auto abstract = node->abstract();
   if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
     tensor_value = abstract->BuildValue();
   }
-  abstract::ShapePtr shape = dyn_cast<abstract::Shape>(nd->Shape());
-  TypePtr type = dyn_cast<Type>(nd->Type());
+  abstract::ShapePtr shape = dyn_cast<abstract::Shape>(node->Shape());
+  TypePtr type = dyn_cast<Type>(node->Type());
   if ((shape != nullptr) && (type != nullptr)) {
     buffer << "<" << type << ", " << shape->ToString();
     if (tensor_value != nullptr && tensor_value != kAnyValue) {
@@ -88,15 +88,15 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   }
 }
 
-void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
-  if (nd == nullptr) {
+void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
     return;
   }
 
-  const auto &inputs = GetInputs(nd);
+  const auto &inputs = GetInputs(node);
   size_t len = inputs.size();
   if (len > 1) {
-    // skip inputs[0] which is Primitive value node
+    // Skip inputs[0] which is Primitive value node
     for (size_t i = 1; i < len; ++i) {
       AnfNodePtr in = inputs[i];
       if (i != 1) {
@@ -107,11 +107,11 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   }
 }
 
-void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd) {
+void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node) {
   buffer << "      : (";
-  PrintNodeInputType(buffer, nd);
+  PrintNodeInputType(buffer, node);
   buffer << ") -> (";
-  PrintNodeOutputType(buffer, nd);
+  PrintNodeOutputType(buffer, node);
   buffer << ")";
 }
 
@@ -183,7 +183,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
   buffer << "#Total params  : " << parameters.size() << std::endl;
   buffer << std::endl;
 
-  // dump parameters
+  // Dump parameters
   int32_t para = 1;
   for (const auto &p : parameters) {
     if (p == nullptr) {
@@ -194,7 +194,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
       MS_LOG(EXCEPTION) << "p cannot cast to ParameterPtr";
     }
     buffer << "%para" << para << "_" << parameter_ptr->name() << " : ";
-    // print parameters' type and shape
+    // Print parameters' type and shape
     PrintNodeOutputType(buffer, p);
     auto kernel_info = p->kernel_info();
     if (kernel_info != nullptr && kernel_info->has_build_info()) {
@@ -215,16 +215,18 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
   return para;
 }
 
-void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  if (op == nullptr) {
-    MS_LOG(INFO) << "Param op is nullptr";
-    return;
-  }
+void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (gsub == nullptr) {
     MS_LOG(INFO) << "Param gsub is nullptr";
     return;
   }
-
+  auto cnode = dyn_cast<CNode>(node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode == nullptr) {
+    MS_LOG(INFO) << "Param node should be a CNode";
+    return;
+  }
+  AnfNodePtr op = cnode->input(0);
   if (IsValueNode<FuncGraph>(op)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op);
     if (fg != nullptr) {
@@ -234,28 +236,35 @@ void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
     if (gsub->local_var_map.find(op) != gsub->local_var_map.end()) {
       gsub->buffer << "%" << gsub->local_var_map[op];
     } else {
-      auto node = op->cast<CNodePtr>();
-      auto fg = node->func_graph();
-      gsub->buffer << "$(" << fg->ToString() << ":" << node->ToString() << ")";
+      auto input = op->cast<CNodePtr>();
+      auto fg = input->func_graph();
+      gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
     }
   } else if (op->isa<ValueNode>()) {
     gsub->buffer << GetValueNode(op)->ToString();
   } else {
+    // It's Parameter.
+    if (op->func_graph() != node->func_graph()) {
+      gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
+    }
     gsub->buffer << op->ToString();
+    if (op->func_graph() != node->func_graph()) {
+      gsub->buffer << ")";
+    }
   }
 }
 
-void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_map,
+void DumpOperands(const AnfNodePtr &node, OrderedMap<AnfNodePtr, int32_t> *para_map,
                   const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  if (nd == nullptr || para_map == nullptr || gsub == nullptr) {
+  if (node == nullptr || para_map == nullptr || gsub == nullptr) {
     return;
   }
 
   gsub->buffer << "(";
-  const auto &inputs = GetInputs(nd);
+  const auto &inputs = GetInputs(node);
   size_t len = inputs.size();
   if (len > 1) {
-    // skip inputs[0] which is Primitive valuenode
+    // Skip inputs[0] which is Primitive valuenode
     for (size_t i = 1; i < len; ++i) {
       AnfNodePtr in = inputs[i];
       MS_EXCEPTION_IF_NULL(in);
@@ -263,21 +272,31 @@ void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_ma
         gsub->buffer << ", ";
       }
       if (in->isa<Parameter>()) {
-        if (!(*para_map)[in]) {
-          gsub->buffer << "%para_" << in->ToString();
+        if (in->func_graph() != node->func_graph()) {
+          gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
         } else {
-          gsub->buffer << "%para" << (*para_map)[in] << "_" << in->ToString();
+          gsub->buffer << "%";
+        }
+        auto iter = para_map->find(in);
+        if (iter == para_map->end()) {
+          gsub->buffer << "para_" << in->ToString();
+        } else {
+          gsub->buffer << "para" << iter->second << "_" << in->ToString();
+        }
+        if (in->func_graph() != node->func_graph()) {
+          gsub->buffer << ")";
         }
       } else if (in->isa<CNode>()) {
-        if (gsub->local_var_map.find(in) != gsub->local_var_map.end()) {
-          gsub->buffer << "%" << gsub->local_var_map[in];
+        auto iter = gsub->local_var_map.find(in);
+        if (iter != gsub->local_var_map.end()) {
+          gsub->buffer << "%" << iter->second;
         } else {
-          auto node = in->cast<CNodePtr>();
-          auto fg = node->func_graph();
-          gsub->buffer << "$(" << fg->ToString() << ":" << node->ToString() << ")";
+          auto input = in->cast<CNodePtr>();
+          auto fg = input->func_graph();
+          gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
-        // non Primitive valuenode
+        // ValueNode except FuncGraph.
         gsub->buffer << GetValueNode(in)->ToString();
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
@@ -324,7 +343,7 @@ void DumpAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std
   int i = 0;
   for (const auto &attr : attrs) {
     if (check_strategy && attr.first == PARALLEL_STRATEGY) {
-      continue;  // skip the strategy
+      continue;  // Skip the strategy
     }
     if (i++ != 0) {
       gsub->buffer << ", ";
@@ -390,29 +409,29 @@ void DumpCNodePrimalAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRIn
   gsub->buffer << std::endl;
 }
 
-void DumpShape(const AnfNodePtr &nd, const FuncGraphPtr &sub_graph, const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  if (nd == nullptr || sub_graph == nullptr || gsub == nullptr) {
+void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (node == nullptr || sub_graph == nullptr || gsub == nullptr) {
     return;
   }
 
-  if (nd != sub_graph->get_return()) {
+  if (node != sub_graph->get_return()) {
     gsub->buffer << "      : (";
-    PrintNodeInputType(gsub->buffer, nd);
+    PrintNodeInputType(gsub->buffer, node);
     gsub->buffer << ") -> (";
-    PrintNodeOutputType(gsub->buffer, nd);
+    PrintNodeOutputType(gsub->buffer, node);
     gsub->buffer << ")";
   } else {
     gsub->buffer << "      : (";
-    PrintNodeInputType(gsub->buffer, nd);
+    PrintNodeInputType(gsub->buffer, node);
     gsub->buffer << ")";
   }
 
   gsub->buffer << std::endl;
 }
 
-void DumpPrimalDebugInfos(const CNodePtr &nd, const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  MS_EXCEPTION_IF_NULL(nd);
-  auto primal_debug_infos = nd->primal_debug_infos();
+void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto primal_debug_infos = node->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
     gsub->buffer << "      # Corresponding forward node candidate:\n";
     for (auto &primal_debug_info : primal_debug_infos) {
@@ -421,10 +440,11 @@ void DumpPrimalDebugInfos(const CNodePtr &nd, const std::shared_ptr<SubGraphIRIn
   }
 }
 
-void DumpDebugInfo(const CNodePtr &nd, const std::shared_ptr<SubGraphIRInfo> &gsub, const LocDumpMode &dump_location) {
-  MS_EXCEPTION_IF_NULL(nd);
+void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub,
+                   const LocDumpMode &dump_location) {
+  MS_EXCEPTION_IF_NULL(node);
   if (dump_location == kTopStack) {
-    auto fused_debug_infos = nd->fused_debug_infos();
+    auto fused_debug_infos = node->fused_debug_infos();
     if (!fused_debug_infos.empty()) {
       gsub->buffer << "      # Corresponding code candidate:\n";
       for (const auto &debug_info : fused_debug_infos) {
@@ -434,71 +454,71 @@ void DumpDebugInfo(const CNodePtr &nd, const std::shared_ptr<SubGraphIRInfo> &gs
         }
       }
     } else {
-      auto debug_info_str = trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard);
+      auto debug_info_str = trace::GetDebugInfo(node->debug_info(), "      # ", kSourceLineTipDiscard);
       if (!debug_info_str.empty()) {
         gsub->buffer << debug_info_str << "\n";
       }
     }
 
-    DumpPrimalDebugInfos(nd, gsub);
+    DumpPrimalDebugInfos(node, gsub);
   } else if (dump_location == kWholeStack) {
-    auto traces = mindspore::trace::GetSourceLineList(nd);
+    auto traces = mindspore::trace::GetSourceLineList(node);
     for (auto &trace : traces) {
       gsub->buffer << "      # " << trace;
     }
   }
 }
 
-void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<AnfNodePtr, int32_t> *const para_map,
+void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, OrderedMap<AnfNodePtr, int32_t> *const para_map,
                const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
                LocDumpMode dump_location = kOff) {
-  if (nd == nullptr || sub_graph == nullptr || para_map == nullptr || gsub == nullptr) {
+  if (node == nullptr || sub_graph == nullptr || para_map == nullptr || gsub == nullptr) {
     return;
   }
 
-  if (nd != sub_graph->get_return()) {
-    gsub->buffer << "  %" << gsub->local_var << "(" << nd->ToString() << ")"
+  if (node != sub_graph->get_return()) {
+    gsub->buffer << "  %" << gsub->local_var << "(" << node->ToString() << ")"
                  << " = ";
-    gsub->local_var_map[nd] = gsub->local_var++;
+    gsub->local_var_map[node] = gsub->local_var++;
   } else {
     gsub->buffer << "  ";
   }
 
-  if (nd->inputs().empty()) {
+  if (node->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Input of apply node is empty";
   }
 
-  // print operator
-  AnfNodePtr op = nd->input(0);
-  DumpOperator(op, gsub);
+  // Print operator
+  DumpOperator(node, gsub);
 
-  // print operands
-  DumpOperands(nd, para_map, gsub);
+  // Print operands
+  DumpOperands(node, para_map, gsub);
 
-  // print operator attrs
+  // Print operator attrs
+  AnfNodePtr op = node->input(0);
   DumpOperateAttrs(op, gsub);
 
-  // print cnode attrs
-  DumpCNodeAttrs(nd, gsub);
+  // Print cnode attrs
+  DumpCNodeAttrs(node, gsub);
 
-  // print cnode primal attrs
-  DumpCNodePrimalAttrs(nd, gsub);
+  // Print cnode primal attrs
+  DumpCNodePrimalAttrs(node, gsub);
 
-  // print parallel info
-  DumpParallelInfo(nd, gsub);
+  // Print parallel info
+  DumpParallelInfo(node, gsub);
 
-  // print shape info
-  DumpShape(nd, sub_graph, gsub);
+  // Print shape info
+  DumpShape(node, sub_graph, gsub);
 
-  // print kernel info
-  DumpKernelInfo(nd, gsub);
+  // Print kernel info
+  DumpKernelInfo(node, gsub);
 
   if (dump_full_name) {
-    gsub->buffer << "      : (" << nd->fullname_with_scope() << ")" << std::endl;
+    gsub->buffer << "      : (" << node->fullname_with_scope() << ")" << std::endl;
   }
 
-  // print debug info
-  DumpDebugInfo(nd, gsub, dump_location);
+  // Print debug info
+  DumpDebugInfo(node, gsub, dump_location);
 }
 
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
@@ -508,11 +528,11 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
     return;
   }
 
-  for (const auto &nd : nodes) {
-    MS_EXCEPTION_IF_NULL(nd);
-    FuncGraphPtr sub_graph = nd->func_graph();
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    FuncGraphPtr sub_graph = node->func_graph();
     if (sub_graph == nullptr) {
-      MS_LOG(DEBUG) << "Node[" << nd->ToString() << "] belongs to no graph!";
+      MS_LOG(DEBUG) << "Node[" << node->ToString() << "] belongs to no graph!";
       continue;
     }
     std::shared_ptr<SubGraphIRInfo> gsub = (*sub_graphs)[sub_graph];
@@ -528,12 +548,12 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
         (*para_map)[parameters[idx]] = total_para++;
       }
     }
-    if (!nd->isa<Parameter>()) {
-      if (nd->isa<CNode>()) {
-        // print and record output of operator if it is not 'Return'
-        DumpCNode(nd->cast<CNodePtr>(), sub_graph, para_map, gsub, dump_full_name, dump_location);
+    if (!node->isa<Parameter>()) {
+      if (node->isa<CNode>()) {
+        // Print and record output of operator if it is not 'Return'
+        DumpCNode(node->cast<CNodePtr>(), sub_graph, para_map, gsub, dump_full_name, dump_location);
       } else {
-        gsub->buffer << "  " << nd->ToString() << std::endl;
+        gsub->buffer << "  " << node->ToString() << std::endl;
       }
     }
   }
@@ -704,22 +724,22 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   OrderedMap<AnfNodePtr, int32_t> para_map;
-  // dump global info
+  // Dump global info
   DumpGlobalInfoEntry(graph, buffer);
   int32_t total_para = DumpParams(graph, buffer, &para_map);
 
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
-  // dump ir in each sub graph
+  // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
 
-  // output global info
+  // Output global info
   fout << buffer.str() << std::endl;
 
-  // output each sub graph
+  // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, fout);
 
   fout.close();
-  // set file mode to read only by user
+  // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
@@ -746,22 +766,22 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
 
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   OrderedMap<AnfNodePtr, int32_t> para_map;
-  // dump global info
+  // Dump global info
   DumpGlobalInfoEntry(graph, buffer);
   int32_t total_para = DumpParams(graph, buffer, &para_map);
 
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
-  // dump ir in each sub graph
+  // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
 
-  // output global info
+  // Output global info
   fout << buffer.str() << std::endl;
 
-  // output each sub graph
+  // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, fout);
 
   fout.close();
-  // set file mode to read only by user
+  // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 

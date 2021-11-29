@@ -36,8 +36,8 @@ namespace mindspore {
 namespace abstract {
 enum SpecializeStatusCode {
   kSpecializeSuccess = 0,
-  kSpecializeFindUniqueArgvalDead = 1,  // Dead Node
-  kSpecializeFindUniqueArgvalPoly = 2,  // Poly Node
+  kSpecializeDead = 1,  // Dead Node
+  kSpecializePoly = 2,  // Poly Node
   kSpecializeFailure = 0xFF
 };
 
@@ -62,7 +62,7 @@ class ProgramSpecializer {
 
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
 
-  AnalysisContextPtr top_context() { return top_context_; }
+  const AnalysisContextPtr &top_context() { return top_context_; }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
@@ -97,7 +97,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void FirstPass();
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
-  void ProcessCNode(const CNodePtr &new_node);
+  void ProcessCNode(const CNodePtr &node);
 
   const NodeToNodeMap &cloned_nodes() const { return cloner_->cloned_nodes(); }
 
@@ -106,6 +106,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
                                         const AbstractBasePtrList &args_spec_list);
 
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
+  inline void AddTodoItem(const std::vector<AnfNodePtr> &nodes) {
+    (void)todo_.insert(todo_.end(), nodes.cbegin(), nodes.cend());
+  }
   // Get node replicated by Cloner.
   AnfNodePtr GetReplicatedNode(const AnfNodePtr &node);
   // Replicated node which is not used directly by a func graph, so it's not searchable from it's return node
@@ -113,7 +116,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   AnfNodePtr ReplicateDisconnectedNode(const AnfNodePtr &node);
 
   // Build a value node from parameter if the function graph has special flag to hint it can be done.
-  AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &new_node);
+  AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &node);
 
   // Build a value node if ival is constant and not any-value
   AnfNodePtr BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
@@ -129,9 +132,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
                                        SpecializeStatusCode *errcode);
 
   // Find the unique argument values which can be used to specialize a primitive or graph function.
-  SpecializeStatusCode FindUniqueArgvals(const AbstractFunctionPtr &fn, const EvaluatorPtr &eval,
-                                         const AbstractBasePtrList &argvals,
-                                         std::pair<AbstractBasePtrList, AbstractBasePtr> *result);
+  SpecializeStatusCode AcquireUniqueEvalVal(const AbstractFunctionPtr &fn, const EvaluatorPtr &eval,
+                                            const AbstractBasePtrList &argvals,
+                                            std::pair<AbstractBasePtrList, AbstractBasePtr> *result);
   // Get cache, it may be eval's cache or cache built from broaded argument values.
   const EvaluatorCacheMgrPtr GetEvalCache(const EvaluatorPtr &eval);
   // Try to build unique argvals from the broaded arg vals if it is unique.

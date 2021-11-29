@@ -207,7 +207,7 @@ std::string AnalysisContext::ToString() const {
   std::ostringstream buffer;
   buffer << "{";
   if (func_graph_ != nullptr) {
-    buffer << "Func Graph: " << func_graph_->ToString();
+    buffer << "FuncGraph: " << func_graph_->ToString();
   }
   buffer << " Args: ";
   int64_t i = 0;

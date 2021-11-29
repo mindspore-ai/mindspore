@@ -39,7 +39,7 @@ typedef struct {
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
             LocDumpMode dump_location = kOff, const std::string &target_file = "");
-void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd);
+void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
                   LocDumpMode dump_location = kOff);

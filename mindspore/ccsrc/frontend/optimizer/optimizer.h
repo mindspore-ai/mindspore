@@ -202,8 +202,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
             DumpIR(fg_name + ".ir", func_graph);
             if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-              func_graph->DumpFuncGraph(fg_name);
               ExportIR(fg_name + ".dat", func_graph);
+              func_graph->DumpFuncGraph(fg_name);
             }
             MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
           }

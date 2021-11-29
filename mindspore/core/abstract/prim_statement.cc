@@ -49,7 +49,7 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
 
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
-  // for tensor as condition, keeps both true and false branch.
+  // For tensor as condition, keeps both true and false branch.
   if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
     MS_EXCEPTION_IF_NULL(tb);
     return tb->Join(fb);
@@ -125,7 +125,7 @@ bool SupportedIsTargetValue(const ValuePtr t) {
 
 AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
-  // statement: x is t
+  // Statement: x is t
   // Inputs: x, t
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);
@@ -141,7 +141,7 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
 
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
-  // statement: x is not t
+  // Statement: x is not t
   // Inputs: x, t
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);
@@ -175,21 +175,21 @@ bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spe
 
 AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
-  // statement: x in t
+  // Statement: x in t
   // Inputs: x, t
   return std::make_shared<AbstractScalar>(IsInDict(primitive, args_spec_list));
 }
 
 AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
-  // statement: x not in t
+  // Statement: x not in t
   // Inputs: x, t
   return std::make_shared<AbstractScalar>(!IsInDict(primitive, args_spec_list));
 }
 
 AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &,
                                     const AbstractBasePtrList &args_spec_list) {
-  // statement: isconstant(x)
+  // Statement: isconstant(x)
   // Inputs: x
   if (args_spec_list.size() != 1) {
     MS_LOG(EXCEPTION) << "IsConstant requires args input size = 1";

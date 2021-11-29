@@ -1173,16 +1173,16 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
     *user_graph = graph;
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
 
-    // generate IR file in dot format, which can be converted to svg file using graphviz dot command
-    draw::Draw(base_name + ".dot", graph);
-    // generate IR file in human readable format
+    // Generate IR file in human readable format
     if (action_index == action_size - 1) {
       DumpIR(base_name + ".ir", graph, false, kWholeStack);
     } else {
       DumpIR(base_name + ".ir", graph, false, kTopStack);
     }
-    // generate IR file in a heavily commented format, which can also be reloaded
+    // Generate IR file in a heavily commented format, which can also be reloaded
     ExportIR(base_name + ".dat", graph);
+    // Generate IR file in dot format, which can be converted to svg file using graphviz dot command
+    draw::Draw(base_name + ".dot", graph);
   }
 }
 #endif

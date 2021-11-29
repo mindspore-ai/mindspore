@@ -908,8 +908,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       // Not wait to get the result of branch.
       auto result = async_result_branches[i]->TryGetResult();
       if (result) {
-        MS_LOG(DEBUG) << GetInferThread() << "async get " << evaluators[i]->ToString()
-                      << " result: " << result->ToString();
+        MS_LOG(DEBUG) << "#" << i << ": " << GetInferThread() << " async get " << evaluators[i]->ToString()
+                      << ", result: " << result->ToString() << ", args: " << args_conf_list;
         out_specs.push_back(result);
       }
     }
@@ -929,7 +929,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   AbstractBasePtrList out_specs;
   const size_t evaluators_size = 2;
   if (evaluators.size() < evaluators_size) {
-    MS_LOG(ERROR) << "evaluators size is less than 2";
+    MS_LOG(EXCEPTION) << "Evaluators size is less than 2.";
   }
   multi_poss_[evaluators[0]] = evaluators[1];
   multi_poss_[evaluators[1]] = evaluators[0];

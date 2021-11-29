@@ -612,9 +612,9 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
         auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
         auto func_graph = res->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
-        func_graph->DumpFuncGraph(fg_name);
         DumpIR(fg_name + ".ir", func_graph);
         ExportIR(fg_name + ".dat", func_graph);
+        func_graph->DumpFuncGraph(fg_name);
         MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
       }
 #endif
