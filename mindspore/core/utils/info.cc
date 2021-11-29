@@ -186,7 +186,7 @@ LocationPtr GetFirstLocation(const DebugInfoPtr &debug_info) {
   return nullptr;
 }
 
-bool DebugInfoCompare::operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) {
+bool DebugInfoCompare::operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) const {
   MS_EXCEPTION_IF_NULL(left);
   MS_EXCEPTION_IF_NULL(right);
   if (left == right) {

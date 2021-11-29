@@ -375,7 +375,7 @@ inline TraceContext::TraceContext(const LocationPtr &loc, const std::string &fun
 }
 
 struct DebugInfoCompare {
-  bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right);
+  bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) const;
 };
 
 void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info);
