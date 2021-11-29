@@ -34,6 +34,7 @@
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/parallel/step_parallel.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -477,7 +478,7 @@ class PynativeEliminater : public OptimizerCaller {
     if (value->isa<tensor::Tensor>()) {
       MS_LOG(DEBUG) << "Start FillZero Tensor";
       auto tensor = value->cast<tensor::TensorPtr>();
-      tensor::TensorPtr out_t = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
+      auto out_t = TensorConstructUtils::CreateZerosTensor(tensor->Dtype(), tensor->shape());
       char *data = reinterpret_cast<char *>(out_t->data_c());
       std::fill(data, data + out_t->data().nbytes(), 0);
       out = out_t;

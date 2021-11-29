@@ -199,34 +199,5 @@ TEST_F(TestClean, TestEraseClassPartial) {
   auto manager = Manage(func_graph);
   SimplifyDataStructures(func_graph, manager);
 }
-
-TEST_F(TestClean, TestEraseTuple) {
-  ASSERT_TRUE(nullptr != me_graph);
-  std::shared_ptr<FuncGraphManager> manager = Manage(me_graph);
-
-  int abstract_tuple_count = 0;
-
-  for (auto node : manager->all_nodes()) {
-    auto dt = node->abstract();
-    if (dyn_cast<AbstractTuple>(dt) != nullptr) {
-      abstract_tuple_count++;
-    }
-  }
-  ASSERT_EQ(abstract_tuple_count, 4);
-
-  // erase tuple in CNode57 and Parameter
-  EraseTuple(me_graph, manager);
-
-  abstract_tuple_count = 0;
-  for (auto node : manager->all_nodes()) {
-    auto dt = node->abstract();
-    if (dyn_cast<AbstractTuple>(dt) != nullptr) {
-      abstract_tuple_count++;
-    }
-  }
-
-  ASSERT_EQ(abstract_tuple_count, 3);
-}
-
 }  // namespace opt
 }  // namespace mindspore
