@@ -60,36 +60,39 @@ class Model:
     """
     High-Level API for training or inference.
 
-    `Model` groups layers into an object with training and inference features.
+    `Model` groups layers into an object with training and inference features based on the arguments.
 
     Args:
         network (Cell): A training or testing network.
-        loss_fn (Cell): Objective function, if loss_fn is None, the
-                             network should contain the logic of loss and grads calculation,
-                             and parallel if needed. Default: None.
-        optimizer (Cell): Optimizer for updating the weights. Default: None.
-        metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
-                        training and inference. eg: {'accuracy', 'recall'}. Default: None.
+        loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss
+                        and parallel if needed. Default: None.
+        optimizer (Cell): Optimizer for updating the weights. If `optimizer` is None, the `network` needs to
+                          do backpropagation and update weights. Default value: None.
+        metrics (Union[dict, set]): A Dictionary or a set of metrics for model evaluation.
+                                    eg: {'accuracy', 'recall'}. Default: None.
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
                              `eval_network` . Default: None.
-        eval_indexes (list): When defining the `eval_network`, if `eval_indexes` is None, all outputs of the
-                             `eval_network` would be passed to metrics, otherwise `eval_indexes` must contain three
-                             elements, including the positions of loss value, predicted value and label. The loss
-                             value would be passed to the `Loss` metric, the predicted value and label would be passed
-                             to other metric. Default: None.
-        amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network` , level for mixed
+        eval_indexes (list): It is used when eval_network is defined. If `eval_indexes` is None by default, all outputs
+                             of the `eval_network` would be passed to metrics. If `eval_indexes` is set, it must contain
+                             three elements: the positions of loss value, predicted value and label in outputs of the
+                             `eval_network`. In this case, the loss value will be passed to the `Loss` metric, the
+                             predicted value and label will be passed to other metrics.
+                             :func: `mindindex.nn.metric.set_indexes` is recommended instead of `eval_indexes`.
+                             Default: None.
+        amp_level (str): Option for argument `level` in :func:`mindspore.build_train_network`, level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
-            - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
-            - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
-              level to O3 Ascend. The recommended level is chosen by the export experience, cannot
-              always general. User should specify the level for special network.
+            - O3: Cast network to float16 and add property `keep_batchnorm_fp32=False` to
+              :func:`mindspore.build_train_network`.
+            - auto: Set level to recommended level in different devices. Set level to O2 on GPU, set
+              level to O3 on Ascend. The recommended level is chosen by the export experience, not applicable to all
+              scenarios. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend.The more detailed explanation of `amp_level` setting
-            can be found at `mindspore.amp.build_train_network` .
-        boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
+            O2 is recommended on GPU, O3 is recommended on Ascend. The more detailed explanation of `amp_level` setting
+            can be found at `mindspore.build_train_network`.
+        boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
             - O0: Do not change.
@@ -657,40 +660,46 @@ class Model:
 
     def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
         """
-        Training API where the iteration is controlled by python front-end.
+        Training API.
 
         When setting pynative mode or CPU, the training process will be performed with dataset not sink.
 
         Note:
             If dataset_sink_mode is True, data will be sent to device. If the device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
-            When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
-            the epoch_end method is called.
+
+            When dataset_sink_mode is True, the `step_end` method of the instance of Callback will be called at the end
+            of epoch.
+
             If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
+
             If sink_size > 0, each epoch of the dataset can be traversed unlimited times until you get sink_size
             elements of the dataset. The next epoch continues to traverse from the end position of the previous
-            traversal. The interface builds the computational graphs and then executes the computational graphs.
-            However, when the 'model.build' is executed first, it only performs the graphs execution.
+            traversal.
+
+            The interface builds the computational graphs and then executes the computational graphs. However, when
+            the `Model.build` is executed first, it only performs the graphs execution.
 
         Args:
-            epoch (int): Generally, total number of iterations on the data per epoch.
-                         When dataset_sink_mode is set to true and sink_size>0, each epoch sink sink_size
-                         steps on the data instead of total number of iterations.
-            train_dataset (Dataset): A training dataset iterator. If there is no
-                                     loss_fn, a tuple with multiple data (data1, data2, data3, ...) should be
-                                     returned and passed to the network. Otherwise, a tuple (data, label) should
-                                     be returned. The data and label would be passed to the network and loss
-                                     function respectively.
+            epoch (int): Total training epochs. Generally, train network will be trained on complete dataset per epoch.
+                         If `dataset_sink_mode` is set to True and `sink_size` is greater than 0, each epoch will
+                         train `sink_size` steps instead of total steps of dataset.
+            train_dataset (Dataset): A training dataset iterator. If `loss_fn` is defined, the data and label will be
+                                     passed to the `network` and the `loss_fn` respectively, so a tuple (data, label)
+                                     should be returned from dataset. If there is multiple data or labels, set `loss_fn`
+                                     to None and implement calculation of loss in `network`,
+                                     then a tuple (data1, data2, data3, ...) with all data returned from dataset will be
+                                     passed to the `network`.
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
                                                             which should be executed while training.
                                                             Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: True.
-            sink_size (int): Control the amount of data in each sink.
+            sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
+                             is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
-                             If dataset_sink_mode is False, set sink_size as invalid.
                              Default: -1.
 
         Examples:
@@ -737,19 +746,18 @@ class Model:
         Build computational graphs and data graphs with the sink mode.
 
         .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
+            This is an experimental prototype that is subject to change or deletion.
 
         Note:
-            Pre-build process only supports `GRAPH_MODE` and `Ascend` target currently.
-            The interface builds the computational graphs, when the interface is executed first,
-            'model.train' only performs the graphs execution.
+            The interface builds the computational graphs, when the interface is executed first, 'Model.train' only
+            performs the graphs execution. Pre-build process only supports `GRAPH_MODE` and `Ascend` target currently.
             It only supports dataset sink mode.
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
-                                     initialized. Default: None.
+                                     built. Default: None.
             valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
-                                     will be initialized, and `metrics` in `Model` can not be None. Default: None.
+                                     will be built, and `metrics` in `Model` can not be None. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
             epoch (int): Control the training epochs. Default: 1.
             jit_config (Union[str, str]): Control the jit config.
@@ -854,21 +862,24 @@ class Model:
 
     def eval(self, valid_dataset, callbacks=None, dataset_sink_mode=True):
         """
-        Evaluation API where the iteration is controlled by python front-end.
+        Evaluation API.
 
         Configure to pynative mode or CPU, the evaluating process will be performed with dataset non-sink mode.
 
         Note:
             If dataset_sink_mode is True, data will be sent to device. If the device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
-            When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
-            the epoch_end method is called.
+
             If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
+
+            The interface builds the computational graphs and then executes the computational graphs. However, when
+            the `Model.build` is executed first, it only performs the graphs execution.
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            callbacks (Optional[list(Callback)]): List of callback objects which should be executed
-                while training. Default: None.
+            callbacks (Optional[list(Callback), Callback]): List of callback objects or callback object,
+                                                            which should be executed while evaluation.
+                                                            Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                 Default: True.
 
@@ -927,11 +938,6 @@ class Model:
     def predict(self, *predict_data):
         """
         Generate output predictions for the input samples.
-
-        Data could be a single tensor, a list of tensor, or a tuple of tensor.
-
-        Note:
-            This is a pre-compile function. The arguments should be the same as model.predict() function.
 
         Args:
             predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
@@ -1110,17 +1116,32 @@ class Model:
 
     @property
     def train_network(self):
-        """Get the model's train_network."""
+        """
+        Get the model's train network.
+
+        Returns:
+            Object, the instance of train network.
+        """
         return self._train_network
 
     @property
     def predict_network(self):
-        """Get the model's predict_network."""
+        """
+        Get the model's predict network.
+
+        Returns:
+            Object, the instance of predict network.
+        """
         return self._predict_network
 
     @property
     def eval_network(self):
-        """Get the model's eval_network."""
+        """
+        Get the model's eval network.
+
+        Returns:
+            Object, the instance of evaluate network.
+        """
         return self._eval_network
 
 
