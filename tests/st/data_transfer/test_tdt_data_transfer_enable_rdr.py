@@ -46,9 +46,3 @@ def test_train_with_Ascend():
 @pytest.mark.env_onecard
 def test_train_with_GPU():
     test_train("GPU")
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_train_with_CPU():
-    test_train("CPU")

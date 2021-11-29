@@ -93,7 +93,7 @@ class WithLossCellLocal(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_high_grad_train():
     x_pure = np.random.randint(-10, 100, 32)

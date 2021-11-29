@@ -72,7 +72,6 @@ def test_switch_layer():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
 def test_cell_in_list():
     """
