@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_DECONVOLUTION_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_DECONVOLUTION_NPU_H_
 
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ABS_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ABS_NPU_H_
 #include <vector>
 #include <string>
-#include <memory>
 #include "include/graph/op/all_ops.h"
-#include "src/delegate/npu/op/convolution_base_npu.h"
+#include "src/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
-class DeconvolutionNPUOp : public ConvolutionBaseNPUOp {
+class AbsNPUOp : public NPUOp {
  public:
-  DeconvolutionNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                     const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
-      : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, name) {}
-  ~DeconvolutionNPUOp() override;
+  AbsNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+      : NPUOp(primitive, in_tensors, out_tensors, name) {}
+
+  ~AbsNPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+                const std::vector<mindspore::MSTensor> &out_tensors) override {
+    return RET_OK;
+  }
 
   int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
            const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -43,11 +45,8 @@ class DeconvolutionNPUOp : public ConvolutionBaseNPUOp {
   ge::Operator *GetNPUOp() override;
 
  private:
-  int SetDeconvParam(const schema::Conv2dTransposeFusion *conv_prim);
-  schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
-  std::vector<int32_t> out_shape_value_{};
-  hiai::op::ConvTranspose *deconv_ = nullptr;
-  hiai::op::Const *out_shape_ = nullptr;
+  hiai::op::Square *square_ = nullptr;
+  hiai::op::Sqrt *sqrt_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_DECONVOLUTION_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ABS_NPU_H_
