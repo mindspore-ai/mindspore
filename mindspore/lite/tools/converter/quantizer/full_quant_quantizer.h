@@ -24,6 +24,7 @@
 #include <vector>
 #include <cfloat>
 #include <map>
+#include <set>
 #include "ops/primitive_c.h"
 #include "schema/inner/model_generated.h"
 #include "src/lite_session.h"
@@ -99,6 +100,8 @@ class FullQuantQuantizer : public Quantizer {
   int q_min_{INT8_MIN};
   bool activation_symmetry_{false};
   bool weight_symmetry_{true};
+  std::set<PrimitivePtr> support_int8_ops_;
+  std::set<PrimitivePtr> skip_check_dtype_ops_;
   QuantRuntimeDevice device_ = CPU;
 
   std::unique_ptr<Calibrator> calibrator_{nullptr};
