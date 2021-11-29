@@ -100,6 +100,10 @@ class DatasetGraph:
             operation (dict): Enhancement operation.
             message (Operation): Enhancement operation proto message.
         """
+        if operation is None:
+            logger.warning("Summary cannot collect the operation for dataset graph as the operation is none."
+                           "it may due to the custom operation cannot be pickled.")
+            return
         for key, value in operation.items():
             if isinstance(value, (list, tuple)):
                 if all(isinstance(ele, int) for ele in value):
@@ -129,7 +133,7 @@ class DatasetGraph:
             message.mapDouble[key] = value
         elif isinstance(value, (list, tuple)) and key != "operations":
             if value:
-                replace_value_list = list(map(lambda x: "" if x is None else x, value))
+                replace_value_list = list(map(lambda x: "" if x is None else json.dumps(x), value))
                 message.mapStrList[key].strValue.extend(replace_value_list)
         elif isinstance(value, dict):
             try:
