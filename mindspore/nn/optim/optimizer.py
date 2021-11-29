@@ -398,7 +398,7 @@ class Optimizer(Cell):
                 raise ValueError(f"For 'Optimizer', the dim of Tensor type 'learning_rate' should be a 0 or 1, "
                                  f"but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
-                logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number"
+                logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number "
                                "of elements in the tensor is greater than 1.")
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
