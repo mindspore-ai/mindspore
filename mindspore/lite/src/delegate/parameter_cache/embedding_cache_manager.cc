@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace cache {
-Status EmbeddingCacheManager::Init(const std::string &cache_model_path) {
+Status EmbeddingCacheManager::Init(const std::string &cache_model_path, size_t vocab_size) {
   if (cache_model_path.empty()) {
     MS_LOG(INFO) << "no cache model ";
     return kSuccess;
@@ -34,6 +34,7 @@ Status EmbeddingCacheManager::Init(const std::string &cache_model_path) {
     return kLiteMemoryFailed;
   }
   auto ret = host_cache_model_->LoadCache(cache_model_path);
+  vocab_size_ = vocab_size;
   MS_LOG(INFO) << "cache manager init end, ret " << ret.ToString();
   return ret;
 }
@@ -68,7 +69,7 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel) {
                   << " host size is " << host_cache_tensor.Shape()[1];
     return kLiteError;
   }
-  size_t vocab_size = host_cache_tensor.Shape()[0];  // 需要跟host_cache_size一起处理下
+  size_t vocab_size = vocab_size_;
   size_t host_cache_size = vocab_size / rank_group_size_;
   size_t device_cache_size = tensor.Shape()[0];
   size_t embedding_size_ = tensor.Shape()[1];

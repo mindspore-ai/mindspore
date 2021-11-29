@@ -37,7 +37,7 @@ class EmbeddingCacheManager {
     rank_id_ = lite::GetRankID();
     rank_group_size_ = lite::GetGPUGroupSize();
   }
-  Status Init(const std::string &cache_model_path);
+  Status Init(const std::string &cache_model_path, size_t vocab_size);
   bool CheckIsCacheKernel(kernel::Kernel *kernel);
   Status InitCacheKernel(kernel::Kernel *kernel);
   bool IsCacheTensor(mindspore::MSTensor tensor);
@@ -51,6 +51,7 @@ class EmbeddingCacheManager {
   int rank_group_size_{1};
 
   std::shared_ptr<HostCacheModel> host_cache_model_;
+  size_t vocab_size_;
 };
 }  // namespace cache
 }  // namespace mindspore

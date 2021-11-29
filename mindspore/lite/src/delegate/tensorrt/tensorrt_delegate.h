@@ -35,7 +35,8 @@ typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
 
 class TensorRTDelegate : public Delegate {
  public:
-  explicit TensorRTDelegate(mindspore::Context *context) : context_(context) {}
+  explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size)
+      : context_(context), cache_model_path_(cache_model_path), vocab_size_(vocab_size) {}
 
   ~TensorRTDelegate() override;
 
@@ -64,6 +65,8 @@ class TensorRTDelegate : public Delegate {
   bool support_hw_resize_{true};
 
   bool support_resize_{true};
+  const std::string cache_model_path_;
+  size_t vocab_size_;
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
 };
 }  // namespace mindspore::lite

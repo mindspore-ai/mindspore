@@ -145,6 +145,14 @@ class LiteSession : public session::LiteSession {
 
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
+  int ContextInit(InnerContext *context);
+
+  int CreateTensorRTDelegate();
+
+  int CreateNPUDelegate();
+
+  int DelegateInit();
+
   int InitGPURuntime();
 
  private:

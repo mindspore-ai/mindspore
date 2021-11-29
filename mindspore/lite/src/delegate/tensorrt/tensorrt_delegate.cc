@@ -138,7 +138,7 @@ Status TensorRTDelegate::Init() {
     MS_LOG(ERROR) << "malloc EmbeddingCacheManager failed.";
     return kLiteMemoryFailed;
   }
-  auto cache_ret = cache_mgr_->Init("");
+  auto cache_ret = cache_mgr_->Init(cache_model_path_, vocab_size_);
   if (cache_ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "cache_mgr_ init failed.";
     return cache_ret;
