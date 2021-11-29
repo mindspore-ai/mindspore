@@ -29,8 +29,7 @@ _INITIALIZER_ALIAS = dict()
 
 class Initializer:
     """
-    The base class of the initializer.
-    Initialization of tensor basic attributes and model weight values.
+    The abstract base class of the initializer.
 
     Args:
         kwargs (dict): Keyword arguments for Initializer.
@@ -91,7 +90,7 @@ def _assignment(arr, num):
 @_register('zeros')
 class Zero(Initializer):
     """
-    Generates an array with constant value of zero in order to initialize the input tensor.
+    Generates an array with constant value of zero in order to initialize a tensor.
 
     Examples:
         >>> import mindspore
@@ -106,7 +105,7 @@ class Zero(Initializer):
 @_register('ones')
 class One(Initializer):
     """
-    Generates an array with constant value of one in order to initialize the input tensor.
+    Generates an array with constant value of one in order to initialize a tensor.
 
     Examples:
         >>> import mindspore
@@ -229,7 +228,7 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Generates an array with values sampled from Xavier uniform distribution
-    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize the input tensor, where:
+    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize a tensor, where:
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
@@ -268,7 +267,7 @@ class XavierUniform(Initializer):
 class HeUniform(Initializer):
     r"""
     Generates an array with values sampled from HeKaiming Uniform distribution
-    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize the input tensor, where
+    :math:`{U}(-\text{boundary}, \text{boundary})` in order to initialize a tensor, where
 
     .. math::
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
@@ -314,7 +313,7 @@ class HeUniform(Initializer):
 class HeNormal(Initializer):
     r"""
     Generates an array with values sampled from HeKaiming Normal distribution
-    :math:`{N}(0, \text{sigma}^2)` in order to initialize the input tensor, where
+    :math:`{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
 
     .. math::
         sigma = \frac{gain} {\sqrt{N}}
@@ -357,7 +356,7 @@ class HeNormal(Initializer):
 
 class Constant(Initializer):
     """
-    Generates an array with constant value in order to initialize the input tensor.
+    Generates an array with constant value in order to initialize a tensor.
 
     Args:
         value (Union[int, numpy.ndarray]): The value to initialize.
@@ -600,7 +599,7 @@ class VarianceScaling(Initializer):
 class Uniform(Initializer):
     r"""
     Generates an array with values sampled from Uniform distribution :math:`{U}(-\text{scale}, \text{scale})` in order
-    to initialize the input tensor.
+    to initialize a tensor.
 
     Args:
         scale (float): The bound of the Uniform distribution. Default: 0.07.
@@ -625,7 +624,7 @@ class Uniform(Initializer):
 class Normal(Initializer):
     r"""
     Generates an array with values sampled from Normal distribution :math:`{N}(\text{sigma}, \text{mean})` in order to
-    initialize the input tensor.
+    initialize a tensor.
 
     .. math::
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
@@ -657,7 +656,7 @@ class Normal(Initializer):
 @_register()
 class TruncatedNormal(Initializer):
     r"""
-    Generates an array with values sampled from Truncated Normal distribution in order to initialize the input tensor.
+    Generates an array with values sampled from Truncated Normal distribution in order to initialize a tensor.
 
     Args:
         sigma (float): The standard deviation of Truncated Normal distribution. Default: 0.01.
@@ -696,7 +695,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
-        Union[Tensor], return is Tensor object.
+        Tensor, return is Tensor object.
 
     Raises:
         TypeError: The type of the argument 'init' is not correct.
