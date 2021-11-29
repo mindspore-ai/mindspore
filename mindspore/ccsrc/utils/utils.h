@@ -496,6 +496,8 @@ constexpr auto kAttrDump = "dump";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
 constexpr auto kAttrFixedInputFormat = "fixed_input_format";
 constexpr auto kAttrFixedOutputFormat = "fixed_output_format";
+constexpr auto kAttrInputToAttrIdx = "input_to_attr_idx";
+constexpr auto kAttrInputToAttrName = "input_to_attr_name";
 constexpr auto kAttrFuncType = "func_type";
 constexpr auto kAttrCustAicpu = "cust_aicpu";
 
