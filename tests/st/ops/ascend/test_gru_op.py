@@ -177,5 +177,5 @@ def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
     x_grad_pynative = out_grad_pynative[0].asnumpy()
     h_grad_pynative = out_grad_pynative[1].asnumpy()
 
-    assert np.allclose(x_grad, x_grad_pynative, 0.0001, 0.0001)
-    assert np.allclose(h_grad, h_grad_pynative, 0.0001, 0.0001)
+    assert np.allclose(x_grad, x_grad_pynative, 0.001, 0.001)
+    assert np.allclose(h_grad, h_grad_pynative, 0.001, 0.001)
