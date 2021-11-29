@@ -224,6 +224,10 @@ class Parser {
   // Assign value to subscript
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
+  // Interpret the return node.
+  AnfNodePtr HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
+                                  const py::object &value_object);
+
   // Process a bool operation value list
   AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
 
