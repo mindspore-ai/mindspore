@@ -28,8 +28,8 @@ CacheClient::Builder::Builder()
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   hostname_ = cfg->cache_host();
   port_ = cfg->cache_port();
-  num_connections_ = cfg->num_connections();  // number of async tcp/ip connections
-  prefetch_size_ = cfg->prefetch_size();      // prefetch size
+  num_connections_ = cfg->num_connections();    // number of async tcp/ip connections
+  prefetch_size_ = cfg->cache_prefetch_size();  // prefetch size
 }
 
 Status CacheClient::Builder::Build(std::shared_ptr<CacheClient> *out) {

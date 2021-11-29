@@ -45,7 +45,7 @@ ConfigManager::ConfigManager()
       cache_host_(kCfgDefaultCacheHost),
       cache_port_(kCfgDefaultCachePort),
       num_connections_(kDftNumConnections),
-      prefetch_size_(kDftPrefetchSize),
+      cache_prefetch_size_(kDftCachePrefetchSize),
       auto_num_workers_(kDftAutoNumWorkers),
       num_cpu_threads_(std::thread::hardware_concurrency()),
       auto_num_workers_num_shards_(1),
@@ -91,7 +91,7 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_cache_host(j.value("cacheHost", cache_host_));
   set_cache_port(j.value("cachePort", cache_port_));
   set_num_connections(j.value("numConnections", num_connections_));
-  set_prefetch_size(j.value("prefetchSize", prefetch_size_));
+  set_cache_prefetch_size(j.value("cachePrefetchSize", cache_prefetch_size_));
   return Status::OK();
 }
 
@@ -159,7 +159,7 @@ void ConfigManager::set_cache_port(int32_t cache_port) { cache_port_ = cache_por
 
 void ConfigManager::set_num_connections(int32_t num_connections) { num_connections_ = num_connections; }
 
-void ConfigManager::set_prefetch_size(int32_t prefetch_size) { prefetch_size_ = prefetch_size; }
+void ConfigManager::set_cache_prefetch_size(int32_t cache_prefetch_size) { cache_prefetch_size_ = cache_prefetch_size; }
 
 }  // namespace dataset
 }  // namespace mindspore

@@ -36,7 +36,6 @@ TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, std::string queue
     : queue_name_(std::move(queue_name)),
       device_id_(device_id),
       device_type_(std::move(device_type)),
-      prefetch_size_(GlobalContext::config_manager()->prefetch_size()),
       send_epoch_end_(send_epoch_end),
       total_batch_(total_batch),
       create_data_info_queue_(create_data_info_queue) {
@@ -50,8 +49,8 @@ std::shared_ptr<DatasetNode> TransferNode::Copy() {
 }
 
 void TransferNode::Print(std::ostream &out) const {
-  out << (Name() + "(prefetch_size:" + std::to_string(prefetch_size_) + ",send_epoch_end:" +
-          (send_epoch_end_ ? "true" : "false") + ",total_batch:" + std::to_string(total_batch_) + ")");
+  out << (Name() + ",send_epoch_end:" + (send_epoch_end_ ? "true" : "false") +
+          ",total_batch:" + std::to_string(total_batch_) + ")");
 }
 
 // Validator for TransferNode
@@ -94,8 +93,8 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
-  auto op = std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
-                                            total_batch_, create_data_info_queue_);
+  auto op = std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, send_epoch_end_, total_batch_,
+                                            create_data_info_queue_);
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

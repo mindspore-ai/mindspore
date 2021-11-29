@@ -47,7 +47,7 @@ Status DatasetCache::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetC
     }
     if (json_cache.find("port") != json_cache.end()) port = json_cache["port"];
     if (json_cache.find("num_connections") != json_cache.end()) num_connections = json_cache["num_connections"];
-    if (json_cache.find("prefetch_size") != json_cache.end()) prefetch_sz = json_cache["prefetch_size"];
+    if (json_cache.find("cache_prefetch_size") != json_cache.end()) prefetch_sz = json_cache["cache_prefetch_size"];
     *cache = std::make_shared<DatasetCacheImpl>(id, mem_sz, spill, hostname_c, port, num_connections, prefetch_sz);
   }
   return Status::OK();

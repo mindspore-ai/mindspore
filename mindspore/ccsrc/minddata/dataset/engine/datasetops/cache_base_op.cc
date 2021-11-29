@@ -68,7 +68,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   int64_t buf_cnt = 0;
   int64_t wait_cnt = 0;
   int64_t prefetch_cnt = 0;
-  // Kick off several threads which will prefetch prefetch_size_ rows in advance.
+  // Kick off several threads which will prefetch cache_prefetch_size_ rows in advance.
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_prefetchers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1), Name()));

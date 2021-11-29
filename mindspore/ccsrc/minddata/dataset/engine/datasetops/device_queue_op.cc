@@ -27,13 +27,12 @@
 
 namespace mindspore {
 namespace dataset {
-DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                             bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
+DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
+                             int32_t total_batch, bool create_data_info_queue)
     : PipelineOp(1),
       channel_name_(channel_name),
       device_type_(device_type),
       device_id_(device_id),
-      prefetch_size_(prefetch_size),
       send_epoch_end_(send_epoch_end),
       stop_send_(false),
       send_finished_(false),
@@ -677,7 +676,7 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nChannel name: " << channel_name_ << "\nPrefetch size: " << prefetch_size_ << "\n\n";
+    out << "\nChannel name: " << channel_name_ << "\n\n";
   }
 }
 

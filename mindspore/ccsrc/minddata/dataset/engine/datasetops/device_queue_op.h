@@ -63,8 +63,8 @@ class DeviceQueueOp : public PipelineOp {
 
   //  Name: constructor
   //  Description
-  DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                bool send_epoch_end, int32_t total_batch, bool create_data_info_queue);
+  DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
+                int32_t total_batch, bool create_data_info_queue);
 
   //  Name: destructor
   //  Description
@@ -75,8 +75,6 @@ class DeviceQueueOp : public PipelineOp {
   int32_t ConnectorSize() const { return ChildOpConnectorSize(); }
 
   Status EoeReceived(int32_t worker_id) override;
-
-  const int32_t GetPrefetchSize() { return prefetch_size_; }
 
   void StopSend() { stop_send_ = true; }
 
@@ -177,7 +175,6 @@ class DeviceQueueOp : public PipelineOp {
   std::string channel_name_;
   DeviceType device_type_;
   const int32_t device_id_;
-  const int32_t prefetch_size_;
   const bool send_epoch_end_;
   bool stop_send_;
   bool send_finished_;
