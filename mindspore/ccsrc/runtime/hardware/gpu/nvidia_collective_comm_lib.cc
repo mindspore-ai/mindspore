@@ -42,6 +42,122 @@ bool NvidiaCollectiveCommLib::CreateCommunicationGroup(const std::string &group_
   groups_[group_name] = group;
   return true;
 }
+
+bool NvidiaCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                        const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(ncclAllGather(send_buff, recv_buff, send_count, kNCCLDataTypeMap.at(data_type), group->nccl_communicator(),
+                          static_cast<cudaStream_t>(stream)),
+            ncclSuccess, "ncclAllGather failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                        ReduceMode reduce_op, const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+  if (!CheckNCCLReduceType(reduce_op)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(
+    ncclAllReduce(send_buff, recv_buff, send_count, kNCCLDataTypeMap.at(data_type), kNCCLReduceTypeMap.at(reduce_op),
+                  group->nccl_communicator(), static_cast<cudaStream_t>(stream)),
+    ncclSuccess, "ncclAllReduce failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                        uint32_t root_rank, const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(ncclBroadcast(send_buff, recv_buff, send_count, kNCCLDataTypeMap.at(data_type), root_rank,
+                          group->nccl_communicator(), static_cast<cudaStream_t>(stream)),
+            ncclSuccess, "ncclBroadcast failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
+                                            ReduceMode reduce_op, const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+  if (!CheckNCCLReduceType(reduce_op)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(
+    ncclReduceScatter(send_buff, recv_buff, recv_count, kNCCLDataTypeMap.at(data_type),
+                      kNCCLReduceTypeMap.at(reduce_op), group->nccl_communicator(), static_cast<cudaStream_t>(stream)),
+    ncclSuccess, "ncclReduceScatter failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::Send(const void *send_buff, size_t count, TypeId data_type, uint32_t peer,
+                                   const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(ncclSend(send_buff, count, kNCCLDataTypeMap.at(data_type), peer, group->nccl_communicator(),
+                     static_cast<cudaStream_t>(stream)),
+            ncclSuccess, "ncclSend failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::Recv(void *recv_buff, size_t count, TypeId data_type, uint32_t peer,
+                                   const std::string &group_name, void *stream) {
+  if (!CheckNCCLDataType(data_type)) {
+    return false;
+  }
+
+  CHECK_RET((groups_.count(group_name) != 0), true, "The NCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<NvidiaCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+
+  CHECK_RET(ncclRecv(recv_buff, count, kNCCLDataTypeMap.at(data_type), peer, group->nccl_communicator(),
+                     static_cast<cudaStream_t>(stream)),
+            ncclSuccess, "ncclRecv failed.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::CheckNCCLDataType(TypeId data_type) {
+  CHECK_RET((kNCCLDataTypeMap.count(data_type) != 0), true,
+            "Data type " + std::to_string(data_type) + " is not supported in NCCL.");
+  return true;
+}
+
+bool NvidiaCollectiveCommLib::CheckNCCLReduceType(ReduceMode reduce_op) {
+  CHECK_RET((kNCCLReduceTypeMap.count(reduce_op) != 0), true,
+            "Reduce type " + std::to_string(reduce_op) + " is not supported in NCCL.");
+  return true;
+}
 }  // namespace gpu
 
 using NvidiaCollectiveCommLib = mindspore::device::gpu::NvidiaCollectiveCommLib;

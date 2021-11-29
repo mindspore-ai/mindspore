@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MPI_COLLECTIVE_COMM_LIB_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MPI_COLLECTIVE_COMM_LIB_H_
 
+#include <map>
 #include <memory>
 #include <vector>
 #include <string>
@@ -30,6 +31,22 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+// Map of collective operation data type to MPI data type.
+const std::map<TypeId, MPI_Datatype> kMPIDataTypeMap = {{TypeId::kNumberTypeInt8, MPI_BYTE},
+                                                        {TypeId::kNumberTypeUInt8, MPI_UNSIGNED_CHAR},
+                                                        {TypeId::kNumberTypeInt32, MPI_INT},
+                                                        {TypeId::kNumberTypeInt, MPI_INT},
+                                                        {TypeId::kNumberTypeUInt32, MPI_UNSIGNED},
+                                                        {TypeId::kNumberTypeInt64, MPI_LONG_LONG},
+                                                        {TypeId::kNumberTypeUInt64, MPI_UNSIGNED_LONG_LONG},
+                                                        {TypeId::kNumberTypeFloat32, MPI_FLOAT},
+                                                        {TypeId::kNumberTypeFloat, MPI_FLOAT},
+                                                        {TypeId::kNumberTypeFloat64, MPI_DOUBLE}};
+
+// Map of reduce type to MPI reduce type.
+const std::map<ReduceMode, MPI_Op> kMPIReduceTypeMap = {
+  {Reduce_Sum, MPI_SUM}, {Reduce_Prod, MPI_PROD}, {Reduce_Min, MPI_MIN}, {Reduce_Max, MPI_MAX}};
+
 constexpr char kMPIGlobalGroupName[] = "mpi_world_group";
 class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLib {
  public:
@@ -42,16 +59,6 @@ class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLi
 
   // Override creating method. Reuse destroying method in base class CollectiveCommunicationLib.
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
-
-  bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                 const std::string &group_name, void *stream) override {
-    return true;
-  }
-
-  bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, uint32_t root_rank,
-                 const std::string &group_name, void *stream) override {
-    return true;
-  }
 
  private:
   MPICollectiveCommLib();

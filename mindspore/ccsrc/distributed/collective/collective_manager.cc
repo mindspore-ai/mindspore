@@ -113,8 +113,8 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   MS_EXCEPTION_IF_NULL(root_info);
 
   // Step 4: Broadcast the device root information to all nodes on host side.
-  if (!host_comm_lib_instance_->Broadcast(root_info, root_info, root_info_size, TypeId::kNumberTypeInt, 0, group_name,
-                                          nullptr)) {
+  if (!host_comm_lib_instance_->Broadcast(root_info, root_info, root_info_size, TypeId::kNumberTypeInt8, 0,
+                                          group_name)) {
     MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
     return false;
   }
@@ -261,8 +261,8 @@ bool CollectiveManager::AssignLocalRank() {
 
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   // AllGather host names across the global communication group.
-  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, 1, TypeId::kNumberTypeInt,
-                                          host_global_group_name_, nullptr)) {
+  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, 1, TypeId::kNumberTypeUInt64,
+                                          host_global_group_name_)) {
     MS_LOG(ERROR) << "AllGather for host names failed.";
     return false;
   }

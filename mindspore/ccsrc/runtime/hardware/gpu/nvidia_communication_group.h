@@ -39,6 +39,9 @@ class NvidiaCommunicationGroup : public CommunicationGroup {
 
   void *GenerateRootInfo(size_t *root_info_size) override;
 
+  // Return NCCL communicator because collective operations need it as a input.
+  const ncclComm_t &nccl_communicator() const;
+
  private:
   // The NCCL unique id for this group. Used to initialize this group's communicator.
   ncclUniqueId unique_id_;
