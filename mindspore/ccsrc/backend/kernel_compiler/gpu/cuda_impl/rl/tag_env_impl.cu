@@ -43,13 +43,6 @@ __global__ void ResetKernel(const int env_num, const int agent_num, const GameSe
     int x = is_prey ? 0 : 0.5 * setting->map_width;
     int y = is_prey ? 0 : 0.5 * setting->map_length;
 
-    // Random reset.
-    // auto local_state = agent_state->rand_state[gaid];
-    // // curand_uniform result [0, 1), cache x y to registers.
-    // int x = static_cast<int>(curand_uniform(&local_state) * setting->map_width);
-    // int y = static_cast<int>(curand_uniform(&local_state) * setting->map_length);
-    // agent_state->rand_state[gaid] = local_state;
-
     agent_state->loc_x[gaid] = x;
     agent_state->loc_y[gaid] = y;
     agent_state->still_in_game[gaid] = true;
@@ -66,38 +59,6 @@ __global__ void ResetKernel(const int env_num, const int agent_num, const GameSe
       state[offset + 3] = aid == id;
     }
     state[eid * agent_num * state_size_per_agent + aid * state_size_per_agent + agent_num * kFeatureNum] = 0;
-  }
-}
-
-__global__ void ResetIfDoneKernel(const int env_num, const int agent_num, const GameSetting *setting,
-                                  AgentState *agent_state, float *state, const bool *done) {
-  for (size_t gaid = blockIdx.x * blockDim.x + threadIdx.x; gaid < env_num * agent_num;
-       gaid += gridDim.x * blockDim.x) {
-    const int eid = gaid / agent_num;
-    const int aid = gaid % agent_num;
-
-    if (done[eid]) {
-      bool is_prey = (aid >= setting->predator_num);
-      int x = is_prey ? 0 : 0.5 * setting->map_width;
-      int y = is_prey ? 0 : 0.5 * setting->map_length;
-
-      agent_state->loc_x[gaid] = x;
-      agent_state->loc_y[gaid] = y;
-      agent_state->still_in_game[gaid] = true;
-      agent_state->time_step[eid] = 0;
-      agent_state->prey_left[eid] = setting->prey_num;
-
-      const int state_size_per_agent = agent_num * kFeatureNum + 1;
-      const size_t base = eid * agent_num * state_size_per_agent + aid * kFeatureNum;
-      for (int id = 0; id < agent_num; id++) {
-        size_t offset = base + id * state_size_per_agent;
-        state[offset] = static_cast<float>(x) / setting->map_width;
-        state[offset + 1] = static_cast<float>(y) / setting->map_length;
-        state[offset + 2] = aid >= setting->predator_num;
-        state[offset + 3] = aid == id;
-      }
-      state[eid * agent_num * state_size_per_agent + aid * state_size_per_agent + agent_num * kFeatureNum] = 0;
-    }
   }
 }
 
@@ -164,6 +125,16 @@ __global__ void StepBindBlockKernel(const int env_num, const int agent_num, cons
     }
     __syncthreads();
 
+    // Auto reset done environment.
+    bool is_done = (agent_state->time_step[eid] >= setting->max_timestep) || (agent_state->prey_left[eid] == 0);
+    if (is_done) {
+      x = is_prey ? 0 : 0.5 * setting->map_width;
+      y = is_prey ? 0 : 0.5 * setting->map_length;
+      agent_state->loc_x[gaid] = x;
+      agent_state->loc_y[gaid] = y;
+      agent_state->still_in_game[gaid] = true;
+    }
+
     // Construct observation.
     const int state_size_per_agent = agent_num * kFeatureNum + 1;
     const size_t base = eid * agent_num * state_size_per_agent + aid * kFeatureNum;
@@ -177,16 +148,19 @@ __global__ void StepBindBlockKernel(const int env_num, const int agent_num, cons
     state[eid * agent_num * state_size_per_agent + aid * state_size_per_agent + agent_num * kFeatureNum] =
       static_cast<float>(agent_state->time_step[eid]) / setting->max_timestep;
 
+    // Construct reward.
     if (team_reward > 0) {
       agent_reward += is_prey ? -setting->caught_penalty * team_reward : setting->catch_reward * team_reward;
     } else {
       agent_reward += is_prey ? setting->step_cost : -setting->step_cost;
     }
-
     reward[gaid] = agent_reward * agent_state->still_in_game[gaid];
 
+    // Construct environment done flag.
     if (aid == 0) {
-      done[eid] = (agent_state->time_step[eid] >= setting->max_timestep) || (agent_state->prey_left[eid] == 0);
+      done[eid] = is_done;
+      agent_state->time_step[eid] = 0;
+      agent_state->prey_left[eid] = setting->prey_num;
     }
   }
 }
@@ -196,10 +170,6 @@ void StepBindBlock(const int env_num, const int agent_num, const GameSetting *se
   size_t shm_size = env_num * agent_num * sizeof(float) * 2;
   StepBindBlockKernel<<<env_num, 256, shm_size, stream>>>(env_num, agent_num, setting, agent_state, action, state,
                                                           reward, done);
-
-  int block_dim = 256;
-  int grid_dim = (env_num * agent_num + block_dim - 1) / block_dim;
-  ResetIfDoneKernel<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, state, done);
 }
 
 __global__ void UpdateAgentLoc(const int env_num, const int agent_num, const GameSetting *setting,
@@ -258,25 +228,31 @@ __global__ void CalcTeamReward(const int env_num, const int agent_num, const Gam
   }
 }
 
-__global__ void CalcAgentReward(const int env_num, const int agent_num, const GameSetting *setting,
-                                AgentState *agent_state, float *state, float *reward, bool *done, float *team_reward) {
+__global__ void ConstructStepOutput(const int env_num, const int agent_num, const GameSetting *setting,
+                                    AgentState *agent_state, float *state, float *reward, bool *done,
+                                    float *team_reward) {
   int total_agent_num = env_num * agent_num;
   for (size_t gaid = blockIdx.x * blockDim.x + threadIdx.x; gaid < total_agent_num; gaid += gridDim.x * blockDim.x) {
     int eid = gaid / agent_num;
     int aid = gaid % agent_num;
     bool is_prey = aid >= setting->predator_num;
-    if (team_reward[eid] > 0) {
-      reward[gaid] += is_prey ? -team_reward[eid] * setting->caught_penalty : team_reward[eid] * setting->catch_reward;
-    } else {
-      reward[gaid] += is_prey ? setting->step_cost : -setting->step_cost;
-    }
 
-    // Construct observation.
     int x = agent_state->loc_x[gaid];
     int y = agent_state->loc_y[gaid];
     int map_width = setting->map_width;
     int map_length = setting->map_length;
 
+    // Auto reset done environment.
+    bool is_done = (agent_state->time_step[eid] >= setting->max_timestep) || (agent_state->prey_left[eid] == 0);
+    if (is_done) {
+      x = is_prey ? 0 : 0.5 * setting->map_width;
+      y = is_prey ? 0 : 0.5 * setting->map_length;
+      agent_state->loc_x[gaid] = x;
+      agent_state->loc_y[gaid] = y;
+      agent_state->still_in_game[gaid] = true;
+    }
+
+    // Construct observation.
     const int state_size_per_agent = agent_num * kFeatureNum + 1;
     const size_t base = eid * agent_num * state_size_per_agent + aid * kFeatureNum;
     for (int id = 0; id < agent_num; id++) {
@@ -289,8 +265,18 @@ __global__ void CalcAgentReward(const int env_num, const int agent_num, const Ga
     state[eid * agent_num * state_size_per_agent + aid * state_size_per_agent + agent_num * kFeatureNum] =
       static_cast<float>(agent_state->time_step[eid]) / setting->max_timestep;
 
+    // Construct agent reward.
+    if (team_reward[eid] > 0) {
+      reward[gaid] += is_prey ? -team_reward[eid] * setting->caught_penalty : team_reward[eid] * setting->catch_reward;
+    } else {
+      reward[gaid] += is_prey ? setting->step_cost : -setting->step_cost;
+    }
+
+    // Construct environment done flag.
     if (aid == 0) {
-      done[eid] = (agent_state->time_step[eid] >= setting->max_timestep) || (agent_state->prey_left[eid] == 0);
+      done[eid] = is_done;
+      agent_state->time_step[eid] = 0;
+      agent_state->prey_left[eid] = setting->prey_num;
     }
   }
 }
@@ -307,12 +293,9 @@ void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *s
   cudaMemsetAsync(team_reward, 0, sizeof(float) * env_num, stream);
   CalcTeamReward<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, team_reward);
 
-  // Calculate agent reward.
-  CalcAgentReward<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, state, reward, done,
-                                                      team_reward);
-
-  // Reset the ended environment.
-  ResetIfDoneKernel<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, state, done);
+  // Construct step output.
+  ConstructStepOutput<<<grid_dim, block_dim, 0, stream>>>(env_num, agent_num, setting, agent_state, state, reward, done,
+                                                          team_reward);
 }
 
 __global__ void AgentStateCopyKernel(const int env_num, const int agent_num, AgentState *dst, AgentState *src) {
