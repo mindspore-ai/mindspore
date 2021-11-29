@@ -23,6 +23,9 @@
 #include "runtime/device/ascend/ge_runtime/task/task.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
 #include "mindspore/core/utils/log_adapter.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore::ge::model_runner {
 RuntimeModel::~RuntimeModel() {
@@ -220,6 +223,9 @@ void RuntimeModel::Run() {
   MS_LOG(INFO) << "Davinci task run start.";
   rtError_t ret = rtModelExecute(rt_model_handle_, rt_model_stream_, 0);
   if (ret != RT_ERROR_NONE) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << ret;
   }
 
@@ -230,6 +236,9 @@ void RuntimeModel::Run() {
       MS_LOG(INFO) << "Model stream ACL_ERROR_RT_END_OF_SEQUENCE signal received.";
       return;
     }
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(EXCEPTION) << "Call rt api rtStreamSynchronize failed, ret: " << ret;
   }
 
