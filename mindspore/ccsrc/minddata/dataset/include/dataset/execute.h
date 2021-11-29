@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 class DeviceResource;
 // class to run tensor operations in eager mode
-class Execute {
+class MS_API Execute {
  public:
   /// \brief Constructor.
   /// \param[in] op TensorOperation to be applied in Eager mode, it accepts operation in type of shared pointer.

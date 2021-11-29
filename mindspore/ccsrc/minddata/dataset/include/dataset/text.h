@@ -41,7 +41,7 @@ namespace text {
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
 /// \note BasicTokenizer is not supported on the Windows platform yet.
-class BasicTokenizer final : public TensorTransform {
+class MS_API BasicTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode) and RegexReplace operations to
@@ -72,7 +72,7 @@ class BasicTokenizer final : public TensorTransform {
 
 /// \brief A tokenizer used for Bert text process.
 /// \note BertTokenizer is not supported on the Windows platform yet.
-class BertTokenizer final : public TensorTransform {
+class MS_API BertTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab A Vocab object.
@@ -132,7 +132,7 @@ class BertTokenizer final : public TensorTransform {
 };
 
 /// \brief Apply case fold operation on UTF-8 string tensors.
-class CaseFold final : public TensorTransform {
+class MS_API CaseFold final : public TensorTransform {
  public:
   /// \brief Constructor.
   CaseFold();
@@ -149,7 +149,7 @@ class CaseFold final : public TensorTransform {
 
 /// \brief Tokenize a Chinese string into words based on the dictionary.
 /// \note The integrity of the HMMSegment algorithm and MPSegment algorithm files must be confirmed.
-class JiebaTokenizer final : public TensorTransform {
+class MS_API JiebaTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] hmm_path Dictionary file is used by the HMMSegment algorithm. The dictionary can be obtained on the
@@ -230,7 +230,7 @@ class JiebaTokenizer final : public TensorTransform {
 };
 
 /// \brief Look up a word into an id according to the input vocabulary table.
-class Lookup final : public TensorTransform {
+class MS_API Lookup final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab a Vocab object.
@@ -272,7 +272,7 @@ class Lookup final : public TensorTransform {
 };
 
 /// \brief Generate n-gram from a 1-D string Tensor.
-class Ngram final : public TensorTransform {
+class MS_API Ngram final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] ngrams ngrams is a vector of positive integers. For example, if ngrams={4, 3}, then the result
@@ -314,7 +314,7 @@ class Ngram final : public TensorTransform {
 
 #ifndef _WIN32
 /// \brief Apply normalize operation to UTF-8 string tensors.
-class NormalizeUTF8 final : public TensorTransform {
+class MS_API NormalizeUTF8 final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] normalize_form Valid values can be any of [NormalizeForm::kNone,NormalizeForm::kNfc,
@@ -341,7 +341,7 @@ class NormalizeUTF8 final : public TensorTransform {
 };
 
 /// \brief Replace a UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
-class RegexReplace final : public TensorTransform {
+class MS_API RegexReplace final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] pattern The regex expression patterns.
@@ -372,7 +372,7 @@ class RegexReplace final : public TensorTransform {
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string by the regex expression pattern.
-class RegexTokenizer final : public TensorTransform {
+class MS_API RegexTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] delim_pattern The pattern of regex delimiters.
@@ -401,7 +401,7 @@ class RegexTokenizer final : public TensorTransform {
 #endif
 
 /// \brief Tokenize a scalar token or a 1-D token to tokens by sentencepiece.
-class SentencePieceTokenizer final : public TensorTransform {
+class MS_API SentencePieceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab a SentencePieceVocab object.
@@ -435,7 +435,7 @@ class SentencePieceTokenizer final : public TensorTransform {
 
 /// \brief Construct a tensor from data (only 1-D for now), where each element in the dimension
 ///   axis is a slice of data starting at the corresponding position, with a specified width.
-class SlidingWindow final : public TensorTransform {
+class MS_API SlidingWindow final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] width The width of the window. It must be an integer and greater than zero.
@@ -461,7 +461,7 @@ class SlidingWindow final : public TensorTransform {
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stof,
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stoul,
 ///   except that any strings which represent negative numbers cannot be cast to an unsigned integer type.
-class ToNumber final : public TensorTransform {
+class MS_API ToNumber final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore::DataType of the tensor to be cast to. Must be a numeric type, excluding bool.
@@ -481,7 +481,7 @@ class ToNumber final : public TensorTransform {
 };
 
 /// \brief Truncate a pair of rank-1 tensors such that the total length is less than max_length.
-class TruncateSequencePair final : public TensorTransform {
+class MS_API TruncateSequencePair final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] max_length Maximum length required.
@@ -501,7 +501,7 @@ class TruncateSequencePair final : public TensorTransform {
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string to Unicode characters.
-class UnicodeCharTokenizer final : public TensorTransform {
+class MS_API UnicodeCharTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] with_offsets whether to output offsets of tokens (default=false).
@@ -521,7 +521,7 @@ class UnicodeCharTokenizer final : public TensorTransform {
 };
 
 /// \brief Tokenize scalar token or 1-D tokens to 1-D sub-word tokens.
-class WordpieceTokenizer final : public TensorTransform {
+class MS_API WordpieceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab A Vocab object.
@@ -555,7 +555,7 @@ class WordpieceTokenizer final : public TensorTransform {
 
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
-class UnicodeScriptTokenizer final : public TensorTransform {
+class MS_API UnicodeScriptTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] keep_whitespace whether to emit whitespace tokens (default=false).
@@ -576,7 +576,7 @@ class UnicodeScriptTokenizer final : public TensorTransform {
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces.
-class WhitespaceTokenizer final : public TensorTransform {
+class MS_API WhitespaceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] with_offsets whether to output offsets of tokens (default=false).
