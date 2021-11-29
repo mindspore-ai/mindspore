@@ -105,7 +105,7 @@ int GatherNdCPUKernel::InitOffset() {
   (void)memset(in_offset_, 0, count_ * sizeof(int));
   for (int j = 0; j < count_; ++j) {
     for (int k = 0; k < idx_lastshape; ++k) {
-      if (indices_ptr[j * idx_stride + k] < in_shape[k]) {
+      if (indices_ptr[j * idx_stride + k] >= 0 && indices_ptr[j * idx_stride + k] < in_shape[k]) {
         in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
       } else {
         MS_LOG(ERROR) << name() << " indices value invalid!";

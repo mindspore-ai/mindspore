@@ -65,11 +65,7 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   for (size_t i = 1; i < inputs_size; ++i) {
     size_t input_i_shape_size = inputs[i]->shape_size_;
     if (input_i_shape_size != input0_shape_size) {
-      if (input_i_shape_size != 0) {
-        return NNACL_PARAM_INVALID;
-      } else {
-        continue;
-      }
+      return NNACL_PARAM_INVALID;
     }
     int shape_tmp[MAX_SHAPE_SIZE] = {0};
     size_t shape_tmp_size = 0;

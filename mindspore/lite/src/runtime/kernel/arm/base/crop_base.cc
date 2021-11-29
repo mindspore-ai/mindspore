@@ -49,7 +49,7 @@ int CropBaseCPUKernel::ReSize() {
 int CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const {
   auto axis = crop_para->axis_;
   auto offsets_size = crop_para->offset_size_;
-  MS_ASSERT(axis <= input_dim);
+  MS_CHECK_TRUE_MSG(axis < input_dim, RET_ERROR, "The axis is invalid.");
   if (offsets_size > 1) {
     MS_CHECK_TRUE_MSG(axis + offsets_size == input_dim, RET_ERROR, "The axis and offsets is invalid");
   }
