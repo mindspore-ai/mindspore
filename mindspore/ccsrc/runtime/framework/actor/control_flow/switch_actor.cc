@@ -24,9 +24,9 @@ namespace runtime {
 constexpr size_t kMaxSwitchCondSize = 8;
 constexpr size_t kSwitchDefaultOutputNum = 1;
 
-SwitchActor::SwitchActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
-                         const AnfNodePtr &node)
-    : ControlActor(name, KernelTransformType::kSwitchActor, parameters, node) {
+SwitchActor::SwitchActor(const std::string &name, const AID &memory_manager_aid,
+                         const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
+    : ControlActor(name, KernelTransformType::kSwitchActor, memory_manager_aid, parameters, node) {
   device_contexts_.resize(parameters.size());
   output_data_by_output_index_.resize(kSwitchDefaultOutputNum);
 }

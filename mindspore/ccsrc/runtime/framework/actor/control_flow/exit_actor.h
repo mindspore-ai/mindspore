@@ -32,8 +32,9 @@ namespace runtime {
 // device tensors in the data to the corresponding actor. It is the exit of the end of kernel graph execution.
 class ExitActor : public ControlActor {
  public:
-  ExitActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
-      : ControlActor(name, KernelTransformType::kExitActor, parameters, node) {
+  ExitActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters,
+            const AnfNodePtr &node)
+      : ControlActor(name, KernelTransformType::kExitActor, memory_manager_aid, parameters, node) {
     device_contexts_.resize(parameters.size());
     input_device_tensors_.resize(parameters.size());
   }
@@ -54,6 +55,7 @@ class ExitActor : public ControlActor {
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
+  void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

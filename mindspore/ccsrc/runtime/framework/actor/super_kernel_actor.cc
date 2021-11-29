@@ -16,6 +16,7 @@
 
 #include "runtime/framework/actor/super_kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/memory_manager_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -163,6 +164,29 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   }
 
   return true;
+}
+
+void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &sequential_num = context->sequential_num_;
+
+  // Collect the input device tensors.
+  std::vector<DeviceTensor *> memory_free_list;
+  if (input_op_datas_.count(sequential_num) > 0) {
+    for (auto &input_data : input_op_datas_[sequential_num]) {
+      MS_EXCEPTION_IF_NULL(input_data);
+      MS_EXCEPTION_IF_NULL(input_data->data_);
+      if (input_data->data_->dynamic_ref_conut() != INT32_MAX) {
+        memory_free_list.emplace_back(input_data->data_);
+      }
+    }
+  }
+
+  if (memory_free_list.size() > 0) {
+    memory_free_lists_.emplace_back(memory_free_list);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
+                          device_contexts_[0], context);
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

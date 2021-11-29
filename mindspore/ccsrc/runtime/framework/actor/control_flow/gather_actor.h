@@ -34,7 +34,8 @@ namespace runtime {
 // together and sent to the subgraph.
 class GatherActor : public ControlActor {
  public:
-  GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
+  GatherActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters,
+              const AnfNodePtr &node);
   ~GatherActor() override = default;
   const mindspore::HashMap<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
     return output_data_with_branch_id_arrows_;
@@ -43,9 +44,12 @@ class GatherActor : public ControlActor {
  protected:
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
+  void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
+
+  void FetchOutput(OpRealParameterWithBranchID *const output, OpContext<DeviceTensor> *const context);
 
   // There will be multiple output branches for gather actor according the funcgraph in partial.
   mindspore::HashMap<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;

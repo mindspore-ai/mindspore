@@ -70,6 +70,13 @@ void EntranceActor::Run(OpContext<DeviceTensor> *const context) {
   is_loop_body_execution_ = true;
 
   FetchInput(context);
+
+  // Note that IncreaseDynamicRefCount must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
+  // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
+  // incremented.
+  IncreaseDynamicRefCounts(context);
+  SendMemoryFreeReq(context);
+
   EraseInput(context);
   SendOutput(context);
 }
@@ -216,6 +223,37 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     if (iter->second.empty()) {
       real_parameters_with_branch_id_.erase(sequential_num);
     }
+  }
+}
+
+void EntranceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &sequential_num = context->sequential_num_;
+
+  // Collect the input device tensors.
+  std::vector<DeviceTensor *> memory_free_list;
+  if (input_op_datas_.count(sequential_num) > 0) {
+    for (auto &input_data : input_op_datas_[sequential_num]) {
+      MS_EXCEPTION_IF_NULL(input_data);
+      MS_EXCEPTION_IF_NULL(input_data->data_);
+      memory_free_list.emplace_back(input_data->data_);
+    }
+  }
+
+  const auto &iter = real_parameters_with_branch_id_.find(sequential_num);
+  if (iter != real_parameters_with_branch_id_.end()) {
+    if (iter->second.empty()) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The real parameter with branch id is empty.");
+    }
+    auto &real_parameters_with_branch_id = iter->second.front();
+    auto partial_device_tensors = GetAllDeviceTensors(real_parameters_with_branch_id);
+    (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(), std::back_inserter(memory_free_list));
+  }
+
+  if (memory_free_list.size() > 0) {
+    memory_free_lists_.emplace_back(memory_free_list);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
+                          device_contexts_[0], context);
   }
 }
 }  // namespace runtime

@@ -23,6 +23,7 @@
 #include <stack>
 #include <queue>
 #include <set>
+#include <algorithm>
 #include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
@@ -33,9 +34,10 @@ namespace runtime {
 // the data to the corresponding actor. It is the entry point for subgraph execution.
 class EntranceActor : public ControlActor {
  public:
-  EntranceActor(const std::string &name, const std::vector<KernelWithIndex> &parameters,
+  EntranceActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters,
                 const std::set<KernelWithIndex> &call_nodes, const AnfNodePtr &node)
-      : ControlActor(name, KernelTransformType::kEntranceActor, parameters, node), call_nodes_(call_nodes) {
+      : ControlActor(name, KernelTransformType::kEntranceActor, memory_manager_aid, parameters, node),
+        call_nodes_(call_nodes) {
     device_contexts_.resize(parameters.size());
     input_device_tensors_.resize(parameters.size());
   }
@@ -56,6 +58,7 @@ class EntranceActor : public ControlActor {
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void EraseInput(const OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

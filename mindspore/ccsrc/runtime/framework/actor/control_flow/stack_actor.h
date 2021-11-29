@@ -22,6 +22,7 @@
 #include <memory>
 #include <stack>
 #include <set>
+#include <algorithm>
 #include "utils/hash_map.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/control_flow/control_actor.h"
@@ -36,7 +37,7 @@ namespace runtime {
 // 4. Send output.
 class StackActor : public ControlActor {
  public:
-  StackActor(const std::string &name, const std::vector<KernelWithIndex> &parameters);
+  StackActor(const std::string &name, const AID &memory_manager_aid, const std::vector<KernelWithIndex> &parameters);
   ~StackActor() override = default;
 
   void Init() override;
@@ -50,14 +51,10 @@ class StackActor : public ControlActor {
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void EraseInput(const OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
-
-  void FillStack(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context);
-
-  // The device tensors created and stored by the stack.
-  std::vector<DeviceTensorPtr> created_device_tensors_;
 
   // The input data and partials records that the stack actor is copied from the input nodes and needs to be
   // stored in the device tensor in the stack.

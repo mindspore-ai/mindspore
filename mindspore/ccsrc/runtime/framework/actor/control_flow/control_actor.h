@@ -25,9 +25,11 @@
 #include <stack>
 #include <queue>
 #include <utility>
+#include <algorithm>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/abstract_actor.h"
 #include "runtime/framework/actor/memory_aware_actor.h"
+#include "runtime/framework/actor/memory_manager_actor.h"
 
 namespace mindspore {
 namespace runtime {
@@ -49,10 +51,10 @@ struct OpRealParameterWithBranchID {
   int branch_id_;
 };
 // The control actor is the base class of control flow actor.
-class ControlActor : public AbstractActor {
+class ControlActor : public MemoryAwareActor {
  public:
-  ControlActor(const std::string &name, KernelTransformType type, const std::vector<KernelWithIndex> &parameters,
-               const AnfNodePtr &node);
+  ControlActor(const std::string &name, KernelTransformType type, const AID &memory_manager_aid,
+               const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node);
   ~ControlActor() override = default;
 
   void Init() override;
@@ -72,6 +74,14 @@ class ControlActor : public AbstractActor {
 
  protected:
   friend class ControlNodeScheduler;
+
+  // The basic interfaces for op partial and op real parameter.
+  std::vector<DeviceTensor *> GetAllDeviceTensors(const OpPartialPtr &op_partial);
+  std::vector<DeviceTensor *> GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter);
+  void IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data);
+  void IncreaseDynamicRefCount(const OpPartialPtr &op_partial);
+  void IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op_real_parameter);
+
   // Get the position of node in the input.
   size_t FetchNodePosition(const KernelWithIndex &node) const;
 
@@ -81,6 +91,11 @@ class ControlActor : public AbstractActor {
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void EraseInput(const OpContext<DeviceTensor> *context) override;
+
+  // Increase the dynamic ref count by the outputs. It corresponds to the SendOutput.
+  virtual void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context);
+  // Free memory by the dynamic ref count decremented. It corresponds to the EraseInput.
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
   // Input data.
   // 1.Input partial.
@@ -98,6 +113,9 @@ class ControlActor : public AbstractActor {
   // Fetch data. After fetch input, all the input collected is saved here.
   std::vector<OpPartialPtr> input_partials_;
   std::vector<DeviceTensor *> input_device_tensors_;
+
+  // The lists of device tensors which need free by dynamic ref count, will be cleared at the end of step.
+  std::vector<std::vector<DeviceTensor *>> memory_free_lists_;
 
   // Input num.
   size_t input_partials_num_{0};
