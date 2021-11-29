@@ -18,12 +18,18 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units) {
-  if (output_ptr == NULL || update == NULL || output_unit_offsets == NULL || unit_size <= 0 || num_units < 0) {
+int DoScatterND(void *output, const void *update, int *output_unit_offsets, ScatterNDParameter *param, int task_id) {
+  if (param->op_parameter.thread_num_ == 0) {
     return NNACL_ERR;
   }
-  for (int i = 0; i < num_units; i++) {
-    (void)memcpy(output_ptr + output_unit_offsets[i], update + unit_size * i, (size_t)(unit_size) * sizeof(float));
+  int unit_per_thread = UP_DIV(param->num_unit, param->op_parameter.thread_num_);
+  int begin = unit_per_thread * task_id;
+  int end = MSMIN(begin + unit_per_thread, param->num_unit);
+
+  int data_type_len = param->data_type_len;
+  for (int i = begin; i < end; i++) {
+    (void)memcpy((int8_t *)output + output_unit_offsets[i] * data_type_len,
+                 (int8_t *)update + i * param->unit_size * data_type_len, param->unit_size * data_type_len);
   }
   return NNACL_OK;
 }

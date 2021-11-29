@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/fp32/scatter_nd_fp32.h"
 using mindspore::schema::PrimitiveType_ScatterNdUpdate;
 
 namespace mindspore {
@@ -22,14 +23,14 @@ OpParameter *PopulateScatterNDUpdateParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
 
-  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *param = reinterpret_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(OpParameter));
+  memset(param, 0, sizeof(ScatterNDParameter));
 
-  param->type_ = primitive->value_type();
+  param->op_parameter.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_ScatterNdUpdate, PopulateScatterNDUpdateParameter, SCHEMA_CUR)
