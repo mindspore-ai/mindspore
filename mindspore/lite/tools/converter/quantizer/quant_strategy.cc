@@ -123,9 +123,6 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
 }
 
 bool QuantStrategy::IsSkipOp(const AnfNodePtr &input_node) {
-  if (skip_node_.find(input_node->fullname_with_scope()) == skip_node_.end()) {
-    return false;
-  }
-  return true;
+  return !(skip_node_.find(input_node->fullname_with_scope()) == skip_node_.end());
 }
 }  // namespace mindspore::lite::quant

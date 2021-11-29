@@ -471,6 +471,16 @@ KernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, Op
       // all outputs are same dtype.
       for (size_t i = 0; i < outputs.size(); ++i) {
         auto tensor = outputs.at(i);
+        if (save_flag_ && !tensor->quant_params().empty()) {
+          QuantParamExtend quant_param;
+          quant_param.node_name = call_param.node_name;
+          quant_param.node_type = call_param.node_type;
+          quant_param.quant_params = tensor->quant_params();
+          quant_param.tensor_name = tensor->tensor_name();
+          quant_param.element_num = tensor->ElementsNum();
+          quant_param.dims = tensor->shape();
+          quant_params_.push_back(quant_param);
+        }
         AddOriginInfo(call_param, op_parameters.at(call_param.node_name), false, i,
                       static_cast<mindspore::lite::Tensor *>(tensor));
       }

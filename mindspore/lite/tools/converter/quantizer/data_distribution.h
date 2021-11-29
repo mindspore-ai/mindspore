@@ -36,7 +36,11 @@ class DataDistribution {
     this->quant_max_ = quant_max;
     this->quant_min_ = quant_min;
     std::fill(histogram_.begin(), histogram_.end(), 1.0e-7);
-    symmetry_ = symmetry;
+    if (this->activation_quant_method_ == KL) {
+      symmetry_ = true;
+    } else {
+      symmetry_ = symmetry;
+    }
   }
 
   int RecordMaxMinValueArray(const std::vector<float> &data);

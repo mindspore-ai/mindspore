@@ -176,14 +176,29 @@ double DataDistribution::CalculateScale(float min_value, float max_value) {
     min_value = -abs_max;
     max_value = abs_max;
   }
-  this->encode_min_ = min_value;
-  this->encode_max_ = max_value;
-  // Optimize Handle 0.
+
+  encode_min_ = min_value;
+  encode_max_ = max_value;
+  // Handling 0
+  // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
+  if (encode_min_ > 0.0f) {
+    MS_LOG(DEBUG) << "min " << encode_min_ << " is bigger then 0, set to 0, this may course low precision";
+    encode_min_ = 0.0f;
+  }
+  // Inputs are strictly negative, set the real max to 0. e.g. input range = [-5.0, -1.0] -> [-5.0, 0.0]
+  if (encode_max_ < 0.0f) {
+    MS_LOG(DEBUG) << "real_max " << encode_max_ << " is smaller than 0, set to 0, this may course low precision";
+    encode_max_ = 0.0f;
+  }
+  // Inputs are both negative and positive, real_min and real_max are slightly shifted to make the floating point zero
+  // exactly representable. e.g. input range = [-5.1, 5.1] -> [-5.12, 5.08]
   MS_ASSERT(quant_max_ - quant_min_ > 0);
   return (encode_max_ - encode_min_) / (quant_max_ - quant_min_);
 }
 
-double DataDistribution::CalculateKLScale() { return CalculateScale(this->best_T_, this->real_max_); }
+double DataDistribution::CalculateKLScale() {
+  return CalculateScale(-std::abs(this->best_T_), std::abs(this->best_T_));
+}
 
 double DataDistribution::GetScale() {
   switch (this->activation_quant_method_) {
