@@ -151,11 +151,8 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
     return BuildNewParameter(pattern, res, top_graph);
   } else if (pattern->isa<Imm>()) {
     return BuildImmNode(pattern);
-  } else {
-    MS_LOG(EXCEPTION) << "Cannot find or build target node, pattern: " + pattern->unique_name() + "\n";
-    return nullptr;
   }
-  return nullptr;
+  MS_LOG(EXCEPTION) << "Cannot find or build target node, pattern: " + pattern->unique_name() + "\n";
 }
 
 AnfNodePtr ProcessComplexPatternFirstInput(const PatternPtr &pattern, const MatchResultPtr &res,

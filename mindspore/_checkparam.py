@@ -165,7 +165,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     type_except = TypeError if type_mismatch else ValueError
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
-        raise type_except(f'{arg_name} {prim_name} should be an {arg_type.__name__} and must {rel_str}, '
+        raise type_except(f'{arg_name} {prim_name} should be {arg_type.__name__} and must {rel_str}, '
                           f'but got `{arg_value}` with type `{type(arg_value).__name__}`.')
 
     return arg_value
@@ -589,8 +589,8 @@ class Validator:
             num_types = len(valid_types)
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                            f'{type_names if num_types > 1 else type_names[0]}, '
-                            f'but got {arg_value} with type {type(arg_value).__name__}.')
+                            f'\'{type_names if num_types > 1 else type_names[0]}\', '
+                            f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
 
         # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
         #         `check_value_type('x', True, [bool, int])` will check pass
