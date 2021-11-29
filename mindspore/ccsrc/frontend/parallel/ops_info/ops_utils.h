@@ -428,6 +428,7 @@ constexpr char ACCU_GRAD[] = "accu_grad";
 constexpr char PARAMETER_START[] = "parameter_start";
 constexpr char PARAM_INDEX[] = "param_index";
 constexpr char PARAMETER[] = "parameter";
+constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";

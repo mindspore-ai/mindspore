@@ -32,6 +32,7 @@ std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node);
+void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
 }  // namespace parallel
 }  // namespace mindspore
 

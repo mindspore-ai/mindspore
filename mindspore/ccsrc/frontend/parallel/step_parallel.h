@@ -35,7 +35,6 @@
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 
 using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
-const char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
 
 namespace mindspore {
 namespace parallel {

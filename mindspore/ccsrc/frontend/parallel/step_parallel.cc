@@ -1754,29 +1754,6 @@ void CoverSliceShape(const FuncGraphPtr &root) {
   g_RefMap.clear();
 }
 
-void LableBatchSizeSplit(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  FuncGraphPtr func_graph = node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto node_user_map = manager->node_users();
-  auto node_users = node_user_map[node];
-  for (auto &node_user : node_users) {
-    if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
-      auto data_users = manager->node_users()[node_user.first];
-      auto node_first = data_users.front().first;
-      for (auto &data_user : data_users) {
-        PrimitivePtr prim = GetCNodePrimitive(data_user.first);
-        MS_EXCEPTION_IF_NULL(prim);
-        if (prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
-          SetStridedSliceStrategy(data_user.first);
-        }
-      }
-    }
-  }
-}
-
 void SetVirtualDatasetStrategy(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
@@ -1921,15 +1898,6 @@ static bool CheckExtractInfomation(const CNodePtr &cnode) {
     return false;
   }
   return true;
-}
-
-void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
-  for (auto &node : all_nodes) {
-    auto cnode = node->cast<CNodePtr>();
-    if (IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset)) {
-      LableBatchSizeSplit(cnode);
-    }
-  }
 }
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
