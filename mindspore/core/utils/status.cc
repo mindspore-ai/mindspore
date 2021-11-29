@@ -93,11 +93,7 @@ Status::Status(enum StatusCode status_code, const std::vector<char> &status_msg)
   }
 
   data_->err_description = CharToString(status_msg);
-  if (!status_msg.empty()) {
-    data_->status_msg = CharToString(status_msg);
-  } else {
-    data_->status_msg = CodeAsString(status_code);
-  }
+  data_->status_msg = CharToString(status_msg);
   data_->status_code = status_code;
 }
 
@@ -144,7 +140,11 @@ std::vector<char> Status::ToCString() const {
   if (data_ == nullptr) {
     return std::vector<char>();
   }
-  return StringToChar(data_->status_msg);
+  if (!data_->status_msg.empty()) {
+    return StringToChar(data_->status_msg);
+  } else {
+    return CodeAsCString(data_->status_code);
+  }
 }
 
 int Status::GetLineOfCode() const {
