@@ -104,12 +104,15 @@ class MS_API MSTensor {
   static inline MSTensor *CreateDevTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                           const void *data, size_t data_len) noexcept;
 
-  /// \brief Creates a MSTensor object from local image file, must be used in pairs with DestroyTensorPtr.
+  /// \brief Creates a MSTensor object from local file, must be used in pairs with DestroyTensorPtr.
   ///
-  /// \param[in] image_file Path of image file.
+  /// \param[in] file Path of file to be read.
+  /// \param[in] type The data type of the MSTensor.
+  /// \param[in] shape The shape of the MSTensor.
   ///
   /// \return A pointer of MSTensor.
-  static inline MSTensor *CreateImageTensor(const std::string &image_file) noexcept;
+  static inline MSTensor *CreateTensorFromFile(const std::string &file, DataType type = DataType::kNumberTypeUInt8,
+                                               const std::vector<int64_t> &shape = {}) noexcept;
 
   /// \brief Create a string type MSTensor object whose data can be accessed by Model only after being copied, must be
   /// used in pair with DestroyTensorPtr.
@@ -268,7 +271,8 @@ class MS_API MSTensor {
                                    const void *data, size_t data_len) noexcept;
   static MSTensor *CreateDevTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                    const void *data, size_t data_len) noexcept;
-  static MSTensor *CreateImageTensor(const std::vector<char> &image_file) noexcept;
+  static MSTensor *CreateTensorFromFile(const std::vector<char> &file, enum DataType type,
+                                        const std::vector<int64_t> &shape) noexcept;
   static MSTensor *CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &str);
   static std::vector<std::vector<char>> TensorToStringChars(const MSTensor &tensor);
 
@@ -316,8 +320,9 @@ MSTensor *MSTensor::CreateDevTensor(const std::string &name, enum DataType type,
   return CreateDevTensor(StringToChar(name), type, shape, data, data_len);
 }
 
-MSTensor *MSTensor::CreateImageTensor(const std::string &image_file) noexcept {
-  return CreateImageTensor(StringToChar(image_file));
+MSTensor *MSTensor::CreateTensorFromFile(const std::string &file, enum DataType type,
+                                         const std::vector<int64_t> &shape) noexcept {
+  return CreateTensorFromFile(StringToChar(file), type, shape);
 }
 
 MSTensor *MSTensor::StringsToTensor(const std::string &name, const std::vector<std::string> &str) {
@@ -334,9 +339,7 @@ MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vecto
 
 std::string MSTensor::Name() const { return CharToString(CharName()); }
 
-void MSTensor::SetTensorName(const std::string &name) {
-  return SetTensorName(StringToChar(name));
-}
+void MSTensor::SetTensorName(const std::string &name) { return SetTensorName(StringToChar(name)); }
 
 using Key = struct Key {
   const size_t max_key_len = 32;

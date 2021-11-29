@@ -75,9 +75,24 @@ message ModelProto {
   optional string doc_string = 6;
   optional GraphProto graph = 7;
   repeated GraphProto functions = 8; // all the graphs without the main graph.
-  optional string preprocessor = 9;  // data graph from MindData.
+  optional PreprocessorProto preprocessor = 9;  // data graph from MindData.
   optional bool little_endian = 10; // bytes order in load device.
   optional ParallelProto parallel = 11; // information for parallel.
+}
+
+
+message PreprocessorProto {
+  repeated PreprocessOpProto op = 1;
+}
+
+
+message PreprocessOpProto {
+  optional string input_columns = 1;
+  optional string output_columns = 2;
+  optional string project_columns = 3;
+  optional string op_type = 4;
+  optional string operations = 5;
+  optional bool offload = 6;
 }
 
 

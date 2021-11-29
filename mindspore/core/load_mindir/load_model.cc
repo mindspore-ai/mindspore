@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 #include "load_mindir/load_model.h"
 #include "load_mindir/anf_model_parser.h"
@@ -121,6 +122,64 @@ bool MindIRLoader::ParseGraphProto(mind_ir::GraphProto *graph, const std::string
     }
   }
   return true;
+}
+
+std::vector<std::string> MindIRLoader::LoadPreprocess(const std::string &file_name) {
+  if (file_name.length() > PATH_MAX) {
+    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
+    return {};
+  }
+  char abs_path_buff[PATH_MAX];
+
+#ifdef _WIN32
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
+#else
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
+    MS_LOG(ERROR) << "Load MindIR get absolute path failed";
+  }
+#endif
+
+  // Read graph
+  mind_ir::ModelProto origin_model;
+  std::fstream mindir_stream(std::string(std::string(abs_path_buff)), std::ios::in | std::ios::binary);
+  if (!mindir_stream || !origin_model.ParseFromIstream(&mindir_stream)) {
+    MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
+    return {};
+  }
+
+  // Read dataset preprocessor
+  auto preprocessor = origin_model.preprocessor();
+
+  // Separate columns and parse
+  std::vector<std::string> input_columns;
+  for (auto i = 0; i < preprocessor.op_size(); i++) {
+    std::string column = preprocessor.op()[i].input_columns();
+    if (std::find(input_columns.begin(), input_columns.end(), column) == input_columns.end()) {
+      input_columns.push_back(column);
+    }
+  }
+
+  // Each column has one string to indicate its preprocess behaviour
+  std::vector<std::string> map_jsons;
+  for (std::string &column : input_columns) {
+    nlohmann::json dataset_json;
+    nlohmann::json child_dataset_json;
+    for (auto i = preprocessor.op_size() - 1; i >= 0; i--) {
+      if (preprocessor.op()[i].input_columns() == column) {
+        child_dataset_json["input_columns"] = nlohmann::json::parse(preprocessor.op()[i].input_columns());
+        child_dataset_json["op_type"] = nlohmann::json::parse(preprocessor.op()[i].op_type());
+        child_dataset_json["operations"] = nlohmann::json::parse(preprocessor.op()[i].operations());
+        child_dataset_json["output_columns"] = nlohmann::json::parse(preprocessor.op()[i].output_columns());
+        child_dataset_json["project_columns"] = nlohmann::json::parse(preprocessor.op()[i].project_columns());
+        child_dataset_json["offload"] = preprocessor.op()[i].offload();
+
+        dataset_json["children"] = child_dataset_json;
+        child_dataset_json = dataset_json;
+      }
+    }
+    map_jsons.push_back(dataset_json["children"].dump());
+  }
+  return map_jsons;
 }
 
 std::vector<FuncGraphPtr> MindIRLoader::LoadMindIRs(std::vector<std::string> file_names) {
@@ -280,32 +339,6 @@ std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   ifs.close();
 
   return buf;
-}
-
-std::string LoadPreprocess(const std::string &file_name) {
-  if (file_name.length() > PATH_MAX) {
-    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
-    return nullptr;
-  }
-  char abs_path_buff[PATH_MAX];
-
-#ifdef _WIN32
-  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
-#else
-  if (!realpath(file_name.c_str(), abs_path_buff)) {
-    MS_LOG(ERROR) << "Load MindIR get absolute path failed";
-  }
-#endif
-
-  // Read graph
-  mind_ir::ModelProto origin_model;
-  std::fstream mindir_stream(std::string(std::string(abs_path_buff)), std::ios::in | std::ios::binary);
-  if (!mindir_stream || !origin_model.ParseFromIstream(&mindir_stream)) {
-    MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
-    return std::string();
-  }
-
-  return origin_model.preprocessor();
 }
 
 FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {

@@ -331,52 +331,50 @@ Serdes::InitializeFuncPtr() {
   return ops_ptr;
 }
 
-Status Serdes::ParseMindIRPreprocess(const std::string &dataset_json, const std::string &process_column,
+Status Serdes::ParseMindIRPreprocess(const std::vector<std::string> &map_json_string,
                                      std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph) {
-  CHECK_FAIL_RETURN_UNEXPECTED(!dataset_json.empty(), "Invalid data, no json data in dataset_json.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!map_json_string.empty(), "Invalid data, no json data in map_json_string.");
 
-  nlohmann::json dataset_js;
+  const std::string process_column = "[\"image\"]";
+  MS_LOG(WARNING) << "Only supports parse \"image\" column from dataset object.";
+
+  nlohmann::json map_json;
   try {
-    dataset_js = nlohmann::json::parse(dataset_json);
+    for (auto &json : map_json_string) {
+      map_json = nlohmann::json::parse(json);
+      if (map_json["input_columns"].dump() == process_column) {
+        break;
+      }
+    }
   } catch (const std::exception &err) {
     MS_LOG(ERROR) << "Invalid json content, failed to parse JSON data, error message: " << err.what();
     RETURN_STATUS_UNEXPECTED("Invalid json content, failed to parse JSON data.");
   }
 
-  // Note1: We have to consider if pipeline has multibranch, how to deal with this situation?
-  // op1 - map - |
-  // op2 - map   - concat - map - ...
-  std::stack<nlohmann::json> reverse_traversal;
-  nlohmann::json dataset_nodes = dataset_js;
-  while (dataset_nodes != nullptr) {
-    reverse_traversal.push(dataset_nodes);
-    if (dataset_nodes["children"].size() > 1) {
-      MS_LOG(WARNING) << "Need to support dataset_node with more than one child.";
-    }
-    dataset_nodes = dataset_nodes["children"][0];
+  if (map_json.empty()) {
+    MS_LOG(ERROR) << "Invalid json content, no JSON data found for given input column: " + process_column;
+    RETURN_STATUS_UNEXPECTED("Invalid json content, no JSON data found for given input column: " + process_column);
   }
 
-  // Note2: We have to consider if the "image" column does not named with "image", how to select its map ops?
-  // In MindRecord, TFRecord, GeneratorDataset or RenameDataset, it seems that the column names are not fixed.
-  while (!reverse_traversal.empty()) {
-    nlohmann::json node = reverse_traversal.top();
-    reverse_traversal.pop();
-    if (node["op_type"] == "Map") {
-      std::vector<std::shared_ptr<TensorOperation>> tensor_ops;
-      RETURN_IF_NOT_OK(ConstructTensorOps(node["operations"], &tensor_ops));
-      if (node["input_columns"][0] == process_column) {
-        std::vector<std::string> op_names;
-        std::transform(tensor_ops.begin(), tensor_ops.end(), std::back_inserter(op_names),
-                       [](const auto &op) { return op->Name(); });
-        MS_LOG(INFO) << "Find valid preprocess operations: " << op_names;
-        data_graph->push_back(std::make_shared<Execute>(tensor_ops));
-      }
+  while (map_json != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(map_json["op_type"] == "Map", "Invalid json content, this is not a MapOp.");
+
+    std::vector<std::shared_ptr<TensorOperation>> tensor_ops;
+    RETURN_IF_NOT_OK(ConstructTensorOps(map_json["operations"], &tensor_ops));
+    if (map_json["input_columns"].dump() == process_column) {
+      std::vector<std::string> op_names;
+      std::transform(tensor_ops.begin(), tensor_ops.end(), std::back_inserter(op_names),
+                     [](const auto &op) { return op->Name(); });
+      MS_LOG(INFO) << "Find valid preprocess operations: " << op_names;
+      data_graph->push_back(std::make_shared<Execute>(tensor_ops));
     }
+    map_json = map_json["children"];
   }
 
   if (!data_graph->size()) {
     MS_LOG(WARNING) << "Can not find any valid preprocess operation.";
   }
+
   return Status::OK();
 }
 
@@ -386,9 +384,9 @@ Status Serdes::ParseMindIRPreprocess(const std::string &dataset_json, const std:
 extern "C" {
 // ParseMindIRPreprocess_C has C-linkage specified, but returns user-defined type 'mindspore::Status'
 // which is incompatible with C
-void ParseMindIRPreprocess_C(const std::string &dataset_json, const std::string &process_column,
+void ParseMindIRPreprocess_C(const std::vector<std::string> &dataset_json,
                              std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph, Status *s) {
-  Status ret = Serdes::ParseMindIRPreprocess(dataset_json, process_column, data_graph);
+  Status ret = Serdes::ParseMindIRPreprocess(dataset_json, data_graph);
   *s = Status(ret);
 }
 }

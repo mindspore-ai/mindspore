@@ -73,6 +73,7 @@ class MindIRLoader {
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> file_names);
+  std::vector<std::string> LoadPreprocess(const std::string &file_name);
 
  private:
   bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path);
@@ -88,7 +89,6 @@ class MindIRLoader {
   LayoutMap layout_map_;
 };
 
-std::string LoadPreprocess(const std::string &file_name);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
 FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore

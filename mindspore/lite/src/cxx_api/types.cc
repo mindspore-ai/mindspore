@@ -149,7 +149,8 @@ MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType
   return nullptr;
 }
 
-MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexcept {
+MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum DataType type,
+                                         const std::vector<int64_t> &shape) noexcept {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return nullptr;
 }
