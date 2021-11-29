@@ -62,6 +62,8 @@ struct ParamPtrHasher {
   }
 };
 
+using ParamIndexMap = OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual, true>;
+
 class AnfExporter {
  public:
   explicit AnfExporter(bool export_used = true, bool check_integrity = false)
@@ -89,8 +91,7 @@ class AnfExporter {
   std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
   std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                              const std::map<AnfNodePtr, int> &apply_map);
-  void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
-                        OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map);
+  void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters, ParamIndexMap *param_map);
 
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
@@ -101,7 +102,7 @@ class AnfExporter {
                            std::map<AnfNodePtr, int> *const apply_map);
   void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map);
 
-  OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
+  OrderedMap<FuncGraphPtr, ParamIndexMap> exported;
 
  private:
   void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,

@@ -412,7 +412,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
 }
 
 void AnfExporter::OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
-                                   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map) {
+                                   ParamIndexMap *param_map) {
   bool first_flag = true;
   for (const AnfNodePtr &param : parameters) {
     if (first_flag) {
@@ -569,7 +569,7 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
 
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
-  OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> param_map;
+  ParamIndexMap param_map;
 
   if (*(func_graph->switch_input())) {
     ofs << "switch_input: " << *(func_graph->switch_input()) << "\n";
