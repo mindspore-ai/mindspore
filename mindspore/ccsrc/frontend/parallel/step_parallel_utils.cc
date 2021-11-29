@@ -34,6 +34,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "ir/param_info.h"
@@ -281,6 +282,24 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
   }
   SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
+}
+
+void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+      continue;
+    }
+    auto slice_prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(slice_prim);
+    if (slice_prim->HasAttr(FUNC_GRAPH_FLAG_STRIDED_SLICE)) {
+      SetStridedSliceStrategy(cnode);
+    }
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore
