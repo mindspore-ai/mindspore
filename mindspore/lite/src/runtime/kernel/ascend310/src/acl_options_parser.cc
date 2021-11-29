@@ -60,15 +60,15 @@ STATUS AclOptionsParser::Parse310AclOptions(const std::shared_ptr<DeviceInfoCont
     return lite::RET_ERROR;
   }
   int32_t device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
-  if (CheckAndModifyDeviceId(&device_id) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Proc device id failed, device id = " << device_id;
+  if (CheckDeviceId(&device_id) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Check device id failed, device id = " << device_id;
     return lite::RET_ERROR;
   }
   acl_options->device_id = device_id;
   return lite::RET_OK;
 }
 
-STATUS AclOptionsParser::CheckAndModifyDeviceId(int32_t *device_id) {
+STATUS AclOptionsParser::CheckDeviceId(int32_t *device_id) {
   CHECK_NULL_RETURN(device_id);
   uint32_t device_count;
   if (aclrtGetDeviceCount(&device_count) != ACL_ERROR_NONE) {
@@ -76,9 +76,9 @@ STATUS AclOptionsParser::CheckAndModifyDeviceId(int32_t *device_id) {
     return lite::RET_OK;
   }
   if (*device_id >= static_cast<int32_t>(device_count)) {
-    *device_id = 0;
-    MS_LOG(WARNING) << "Cur device id " << *device_id << " is larger than max count " << device_count
-                    << ", set default device id 0";
+    MS_LOG(ERROR) << "Current device id " << *device_id << " is larger than max count " << device_count
+                  << ",please check the device info of context.";
+    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
