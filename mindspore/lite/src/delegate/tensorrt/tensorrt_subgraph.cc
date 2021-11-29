@@ -220,7 +220,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
         }
-        cur_op->AddInnerInTensors(ITensorHelper{trt_tensor, in_tensor.format()});
+        cur_op->AddInnerInTensors(ITensorHelper{trt_tensor, in_tensor.format(), true});
         continue;
       }
 
@@ -604,7 +604,7 @@ int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MST
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return RET_ERROR;
   }
-  ITensorHelper trt_tensor{cache_input, Format::NHWC};
+  ITensorHelper trt_tensor{cache_input, Format::NHWC, true};
   cur_op->AddInnerInTensors(trt_tensor);
   return RET_OK;
 }

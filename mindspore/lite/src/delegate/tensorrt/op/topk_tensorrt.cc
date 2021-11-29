@@ -69,8 +69,6 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::ITensor *topk_input = tensorrt_in_tensors_[0].trt_tensor_;
-  Format output_format = tensorrt_in_tensors_[0].format_;
-
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *topk_input);
@@ -80,7 +78,6 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer->setName((op_name_ + "_transpose_in").c_str());
     topk_input = transpose_layer->getOutput(0);
-    output_format = Format::NHWC;
   }
   uint32_t reduce_axes = 1 << axis_value;
 
@@ -120,7 +117,7 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, output_format});
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, Format::NHWC, true});
   return RET_OK;
 }
 }  // namespace mindspore::lite

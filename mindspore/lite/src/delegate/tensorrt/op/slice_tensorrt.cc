@@ -51,7 +51,6 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   axis_index_ = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
 
   nvinfer1::ITensor *slice_input = tensorrt_in_tensors_[0].trt_tensor_;
-  Format out_format = tensorrt_in_tensors_[0].format_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     // transpose: NCHW->NHWC
@@ -62,7 +61,6 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
     slice_input = transpose_layer_in->getOutput(0);
-    out_format = Format::NHWC;
   }
   int ret = ConvertParamsDims();
   if (ret != RET_OK) {
@@ -82,7 +80,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, Format::NHWC, true});
   return RET_OK;
 }
 

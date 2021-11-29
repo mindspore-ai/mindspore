@@ -120,7 +120,9 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
   activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
+  bool same_format = SameDims(activation_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&
+                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
+  this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW, same_format});
   return RET_OK;
 }
 
@@ -172,12 +174,12 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
       return;
     }
     nvinfer1::Dims dims_pre{};
-    dims_pre.nbDims = 2;
+    dims_pre.nbDims = DIMENSION_2D;
     dims_pre.d[0] = padding_val[0];  // up
     dims_pre.d[1] = padding_val[2];  // left
     decon_layer->setPrePadding(dims_pre);
     nvinfer1::Dims dims_post{};
-    dims_post.nbDims = 2;
+    dims_post.nbDims = DIMENSION_2D;
     dims_post.d[0] = padding_val[1] - out_pad_val[0];  // down
     dims_post.d[1] = padding_val[3] - out_pad_val[1];  // right
     decon_layer->setPostPadding(dims_post);

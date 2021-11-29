@@ -73,7 +73,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   resize_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NHWC});
+  this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NHWC, true});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(resize_layer->getOutput(0), Format::NHWC);
   return RET_OK;
 }

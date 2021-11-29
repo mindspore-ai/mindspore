@@ -94,19 +94,11 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
   nvinfer1::ITensor *out_trt_tensor = activation_layer->getOutput(0);
-  if (out_trt_tensor->getDimensions().nbDims == DIMENSION_4D) {
-    // transpose output from nchw to nhwc
-    nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(network, *out_trt_tensor);
-    if (transpose_layer_out == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return RET_ERROR;
-    }
-    transpose_layer_out->setName((op_name_ + "_transpose2NHWC").c_str());
-    out_trt_tensor = transpose_layer_out->getOutput(0);
-  }
   out_trt_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NHWC});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_trt_tensor, Format::NHWC);
+  bool same_format = SameDims(out_trt_tensor->getDimensions(), out_tensors_[0].Shape()) &&
+                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
+  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, same_format});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_trt_tensor, Format::NCHW);
   return RET_OK;
 }
 

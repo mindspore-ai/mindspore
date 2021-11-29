@@ -70,7 +70,8 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *reduce_scatter_out = reduce_scatter_layer->getOutput(0);
   reduce_scatter_layer->setName(op_name_.c_str());
   reduce_scatter_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{reduce_scatter_out, tensorrt_in_tensors_[0].format_});
+  this->AddInnerOutTensors(
+    ITensorHelper{reduce_scatter_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
   return RET_OK;
 }
 

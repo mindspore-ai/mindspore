@@ -111,9 +111,6 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     transpose_layer->setName((op_name_ + "_input_transpose2NHWC").c_str());
     tensorrt_in_tensors_[transpose_input_tensor].trt_tensor_ = transpose_layer->getOutput(0);
     tensorrt_in_tensors_[transpose_input_tensor].format_ = Format::NHWC;
-  } else if (tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
-    MS_LOG(ERROR) << "elementwise op inputs are in different format: " << op_name_;
-    return RET_ERROR;
   }
   MS_LOG(DEBUG) << "after transpose "
                 << GetTensorFormat(tensorrt_in_tensors_[input_x_index_].trt_tensor_,
@@ -155,7 +152,8 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
   }
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_});
+  this->AddInnerOutTensors(
+    ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_, tensorrt_in_tensors_[1].same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, tensorrt_in_tensors_[1].format_);
   return RET_OK;
 }
@@ -221,7 +219,7 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << op_name_;
       return RET_ERROR;
     }
-    this->AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_});
+    this->AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_, true});
   } else if (this->in_tensors_[const_tensor_index].Shape().size() ==
              this->in_tensors_[1 - const_tensor_index].Shape().size()) {
     constant_input = lite::ConvertConstantTensor(network, in_tensors_[const_tensor_index], op_name_);
@@ -229,7 +227,7 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
       return RET_ERROR;
     }
-    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC});
+    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
   } else if (this->in_tensors_[const_tensor_index].Shape().size() == 1 &&
              this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
     constant_input = ConvertTensorWithExpandDims(network, in_tensors_[const_tensor_index],
@@ -238,7 +236,7 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "create Itensor from ConvertTensorWithExpandDims failed: " << op_name_;
       return RET_ERROR;
     }
-    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC});
+    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
   } else {
     MS_LOG(ERROR) << "const tensor value needs check: " << op_name_;
   }

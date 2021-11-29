@@ -62,7 +62,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
       return RET_ERROR;
     }
-    tensorrt_in_tensors_.push_back(ITensorHelper{const_input, Format::NHWC});
+    tensorrt_in_tensors_.push_back(ITensorHelper{const_input, Format::NHWC, true});
   }
 
   int indices_tensor_index = tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32 ? 0 : 1;
@@ -101,7 +101,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   gather_layer->setName(op_name_.c_str());
   gather_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{gather_layer->getOutput(0), Format::NHWC});
+  this->AddInnerOutTensors(ITensorHelper{gather_layer->getOutput(0), Format::NHWC, true});
   return RET_OK;
 }
 }  // namespace mindspore::lite

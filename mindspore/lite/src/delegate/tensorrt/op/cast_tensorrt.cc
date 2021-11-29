@@ -70,7 +70,8 @@ int CastTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *cast_out = cast_layer->getOutput(0);
   cast_layer->setName(op_name_.c_str());
   cast_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{cast_out, tensorrt_in_tensors_[0].format_});
+  this->AddInnerOutTensors(
+    ITensorHelper{cast_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
   return RET_OK;
 }
 

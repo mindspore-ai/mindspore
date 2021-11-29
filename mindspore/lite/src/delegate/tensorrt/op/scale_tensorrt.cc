@@ -129,7 +129,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     op_out_tensor = AddSqueezeOp(activation_tensor, network);
   }
   op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_});
+  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, tensorrt_in_tensors_[0].same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, out_format_);
   return RET_OK;
 }

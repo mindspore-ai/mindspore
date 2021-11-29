@@ -119,7 +119,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_, true});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_);
   return RET_OK;
 }
