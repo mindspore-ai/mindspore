@@ -345,8 +345,8 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
         MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
         return false;
       }
-      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
       data = plain_data.get();
+      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
     } else {
       // Read file
       std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);

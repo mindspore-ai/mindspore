@@ -17,18 +17,18 @@
 
 import copy
 import json
-import math
 import os
 import shutil
 import stat
-import sys
 import threading
 from threading import Thread, Lock
-import time
 from collections import defaultdict
 
-
+import math
+import sys
+import time
 import numpy as np
+
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts, ParallelGroupMap
@@ -448,7 +448,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             logger.critical("Failed to read the checkpoint file '%s' , may not have permission to read it, please "
                             "check the correct of the file.", ckpt_file_name)
         raise ValueError(e.__str__() + "\nFailed to read the checkpoint file {}, may not have permission to "
-                         "read it.".format(ckpt_file_name))
+                                       "read it.".format(ckpt_file_name))
 
     parameter_dict = {}
     try:
@@ -850,14 +850,39 @@ def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
     return front_info
 
 
-def _change_file(ori_data_file_name, dirname, external_local):
+def _change_file(f, dirname, external_local, is_encrypt, kwargs):
+    '''
+        Change to another file to write parameter data
+    '''
     # The parameter has been not written in the file
+    front_info = _generate_front_info_for_param_data_file(is_encrypt, kwargs)
+    f.seek(0, 0)
+    f.write(front_info)
+    f.close()
+    ori_data_file_name = f.name
+    os.chmod(ori_data_file_name, stat.S_IRUSR)
     if os.path.getsize(ori_data_file_name) == 64:
         raise RuntimeError("The parameter size is exceed 1T,cannot export to the file")
     data_file_name = os.path.join(dirname, external_local)
+    return _get_data_file(is_encrypt, kwargs, data_file_name)
+
+
+def _get_data_file(is_encrypt, kwargs, data_file_name):
+    '''
+        Get Data File to write parameter data
+    '''
+    # Reserves 64 bytes as spare information such as check data
+    offset = 64
     if os.path.exists(data_file_name):
         os.chmod(data_file_name, stat.S_IWUSR)
-    return data_file_name
+    f = open(data_file_name, "wb")
+    place_holder_data = bytes(offset)
+    if is_encrypt():
+        place_holder_data = _encrypt(place_holder_data, len(place_holder_data), kwargs["enc_key"],
+                                     len(kwargs["enc_key"]), kwargs["enc_mode"])
+    f.write(place_holder_data)
+    parameter_size = (offset / 1024)
+    return f, parameter_size, offset
 
 
 def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
@@ -876,16 +901,10 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
         shutil.rmtree(data_path)
     os.makedirs(data_path, exist_ok=True)
     os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-    # Reserves 4096 bytes as spare information such as check data
-    offset = 64
     index = 0
-    parameter_size = (offset / 1024)
     external_local = os.path.join(file_prefix + "_variables", "data_" + str(index))
     data_file_name = os.path.join(dirname, external_local)
-    if os.path.exists(data_file_name):
-        os.chmod(data_file_name, stat.S_IWUSR)
-    f = open(data_file_name, "wb")
-    f.write(bytes(offset))
+    f, parameter_size, offset = _get_data_file(is_encrypt, kwargs, data_file_name)
     try:
         for param_proto in model.graph.parameter:
             name = param_proto.name[param_proto.name.find(":") + 1:]
@@ -897,18 +916,10 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
                 append_size = 64 - (data_length % 64)
                 parameter_size += ((append_size + data_length) / 1024)
             if parameter_size > PARAMETER_SPLIT_SIZE:
-                front_info = _generate_front_info_for_param_data_file(is_encrypt, kwargs)
-                f.seek(0, 0)
-                f.write(front_info)
-                f.close()
-                os.chmod(data_file_name, stat.S_IRUSR)
-                offset = 64
                 index += 1
-                parameter_size = (offset + append_size + data_length) / 1024
                 external_local = os.path.join(file_prefix + "_variables", "data_" + str(index))
-                data_file_name = _change_file(data_file_name, dirname, external_local)
-                f = open(data_file_name, "wb")
-                f.write(bytes(offset))
+                f, parameter_size, offset = _change_file(f, dirname, external_local, is_encrypt, kwargs)
+                parameter_size += ((append_size + data_length) / 1024)
             param_proto.external_data.location = external_local
             param_proto.external_data.length = data_length
             param_proto.external_data.offset = offset
@@ -1126,7 +1137,7 @@ def parse_print(print_file_name):
         logger.critical("Failed to read the print file %s, please check whether the file is "
                         "correct.", print_file_name)
         raise ValueError(e.__str__() + "\nFailed to read the print file {}, please check whether "
-                         "the file is correct.".format(print_file_name))
+                                       "the file is correct.".format(print_file_name))
 
     tensor_list = []
 
@@ -1391,7 +1402,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         parameter_shape_length = len(parameter_shape)
     except BaseException as e:
         raise TypeError(e.__str__() + f" For 'merge_sliced_parameter', the element in 'sliced_parameters' should be "
-                        f"'Parameter', but got {type(sliced_parameters[0])} at index 0.")
+                                      f"'Parameter', but got {type(sliced_parameters[0])} at index 0.")
 
     is_even = True
     for index, parameter in enumerate(sliced_parameters):
@@ -1543,8 +1554,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__() + f"\nFailed to load opt shard slice in load distributed "
-                                   f"checkpoint for {param.name}. Data shape is {split_param.data.shape} "
-                                   f"and group is {opt_shard_group}.")
+                                                 f"checkpoint for {param.name}. Data shape is {split_param.data.shape} "
+                                                 f"and group is {opt_shard_group}.")
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param

@@ -14,10 +14,12 @@
 # ============================================================================
 """ test mindir export larger than 1G """
 import os
-import sys
+import secrets
+import shutil
 
-import numpy as np
+import sys
 import pytest
+import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -26,12 +28,14 @@ from mindspore import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
 
+
 def get_front_info():
     correct_data = bytes()
     check_code = sys.byteorder == "little"
     correct_data += check_code.to_bytes(1, byteorder=sys.byteorder)
     correct_data += bytes(63)
     return correct_data
+
 
 def get_correct_data(parameter):
     correct_data = bytes()
@@ -144,3 +148,52 @@ def test_mindir_export_larger_parameter_exceed_1t_mock():
     correct_data += get_correct_data(add_net.z)
     export_data = get_data("larger_parameter_exceed_1T_mock")
     assert export_data == correct_data
+
+
+class AddNet(nn.Cell):
+    def __init__(self, parameter1, parameter2):
+        super().__init__()
+        self.parameter1 = parameter1
+        self.parameter2 = parameter2
+        self.mul = ops.Mul()
+        self.add = ops.Add()
+        self.relu = ops.ReLU()
+
+    def construct(self, x, y):
+        x = self.mul(x, self.parameter1)
+        y = self.mul(y, self.parameter2)
+        result = self.add(x, y)
+        result = self.relu(result)
+        return result
+
+
+def get_addnet_net_and_inputs():
+    parameter1 = Parameter(Tensor(np.ones([2, 3, 4, 5]).astype(np.float32)))
+    parameter2 = Parameter(Tensor(np.ones([2, 3, 4, 5]).astype(np.float32)))
+    net = AddNet(parameter1, parameter2)
+    input_x = Tensor(np.ones([2, 3, 4, 5]).astype(np.float32))
+    input_y = Tensor(np.full([2, 3, 4, 5], 2).astype(np.float32))
+    inputs = (input_x, input_y)
+
+    return net, inputs
+
+
+def test_ms_mindir_enc_2g_0001():
+    """
+    Feature: MindIR Export model is exceed TOTAL_SAVE(1G but mocked as 0) using encrypted
+    Description: MindIR Export model is exceed TOTAL_SAVE(1G but mocked as 0) should be split save as model file
+    and check encrypted
+    Expectation: No exception.
+    """
+    ms.train.serialization.TOTAL_SAVE = 0
+    mindir_dir = "./AddNet_2g"
+
+    if os.path.exists(mindir_dir):
+        shutil.rmtree(mindir_dir)
+    os.mkdir(mindir_dir)
+
+    net, inputs = get_addnet_net_and_inputs()
+    key = secrets.token_bytes(32)
+    export(net, *inputs, file_name=os.path.join(mindir_dir, "AddNet.mindir"), file_format="MINDIR", enc_key=key)
+    graph = load(os.path.join(mindir_dir, "AddNet_graph.mindir"), dec_key=key)
+    assert graph is not None
