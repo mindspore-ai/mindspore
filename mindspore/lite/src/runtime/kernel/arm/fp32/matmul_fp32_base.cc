@@ -332,6 +332,8 @@ int MatmulFp32BaseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   init_global_variable();
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
   matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "
@@ -378,6 +380,8 @@ void MatmulFp32BaseCPUKernel::FreeBuffSrcB() {
 int MatmulFp32BaseCPUKernel::ReSize() {
   ResizeParameter();
   matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
   matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
     MS_LOG(ERROR) << "Matrix pack size is negative "
