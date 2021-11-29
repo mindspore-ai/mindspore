@@ -83,6 +83,7 @@
 #define FIFTH_INPUT 4
 #define SIXTH_INPUT 5
 
+#define DIMENSION_0D 0
 #define DIMENSION_1D 1
 #define DIMENSION_2D 2
 #define DIMENSION_3D 3

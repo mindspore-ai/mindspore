@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#ifndef MINDSPORE_NNACL_FP16_SPARSE_TO_DENSE_FP16_H_
+#define MINDSPORE_NNACL_FP16_SPARSE_TO_DENSE_FP16_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/space_to_depth_parameter.h"
+#include "nnacl/sparse_to_dense_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, const int *out_shape, int shape_size,
-                        SpaceToDepthParameter *param, int task_id);
+int SparseToDenseSetDefaultFp16(float16_t *output, float16_t default_value, SparseToDenseParameter *param, int task_id);
+int SparseToDenseFp16(int *indices_vec, const float16_t *sparse_values, float16_t default_value, float16_t *output,
+                      SparseToDenseParameter *param, int task_id);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#endif  // MINDSPORE_NNACL_FP16_SPARSE_TO_DENSE_FP16_H_

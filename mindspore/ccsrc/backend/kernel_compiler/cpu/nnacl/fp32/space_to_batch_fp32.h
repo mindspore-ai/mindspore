@@ -35,13 +35,14 @@ typedef struct SpaceToBatchParameter {
   // other parameter
   bool need_paddings_;
   int m_;
+  int data_type_len;
 } SpaceToBatchParameter;
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
-                   const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id);
+int DoSpaceToBatch(const void *input, void *output, SpaceToBatchParameter *param, int task_id);
+
 #ifdef __cplusplus
 }
 #endif

@@ -21,6 +21,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <vector>
 #include "gtest/gtest.h"
 #include "src/common/file_utils.h"
 
@@ -34,6 +35,12 @@ class CommonTest : public testing::Test {
   // every TEST_F macro will enter one
   virtual void SetUp();
   virtual void TearDown();
+
+  void SetShape(int *dst, std::vector<int> src, size_t num) {
+    for (size_t i = 0; i < num; i++) {
+      dst[i] = src[i];
+    }
+  }
 
   template <typename T>
   void PrintData(const std::string &name, T *output_data, int size) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/fp32/sparse_to_dense_fp32.h"
+#include "nnacl/fp16/sparse_to_dense_fp16.h"
 #include "nnacl/errorcode.h"
 
-int SparseToDenseSetDefault(float *output, float default_value, SparseToDenseParameter *param, int task_id) {
+int SparseToDenseSetDefaultFp16(float16_t *output, float16_t default_value, SparseToDenseParameter *param,
+                                int task_id) {
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }
@@ -29,9 +30,9 @@ int SparseToDenseSetDefault(float *output, float default_value, SparseToDensePar
   return NNACL_OK;
 }
 
-int SparseToDense(int *indices_vec, const float *sparse_values, float default_value, float *output,
-                  SparseToDenseParameter *param, int task_id) {
-  if (param->op_parameter_.thread_num_ == 0) {
+int SparseToDenseFp16(int *indices_vec, const float16_t *sparse_values, float16_t default_value, float16_t *output,
+                      SparseToDenseParameter *param, int task_id) {
+  if (param->op_parameter_.thread_num_) {
     return NNACL_ERR;
   }
   int unit_per_thread = UP_DIV(param->index_num, param->op_parameter_.thread_num_);

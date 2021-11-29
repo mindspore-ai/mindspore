@@ -16,45 +16,45 @@
 #include "nnacl/fp32/space_to_batch_fp32.h"
 #include "nnacl/errorcode.h"
 
-int DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
-                   const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id) {
-  if (thread == 0) {
+int DoSpaceToBatch(const void *input, void *output, SpaceToBatchParameter *param, int task_id) {
+  if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
   }
-  const int depth = in_shape[3];
-  const int input_width = in_shape[2];
-  const int input_height = in_shape[1];
-  const int input_batch_size = in_shape[0];
+  const int input_batch = param->input_shape_[0];
+  const int input_height = param->input_shape_[1];
+  const int input_width = param->input_shape_[2];
 
-  const int output_width = out_shape[2];
-  const int output_height = out_shape[1];
-  const int output_batch_size = out_shape[0];
+  const int output_batch = param->output_shape_[0];
+  const int output_height = param->output_shape_[1];
+  const int output_width = param->output_shape_[2];
 
-  const int block_shape_height = blocks[0];
-  const int block_shape_width = blocks[1];
-  const int padding_top = paddings[0];
-  const int padding_left = paddings[2];
+  const int block_shape_height = param->block_sizes_[0];
+  const int block_shape_width = param->block_sizes_[1];
+  const int padding_top = param->paddings_[0];
+  const int padding_left = param->paddings_[2];
 
-  NNACL_CHECK_ZERO_RETURN_ERR(input_batch_size);
+  NNACL_CHECK_ZERO_RETURN_ERR(input_batch);
   NNACL_CHECK_ZERO_RETURN_ERR(block_shape_width);
-  size_t copy_size = depth * sizeof(float);
-  for (int out_b = task_id; out_b < output_batch_size; out_b += thread) {
-    int input_batch = out_b % input_batch_size;
-    int shift_w = (out_b / input_batch_size) % block_shape_width;
-    int shift_h = (out_b / input_batch_size) / block_shape_width;
+  int copy_size = param->input_shape_[3] * param->data_type_len;
+  for (int out_b = task_id; out_b < output_batch; out_b += param->op_parameter_.thread_num_) {
+    int in_b = out_b % input_batch;
+    int shift_w = (out_b / input_batch) % block_shape_width;
+    int shift_h = (out_b / input_batch) / block_shape_width;
     for (int out_h = 0; out_h < output_height; out_h++) {
       for (int out_w = 0; out_w < output_width; out_w++) {
-        float *out = output + out_b * out_stride[0] + out_h * out_stride[1] + out_w * out_stride[2];
+        int output_offset =
+          out_b * param->out_stride_[0] + out_h * param->out_stride_[1] + out_w * param->out_stride_[2];
         if (out_h * block_shape_height + shift_h < padding_top ||
             out_h * block_shape_height + shift_h >= padding_top + input_height ||
             out_w * block_shape_width + shift_w < padding_left ||
             out_w * block_shape_width + shift_w >= padding_left + input_width) {
-          memset(out, 0, copy_size);
+          memset((int8_t *)output + output_offset * param->data_type_len, 0, copy_size);
         } else {
           int in_h = (out_h * block_shape_height + shift_h) - padding_top;
           int in_w = (out_w * block_shape_width + shift_w) - padding_left;
-          const float *in = input + input_batch * in_stride[0] + in_h * in_stride[1] + in_w * in_stride[2];
-          memcpy(out, in, copy_size);
+          int input_offset = in_b * param->in_stride_[0] + in_h * param->in_stride_[1] + in_w * param->in_stride_[2];
+          memcpy((int8_t *)output + output_offset * param->data_type_len,
+                 (const int8_t *)input + input_offset * param->data_type_len, copy_size);
         }
       }
     }

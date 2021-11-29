@@ -21,6 +21,7 @@ typedef struct SpaceToDepthParameter {
   // primitive parameter
   OpParameter op_parameter_;
   int32_t block_size_;
+  int32_t date_type_len;
 } SpaceToDepthParameter;
 
 #endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_

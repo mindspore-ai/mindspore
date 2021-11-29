@@ -38,9 +38,13 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest1) {
   float output[16];
   int in_shape[4] = {1, 4, 4, 1};
   int out_shape[4] = {1, 2, 2, 4};
-  int h_start = 0;
-  int h_end = 2;
-  SpaceToDepthForNHWC((const float *)input, output, in_shape, out_shape, 4, 2, h_start, h_end, sizeof(float));
+  SpaceToDepthParameter param;
+  param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  param.op_parameter_.thread_num_ = 1;
+  param.block_size_ = 2;
+  param.date_type_len = sizeof(float);
+
+  SpaceToDepthForNHWC(input, output, in_shape, out_shape, 4, &param, 0);
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
   }
@@ -71,17 +75,19 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.push_back(&output_tensor);
 
-  SpaceToDepthParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  op_param.block_size_ = 2;
+  auto param = static_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
+  param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
+  param->op_parameter_.thread_num_ = 1;
+  param->block_size_ = 2;
+  param->date_type_len = sizeof(float);
 
-  lite::InnerContext ctx;
-  ctx.thread_num_ = 3;
-  ASSERT_EQ(lite::RET_OK, ctx.Init());
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ctx->thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToDepth};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+  auto kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -92,6 +98,8 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   }
   std::cout << "\n";
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_out, out_size, 0.000001));
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
   delete kernel;
 }
 

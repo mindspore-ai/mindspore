@@ -21,8 +21,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SparseToDense(int **sparse_indices_vect, const int *output_shape, const float *sparse_values, float default_value,
-                   float *output, bool isScalar, int index_start, int index_end, int out_width);
+int SparseToDenseSetDefault(float *output, float default_value, SparseToDenseParameter *param, int task_id);
+int SparseToDense(int *indices_vec, const float *sparse_values, float default_value, float *output,
+                  SparseToDenseParameter *param, int task_id);
 #ifdef __cplusplus
 }
 #endif
