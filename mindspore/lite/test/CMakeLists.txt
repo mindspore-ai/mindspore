@@ -98,6 +98,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${LITE_DIR}/tools/benchmark/run_benchmark.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_base.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_unified_api.cc
+                ${LITE_DIR}/tools/benchmark/benchmark_c_api.cc
                 ${LITE_DIR}/tools/benchmark/benchmark.cc
                 )
     endif()
