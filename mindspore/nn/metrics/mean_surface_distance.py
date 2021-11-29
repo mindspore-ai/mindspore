@@ -50,8 +50,8 @@ class MeanSurfaceDistance(Metric):
                           Default: "euclidean".
         symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math: `AvgSurDis(y_pred\rightarrow y)`,
-                           otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
-                           :math: `MeanSurDis(A \leftrightarrow B)`, will be returned. Default: False.
+                          otherwise, the mean of  distance form `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                          :math: `MeanSurDis(A \leftrightarrow B)`, will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -59,7 +59,7 @@ class MeanSurfaceDistance(Metric):
     Examples:
         >>> import numpy as np
 
-        >>> from mindspore imporst nn, Tensor
+        >>> from mindspore import nn, Tensor
         >>>
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
         >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))

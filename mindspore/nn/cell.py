@@ -42,7 +42,7 @@ class Cell(Cell_):
     """
     Base class for all neural networks.
 
-    A 'Cell' could be a single neural network cell, such as  :class:`mindspore.nn.Conv2d`,  :class:`mindspore.nn.ReLU,
+    A 'Cell' could be a single neural network cell, such as  :class:`mindspore.nn.Conv2d`,  :class:`mindspore.nn.ReLU`,
     :class:`mindspore.nn.BatchNorm`, etc. or a composition of cells to constructing a network.
 
     Note:

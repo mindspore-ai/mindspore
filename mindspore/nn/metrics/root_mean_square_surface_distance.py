@@ -35,7 +35,7 @@ class RootMeanSquareDistance(Metric):
         RmsSurDis(B \rightarrow A) = \sqrt{\frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}^2  \left ( s_{B}, S(A)
         \right )} }{\left | S(B) \right |}}
 
-    Where the \|\|\*\|\| denotes a distance measure.\ |\*\| denotes the number of elements.
+    Where the \|\|\*\|\| denotes a distance measure. \|\*\| denotes the number of elements.
 
     The Root Mean Square Surface Distance form set(B) to set(A) and from set(A) to set(B) is:
 
