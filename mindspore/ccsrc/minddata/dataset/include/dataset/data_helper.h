@@ -33,7 +33,7 @@ namespace mindspore {
 namespace dataset {
 
 /// \brief Simple class to do data manipulation, contains helper function to update json files in dataset
-class DataHelper {
+class MS_API DataHelper {
  public:
   /// \brief constructor
   DataHelper() {}

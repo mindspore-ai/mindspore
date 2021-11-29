@@ -36,7 +36,7 @@ namespace vision {
 class RotateOperation;
 
 /// \brief Apply affine transform on the input image.
-class Affine final : public TensorTransform {
+class MS_API Affine final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees The degrees to rotate the image.
@@ -80,7 +80,7 @@ class Affine final : public TensorTransform {
 };
 
 /// \brief Crop the input image at the center to the given size.
-class CenterCrop final : public TensorTransform {
+class MS_API CenterCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -114,7 +114,7 @@ class CenterCrop final : public TensorTransform {
 };
 
 /// \brief Crop an image based on location and crop size.
-class Crop final : public TensorTransform {
+class MS_API Crop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}.
@@ -147,7 +147,7 @@ class Crop final : public TensorTransform {
 };
 
 /// \brief Decode the input image in RGB mode.
-class Decode final : public TensorTransform {
+class MS_API Decode final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rgb A boolean indicating whether to decode the image in RGB mode or not.
@@ -178,7 +178,7 @@ class Decode final : public TensorTransform {
 };
 
 /// \brief Blur the input image with the specified Gaussian kernel.
-class GaussianBlur final : public TensorTransform {
+class MS_API GaussianBlur final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The value must be positive and odd.
@@ -210,7 +210,7 @@ class GaussianBlur final : public TensorTransform {
 };
 
 /// \brief Normalize the input image with respect to mean and standard deviation.
-class Normalize final : public TensorTransform {
+class MS_API Normalize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] mean A vector of mean values for each channel, with respect to channel order.
@@ -245,7 +245,7 @@ class Normalize final : public TensorTransform {
 };
 
 /// \brief Apply a Random Affine transformation on the input image in RGB or Greyscale mode.
-class RandomAffine final : public TensorTransform {
+class MS_API RandomAffine final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degree.
@@ -296,7 +296,7 @@ class RandomAffine final : public TensorTransform {
 };
 
 /// \brief Resize the input image to the given size.
-class Resize final : public TensorTransform {
+class MS_API Resize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -336,7 +336,7 @@ class Resize final : public TensorTransform {
 };
 
 /// \brief Keep the original picture ratio and fills the rest.
-class ResizePreserveAR final : public TensorTransform {
+class MS_API ResizePreserveAR final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] height The height of image output value after resizing.
@@ -377,7 +377,7 @@ class ResizePreserveAR final : public TensorTransform {
 
 /// \brief RGB2BGR TensorTransform.
 /// \notes Convert the format of input image from RGB to BGR.
-class RGB2BGR final : public TensorTransform {
+class MS_API RGB2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -404,7 +404,7 @@ class RGB2BGR final : public TensorTransform {
 /// \brief RGB2GRAY TensorTransform.
 /// \note Convert RGB image or color image to grayscale image.
 /// \brief Convert a RGB image or color image to a grayscale one.
-class RGB2GRAY final : public TensorTransform {
+class MS_API RGB2GRAY final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -429,7 +429,7 @@ class RGB2GRAY final : public TensorTransform {
 };
 
 /// \brief Rotate the input image according to parameters.
-class Rotate final : public TensorTransform {
+class MS_API Rotate final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \note This api is only used in Lite, the interpolation mode is bilinear.
