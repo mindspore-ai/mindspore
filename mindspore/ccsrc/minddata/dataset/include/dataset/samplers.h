@@ -20,6 +20,8 @@
 #include <memory>
 #include <vector>
 
+#include "include/api/types.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -29,7 +31,7 @@ class SamplerObj;
 // Abstract class to represent a sampler in the data pipeline.
 /// \class Sampler samplers.h
 /// \brief An abstract base class to represent a sampler in the data pipeline.
-class Sampler : std::enable_shared_from_this<Sampler> {
+class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class AlbumDataset;
   friend class CelebADataset;
   friend class Cifar10Dataset;
@@ -81,7 +83,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
 
 /// \brief A class to represent a Distributed Sampler in the data pipeline.
 /// \note A Sampler that accesses a shard of the dataset.
-class DistributedSampler final : public Sampler {
+class MS_API DistributedSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -123,7 +125,7 @@ class DistributedSampler final : public Sampler {
 /// \brief A class to represent a PK Sampler in the data pipeline.
 /// \note Samples K elements for each P class in the dataset.
 ///        This will sample all classes.
-class PKSampler final : public Sampler {
+class MS_API PKSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -155,7 +157,7 @@ class PKSampler final : public Sampler {
 
 /// \brief A class to represent a Random Sampler in the data pipeline.
 /// \note Samples the elements randomly.
-class RandomSampler final : public Sampler {
+class MS_API RandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -185,7 +187,7 @@ class RandomSampler final : public Sampler {
 
 /// \brief A class to represent a Sequential Sampler in the data pipeline.
 /// \note Samples the dataset elements sequentially, same as not having a sampler.
-class SequentialSampler final : public Sampler {
+class MS_API SequentialSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -215,7 +217,7 @@ class SequentialSampler final : public Sampler {
 
 /// \brief A class to represent a Subset Sampler in the data pipeline.
 /// \note Samples the elements from a sequence of indices.
-class SubsetSampler : public Sampler {
+class MS_API SubsetSampler : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -244,7 +246,7 @@ class SubsetSampler : public Sampler {
 
 /// \brief A class to represent a Subset Random Sampler in the data pipeline.
 /// \note Samples the elements randomly from a sequence of indices.
-class SubsetRandomSampler final : public SubsetSampler {
+class MS_API SubsetRandomSampler final : public SubsetSampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -271,7 +273,7 @@ class SubsetRandomSampler final : public SubsetSampler {
 /// \brief A class to represent a Weighted Random Sampler in the data pipeline.
 /// \note Samples the elements from [0, len(weights) - 1] randomly with the given
 ///        weights (probabilities).
-class WeightedRandomSampler final : public Sampler {
+class MS_API WeightedRandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
