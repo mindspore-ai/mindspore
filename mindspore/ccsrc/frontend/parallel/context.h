@@ -148,6 +148,8 @@ class ParallelContext {
                                             const AbstractBasePtr &ptr);
   void ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
                                          const AbstractBasePtr &ptr);
+  void set_sharding_propagation(const bool);
+  bool sharding_propagation() const { return sharding_propagation_; }
 
  private:
   ParallelContext();
@@ -183,6 +185,7 @@ class ParallelContext {
   std::vector<std::vector<int64_t>> dataset_strategy_;
   bool dataset_repeat_dim_right_ = false;
   bool hccl_test_available_ = false;
+  bool sharding_propagation_;
 };
 
 }  // namespace parallel

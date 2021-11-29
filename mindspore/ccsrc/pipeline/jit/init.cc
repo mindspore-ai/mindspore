@@ -211,6 +211,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get whether to integrated save weight shard when enable parallel optimizer.")
     .def("set_enable_alltoall", &ParallelContext::set_enable_all2all, "Set the enabling AllToAll value.")
     .def("get_enable_alltoall", &ParallelContext::enable_all2all, "Get the enabling AllToAll value.")
+    .def("set_sharding_propagation", &ParallelContext::set_sharding_propagation,
+         "Set sharding strategy propagation value.")
+    .def("get_sharding_propagation", &ParallelContext::sharding_propagation, "Get sharding strategy propagation value.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

@@ -233,6 +233,55 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_strategy_search_mode()
 
+    def set_auto_parallel_search_mode(self, search_mode):
+        """
+        Set search mode of strategy searching. This is the old version of 'search_mode', and will be deleted in a future
+        MindSpore version.
+
+        Args:
+            search_mode (str): The search mode of strategy.
+        """
+        logger.warning("The attribute 'auto_parallel_search_mode' is currently replaced by 'search_mode'. "
+                       "The attribute 'auto_parallel_search_mode' will be deleted in a future MindSpore version.")
+        self.check_context_handle()
+        ret = self._context_handle.set_strategy_search_mode(search_mode)
+        if ret is False:
+            raise ValueError("The context configuration parameter 'search_mode' only support "
+                             "'recursive_programming' and 'dynamic_programming', but got the value : {}."
+                             .format(search_mode))
+
+    def get_auto_parallel_search_mode(self):
+        """Get search mode of strategy. This is the old version of 'search_mode', and will be deleted in a future
+        MindSpore version.
+        """
+        logger.warning("The attribute 'auto_parallel_search_mode' is currently replaced by 'search_mode'. "
+                       "The attribute 'auto_parallel_search_mode' will be deleted in a future MindSpore version.")
+        self.check_context_handle()
+        return self._context_handle.get_strategy_search_mode()
+
+    def set_sharding_propagation(self, sharding_propagation):
+        """
+        Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True, the strategy-configured operators
+        will propagate the strategies to other operators with minimum redistribution cost; otherwise, the algorithm
+        will search the desired strategies. Default: False.
+        This attribute is replaced by context.set_auto_parallel(search_mode="sharding_propagation").
+
+        Args:
+            sharding_propagation (bool): Enable/disable strategy propagation.
+        """
+        logger.warning("This attribute is replaced by context.set_auto_parallel(search_mode='sharding_propagation'), "
+                       "and this attribute will be deleted in a future MindSpore version.")
+        self.check_context_handle()
+        if not isinstance(sharding_propagation, bool):
+            raise TypeError("The type of parameter 'sharding_propagation' must be bool, "
+                            "but got the type : {}.".format(type(sharding_propagation)))
+        self._context_handle.set_sharding_propagation(sharding_propagation)
+
+    def get_sharding_propagation(self):
+        """Get the value of sharding strategy propagation."""
+        self.check_context_handle()
+        return self._context_handle.get_sharding_propagation()
+
     def set_parameter_broadcast(self, parameter_broadcast):
         """
         Set parameter broadcast.
@@ -677,6 +726,7 @@ _set_auto_parallel_context_func_map = {
     "pipeline_stages": auto_parallel_context().set_pipeline_stages,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
     "search_mode": auto_parallel_context().set_strategy_search_mode,
+    "auto_parallel_search_mode": auto_parallel_context().set_auto_parallel_search_mode,
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
@@ -690,6 +740,7 @@ _set_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
+    "sharding_propagation": auto_parallel_context().set_sharding_propagation,
     "enable_alltoall": auto_parallel_context().set_enable_alltoall}
 
 
@@ -702,6 +753,7 @@ _get_auto_parallel_context_func_map = {
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "search_mode": auto_parallel_context().get_strategy_search_mode,
+    "auto_parallel_search_mode": auto_parallel_context().get_auto_parallel_search_mode,
     "parameter_broadcast": auto_parallel_context().get_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
@@ -713,15 +765,16 @@ _get_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
+    "sharding_propagation": auto_parallel_context().get_sharding_propagation,
     "enable_alltoall": auto_parallel_context().get_enable_alltoall}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
-                 loss_repeated_mean=bool, parallel_mode=str, search_mode=str,
+                 loss_repeated_mean=bool, parallel_mode=str, search_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
-                 communi_parallel_mode=str, optimizer_weight_shard_size=int,
+                 communi_parallel_mode=str, optimizer_weight_shard_size=int, sharding_propagation=bool,
                  optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool)
 
 def _set_auto_parallel_context(**kwargs):
@@ -760,6 +813,8 @@ def _set_auto_parallel_context(**kwargs):
                      - dynamic_programming: Dynamic programming search mode.
 
                      - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
+        auto_parallel_search_mode (str): This is the old version of 'search_mode'. Here, remaining this attribute is
+                     for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
@@ -837,6 +892,8 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
     - search_mode: dynamic_programming
+    - auto_parallel_search_mode: dynamic_programming
+    - sharding_propagation: False
     - pipeline_stages: 0
     - gradient_accumulation_shard: True
     """

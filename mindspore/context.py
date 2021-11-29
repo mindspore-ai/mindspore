@@ -370,7 +370,7 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
-                 search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
+                 auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
                  parallel_optimizer_config=dict)
@@ -401,6 +401,7 @@ def set_auto_parallel_context(**kwargs):
     enable_parallel_optimizer    dataset_strategy
     parallel_optimizer_config    pipeline_stages
                \                 grad_accumulation_step
+               \                 auto_parallel_search_mode
     ===========================  ===========================
 
     Args:
@@ -431,6 +432,8 @@ def set_auto_parallel_context(**kwargs):
                      - dynamic_programming: Dynamic programming search mode.
 
                      - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
+        auto_parallel_search_mode (str): This is the old version of 'search_mode'. Here, remaining this attribute is
+                     for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
                      the same network initialization parameter values for all devices, broadcast the parameters
                      on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
@@ -485,6 +488,7 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
         >>> context.set_auto_parallel_context(search_mode="dynamic_programming")
+        >>> context.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
@@ -529,6 +533,7 @@ def reset_auto_parallel_context():
     - gradient_fp32_sync: True.
     - parallel_mode: 'stand_alone'.
     - search_mode: 'dynamic_programming'.
+    - auto_parallel_search_mode: 'dynamic_programming'.
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: ''.
     - strategy_ckpt_save_file: ''.
