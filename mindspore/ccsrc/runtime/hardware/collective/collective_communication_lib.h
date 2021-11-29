@@ -77,6 +77,10 @@ class CollectiveCommunicationLib {
     return true;
   }
 
+  // Returns the global group name of this collective communication library. For NCCL, it's 'nccl_world_group'. For
+  // HCCL, it's 'hccl_world_group'.
+  const std::string &global_group_name() const;
+
   // Returns global rank id of this process.
   uint32_t global_rank_id() const;
 
@@ -89,6 +93,9 @@ class CollectiveCommunicationLib {
  protected:
   // Whether this collective communication library is initialized.
   bool initialized_;
+
+  // The global group name.
+  std::string global_group_name_;
 
   // The global rank id of this process. Normally this range is 0 to `total process number - 1`.
   uint32_t global_rank_id_;

@@ -39,7 +39,6 @@ class ClusterContext {
 
   bool Initialize() const;
   bool Finalize() const;
-  std::string node_role() const;
 
  private:
   ClusterContext() = default;

@@ -24,11 +24,15 @@
 #include "runtime/hardware/collective/collective_communication_lib.h"
 #include "runtime/hardware/gpu/nvidia_communication_group.h"
 
+#ifndef EXPORT_NCCL_WRAPPER
+#define EXPORT_NCCL_WRAPPER __attribute__((visibility("default")))
+#endif
+
 namespace mindspore {
 namespace device {
 namespace gpu {
-constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
-class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
+constexpr char kNCCLGlobalGroupName[] = "nccl_world_group";
+class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
  public:
   static NvidiaCollectiveCommLib &GetInstance() {
     static NvidiaCollectiveCommLib instance;
@@ -50,31 +54,12 @@ class NvidiaCollectiveCommLib : public CollectiveCommunicationLib {
   }
 
  private:
-  NvidiaCollectiveCommLib() = default;
+  NvidiaCollectiveCommLib();
   ~NvidiaCollectiveCommLib() override = default;
 };
 }  // namespace gpu
 
-#ifndef EXPORT_NCCL_WRAPPER
-#define EXPORT_NCCL_WRAPPER __attribute__((visibility("default")))
-#endif
 extern "C" EXPORT_NCCL_WRAPPER CollectiveCommunicationLib *communication_lib_instance();
-extern "C" EXPORT_NCCL_WRAPPER bool InitializeCollectiveLib(uint32_t global_rank = UINT32_MAX,
-                                                            uint32_t global_rank_size = UINT32_MAX);
-extern "C" EXPORT_NCCL_WRAPPER bool FinalizeCollectiveLib();
-extern "C" EXPORT_NCCL_WRAPPER bool CreateCommunicationGroup(const std::string &group_name,
-                                                             const std::vector<uint32_t> &group_ranks);
-extern "C" EXPORT_NCCL_WRAPPER bool DestroyCommunicationGroup(const std::string &group_name);
-extern "C" EXPORT_NCCL_WRAPPER uint32_t GetRankId(const std::string &group_name);
-extern "C" EXPORT_NCCL_WRAPPER uint32_t GetCommunicationGroupSize(const std::string &group_name);
-extern "C" EXPORT_NCCL_WRAPPER bool AssignLocalRank();
-extern "C" EXPORT_NCCL_WRAPPER CommunicationGroupPtr GetGroup(const std::string &group_name);
-extern "C" EXPORT_NCCL_WRAPPER bool AllGather(const void *send_buff, void *recv_buff, size_t send_count,
-                                              mindspore::TypeId data_type, const std::string &group_name, void *stream);
-extern "C" EXPORT_NCCL_WRAPPER bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count,
-                                              mindspore::TypeId data_type, uint32_t root_rank,
-                                              const std::string &group_name, void *stream);
-extern "C" EXPORT_NCCL_WRAPPER uint32_t local_rank_id();
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_NVIDIA_COLLECTIVE_COMM_LIB_H_

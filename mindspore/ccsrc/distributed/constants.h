@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CONSTANTS_H_
 
 #include <set>
+#include <map>
 #include <string>
 
 namespace mindspore {

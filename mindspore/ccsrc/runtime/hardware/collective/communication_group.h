@@ -55,6 +55,11 @@ class CommunicationGroup {
   // Return the size of this communication group.
   uint32_t group_size() const;
 
+  // Return group ranks info.
+  const std::vector<uint32_t> &group_ranks() const;
+  const std::map<uint32_t, uint32_t> &global_to_group_ranks() const;
+  const std::map<uint32_t, uint32_t> &group_to_global_ranks() const;
+
  protected:
   // Whether this communication group is initialized.
   bool initialized_;

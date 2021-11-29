@@ -34,6 +34,9 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "profiler/device/cpu/cpu_profiling.h"
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#include "runtime/hardware/cpu/ms_collective_comm_lib.h"
+#endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -294,6 +297,32 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   }
 #endif
   return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+}
+
+bool CPUDeviceContext::LoadCollectiveCommLib() {
+  bool using_mpi = common::CheckUseMPI();
+  if (using_mpi) {
+    std::string mpi_comm_lib_name = "libmpi_collective.so";
+    auto loader = std::make_shared<CollectiveCommLibLoader>(mpi_comm_lib_name);
+    MS_EXCEPTION_IF_NULL(loader);
+    if (!loader->Initialize()) {
+      MS_LOG(EXCEPTION) << "Failed to load mpi collective library.";
+      return false;
+    }
+
+    void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
+    MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+
+    auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
+    collective_comm_lib_ = instance_func();
+    MS_EXCEPTION_IF_NULL(collective_comm_lib_);
+  } else {
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+    collective_comm_lib_ = &MsCollectiveCommLib::GetInstance();
+    MS_EXCEPTION_IF_NULL(collective_comm_lib_);
+#endif
+  }
+  return true;
 }
 
 bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,

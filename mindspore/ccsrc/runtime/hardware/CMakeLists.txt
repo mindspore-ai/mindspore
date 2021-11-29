@@ -23,6 +23,9 @@ endif()
 if(ENABLE_CPU)
     file(GLOB_RECURSE HARDWARE_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
     list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "cpu/mpi_collective_comm_lib.cc" "cpu/mpi_communication_group.cc")
+    if(WIN32)
+        list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "cpu/ms_collective_comm_lib.cc")
+    endif()
     if(ENABLE_MPI)
         set(MPI_COLLECTIVE_SRCS "cpu/mpi_collective_comm_lib.cc"
                                 "cpu/mpi_communication_group.cc"

@@ -410,7 +410,8 @@ void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
 
 core::ClusterConfig &PSContext::cluster_config() {
   if (cluster_config_ == nullptr) {
-    MS_LOG(EXCEPTION) << "The cluster config is empty.";
+    cluster_config_ = std::make_unique<core::ClusterConfig>(worker_num_, server_num_, scheduler_host_, scheduler_port_);
+    MS_EXCEPTION_IF_NULL(cluster_config_);
   }
   return *cluster_config_;
 }

@@ -19,6 +19,8 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+NvidiaCollectiveCommLib::NvidiaCollectiveCommLib() { global_group_name_ = kNCCLGlobalGroupName; }
+
 bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
   if (initialized_) {
     return false;
@@ -42,50 +44,7 @@ bool NvidiaCollectiveCommLib::CreateCommunicationGroup(const std::string &group_
 }
 }  // namespace gpu
 
-// The exported APIs for 'dlsym' to load.
 using NvidiaCollectiveCommLib = mindspore::device::gpu::NvidiaCollectiveCommLib;
 CollectiveCommunicationLib *communication_lib_instance() { return &NvidiaCollectiveCommLib::GetInstance(); }
-
-bool InitializeCollectiveLib(uint32_t global_rank, uint32_t global_rank_size) {
-  return NvidiaCollectiveCommLib::GetInstance().Initialize(global_rank, global_rank_size);
-}
-
-bool FinalizeCollectiveLib() { return NvidiaCollectiveCommLib::GetInstance().Finalize(); }
-
-bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
-  return NvidiaCollectiveCommLib::GetInstance().CreateCommunicationGroup(group_name, group_ranks);
-}
-
-bool DestroyCommunicationGroup(const std::string &group_name) {
-  return NvidiaCollectiveCommLib::GetInstance().DestroyCommunicationGroup(group_name);
-}
-
-uint32_t GetRankId(const std::string &group_name) {
-  return NvidiaCollectiveCommLib::GetInstance().GetRankId(group_name);
-}
-
-uint32_t GetCommunicationGroupSize(const std::string &group_name) {
-  return NvidiaCollectiveCommLib::GetInstance().GetGroupSize(group_name);
-}
-
-bool AssignLocalRank() { return NvidiaCollectiveCommLib::GetInstance().AssignLocalRank(); }
-
-CommunicationGroupPtr GetGroup(const std::string &group_name) {
-  return NvidiaCollectiveCommLib::GetInstance().GetGroup(group_name);
-}
-
-bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, mindspore::TypeId data_type,
-               const std::string &group_name, void *stream) {
-  return NvidiaCollectiveCommLib::GetInstance().AllGather(send_buff, recv_buff, send_count, data_type, group_name,
-                                                          stream);
-}
-
-bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, mindspore::TypeId data_type,
-               uint32_t root_rank, const std::string &group_name, void *stream) {
-  return NvidiaCollectiveCommLib::GetInstance().Broadcast(send_buff, recv_buff, send_count, data_type, root_rank,
-                                                          group_name, stream);
-}
-
-uint32_t local_rank_id() { return NvidiaCollectiveCommLib::GetInstance().local_rank_id(); }
 }  // namespace device
 }  // namespace mindspore

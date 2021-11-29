@@ -31,7 +31,7 @@ namespace distributed {
 // The static methods of MindSpore distributed execution. They can be exported by Pybind.
 
 // Initialize and finalize distributed execution.
-bool Initialize(const std::string &backend, const std::string &global_group_name);
+bool Initialize();
 bool Finalize();
 
 // Initialize and finalize the cluster based on MindSpore communication framework.
@@ -39,7 +39,7 @@ bool InitializeCluster();
 bool FinalizeCluster();
 
 // Initialize and finalize collective communication for distributed execution.
-bool InitializeCollective(const std::string &backend, const std::string &global_group_name);
+bool InitializeCollective();
 bool FinalizeCollective();
 }  // namespace distributed
 }  // namespace mindspore

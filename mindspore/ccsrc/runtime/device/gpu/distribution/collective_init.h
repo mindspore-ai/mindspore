@@ -42,12 +42,20 @@ class CollectiveInitializer {
   static void InitCollective();
   static void FinalizeCollective();
 
+  // The capsulation of the collective communication APIs for compatibility.
+  uint32_t local_rank_id();
+  bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks);
+  bool DestroyCommunicationGroup(const std::string &group_name);
+  uint32_t GetRankIDByGroup(const std::string &group_name);
+  uint32_t GetGroupSize(const std::string &group_name);
+
  private:
-  CollectiveInitializer() : collective_inited_(false) {}
+  CollectiveInitializer() : use_mpi_(false), collective_inited_(false), collective_handle_(nullptr) {}
   ~CollectiveInitializer() = default;
 
+  bool use_mpi_;
   bool collective_inited_;
-  void *collective_handle_{nullptr};
+  void *collective_handle_;
 };
 }  // namespace gpu
 }  // namespace device

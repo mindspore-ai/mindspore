@@ -85,7 +85,7 @@ bool ClusterContext::Finalize() {
   return true;
 }
 
-std::string ClusterContext::node_role() const { return node_role_; }
+const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
 void ClusterContext::InitClusterConfig() {
   InitNodeRole();

@@ -32,8 +32,6 @@ std::shared_ptr<ClusterContext> ClusterContext::instance() {
 bool ClusterContext::Initialize() const { return true; }
 
 bool ClusterContext::Finalize() const { return true; }
-
-std::string ClusterContext::node_role() const { return ""; }
 }  // namespace cluster
 }  // namespace distributed
 }  // namespace mindspore
