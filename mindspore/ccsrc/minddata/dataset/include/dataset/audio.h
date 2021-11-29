@@ -37,7 +37,7 @@ class TensorOperation;
 namespace audio {
 
 /// \brief Compute the angle of complex tensor input.
-class Angle final : public TensorTransform {
+class MS_API Angle final : public TensorTransform {
  public:
   /// \brief Constructor.
   Angle();
@@ -51,7 +51,7 @@ class Angle final : public TensorTransform {
 };
 
 /// \brief Design two-pole band filter.
-class BandBiquad final : public TensorTransform {
+class MS_API BandBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -74,7 +74,7 @@ class BandBiquad final : public TensorTransform {
 };
 
 /// \brief Design two-pole allpass filter. Similar to SoX implementation.
-class AllpassBiquad final : public TensorTransform {
+class MS_API AllpassBiquad final : public TensorTransform {
  public:
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
@@ -96,7 +96,7 @@ class AllpassBiquad final : public TensorTransform {
 
 /// \brief AmplitudeToDB TensorTransform.
 /// \notes Turn a tensor from the power/amplitude scale to the decibel scale.
-class AmplitudeToDB final : public TensorTransform {
+class MS_API AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude] (Default:
@@ -121,7 +121,7 @@ class AmplitudeToDB final : public TensorTransform {
 };
 
 /// \brief Design two-pole band-pass filter.
-class BandpassBiquad final : public TensorTransform {
+class MS_API BandpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -145,7 +145,7 @@ class BandpassBiquad final : public TensorTransform {
 };
 
 /// \brief Design two-pole band-reject filter. Similar to SoX implementation.
-class BandrejectBiquad final : public TensorTransform {
+class MS_API BandrejectBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -167,7 +167,7 @@ class BandrejectBiquad final : public TensorTransform {
 };
 
 /// \brief Design a bass tone-control effect.
-class BassBiquad final : public TensorTransform {
+class MS_API BassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -190,7 +190,7 @@ class BassBiquad final : public TensorTransform {
 };
 
 /// \brief Perform a biquad filter of input tensor.
-class Biquad final : public TensorTransform {
+class MS_API Biquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] b0 Numerator coefficient of current input, x[n].
@@ -216,7 +216,7 @@ class Biquad final : public TensorTransform {
 
 /// \brief ComplexNorm TensorTransform.
 /// \notes Compute the norm of complex tensor input.
-class ComplexNorm final : public TensorTransform {
+class MS_API ComplexNorm final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
@@ -236,7 +236,7 @@ class ComplexNorm final : public TensorTransform {
 };
 
 /// \brief Apply contrast effect.
-class Contrast final : public TensorTransform {
+class MS_API Contrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] enhancement_amount Controls the amount of the enhancement (Default: 75.0).
@@ -256,7 +256,7 @@ class Contrast final : public TensorTransform {
 };
 
 /// \brief Apply a DC shift to the audio.
-class DCShift : public TensorTransform {
+class MS_API DCShift : public TensorTransform {
  public:
   /// \brief Constructor
   /// \param[in] shift Indicates the amount to shift the audio, the value must be in the range [-2.0, 2.0].
@@ -282,7 +282,7 @@ class DCShift : public TensorTransform {
 };
 
 /// \brief Design two-pole deemph filter. Similar to SoX implementation.
-class DeemphBiquad final : public TensorTransform {
+class MS_API DeemphBiquad final : public TensorTransform {
  public:
   /// \param[in] sample_rate Sampling rate of the waveform, the value can only be 44100 (Hz) or 48000(hz).
   explicit DeemphBiquad(int32_t sample_rate);
@@ -301,7 +301,7 @@ class DeemphBiquad final : public TensorTransform {
 };
 
 /// \brief EqualizerBiquad TensorTransform. Apply highpass biquad filter on audio.
-class EqualizerBiquad final : public TensorTransform {
+class MS_API EqualizerBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -324,7 +324,7 @@ class EqualizerBiquad final : public TensorTransform {
 };
 
 /// \brief Add fade in or/and fade out on the input audio.
-class Fade final : public TensorTransform {
+class MS_API Fade final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] fade_in_len Length of fade-in (time frames), which must be non-negative
@@ -349,7 +349,7 @@ class Fade final : public TensorTransform {
 
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
-class FrequencyMasking final : public TensorTransform {
+class MS_API FrequencyMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
@@ -375,7 +375,7 @@ class FrequencyMasking final : public TensorTransform {
 };
 
 /// \brief HighpassBiquad TensorTransform. Apply highpass biquad filter on audio.
-class HighpassBiquad final : public TensorTransform {
+class MS_API HighpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -397,7 +397,7 @@ class HighpassBiquad final : public TensorTransform {
 };
 
 /// \brief Design filter. Similar to SoX implementation.
-class LFilter final : public TensorTransform {
+class MS_API LFilter final : public TensorTransform {
  public:
   /// \param[in] a_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
   ///     Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
@@ -422,7 +422,7 @@ class LFilter final : public TensorTransform {
 };
 
 /// \brief Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
-class LowpassBiquad final : public TensorTransform {
+class MS_API LowpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -444,7 +444,7 @@ class LowpassBiquad final : public TensorTransform {
 };
 
 /// \brief Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
-class Magphase final : public TensorTransform {
+class MS_API Magphase final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
@@ -465,7 +465,7 @@ class Magphase final : public TensorTransform {
 
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
-class MuLawDecoding final : public TensorTransform {
+class MS_API MuLawDecoding final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
@@ -486,7 +486,7 @@ class MuLawDecoding final : public TensorTransform {
 
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
-class TimeMasking final : public TensorTransform {
+class MS_API TimeMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
@@ -513,7 +513,7 @@ class TimeMasking final : public TensorTransform {
 
 /// \brief TimeStretch TensorTransform
 /// \notes Stretch STFT in time at a given rate, without changing the pitch.
-class TimeStretch final : public TensorTransform {
+class MS_API TimeStretch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] hop_length Length of hop between STFT windows. Default: None.
@@ -537,7 +537,7 @@ class TimeStretch final : public TensorTransform {
 
 /// \brief Vol TensorTransform.
 /// \notes Add a volume to an waveform.
-class Vol final : public TensorTransform {
+class MS_API Vol final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] gain Gain value, varies according to the value of gain_type. If gain_type is GainType::kAmplitude,
