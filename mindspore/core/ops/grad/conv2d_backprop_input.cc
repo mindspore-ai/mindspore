@@ -35,9 +35,10 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   auto prim_name = primitive->name();
   // check
   auto kernel_size =
-    CheckAndConvertUtils::CheckAttrIntOrTupleInt("kernel_size", primitive->GetAttr(kKernelSize), prim_name);
-  auto stride = CheckAndConvertUtils::CheckAttrIntOrTupleInt("stride", primitive->GetAttr(kStride), prim_name);
-  auto dilation = CheckAndConvertUtils::CheckAttrIntOrTupleInt("dilation", primitive->GetAttr(kDilation), prim_name);
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[kernel_size]", primitive->GetAttr(kKernelSize), prim_name);
+  auto stride = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[stride]", primitive->GetAttr(kStride), prim_name);
+  auto dilation =
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
   // default pad mode is valid
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   int64_t pad_mode;
@@ -128,10 +129,13 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
     }
   } else if (input_size->isa<abstract::AbstractTuple>()) {
     // check tensor, tuple or int to raise error.
-    out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("input x size", input_size_v, prim_name);
+    out_shape = CheckAndConvertUtils::CheckTupleInt("input[x size]", input_size_v, prim_name);
     ret_shape = std::make_shared<abstract::Shape>(out_shape);
   } else {
-    MS_EXCEPTION(TypeError) << "Conv2DBackpropInput x_size must be a tuple or tensor, but " << input_size->ToString();
+    auto size_type = input_size->BuildType();
+    MS_EXCEPTION_IF_NULL(size_type);
+    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s input[x size] must be a tuple or Tensor, "
+                            << "but got " << size_type->ToString();
   }
   auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDoutIndex]->BuildShape())[kShape];
 

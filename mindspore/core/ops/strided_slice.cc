@@ -69,52 +69,63 @@ void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *be
   return;
 }
 
+int64_t GetSlicingLengthForPositiveStrides(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
+  int64_t slicing_length = 0;
+  if ((start_pos < x_dim) && end_pos >= -x_dim) {
+    if (-x_dim <= start_pos && start_pos < 0) {
+      start_pos += x_dim;
+    }
+    if (start_pos < -x_dim) {
+      start_pos = 0;
+    }
+    if (-x_dim <= end_pos && end_pos < 0) {
+      end_pos += x_dim;
+    }
+    if (end_pos > x_dim) {
+      end_pos = x_dim;
+    }
+    if (start_pos > end_pos) {
+      slicing_length = 0;
+    } else {
+      slicing_length = 1 + (end_pos - 1 - start_pos) / strides;
+    }
+  }
+  return slicing_length;
+}
+
+int64_t GetSlicingLengthForNegativeStrides(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
+  int64_t slicing_length = 0;
+  if (start_pos >= -x_dim && end_pos < x_dim) {
+    if (start_pos > 0 && start_pos < x_dim) {
+      start_pos += -x_dim;
+    }
+    if (start_pos >= x_dim) {
+      start_pos = -1;
+    }
+    if (end_pos >= 0 && end_pos < x_dim) {
+      end_pos += -x_dim;
+    }
+    if (end_pos < -x_dim - 1) {
+      end_pos = -x_dim - 1;
+    }
+    if (start_pos <= end_pos) {
+      slicing_length = 0;
+    } else {
+      slicing_length = 1 + (end_pos + 1 - start_pos) / strides;
+    }
+  }
+  return slicing_length;
+}
+
 int64_t ComputeSlicingLength(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
   int64_t slicing_length = 0;
+  if (strides == 0) {
+    MS_EXCEPTION(ValueError) << "StridedSlice's input strides cannot contain 0.";
+  }
   if (strides > 0) {
-    if ((start_pos >= x_dim) || end_pos < -x_dim) {
-      slicing_length = 0;
-    } else {
-      if (-x_dim <= start_pos && start_pos < 0) {
-        start_pos += x_dim;
-      }
-      if (start_pos < -x_dim) {
-        start_pos = 0;
-      }
-      if (-x_dim <= end_pos && end_pos < 0) {
-        end_pos += x_dim;
-      }
-      if (end_pos > x_dim) {
-        end_pos = x_dim;
-      }
-      if (start_pos > end_pos) {
-        slicing_length = 0;
-      } else {
-        slicing_length = 1 + (end_pos - 1 - start_pos) / strides;
-      }
-    }
+    slicing_length = GetSlicingLengthForPositiveStrides(start_pos, end_pos, strides, x_dim);
   } else {
-    if (start_pos < -x_dim || end_pos >= x_dim) {
-      slicing_length = 0;
-    } else {
-      if (start_pos > 0 && start_pos < x_dim) {
-        start_pos += -x_dim;
-      }
-      if (start_pos >= x_dim) {
-        start_pos = -1;
-      }
-      if (end_pos >= 0 && end_pos < x_dim) {
-        end_pos += -x_dim;
-      }
-      if (end_pos < -x_dim - 1) {
-        end_pos = -x_dim - 1;
-      }
-      if (start_pos <= end_pos) {
-        slicing_length = 0;
-      } else {
-        slicing_length = 1 + (end_pos + 1 - start_pos) / strides;
-      }
-    }
+    slicing_length = GetSlicingLengthForNegativeStrides(start_pos, end_pos, strides, x_dim);
   }
   return slicing_length;
 }
@@ -288,7 +299,7 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
   auto input_value = input_arg->BuildValue();
   MS_EXCEPTION_IF_NULL(input_value);
   if (input_arg->isa<abstract::AbstractTuple>()) {
-    *slice_value = CheckAndConvertUtils::CheckAttrTupleInt(arg_name, input_value, "StridedSlice");
+    *slice_value = CheckAndConvertUtils::CheckTupleInt(arg_name, input_value, "StridedSlice");
     *slice_len = (*slice_value).size();
   } else if (input_arg->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64}, "StridedSlice");

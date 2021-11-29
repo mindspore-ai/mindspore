@@ -46,9 +46,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     auto perm_value = input_args[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(perm_value);
     if (perm_value->isa<tensor::Tensor>()) {
-      p_value = CheckAndConvertUtils::CheckTensorIntValue("perm value", perm_value, op_name);
+      p_value = CheckAndConvertUtils::CheckTensorIntValue("perm", perm_value, op_name);
     } else {
-      p_value = CheckAndConvertUtils::CheckAttrTupleInt("perm value", perm_value, op_name);
+      p_value = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
     }
   }
   if (x_shape.size() != p_value.size()) {

@@ -30,7 +30,7 @@ abstract::ShapePtr OnesInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = primitive->name();
   // check
   auto shape_value = input_args[0]->BuildValue();
-  std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("shape", shape_value, prim_name);
+  std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
   (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
   return std::make_shared<abstract::Shape>(out_shape);
 }

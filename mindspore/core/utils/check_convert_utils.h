@@ -306,10 +306,10 @@ class CheckAndConvertUtils {
   static void CheckSummaryParam(const AbstractBasePtr &name, const AbstractBasePtr &value,
                                 const std::string &class_name);
   static void CheckMode(const std::string &class_name);
-  static std::vector<int64_t> CheckAttrIntOrTupleInt(const std::string &prim_name, const ValuePtr &attr,
-                                                     const std::string &arg_name);
-  static std::vector<int64_t> CheckAttrTupleInt(const std::string &prim_name, const ValuePtr &attr,
-                                                const std::string &arg_name);
+  static std::vector<int64_t> CheckIntOrTupleInt(const std::string &prim_name, const ValuePtr &attr,
+                                                 const std::string &arg_name);
+  static std::vector<int64_t> CheckTupleInt(const std::string &prim_name, const ValuePtr &attr,
+                                            const std::string &arg_name);
   static void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);

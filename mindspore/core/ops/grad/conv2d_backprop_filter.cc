@@ -99,11 +99,13 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
     }
   } else if (filter_size->isa<abstract::AbstractTuple>()) {
     // check tensor, tuple or int to raise error.
-    out_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("filter_size", filter_size_v, prim_name);
+    out_shape = CheckAndConvertUtils::CheckTupleInt("input[filter_size]", filter_size_v, prim_name);
     ret_shape = std::make_shared<abstract::Shape>(out_shape);
   } else {
-    MS_EXCEPTION(TypeError) << "Conv2DBackpropFilter filter_size must be a tuple or tensor, but "
-                            << filter_size->ToString();
+    auto size_type = filter_size->BuildType();
+    MS_EXCEPTION_IF_NULL(size_type);
+    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s input[filter size] must be a tuple or Tensor, "
+                            << "but got " << size_type->ToString();
   }
   return ret_shape;
 }

@@ -34,7 +34,7 @@ def _check_mul():
     finally:
         pass
 
-    print(f"MindSpore version:", ms.__version__)
+    print(f"MindSpore version: ", ms.__version__)
 
     input_x = ms.Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
     input_y = ms.Tensor(np.array([4.0, 5.0, 6.0]), ms.float32)

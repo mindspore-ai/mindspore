@@ -546,7 +546,7 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
   ShapeVector tensor_value;
   if (!value->isa<tensor::Tensor>()) {
     MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "] input argument[" << type_name
-                             << "] must be a tensor,but got " << value->ToString();
+                             << "] must be a tensor, but got " << value->ToString();
   }
   auto input_tensor = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -565,7 +565,7 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
     tensor_value = {tensor_data, tensor_data + data_size};
   } else {
     MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "] input argument[" << type_name
-                            << "] must be a Tensor[Int64] or Tensor[Int32] type,but got " << value->ToString();
+                            << "] must be a Tensor[Int64] or Tensor[Int32] type, but got " << value->ToString();
   }
   return tensor_value;
 }
@@ -726,8 +726,8 @@ void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
   }
 }
 
-std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
-                                                                  const std::string &prim_name) {
+std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                              const std::string &prim_name) {
   std::vector<int64_t> result;
   bool is_correct = false;
   MS_EXCEPTION_IF_NULL(attr);
@@ -749,14 +749,14 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::str
     }
   }
   if (!is_correct) {
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s attribute[" << arg_name
-                            << "] must be a Int or a tuple with all Int elements, but got " << attr->ToString();
+    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+                            << " must be a Int or a tuple with all Int elements, but got " << attr->ToString();
   }
   return result;
 }
 
-std::vector<int64_t> CheckAndConvertUtils::CheckAttrTupleInt(const std::string &arg_name, const ValuePtr &attr,
-                                                             const std::string &prim_name) {
+std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                         const std::string &prim_name) {
   std::vector<int64_t> result;
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
@@ -764,14 +764,14 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrTupleInt(const std::string &
     (void)std::transform(
       attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
         if (!e->isa<Int64Imm>()) {
-          MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s attribute[" << arg_name
-                                  << "] must be a tuple with all Int elements, but got " << attr->ToString();
+          MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+                                  << " must be a tuple with all Int elements, but got " << attr->ToString();
         }
         return GetValue<int64_t>(e);
       });
   } else {
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s attribute[" << arg_name
-                            << "] must be a tuple with all Int elements, but got " << attr->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s " << arg_name
+                            << " must be a tuple with all Int elements, but got " << attr->ToString() << ".";
   }
   return result;
 }
