@@ -556,6 +556,7 @@ session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) 
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
+    delete context;
     return nullptr;
   }
 
