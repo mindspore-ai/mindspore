@@ -49,6 +49,9 @@ class AutoTune {
   /// \return Status object
   Status Main();
 
+  /// \brief Helper to print the tree configuration
+  void PrintTreeConfiguration();
+
   /// Function to collect info from the tree
   /// \return Status code
   Status CollectOpsInfo();
