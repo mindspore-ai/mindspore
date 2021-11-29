@@ -7,9 +7,9 @@ Tensor
 .. cnmsautosummary::
     :toctree: mindspore
 
-    mindspore.Tensor
     mindspore.RowTensor
     mindspore.SparseTensor
+    mindspore.Tensor
 
 Parameter
 ---------
@@ -44,3 +44,22 @@ JIT
     :toctree: mindspore
 
     mindspore.ms_function
+
+Dataset Helper
+---------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.DatasetHelper
+    mindspore.connect_network_with_dataset
+
+Loss Scale Manager
+------------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.DynamicLossScaleManager
+    mindspore.FixedLossScaleManager
+    mindspore.LossScaleManager
