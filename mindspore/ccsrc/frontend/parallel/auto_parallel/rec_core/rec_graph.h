@@ -51,6 +51,8 @@ enum OperatorType {
   kRecReduce,
   kRecPReLU,
   kRecGatherV2,
+  kRecExpandDims,
+  kRecStridedSlice,
   kRecArgWithValue,
   kRecUnsortedSegmentOp
 };
