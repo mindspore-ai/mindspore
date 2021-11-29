@@ -60,7 +60,7 @@ class RMSProp(Optimizer):
     The first equation calculates moving average of the squared gradient for
     each weight. Then dividing the gradient by :math:`\\sqrt{ms_{t+1} + \\epsilon}`.
 
-    if centered is True:
+    If centered is True:
 
     .. math::
         g_{t+1} = \\rho g_{t} + (1 - \\rho)\\nabla Q_{i}(w)
@@ -106,7 +106,7 @@ class RMSProp(Optimizer):
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
               convolution layer.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
@@ -124,7 +124,7 @@ class RMSProp(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              LearningRateSchedule with step as the input to get the learning rate of the current step.
 
         decay (float): Decay rate. Should be equal to or greater than 0. Default: 0.9.
         momentum (float): Hyperparameter of type float, means momentum for the moving average. Should be equal to or

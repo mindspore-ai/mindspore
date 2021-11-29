@@ -155,7 +155,7 @@ class FTRL(Optimizer):
           in optimizer.
 
     Outputs:
-        tuple[Parameter], the updated parameters, the shape is the same as `params`.
+        Tuple[Parameter], the updated parameters, the shape is the same as `params`.
 
     Raises:
         TypeError: If `initial_accum`, `learning_rate`, `lr_power`, `l1`, `l2` or `loss_scale` is not a float.
