@@ -1,7 +1,7 @@
 mindspore.dataset.MnistDataset
 ===============================
 
-.. py:class:: MnistDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.MnistDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
     用于读取和解析MNIST数据集的源数据集文件。
 

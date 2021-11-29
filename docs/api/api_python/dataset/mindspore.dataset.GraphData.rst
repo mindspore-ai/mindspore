@@ -11,9 +11,9 @@ mindspore.dataset.GraphData
     - **num_parallel_workers** (int, 可选)：读取数据的工作线程数（默认为None）。
     - **working_mode** (str, 可选)：设置工作模式，目前支持'local'/'client'/'server'（默认为'local'）。
 
-      -'local'，用于非分布式训练场景。
-      -'client'，用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
-      -'server'，用于分布式训练场景。服务器加载数据并可供客户端使用。
+      - 'local'，用于非分布式训练场景。
+      - 'client'，用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
+      - 'server'，用于分布式训练场景。服务器加载数据并可供客户端使用。
 
     - **hostname** (str, 可选)：图数据集服务器的主机名。该参数仅在工作模式设置为'client'或'server'时有效（默认为'127.0.0.1'）。
     - **port** (int, 可选)：图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为'client'或'server'（默认为50051）时有效。
@@ -46,7 +46,7 @@ mindspore.dataset.GraphData
 
     **异常：**
 
-    **TypeError**：参数`edge_type`的类型不为整型。
+    **TypeError**：参数 `edge_type` 的类型不为整型。
 
 
 .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL: 0。
@@ -181,7 +181,7 @@ mindspore.dataset.GraphData
 
     **异常：**
 
-    **TypeError**：参数`node_type`的类型不为整型。
+    **TypeError**：参数 `node_type` 的类型不为整型。
 
 
 .. py:method:: get_edges_from_nodes(node_list)

@@ -5,7 +5,7 @@ mindspore.dataset.ImageFolderDataset
 
     从树状结构的文件目录中读取图像作为源数据集，同一个文件夹中的所有图像都具有相同的标签。
 
-    生成的数据集有两列： :py:obj:`[image, label]`。列:py:obj:`image` 的数据为uint8类型，列:py:obj:`label` 的数据是uint32类型的标量。
+    生成的数据集有两列：`[image, label]`。列: `image` 的数据为uint8类型，列: `label` 的数据是uint32类型的标量。
 
     **参数：**
 

@@ -20,22 +20,22 @@
 
     **样例：**
     
-		>>> # 创建一个数据集对象，其中给定条数的数据会被组成一个批次数据
-		>>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
-		>>> import numpy as np
-		>>> def generate_2_columns(n):
-		...     for i in range(n):
-		...         yield (np.array([i]), np.array([j for j in range(i + 1)]))
-		>>>
-		>>> column_names = ["col1", "col2"]
-		>>> dataset = ds.GeneratorDataset(generate_2_columns(8), column_names)
-		>>> bucket_boundaries = [5, 10]
-		>>> bucket_batch_sizes = [2, 1, 1]
-		>>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
-		>>> # 将对列名为"col2"的列进行填充，填充后的shape为[bucket_boundaries[i]]，其中i是当前正在批处理的桶的索引
-		>>> pad_info = {"col2": ([None], -1)}
-		>>> pad_to_bucket_boundary = True
-		>>> dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
-		...                                          bucket_batch_sizes,
-		...                                          element_length_function, pad_info,
-		...                                          pad_to_bucket_boundary)
+	>>> # 创建一个数据集对象，其中给定条数的数据会被组成一个批次数据
+	>>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
+	>>> import numpy as np
+	>>> def generate_2_columns(n):
+	...     for i in range(n):
+	...         yield (np.array([i]), np.array([j for j in range(i + 1)]))
+	>>>
+	>>> column_names = ["col1", "col2"]
+	>>> dataset = ds.GeneratorDataset(generate_2_columns(8), column_names)
+	>>> bucket_boundaries = [5, 10]
+	>>> bucket_batch_sizes = [2, 1, 1]
+	>>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
+	>>> # 将对列名为"col2"的列进行填充，填充后的shape为[bucket_boundaries[i]]，其中i是当前正在批处理的桶的索引
+	>>> pad_info = {"col2": ([None], -1)}
+	>>> pad_to_bucket_boundary = True
+	>>> dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+	...                                          bucket_batch_sizes,
+	...                                          element_length_function, pad_info,
+	...                                          pad_to_bucket_boundary)
