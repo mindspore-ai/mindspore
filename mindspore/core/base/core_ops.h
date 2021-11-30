@@ -297,6 +297,7 @@ inline const PrimitivePtr kPrimAsinh = std::make_shared<Primitive>("Asinh");
 inline const PrimitivePtr kPrimAcosh = std::make_shared<Primitive>("Acosh");
 inline const PrimitivePtr kPrimAtanh = std::make_shared<Primitive>("Atanh");
 inline const PrimitivePtr kPrimApplyGradientDescent = std::make_shared<Primitive>("ApplyGradientDescent");
+inline const PrimitivePtr kPrimBesselI1e = std::make_shared<Primitive>("BesselI1e");
 inline const PrimitivePtr kPrimTanhGrad = std::make_shared<Primitive>("TanhGrad");
 inline const PrimitivePtr kPrimPooling = std::make_shared<Primitive>("Pooling");
 inline const PrimitivePtr kPrimPoolingGrad = std::make_shared<Primitive>("PoolingGrad");
