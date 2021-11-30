@@ -42,8 +42,8 @@ class Cell(Cell_):
     """
     Base class for all neural networks.
 
-    A 'Cell' could be a single neural network cell, such as conv2d, relu, batch_norm, etc. or a composition of
-    cells to constructing a network.
+    A 'Cell' could be a single neural network cell, such as  :class:`mindspore.nn.Conv2d`,  :class:`mindspore.nn.ReLU,
+    :class:`mindspore.nn.BatchNorm`, etc. or a composition of cells to constructing a network.
 
     Note:
         In general, the autograd algorithm will automatically generate the implementation of the gradient function,
@@ -356,8 +356,11 @@ class Cell(Cell_):
         Cast inputs to specified type.
 
         Args:
-            inputs (tuple): The cell inputs.
+            inputs (tuple[Tensor]): The cell inputs.
             dst_type (mindspore.dtype): The specified data type.
+
+        returns:
+            tuple[Tensor], the result with destination data type.
         """
         res = list()
         for item in inputs:
@@ -836,8 +839,8 @@ class Cell(Cell_):
         """
         Adds a parameter to the current cell.
 
-        Inserts a parameter with given name to the cell. Please refer to the usage in
-        source code of `mindspore.nn.Cell.__setattr__`.
+        Inserts a parameter with given name to the cell. The method is currently used in
+        `mindspore.nn.Cell.__setattr__`.
 
         Args:
             param_name (str): Name of the parameter.
@@ -846,7 +849,6 @@ class Cell(Cell_):
 
         Raises:
             KeyError: If the name of parameter is null or contains dot.
-            AttributeError: If user did not call init() first.
             TypeError: If the type of parameter is not Parameter.
         """
         if not param_name:
@@ -1304,7 +1306,7 @@ class Cell(Cell_):
 
     def get_flags(self):
         """
-        Get the attributes of cell's flags.
+        Get the self_defined attributes of the cell, which can be added by `add_flags` method.
         """
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
@@ -1497,7 +1499,7 @@ class Cell(Cell_):
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
         Set `comm_fusion` for all the parameters in this cell. Please refer to the description of
-        `mindspore.common.parameter.comm_fusion`.
+         :class:`mindspore.Parameter.comm_fusion`.
 
         Note:
             The value of attribute will be overwritten when the function is called multiply.
