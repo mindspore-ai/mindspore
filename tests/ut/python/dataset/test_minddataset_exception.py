@@ -100,8 +100,8 @@ def test_invalid_mindrecord():
         f.write('just for test')
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid file "
-                       "content, incorrect file or file header is exceeds the upper limit."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid file, the size of mindrecord file header "
+                                           "is larger than the upper limit."):
         data_set = ds.MindDataset(file_name, columns_list, num_readers)
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass

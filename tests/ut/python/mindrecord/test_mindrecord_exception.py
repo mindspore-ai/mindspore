@@ -234,7 +234,7 @@ def test_invalid_mindrecord():
         f.write(dummy)
     with pytest.raises(RuntimeError) as err:
         FileReader(file_name)
-    assert "Unexpected error. Invalid file content, incorrect file or file header" in str(err.value)
+    assert "Invalid file, the size of mindrecord file header is larger than the upper limit." in str(err.value)
     remove_file(file_name)
 
 def test_invalid_db():
@@ -264,7 +264,7 @@ def test_overwrite_invalid_mindrecord():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1, file_name)
-    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_file(file_name)
 
 def test_overwrite_invalid_db():
@@ -278,7 +278,7 @@ def test_overwrite_invalid_db():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         create_cv_mindrecord(1, file_name)
-    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_file(file_name)
 
 def test_read_after_close():
@@ -560,7 +560,8 @@ def test_write_with_invalid_data():
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     # field: file_name  =>  filename
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -594,43 +595,9 @@ def test_write_with_invalid_data():
         writer.write_raw_data(data)
         writer.commit()
 
-    # field: mask  =>  masks
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
-        remove_one_file(mindrecord_file_name)
-        remove_one_file(mindrecord_file_name + ".db")
-
-        data = [{"file_name": "001.jpg", "label": 43, "score": 0.8, "masks": np.array([3, 6, 9], dtype=np.int64),
-                 "segments": np.array([[5.0, 1.6], [65.2, 8.3]], dtype=np.float32),
-                 "data": bytes("image bytes abc", encoding='UTF-8')},
-                {"file_name": "002.jpg", "label": 91, "score": 5.4, "masks": np.array([1, 4, 7], dtype=np.int64),
-                 "segments": np.array([[5.1, 9.1], [2.0, 65.4]], dtype=np.float32),
-                 "data": bytes("image bytes def", encoding='UTF-8')},
-                {"file_name": "003.jpg", "label": 61, "score": 6.4, "masks": np.array([7, 6, 3], dtype=np.int64),
-                 "segments": np.array([[0.0, 5.6], [3.0, 16.3]], dtype=np.float32),
-                 "data": bytes("image bytes ghi", encoding='UTF-8')},
-                {"file_name": "004.jpg", "label": 29, "score": 8.1, "masks": np.array([2, 8, 0], dtype=np.int64),
-                 "segments": np.array([[5.9, 7.2], [4.0, 89.0]], dtype=np.float32),
-                 "data": bytes("image bytes jkl", encoding='UTF-8')},
-                {"file_name": "005.jpg", "label": 78, "score": 7.7, "masks": np.array([3, 1, 2], dtype=np.int64),
-                 "segments": np.array([[0.6, 8.1], [5.3, 49.3]], dtype=np.float32),
-                 "data": bytes("image bytes mno", encoding='UTF-8')},
-                {"file_name": "006.jpg", "label": 37, "score": 9.4, "masks": np.array([7, 6, 7], dtype=np.int64),
-                 "segments": np.array([[4.2, 6.3], [8.9, 81.8]], dtype=np.float32),
-                 "data": bytes("image bytes pqr", encoding='UTF-8')}
-                ]
-        writer = FileWriter(mindrecord_file_name)
-        schema = {"file_name": {"type": "string"},
-                  "label": {"type": "int32"},
-                  "score": {"type": "float64"},
-                  "mask": {"type": "int64", "shape": [-1]},
-                  "segments": {"type": "float32", "shape": [2, 2]},
-                  "data": {"type": "bytes"}}
-        writer.add_schema(schema, "data is so cool")
-        writer.write_raw_data(data)
-        writer.commit()
-
     # field: data  =>  image
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -664,78 +631,9 @@ def test_write_with_invalid_data():
         writer.write_raw_data(data)
         writer.commit()
 
-    # field: label  =>  labels
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
-        remove_one_file(mindrecord_file_name)
-        remove_one_file(mindrecord_file_name + ".db")
-
-        data = [{"file_name": "001.jpg", "labels": 43, "score": 0.8, "mask": np.array([3, 6, 9], dtype=np.int64),
-                 "segments": np.array([[5.0, 1.6], [65.2, 8.3]], dtype=np.float32),
-                 "data": bytes("image bytes abc", encoding='UTF-8')},
-                {"file_name": "002.jpg", "labels": 91, "score": 5.4, "mask": np.array([1, 4, 7], dtype=np.int64),
-                 "segments": np.array([[5.1, 9.1], [2.0, 65.4]], dtype=np.float32),
-                 "data": bytes("image bytes def", encoding='UTF-8')},
-                {"file_name": "003.jpg", "labels": 61, "score": 6.4, "mask": np.array([7, 6, 3], dtype=np.int64),
-                 "segments": np.array([[0.0, 5.6], [3.0, 16.3]], dtype=np.float32),
-                 "data": bytes("image bytes ghi", encoding='UTF-8')},
-                {"file_name": "004.jpg", "labels": 29, "score": 8.1, "mask": np.array([2, 8, 0], dtype=np.int64),
-                 "segments": np.array([[5.9, 7.2], [4.0, 89.0]], dtype=np.float32),
-                 "data": bytes("image bytes jkl", encoding='UTF-8')},
-                {"file_name": "005.jpg", "labels": 78, "score": 7.7, "mask": np.array([3, 1, 2], dtype=np.int64),
-                 "segments": np.array([[0.6, 8.1], [5.3, 49.3]], dtype=np.float32),
-                 "data": bytes("image bytes mno", encoding='UTF-8')},
-                {"file_name": "006.jpg", "labels": 37, "score": 9.4, "mask": np.array([7, 6, 7], dtype=np.int64),
-                 "segments": np.array([[4.2, 6.3], [8.9, 81.8]], dtype=np.float32),
-                 "data": bytes("image bytes pqr", encoding='UTF-8')}
-                ]
-        writer = FileWriter(mindrecord_file_name)
-        schema = {"file_name": {"type": "string"},
-                  "label": {"type": "int32"},
-                  "score": {"type": "float64"},
-                  "mask": {"type": "int64", "shape": [-1]},
-                  "segments": {"type": "float32", "shape": [2, 2]},
-                  "data": {"type": "bytes"}}
-        writer.add_schema(schema, "data is so cool")
-        writer.write_raw_data(data)
-        writer.commit()
-
-    # field: score  =>  scores
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
-        remove_one_file(mindrecord_file_name)
-        remove_one_file(mindrecord_file_name + ".db")
-
-        data = [{"file_name": "001.jpg", "label": 43, "scores": 0.8, "mask": np.array([3, 6, 9], dtype=np.int64),
-                 "segments": np.array([[5.0, 1.6], [65.2, 8.3]], dtype=np.float32),
-                 "data": bytes("image bytes abc", encoding='UTF-8')},
-                {"file_name": "002.jpg", "label": 91, "scores": 5.4, "mask": np.array([1, 4, 7], dtype=np.int64),
-                 "segments": np.array([[5.1, 9.1], [2.0, 65.4]], dtype=np.float32),
-                 "data": bytes("image bytes def", encoding='UTF-8')},
-                {"file_name": "003.jpg", "label": 61, "scores": 6.4, "mask": np.array([7, 6, 3], dtype=np.int64),
-                 "segments": np.array([[0.0, 5.6], [3.0, 16.3]], dtype=np.float32),
-                 "data": bytes("image bytes ghi", encoding='UTF-8')},
-                {"file_name": "004.jpg", "label": 29, "scores": 8.1, "mask": np.array([2, 8, 0], dtype=np.int64),
-                 "segments": np.array([[5.9, 7.2], [4.0, 89.0]], dtype=np.float32),
-                 "data": bytes("image bytes jkl", encoding='UTF-8')},
-                {"file_name": "005.jpg", "label": 78, "scores": 7.7, "mask": np.array([3, 1, 2], dtype=np.int64),
-                 "segments": np.array([[0.6, 8.1], [5.3, 49.3]], dtype=np.float32),
-                 "data": bytes("image bytes mno", encoding='UTF-8')},
-                {"file_name": "006.jpg", "label": 37, "scores": 9.4, "mask": np.array([7, 6, 7], dtype=np.int64),
-                 "segments": np.array([[4.2, 6.3], [8.9, 81.8]], dtype=np.float32),
-                 "data": bytes("image bytes pqr", encoding='UTF-8')}
-                ]
-        writer = FileWriter(mindrecord_file_name)
-        schema = {"file_name": {"type": "string"},
-                  "label": {"type": "int32"},
-                  "score": {"type": "float64"},
-                  "mask": {"type": "int64", "shape": [-1]},
-                  "segments": {"type": "float32", "shape": [2, 2]},
-                  "data": {"type": "bytes"}}
-        writer.add_schema(schema, "data is so cool")
-        writer.write_raw_data(data)
-        writer.commit()
-
     # string type with int value
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -770,7 +668,8 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field with int64 type, but the real data is string
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -805,7 +704,8 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # bytes field is string
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -840,7 +740,8 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field is not numpy type
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -875,7 +776,8 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # not enough field
-    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, schema count should be positive."):
+    with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, " \
+                                           "the number of schema should be positive but got:"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
