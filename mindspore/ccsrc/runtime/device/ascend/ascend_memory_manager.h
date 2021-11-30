@@ -45,6 +45,7 @@ class AscendMemoryManager : public MemoryManager {
   void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
   size_t GetAvailableMemSize() override;
+  uint64_t GetMsUsedHbmSize();
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;

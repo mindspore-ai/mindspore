@@ -29,28 +29,27 @@ namespace profiler {
 namespace ascend {
 constexpr char kOutputPath[] = "output";
 
-bool MemoryProfiling::IsMemoryProfilingEnable() const {
-  auto ascend_profiler = AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetProfilingEnableFlag()) {
-    return false;
-  }
-
-  const std::string prof_options_str = ascend_profiler->GetProfilingOptions();
+void MemoryProfiling::SetMemoryProfilingInitialize(const std::string &profiling_options) {
   nlohmann::json options;
   try {
-    options = nlohmann::json::parse(prof_options_str);
+    options = nlohmann::json::parse(profiling_options);
   } catch (nlohmann::json::exception &e) {
-    MS_LOG(ERROR) << "Failed to parse profiling options.";
-    return false;
+    MS_LOG(EXCEPTION) << "Failed to parse profiling options because of format error.";
   }
 
-  if (options["profile_memory"] == "off") {
-    return false;
+  if (options["profile_memory"] == "on") {
+    is_initialized_ = true;
   }
-
-  return true;
 }
+
+void MemoryProfiling::StartMemoryProfiling() {
+  is_enabled_ = true;
+  if (NeedSaveMemoryProfiling()) {
+    SaveMemoryProfiling();
+  }
+}
+
+void MemoryProfiling::StopMemoryProfiling() { is_enabled_ = false; }
 
 std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
   std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);
@@ -70,6 +69,11 @@ std::shared_ptr<GraphMemory> MemoryProfiling::GetGraphMemoryNode(uint32_t graph_
 
 bool MemoryProfiling::MemoryToPB() {
   memory_proto_.set_total_mem(device_mem_size_);
+  if (graph_memory_.size() == 0) {
+    MS_LOG(INFO) << "No memory profiling data need to be reported.";
+    return false;
+  }
+
   for (const auto &graph : graph_memory_) {
     GraphMemProto *graph_proto = memory_proto_.add_graph_mem();
     if (graph_proto == nullptr) {
@@ -127,15 +131,19 @@ void MemoryProfiling::SaveMemoryProfiling() {
   if (device_id.empty()) {
     device_id = "0";
   }
+
+  if (!MemoryToPB()) {
+    return;
+  }
+
   std::string file = dir_path + std::string("/memory_usage_") + std::string(device_id) + std::string(".pb");
-
-  MemoryToPB();
-
   std::fstream handle(file, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!memory_proto_.SerializeToOstream(&handle)) {
     MS_LOG(ERROR) << "Save memory profiling data to file failed";
   }
   handle.close();
+
+  has_save_memory_data_ = true;
   MS_LOG(INFO) << "Start save memory profiling data to " << file << " end";
   return;
 }

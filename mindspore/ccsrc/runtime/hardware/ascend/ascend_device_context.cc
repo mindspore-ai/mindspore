@@ -419,11 +419,12 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());
 
 #ifndef ENABLE_SECURITY
-  auto profiling_instance = MemoryProfiling::GetInstance();
-  if (profiling_instance.IsMemoryProfilingEnable()) {
-    uint64_t mem_size = runtime_instance_->GetAvailableMemMaxSize();
-    profiling_instance.SetDeviceMemSize(mem_size);
-    profiling_instance.SaveMemoryProfiling();
+  if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized()) {
+    uint64_t mem_size = runtime_instance_->GetMsUsedHbmSize();
+    MemoryProfiling::GetInstance().SetDeviceMemSize(mem_size);
+    if (MemoryProfiling::GetInstance().NeedSaveMemoryProfiling()) {
+      MemoryProfiling::GetInstance().SaveMemoryProfiling();
+    }
   }
 #endif
 }

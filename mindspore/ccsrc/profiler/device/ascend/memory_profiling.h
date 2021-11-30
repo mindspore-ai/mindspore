@@ -99,7 +99,7 @@ class GraphMemory {
 
 class MemoryProfiling {
  public:
-  MemoryProfiling() : device_mem_size_(0) {}
+  MemoryProfiling() : device_mem_size_(0), is_initialized_(false), is_enabled_(false), has_save_memory_data_(false) {}
   ~MemoryProfiling() = default;
 
   static MemoryProfiling &GetInstance() {
@@ -107,17 +107,25 @@ class MemoryProfiling {
     return instance;
   }
 
-  bool IsMemoryProfilingEnable() const;
   std::shared_ptr<GraphMemory> AddGraphMemoryNode(uint32_t graph_id);
   std::shared_ptr<GraphMemory> GetGraphMemoryNode(uint32_t graph_id) const;
   void SetDeviceMemSize(uint64_t size) { device_mem_size_ = size; }
   bool MemoryToPB();
   void SaveMemoryProfiling();
+  bool IsMemoryProfilingInitialized() const { return is_initialized_; }
+  bool IsMemoryProfilingEnabled() const { return is_enabled_; }
+  void SetMemoryProfilingInitialize(const std::string &profiling_options);
+  bool NeedSaveMemoryProfiling() { return (is_enabled_) && (!has_save_memory_data_); }
+  void StartMemoryProfiling();
+  void StopMemoryProfiling();
 
  private:
   MemoryProto memory_proto_;
   std::map<uint32_t, std::shared_ptr<GraphMemory>> graph_memory_;
   uint64_t device_mem_size_;
+  bool is_initialized_;
+  bool is_enabled_;
+  bool has_save_memory_data_;
 };
 }  // namespace ascend
 }  // namespace profiler

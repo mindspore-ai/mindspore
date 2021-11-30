@@ -42,6 +42,8 @@ void AscendMemoryManager::ClearGlobalIdleMem() { AscendMemoryPool::GetInstance()
 
 uint64_t AscendMemoryManager::GetMsMaxMemSize() { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
 
+uint64_t AscendMemoryManager::GetMsUsedHbmSize() { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
+
 void *AscendMemoryManager::MallocDevice(size_t size) {
   auto align_size = GetCommonAlignSize(size);
   return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
@@ -71,7 +73,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
   MS_LOG(INFO) << "Malloc Memory for Static: size[" << align_size << "] communication_mem:" << communication_mem;
 
 #ifndef ENABLE_SECURITY
-  if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable() && graph_id != kInvalidGraphId) {
+  if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized() && graph_id != kInvalidGraphId) {
     auto node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
     if (node == nullptr) {
       node = MemoryProfiling::GetInstance().AddGraphMemoryNode(graph_id);
@@ -109,7 +111,7 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
   MemoryManager::MallocSomasDynamicMem(graph);
 #ifndef ENABLE_SECURITY
-  if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable()) {
+  if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized()) {
     MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
     somas_reuse_util_ptr_->ConvertToProfilingNode(graph.graph_id());
   }

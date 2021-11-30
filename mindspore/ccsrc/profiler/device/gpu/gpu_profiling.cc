@@ -415,6 +415,7 @@ void GPUProfiler::Init(const std::string &profileDataPath = "") {
   profile_data_path_ = profileDataPath;
   MS_LOG(INFO) << "GPU start time(ns):" << base_time_.gpu_start_time
                << " Host start time(ns):" << base_time_.host_start_time << " profile data path: " << profile_data_path_;
+  is_init_ = true;
 }
 
 void GPUProfiler::SetRunTimeData(const std::string &op_name, void *stream) {

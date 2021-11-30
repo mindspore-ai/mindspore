@@ -73,8 +73,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-  profiling_enable_ = profiler_inst->GetEnableFlag();
-  if (profiling_enable_) {
+  if (profiler_inst->IsInitialized()) {
     std::string path = profiler_inst->ProfileDataPath();
     profiling_op_ = std::make_shared<GetNextProfiling>(path);
     MS_EXCEPTION_IF_NULL(profiling_op_);
@@ -89,19 +88,27 @@ void DatasetIteratorKernel::InitSizeLists() { return; }
 bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
   uint64_t start_time_stamp = 0;
   uint32_t queue_size = 0;
-
+#ifndef ENABLE_SECURITY
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+#endif
   int repeat = 0;
   while (true) {
+#ifndef ENABLE_SECURITY
+    profiling_enable_ = profiler_inst->GetEnableFlag();
     if (profiling_enable_) {
       start_time_stamp = profiling_op_->GetTimeStamp();
       queue_size = GpuBufferMgr::GetInstance().Size(handle_);
     }
+#endif
     auto ret = GpuBufferMgr::GetInstance().Front(handle_, addr, len);
     if (ret == device::SUCCESS) {
+#ifndef ENABLE_SECURITY
       if (profiling_enable_) {
         uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
         profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
       }
+#endif
       break;
     }
 
@@ -117,11 +124,12 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
         MS_LOG(EXCEPTION) << "Get data timeout";
       }
     }
-
+#ifndef ENABLE_SECURITY
     if (profiling_enable_) {
       uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
       profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
     }
+#endif
     MS_LOG(ERROR) << "Get data failed, errcode " << ret;
     return false;
   }
