@@ -22,6 +22,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <limits.h>
+
+#ifdef ENABLE_AVX512
+#include "nnacl/intrinsics/ms_simd_avx512_instructions.h"
+#endif
+
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #endif

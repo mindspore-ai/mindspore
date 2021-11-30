@@ -19,8 +19,8 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/exp_parameter.h"
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/intrinsics/ms_simd_avx512_instructions.h"
 #endif
 
 #ifdef __cplusplus
@@ -52,6 +52,34 @@ static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
   static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
   input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
   MS_STQ_F32(dst, VexpFp32(input));
+}
+#endif
+
+#if defined(ENABLE_AVX512)
+static inline void simd_exp_avx512(MS_FLOAT32X16 input, float *dst) {
+  static MS_FLOAT32X16 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f,
+                               98.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X16 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f,
+                               -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
+  static MS_FLOAT32X16 param[] = {
+    {0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f,
+     0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f},
+    {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120,
+     1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+    {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24,
+     1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+    {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6,
+     1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+    {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}};
+  input = MS_MAX512_F32(minv, MS_MIN512_F32(input, maxv));
+  MS_INT32X16 integer = MS_CVT512PS_EPI32(MS_DIV512_F32(input, param[0]));
+  MS_FLOAT32X16 decimal = MS_SUB512_F32(input, MS_MUL512_F32(MS_CVT512EPI32_PS(integer), param[0]));
+  MS_INT32X16 int_exp = MS_SLLI512_EPI32(MS_ADD512_EPI32(integer, MS_MOV512_EPI32(127)), 23);
+  MS_FLOAT32X16 tmp = MS_MUL512_F32(decimal, (MS_ADD512_F32(param[2], MS_MUL512_F32(decimal, param[1]))));
+  tmp = MS_MUL512_F32(decimal, MS_ADD512_F32(param[4], MS_MUL512_F32(decimal, MS_ADD512_F32(param[3], tmp))));
+  MS_FLOAT32X16 decimal_exp = MS_ADD512_F32(param[5], MS_MUL512_F32(decimal, MS_ADD512_F32(param[5], tmp)));
+  MS_ST512_F32(dst, MS_MUL512_F32(decimal_exp, MS_CAST512_F32_S32(int_exp)));
 }
 #endif
 

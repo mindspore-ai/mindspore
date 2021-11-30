@@ -232,6 +232,14 @@ int BroadcastAdd(const float *in0, const float *in1, float *tile_in0, float *til
 
 int ElementAdd(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
+#ifdef ENABLE_AVX512
+  for (; index <= size - C16NUM; index += C16NUM) {
+    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
+    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
+    MS_FLOAT32X16 vout = MS_ADD512_F32(vin0, vin1);
+    MS_ST512_F32(out + index, vout);
+  }
+#endif
 #ifdef ENABLE_AVX
   for (; index <= size - C8NUM; index += C8NUM) {
     MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
@@ -256,6 +264,17 @@ int ElementAdd(const float *in0, const float *in1, float *out, int size) {
 
 int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
+#ifdef ENABLE_AVX512
+  MS_FLOAT32X16 zeros_16 = MS_MOV512_F32(0.0f);
+  for (; index <= size - C16NUM; index += C16NUM) {
+    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
+    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
+    MS_FLOAT32X16 vout = MS_ADD512_F32(vin0, vin1);
+    __mmask16 mask = MS_CMP512_F32(vout, zeros_16, 30);
+    vout = MS_BLEND512_F32(mask, zeros_16, vout);
+    MS_ST512_F32(out + index, vout);
+  }
+#endif
 #ifdef ENABLE_AVX
   MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
   for (; index <= size - C8NUM; index += C8NUM) {
@@ -285,6 +304,16 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
 
 int ElementAddRelu6(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
+#ifdef ENABLE_AVX512
+  MS_FLOAT32X16 zeros_16 = MS_MOV512_F32(0.0f);
+  MS_FLOAT32X16 bounds_16 = MS_MOV512_F32(6.0f);
+  for (; index <= size - C16NUM; index += C16NUM) {
+    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
+    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
+    MS_FLOAT32X16 vout = MS_MIN512_F32(MS_MAX512_F32(MS_ADD512_F32(vin0, vin1), zeros_16), bounds_16);
+    MS_ST512_F32(out + index, vout);
+  }
+#endif
 #ifdef ENABLE_AVX
   MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
   MS_FLOAT32X8 bounds_8 = MS_MOV256_F32(6.0f);
