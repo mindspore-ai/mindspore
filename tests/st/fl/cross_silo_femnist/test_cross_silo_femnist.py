@@ -28,8 +28,7 @@ import mindspore.dataset.vision.py_transforms as PV
 import mindspore.dataset.transforms.py_transforms as PT
 import mindspore.dataset.transforms.c_transforms as tC
 from mindspore.train.serialization import save_checkpoint
-from mindspore.ops import operations as P
-from mindspore.train.callback import Callback
+from mindspore.train.callback import Callback, FederatedLearningManager
 from mindspore.nn.metrics import Accuracy
 from mindspore.train import Model
 
@@ -62,6 +61,7 @@ parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--dataset_path", type=str, default="")
 # The user_id is used to set each worker's dataset path.
 parser.add_argument("--user_id", type=str, default="0")
+parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
 
 parser.add_argument('--img_size', type=int, default=(32, 32, 1), help='the image size of (h,w,c)')
 parser.add_argument('--repeat_size', type=int, default=1, help='the repeat size when create the dataLoader')
@@ -91,6 +91,7 @@ encrypt_type = args.encrypt_type
 cipher_time_window = args.cipher_time_window
 dataset_path = args.dataset_path
 user_id = args.user_id
+sync_type = args.sync_type
 
 ctx = {
     "enable_fl": True,
@@ -279,56 +280,11 @@ def evalute_process(model, eval_data, img_size, batch_size):
     return acc['Accuracy'], acc['Loss']
 
 
-class StartFLJob(nn.Cell):
-    def __init__(self, data_size):
-        super(StartFLJob, self).__init__()
-        self.start_fl_job = P.StartFLJob(data_size)
-
-    def construct(self):
-        return self.start_fl_job()
-
-
-class ExchangeKeys(nn.Cell):
-    def __init__(self):
-        super(ExchangeKeys, self).__init__()
-        self.exchange_keys = P.ExchangeKeys()
-
-    def construct(self):
-        return self.exchange_keys()
-
-
-class GetKeys(nn.Cell):
-    def __init__(self):
-        super(GetKeys, self).__init__()
-        self.get_keys = P.GetKeys()
-
-    def construct(self):
-        return self.get_keys()
-
-
-class UpdateAndGetModel(nn.Cell):
-    def __init__(self, weights):
-        super(UpdateAndGetModel, self).__init__()
-        self.update_model = P.UpdateModel()
-        self.get_model = P.GetModel()
-        self.weights = weights
-
-    def construct(self):
-        self.update_model(self.weights)
-        get_model = self.get_model(self.weights)
-        return get_model
-
-
 def train():
     epoch = fl_iteration_num
     network = LeNet5(62, 3)
 
-    # define the loss function
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    # define the optimizer
-    net_opt = nn.Momentum(network.trainable_params(), client_learning_rate, 0.9)
-    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy(), 'Loss': nn.Loss()})
-
+    # construct dataset
     ds.config.set_seed(1)
     data_root_path = dataset_path
     user = "dataset_" + user_id
@@ -339,29 +295,27 @@ def train():
     print("size is ", dataset.get_dataset_size(), flush=True)
     num_batches = dataset.get_dataset_size()
 
+    # define the loss function
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    # define fl manager
+    federated_learning_manager = FederatedLearningManager(
+        network,
+        sync_frequency=epoch * num_batches,
+        sync_type=sync_type,
+    )
+    # define the optimizer
+    net_opt = nn.Momentum(network.trainable_params(), client_learning_rate, 0.9)
+    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy(), 'Loss': nn.Loss()})
+
     loss_cb = LossGet(1, num_batches)
-    cbs = []
+    cbs = list()
+    cbs.append(federated_learning_manager)
     cbs.append(loss_cb)
     ckpt_path = "ckpt"
     os.makedirs(ckpt_path)
 
     for iter_num in range(fl_iteration_num):
-        if context.get_fl_context("ms_role") == "MS_WORKER":
-            start_fl_job = StartFLJob(dataset.get_dataset_size() * args.client_batch_size)
-            start_fl_job()
-            if encrypt_type == "STABLE_PW_ENCRYPT":
-                exchange_keys = ExchangeKeys()
-                exchange_keys()
-                get_keys = GetKeys()
-                get_keys()
-
-        for _ in range(epoch):
-            print("step is ", epoch, flush=True)
-            model.train(1, dataset, callbacks=cbs, dataset_sink_mode=False)
-
-        if context.get_fl_context("ms_role") == "MS_WORKER":
-            update_and_get_model = UpdateAndGetModel(net_opt.parameters)
-            update_and_get_model()
+        model.train(epoch, dataset, callbacks=cbs, dataset_sink_mode=False)
 
         ckpt_name = user_id + "-fl-ms-bs32-" + str(iter_num) + "epoch.ckpt"
         ckpt_name = os.path.join(ckpt_path, ckpt_name)

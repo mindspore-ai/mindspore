@@ -28,6 +28,8 @@ from ._time_monitor import TimeMonitor
 from ._summary_collector import SummaryCollector
 from ._lr_scheduler_callback import LearningRateScheduler
 from ._landscape import SummaryLandscape
+from ._fl_manager import FederatedLearningManager
 
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
-           "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape"]
+           "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape",
+           "FederatedLearningManager"]

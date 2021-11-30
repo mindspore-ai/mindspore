@@ -150,6 +150,7 @@ config_file_path: ""
 encrypt_type: "NOT_ENCRYPT"
 dataset_path: ""
 user_id: 0
+sync_type: fixed
 
 
 # Number of threads used to process the dataset in parallel

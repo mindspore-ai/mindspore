@@ -21,9 +21,7 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, Parameter
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.train.callback import TimeMonitor
+from mindspore.train.callback import TimeMonitor, FederatedLearningManager
 from mindspore.train import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.serialization import save_checkpoint
@@ -59,6 +57,7 @@ worker_step_num_per_iteration = config.worker_step_num_per_iteration
 scheduler_manage_port = config.scheduler_manage_port
 config_file_path = config.config_file_path
 encrypt_type = config.encrypt_type
+sync_type = config.sync_type
 
 user_id = config.user_id
 
@@ -125,25 +124,6 @@ def train_fasterrcnn_():
 
     return dataset_size, dataset
 
-class StartFLJob(nn.Cell):
-    def __init__(self, data_size):
-        super(StartFLJob, self).__init__()
-        self.start_fl_job = P.StartFLJob(data_size)
-
-    def construct(self):
-        return self.start_fl_job()
-
-class UpdateAndGetModel(nn.Cell):
-    def __init__(self, weights):
-        super(UpdateAndGetModel, self).__init__()
-        self.update_model = P.UpdateModel()
-        self.get_model = P.GetModel()
-        self.weights = weights
-
-    def construct(self):
-        self.update_model(self.weights)
-        get_model = self.get_model(self.weights)
-        return get_model
 
 def train():
     """ train_fasterrcnn """
@@ -184,6 +164,11 @@ def train():
 
     loss = LossNet()
     lr = Tensor(dynamic_lr(config, dataset_size), mstype.float32)
+    federated_learning_manager = FederatedLearningManager(
+        net,
+        sync_frequency=config.client_epoch_num * dataset_size,
+        sync_type=sync_type
+    )
     opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
               weight_decay=config.weight_decay, loss_scale=config.loss_scale)
     net_with_loss = WithLossCell(net, loss)
@@ -194,7 +179,7 @@ def train():
         net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale)
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossCallBack(rank_id=rank)
-    cb = [time_cb, loss_cb]
+    cb = [federated_learning_manager, time_cb, loss_cb]
 
     model = Model(net)
     ckpt_path1 = os.path.join("ckpt", user)
@@ -202,13 +187,7 @@ def train():
     os.makedirs(ckpt_path1)
     print("====================", config.client_epoch_num, fl_iteration_num, flush=True)
     for iter_num in range(fl_iteration_num):
-        if context.get_fl_context("ms_role") == "MS_WORKER":
-            start_fl_job = StartFLJob(dataset_size * config.batch_size)
-            start_fl_job()
         model.train(config.client_epoch_num, dataset, callbacks=cb)
-        if context.get_fl_context("ms_role") == "MS_WORKER":
-            update_and_get_model = UpdateAndGetModel(opt.parameters)
-            update_and_get_model()
         ckpt_name = user + "-fast-rcnn-" + str(iter_num) + "epoch.ckpt"
         ckpt_path = os.path.join(ckpt_path1, ckpt_name)
         save_checkpoint(net, ckpt_path)

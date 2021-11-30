@@ -37,6 +37,7 @@ parser.add_argument("--local_server_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 parser.add_argument("--dataset_path", type=str, default="")
+parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -59,6 +60,7 @@ local_server_num = args.local_server_num
 config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
 dataset_path = args.dataset_path
+sync_type = args.sync_type
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -92,6 +94,7 @@ for i in range(local_server_num):
     cmd_server += " --encrypt_type=" + str(encrypt_type)
     cmd_server += " --dataset_path=" + str(dataset_path)
     cmd_server += " --user_id=" + str(0)
+    cmd_server += " --sync_type=" + sync_type
     cmd_server += " > server.log 2>&1 &"
 
     import time
