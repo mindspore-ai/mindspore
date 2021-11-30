@@ -99,7 +99,7 @@ class ProximalAdagrad(Optimizer):
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
               convolution layer.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
@@ -118,7 +118,7 @@ class ProximalAdagrad(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              LearningRateSchedule with step as the input to get the learning rate of the current step.
 
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
