@@ -21,6 +21,9 @@
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "distributed/cluster/cluster_context.h"
+#else
+#include "distributed/cluster/dummy_cluster_context.h"
 #endif
 
 namespace mindspore {
@@ -115,6 +118,9 @@ bool PSContext::is_worker() const {
   if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
     return role_ == kEnvRoleOfWorker;
   }
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    return role_ == kEnvRoleOfWorker;
+  }
   return is_worker_;
 }
 
@@ -122,11 +128,17 @@ bool PSContext::is_server() const {
   if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
     return role_ == kEnvRoleOfServer;
   }
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    return role_ == kEnvRoleOfServer;
+  }
   return is_pserver_;
 }
 
 bool PSContext::is_scheduler() const {
   if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
+    return role_ == kEnvRoleOfScheduler;
+  }
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
     return role_ == kEnvRoleOfScheduler;
   }
   return is_sched_;
@@ -242,10 +254,6 @@ void PSContext::set_dp_norm_clip(float dp_norm_clip) {
 float PSContext::dp_norm_clip() const { return dp_norm_clip_; }
 
 void PSContext::set_ms_role(const std::string &role) {
-  if (server_mode_ != kServerModeFL && server_mode_ != kServerModeHybrid) {
-    MS_LOG(EXCEPTION) << "Only federated learning supports to set role by fl context.";
-    return;
-  }
   if (role != kEnvRoleOfWorker && role != kEnvRoleOfServer && role != kEnvRoleOfScheduler) {
     MS_LOG(EXCEPTION) << "ms_role " << role << " is invalid.";
     return;
@@ -263,13 +271,7 @@ void PSContext::set_worker_num(uint32_t worker_num) {
 }
 uint32_t PSContext::worker_num() const { return worker_num_; }
 
-void PSContext::set_server_num(uint32_t server_num) {
-  if (server_num == 0) {
-    MS_LOG(EXCEPTION) << "Server number must be greater than 0.";
-    return;
-  }
-  server_num_ = server_num;
-}
+void PSContext::set_server_num(uint32_t server_num) { server_num_ = server_num; }
 uint32_t PSContext::server_num() const { return server_num_; }
 
 void PSContext::set_scheduler_ip(const std::string &sched_ip) { scheduler_host_ = sched_ip; }

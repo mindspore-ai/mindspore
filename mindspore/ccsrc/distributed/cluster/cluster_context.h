@@ -52,6 +52,9 @@ class ClusterContext {
   // Return node object of this process.
   const std::shared_ptr<ps::core::Node> &node() const;
 
+  // Return cluster is initialized.
+  bool initialized() const;
+
  private:
   ClusterContext();
 

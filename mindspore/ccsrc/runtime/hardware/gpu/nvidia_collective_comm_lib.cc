@@ -60,7 +60,7 @@ bool NvidiaCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, 
 }
 
 bool NvidiaCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                                        ReduceMode reduce_op, const std::string &group_name, void *stream) {
+                                        CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream) {
   if (!CheckNCCLDataType(data_type)) {
     return false;
   }
@@ -96,7 +96,8 @@ bool NvidiaCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, 
 }
 
 bool NvidiaCollectiveCommLib::ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
-                                            ReduceMode reduce_op, const std::string &group_name, void *stream) {
+                                            CollectiveOpReduceType reduce_op, const std::string &group_name,
+                                            void *stream) {
   if (!CheckNCCLDataType(data_type)) {
     return false;
   }
@@ -153,7 +154,7 @@ bool NvidiaCollectiveCommLib::CheckNCCLDataType(TypeId data_type) {
   return true;
 }
 
-bool NvidiaCollectiveCommLib::CheckNCCLReduceType(ReduceMode reduce_op) {
+bool NvidiaCollectiveCommLib::CheckNCCLReduceType(CollectiveOpReduceType reduce_op) {
   CHECK_RET((kNCCLReduceTypeMap.count(reduce_op) != 0), true,
             "Reduce type " + std::to_string(reduce_op) + " is not supported in NCCL.");
   return true;

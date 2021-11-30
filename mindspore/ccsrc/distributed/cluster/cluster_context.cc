@@ -30,7 +30,7 @@ ClusterContext::ClusterContext()
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
       node_(nullptr),
-      node_role_(kEnvRoleOfWorker),
+      node_role_(""),
       cluster_config_(nullptr) {}
 
 ClusterContext::~ClusterContext() {
@@ -59,7 +59,12 @@ bool ClusterContext::Initialize() {
 
   // Step 2: Build network for this cluster. Every process will block in this method until networking is done.
   if (!BuildCluster()) {
-    MS_LOG(EXCEPTION) << "Building networking for " << node_role_ << " failed.";
+    MS_EXCEPTION_IF_NULL(node_);
+    if (!node_->Stop()) {
+      MS_LOG(ERROR) << "Failed to stop node after the failure of BuildCluster";
+      return false;
+    }
+    MS_LOG(ERROR) << "Building networking for " << node_role_ << " failed.";
     return false;
   }
 
@@ -87,10 +92,13 @@ bool ClusterContext::Finalize() {
 
 const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
+bool ClusterContext::initialized() const { return inited_; }
+
 void ClusterContext::InitClusterConfig() {
   InitNodeRole();
   InitSchedulerIp();
   InitSchedulerPort();
+  ps::PSContext::instance()->set_ms_role(node_role_);
   ps::PSContext::instance()->set_worker_num(node_num_each_role_[kEnvRoleOfWorker]);
   ps::PSContext::instance()->set_server_num(node_num_each_role_[kEnvRoleOfServer]);
   ps::PSContext::instance()->set_scheduler_ip(scheduler_host_);
@@ -117,7 +125,7 @@ bool ClusterContext::BuildCluster() {
 
   RegisterEventCallback();
   if (!node_->Start()) {
-    MS_LOG(EXCEPTION) << "Building network failed.";
+    MS_LOG(ERROR) << "Building network failed.";
     return false;
   }
   MS_LOG(INFO) << "Cluster is successfully initialized.";
@@ -148,12 +156,7 @@ void ClusterContext::InitNodeRole() {
   }
 }
 
-void ClusterContext::InitSchedulerIp() {
-  scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
-  if (scheduler_host_ != kLocalHost) {
-    MS_LOG(EXCEPTION) << "Scheduler IP should be 127.0.0.1";
-  }
-}
+void ClusterContext::InitSchedulerIp() { scheduler_host_ = common::GetEnv(kEnvSchedulerHost); }
 
 void ClusterContext::InitSchedulerPort() {
   TRY_AND_CATCH_WITH_EXCEPTION((scheduler_port_ = static_cast<uint16_t>(std::stoi(common::GetEnv(kEnvSchedulerPort)))),

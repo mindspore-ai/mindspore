@@ -14,12 +14,12 @@
 # ============================================================================
 """Dataset help for minddata dataset"""
 import math
-import os
 from mindspore._checkparam import Validator
 from mindspore import context
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.nn.wrap import GetNextSingleOp
 from mindspore.parallel._utils import _get_device_num, _need_to_full, _to_full_shapes
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 
 
 def _send_data(dataset, epoch_num):
@@ -160,8 +160,7 @@ class _DatasetIterMSLoopSink(_DatasetIter):
             loop_size = dataset.__loop_size__ + iter_first_order
             sink_count = int(sink_size / loop_size) * 2
         self.sink_count = sink_count
-        ms_role = os.getenv("MS_ROLE")
-        if ms_role in ("MS_PSERVER", "MS_SCHED"):
+        if _is_role_pserver() or _is_role_sched():
             self.sink_count = 1
         # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, and not using full_batch,
         # use a complete tensor to compile, and slice tensor to run. The batch dimension of tensors for

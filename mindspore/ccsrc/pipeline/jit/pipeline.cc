@@ -74,6 +74,7 @@
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "fl/server/server.h"
 #include "fl/worker/fl_worker.h"
+#include "distributed/cluster/cluster_context.h"
 #endif
 
 #if ((defined ENABLE_GE) || (defined ENABLE_D))
@@ -893,6 +894,19 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   }
   if (ps::PSContext::instance()->is_scheduler()) {
     return PSchedulerPipeline();
+  }
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    auto node = distributed::cluster::ClusterContext::instance()->node();
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(INFO) << "Cluster is initialized. This node role is " << node->role();
+    switch (node->role()) {
+      case ps::core::NodeRole::SERVER:
+        return PServerPipeline();
+      case ps::core::NodeRole::SCHEDULER:
+        return PSchedulerPipeline();
+      default:
+        break;
+    }
   }
 #endif
 

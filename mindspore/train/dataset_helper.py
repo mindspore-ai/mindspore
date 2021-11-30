@@ -14,13 +14,13 @@
 # ============================================================================
 """Dataset help for minddata dataset"""
 import math
-import os
 
 from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched
 from ..ops import operations as P
 
 
@@ -52,10 +52,9 @@ def _dynamic_sink_data(dataset, dataset_iter):
 
 def _dynamic_sink_exception_scenario(dataset_iter):
     """The exception scenario for dynamic data is not applicable."""
-    ms_role = os.getenv("MS_ROLE")
     _, dataset_shapes = dataset_iter.types_shapes()
 
-    if _has_dynamic_shape(dataset_shapes) or ms_role == "MS_WORKER" or \
+    if _has_dynamic_shape(dataset_shapes) or _is_role_worker() or \
        context.get_context("mode") != context.GRAPH_MODE:
         return True
     return False
@@ -171,8 +170,7 @@ def connect_network_with_dataset(network, dataset_helper):
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("The API 'connect_network_with_dataset' should be called in dataset sink mode.")
 
-    ms_role = os.getenv("MS_ROLE")
-    if ms_role in ("MS_PSERVER", "MS_SCHED"):
+    if _is_role_sched() or _is_role_pserver():
         return network
 
     queue_name = dataset.__transfer_dataset__.queue_name
@@ -260,10 +258,9 @@ class DatasetHelper:
                 iterclass = _DatasetIterGE
             else:
                 if context.get_context("mode") == context.GRAPH_MODE:
-                    ms_role = os.getenv("MS_ROLE")
-                    if ms_role in ("MS_PSERVER", "MS_SCHED"):
+                    if _is_role_sched() or _is_role_pserver():
                         iterclass = _DatasetIterPSServer
-                    elif ms_role == "MS_WORKER":
+                    elif _is_role_worker():
                         iterclass = _DatasetIterPSWork
                     elif (context.get_context("device_target") == "Ascend") or \
                          (context.get_context("device_target") == "GPU"):
@@ -365,9 +362,8 @@ class _DatasetIter:
 
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
-                ms_role = os.getenv("MS_ROLE")
                 # PS mode does not support loop sink and need get the real sink size.
-                if ms_role != "MS_WORKER":
+                if not _is_role_worker():
                     self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and context.get_context(
                 "device_target") == "Ascend")
@@ -413,10 +409,9 @@ class _DatasetIter:
     def get_sink_size(self):
         """get sink_size to device"""
         sink_size = 1
-        ms_role = os.getenv("MS_ROLE")
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
-        elif ms_role == "MS_WORKER":
+        elif _is_role_worker():
             # PS mode does not support loop sink.
             sink_size = 1
         else:
