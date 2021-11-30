@@ -73,6 +73,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void *GetModelStream(uint32_t graph_id) const override;
   // add for MindRT
   void ReleaseDeviceRes() override;
+  uint64_t GetMsUsedHbmSize() const;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

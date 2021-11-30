@@ -146,25 +146,29 @@ class Profiler:
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
         self._md_profiler.init()
-        self._md_profiler.start()
 
         if self._device_target:
             cpu_profiler = c_expression.CPUProfiler
             self._cpu_profiler = cpu_profiler.get_instance()
             self._cpu_profiler.init(self._output_path)
-            self._cpu_profiler.step_profiling_enable(True)
+
         if self._device_target and self._device_target == "GPU":
             gpu_profiler = c_expression.GPUProfiler
             self._gpu_profiler = gpu_profiler.get_instance()
             self._gpu_profiler.init(self._output_path)
-            self._gpu_profiler.step_profiling_enable(True)
             if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
                 self._dev_id = str(get_rank())
             os.environ['DEVICE_ID'] = self._dev_id
 
+            self.start_profile = kwargs.pop("start_profile", True)
+            if not isinstance(self.start_profile, bool):
+                raise TypeError("The parameter start_profile must be bool.")
+
             if kwargs:
                 logger.warning("Params not be supported yet on GPU.")
         elif self._device_target and self._device_target == "Ascend":
+            self._init_time = int(time.time() * 10000000)
+            logger.info("Profiling: profiling init time: %d", self._init_time)
             self._parse_parameter_for_ascend(**kwargs)
             os.environ['DEVICE_ID'] = self._dev_id
 
@@ -186,10 +190,9 @@ class Profiler:
 
             # add job id env through user input later
             self._job_id_env = 0
-            self._init_time = int(time.time() * 10000000)
-            logger.info("Profiling: profiling init time: %d", self._init_time)
-            if self.start_profile:
-                self.start()
+
+        if self.start_profile:
+            self.start()
 
     def _construct_profiling_options(self):
         """
@@ -238,6 +241,9 @@ class Profiler:
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
+            if not self.start_profile:
+                raise TypeError("The parameter profile_communication can not be True if want to start profiler in the "
+                                "process of training.")
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
             raise TypeError("The parameter profile_memory must be bool")
@@ -255,10 +261,11 @@ class Profiler:
             msg = "Do not analyze twice in the profiler."
             raise RuntimeError(msg)
         Profiler._has_analysed = True
+
         _environment_check()
+
         self._cpu_profiler.stop()
-        self._md_profiler.stop()
-        self._md_profiler.save(self._output_path)
+
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
 
@@ -276,11 +283,12 @@ class Profiler:
             self._rank_size = get_group_size()
 
         release()
+
         if self._has_started:
-            self._ascend_profiler.stop()
+            self.stop()
         else:
-            msg = "The profiler has not start, so can not stop."
-            logger.info(msg)
+            logger.info("No need to stop profiler because profiler has been stopped.")
+
         self._ascend_profiler.finalize()
 
         job_id = self._get_profiling_job_id()
@@ -392,34 +400,50 @@ class Profiler:
 
     def start(self):
         """Used for Ascend, start profiling."""
+        self._start_time = int(time.time() * 10000000)
+        logger.info("Profiling: start time: %d", self._start_time)
+
         if not self._has_started:
             self._has_started = True
         else:
-            msg = "The profiler has already started."
-            logger.error(msg)
-            raise RuntimeError(msg)
-        self._ascend_profiler.start()
-        self._start_time = int(time.time() * 10000000)
-        logger.info("Profiling: start time: %d", self._start_time)
+            raise RuntimeError("The profiler has already started.")
+
+        self._md_profiler.start()
+        self._cpu_profiler.step_profiling_enable(True)
+
+        if self._device_target and self._device_target == "GPU":
+            self._gpu_profiler.step_profiling_enable(True)
+        elif self._device_target and self._device_target == "Ascend":
+            self._ascend_profiler.start()
 
     def stop(self):
         """Used for Ascend, stop profiling."""
         if self._has_started:
             self._has_started = False
         else:
-            msg = "The profiler has not start, so can not stop."
-            logger.error(msg)
-            raise RuntimeError(msg)
-        self._ascend_profiler.stop()
-        self._stop_time = int(time.time() * 10000000)
-        logger.info("Profiling: stop time: %d", self._stop_time)
+            raise RuntimeError("The profiler has not start, so can not stop.")
+
+        self._md_profiler.stop()
+        self._md_profiler.save(self._output_path)
+
+        if self._device_target and self._device_target == "GPU":
+            self._gpu_profiler.stop()
+        elif self._device_target and self._device_target == "Ascend":
+            self._ascend_profiler.stop()
+            self._stop_time = int(time.time() * 10000000)
+            logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _gpu_analyse(self):
         """Collect and analyse gpu performance data"""
         self._dev_id = context.get_context("device_id")
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
-        self._gpu_profiler.stop()
+
+        if self._has_started:
+            self.stop()
+        else:
+            logger.info("No need to stop profiler because profiler has been stopped.")
+
         timeline_generator = self._generate_timeline()
 
         # parse minddata pipeline operator and queue for GPU
@@ -609,6 +633,7 @@ class Profiler:
                 logger.warning("Find profiling job path %s, but start_time(%d) is earlier than this training "
                                "start_time(%d), profiler will ignore this job dir.",
                                job_dir, int(job_start_time), self._start_time)
+                continue
 
             job_id = dir_name
             break

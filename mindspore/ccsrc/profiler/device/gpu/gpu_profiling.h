@@ -133,6 +133,7 @@ class GPUProfiler : public Profiler {
   void RegisterProfilingOp(std::shared_ptr<ProfilingOp> node);
   void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
   std::string ProfileDataPath() const { return profile_data_path_; }
+  bool IsInitialized() { return is_init_; }
 
  private:
   void SingleOpLaunchTimeProcess(float op_time_elapsed);
@@ -175,6 +176,7 @@ class GPUProfiler : public Profiler {
   std::string profile_data_path_;
   std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
   ProfilingTraceInfo step_trace_op_name_;
+  bool is_init_ = false;
 };
 }  // namespace gpu
 }  // namespace profiler

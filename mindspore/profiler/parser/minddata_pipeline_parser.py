@@ -264,11 +264,13 @@ class MinddataPipelineParser:
                 queue_size = output_queue.get('size')
                 if queue_size is None:
                     raise ValueError("The queue can not be None.")
-                queue_average_size = sum(queue_size) / len(queue_size)
+                if queue_size:
+                    queue_average_size = sum(queue_size) / len(queue_size)
                 queue_length = output_queue.get('length')
                 if queue_length == 0:
                     raise ValueError("The length of queue can not be 0.")
-                queue_usage_rate = queue_average_size / queue_length
+                if queue_average_size is not None:
+                    queue_usage_rate = queue_average_size / queue_length
 
         children_id = op_node.get('children')
         op_info = [

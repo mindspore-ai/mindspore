@@ -19,10 +19,12 @@
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
+#include "profiler/device/ascend/memory_profiling.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include <nlohmann/json.hpp>
 
 using mindspore::device::ascend::ProfilingManager;
+using mindspore::profiler::ascend::MemoryProfiling;
 
 namespace mindspore {
 namespace profiler {
@@ -51,6 +53,8 @@ void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t d
   profile_data_path_ = profiling_path;
   device_id_ = device_id;
   (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
+
+  MemoryProfiling::GetInstance().SetMemoryProfilingInitialize(profiling_options_);
 
   aclError aclRet = aclprofInit(profile_data_path_.c_str(), profile_data_path_.length());
   if (aclRet != ACL_SUCCESS) {
@@ -112,6 +116,8 @@ void AscendProfiler::Start() {
   }
   MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
 
+  MemoryProfiling::GetInstance().StartMemoryProfiling();
+
   StepProfilingEnable(true);
 }
 
@@ -131,6 +137,8 @@ void AscendProfiler::Stop() {
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }
+
+  MemoryProfiling::GetInstance().StopMemoryProfiling();
 
   StepProfilingEnable(false);
 }
