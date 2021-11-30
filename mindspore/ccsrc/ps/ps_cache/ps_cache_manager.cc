@@ -231,9 +231,14 @@ void PsCacheManager::AllocMemForHashTable() {
     device_address.addr = addr;
 
     auto &host_address = item.second.host_address;
+#ifdef __APPLE__
+    host_address =
+      std::shared_ptr<float>(new float[host_vocab_cache_size_ * embedding_size], std::default_delete<float[]>());
+#else
     std::unique_ptr<float[]> host_hash_table_addr = std::make_unique<float[]>(host_vocab_cache_size_ * embedding_size);
     MS_EXCEPTION_IF_NULL(host_hash_table_addr);
     host_address = std::move(host_hash_table_addr);
+#endif
     MS_EXCEPTION_IF_NULL(host_address);
 
     max_embedding_size = (embedding_size > max_embedding_size) ? embedding_size : max_embedding_size;

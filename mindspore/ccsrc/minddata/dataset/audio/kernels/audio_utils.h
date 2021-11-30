@@ -937,7 +937,7 @@ Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out
       cur_channel_phase[j] = static_cast<int>(j * lfo_length * channel_phase + 0.5);
       // through the current channel phase and lfo arrays to get the delay
       auto iter_lfo = lfo->begin<float>();
-      delay_tensor[j] = *(iter_lfo + (lfo_pos + cur_channel_phase[j]) % lfo_length);
+      delay_tensor[j] = *(iter_lfo + static_cast<ptrdiff_t>((lfo_pos + cur_channel_phase[j]) % lfo_length));
       // the frac delay is obtained by using the frac function
       frac_delay[j] = delay_tensor[j] - static_cast<int>(delay_tensor[j]);
       delay_tensor[j] = floor(delay_tensor[j]);

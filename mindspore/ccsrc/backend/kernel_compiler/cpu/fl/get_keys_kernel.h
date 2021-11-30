@@ -41,7 +41,8 @@ class GetKeysKernel : public CPUKernel {
 
  private:
   void BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb);
-  bool SavePublicKeyList(auto remote_public_key);
+  bool SavePublicKeyList(
+    const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key);
 
   uint32_t rank_id_;
   uint32_t server_num_;

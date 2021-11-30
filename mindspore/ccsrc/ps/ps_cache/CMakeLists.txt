@@ -1,7 +1,6 @@
-if(ENABLE_CPU AND NOT WIN32 AND NOT APPLE)
+if(ENABLE_CPU AND NOT WIN32)
     file(GLOB_RECURSE _PS_CACHE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ps_data/*.cc")
     set_property(SOURCE ${_PS_CACHE_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PS)
     add_library(ps_cache SHARED ${_PS_CACHE_SRC_FILES})
+    target_link_libraries(ps_cache mindspore::pybind11_module)
 endif()
-
-

@@ -32,7 +32,11 @@ namespace mindspore {
 #endif
 class TensorLoader {
  public:
+#ifndef __APPLE__
   TensorLoader() : iter_num_(-1), mem_total_(0), mem_usage_(0) {}
+#else
+  TensorLoader() : mem_total_(0), mem_usage_(0) {}
+#endif
 
   ~TensorLoader() { EmptyTensor(); }
 
@@ -227,7 +231,9 @@ class TensorLoader {
   // the pair is (device_id, iteration)
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map_;
   std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map_;
+#ifndef __APPLE__
   uint32_t iter_num_;
+#endif
   std::mutex lock_;
   std::mutex mem_lock_;
   uint64_t mem_total_;

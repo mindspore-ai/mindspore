@@ -40,15 +40,20 @@ set(INSTALL_BASE_DIR ".")
 set(INSTALL_BIN_DIR "bin")
 set(INSTALL_CFG_DIR "config")
 set(INSTALL_LIB_DIR "lib")
-
-message("offline debugger does not support macosx system temporarily")
-
 # set package files
 install(
     TARGETS _c_expression
     DESTINATION ${INSTALL_BASE_DIR}
     COMPONENT mindspore
 )
+
+if(ENABLE_DEBUGGER)
+    install(
+        TARGETS _mindspore_offline_debug
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+endif()
 
 install(
     TARGETS mindspore_shared_lib
@@ -66,6 +71,25 @@ if(USE_GLOG)
     file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
     install(
         FILES ${GLOG_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
+install(FILES ${libevent_LIBPATH}/libevent-2.1.7.dylib
+  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_core-2.1.7.dylib
+  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_extra-2.1.7.dylib
+  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_openssl-2.1.7.dylib
+  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_pthreads-2.1.7.dylib
+  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
+
+if(ENABLE_CPU AND NOT WIN32)
+    install(
+        TARGETS ps_cache
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
@@ -213,6 +237,14 @@ install(
 if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
     install(
         DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset
+        DESTINATION ${INSTALL_PY_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
+if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/offline_debug)
+    install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/offline_debug
         DESTINATION ${INSTALL_PY_DIR}
         COMPONENT mindspore
     )

@@ -192,9 +192,13 @@ const std::map<std::string, size_t> kCiphers = {{"ECDHE-RSA-AES128-GCM-SHA256", 
                                                 {"!PSK", 27},
                                                 {"kEDH+AESGCM", 28}};
 
+#ifdef __APPLE__
+using DataPtr = std::shared_ptr<unsigned char>;
+#else
 using DataPtr = std::shared_ptr<unsigned char[]>;
+#endif
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
-using Key = uint64_t;
+using Key = size_t;
 using Keys = std::vector<Key>;
 using Values = std::vector<float>;
 using ValuesPtr = std::shared_ptr<Values>;

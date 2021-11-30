@@ -67,7 +67,7 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name()
                << ") launches graph: " << std::to_string(graph_->graph_id());
   if (!CopyInputData(context)) {
-    std::string error_info = "Copy the input data failed, graph id: " + graph_->graph_id();
+    std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 

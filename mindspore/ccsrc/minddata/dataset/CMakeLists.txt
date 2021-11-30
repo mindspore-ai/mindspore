@@ -74,9 +74,7 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
-if(NOT APPLE)
-    add_subdirectory(audio)
-endif()
+add_subdirectory(audio)
 add_subdirectory(text)
 add_subdirectory(callback)
 add_subdirectory(plugin)
@@ -91,16 +89,12 @@ add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
 add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
-if(NOT APPLE)
-    add_dependencies(engine-gnn core)
-endif()
+add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
-if(NOT APPLE)
-    add_dependencies(audio-kernels core)
-    add_dependencies(audio-ir core)
-    add_dependencies(audio-ir-kernels core)
-endif()
+add_dependencies(audio-kernels core)
+add_dependencies(audio-ir core)
+add_dependencies(audio-ir-kernels core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
 add_dependencies(text-ir core)
@@ -161,10 +155,14 @@ set(submodules
         $<TARGET_OBJECTS:engine-datasetops-source>
         $<TARGET_OBJECTS:engine-datasetops-source-sampler>
         $<TARGET_OBJECTS:engine-datasetops-mapop>
+        $<TARGET_OBJECTS:engine-gnn>
         $<TARGET_OBJECTS:engine-datasetops>
         $<TARGET_OBJECTS:engine-opt>
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
+        $<TARGET_OBJECTS:audio-kernels>
+        $<TARGET_OBJECTS:audio-ir>
+        $<TARGET_OBJECTS:audio-ir-kernels>
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>
         $<TARGET_OBJECTS:text-ir>
@@ -174,15 +172,6 @@ set(submodules
         $<TARGET_OBJECTS:kernels-ir-vision>
         $<TARGET_OBJECTS:md_plugin>
         )
-
-if(NOT APPLE)
-    set(submodules
-            ${submodules}
-            $<TARGET_OBJECTS:engine-gnn>
-            $<TARGET_OBJECTS:audio-kernels>
-            $<TARGET_OBJECTS:audio-ir>
-            $<TARGET_OBJECTS:audio-ir-kernels>)
-endif()
 
 if(ENABLE_ACL)
     set(submodules
@@ -222,61 +211,6 @@ endif()
 
 ################# Link with external libraries ########################
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
-
-set(targetso $<TARGET_FILE:_c_dataengine>)
-set(target_tiny "libtinyxml")
-set(target_icuuc "libicuuc")
-set(target_icudata "libicudata")
-set(target_icui18n "libicui18n")
-function(changerpath targetso linkso)
-    set(some-file "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/${linkso}.txt")
-    set(some-file1 "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/${linkso}1.txt")
-    set(some-file2 "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/${linkso}2.txt")
-    add_custom_command(
-            OUTPUT
-            ${some-file}
-            COMMAND
-            otool -L ${targetso} | grep ${linkso} > ${some-file}
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset"
-            VERBATIM
-    )
-    add_custom_command(
-            OUTPUT
-            ${some-file1}
-            COMMAND
-            cat ${some-file} | cut -d " " -f 1 | sed -E "s/^.//g" > ${some-file1}
-            DEPENDS
-            ${some-file}
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset"
-            VERBATIM
-    )
-    add_custom_command(
-            OUTPUT
-            ${some-file2}
-            COMMAND
-            awk -F "/"  "{print $NF}"  ${some-file1} > ${some-file2}
-            DEPENDS
-            ${some-file1}
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset"
-            VERBATIM
-    )
-    add_custom_target(
-            link_${linkso} ALL
-            COMMAND install_name_tool -change `cat ${some-file1}` @rpath/`cat ${some-file2}` ${targetso}
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset"
-            DEPENDS ${targetso} ${some-file1} ${some-file2}
-            COMMENT "install tool name")
-endfunction()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    changerpath(${targetso} ${target_tiny})
-    changerpath(${targetso} ${target_icuuc})
-    add_dependencies(link_${target_icuuc} link_${target_tiny})
-    changerpath(${targetso} ${target_icudata})
-    add_dependencies(link_${target_icudata} link_${target_icuuc})
-    changerpath(${targetso} ${target_icui18n})
-    add_dependencies(link_${target_icui18n} link_${target_icudata})
-endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if(ENABLE_PYTHON)
@@ -320,9 +254,7 @@ else()
         if(${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(_c_dataengine PRIVATE ibverbs rdmacm)
         endif()
-        if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
-            target_link_libraries(_c_dataengine PRIVATE ps_cache)
-        endif()
+        target_link_libraries(_c_dataengine PRIVATE ps_cache)
     endif()
 endif()
 
@@ -348,4 +280,10 @@ endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    include(${CMAKE_SOURCE_DIR}/cmake/change_rpath.cmake)
+    set(LINK_SOS libtinyxml libicuuc libicudata libicui18n)
+    changerpath($<TARGET_FILE:_c_dataengine> _c_dataengine "${LINK_SOS}")
 endif()

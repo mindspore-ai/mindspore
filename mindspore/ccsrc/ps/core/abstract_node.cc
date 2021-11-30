@@ -956,7 +956,11 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
+#ifdef __APPLE__
+  std::shared_ptr<unsigned char> res(new unsigned char[size], std::default_delete<unsigned char[]>());
+#else
   std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
+#endif
   if (size > 0) {
     size_t dest_size = size;
     size_t src_size = size;

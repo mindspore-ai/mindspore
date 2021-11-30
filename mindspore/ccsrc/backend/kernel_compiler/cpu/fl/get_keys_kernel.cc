@@ -96,7 +96,8 @@ void GetKeysKernel::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_LOG(INFO) << "BuildGetKeysReq successfully.";
 }
 
-bool GetKeysKernel::SavePublicKeyList(auto remote_public_key) {
+bool GetKeysKernel::SavePublicKeyList(
+  const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key) {
   if (remote_public_key == nullptr) {
     MS_LOG(EXCEPTION) << "Input remote_pubic_key is nullptr.";
   }

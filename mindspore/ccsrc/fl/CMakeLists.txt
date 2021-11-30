@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _FL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if(NOT ENABLE_CPU OR WIN32 OR APPLE)
+if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/apply_momentum_kernel.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/aggregation_kernel_factory.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "server/kernel/dense_grad_accum_kernel.cc")
@@ -47,6 +47,10 @@ if(NOT ENABLE_CPU OR WIN32 OR APPLE)
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_reconstruct.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_shares.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_unmask.cc")
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-pointer-compare")
 endif()
 
 list(LENGTH _FL_SRC_FILES fl_file_num)

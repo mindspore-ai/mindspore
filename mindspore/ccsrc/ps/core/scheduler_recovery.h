@@ -49,7 +49,7 @@ class SchedulerRecovery : public RecoveryBase {
 
  private:
   // The node_ will only be instantiated with worker/server node.
-  SchedulerNode *const node_;
+  SchedulerNode *const node_ = nullptr;
 };
 }  // namespace core
 }  // namespace ps
