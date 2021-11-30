@@ -20,7 +20,10 @@
 #include <sstream>
 #include <climits>
 #include "ir/anf.h"
+#include "ir/graph_utils.h"
+#include "ir/func_graph.h"
 #include "utils/convert_utils_base.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
@@ -51,19 +54,11 @@ std::string Location::ToString(SourceLineTip tip) const {
   if (line_ <= 0) {
     return debug_info_ss.str();
   }
-
-  char path[PATH_MAX] = {0x00};
-#if defined(_WIN32) || defined(_WIN64)
-  if (file_name_.size() >= PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
+  auto path = FileUtils::GetRealPath(file_name_.c_str());
+  if (!path.has_value()) {
     return debug_info_ss.str();
   }
-#else
-  if (file_name_.size() >= PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
-    return debug_info_ss.str();
-  }
-#endif
-  auto src_path = std::string(path);
-  std::ifstream file(src_path);
+  std::ifstream file(path.value());
   if (!file.is_open()) {
     return debug_info_ss.str();
   }
@@ -206,5 +201,20 @@ bool DebugInfoCompare::operator()(const DebugInfoPtr &left, const DebugInfoPtr &
     return false;
   }
   return *left_loc < *right_loc;
+}
+
+void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info) {
+  if (func_graph == nullptr || scope == nullptr || debug_info == nullptr) {
+    return;
+  }
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  TraceGuard guard(std::make_shared<TraceGenMetaFuncGraph>(debug_info));
+  for (const auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    node->set_scope(std::make_shared<Scope>(scope->name()));
+    node->set_debug_info(std::make_shared<NodeDebugInfo>());
+  }
 }
 }  // namespace mindspore

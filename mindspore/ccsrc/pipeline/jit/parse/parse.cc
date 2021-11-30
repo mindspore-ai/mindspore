@@ -853,7 +853,6 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 // Process comparison expression : a == b. a > b  etc.
 AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Compare";
-  TraceGuard guard(GetLocation(node));
 
   // For python comparison ,there may be if x>y>5 ,
   // Which there is two ops , but we only support one now

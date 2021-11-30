@@ -110,10 +110,21 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   auto old_node = node->cast<CNodePtr>();
   AnfNodePtrList inputs;
   inputs.reserve(old_node->size());
-  auto debug_info = CloneNodeDebugInfo(node->debug_info(), relation_);
-  CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(debug_info));
+  NodeDebugInfoPtr debug_info;
+  if (this->update_info() != nullptr && this->update_info()->debug_info_ != nullptr) {
+    debug_info = this->update_info()->debug_info_;
+  } else {
+    debug_info = node->debug_info();
+  }
+  auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
+  CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
   new_node->CloneCNodeInfo(old_node);
-  ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
+  ScopePtr scope;
+  if (this->update_info() != nullptr && this->update_info()->scope_ != nullptr) {
+    scope = this->update_info()->scope_;
+  } else {
+    scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
+  }
   new_node->set_scope(scope);
   repl_node_[node] = std::move(new_node);
 }
@@ -731,9 +742,12 @@ FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
   return ((iter == repl_func_graph_.end()) ? func_graph : iter->second);
 }
 
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes) {
+FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, const UpdateInfoPtr update_info) {
   MS_EXCEPTION_IF_NULL(func_graph);
   Cloner cloner({func_graph}, clone_value_nodes, true, true);
+  if (update_info != nullptr) {
+    cloner.set_update_info(update_info);
+  }
   return cloner[func_graph];
 }
 

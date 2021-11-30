@@ -352,7 +352,12 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_spec_list);
   }
 
-  FuncGraphPtr cloned_func_graph = BasicClone(generated_func_graph);
+  NodeDebugInfoPtr debug_info;
+  if (this->bound_node() != nullptr) {
+    debug_info = this->bound_node()->debug_info();
+  }
+  FuncGraphPtr cloned_func_graph =
+    BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
   func_graph_cache_[args_spec_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);
   engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);

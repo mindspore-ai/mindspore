@@ -24,6 +24,7 @@
 
 #include "base/base.h"
 #include "utils/visible.h"
+#include "ir/scope.h"
 #include "utils/trace_info.h"
 
 namespace mindspore {
@@ -251,7 +252,7 @@ class MS_CORE_API DebugInfo {
 class MS_CORE_API NodeDebugInfo : public DebugInfo {
  public:
   /// \brief Construct a default NodeDebugInfo.
-  NodeDebugInfo() {
+  NodeDebugInfo() : DebugInfo() {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_belonged_ = top->func_name();
@@ -304,7 +305,7 @@ using NodeDebugInfoPtr = std::shared_ptr<NodeDebugInfo>;
 
 class GraphDebugInfo : public DebugInfo {
  public:
-  GraphDebugInfo() {
+  GraphDebugInfo() : DebugInfo() {
     auto top = TraceManager::CurrentContextInfo();
     if (top != nullptr) {
       py_func_name_ = top->func_name();
@@ -376,6 +377,8 @@ inline TraceContext::TraceContext(const LocationPtr &loc, const std::string &fun
 struct DebugInfoCompare {
   bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right);
 };
+
+void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_INFO_H_

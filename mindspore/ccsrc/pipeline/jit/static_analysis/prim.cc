@@ -33,6 +33,7 @@
 #include "utils/symbolic.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/pipeline.h"
 #include "utils/convert_utils.h"
 #include "utils/convert_utils_py.h"
 #include "utils/ms_context.h"
@@ -274,9 +275,8 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
 
-  ScopePtr scope = kDefaultScope;
-  scope = out_conf->node()->scope();
-  ScopeGuard scope_guard(scope);
+  ScopeGuard scope_guard(out_conf->node()->scope());
+  TraceGuard trace_guard(std::make_shared<TraceMixedPrecision>(out_conf->node()->debug_info()));
 
   FuncGraphPtr func_graph = out_node->func_graph();
   constexpr size_t source_node_index = 2;
@@ -896,8 +896,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   // An external type.
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  MS_LOG(DEBUG) << "Args[0]: " << args_spec_list[0]->ToString();
-  MS_LOG(DEBUG) << "Args[1]: " << args_spec_list[1]->ToString();
   auto data_value = args_spec_list[0]->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
   if (!data_value->isa<parse::NameSpace>()) {
@@ -925,6 +923,9 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_node);
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
+  }
+  if (pipeline::GetJitLevel() == "o0" && IsValueNode<FuncGraph>(new_node)) {
+    UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
   }
 
   // Replace old node with the resolved new node in order list.
@@ -999,6 +1000,9 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
     // composite registered in standard_method_map go to this branch
     converted_value = prim::GetPythonOps(require.cast<std::string>());
     MS_EXCEPTION_IF_NULL(converted_value);
+    if (pipeline::GetJitLevel() == "o0" && converted_value->isa<FuncGraph>()) {
+      UpdateDebugInfo(converted_value->cast<FuncGraphPtr>(), out_conf->node()->scope(), out_conf->node()->debug_info());
+    }
     if (!converted_value->isa<Primitive>()) {
       AddToManager(engine, converted_value->cast<FuncGraphPtr>());
     }
@@ -1035,6 +1039,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   MS_EXCEPTION_IF_NULL(args_spec_list[1]);
+  MS_LOG(DEBUG) << "Args[0]: " << args_spec_list[0]->ToString();
+  MS_LOG(DEBUG) << "Args[1]: " << args_spec_list[1]->ToString();
   TypePtr data_type = args_spec_list[0]->BuildType();
   ValuePtr item_value = args_spec_list[1]->BuildValue();
   ScopePtr scope = kDefaultScope;
@@ -1464,13 +1470,13 @@ class PartialEvaluator : public Evaluator {
     if (cnode == nullptr) {
       MS_LOG(EXCEPTION) << "Cnode is nullptr";
     }
+
+    ScopeGuard scope_guard(out_conf->node()->scope());
+    TraceGuard trace_guard(std::make_shared<TraceDoSignature>(out_conf->node()->debug_info()));
     std::vector<AnfNodePtr> new_nodes_inputs = cnode->inputs();
     auto new_signature_value = std::make_shared<prim::DoSignatureMetaFuncGraph>("signature", signature_value);
     new_nodes_inputs[1] = NewValueNode(new_signature_value);
     FuncGraphPtr func_graph = cnode->func_graph();
-
-    ScopePtr scope = out_conf->node()->scope();
-    ScopeGuard scope_guard(scope);
     MS_EXCEPTION_IF_NULL(func_graph);
     CNodePtr new_cnode = func_graph->NewCNode(std::move(new_nodes_inputs));
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());

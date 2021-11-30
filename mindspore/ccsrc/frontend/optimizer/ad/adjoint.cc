@@ -71,6 +71,7 @@ void Adjoint::RegisterDoutUser(const CNodePtr &user, size_t index) {
 void Adjoint::AccumulateDout(const AnfNodePtr &dout_factor) {
   if (dout_ != nullptr) {
     MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
+    ScopeGuard scope_guard(std::make_shared<Scope>("Gradients/" + primal()->scope()->name()));
     auto add = prim::GetPythonOps("hyper_add");
     dout_ = caller_->NewCNode({NewValueNode(add), dout_, dout_factor});
     return;
