@@ -74,6 +74,7 @@ class PrimitivePy : public Primitive {
   bool HasPyObj() { return python_obj_.operator bool(); }
   PrimitivePtr Clone() override;
   PrimitivePyAdapterPtr adapter() const { return adapter_; }
+  void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
 
  private:
   py::function GetComputeFunction() const;
@@ -82,6 +83,7 @@ class PrimitivePy : public Primitive {
   py::object python_obj_;
   PrimitivePyAdapterPtr adapter_;
   py::function hook_;
+  std::string bprop_cls_name_;
   std::vector<Signature> signatures_;
   static std::map<std::string, py::object> hook_grad_;
 };
