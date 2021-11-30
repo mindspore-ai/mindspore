@@ -58,16 +58,7 @@ int QuantParamParser::ParseFilter(const CommonQuantString &common_quant_string, 
   return RET_OK;
 }
 
-int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
-                                       quant::CommonQuantParam *common_quant) {
-  if (!common_quant_string.quant_type.empty()) {
-    auto ret = ParseQuantType(common_quant_string.quant_type, &common_quant->quant_type);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Parse quant_type failed.";
-      return ret;
-    }
-  }
-
+int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant) {
   if (!common_quant_string.bit_num.empty() && !ConvertIntNum(common_quant_string.bit_num, &common_quant->bit_num)) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
@@ -83,13 +74,42 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  auto ret = ParseFilter(common_quant_string, common_quant);
+  return RET_OK;
+}
+
+int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
+                                       quant::CommonQuantParam *common_quant) {
+  if (!common_quant_string.quant_type.empty()) {
+    auto ret = ParseQuantType(common_quant_string.quant_type, &common_quant->quant_type);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse quant_type failed.";
+      return ret;
+    }
+  }
+
+  auto ret = ParseBitNum(common_quant_string, common_quant);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse bit num failed.";
     return ret;
   }
+
+  ret = ParseFilter(common_quant_string, common_quant);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse filter failed.";
+    return ret;
+  }
+
   common_quant->debug_info_save_path = common_quant_string.debug_info_save_path;
   if (!common_quant->debug_info_save_path.empty()) {
     common_quant->is_debug = true;
+  }
+
+  if (!common_quant_string.target_device.empty()) {
+    ret = ParseTargetDevice(common_quant_string.target_device, &common_quant->target_device);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse device failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -142,6 +162,19 @@ int QuantParamParser::ParseQuantType(const std::string &quant_type_str, schema::
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "INPUT ILLEGAL: quant_type must be WEIGHT_QUANT|FULL_QUANT.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+}
+
+int QuantParamParser::ParseTargetDevice(const std::string &target_device_str, quant::TargetDevice *target_device) {
+  if (target_device_str == "CPU") {
+    (*target_device) = quant::CPU;
+    return RET_OK;
+  } else if (target_device_str == "KIRIN") {
+    (*target_device) = quant::KIRIN;
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be CPU|KIRIN.";
     return RET_INPUT_PARAM_INVALID;
   }
 }

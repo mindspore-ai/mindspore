@@ -90,11 +90,13 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetFloatAfterCallBack();
   void InitQMinMax();
   void InitCpuConfig();
+  void InitKirinConfig();
   int MarkQuantNode(const FuncGraphPtr &func_graph);
 
  private:
   // Config
-  TypeId target_data_type_{kNumberTypeInt8};
+  TypeId activation_target_data_type_{kNumberTypeInt8};
+  TypeId weight_target_data_type_{kNumberTypeInt8};
   size_t bit_num_{8};
   int q_max_{INT8_MAX};
   int q_min_{INT8_MIN};
@@ -102,7 +104,6 @@ class FullQuantQuantizer : public Quantizer {
   bool weight_symmetry_{true};
   std::set<PrimitivePtr> support_int8_ops_;
   std::set<PrimitivePtr> skip_check_dtype_ops_;
-  QuantRuntimeDevice device_ = CPU;
 
   std::unique_ptr<Calibrator> calibrator_{nullptr};
   session::LiteSession *fp32_session_{nullptr};
