@@ -21,9 +21,148 @@
 namespace mindspore {
 namespace runtime {
 namespace {
+// Check whether node has a partial structure, a node is a partial structure whicih:
+// 1. a partial cnode.
+// 2. a funcgraph value node.
+bool IsPartial(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return (node->isa<ValueNode>() && IsValueNode<FuncGraph>(node)) ||
+         AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial);
+}
+
+// Get funcgraph in partial structure.
+// Depth represents the number of layers of the call. When the first input of the call node is a call node,
+// the funcgraph in the return value of the inner call needs to be returned.
+FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node, std::stack<size_t> *output_indexs) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(output_indexs);
+
+  if (output_indexs->empty()) {
+    if (node->isa<ValueNode>() && IsValueNode<FuncGraph>(node)) {
+      // Value node of funcgraph.
+      return GetValueNode<FuncGraphPtr>(node);
+    } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+      // Partial cnode.
+      const auto &partial_inputs = node->cast<CNodePtr>()->inputs();
+      return GetValueNode<FuncGraphPtr>(partial_inputs[kPartialFuncGraphPos]);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid partial construct node:" << node->DebugString();
+    }
+    return nullptr;
+  }
+
+  // Get funcgraph in the output of inner call.
+  FuncGraphPtr func_graph;
+  if (node->isa<ValueNode>() && IsValueNode<FuncGraph>(node)) {
+    func_graph = GetValueNode<FuncGraphPtr>(node);
+  } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    const auto &partial_inputs = node->cast<CNodePtr>()->inputs();
+    const auto &func_graph_node = partial_inputs[kPartialFuncGraphPos];
+    if (!func_graph_node->isa<ValueNode>() || !IsValueNode<FuncGraph>(func_graph_node)) {
+      MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
+    }
+    func_graph = GetValueNode<FuncGraphPtr>(func_graph_node);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
+  }
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  size_t index = output_indexs->top();
+  output_indexs->pop();
+  const auto &output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  KernelWithIndex real_output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0);
+  auto real_output = real_output_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_output);
+  if (AnfAlgo::CheckPrimitiveType(real_output, prim::kPrimMakeTuple)) {
+    const auto &cnode = real_output->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    if (inputs.size() <= index + kMakeTupleInputStartPos) {
+      MS_LOG(EXCEPTION) << "Invalid output index:" << index << " for node:" << real_output->DebugString();
+    }
+    real_output = inputs[index + kMakeTupleInputStartPos];
+  }
+  MS_EXCEPTION_IF_NULL(real_output);
+  return GetFuncGraphFromPartial(real_output, output_indexs);
+}
+
+// Find all funcgraphs that the call node will call.
+// The output index represents the index of the funcgraph in the graph output. When the funcgraph is passed through
+// the function return value, the index in the return value needs to be placed on the stack so that the index can be
+// obtained from the stack when the graph output is found.
+std::set<FuncGraphPtr> GetFuncGraphbyCallNode(const AnfNodePtr &node, std::stack<size_t> *output_indexs,
+                                              AnfNodePtr make_tuple = nullptr) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::set<FuncGraphPtr> func_graphs;
+  if (!node->isa<CNode>()) {
+    return func_graphs;
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &call_input0 = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(call_input0);
+  const auto &call_input_with_index = AnfAlgo::VisitKernelWithReturnType(call_input0, 0);
+  const auto &real_input = call_input_with_index.first;
+  if (AnfAlgo::IsCallNode(real_input)) {
+    output_indexs->push(call_input_with_index.second);
+    return GetFuncGraphbyCallNode(real_input, output_indexs);
+  }
+
+  if (AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimSwitch)) {
+    // First input node of call is switch node.
+    const auto &input_cnode = real_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_cnode);
+    const auto &switch_inputs = input_cnode->inputs();
+    for (size_t i = kSwitchTrueBranchPos; i < switch_inputs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(switch_inputs[i]);
+      std::stack<size_t> tmp_output_indexs = *output_indexs;
+      (void)func_graphs.emplace(GetFuncGraphFromPartial(switch_inputs[i], &tmp_output_indexs));
+    }
+  } else if (AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimSwitchLayer)) {
+    // First input node of call is switch layer node.
+    const auto &input_cnode = real_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_cnode);
+    const auto &tuple_node = input_cnode->input(kSwitchLayerBranchPos);
+    if (AnfAlgo::CheckPrimitiveType(tuple_node, prim::kPrimMakeTuple)) {
+      const auto &tuple_inputs = tuple_node->cast<CNodePtr>()->inputs();
+      for (size_t i = kMakeTupleInputStartPos; i < tuple_inputs.size(); ++i) {
+        MS_EXCEPTION_IF_NULL(tuple_inputs[i]);
+        std::stack<size_t> tmp_output_indexs = *output_indexs;
+        func_graphs.emplace(GetFuncGraphFromPartial(tuple_inputs[i], &tmp_output_indexs));
+      }
+    } else if (tuple_node->isa<Parameter>()) {
+      const auto &abstract = tuple_node->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      if (!abstract->isa<abstract::AbstractTuple>()) {
+        MS_LOG(EXCEPTION) << "Invalid abstract:" << abstract->ToString() << " in node:" << tuple_node->DebugString()
+                          << " for switch layer node:" << real_input->DebugString();
+      }
+      MS_EXCEPTION_IF_NULL(make_tuple);
+      auto partials = make_tuple->cast<CNodePtr>()->inputs();
+      for (const auto partial : partials) {
+        if (IsPartial(partial)) {
+          std::stack<size_t> tmp_output_indexs;
+          (void)func_graphs.emplace(GetFuncGraphFromPartial(partial, &tmp_output_indexs));
+        }
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid input tuple node:" << tuple_node->DebugString()
+                        << " for switch layer node:" << cnode->DebugString();
+    }
+  } else if (IsPartial(real_input)) {
+    // First input node of call is partial node or value node of funcgraph.
+    (void)func_graphs.emplace(GetFuncGraphFromPartial(real_input, output_indexs));
+  } else {
+    MS_LOG(EXCEPTION) << "Unable to identify call node" << real_input->DebugString();
+  }
+  return func_graphs;
+}
+
 // Get all the real parameters corresponding to node.
 void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIndex> *real_parameters,
-                              std::set<KernelWithIndex> *invalid_call_nodes) {
+                              std::set<KernelWithIndex> *invalid_call_nodes,
+                              const mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>> &call_node_to_func_graphs) {
   auto node_with_index = node;
   if (!node.first->isa<ValueNode>()) {
     node_with_index = AnfAlgo::VisitKernelWithReturnType(node.first, node.second);
@@ -37,10 +176,15 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
       return;
     }
     invalid_call_nodes->emplace(node_with_index);
-    const auto &func_graphs = AnfAlgo::GetFuncGraphbyCallNode(node_with_index.first);
+    const auto &iter = call_node_to_func_graphs.find(node_with_index.first);
+    if (iter == call_node_to_func_graphs.end()) {
+      MS_LOG(EXCEPTION) << "Invalid call node:" << node_with_index.first->DebugString();
+    }
+    const auto &func_graphs = iter->second;
     for (const auto &func_graph : func_graphs) {
       MS_EXCEPTION_IF_NULL(func_graph);
-      FetchRealParameterByNode({func_graph->output(), node_with_index.second}, real_parameters, invalid_call_nodes);
+      FetchRealParameterByNode({func_graph->output(), node_with_index.second}, real_parameters, invalid_call_nodes,
+                               call_node_to_func_graphs);
     }
   } else if (AnfAlgo::CheckPrimitiveType(node_with_index.first, prim::kPrimMakeTuple)) {
     // If node is a maketuple node, the real parameters are its total inputs.
@@ -51,13 +195,13 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
                         << "for tuple node:" << node_with_index.first->DebugString();
     }
     FetchRealParameterByNode({make_tuple_inputs[node_with_index.second + kMakeTupleInputStartPos], 0}, real_parameters,
-                             invalid_call_nodes);
+                             invalid_call_nodes, call_node_to_func_graphs);
   } else if (AnfAlgo::CheckPrimitiveType(node.first, prim::kPrimSwitch)) {
     // If node is a switch node, the real parameters are its both true and false branches.
     const auto cnode = node_with_index.first->cast<CNodePtr>();
     const auto inputs = cnode->inputs();
     for (size_t i = kSwitchTrueBranchPos; i < inputs.size(); ++i) {
-      FetchRealParameterByNode({inputs[i], 0}, real_parameters, invalid_call_nodes);
+      FetchRealParameterByNode({inputs[i], 0}, real_parameters, invalid_call_nodes, call_node_to_func_graphs);
     }
   } else if (AnfAlgo::CheckPrimitiveType(node_with_index.first, prim::kPrimSwitchLayer)) {
     // If node is a switchlyaer node, the real parameters are its total branches.
@@ -70,7 +214,8 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
     const auto &make_tuple_cnode = switch_layer_inputs[kSwitchLayerBranchPos]->cast<CNodePtr>();
     const auto &make_tuple_inputs = make_tuple_cnode->inputs();
     for (size_t i = kSwitchTrueBranchPos; i < make_tuple_inputs.size(); ++i) {
-      FetchRealParameterByNode({make_tuple_inputs[i], 0}, real_parameters, invalid_call_nodes);
+      FetchRealParameterByNode({make_tuple_inputs[i], 0}, real_parameters, invalid_call_nodes,
+                               call_node_to_func_graphs);
     }
   } else {
     // If node is a kernel, the real parameter is itself.
@@ -81,18 +226,19 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
 // Fetch all the weight parameters related to node. It runs like this:
 // if we have a map like {{a, {b, c}}, {b, {d, e}}}, final we will get {{a, {b, c, d, e}}, {b, {c, d}}}.
 void FetchWeightbyHostParameter(const AnfNodePtr &node, std::set<AnfNodePtr> *dest_nodes,
-                                const HostParameterToWeight &front_to_front_weight) {
+                                const RealToFormalParameter &front_to_front_weight) {
   if (dest_nodes->find(node) != dest_nodes->end()) {
     return;
   }
   dest_nodes->emplace(node);
-  if (front_to_front_weight.find(node) == front_to_front_weight.end()) {
+  auto iter = front_to_front_weight.find({node, 0});
+  if (iter == front_to_front_weight.end()) {
     return;
   }
 
-  const auto weight_nodes = front_to_front_weight.at(node);
+  const auto weight_nodes = iter->second;
   for (const auto weight_node : weight_nodes) {
-    FetchWeightbyHostParameter(weight_node, dest_nodes, front_to_front_weight);
+    FetchWeightbyHostParameter(weight_node.first, dest_nodes, front_to_front_weight);
   }
 }
 
@@ -319,6 +465,27 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     results.emplace_back(real_node, i);
   }
   return results;
+}
+
+// Add formal parameter and real parameter into realationship map.
+void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodePtr &real_parameter,
+                              const CallNodeToFuncGraph &call_node_to_func_graphs,
+                              FormalToRealParameter *formal_to_real_parameters) {
+  MS_EXCEPTION_IF_NULL(formal_parameter);
+  auto abstract = formal_parameter->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+
+  for (size_t i = 0; i < output_num; ++i) {
+    std::set<KernelWithIndex> real_parameters;
+    std::set<KernelWithIndex> invalid_call_nodes;
+    FetchRealParameterByNode({real_parameter, i}, &real_parameters, &invalid_call_nodes, call_node_to_func_graphs);
+    if (real_parameters.empty()) {
+      MS_LOG(EXCEPTION) << "Failed to find real parameter for formal parameter:" << real_parameter->DebugString();
+    }
+
+    (*formal_to_real_parameters)[{formal_parameter, i}].insert(real_parameters.begin(), real_parameters.end());
+  }
 }
 }  // namespace
 
@@ -617,7 +784,7 @@ void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodeP
     }
 
     // Fetch the device contexts of the funcgraph the node called.
-    const auto &func_graphs = AnfAlgo::GetFuncGraphbyCallNode(control_node);
+    const auto &func_graphs = FetchFuncGraphbyCallNode(control_node);
     if (func_graphs.empty()) {
       MS_LOG(EXCEPTION) << "Failed to get funcgraph by call node:" << control_node->DebugString();
     }
@@ -722,6 +889,8 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
         }
         MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
         return_device_contexts.emplace_back(call_device_contexts[output_node.second]);
+      } else if (AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimPartial)) {
+        return_device_contexts.emplace_back(default_context);
       } else if (output_node.first->isa<CNode>()) {
         // If the output is a cnode, get the device context type by the kernel.
         const auto &iter = front_to_backend_kernels_.find(output_node);
@@ -859,7 +1028,7 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
 }
 
 void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr> &control_nodes) {
-  mindspore::HashMap<AnfNodePtr, std::set<KernelWithIndex>> formal_to_real_parameters;
+  FormalToRealParameter formal_to_real_parameters;
 
   // The actual parameters of the function are divided into two parts:
   // 1. Input of partial node.
@@ -877,13 +1046,7 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
           if (HasAbstractMonad(inputs[i])) {
             continue;
           }
-          std::set<KernelWithIndex> real_parameters;
-          std::set<KernelWithIndex> invalid_call_nodes;
-          FetchRealParameterByNode({inputs[i], 0}, &real_parameters, &invalid_call_nodes);
-          if (real_parameters.empty()) {
-            MS_LOG(EXCEPTION) << "Failed to find real parameter for formal parameter:" << inputs[i]->DebugString();
-          }
-          formal_to_real_parameters[parameters[j]].insert(real_parameters.begin(), real_parameters.end());
+          AddFormalToRealParameter(parameters[j], inputs[i], call_node_to_func_graphs_, &formal_to_real_parameters);
         }
       }
     } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
@@ -907,15 +1070,8 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
         if (HasAbstractMonad(inputs[i])) {
           continue;
         }
-
-        std::set<KernelWithIndex> real_parameters;
-        std::set<KernelWithIndex> invalid_call_nodes;
-        FetchRealParameterByNode({inputs[i], 0}, &real_parameters, &invalid_call_nodes);
-        if (real_parameters.empty()) {
-          MS_LOG(EXCEPTION) << "Failed to find real parameter for formal parameter:" << inputs[i]->DebugString();
-        }
-        formal_to_real_parameters[parameters[i - kPartialInputStartPos]].insert(real_parameters.begin(),
-                                                                                real_parameters.end());
+        AddFormalToRealParameter(parameters[i - kPartialInputStartPos], inputs[i], call_node_to_func_graphs_,
+                                 &formal_to_real_parameters);
       }
     }
   }
@@ -927,10 +1083,10 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
     std::set<KernelWithIndex> total_real_parameters = real_parameters;
     for (const auto &real_parameter : real_parameters) {
       if (real_parameter.first->isa<Parameter>()) {
-        std::set<AnfNodePtr> invalid_real_parameter{formal_parameter};
-        ParseAllRealParameterByFormalParameter(real_parameter.first, formal_to_real_parameters, &total_real_parameters,
+        std::set<KernelWithIndex> invalid_real_parameter{formal_parameter};
+        ParseAllRealParameterByFormalParameter(real_parameter, formal_to_real_parameters, &total_real_parameters,
                                                &invalid_real_parameter);
-        real_to_formal_parameters_[real_parameter.first].emplace(formal_parameter);
+        real_to_formal_parameters_[real_parameter].emplace(formal_parameter);
       } else {
         total_real_parameters.emplace(real_parameter);
       }
@@ -939,10 +1095,10 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
   }
 }
 
-void ControlNodeParser::ParseAllRealParameterByFormalParameter(const AnfNodePtr &formal_parameter,
+void ControlNodeParser::ParseAllRealParameterByFormalParameter(const KernelWithIndex &formal_parameter,
                                                                const FormalToRealParameter &formal_to_real_parameters,
                                                                std::set<KernelWithIndex> *total_real_parameters,
-                                                               std::set<AnfNodePtr> *invalid_real_parameter) {
+                                                               std::set<KernelWithIndex> *invalid_real_parameter) {
   if (invalid_real_parameter->find(formal_parameter) != invalid_real_parameter->end()) {
     return;
   }
@@ -956,19 +1112,19 @@ void ControlNodeParser::ParseAllRealParameterByFormalParameter(const AnfNodePtr 
   }
   const auto &src_iter = formal_to_real_parameters.find(formal_parameter);
   if (src_iter == formal_to_real_parameters.end()) {
-    const auto &func_graph = formal_parameter->func_graph();
+    const auto &func_graph = formal_parameter.first->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph == root_func_graph_) {
       return;
     }
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << formal_parameter->DebugString();
+    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << formal_parameter.first->DebugString();
   }
   const auto &real_parameters = src_iter->second;
   for (const auto &real_parameter : real_parameters) {
     MS_EXCEPTION_IF_NULL(real_parameter.first);
     total_real_parameters->emplace(real_parameter);
     if (real_parameter.first->isa<Parameter>()) {
-      ParseAllRealParameterByFormalParameter(real_parameter.first, formal_to_real_parameters, total_real_parameters,
+      ParseAllRealParameterByFormalParameter(real_parameter, formal_to_real_parameters, total_real_parameters,
                                              invalid_real_parameter);
     }
   }
@@ -1061,7 +1217,8 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
       if (front_node_with_index.first != nullptr) {
         std::set<KernelWithIndex> real_parameters;
         std::set<KernelWithIndex> invalid_call_nodes;
-        FetchRealParameterByNode(front_node_with_index, &real_parameters, &invalid_call_nodes);
+        FetchRealParameterByNode(front_node_with_index, &real_parameters, &invalid_call_nodes,
+                                 call_node_to_func_graphs_);
         for (const auto real_parameter : real_parameters) {
           if (real_parameter.first->isa<Parameter>() || real_parameter.first->isa<ValueNode>()) {
             front_to_backend_parameters_[real_parameter].emplace(parameter, device_context);
@@ -1078,7 +1235,7 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
   for (const auto &front_to_backend_parameters : front_to_backend_parameters_) {
     const auto &front_parameter = front_to_backend_parameters.first;
     const auto &backend_parameters = front_to_backend_parameters.second;
-    const auto &iter = formal_to_real_parameters_.find(front_parameter.first);
+    const auto &iter = formal_to_real_parameters_.find(front_parameter);
     if (iter != formal_to_real_parameters_.end()) {
       for (const auto &real_parameter_with_index : iter->second) {
         const auto &real_parameter = real_parameter_with_index.first;
@@ -1092,11 +1249,21 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
 }
 
 void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
+  AnfNodePtr make_tuple;
+  for (const auto &control_node : control_nodes) {
+    MS_EXCEPTION_IF_NULL(control_node);
+    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimMakeTuple)) {
+      make_tuple = control_node;
+      break;
+    }
+  }
+
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
 
     if (AnfAlgo::IsCallNode(control_node)) {
-      call_node_to_func_graphs_[control_node] = AnfAlgo::GetFuncGraphbyCallNode(control_node);
+      std::stack<size_t> output_indexs;
+      call_node_to_func_graphs_[control_node] = GetFuncGraphbyCallNode(control_node, &output_indexs, make_tuple);
     }
   }
 }
@@ -1112,13 +1279,13 @@ const std::set<FuncGraphPtr> &ControlNodeParser::FetchFuncGraphbyCallNode(const 
 void ControlNodeParser::FetchHostParameterToWeight() {
   for (const auto &pair : real_to_formal_parameters_) {
     std::set<AnfNodePtr> dest_nodes;
-    FetchWeightbyHostParameter(pair.first, &dest_nodes, real_to_formal_parameters_);
-    host_parameter_to_weights_[pair.first] = dest_nodes;
+    FetchWeightbyHostParameter(pair.first.first, &dest_nodes, real_to_formal_parameters_);
+    host_parameter_to_weights_[pair.first.first] = dest_nodes;
 
-    if (std::find(root_graph_parameters_.begin(), root_graph_parameters_.end(), pair.first) !=
+    if (std::find(root_graph_parameters_.begin(), root_graph_parameters_.end(), pair.first.first) !=
         root_graph_parameters_.end()) {
       for (auto &sub_front_node : dest_nodes) {
-        sub_front_node_to_root_front_node_[sub_front_node] = pair.first;
+        sub_front_node_to_root_front_node_[sub_front_node] = pair.first.first;
       }
     }
   }

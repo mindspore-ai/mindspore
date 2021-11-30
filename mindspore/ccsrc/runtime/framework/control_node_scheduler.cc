@@ -160,8 +160,14 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       // The entrance actor has two parts of node members :
       // 1. The formal parameters of the subgraph are used to connect the actor's output arrows.
       for (const auto &parameter : func_graph->parameters()) {
-        if (!HasAbstractMonad(parameter)) {
-          formal_parameters.emplace_back(parameter, 0);
+        if (HasAbstractMonad(parameter)) {
+          continue;
+        }
+        const auto &abstract = parameter->abstract();
+        MS_EXCEPTION_IF_NULL(abstract);
+        size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+        for (size_t i = 0; i < output_num; ++i) {
+          formal_parameters.emplace_back(parameter, i);
         }
       }
 
@@ -517,7 +523,8 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
   if (IsValueNode<FuncGraph>(value_node)) {
     // Link local partial.
     const auto &func_graph = GetValueNode<FuncGraphPtr>(value_node);
-    to_actor->local_partials_[to_index] = OpPartial(func_graph.get(), {});
+    to_actor->local_partials_[to_index] = std::make_shared<OpPartial>();
+    *(to_actor->local_partials_[to_index]) = {func_graph.get(), {}, {}};
   } else {
     // Link device store value node.
     if (!AnfAlgo::OutputAddrExist(value_node, from_index)) {
@@ -545,8 +552,17 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
   MS_EXCEPTION_IF_NULL(actor);
   auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
   MS_EXCEPTION_IF_NULL(entrance_actor);
-  LinkDataArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
-                to_node_with_index.second);
+
+  auto abstract = parameter->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  auto dst_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
+  if (dst_abstract->isa<abstract::AbstractFunction>()) {
+    LinkPartialArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
+                     to_node_with_index.second);
+  } else {
+    LinkDataArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
+                  to_node_with_index.second);
+  }
 }
 
 void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
@@ -565,7 +581,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
     const auto &real_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
 
-    const auto &func_graphs = AnfAlgo::GetFuncGraphbyCallNode(from_node);
+    const auto &func_graphs = parser->FetchFuncGraphbyCallNode(from_node);
     for (const auto &func_graph : func_graphs) {
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
@@ -933,7 +949,6 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
     if ((!graph->is_executing_sink()) && (IsSkippedKernelActor(kernel) || !IsKernelActor(kernel))) {
       continue;
     }
-
     for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = AnfAlgo::GetInputNode(kernel, i);
       MS_EXCEPTION_IF_NULL(input_node);
@@ -947,12 +962,15 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         continue;
       }
       auto front_node = graph->GetFrontAnfByBackendAnf(input);
-      if ((!is_call_input_graph) && (front_node == nullptr)) {
-        continue;
-      }
       auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(input);
       KernelWithIndex from_node_with_index =
         (front_node == nullptr) ? internal_node_with_index : KernelWithIndex(front_node, 0);
+      // If the formal parameter is a tuple type, the parameter of the kernel graph will not directly correspond
+      // to the front parameter, but the node in the internal parameter.
+      if ((!is_call_input_graph) &&
+          ((from_node_with_index.first == nullptr) || (!from_node_with_index.first->isa<Parameter>()))) {
+        continue;
+      }
 
       // Fetch actor and link.
       auto type = FetchKernelTransformType(kernel, graph, {});

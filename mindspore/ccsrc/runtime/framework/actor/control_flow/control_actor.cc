@@ -21,7 +21,9 @@ namespace runtime {
 ControlActor::ControlActor(const std::string &name, KernelTransformType type,
                            const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
     : AbstractActor(name, type, nullptr), formal_parameters_(parameters), node_(node) {
-  input_partials_.resize(parameters.size());
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    input_partials_.emplace_back(std::make_shared<OpPartial>());
+  }
   input_device_tensors_.resize(parameters.size());
 }
 
@@ -54,13 +56,10 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
   SendOutput(context);
 }
 
-void ControlActor::RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
-                                OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+void ControlActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_partials_[sequential_num].emplace_back(position, OpPartial(func_graph, input_data));
-
+  input_op_partials_[sequential_num].emplace_back(position, partial);
   if (CheckRunningCondition(context)) {
     Run(context);
   }
@@ -155,16 +154,23 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
   const auto &partial_iter = input_op_partials_.find(context->sequential_num_);
   if (partial_iter != input_op_partials_.end()) {
     for (const auto &input_partial : partial_iter->second) {
-      MS_EXCEPTION_IF_NULL(input_partial.second.first);
+      MS_EXCEPTION_IF_NULL(input_partial.second->func_graph_);
+      if (input_partial.first >= input_partials_.size()) {
+        MS_LOG(ERROR) << "Invalid partial index:" << input_partial.first << " vector size:" << input_partials_.size()
+                      << " for actor:" << GetAID();
+      }
       input_partials_[input_partial.first] = input_partial.second;
     }
   }
-
   // Fetch input partial from local partial.
   for (const auto &local_partial : local_partials_) {
-    input_partials_[local_partial.first] = local_partial.second;
+    if (local_partial.first >= input_partials_.size()) {
+      MS_LOG(ERROR) << "Invalid partial index:" << local_partial.first << " vector size:" << input_partials_.size()
+                    << " for actor:" << GetAID();
+    }
+    MS_EXCEPTION_IF_NULL(local_partial.second);
+    *(input_partials_[local_partial.first]) = *(local_partial.second);
   }
-
   // Fetch branch id in stack.
   auto iter = input_branch_ids_.find(context->sequential_num_);
   if (iter != input_branch_ids_.end() && (!iter->second.empty())) {
@@ -213,9 +219,9 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
                     << " current:" << input_partials_.size() << " for actor:" << GetAID();
     }
     auto output_partial = input_partials_[partial_arrow->from_output_index_];
-    MS_EXCEPTION_IF_NULL(output_partial.first);
-    ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial.first,
-                          output_partial.second, IntToSize(partial_arrow->to_input_index_), context);
+    MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
+    ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
+                          IntToSize(partial_arrow->to_input_index_), context);
   }
 }
 }  // namespace runtime

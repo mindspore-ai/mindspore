@@ -23,6 +23,7 @@
 #include <set>
 #include <queue>
 #include <map>
+#include <stack>
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
@@ -62,15 +63,15 @@ const char kStackActorNameSuffix[] = "_StackActor";
 using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraph = mindspore::HashMap<FuncGraphPtr, std::vector<KernelGraphPtr>>;
-using HostParameterToWeight = mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>>;
+using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;
 using NodeWithDeviceContext = std::set<std::pair<KernelWithIndex, const DeviceContext *>>;
 using RealToFormalNode = mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>>;
-using FormalToRealParameter = mindspore::HashMap<AnfNodePtr, std::set<KernelWithIndex>>;
-using RealToFormalParameter = mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>>;
+using FormalToRealParameter = std::map<KernelWithIndex, std::set<KernelWithIndex>>;
+using RealToFormalParameter = std::map<KernelWithIndex, std::set<KernelWithIndex>>;
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
 using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
-
+using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>>;
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
 bool HasAbstractRef(const AnfNodePtr &node);
@@ -139,10 +140,10 @@ class ControlNodeParser {
   //    subsequent call node.
   void ParseFormalToRealParameter(const std::vector<AnfNodePtr> &control_nodes);
   // Recursively get all the real parameters corresponding to the formal parameters.
-  void ParseAllRealParameterByFormalParameter(const AnfNodePtr &formal_parameter,
+  void ParseAllRealParameterByFormalParameter(const KernelWithIndex &formal_parameter,
                                               const FormalToRealParameter &formal_to_real_parameters,
                                               std::set<KernelWithIndex> *total_real_parameters,
-                                              std::set<AnfNodePtr> *invalid_real_parameter);
+                                              std::set<KernelWithIndex> *invalid_real_parameter);
   // Get all the call nodes without a recursion call relation.
   void ParseUnRecursionCallNode();
 
@@ -213,7 +214,7 @@ class ControlNodeParser {
   // id needs to be sent to the gather actor corresponding to the funcgraph, and the gather will send the branch id
   // to its output switch actor.
   mindspore::HashMap<AnfNodePtr, int> call_node_to_branch_id_;
-  mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>> call_node_to_func_graphs_;
+  CallNodeToFuncGraph call_node_to_func_graphs_;
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.
   HostParameterToWeight host_parameter_to_weights_;

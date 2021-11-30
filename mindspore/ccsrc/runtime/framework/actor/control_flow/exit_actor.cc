@@ -83,8 +83,8 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
                       << " current:" << input_partials_.size() << " for actor:" << GetAID();
       }
       auto output_partial = input_partials_[partial_arrow->from_output_index_];
-      MS_EXCEPTION_IF_NULL(output_partial.first);
-      Async(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial.first, output_partial.second,
+      MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
+      Async(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
             IntToSize(partial_arrow->to_input_index_), context);
     }
   }

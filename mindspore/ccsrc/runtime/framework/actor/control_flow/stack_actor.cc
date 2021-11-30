@@ -87,16 +87,14 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
   }
 }
 
-void StackActor::RunOpPartial(FuncGraph *func_graph, std::vector<DeviceTensor *> input_data, size_t position,
-                              OpContext<DeviceTensor> *const context) {
+void StackActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(func_graph);
   // The parameters from the inside of the subgraph need to be put into the stack.
   if (IntToSize(position) < input_parameter_data_num_ + device_tensor_store_keys_.size() +
                               input_parameter_partial_num_ + local_device_tensors_.size()) {
-    input_parameter_partial_[context->sequential_num_][position].push(OpPartial(func_graph, input_data));
+    input_parameter_partial_[context->sequential_num_][position].push(partial);
   } else {
-    input_op_partials_[context->sequential_num_].emplace_back(position, OpPartial(func_graph, input_data));
+    input_op_partials_[context->sequential_num_].emplace_back(position, partial);
   }
   if (CheckRunningCondition(context)) {
     Run(context);
