@@ -31,20 +31,6 @@
 
 namespace mindspore {
 namespace parallel {
-namespace {
-ValuePtr MakeListValue(const std::vector<int64_t> &v) {
-  std::vector<ValuePtr> list;
-  (void)std::transform(v.begin(), v.end(), std::back_inserter(list), [](int64_t ele) { return MakeValue(ele); });
-  return std::make_shared<ValueSequeue>(list);
-}
-
-ValuePtr MakeTupleListValue(const Shapes &v) {
-  std::vector<ValuePtr> tuple;
-  (void)std::transform(v.begin(), v.end(), std::back_inserter(tuple),
-                       [](const std::vector<int64_t> &list) { return MakeListValue(list); });
-  return std::make_shared<ValueTuple>(tuple);
-}
-}  // namespace
 Status Conv2DInfo::GetAttrsBase() {
   // format
   format_ = GetStringAttr(FORMAT);
@@ -653,8 +639,11 @@ OperatorAttrs Conv2DInfo::CreateNeighborExchangeAttrs(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto dtype = tensor_type->element();
   MS_EXCEPTION_IF_NULL(dtype);
-  Attr send_ranks = {SEND_RNAK_IDS, MakeListValue(send_rank_ids_)};
-  Attr recv_ranks = {RECV_RNAK_IDS, MakeListValue(recv_rank_ids_)};
+
+  // the type of send_rank_ids, recv_rank_ids, send_shapes, recv_shapes is list, is not tuple, can not use MakeValue
+  // the MakeValue(vector) return a tuple
+  Attr send_ranks = {SEND_RANK_IDS, MakeListValue(send_rank_ids_)};
+  Attr recv_ranks = {RECV_RANK_IDS, MakeListValue(recv_rank_ids_)};
   Attr send_shapes = {SEND_SHAPES, MakeTupleListValue(send_shapes_)};
   Attr recv_shapes = {RECV_SHAPES, MakeTupleListValue(recv_shapes_)};
   Attr recv_type = {RECV_TYPE, dtype};
