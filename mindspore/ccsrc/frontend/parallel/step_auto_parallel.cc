@@ -105,14 +105,15 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // search parallelization strategy
   if ((strategy_search_mode == DYNAMIC_PROGRAMMING) || (strategy_search_mode == SHARDING_PROPAGATION)) {
     if (ParallelStrategySearch(all_nodes, root) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using DP searching mode";
+      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using " << strategy_search_mode
+                        << " searching mode";
     }
   } else if (strategy_search_mode == RECURSIVE_PROGRAMMING) {
     if (ParallelStrategyRecSearch(all_nodes, root) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
     }
   } else {
-    MS_LOG(EXCEPTION) << "Auto-parallel strategy searching mode unexpected";
+    MS_LOG(EXCEPTION) << "Auto-parallel strategy searching mode unexpected: " << strategy_search_mode;
   }
 
   (void)gettimeofday(&end_time, nullptr);
@@ -288,6 +289,14 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
   (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
 }
 
+void ApplyApproximationForNode(const OperatorInfoPtr &operator_info) {
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (approximation) {
+    operator_info->ApproximateStrategies();
+    MS_LOG(INFO) << "Approximated StrategyCost for: " << operator_info->name();
+  }
+}
+
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, bool is_last_nodes,
                                       StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -369,8 +378,10 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     return nullptr;
   }
 
-  if ((ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) &&
-      (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos)) {
+  bool use_sp_and_dataset = ((ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+                             (ParallelContext::GetInstance()->sharding_propagation())) &&
+                            (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos);
+  if (use_sp_and_dataset) {
     const auto &swc_vec = operator_info->GetStrategyCost();
     if (swc_vec.empty()) {
       MS_LOG(EXCEPTION) << "No available strategy for: " << operator_info->name();
@@ -379,11 +390,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     (void)configured_stra_ops_.emplace(operator_info, swc_vec[0]->strategy_ptr);
   }
   // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
-  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
-  if (approximation) {
-    operator_info->ApproximateStrategies();
-    MS_LOG(INFO) << "Approximated StrategyCost for: " << operator_info->name();
-  }
+  ApplyApproximationForNode(operator_info);
   return operator_info;
 }
 
@@ -639,7 +646,9 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
-  if ((ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) && (prev_prim->name() == CAST) &&
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
+  if (use_sp && (prev_prim->name() == CAST) &&
       (configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
     const auto next_op_stra = configured_stra_ops_[node_op_info];
     const auto cast_stra = edge_ptr->GetPrevOpStrategyByNextOpStrategyWithMiniComm(next_op_stra);
@@ -990,7 +999,9 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   }
 
   // Step 4: run the strategy searching algorithm
-  if ((ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION)) {
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
+  if (use_sp) {
     entire_costgraph->StrategyPropagate(configured_stra_ops_);
     configured_stra_ops_.clear();
   } else if (GetStrategy(entire_costgraph) != SUCCESS) {
