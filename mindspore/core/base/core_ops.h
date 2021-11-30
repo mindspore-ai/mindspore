@@ -497,6 +497,7 @@ inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
 inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
 inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>(kAdd);
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
+inline const PrimitivePtr kPrimMatMulV2 = std::make_shared<Primitive>("MatMulV2");
 inline const PrimitivePtr kPrimMatrixDiag = std::make_shared<Primitive>("MatrixDiag");
 inline const PrimitivePtr kPrimBatchMatMul = std::make_shared<Primitive>("BatchMatMul");
 inline const PrimitivePtr kPrimBatchMatMulV2 = std::make_shared<Primitive>("BatchMatMulV2");
