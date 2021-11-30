@@ -1038,7 +1038,7 @@ size_t AnfRuntimeAlgorithm::GetOutputAddressNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetOutputNum();
+  return build_info->GetOutputNumWithoutMonad();
 }
 
 // set output device addr of anf_node
