@@ -7,8 +7,8 @@ mindspore.dataset.SequentialSampler
 
     **参数：**
 
-        - **indices** (Any iterable Python object but string): 索引的序列。
-        - **num_samples** (int, optional): 要采样的元素数量（默认值为None，采样所有元素）。
+    - **indices** (Any iterable Python object but string): 索引的序列。
+    - **num_samples** (int, optional): 要采样的元素数量（默认值为None，采样所有元素）。
 
     **样例：**
 

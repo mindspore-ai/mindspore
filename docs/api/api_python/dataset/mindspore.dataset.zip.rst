@@ -4,7 +4,7 @@
 
     **参数：**
 
-    - **datasets** (tuple of class Dataset) - 输入元组格式的多个dataset对象。 `datasets` 参数的长度必须大于1。
+    **datasets** (tuple of class Dataset) - 输入元组格式的多个dataset对象。 `datasets` 参数的长度必须大于1。
 
     **返回：**
 

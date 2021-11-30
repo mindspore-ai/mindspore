@@ -7,9 +7,9 @@ mindspore.dataset.audio.transforms.LowpassBiquad
 
     **参数：**
 
-        - **sample_rate** (int)：采样率，例如44100 (Hz)，不能为零。
-        - **cutoff_freq** (float)：中心频率（单位：Hz）。
-        - **Q** (float, optional)：品质因子，参考https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
+    - **sample_rate** (int)：采样率，例如44100 (Hz)，不能为零。
+    - **cutoff_freq** (float)：中心频率（单位：Hz）。
+    - **Q** (float, optional)：品质因子，参考https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
 
     **样例：**
 
