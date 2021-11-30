@@ -28,7 +28,7 @@ mindspore.train.summary
 
         - **tensor_format** (Union[str, None])：自定义导出的Tensor的格式。支持["npy", None]。默认值：None，表示不导出Tensor。
 
-            - **npy**：将Tensor导出为NPY文件。
+          - **npy**：将Tensor导出为NPY文件。
 
     **异常：**
 
@@ -60,13 +60,13 @@ mindspore.train.summary
         - **name** (str)：数据名称。
         - **value** (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo])： 待存储的值。
 
-            - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 mindspore/ccsrc/anf_ir.proto。
-            - 当plugin为"scalar"、"image"、"tensor"或"histogram"时，参数值的数据类型应为"Tensor"对象。
-            - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-            - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-            - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-            - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-            - 当plugin为"explainer"时，参数值的数据类型应为"Explain"对象。具体详情，请参见 mindspore/ccsrc/summary.proto。
+          - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 mindspore/ccsrc/anf_ir.proto。
+          - 当plugin为"scalar"、"image"、"tensor"或"histogram"时，参数值的数据类型应为"Tensor"对象。
+          - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
+          - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
+          - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
+          - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
+          - 当plugin为"explainer"时，参数值的数据类型应为"Explain"对象。具体详情，请参见 mindspore/ccsrc/summary.proto。
         
         **异常：**
 

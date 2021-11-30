@@ -308,8 +308,8 @@ mindspore.dataset.GraphData
     - **neighbor_types** (Union[list, numpy.ndarray])：每跳采样的邻居类型。
     - **strategy** (SamplingStrategy, 可选)：采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
         
-        - SamplingStrategy.RANDOM，随机抽样，带放回采样。
-        - SamplingStrategy.EDGE_WEIGHT，以边缘权重为概率进行采样。
+      - SamplingStrategy.RANDOM，随机抽样，带放回采样。
+      - SamplingStrategy.EDGE_WEIGHT，以边缘权重为概率进行采样。
 
     **返回：**
 
