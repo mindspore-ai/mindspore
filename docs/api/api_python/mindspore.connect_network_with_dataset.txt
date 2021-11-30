@@ -1,32 +1,40 @@
-mindspore.connect_network_with_dataset(network, dataset_helper)
+mindspore.connect_network_with_dataset
+=======================================
 
-    å°†`network`ä¸`dataset_helper`ä¸­çš„æ•°æ®é›†è¿æ¥ã€‚
+.. py:class:: mindspore.connect_network_with_dataset(network, dataset_helper)
 
-    æ­¤å‡½æ•°ä½¿ç”¨:class:`mindspore.ops.GetNext`åŒ…è£…è¾“å…¥ç½‘ç»œï¼Œä»¥ä¾¿åœ¨æ­£å‘è®¡ç®—æœŸé—´å¯ä»¥è‡ªåŠ¨ä»ä¸é˜Ÿåˆ—åç§°å¯¹åº”çš„æ•°æ®é€šé“ä¸­æå–æ•°æ®ï¼Œå¹¶å°†æ•°æ®ä¼ é€’åˆ°è¾“å…¥ç½‘ç»œã€‚
+    ½« `network` Óë `dataset_helper` ÖĞµÄÊı¾İ¼¯Á¬½Ó¡£
 
-    æ³¨ï¼š
-        å¦‚æœä»¥å›¾æ¨¡å¼åœ¨Ascend/GPUä¸Šè¿è¡Œç½‘ç»œï¼Œæ­¤å‡½æ•°å°†ä½¿ç”¨:class:`mindspore.ops.GetNext`åŒ…è£…è¾“å…¥ç½‘ç»œã€‚åœ¨å…¶ä»–æƒ…å†µä¸‹ï¼Œè¾“å…¥ç½‘ç»œå°†åœ¨æ²¡æœ‰æ”¹åŠ¨çš„æƒ…å†µä¸‹è¿”å›ã€‚
-        ä»…åœ¨ä¸‹æ²‰æ¨¡å¼ä¸‹è·å–æ•°æ®éœ€è¦ä½¿ç”¨:class:`mindspore.ops.GetNext`ï¼Œå› æ­¤æ­¤å‡½æ•°ä¸é€‚ç”¨äºéä¸‹æ²‰æ¨¡å¼ã€‚
+    ´Ëº¯ÊıÊ¹ÓÃ :class:`mindspore.ops.GetNext` °ü×°ÊäÈëÍøÂç£¬ÒÔ±ãÔÚÕıÏò¼ÆËãÆÚ¼ä¿ÉÒÔ×Ô¶¯´ÓÓë¶ÓÁĞÃû³Æ¶ÔÓ¦µÄÊı¾İÍ¨µÀÖĞÌáÈ¡Êı¾İ£¬²¢½«Êı¾İ´«µİµ½ÊäÈëÍøÂç¡£
 
-    å‚æ•°ï¼š
-        network (Cell)ï¼šæ•°æ®é›†çš„è®­ç»ƒç½‘ç»œã€‚
-        dataset_helper (DatasetHelper)ï¼šä¸€ä¸ªå¤„ç†MindDataæ•°æ®é›†çš„ç±»ï¼Œæä¾›äº†æ•°æ®é›†çš„ç±»å‹ã€å½¢çŠ¶ï¼ˆshapeï¼‰å’Œé˜Ÿåˆ—åç§°ï¼Œä»¥åŒ…è£…:class:`mindspore.ops.GetNext`ã€‚
+    .. note::
+        Èç¹ûÒÔÍ¼Ä£Ê½ÔÚAscend/GPUÉÏÔËĞĞÍøÂç£¬´Ëº¯Êı½«Ê¹ÓÃ :class:`mindspore.ops.GetNext` °ü×°ÊäÈëÍøÂç¡£ÔÚÆäËûÇé¿öÏÂ£¬ÊäÈëÍøÂç½«ÔÚÃ»ÓĞ¸Ä¶¯µÄÇé¿öÏÂ·µ»Ø¡£
+        ½öÔÚÏÂ³ÁÄ£Ê½ÏÂ»ñÈ¡Êı¾İĞèÒªÊ¹ÓÃ :class:`mindspore.ops.GetNext` £¬Òò´Ë´Ëº¯Êı²»ÊÊÓÃÓÚ·ÇÏÂ³ÁÄ£Ê½¡£
 
-    è¿”å›ï¼š
-        Cellï¼Œåœ¨Ascendä¸Šä»¥å›¾æ¨¡å¼è¿è¡Œä»»åŠ¡çš„æƒ…å†µä¸‹ï¼Œä¸€ä¸ªç”±:class:`mindspore.ops.GetNext`åŒ…è£…çš„æ–°ç½‘ç»œã€‚åœ¨å…¶ä»–æƒ…å†µä¸‹æ˜¯è¾“å…¥ç½‘ç»œã€‚
+    **²ÎÊı£º**
+      
+    - **network** (Cell) - Êı¾İ¼¯µÄÑµÁ·ÍøÂç¡£
+    - **dataset_helper** (DatasetHelper) - Ò»¸ö´¦ÀíMindDataÊı¾İ¼¯µÄÀà£¬Ìá¹©ÁËÊı¾İ¼¯µÄÀàĞÍ¡¢ĞÎ×´£¨shape£©ºÍ¶ÓÁĞÃû³Æ£¬ÒÔ°ü×° :class:`mindspore.ops.GetNext` ¡£
 
-    å¼‚å¸¸ï¼š
-        RuntimeError:  å¦‚æœè¯¥æ¥å£åœ¨éæ•°æ®ä¸‹æ²‰æ¨¡å¼è°ƒç”¨ã€‚
+    **·µ»Ø£º**
 
-    æ”¯æŒå¹³å°ï¼š
-        ``Ascend`` ``GPU``
+    Cell£¬ÔÚAscendÉÏÒÔÍ¼Ä£Ê½ÔËĞĞÈÎÎñµÄÇé¿öÏÂ£¬Ò»¸öÓÉ :class:`mindspore.ops.GetNext` °ü×°µÄĞÂÍøÂç¡£ÔÚÆäËûÇé¿öÏÂÊÇÊäÈëÍøÂç¡£
 
-    ç¤ºä¾‹ï¼š
-        >>> from mindspore import DatasetHelper
-        >>>
-        >>> # è°ƒç”¨create_datasetå‡½æ•°åˆ›å»ºä¸€ä¸ªé€šç”¨çš„æ•°æ®é›†ï¼Œå‚è€ƒmindpore.dataset
-        >>> train_dataset = create_custom_dataset()
-        >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
-        >>> net = Net()                                                                                                                                                                       
-        >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
+    **Òì³££º**
+    
+    **RuntimeError** - Èç¹û¸Ã½Ó¿ÚÔÚ·ÇÊı¾İÏÂ³ÁÄ£Ê½µ÷ÓÃ¡£
+
+    **Ö§³ÖÆ½Ì¨£º**
+      
+    ``Ascend``  ``GPU``
+
+    **ÑùÀı£º**
+
+    >>> from mindspore import DatasetHelper
+    >>>
+    >>> # µ÷ÓÃcreate_datasetº¯Êı´´½¨Ò»¸öÍ¨ÓÃµÄÊı¾İ¼¯£¬²Î¿¼mindpore.dataset
+    >>> train_dataset = create_custom_dataset()
+    >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+    >>> net = Net()                                                                                                                                                                       
+    >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     
