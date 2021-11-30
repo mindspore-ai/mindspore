@@ -58,7 +58,7 @@ class FileWriter:
         ...          "data": b"\xe6\xda\xd1\xae\x07\xb8>\xd4\x00\xf8\x129\x15\xd9\xf2q\xc0\xa2\x91YFUO\x1dsE1"},
         ...         {"file_name": "3.jpg", "label": 99,
         ...          "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1"}]
-        >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
+        >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
         >>> writer.add_schema(schema_json, "test_schema")
         0
         >>> writer.add_index(indexes)

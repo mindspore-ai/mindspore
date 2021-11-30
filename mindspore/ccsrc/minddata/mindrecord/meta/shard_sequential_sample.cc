@@ -52,14 +52,14 @@ Status ShardSequentialSample::Execute(ShardTaskList &tasks) {
   if (tasks.permutation_.empty()) {
     ShardTaskList new_tasks;
     total_no = static_cast<int64_t>(tasks.Size());
-    for (size_t i = offset_; i < taking + offset_; ++i) {
+    for (int64_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.AssignTask(tasks, i % total_no);
     }
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {  // shuffled
     ShardTaskList new_tasks;
     total_no = static_cast<int64_t>(tasks.permutation_.size());
-    for (size_t i = offset_; i < taking + offset_; ++i) {
+    for (int64_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
     }
     ShardTaskList::TaskListSwap(tasks, new_tasks);

@@ -64,11 +64,11 @@ class __attribute__((visibility("default"))) ShardOperator {
 
   virtual dataset::ShuffleMode GetShuffleMode() { return shuffle_mode_; }
 
-  virtual void SetShardSampleCount(const std::vector<uint32_t> &shard_sample_count) {
+  virtual void SetShardSampleCount(const std::vector<int64_t> &shard_sample_count) {
     shard_sample_count_ = shard_sample_count;
   }
 
-  virtual std::vector<uint32_t> GetShardSampleCount() { return shard_sample_count_; }
+  virtual std::vector<int64_t> GetShardSampleCount() { return shard_sample_count_; }
 
  private:
   int64_t num_samples_ = 0;
@@ -77,7 +77,7 @@ class __attribute__((visibility("default"))) ShardOperator {
   // 0 : 15  -  shard0 has 15 samples
   // 1 : 41  -  shard1 has 26 samples
   // 2 : 58  -  shard2 has 17 samples
-  std::vector<uint32_t> shard_sample_count_;
+  std::vector<int64_t> shard_sample_count_;
   dataset::ShuffleMode shuffle_mode_ = dataset::ShuffleMode::kGlobal;
 };
 }  // namespace mindrecord

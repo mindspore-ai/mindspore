@@ -56,8 +56,8 @@ class MindRecordSamplerRT : public SamplerRT {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
-  mindrecord::ShardReader *shard_reader_;  // back pointer to the shard reader
-  const std::vector<int> *sample_ids_;     // read-only back pointer into mind record sampler ids
+  mindrecord::ShardReader *shard_reader_;   // back pointer to the shard reader
+  const std::vector<int64_t> *sample_ids_;  // read-only back pointer into mind record sampler ids
   int64_t next_id_;
 };
 }  // namespace dataset

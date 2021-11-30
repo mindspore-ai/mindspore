@@ -28,11 +28,11 @@ namespace mindspore {
 namespace mindrecord {
 class __attribute__((visibility("default"))) ShardSample : public ShardOperator {
  public:
-  explicit ShardSample(int n);
+  explicit ShardSample(int64_t n);
 
-  ShardSample(int num, int den);
+  ShardSample(int64_t num, int64_t den);
 
-  ShardSample(int num, int den, int par, int no_of_samples = 0, int offset = -1);
+  ShardSample(int64_t num, int64_t den, int64_t par, int64_t no_of_samples = 0, int64_t offset = -1);
 
   ShardSample(const std::vector<int64_t> &indices);
 
@@ -42,24 +42,24 @@ class __attribute__((visibility("default"))) ShardSample : public ShardOperator 
 
   Status Execute(ShardTaskList &tasks) override;
 
-  Status UpdateTasks(ShardTaskList &tasks, int taking);
+  Status UpdateTasks(ShardTaskList &tasks, int64_t taking);
 
   Status SufExecute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
  protected:
-  int numerator_;
-  int denominator_;
-  int partition_id_;
-  int no_of_samples_;
+  int64_t numerator_;
+  int64_t denominator_;
+  int64_t partition_id_;
+  int64_t no_of_samples_;
   std::shared_ptr<ShardShuffle> shuffle_op_;
   std::vector<int64_t> nums_per_shard_;
 
  private:
   std::vector<int64_t> indices_;
   SamplerType sampler_type_;
-  int offset_;
+  int64_t offset_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

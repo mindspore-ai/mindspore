@@ -45,16 +45,18 @@ ShardTaskList &ShardTaskList::operator=(const ShardTaskList &other) {
 void ShardTaskList::InitSampleIds() {
   // no-op if there already exists sample ids.  Do not clobber previous list
   if (sample_ids_.empty()) {
-    sample_ids_ = std::vector<int>(task_list_.size());
-    for (int i = 0; i < task_list_.size(); i++) sample_ids_[i] = i;
+    sample_ids_ = std::vector<int64_t>(task_list_.size());
+    for (auto i = 0; i < task_list_.size(); i++) {
+      sample_ids_[i] = i;
+    }
   }
 }
 
 void ShardTaskList::MakePerm() {
-  size_t perm_size = sample_ids_.size();
-  permutation_ = std::vector<int>(perm_size);
-  for (uint32_t i = 0; i < perm_size; i++) {
-    permutation_[i] = static_cast<int>(i);
+  int64_t perm_size = sample_ids_.size();
+  permutation_ = std::vector<int64_t>(perm_size);
+  for (int64_t i = 0; i < perm_size; i++) {
+    permutation_[i] = i;
   }
 }
 
@@ -73,23 +75,23 @@ void ShardTaskList::TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_t
 
 void ShardTaskList::PopBack() { task_list_.pop_back(); }
 
-uint32_t ShardTaskList::Size() const { return static_cast<uint32_t>(task_list_.size()); }
+int64_t ShardTaskList::Size() const { return static_cast<int64_t>(task_list_.size()); }
 
-uint32_t ShardTaskList::SizeOfRows() const {
-  if (task_list_.size() == 0) return static_cast<uint32_t>(0);
+int64_t ShardTaskList::SizeOfRows() const {
+  if (task_list_.size() == 0) return static_cast<int64_t>(0);
 
   // 1 task is 1 page
   const size_t kBlobInfoIndex = 2;
-  auto sum_num_rows = [](int x, ShardTask y) { return x + std::get<kBlobInfoIndex>(y)[0]; };
-  uint32_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
+  auto sum_num_rows = [](int64_t x, ShardTask y) { return x + std::get<kBlobInfoIndex>(y)[0]; };
+  int64_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
   return nRows;
 }
 
-ShardTask &ShardTaskList::GetTaskByID(size_t id) { return task_list_[id]; }
+ShardTask &ShardTaskList::GetTaskByID(int64_t id) { return task_list_[id]; }
 
-int ShardTaskList::GetTaskSampleByID(size_t id) { return sample_ids_[id]; }
+int64_t ShardTaskList::GetTaskSampleByID(int64_t id) { return sample_ids_[id]; }
 
-int ShardTaskList::GetRandomTaskID() {
+int64_t ShardTaskList::GetRandomTaskID() {
   std::mt19937 gen = mindspore::dataset::GetRandomDevice();
   std::uniform_int_distribution<> dis(0, sample_ids_.size() - 1);
   return dis(gen);
@@ -106,31 +108,31 @@ ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks,
   ShardTaskList res;
   if (category_tasks.empty()) return res;
   auto total_categories = category_tasks.size();
-  res.categories = static_cast<uint32_t>(total_categories);
+  res.categories = static_cast<int64_t>(total_categories);
   if (replacement == false) {
     auto minTasks = category_tasks[0].Size();
-    for (uint32_t i = 1; i < total_categories; i++) {
+    for (int64_t i = 1; i < total_categories; i++) {
       minTasks = std::min(minTasks, category_tasks[i].Size());
     }
     int64_t count = 0;
-    for (uint32_t task_no = 0; task_no < minTasks; task_no++) {
-      for (uint32_t i = 0; i < total_categories; i++) {
+    for (int64_t task_no = 0; task_no < minTasks; task_no++) {
+      for (int64_t i = 0; i < total_categories; i++) {
         if (num_samples != 0 && count == num_samples) break;
-        res.InsertTask(std::move(category_tasks[i].GetTaskByID(static_cast<int>(task_no))));
+        res.InsertTask(std::move(category_tasks[i].GetTaskByID(task_no)));
         count++;
       }
     }
   } else {
     auto maxTasks = category_tasks[0].Size();
-    for (uint32_t i = 1; i < total_categories; i++) {
+    for (int64_t i = 1; i < total_categories; i++) {
       maxTasks = std::max(maxTasks, category_tasks[i].Size());
     }
     if (num_elements != std::numeric_limits<int64_t>::max()) {
       maxTasks = static_cast<decltype(maxTasks)>(num_elements);
     }
     int64_t count = 0;
-    for (uint32_t i = 0; i < total_categories; i++) {
-      for (uint32_t j = 0; j < maxTasks; j++) {
+    for (int64_t i = 0; i < total_categories; i++) {
+      for (int64_t j = 0; j < maxTasks; j++) {
         if (num_samples != 0 && count == num_samples) break;
         res.InsertTask(category_tasks[i].GetRandomTask());
         count++;

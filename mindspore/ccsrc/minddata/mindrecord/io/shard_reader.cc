@@ -172,9 +172,9 @@ Status ShardReader::CheckColumnList(const std::vector<std::string> &selected_col
   auto schema_ptr = GetShardHeader()->GetSchemas()[0];
   auto schema = schema_ptr->GetSchema()["schema"];
   for (auto i = 0; i < selected_columns.size(); ++i) {
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      schema.find(selected_columns[i]) != schema.end(),
-      "Invalid data, column name: " + selected_columns[i] + "can not found in schema. Please check the 'column_list'.");
+    CHECK_FAIL_RETURN_UNEXPECTED(schema.find(selected_columns[i]) != schema.end(),
+                                 "Invalid data, column name: " + selected_columns[i] +
+                                   " can not found in schema. Please check the 'column_list'.");
   }
   return Status::OK();
 }
@@ -294,7 +294,7 @@ std::shared_ptr<ShardColumn> ShardReader::GetShardColumn() const { return shard_
 
 int ShardReader::GetShardCount() const { return shard_header_->GetShardCount(); }
 
-int ShardReader::GetNumRows() const { return num_rows_; }
+int64_t ShardReader::GetNumRows() const { return num_rows_; }
 
 std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummary() {
   std::vector<std::tuple<int, int, int, uint64_t>> row_group_summary;
@@ -946,7 +946,8 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
 }
 
 Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
-                                   const std::shared_ptr<ShardOperator> &ops, int64_t *count, const int num_padded) {
+                                   const std::shared_ptr<ShardOperator> &ops, int64_t *count,
+                                   const int64_t num_padded) {
   RETURN_IF_NOT_OK(Init(file_paths, load_dataset));
   int64_t num_samples = num_rows_;
   bool root = true;
@@ -1007,7 +1008,8 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
 
 Status ShardReader::Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer,
                          const std::vector<std::string> &selected_columns,
-                         const std::vector<std::shared_ptr<ShardOperator>> &operators, int num_padded, bool lazy_load) {
+                         const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
+                         bool lazy_load) {
   lazy_load_ = lazy_load;
 
   // Open file and set header by ShardReader
@@ -1228,7 +1230,7 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
 
     // need padded sample to the task
     if (num_padded_ > 0) {
-      for (int i = 0; i < num_padded_; ++i) {
+      for (auto i = 0; i < num_padded_; ++i) {
         tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
       }
     }
@@ -1258,13 +1260,12 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
   return Status::OK();
 }
 
-Status ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_id,
+Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
                                     std::shared_ptr<TASK_CONTENT> *task_content_ptr) {
   RETURN_UNEXPECTED_IF_NULL(task_content_ptr);
   // All tasks are done
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    task_id < static_cast<int>(tasks_.Size()),
-    "[Internal ERROR] 'task_id': " + std::to_string(task_id) + " is out of bound: " + std::to_string(tasks_.Size()));
+  CHECK_FAIL_RETURN_UNEXPECTED(task_id < tasks_.Size(), "[Internal ERROR] 'task_id': " + std::to_string(task_id) +
+                                                          " is out of bound: " + std::to_string(tasks_.Size()));
   uint32_t shard_id = 0;
   uint32_t group_id = 0;
   uint32_t blob_start = 0;
@@ -1467,7 +1468,7 @@ void ShardReader::ShuffleTask() {
   if (tasks_.permutation_.empty()) tasks_.MakePerm();
 }
 
-const std::vector<int> *ShardReader::GetSampleIds() {
+const std::vector<int64_t> *ShardReader::GetSampleIds() {
   // return const reference to private sample id list.
   return &(this->tasks_.sample_ids_);
 }
