@@ -58,6 +58,8 @@ void *NvidiaCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   }
   return &unique_id_;
 }
+
+const ncclComm_t &NvidiaCommunicationGroup::nccl_communicator() const { return comm_; }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

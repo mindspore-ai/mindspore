@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include "ir/dtype/type_id.h"
+#include "utils/check_convert_utils.h"
 #include "runtime/hardware/collective/communication_group.h"
 
 namespace mindspore {
@@ -65,15 +66,31 @@ class CollectiveCommunicationLib {
   // Return communication group pointer.
   virtual CommunicationGroupPtr GetGroup(const std::string &group_name);
 
-  // Primitive of AllGather operation.
+  // Primitive of collective operations.
   virtual bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                         const std::string &group_name, void *stream) {
+                         const std::string &group_name, void *stream = nullptr) {
+    return true;
+  }
+  virtual bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                         ReduceMode reduce_op, const std::string &group_name, void *stream = nullptr) {
+    return true;
+  }
+  virtual bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                         uint32_t root_rank, const std::string &group_name, void *stream = nullptr) {
+    return true;
+  }
+  virtual bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
+                             ReduceMode reduce_op, const std::string &group_name, void *stream = nullptr) {
     return true;
   }
 
-  // Primitive of Broadcast operation.
-  virtual bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                         uint32_t root_rank, const std::string &group_name, void *stream) {
+  virtual bool Send(const void *send_buff, size_t count, TypeId data_type, uint32_t peer, const std::string &group_name,
+                    void *stream = nullptr) {
+    return true;
+  }
+
+  virtual bool Recv(void *recv_buff, size_t count, TypeId data_type, uint32_t peer, const std::string &group_name,
+                    void *stream = nullptr) {
     return true;
   }
 

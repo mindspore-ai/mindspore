@@ -45,9 +45,27 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
+  bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                 const std::string &group_name, void *stream = nullptr) override;
+
+  bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, ReduceMode reduce_op,
+                 const std::string &group_name, void *stream = nullptr) override {
+    return true;
+  }
+
+  bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, uint32_t root_rank,
+                 const std::string &group_name, void *stream = nullptr) override;
+
+  bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type, ReduceMode reduce_op,
+                     const std::string &group_name, void *stream = nullptr) override {
+    return true;
+  }
+
  private:
   MsCollectiveCommLib();
   ~MsCollectiveCommLib() override = default;
+
+  std::shared_ptr<ps::core::AbstractNode> node_;
 };
 }  // namespace cpu
 }  // namespace device
