@@ -318,19 +318,17 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNod
     }
     return RET_NO_CHANGE;
   }
-  if (CheckNodeInSet(cnode, has_bias_operator)) {
-    if (input_index == THIRD_INPUT + 1) {
-      ret = DoBiasQuant(input_node, primitive);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Do bias quant failed.";
-        return ret;
-      }
-    } else {
-      ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Do bias quant failed.";
-        return ret;
-      }
+  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
+    ret = DoBiasQuant(input_node, primitive);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Do bias quant failed.";
+      return ret;
+    }
+  } else if (CheckNodeInSet(cnode, per_channel_ops_)) {
+    ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Do bias quant failed.";
+      return ret;
     }
   } else {
     ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
@@ -511,6 +509,8 @@ void FullQuantQuantizer::InitCpuConfig() {
                        prim::kPrimAffine,        prim::kPrimEltwise,
                        prim::kPrimShape};
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
+  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMul,
+                      prim::kPrimFullConnection, prim::kPrimLayerNormFusion};
 }
 
 void FullQuantQuantizer::InitKirinConfig() {
@@ -521,6 +521,7 @@ void FullQuantQuantizer::InitKirinConfig() {
   weight_symmetry_ = true;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
   flags_.fullQuantParam.bias_correction = false;
+  per_channel_ops_ = {prim::kPrimConv2DFusion};
 }
 
 void FullQuantQuantizer::InitQMinMax() {

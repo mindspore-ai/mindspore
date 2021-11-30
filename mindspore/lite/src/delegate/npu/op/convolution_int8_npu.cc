@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-#include "src/delegate/npu/op/convolution_npu.h"
-#include "src/delegate/npu/op/convolution_depthwise_npu.h"
 #include "src/delegate/npu/op/convolution_int8_npu.h"
-#include "src/delegate/npu/op/convolution_depthwise_int8_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
-int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                                const std::vector<mindspore::MSTensor> &out_tensors) {
+int ConvolutionInt8NPUOp::IsSupport(const schema::Primitive *primitive,
+                                    const std::vector<mindspore::MSTensor> &in_tensors,
+                                    const std::vector<mindspore::MSTensor> &out_tensors) {
   auto conv_prim = primitive->value_as_Conv2DFusion();
   if (conv_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -37,7 +35,7 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
   return RET_OK;
 }
 
-int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
+int ConvolutionInt8NPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   auto group = static_cast<int>(conv_prim->group());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
@@ -64,10 +62,10 @@ int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   return RET_OK;
 }
 
-int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                           const std::vector<mindspore::MSTensor> &out_tensors) {
+int ConvolutionInt8NPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
   // set conv attr param
-  conv_ = new (std::nothrow) hiai::op::Convolution(name_ + "_conv");
+  conv_ = new (std::nothrow) hiai::op::QuantizedConvolution(name_ + "_quant_conv");
   if (conv_ == nullptr) {
     MS_LOG(ERROR) << "New convolution operator for convolution op " << name_ << " failed.";
     return RET_ERROR;
@@ -82,6 +80,7 @@ int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector
     MS_LOG(ERROR) << "Set npu op parameter for convolution op " << name_ << " failed.";
     return RET_ERROR;
   }
+
   act_type_ = conv_prim->activation_type();
   if (act_type_ != schema::ActivationType_NO_ACTIVATION) {
     ret = SetActivation(conv_, act_type_);
@@ -90,12 +89,13 @@ int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector
       return RET_ERROR;
     }
   }
+  SetQuantParam(conv_, in_tensors);
   return RET_OK;
 }
 
-int ConvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                                   const std::vector<mindspore::MSTensor> &out_tensors,
-                                   const std::vector<ge::Operator *> &npu_inputs) {
+int ConvolutionInt8NPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                       const std::vector<mindspore::MSTensor> &out_tensors,
+                                       const std::vector<ge::Operator *> &npu_inputs) {
   auto ret = InitWeightConst(in_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set weight and bias for convolution op " << name_ << " failed when running npu";
@@ -114,7 +114,7 @@ int ConvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_te
   return RET_OK;
 }
 
-int ConvolutionNPUOp::SetNPUInputs(
+int ConvolutionInt8NPUOp::SetNPUInputs(
   const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
   const std::vector<ge::Operator *> &npu_inputs,
   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
@@ -144,7 +144,7 @@ int ConvolutionNPUOp::SetNPUInputs(
   return RET_OK;
 }
 
-ge::Operator *ConvolutionNPUOp::GetNPUOp() {
+ge::Operator *ConvolutionInt8NPUOp::GetNPUOp() {
   if (act_type_ == schema::ActivationType_NO_ACTIVATION) {
     return conv_;
   } else {
@@ -152,66 +152,10 @@ ge::Operator *ConvolutionNPUOp::GetNPUOp() {
   }
 }
 
-ConvolutionNPUOp::~ConvolutionNPUOp() {
+ConvolutionInt8NPUOp::~ConvolutionInt8NPUOp() {
   if (conv_ != nullptr) {
     delete conv_;
     conv_ = nullptr;
   }
-}
-NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                    const std::vector<mindspore::MSTensor> &out_tensors, std::string name) {
-  auto shape = out_tensors.front().Shape();
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    MS_LOG(ERROR) << "NPU does not support runtime inference shape.";
-    return nullptr;
-  }
-
-  if (in_tensors[0].Shape().size() > NPU_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
-    return nullptr;
-  }
-
-  if (in_tensors[0].DataType() != DataType::kNumberTypeFloat32 &&
-      in_tensors[0].DataType() != DataType::kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "Npu does not support datatype " << static_cast<int>(in_tensors[0].DataType());
-    return nullptr;
-  }
-
-  NPUOp *op = nullptr;
-  auto conv_prim = primitive->value_as_Conv2DFusion();
-  auto group = static_cast<int>(conv_prim->group());
-  auto input_channel = in_tensors.front().Shape()[NHWC_C];
-  auto output_channel = out_tensors.front().Shape()[NHWC_C];
-  if (group == input_channel && group == output_channel) {
-    if (in_tensors.front().QuantParams().empty()) {
-      op = new (std::nothrow) ConvolutionDepthwiseNPUOp(primitive, in_tensors, out_tensors, name);
-    } else {
-      op = new (std::nothrow) ConvolutionDepthwiseInt8NPUOp(primitive, in_tensors, out_tensors, name);
-    }
-  } else {
-    if (in_tensors.front().QuantParams().empty()) {
-      op = new (std::nothrow) ConvolutionNPUOp(primitive, in_tensors, out_tensors, name);
-    } else {
-      op = new (std::nothrow) ConvolutionInt8NPUOp(primitive, in_tensors, out_tensors, name);
-    }
-  }
-
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "create conv op for Npu failed.";
-    return nullptr;
-  }
-
-  auto ret = op->IsSupport(primitive, in_tensors, out_tensors);
-  if (ret != RET_OK) {
-    delete op;
-    return nullptr;
-  }
-  ret = op->Init(primitive, in_tensors, out_tensors);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NPU op init failed.";
-    delete op;
-    return nullptr;
-  }
-  return op;
 }
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_BASE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_BASE_NPU_H_
 
+#include <utility>
 #include <vector>
 #include <memory>
 #include <string>
@@ -30,11 +31,24 @@ class ConvolutionBaseNPUOp : public NPUOp {
  public:
   ConvolutionBaseNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                        const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
-      : NPUOp(primitive, in_tensors, out_tensors, name) {}
+      : NPUOp(primitive, in_tensors, out_tensors, std::move(name)) {}
 
   ~ConvolutionBaseNPUOp() override;
 
  protected:
+  template <typename T>
+  void SetQuantParam(T *conv_, const std::vector<mindspore::MSTensor> &in_tensors) {
+    conv_->set_attr_x_quant_scale(in_tensors.at(0).QuantParams().front().scale);
+    conv_->set_attr_x_quant_offset(in_tensors.at(0).QuantParams().front().zero_point);
+    conv_->set_attr_x_quant_type(1);
+
+    std::vector<float> filter_scales(in_tensors.at(WEIGHT_INDEX).QuantParams().size());
+    for (size_t i = 0; i < in_tensors.at(WEIGHT_INDEX).QuantParams().size(); i++) {
+      filter_scales[i] = in_tensors.at(WEIGHT_INDEX).QuantParams().at(i).scale;
+    }
+    conv_->set_attr_filter_quant_scales(filter_scales);
+    conv_->set_attr_filter_quant_type(1);
+  }
   int InitWeightConst(const std::vector<mindspore::MSTensor> &inputs);
   int InitBiasConst(const std::vector<mindspore::MSTensor> &inputs);
   int SetActivation(const ge::Operator *input, schema::ActivationType act_type);
@@ -43,7 +57,7 @@ class ConvolutionBaseNPUOp : public NPUOp {
   hiai::op::Const *weight_ = nullptr;
   hiai::op::Const *bias_ = nullptr;
   float *fp32_weight_ = nullptr;
-  float *nchw_weight_ = nullptr;
+  void *nchw_weight_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_BASE_NPU_H_

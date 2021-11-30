@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_DEPTHWISE_INT8_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_DEPTHWISE_INT8_NPU_H_
+#include <utility>
 #include <vector>
 #include <string>
-#include "include/graph/op/all_ops.h"
+#include "include/graph/compatible/all_ops.h"
 #include "src/delegate/npu/op/convolution_base_npu.h"
-
 namespace mindspore {
-class FullconnectionNPUOp : public ConvolutionBaseNPUOp {
+class ConvolutionDepthwiseInt8NPUOp : public ConvolutionBaseNPUOp {
  public:
-  FullconnectionNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                      const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
-      : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, name) {}
+  ConvolutionDepthwiseInt8NPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                                const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+      : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, std::move(name)) {}
 
-  ~FullconnectionNPUOp() override;
+  ~ConvolutionDepthwiseInt8NPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override {
@@ -45,14 +45,9 @@ class FullconnectionNPUOp : public ConvolutionBaseNPUOp {
   ge::Operator *GetNPUOp() override;
 
  private:
+  int SetConvDwParam(const schema::Conv2DFusion *conv_prim);
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
-  bool has_bias_ = false;
-  hiai::op::Reshape *reshape_ = nullptr;
-  hiai::op::MatMul *fc_ = nullptr;
-  hiai::op::BiasAdd *biasadd_ = nullptr;
-  hiai::op::Const *reshape_op_ = nullptr;
+  hiai::op::QuantizedConvolutionDepthwise *conv_dw_ = nullptr;
 };
-NPUOp *GetNPUFCOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                  const std::vector<mindspore::MSTensor> &out_tensors, std::string name);
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_DEPTHWISE_INT8_NPU_H_
