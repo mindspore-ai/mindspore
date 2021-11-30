@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CAST_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/cast_impl.cuh"
@@ -47,19 +48,20 @@ class CastGpuKernel : public GpuKernel {
     } else if (input_addr != nullptr && output_addr != nullptr) {
       Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      MS_LOG(EXCEPTION)
-        << "The input and output device addresses for CastGpuKernel should be both null or both not null.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the input and output device addresses should be both null or both not null";
     }
 
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'CastGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -74,7 +76,9 @@ class CastGpuKernel : public GpuKernel {
     }
 
     if (input_size_ != output_size_) {
-      MS_LOG(EXCEPTION) << "Input size is not equal to output size.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the size of input and output should be the same, but got the size of input: "
+                        << input_size_ << ", the size of output: " << output_size_;
     }
     InitSizeLists();
     return true;
@@ -84,6 +88,7 @@ class CastGpuKernel : public GpuKernel {
     input_size_ = 1;
     output_size_ = 1;
     is_null_input_ = false;
+    kernel_name_ = "Cast";
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -103,6 +108,7 @@ class CastGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

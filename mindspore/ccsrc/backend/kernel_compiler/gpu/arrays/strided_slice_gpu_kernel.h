@@ -50,17 +50,16 @@ class StridedSliceGpuKernel : public GpuKernel, public StridedSliceGpuCommon {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    null_output_ = CHECK_NULL_INPUT(input_shape_);
+    null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (null_output_) {
-      MS_LOG(WARNING) << "For 'StridedSliceGpuKernel', input is null";
       InitSizeLists();
       return true;
     }
     if (input_shape_.size() > MAX_DIMS) {
-      MS_LOG(ERROR) << "StridedSlice support dims no more than " << MAX_DIMS << ", but the input shape is "
-                    << input_shape_.size();
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than " << MAX_DIMS
+                        << ", but got " << input_shape_.size();
     }
 
     CollectInfo(kernel_node);

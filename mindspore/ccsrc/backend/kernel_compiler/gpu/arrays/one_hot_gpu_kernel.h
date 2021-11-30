@@ -49,21 +49,23 @@ class OneHotGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'OneHotGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     int64_t input_dims = static_cast<int64_t>(input_shape.size());
     int64_t output_dims = static_cast<int64_t>(output_shape.size());
     if (axis >= input_dims || axis >= output_dims) {
-      MS_LOG(ERROR) << "invalid one hot axis value: " << axis << " for input dims size: " << input_shape.size()
-                    << " or output dims size: " << output_dims;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the 'axis' should be less than the dimension of input and output"
+                        << ", but got 'axis': " << axis << ", the dimension of input: " << input_dims
+                        << ", the dimension of output: " << output_dims;
     }
     const int64_t default_axis = -1;
 

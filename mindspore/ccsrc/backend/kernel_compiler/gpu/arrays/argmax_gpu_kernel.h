@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARGMAX_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/argmax_impl.cuh"
@@ -33,7 +34,8 @@ class ArgmaxGpuKernel : public GpuKernel {
         bound_(0),
         outer_size_(0),
         inner_size_(0),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        kernel_name_("Argmax") {}
   ~ArgmaxGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -54,18 +56,20 @@ class ArgmaxGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ArgmaxGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
     int64_t dims = shape.size();
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < -dims || axis >= dims) {
-      MS_LOG(EXCEPTION) << "axis must be in the range [-rank, rank)";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+                        << "), but got " << axis;
     }
 
     if (axis < 0) {
@@ -81,7 +85,8 @@ class ArgmaxGpuKernel : public GpuKernel {
     }
     bound_ = static_cast<S>(shape[axis]);
     if (shape[axis] != static_cast<size_t>(bound_)) {
-      MS_LOG(EXCEPTION) << "Bound's shape is larger than index type and overflows when casting.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of shape[axis] should be "
+                        << static_cast<size_t>(bound_) << ", but got " << shape[axis];
     }
     outer_size_ = 1;
     for (int64_t i = axis - 1; i >= 0; i--) {
@@ -112,6 +117,7 @@ class ArgmaxGpuKernel : public GpuKernel {
   size_t outer_size_;
   size_t inner_size_;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

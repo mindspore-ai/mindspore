@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_CONCATV2_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -34,6 +35,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
         output_size_(0),
         all_size_before_axis_(1),
         all_size_axis_(1),
+        kernel_name_("ConcatV2"),
         inputs_host_(nullptr),
         len_axis_(nullptr) {}
   ~ConcatV2GpuFwdKernel() override = default;
@@ -71,6 +73,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
@@ -79,8 +82,8 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+                        << "), but got " << axis_;
     }
     if (axis_ < 0) {
       axis_ += dims;
@@ -135,8 +138,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
   bool CheckParam(const CNodePtr &kernel_node) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ConcatV2GpuFwdKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     return true;
   }
@@ -145,6 +147,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
   size_t output_size_;
   int all_size_before_axis_;
   int all_size_axis_;
+  std::string kernel_name_;
   std::unique_ptr<T *[]> inputs_host_;
   std::unique_ptr<int[]> len_axis_;
   std::vector<size_t> input_size_list_;

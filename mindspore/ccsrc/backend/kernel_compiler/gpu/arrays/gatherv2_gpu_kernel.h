@@ -64,6 +64,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -73,15 +74,15 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     } else if (input_num == 2) {
       MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Normal Mode.";
     } else {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherGpuV2FwdKernel needs 2 or 3.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2 or 3, but got " << input_num;
     }
     input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ =
-      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(indices_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input") ||
+                     CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
+                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'GatherV2GpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -89,8 +90,8 @@ class GatherV2GpuFwdKernel : public GpuKernel {
       int dims = SizeToInt(input_shapes_.size());
       axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       if (axis_ < -dims || axis_ >= dims) {
-        MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+                          << "), but got " << axis_;
       }
       Reshape();
     }

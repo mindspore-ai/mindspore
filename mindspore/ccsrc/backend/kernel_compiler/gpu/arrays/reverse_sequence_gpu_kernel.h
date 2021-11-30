@@ -66,28 +66,27 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     batch_dim_ = GetAttr<int64_t>(kernel_node, "batch_dim");
     seq_dim_ = GetAttr<int64_t>(kernel_node, "seq_dim");
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ReverseSequence needs 2 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ReverseSequence needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto seq_len_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(seq_len_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape_, kernel_name, "x") || CHECK_SHAPE_NULL(seq_len_shape, kernel_name, "seq_lengths");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ReverseSequenceGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }
     if (input_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For 'ReverseSequenceGpuKernel', the rank of input cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 1, but got "
                         << input_shape_.size();
     }
     input_size_ = 1;

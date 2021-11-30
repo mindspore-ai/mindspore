@@ -57,40 +57,39 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ResizeNearestNeighbor needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ResizeNearestNeighbor has 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ResizeNearestNeighborGradGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }
     if (shape_size_ != RESIZENEARESTNEIGHBORGRAD_DIMENSION) {
-      MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
-                    << RESIZENEARESTNEIGHBORGRAD_DIMENSION << "-D inputs.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be "
+                        << RESIZENEARESTNEIGHBORGRAD_DIMENSION << ", but got " << shape_size_;
     }
     if (shape_size_ != output_shape.size()) {
-      MS_LOG(ERROR) << "The dim of input and output must be same.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the dimension of input and output should be the same, but got the dimension of input: "
+                        << shape_size_ << ", the dimension of output: " << output_shape.size();
     }
     input_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       input_size_ *= input_shape[i];
       if (input_shape[i] == 0) {
-        MS_LOG(ERROR) << "The shape of input has 0.";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input at " << i << " index cannot be 0, "
+                          << "but got " << input_shape[i];
       }
       input_shape_.push_back(input_shape[i]);
     }
@@ -99,8 +98,8 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
     for (size_t i = 0; i < shape_size_; i++) {
       output_size_ *= output_shape[i];
       if (input_shape[i] == 0) {
-        MS_LOG(ERROR) << "The shape of output has 0.";
-        return false;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of output at " << i << " index cannot be 0, "
+                          << "but got " << input_shape[i];
       }
       output_shape_.push_back(output_shape[i]);
     }

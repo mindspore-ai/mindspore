@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETOBATCH_KERNEL_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/spacetobatch_impl.cuh"
@@ -51,9 +52,8 @@ class SpaceToBatchGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    (void)CheckParam(kernel_node);
     input_size_ = sizeof(T);
     for (size_t idx = 0; idx < input_shape_.size(); ++idx) {
       input_size_ *= input_shape_[idx];
@@ -80,6 +80,7 @@ class SpaceToBatchGpuKernel : public GpuKernel {
     oc_ = 0;
     oh_ = 0;
     ow_ = 0;
+    kernel_name_ = "SpaceToBatch";
     input_size_list_.clear();
     output_size_list_.clear();
     paddings_.clear();
@@ -96,58 +97,58 @@ class SpaceToBatchGpuKernel : public GpuKernel {
   bool CheckParam(const CNodePtr &kernel_node) {
     block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
     if (block_size_ < 1) {
-      MS_LOG(ERROR) << "block_size can not be less than 1.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 1, but got "
+                        << block_size_;
     }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "input_num is " << input_num << ", but BatchToSpace needs 1 input.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "output_num is " << output_num << ", but BatchToSpace needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
 
     // check input_shape
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     if (input_shape.size() != SHAPE_SIZE) {
-      MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but BatchToSpace supports 4-D tensor.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to " << SHAPE_SIZE
+                        << ", but got " << input_shape.size();
     }
     input_shape_.assign(input_shape.begin(), input_shape.end());
     // check paddings_
     paddings_ = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
     if (paddings_.size() != PADDING_SHAPE_0) {
-      MS_LOG(ERROR) << "paddings.size() in BatchToSpace needs 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'paddings' cannot be equal to " << PADDING_SHAPE_0
+                        << ", but got " << paddings_.size();
     }
     if (paddings_[0].size() != PADDING_SHAPE_1 || paddings_[1].size() != PADDING_SHAPE_1) {
-      MS_LOG(ERROR) << "paddings[i].size() in BatchToSpace needs 2.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'paddings' cannot be equal to " << PADDING_SHAPE_0
+                        << ", but got " << paddings_.size();
     } else {
       for (size_t idx_i = 0; idx_i < PADDING_SHAPE_0; ++idx_i) {
         for (size_t idx_j = 0; idx_j < PADDING_SHAPE_1; ++idx_j) {
           if (paddings_[idx_i][idx_j] < 0) {
-            MS_LOG(ERROR) << "the number in paddings can not be less than 0.";
-            return false;
+            MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'paddings' cannot be less than 0, "
+                              << "but got paddings[" << idx_i << "][ " << idx_j << "]: " << paddings_[idx_i][idx_j];
           }
         }
         auto tmp_shape = input_shape[idx_i + PADDING_SHAPE_1] + paddings_[idx_i][0] + paddings_[idx_i][1];
         if ((tmp_shape % block_size_) != 0) {
-          MS_LOG(ERROR) << "padded shape must be divisible by block_size";
-          return false;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                            << "', padded shape should be divisible by block_size, , but got padded shape: "
+                            << tmp_shape << ", block_size: " << block_size_;
         }
         if ((tmp_shape / block_size_) == 0) {
-          MS_LOG(ERROR) << "padded shape can not be less than block_size";
-          return false;
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', padded shape cannot be less than block_size"
+                            << ", but got padded shape: " << tmp_shape << ", block_size: " << block_size_;
         }
       }
     }
     return true;
   }
 
+  std::string kernel_name_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

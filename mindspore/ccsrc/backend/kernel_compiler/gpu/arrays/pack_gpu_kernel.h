@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_PACK_GPU_KERNEL_H
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -29,7 +30,13 @@ template <typename T>
 class PackGpuFwdKernel : public GpuKernel {
  public:
   PackGpuFwdKernel()
-      : axis_(0), is_null_input_(false), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr) {}
+      : axis_(0),
+        is_null_input_(false),
+        input_num_(1),
+        output_size_(0),
+        dims_behind_axis_(1),
+        inputs_host_(nullptr),
+        kernel_name_("Pack") {}
   ~PackGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -55,10 +62,9 @@ class PackGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+    (void)CheckParam(kernel_node);
     axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -73,9 +79,8 @@ class PackGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      is_null_input_ = CHECK_NULL_INPUT(input_shape);
+      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
       if (is_null_input_) {
-        MS_LOG(WARNING) << "For 'PackGpuKernel', input is null";
         InitSizeLists();
         return true;
       }
@@ -90,9 +95,8 @@ class PackGpuFwdKernel : public GpuKernel {
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
 
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(output_shape);
+    is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PackGpuKernel', output is null";
       InitSizeLists();
       return true;
     }
@@ -109,13 +113,11 @@ class PackGpuFwdKernel : public GpuKernel {
   void InitSizeLists() override {}
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
+  void CheckParam(const CNodePtr &kernel_node) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but PackGpuFwdKernel needs 1 output.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    return true;
   }
   int axis_;
   bool is_null_input_;
@@ -126,6 +128,7 @@ class PackGpuFwdKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

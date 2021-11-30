@@ -85,20 +85,21 @@ class ExtractImagePatchesKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ExtractImagePatches needs 1 inputs.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ExtractImagePatches has 1 output.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    is_null_input_ =
+      CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'ExtractImagePatchesGpuKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -113,9 +114,9 @@ class ExtractImagePatchesKernel : public GpuKernel {
       output_size_ *= output_shape[i];
     }
     if (input_shape.size() != 4 || output_shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "For 'ExtractImagePatchesGpuKernel', the rank of input and output should be 4, "
-                        << "but got the rank of input: " << input_shape.size()
-                        << ", the rank of output: " << output_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the dimension of input and output should be 4, but got the dimension of input: "
+                        << input_shape.size() << ", the dimension of output: " << output_shape.size();
     }
     // transposed NHWC shape
     t_output_shape_ = {output_shape[0], output_shape[2], output_shape[3], output_shape[1]};
@@ -125,9 +126,10 @@ class ExtractImagePatchesKernel : public GpuKernel {
     auto strides = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
     auto rates = GetAttr<std::vector<int64_t>>(kernel_node, "rates");
     if (ksizes.size() != 4 || strides.size() != 4 || rates.size() != 4) {
-      MS_LOG(EXCEPTION) << "For 'ExtractImagePatchesGpuKernel', the rank of ksizes, strides and rates should be 4, "
-                        << "but got the rank of ksizes: " << ksizes.size()
-                        << ", the rank of strides: " << strides.size() << ", the rank of rates: " << rates.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the size of 'ksizes', 'strides' and 'rates' should be 4, but got the size of 'ksizes': "
+                        << ksizes.size() << ", the size of 'strides': " << strides.size()
+                        << ", the size of 'rates': " << rates.size();
     }
 
     ksize_row_ = ksizes[2];
@@ -161,7 +163,8 @@ class ExtractImagePatchesKernel : public GpuKernel {
       row_padding_top_ = ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / 2;
       col_padding_left_ = ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / 2;
     } else {
-      MS_LOG(EXCEPTION) << "Invalid padding value: " << padding << ".";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'padding' should be 'VALID' or 'SAME', but got "
+                        << padding;
     }
 
     row_stride_ = ksize_col_;

@@ -116,10 +116,10 @@ class DynamicRangeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 3) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but DynamicRangeGpuKernel expects 3.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_count;
     }
 
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
