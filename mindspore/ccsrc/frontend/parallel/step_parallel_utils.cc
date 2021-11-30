@@ -161,7 +161,7 @@ RankList FindCommonMirrorGroup(const FuncGraphPtr &root) {
     }
     size_t allow_repeat_num = 1;
     if (ParallelContext::GetInstance()->enable_parallel_optimizer() &&
-        (!param_ptr->param_info() || !param_ptr->param_info()->parallel_optimizer())) {
+        (!param_ptr->param_info() || param_ptr->param_info()->parallel_optimizer())) {
       if (ParallelContext::GetInstance()->optimizer_weight_shard_size() == -1) {
         MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
                         << " is fully shard by optimizer parallel,"
