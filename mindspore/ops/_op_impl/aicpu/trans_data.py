@@ -24,6 +24,8 @@ trans_data_op_info = AiCPURegOp("TransData") \
     .attr("dst_format", "str") \
     .dtype_format(DataType.U16_Default, DataType.U16_5HD) \
     .dtype_format(DataType.U16_5HD, DataType.U16_Default) \
+    .dtype_format(DataType.I64_5HD, DataType.I64_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_Default) \
     .get_op_info()
 
 @op_info_register(trans_data_op_info)
