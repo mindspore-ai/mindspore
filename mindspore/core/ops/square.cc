@@ -79,47 +79,47 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {
-      ImpleSquare<int8_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<int8_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt16: {
-      ImpleSquare<int16_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<int16_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt32: {
-      ImpleSquare<int32_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<int32_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeInt64: {
-      ImpleSquare<int64_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<int64_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt8: {
-      ImpleSquare<uint8_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<uint8_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt16: {
-      ImpleSquare<uint16_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<uint16_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt32: {
-      ImpleSquare<uint32_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<uint32_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeUInt64: {
-      ImpleSquare<uint64_t>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<uint64_t>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat16: {
-      ImpleSquare<float16>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<float16>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat32: {
-      ImpleSquare<float>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<float>(x_datac, result_datac, data_size);
       break;
     }
     case kNumberTypeFloat64: {
-      ImpleSquare<double>(x_datac, result_datac, IntToSize(data_size));
+      ImpleSquare<double>(x_datac, result_datac, data_size);
       break;
     }
     default: {

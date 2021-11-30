@@ -259,7 +259,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Getting tensor data size.
   ///
   /// \return The total number of elements of the tensor data.
-  int DataSize() const { return static_cast<int>(data().size()); }
+  size_t DataSize() const { return data().size(); }
 
   /// \brief Get the data type of the tensor for C++
   ///
@@ -314,7 +314,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \param[in] limit_size The limit size.
   /// \return The display information of limit size.
-  std::string ToStringInternal(int limit_size) const;
+  std::string ToStringInternal(size_t limit_size) const;
 
   /// \brief Get display information with unlimited size.
   ///

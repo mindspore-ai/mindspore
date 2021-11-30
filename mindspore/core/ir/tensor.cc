@@ -73,6 +73,10 @@ std::unique_ptr<T[]> NewData(const U *input, size_t size) {
   if (input == nullptr || size == 0) {
     return nullptr;
   }
+  if (size > INT32_MAX) {
+    MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << size * sizeof(T);
+  }
+
   auto data = std::make_unique<T[]>(size);
   if constexpr (!std::is_same<T, U>::value &&
                 (std::is_same<T, float16>::value || std::is_same<U, float16>::value ||
@@ -209,6 +213,9 @@ class TensorDataImpl : public TensorData {
 
   void *data() override {
     if (data_ == nullptr) {
+      if (data_size_ > INT32_MAX) {
+        MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
+      }
       // Lazy allocation.
       data_ = std::make_unique<T[]>(data_size_);
     }
@@ -615,12 +622,12 @@ std::string Tensor::GetShapeAndDataTypeInfo() const {
   return buf.str();
 }
 
-std::string Tensor::ToStringInternal(int limit_size) const {
+std::string Tensor::ToStringInternal(size_t limit_size) const {
   std::ostringstream buf;
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", value=";
-  if (limit_size <= 0 || DataSize() < limit_size) {
+  if (limit_size == 0 || DataSize() < limit_size) {
     // Only print data for small tensor.
     buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, false);
   } else {
@@ -634,7 +641,7 @@ std::string Tensor::ToStringInternal(int limit_size) const {
 }
 
 std::string Tensor::ToString() const {
-  constexpr int small_tensor_size = 30;
+  constexpr size_t small_tensor_size = 30;
   return ToStringInternal(small_tensor_size);
 }
 

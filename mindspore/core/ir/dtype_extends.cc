@@ -120,10 +120,10 @@ TypePtr StringToNumberType(const std::string &type_name, const std::string &num_
 /// Cnvert a string(like "type1, type2, type3") to Vector(TypeID_1, TypeID_1, TypeID_1)
 /// \param type_names
 /// \param types  The return types
-/// \return : 0, convert success  1, format error
-int StringToVectorOfType(const std::string &type_names, std::vector<TypePtr> *types) {
+/// \return : true, convert success;  false, format error
+bool StringToVectorOfType(const std::string &type_names, std::vector<TypePtr> *types) {
   if (type_names.length() == 0) {
-    return 0;
+    return true;
   }
   std::string::size_type start = 0;
   std::string::size_type end = type_names.find_first_of(',');
@@ -134,10 +134,10 @@ int StringToVectorOfType(const std::string &type_names, std::vector<TypePtr> *ty
     end = type_names.find_first_of(',', start);
   }
   if (start >= type_names.size()) {
-    return 1;
+    return false;
   }
   types->push_back(StringToType(type_names.substr(start)));
-  return 0;
+  return true;
 }
 
 TypePtr TensorStrToType(const std::string &type_name) {
@@ -244,7 +244,7 @@ TypePtr ListStrToType(const std::string &type_name) {
     std::string element_strs = type_name.substr(start, end - start);
     std::vector<TypePtr> element_types;
     auto ret = StringToVectorOfType(element_strs, &element_types);
-    if (ret > 0) {
+    if (!ret) {
       MS_EXCEPTION(NotSupportError) << "Expect format like 'List[type1, type2, ...]', but got '" << type_name
                                     << "' that miss typename after ','.";
     }
@@ -270,7 +270,7 @@ TypePtr TupleStrToType(const std::string &type_name) {
     std::string element_strs = type_name.substr(start, end - start);
     std::vector<TypePtr> element_types;
     auto ret = StringToVectorOfType(element_strs, &element_types);
-    if (ret > 0) {
+    if (!ret) {
       MS_EXCEPTION(NotSupportError) << "Expect format like 'Tuple[type1, type2, ...]', but got '" << type_name
                                     << "' that miss typename after ','.";
     }
@@ -308,12 +308,12 @@ TypePtr FunctionStrToType(const std::string &type_name) {
     start = end_a + 2;
     if (start >= str_all.size()) {
       MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
-                                    << "' that miss typename after ','.";
+                                    << type_name;
     }
     std::string str_retval = str_all.substr(start);
     std::vector<TypePtr> args_type;
     auto ret = StringToVectorOfType(str_args, &args_type);
-    if (ret > 0) {
+    if (!ret) {
       MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
                                     << type_name;
     }

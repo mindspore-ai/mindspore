@@ -516,7 +516,7 @@ AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &
   auto data_pos = reinterpret_cast<int64_t *>(recv_size_tensor->data_c());
   MS_EXCEPTION_IF_NULL(data_pos);
   int64_t infer_max_size = 0;
-  for (int64_t i = 0; i < recv_size_tensor->DataSize(); ++i) {
+  for (size_t i = 0; i < recv_size_tensor->DataSize(); ++i) {
     infer_max_size += *(data_pos + i);
   }
 

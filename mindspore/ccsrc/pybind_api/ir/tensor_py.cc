@@ -493,7 +493,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              Get tensor's data size.
 
                              Returns:
-                                 int, the size of tensor.
+                                 size_t, the size of tensor.
 
                              Examples:
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
