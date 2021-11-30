@@ -1172,6 +1172,28 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
   return BuildReturnForFuncGraph(outputFuncGraph, importProto);
 }
 
+bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                             const mind_ir::GraphProto &importProto) {
+  for (auto i = 0; i < importProto.attribute_size(); ++i) {
+    const mind_ir::AttributeProto &attr_proto = importProto.attribute(i);
+    const int attr_type = attr_proto.type();
+    switch (attr_type) {
+      case mind_ir::AttributeProto_AttributeType_STRING: {
+        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_string_string(attr_proto));
+        break;
+      }
+      case mind_ir::AttributeProto_AttributeType_BOOL: {
+        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_bool(attr_proto));
+        break;
+      }
+      default:
+        MS_LOG(ERROR) << "Obtain attr for graph has not support input type: " << attr_type << "!";
+        return false;
+    }
+  }
+  return true;
+}
+
 bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   GraphDebugInfoPtr debug_info_ptr = outputFuncGraph->debug_info();
@@ -1185,8 +1207,12 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const
     outputFuncGraph->set_bprop_hash(importProto.bprop_hash());
   }
 
+  if (!BuildAttrForFuncGraph(outputFuncGraph, importProto)) {
+    MS_LOG(ERROR) << "Build attribute for graph fail!";
+  }
+
   if (!ImportParametersForGraph(outputFuncGraph, importProto)) {
-    MS_LOG(ERROR) << "import parameters for graph fail!";
+    MS_LOG(ERROR) << "Import parameters for graph fail!";
     return false;
   }
   return ImportNodesForGraph(outputFuncGraph, importProto);

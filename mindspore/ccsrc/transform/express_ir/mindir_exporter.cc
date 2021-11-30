@@ -99,6 +99,7 @@ class IrExportBuilder {
   ModelProtoPtr Model() { return model_; }
 
   bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
+  bool BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
@@ -243,8 +244,29 @@ bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::Gr
     return false;
   }
 
+  // Export graph attributes
+  if (!BuildFuncGraphAttrs(func_graph, graph_proto)) {
+    MS_LOG(ERROR) << "Build attributes for graph failed.";
+    return false;
+  }
+
   // Export operator nodes(include output)
   return BuildNodes(func_graph, graph_proto);
+}
+
+bool IrExportBuilder::BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(graph_proto);
+  for (auto attr : func_graph->attrs()) {
+    MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
+    mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
+    attr_proto->set_name(attr.first);
+    if (!SetValueToAttributeProto(attr.second, attr_proto)) {
+      MS_LOG(ERROR) << "Set value to AttributeProto for GraphProto failed.";
+      return false;
+    }
+  }
+  return true;
 }
 
 bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {

@@ -44,7 +44,6 @@ message AttributeProto {
   optional string ref_attr_name = 15;
   optional AttributeType type = 16;
   repeated AttributeProto values = 17;          // tuple, list,dict of value
-  optional AttributeType type_val = 18;         // type type info
 }
 
 
@@ -89,6 +88,7 @@ message GraphProto {
   repeated ValueInfoProto input = 5;
   repeated ValueInfoProto output = 6;
   optional string bprop_hash = 7;
+  repeated AttributeProto attribute = 8;
 }
 
 
