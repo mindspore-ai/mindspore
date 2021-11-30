@@ -20,6 +20,7 @@
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/recorder_actor.h"
 #include "runtime/framework/actor/debug_actor.h"
+#include "runtime/framework/actor/control_flow/entrance_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -68,6 +69,11 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   auto from_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_control_arrows_) {
     ActorDispatcher::Send(output_control, &OpActor::RunOpControl, from_aid, context);
+  }
+
+  // Send to EntranceActor to clear the data which are generated in the loop body execution.
+  for (auto &entrance_aid : entrance_aids_) {
+    ActorDispatcher::Send(entrance_aid, &EntranceActor::ClearDataOnStepEnd, from_aid, context);
   }
 
   // The LoopCountActor exits.

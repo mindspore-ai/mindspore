@@ -40,8 +40,16 @@ class EntranceActor : public ControlActor {
     input_device_tensors_.resize(parameters.size());
   }
   ~EntranceActor() override = default;
+
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+
   void RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
                                       OpContext<DeviceTensor> *const context);
+
+  // Clear the data which are generated in the loop body execution.
+  void ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context);
+
+  const std::vector<AID> &loop_body_input_control_arrow_aids() const { return loop_body_input_control_arrow_aids_; }
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -52,13 +60,14 @@ class EntranceActor : public ControlActor {
  private:
   friend class ControlNodeScheduler;
 
-  // Check if actor is enable. During operation, entrance actor can be enabled only when receives all control arrows.
-  bool CheckActorStatus(const OpContext<DeviceTensor> *const context) const;
-
-  // Is actor ready indicates whether the entrance actor can be executed. In the control flow, the subgraph is an
-  // atomic operation, and execution can only continue after the output of the corresponding exit actor is completed.
-  // At this time, the exit actor will notify the entrance actor to change the ready to true.
-  bool is_actor_ready_{true};
+  // Indicate whether the entrance actor is the execution of loop body. In the control flow, the subgraph can be
+  // triggered to execute in two ways: one is the begin execution of step, another is the execution of loop body.
+  // The input controls are different in the two ways.
+  bool is_loop_body_execution_{false};
+  // The dependent of loop body input actors.
+  mindspore::HashMap<int, std::vector<AID *>> loop_body_input_op_controls_;
+  std::vector<AID> loop_body_input_control_arrow_aids_;
+  size_t loop_body_input_controls_nums_{0};
 
   // Input data with branch id.
   mindspore::HashMap<int, std::queue<OpRealParameterWithBranchID>> real_parameters_with_branch_id_;

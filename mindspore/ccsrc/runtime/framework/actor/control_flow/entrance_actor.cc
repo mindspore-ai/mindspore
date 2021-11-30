@@ -21,14 +21,45 @@ namespace mindspore {
 namespace runtime {
 constexpr size_t kEntranceInputStartPos = 1;
 
+void EntranceActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto &sequential_num = context->sequential_num_;
+  if (is_loop_body_execution_) {
+    (void)loop_body_input_op_controls_[sequential_num].emplace_back(input_control);
+  } else {
+    (void)input_op_controls_[sequential_num].emplace_back(input_control);
+  }
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op control and check running condition:" << is_run
+                << ", loop body execution:" << is_loop_body_execution_;
+  if (is_run) {
+    Run(context);
+  }
+}
+
 void EntranceActor::RunOpRealParameterWithBranchID(OpRealParameterWithBranchID real_parameter_with_branch_id,
                                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   real_parameters_with_branch_id_[sequential_num].emplace(real_parameter_with_branch_id);
 
-  if (CheckRunningCondition(context)) {
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op data with branch id and check running condition:" << is_run
+                << ", loop body execution:" << is_loop_body_execution_;
+  if (is_run) {
     Run(context);
+  }
+}
+
+void EntranceActor::ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  is_loop_body_execution_ = false;
+
+  if (loop_body_input_controls_nums_ != 0) {
+    loop_body_input_op_controls_.clear();
   }
 }
 
@@ -36,8 +67,8 @@ void EntranceActor::Run(OpContext<DeviceTensor> *const context) {
   FetchInput(context);
   EraseInput(context);
   SendOutput(context);
-  // The actor needs to be disabled after the actor is running, until no actor is running in the entire funcgraph.
-  is_actor_ready_ = false;
+  // The begin execution of step is false and the others execution of step is true.
+  is_loop_body_execution_ = true;
 }
 
 void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
@@ -104,33 +135,34 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
   }
 }
 
-bool EntranceActor::CheckActorStatus(const OpContext<DeviceTensor> *const context) const {
-  if (is_actor_ready_) {
-    return true;
-  }
-  // During operation, entrance actor can be enabled only when receives all control arrows.
-  if (input_controls_num_ != 0) {
-    const auto &control_iter = input_op_controls_.find(context->sequential_num_);
-    if (control_iter != input_op_controls_.end() && control_iter->second.size() == input_controls_num_) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool EntranceActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
 
-  // When the entrance actor is in the disabled state, it cannot be run.
-  if (!CheckActorStatus(context)) {
-    return false;
+  // Check the running condition in the begin execution of step.
+  // The input controls and input data exist the begin execution of root graph, and there will only be one of the two.
+  if (!is_loop_body_execution_) {
+    if (input_controls_num_ != 0) {
+      const auto &control_iter = input_op_controls_.find(context->sequential_num_);
+      if ((control_iter != input_op_controls_.end()) && (control_iter->second.size() == input_controls_num_)) {
+        return true;
+      }
+    }
+
+    // Data comes from the data source actor.
+    if (input_datas_num_ != 0) {
+      const auto &data_iter = input_op_datas_.find(context->sequential_num_);
+      if (data_iter != input_op_datas_.end() && data_iter->second.size() == input_datas_num_) {
+        return true;
+      }
+    }
   }
 
-  // Data comes from the data source actor.
-  if (input_datas_num_ != 0) {
-    const auto &data_iter = input_op_datas_.find(context->sequential_num_);
-    if (data_iter != input_op_datas_.end() && data_iter->second.size() == input_datas_num_) {
-      return true;
+  // Check the controls in the loop body execution of step.
+  if (is_loop_body_execution_ && (loop_body_input_controls_nums_ != 0)) {
+    const auto &control_iter = loop_body_input_op_controls_.find(context->sequential_num_);
+    if ((control_iter == loop_body_input_op_controls_.end()) ||
+        (control_iter->second.size() != loop_body_input_controls_nums_)) {
+      return false;
     }
   }
 
@@ -149,7 +181,6 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
   const auto &data_iter = input_op_datas_.find(sequential_num);
   if (data_iter != input_op_datas_.end()) {
     input_op_datas_.erase(data_iter);
-    return;
   }
 
   const auto &control_iter = input_op_controls_.find(sequential_num);
@@ -157,14 +188,17 @@ void EntranceActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     input_op_controls_.erase(control_iter);
   }
 
-  const auto &iter = real_parameters_with_branch_id_.find(sequential_num);
-  if (iter == real_parameters_with_branch_id_.end() || iter->second.empty()) {
-    MS_LOG(ERROR) << "Cannot find input in batch op result for actor:" << GetAID();
+  const auto &loop_body_control_iter = loop_body_input_op_controls_.find(sequential_num);
+  if (loop_body_control_iter != loop_body_input_op_controls_.end()) {
+    loop_body_input_op_controls_.erase(loop_body_control_iter);
   }
 
-  iter->second.pop();
-  if (iter->second.empty()) {
-    real_parameters_with_branch_id_.erase(sequential_num);
+  const auto &iter = real_parameters_with_branch_id_.find(sequential_num);
+  if (iter != real_parameters_with_branch_id_.end()) {
+    iter->second.pop();
+    if (iter->second.empty()) {
+      real_parameters_with_branch_id_.erase(sequential_num);
+    }
   }
 }
 }  // namespace runtime

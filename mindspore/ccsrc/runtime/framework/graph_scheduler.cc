@@ -215,6 +215,11 @@ void GraphScheduler::Clear() {
   ClearAllActors();
 }
 
+void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
+}
+
 using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, AbstractActor *const, const KernelWithIndex &,
                                                    const KernelWithIndex &, const KernelGraphPtr &);
 static std::map<KernelTransformType, DataArrowLinkFunc> kKernelTypeToLinkFunc;

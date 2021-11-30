@@ -57,6 +57,8 @@ class GraphScheduler {
   // Clear the members.
   void Clear();
   void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept;
+  // The control flow actors will generate some data in the loop body execution, so need clear on the end of execution.
+  void ClearActorData(const ActorSet *actor_set);
 
   // Transform graph to actor DAG, contains build and link.
   ActorSet *Transform(const GraphCompilerInfo &graph_compiler_info);

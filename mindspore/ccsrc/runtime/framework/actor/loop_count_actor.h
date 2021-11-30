@@ -52,6 +52,7 @@ class LoopCountActor : public DebugAwareActor {
   // Get the member.
   size_t loop_count() const { return loop_count_; }
   const AID &data_prepare_aid() const { return data_prepare_aid_; }
+  const std::vector<AID> &entrance_aids() const { return entrance_aids_; }
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -59,6 +60,7 @@ class LoopCountActor : public DebugAwareActor {
 
  private:
   friend class GraphScheduler;
+  friend class ControlNodeScheduler;
 
   void IncreaseLoopCount(OpContext<DeviceTensor> *const context);
 
@@ -68,7 +70,9 @@ class LoopCountActor : public DebugAwareActor {
   // The total running count represents the toal step running count.
   size_t total_running_count_;
 
+  // The actors which need be handled separately by loop count actor.
   AID data_prepare_aid_;
+  std::vector<AID> entrance_aids_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;
