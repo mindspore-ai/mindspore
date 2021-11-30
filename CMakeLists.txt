@@ -19,7 +19,12 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_OSX_SYSROOT "")
+    exec_program(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_SYSTEM_VERSION)
+    if(NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+        set(CMAKE_OSX_DEPLOYMENT_TARGET ${MACOSX_SYSTEM_VERSION} CACHE STRING
+            "minimum macosx deployment target version" FORCE)
+    endif()
+    message("macosx deployment target version: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Winconsistent-missing-override -Wno-user-defined-warnings \
         -Wno-return-std-move -Wno-unused-private-field -Wno-unused-lambda-capture -Wno-sign-compare \
         -Wno-overloaded-virtual -Wno-unneeded-internal-declaration -Wno-unused-variable -Wno-pessimizing-move \
