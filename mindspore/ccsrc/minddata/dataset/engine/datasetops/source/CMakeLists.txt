@@ -28,6 +28,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     qmnist_op.cc
     random_data_op.cc
     sbu_op.cc
+    speech_commands_op.cc
     text_file_op.cc
     usps_op.cc
     yes_no_op.cc

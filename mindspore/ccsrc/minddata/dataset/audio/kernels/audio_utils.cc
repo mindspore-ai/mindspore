@@ -862,7 +862,6 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   }
 
   const float kMaxVal = 32767.0;
-  const int kDataMove = 2;
   Path file_path(wav_realpath.value());
   CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
                                "Invalid file, failed to find metadata file:" + file_path.ToString());
@@ -872,8 +871,6 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   WavHeader *header = new WavHeader();
   in.read(reinterpret_cast<char *>(header), sizeof(WavHeader));
   *sample_rate = header->sampleRate;
-  std::unique_ptr<char[]> data = std::make_unique<char[]>(header->subChunk2Size);
-  in.read(data.get(), header->subChunk2Size);
   float bytesPerSample = header->bitsPerSample / 8;
   if (bytesPerSample == 0) {
     in.close();
@@ -881,9 +878,11 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "ReadWaveFile: divide zero error.");
   }
   int numSamples = header->subChunk2Size / bytesPerSample;
+  std::unique_ptr<int16_t[]> data = std::make_unique<int16_t[]>(numSamples);
+  in.read(reinterpret_cast<char *>(data.get()), sizeof(int16_t) * numSamples);
   waveform_vec->resize(numSamples);
   for (int i = 0; i < numSamples; i++) {
-    (*waveform_vec)[i] = static_cast<int16_t>(data[kDataMove * i] / kMaxVal);
+    (*waveform_vec)[i] = data[i] / kMaxVal;
   }
   in.close();
   delete header;

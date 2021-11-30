@@ -3541,6 +3541,79 @@ inline std::shared_ptr<SBUDataset> MS_API SBU(const std::string &dataset_dir, bo
   return std::make_shared<SBUDataset>(StringToChar(dataset_dir), decode, sampler, cache);
 }
 
+/// \class SpeechCommandsDataset.
+/// \brief A source dataset that reads and parses SpeechCommands dataset.
+class SpeechCommandsDataset : public Dataset {
+ public:
+  /// \brief Constructor of SpeechCommandsDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  SpeechCommandsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SpeechCommandsDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  SpeechCommandsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                        const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SpeechCommandsDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  SpeechCommandsDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of SpeechCommandsDataset.
+  ~SpeechCommandsDataset() = default;
+};
+
+/// \brief Function to create a SpeechCommands Dataset.
+/// \note The generated dataset has five columns ["waveform", "sample_rate", "label", "speaker_id", "utterance_number"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the SpeechCommandsDataset.
+inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(
+  const std::string &dataset_dir, const std::string &usage = "all",
+  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a SpeechCommands Dataset.
+/// \note The generated dataset has five columns ["waveform", "sample_rate", "label", "speaker_id", "utterance_number"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the SpeechCommandsDataset.
+inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &dataset_dir, const std::string &usage,
+                                                             const Sampler *sampler,
+                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a SpeechCommands Dataset.
+/// \note The generated dataset has five columns ["waveform", "sample_rate", "label", "speaker_id", "utterance_number"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of SpeechCommands, can be "train", "test", "valid" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the SpeechCommandsDataset.
+inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &dataset_dir, const std::string &usage,
+                                                             const std::reference_wrapper<Sampler> sampler,
+                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class TextFileDataset
 /// \brief A source dataset that reads and parses datasets stored on disk in text format.
 class MS_API TextFileDataset : public Dataset {

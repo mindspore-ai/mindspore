@@ -28,6 +28,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         qmnist_node.cc
         random_node.cc
         sbu_node.cc
+        speech_commands_node.cc
         text_file_node.cc
         tf_record_node.cc
         usps_node.cc
