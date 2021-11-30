@@ -110,32 +110,34 @@ def test_cg_against_numpy(dtype, shape):
     onp.testing.assert_allclose(expected, actual_sta.asnumpy(), **kw)
 
 
-def gmres_compare_with_scipy_incremental(A, b, x, M):
-    gmres_x, _ = msp.sparse.linalg.gmres(Tensor(A), Tensor(b), Tensor(
-        x), tol=1e-07, atol=0, solve_method='incremental')
-    scipy_x, _ = osp.sparse.linalg.gmres(A, b, x, tol=1e-07, atol=0)
-    onp.testing.assert_almost_equal(scipy_x, gmres_x.asnumpy(), decimal=5)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [5])
-@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('dtype,tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-def test_gmres_incremental_against_scipy(n, dtype, preconditioner):
+def test_gmres_incremental_against_scipy(n, tol, dtype, preconditioner):
     """
     Feature: ALL TO ALL
     Description:  test cases for [N x N] X [N X 1]
     Expectation: the result match scipy
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    # add Identity matrix to make matrix A non-singular
     A = create_full_rank_matrix((n, n), dtype)
     b = onp.random.rand(n).astype(dtype)
+    x0 = onp.zeros_like(b).astype(dtype)
     M = _fetch_preconditioner(preconditioner, A)
-    gmres_compare_with_scipy_incremental(A, b, onp.zeros_like(b).astype(dtype), M)
+
+    scipy_x, _ = osp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, M=M)
+    A = Tensor(A)
+    b = Tensor(b)
+    x0 = Tensor(x0)
+    if M is not None:
+        M = Tensor(M)
+
+    gmres_x, _ = msp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, solve_method='incremental', M=M)
+    onp.testing.assert_almost_equal(scipy_x, gmres_x.asnumpy(), decimal=tol)
 
 
 @pytest.mark.level0
@@ -143,20 +145,29 @@ def test_gmres_incremental_against_scipy(n, dtype, preconditioner):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [5])
-@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-def test_gmres_incremental_against_scipy_graph(n, dtype, preconditioner):
+def test_gmres_incremental_against_scipy_graph(n, tol, dtype, preconditioner):
     """
     Feature: ALL TO ALL
     Description:  test cases for [N x N] X [N X 1]
     Expectation: the result match scipy
     """
     context.set_context(mode=context.GRAPH_MODE)
-    # add Identity matrix to make matrix A non-singular
     A = create_full_rank_matrix((n, n), dtype)
     b = onp.random.rand(n).astype(dtype)
+    x0 = onp.zeros_like(b).astype(dtype)
     M = _fetch_preconditioner(preconditioner, A)
-    gmres_compare_with_scipy_incremental(A, b, onp.zeros_like(b).astype(dtype), M)
+
+    scipy_x, _ = osp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, M=M)
+    A = Tensor(A)
+    b = Tensor(b)
+    x0 = Tensor(x0)
+    if M is not None:
+        M = Tensor(M)
+
+    gmres_x, _ = msp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, solve_method='incremental', M=M)
+    onp.testing.assert_almost_equal(scipy_x, gmres_x.asnumpy(), decimal=tol)
 
 
 @pytest.mark.level0
