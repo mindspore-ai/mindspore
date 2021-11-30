@@ -47,30 +47,29 @@ Status ShardIndexGenerator::Build() {
   return Status::OK();
 }
 
-Status ShardIndexGenerator::GetValueByField(const string &field, json input, std::shared_ptr<std::string> *value) {
+Status ShardIndexGenerator::GetValueByField(const string &field, const json &input,
+                                            std::shared_ptr<std::string> *value) {
   RETURN_UNEXPECTED_IF_NULL(value);
-  CHECK_FAIL_RETURN_UNEXPECTED(!field.empty(), "The input field is empty.");
-  CHECK_FAIL_RETURN_UNEXPECTED(!input.empty(), "The input json is empty.");
 
   // parameter input does not contain the field
   CHECK_FAIL_RETURN_UNEXPECTED(input.find(field) != input.end(),
-                               "The field " + field + " is not found in json " + input.dump());
+                               "[Internal ERROR] 'field': " + field + " can not found in raw data: " + input.dump());
 
   // schema does not contain the field
   auto schema = shard_header_.GetSchemas()[0]->GetSchema()["schema"];
   CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) != schema.end(),
-                               "The field " + field + " is not found in schema " + schema.dump());
+                               "[Internal ERROR] 'field': " + field + " can not found in schema: " + schema.dump());
 
   // field should be scalar type
   CHECK_FAIL_RETURN_UNEXPECTED(
     kScalarFieldTypeSet.find(schema[field]["type"]) != kScalarFieldTypeSet.end(),
-    "The field " + field + " type is " + schema[field]["type"].dump() + " which is not retrievable.");
+    "[Internal ERROR] 'field': " + field + " type is " + schema[field]["type"].dump() + " which is not retrievable.");
 
   if (kNumberFieldTypeSet.find(schema[field]["type"]) != kNumberFieldTypeSet.end()) {
     auto schema_field_options = schema[field];
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      schema_field_options.find("shape") == schema_field_options.end(),
-      "The field " + field + " shape is " + schema[field]["shape"].dump() + " which is not retrievable.");
+    CHECK_FAIL_RETURN_UNEXPECTED(schema_field_options.find("shape") == schema_field_options.end(),
+                                 "[Internal ERROR] 'field': " + field + " shape is " + schema[field]["shape"].dump() +
+                                   " which is not retrievable.");
     *value = std::make_shared<std::string>(input[field].dump());
   } else {
     // the field type is string in here
@@ -79,7 +78,7 @@ Status ShardIndexGenerator::GetValueByField(const string &field, json input, std
   return Status::OK();
 }
 
-std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
+std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json &schema) {
   std::vector<std::string> field_name = StringSplit(field_path, kPoint);
   for (uint64_t i = 0; i < field_name.size(); ++i) {
     try {
@@ -131,14 +130,14 @@ Status ShardIndexGenerator::ExecuteSQL(const std::string &sql, sqlite3 *db, cons
   int rc = sqlite3_exec(db, common::SafeCStr(sql), Callback, nullptr, &z_err_msg);
   if (rc != SQLITE_OK) {
     std::ostringstream oss;
-    oss << "Failed to exec sqlite3_exec, msg is: " << z_err_msg;
+    oss << "[Internal ERROR] Failed to execute the sql [ " << common::SafeCStr(sql) << " ], " << z_err_msg;
     MS_LOG(DEBUG) << oss.str();
     sqlite3_free(z_err_msg);
     sqlite3_close(db);
     RETURN_STATUS_UNEXPECTED(oss.str());
   } else {
     if (!success_msg.empty()) {
-      MS_LOG(DEBUG) << "Suceess to exec sqlite3_exec, msg is: " << success_msg;
+      MS_LOG(DEBUG) << "Suceess to execute the sql [ " << common::SafeCStr(sql) << " ], " << success_msg;
     }
     sqlite3_free(z_err_msg);
     return Status::OK();
@@ -156,9 +155,8 @@ Status ShardIndexGenerator::GenerateFieldName(const std::pair<uint64_t, std::str
   auto pos = std::find_if_not(field_name.begin(), field_name.end(), [](char x) {
     return (x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z') || x == '_' || (x >= '0' && x <= '9');
   });
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    pos == field_name.end(),
-    "Field name must be composed of '0-9' or 'a-z' or 'A-Z' or '_', field_name: " + field_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(pos == field_name.end(), "Invalid data, field name: " + field_name +
+                                                          "is not composed of '0-9' or 'a-z' or 'A-Z' or '_'.");
   *fn_ptr = std::make_shared<std::string>(field_name + "_" + std::to_string(field.first));
   return Status::OK();
 }
@@ -172,7 +170,9 @@ Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqli
   }
 
   auto realpath = FileUtils::GetRealPath(dir.value().data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + shard_address);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    realpath.has_value(),
+    "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + shard_address);
 
   std::optional<std::string> whole_path = "";
   FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
@@ -180,14 +180,16 @@ Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqli
   std::ifstream fin(whole_path.value());
   if (!append_ && fin.good()) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("Invalid file, DB file already exist: " + shard_address);
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid file, mindrecord meta files already exist. Please check file path: " + shard_address +
+      ".\nIf you do not want to keep the files, set the 'overwrite' parameter to True and try again.");
   }
   fin.close();
   if (sqlite3_open_v2(common::SafeCStr(whole_path.value()), db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open database: " + shard_address + ", error" +
-                             std::string(sqlite3_errmsg(*db)));
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open mindrecord meta file: " + shard_address + ", " +
+                             sqlite3_errmsg(*db));
   }
-  MS_LOG(DEBUG) << "Opened database successfully";
+  MS_LOG(DEBUG) << "Open meta file successfully";
   return Status::OK();
 }
 
@@ -204,20 +206,20 @@ Status ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::string 
       (void)sqlite3_finalize(stmt);
     }
     sqlite3_close(db);
-    RETURN_STATUS_UNEXPECTED("SQL error: could not prepare statement, sql: " + sql);
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
   }
 
   int index = sqlite3_bind_parameter_index(stmt, ":SHARD_NAME");
   if (sqlite3_bind_text(stmt, index, shard_name.data(), -1, SQLITE_STATIC) != SQLITE_OK) {
     (void)sqlite3_finalize(stmt);
     sqlite3_close(db);
-    RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
-                             ", field value: " + std::string(shard_name));
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to bind parameter of sql, key index: " + std::to_string(index) +
+                             ", value: " + shard_name);
   }
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     (void)sqlite3_finalize(stmt);
-    RETURN_STATUS_UNEXPECTED("SQL error: Could not step (execute) stmt.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to step execute stmt.");
   }
   (void)sqlite3_finalize(stmt);
   return Status::OK();
@@ -225,7 +227,6 @@ Status ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::string 
 
 Status ShardIndexGenerator::CreateDatabase(int shard_no, sqlite3 **db) {
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
-  CHECK_FAIL_RETURN_UNEXPECTED(!shard_address.empty(), "Shard address is empty, shard No: " + std::to_string(shard_no));
   std::shared_ptr<std::string> fn_ptr;
   RETURN_IF_NOT_OK(GetFileName(shard_address, &fn_ptr));
   shard_address += ".db";
@@ -269,7 +270,7 @@ Status ShardIndexGenerator::GetSchemaDetails(const std::vector<uint64_t> &schema
       auto &io_read = in.read(&schema_detail[0], schema_lens[sc]);
       if (!io_read.good() || io_read.fail() || io_read.bad()) {
         in.close();
-        RETURN_STATUS_UNEXPECTED("Failed to read file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to read file.");
       }
       auto j = json::from_msgpack(std::string(schema_detail.begin(), schema_detail.end()));
       (*detail_ptr)->emplace_back(j);
@@ -312,7 +313,7 @@ Status ShardIndexGenerator::BindParameterExecuteSQL(sqlite3 *db, const std::stri
       (void)sqlite3_finalize(stmt);
     }
     sqlite3_close(db);
-    RETURN_STATUS_UNEXPECTED("SQL error: could not prepare statement, sql: " + sql);
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to prepare statement [ " + sql + " ].");
   }
   for (auto &row : data) {
     for (auto &field : row) {
@@ -325,36 +326,36 @@ Status ShardIndexGenerator::BindParameterExecuteSQL(sqlite3 *db, const std::stri
         if (sqlite3_bind_int64(stmt, index, std::stoll(field_value)) != SQLITE_OK) {
           (void)sqlite3_finalize(stmt);
           sqlite3_close(db);
-          RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
-                                   ", field value: " + std::string(field_value));
+          RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                   std::to_string(index) + ", value: " + field_value);
         }
       } else if (field_type == "NUMERIC") {
         if (sqlite3_bind_double(stmt, index, std::stold(field_value)) != SQLITE_OK) {
           (void)sqlite3_finalize(stmt);
           sqlite3_close(db);
-          RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
-                                   ", field value: " + std::string(field_value));
+          RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                   std::to_string(index) + ", value: " + field_value);
         }
       } else if (field_type == "NULL") {
         if (sqlite3_bind_null(stmt, index) != SQLITE_OK) {
           (void)sqlite3_finalize(stmt);
 
           sqlite3_close(db);
-          RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
-                                   ", field value: NULL");
+          RETURN_STATUS_UNEXPECTED(
+            "[Internal ERROR] Failed to bind parameter of sql, key index: " + std::to_string(index) + ", value: NULL");
         }
       } else {
         if (sqlite3_bind_text(stmt, index, common::SafeCStr(field_value), -1, SQLITE_STATIC) != SQLITE_OK) {
           (void)sqlite3_finalize(stmt);
           sqlite3_close(db);
-          RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
-                                   ", field value: " + std::string(field_value));
+          RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to bind parameter of sql, key index: " +
+                                   std::to_string(index) + ", value: " + field_value);
         }
       }
     }
     if (sqlite3_step(stmt) != SQLITE_DONE) {
       (void)sqlite3_finalize(stmt);
-      RETURN_STATUS_UNEXPECTED("SQL error: Could not step (execute) stmt.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to step execute stmt.");
     }
     (void)sqlite3_reset(stmt);
   }
@@ -373,14 +374,13 @@ Status ShardIndexGenerator::AddBlobPageInfo(std::vector<std::tuple<std::string, 
     in.seekg(page_size_ * cur_blob_page->GetPageID() + header_size_ + cur_blob_page_offset, std::ios::beg);
   if (!io_seekg_blob.good() || io_seekg_blob.fail() || io_seekg_blob.bad()) {
     in.close();
-    RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
   }
   uint64_t image_size = 0;
   auto &io_read = in.read(reinterpret_cast<char *>(&image_size), kInt64Len);
   if (!io_read.good() || io_read.fail() || io_read.bad()) {
-    MS_LOG(ERROR) << "File read failed";
     in.close();
-    RETURN_STATUS_UNEXPECTED("Failed to read file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to read file.");
   }
 
   cur_blob_page_offset += (kInt64Len + image_size);
@@ -415,7 +415,8 @@ Status ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, in
   for (pair<int, int> blob_ids : row_group_list) {
     // get blob data page according to row_group id
     auto iter = blob_id_to_page_id.find(blob_ids.first);
-    CHECK_FAIL_RETURN_UNEXPECTED(iter != blob_id_to_page_id.end(), "Failed to get page id from blob id.");
+    CHECK_FAIL_RETURN_UNEXPECTED(iter != blob_id_to_page_id.end(),
+                                 "[Internal ERROR] Failed to get page id from blob id.");
     std::shared_ptr<Page> blob_page_ptr;
     RETURN_IF_NOT_OK(shard_header_.GetPage(shard_no, iter->second, &blob_page_ptr));
     // offset in current raw data page
@@ -435,7 +436,7 @@ Status ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, in
         in.seekg(page_size_ * (page_ptr->GetPageID()) + header_size_ + cur_raw_page_offset, std::ios::beg);
       if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
         in.close();
-        RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
       }
       std::vector<uint64_t> schema_lens;
       if (schema_count_ <= kMaxSchemaCount) {
@@ -445,7 +446,7 @@ Status ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, in
           auto &io_read = in.read(reinterpret_cast<char *>(&schema_size), kInt64Len);
           if (!io_read.good() || io_read.fail() || io_read.bad()) {
             in.close();
-            RETURN_STATUS_UNEXPECTED("Failed to read file.");
+            RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to read file.");
           }
 
           cur_raw_page_offset += (kInt64Len + schema_size);
@@ -474,7 +475,9 @@ Status ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &schema_
   // index fields
   std::vector<std::pair<uint64_t, std::string>> index_fields = shard_header_.GetFields();
   for (const auto &field : index_fields) {
-    CHECK_FAIL_RETURN_UNEXPECTED(field.first < schema_detail.size(), "Index field id is out of range.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      field.first < schema_detail.size(),
+      "[Internal ERROR] 'field': " + field.second + " is out of bound:" + std::to_string(schema_detail.size()));
     std::shared_ptr<std::string> field_val_ptr;
     RETURN_IF_NOT_OK(GetValueByField(field.second, schema_detail[field.first], &field_val_ptr));
     std::shared_ptr<Schema> schema_ptr;
@@ -491,15 +494,19 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
                                                const std::map<int, int> &blob_id_to_page_id) {
   // Add index data to database
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
-  CHECK_FAIL_RETURN_UNEXPECTED(!shard_address.empty(), "shard address is empty.");
 
   auto realpath = FileUtils::GetRealPath(shard_address.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + shard_address);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    realpath.has_value(),
+    "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + shard_address);
   std::fstream in;
   in.open(realpath.value(), std::ios::in | std::ios::binary);
   if (!in.good()) {
     in.close();
-    RETURN_STATUS_UNEXPECTED("Failed to open file: " + shard_address);
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid file, failed to open mindrecord files. Please check file path, permission and open files limit(ulimit "
+      "-a): " +
+      shard_address);
   }
   (void)sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
   for (int raw_page_id : raw_page_ids) {
@@ -525,8 +532,8 @@ Status ShardIndexGenerator::WriteToDatabase() {
   header_size_ = shard_header_.GetHeaderSize();
   schema_count_ = shard_header_.GetSchemaCount();
   CHECK_FAIL_RETURN_UNEXPECTED(shard_header_.GetShardCount() <= kMaxShardCount,
-                               "num shards: " + std::to_string(shard_header_.GetShardCount()) +
-                                 " exceeds max count:" + std::to_string(kMaxSchemaCount));
+                               "[Internal ERROR] 'shard_count': " + std::to_string(shard_header_.GetShardCount()) +
+                                 "is not in range (0, " + std::to_string(kMaxShardCount) + "].");
 
   task_ = 0;  // set two atomic vars to initial value
   write_success_ = true;
@@ -545,7 +552,7 @@ Status ShardIndexGenerator::WriteToDatabase() {
   for (size_t t = 0; t < threads.capacity(); t++) {
     threads[t].join();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(write_success_, "Failed to write data to db.");
+  CHECK_FAIL_RETURN_UNEXPECTED(write_success_, "[Internal ERROR] Failed to write mindrecord meta files.");
   return Status::OK();
 }
 
@@ -554,7 +561,6 @@ void ShardIndexGenerator::DatabaseWriter() {
   while (shard_no < shard_header_.GetShardCount()) {
     sqlite3 *db = nullptr;
     if (CreateDatabase(shard_no, &db).IsError()) {
-      MS_LOG(ERROR) << "Failed to create Generate database.";
       write_success_ = false;
       return;
     }
@@ -567,7 +573,6 @@ void ShardIndexGenerator::DatabaseWriter() {
     for (uint64_t i = 0; i < total_pages; ++i) {
       std::shared_ptr<Page> page_ptr;
       if (shard_header_.GetPage(shard_no, i, &page_ptr).IsError()) {
-        MS_LOG(ERROR) << "Failed to get page.";
         write_success_ = false;
         return;
       }
@@ -579,7 +584,6 @@ void ShardIndexGenerator::DatabaseWriter() {
     }
 
     if (ExecuteTransaction(shard_no, db, raw_page_ids, blob_id_to_page_id).IsError()) {
-      MS_LOG(ERROR) << "Failed to execute transaction.";
       write_success_ = false;
       return;
     }
@@ -588,7 +592,7 @@ void ShardIndexGenerator::DatabaseWriter() {
   }
 }
 Status ShardIndexGenerator::Finalize(const std::vector<std::string> file_names) {
-  CHECK_FAIL_RETURN_UNEXPECTED(!file_names.empty(), "Mindrecord files is empty.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!file_names.empty(), "[Internal ERROR] the size of mindrecord files is 0.");
   ShardIndexGenerator sg{file_names[0]};
   RETURN_IF_NOT_OK(sg.Build());
   RETURN_IF_NOT_OK(sg.WriteToDatabase());

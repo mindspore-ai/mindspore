@@ -145,7 +145,7 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
     CHECK_FAIL_RETURN_UNEXPECTED(static_cast<int>(indices_.size()) <= total_no,
                                  "Invalid input, indices size: " + std::to_string(indices_.size()) +
-                                   " need to be less than  dataset size: " + std::to_string(total_no) + ".");
+                                   " should be less than or equal to database size: " + std::to_string(total_no) + ".");
   } else {  // constructor TopPercent
     if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
       if (numerator_ == 1 && denominator_ > 1) {  // sharding
@@ -155,9 +155,8 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
         taking -= (taking % no_of_categories);
       }
     } else {
-      RETURN_STATUS_UNEXPECTED("Invalid input, numerator: " + std::to_string(numerator_) +
-                               " need to be positive and be less than denominator: " + std::to_string(denominator_) +
-                               ".");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] 'numerator_': " + std::to_string(numerator_) +
+                               " should be positive and less than denominator_: " + std::to_string(denominator_) + ".");
     }
   }
   return UpdateTasks(tasks, taking);

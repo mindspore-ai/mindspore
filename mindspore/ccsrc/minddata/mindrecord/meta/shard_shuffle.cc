@@ -69,8 +69,8 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = static_cast<int>(tasks.Size());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
-                                                     std::to_string(no_of_samples_) + "] need to be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
   auto shard_sample_cout = GetShardSampleCount();
 
   // shuffle the files index
@@ -123,8 +123,8 @@ Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = static_cast<int>(tasks.Size());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
-                                                     std::to_string(no_of_samples_) + "] need to be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
   // reconstruct the permutation in file
   // -- before --
   // file1: [0, 1, 2]
@@ -158,9 +158,9 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
   if (reshuffle_each_epoch_) {
     shuffle_seed_++;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    tasks.categories >= 1,
-    "Invalid data, task categories [" + std::to_string(tasks.categories) + "] need to be larger than 1.");
+  CHECK_FAIL_RETURN_UNEXPECTED(tasks.categories >= 1,
+                               "[Internal ERROR] task categories should be greater than or equal to 1 but got: " +
+                                 std::to_string(tasks.categories));
   if (shuffle_type_ == kShuffleSample) {  // shuffle each sample
     if (tasks.permutation_.empty() == true) {
       tasks.MakePerm();
@@ -168,9 +168,11 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
     if (GetShuffleMode() == dataset::ShuffleMode::kGlobal) {
       if (replacement_ == true) {
         ShardTaskList new_tasks;
-        if (no_of_samples_ == 0) no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
-        CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
-                                                           std::to_string(no_of_samples_) + "] need to be positive.");
+        if (no_of_samples_ == 0) {
+          no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
+        }
+        CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " +
+                                                           std::to_string(no_of_samples_));
         for (uint32_t i = 0; i < no_of_samples_; ++i) {
           new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
         }

@@ -103,7 +103,8 @@ def test_lack_partition_and_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader('dummy.mindrecord')
         reader.close()
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
 
 def test_lack_db():
     """
@@ -117,7 +118,8 @@ def test_lack_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name)
         reader.close()
-    assert 'Unexpected error. Invalid database file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to open mindrecord meta files while verifying meta file. " \
+           "Please check the meta file:" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_and_db():
@@ -135,7 +137,8 @@ def test_lack_some_partition_and_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_first():
@@ -152,7 +155,8 @@ def test_lack_some_partition_first():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_middle():
@@ -169,7 +173,8 @@ def test_lack_some_partition_middle():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_last():
@@ -186,7 +191,8 @@ def test_lack_some_partition_last():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
     remove_file(file_name)
 
 def test_mindpage_lack_some_partition():
@@ -202,7 +208,8 @@ def test_mindpage_lack_some_partition():
     os.remove("{}".format(paths[0]))
     with pytest.raises(RuntimeError) as err:
         MindPage(file_name + "0")
-    assert 'Unexpected error. Invalid file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to verify files for reading mindrecord files. " \
+           "Please check file:" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_db():
@@ -219,7 +226,8 @@ def test_lack_some_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert 'Unexpected error. Invalid database file, path:' in str(err.value)
+    assert "Unexpected error. Invalid file, failed to open mindrecord meta files while verifying meta file. " \
+           "Please check the meta file:" in str(err.value)
     remove_file(file_name)
 
 def test_invalid_mindrecord():
@@ -250,7 +258,8 @@ def test_invalid_db():
         f.write('just for test')
     with pytest.raises(RuntimeError) as err:
         FileReader(file_name)
-    assert "Unexpected error. Failed to execute sql [ SELECT NAME from SHARD_NAME; ], " in str(err.value)
+    assert "Unexpected error. Failed to execute the sql [ SELECT NAME from SHARD_NAME; ] " \
+           "while verifying meta file" in str(err.value)
     remove_file(file_name)
 
 def test_overwrite_invalid_mindrecord():

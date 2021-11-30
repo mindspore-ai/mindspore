@@ -81,7 +81,8 @@ Status ShardColumn::GetColumnTypeByName(const std::string &column_name, ColumnDa
   RETURN_UNEXPECTED_IF_NULL(column_category);
   // Skip if column not found
   *column_category = CheckColumnName(column_name);
-  CHECK_FAIL_RETURN_UNEXPECTED(*column_category != ColumnNotFound, "Invalid data, column category is not found.");
+  CHECK_FAIL_RETURN_UNEXPECTED(*column_category != ColumnNotFound,
+                               "[Internal ERROR] the type of column: " + column_name + " can not found.");
 
   // Get data type and size
   auto column_id = column_name_id_[column_name];
@@ -101,7 +102,8 @@ Status ShardColumn::GetColumnValueByName(const std::string &column_name, const s
   RETURN_UNEXPECTED_IF_NULL(column_shape);
   // Skip if column not found
   auto column_category = CheckColumnName(column_name);
-  CHECK_FAIL_RETURN_UNEXPECTED(column_category != ColumnNotFound, "Invalid data, column category is not found.");
+  CHECK_FAIL_RETURN_UNEXPECTED(column_category != ColumnNotFound,
+                               "[Internal ERROR] the type of column: " + column_name + " can not found.");
   // Get data type and size
   auto column_id = column_name_id_[column_name];
   *column_data_type = column_data_type_[column_id];
@@ -133,9 +135,9 @@ Status ShardColumn::GetColumnFromJson(const std::string &column_name, const json
   // Initialize num bytes
   *n_bytes = ColumnDataTypeSize[column_data_type];
   auto json_column_value = columns_json[column_name];
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    json_column_value.is_string() || json_column_value.is_number(),
-    "Invalid data, column value [" + json_column_value.dump() + "] is not string or number.");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_column_value.is_string() || json_column_value.is_number(),
+                               "[Internal ERROR] the value of column: " + column_name +
+                                 " should be string or number but got: " + json_column_value.dump());
   switch (column_data_type) {
     case ColumnFloat32: {
       return GetFloat<float>(data_ptr, json_column_value, false);
@@ -185,8 +187,8 @@ Status ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const j
         array_data[0] = json_column_value.get<float>();
       }
     } catch (json::exception &e) {
-      RETURN_STATUS_UNEXPECTED("Failed to convert [" + json_column_value.dump() + "] to float, " +
-                               std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + json_column_value.dump() +
+                               " to type float, " + std::string(e.what()));
     }
   }
 
@@ -221,17 +223,20 @@ Status ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const jso
         temp_value = static_cast<int64_t>(std::stoull(string_value));
       }
     } catch (std::invalid_argument &e) {
-      RETURN_STATUS_UNEXPECTED("Failed to convert [" + string_value + "] to int, " + std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
+                               std::string(e.what()));
     } catch (std::out_of_range &e) {
-      RETURN_STATUS_UNEXPECTED("Failed to convert [" + string_value + "] to int, " + std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
+                               std::string(e.what()));
     }
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column value [" + json_column_value.dump() + "] is not string or number.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] column value should be type string or number but got: " +
+                             json_column_value.dump());
   }
 
   if ((less_than_zero && temp_value < static_cast<int64_t>(std::numeric_limits<T>::min())) ||
       (!less_than_zero && static_cast<uint64_t>(temp_value) > static_cast<uint64_t>(std::numeric_limits<T>::max()))) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column value [" + std::to_string(temp_value) + "] is out of range.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] column value: " + std::to_string(temp_value) + " is out of range.");
   }
   array_data[0] = static_cast<T>(temp_value);
 
@@ -408,7 +413,8 @@ Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<uns
   if (*num_bytes == 0) {
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0, "Failed to copy data.");
+  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0,
+                               "[Internal ERROR] Failed to call securec func [memcpy_s]");
   return Status::OK();
 }
 
