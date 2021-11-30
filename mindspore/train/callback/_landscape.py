@@ -22,7 +22,7 @@ from collections import defaultdict, namedtuple
 from concurrent.futures import wait, ALL_COMPLETED, ProcessPoolExecutor
 
 import numpy as np
-from sklearn.decomposition import PCA
+from scipy import linalg as LA
 
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
@@ -446,8 +446,7 @@ class SummaryLandscape:
         param_matrixs = np.vstack(param_matrixs)
         param_matrixs = param_matrixs[:-1] - param_matrixs[-1]
         # Only 2 are needed, as we have to reduce high dimensions into 2D.And we reserve one for loss value.
-        pca = PCA(n_components=2)
-        principal_components = pca.fit_transform(param_matrixs.T)
+        principal_components = self._compute_pca(param_matrixs.T)
         v_ori, w_ori = np.array(principal_components[:, 0]), np.array(principal_components[:, -1])
         final_params = list(multi_parameters[-1])
 
@@ -892,3 +891,12 @@ class SummaryLandscape:
         self._check_unit(unit)
         check_value_type("num_samples", num_samples, int)
         self._check_create_landscape(create_landscape)
+
+    def _compute_pca(self, x):
+        x -= np.mean(x, axis=0)
+        cov = np.cov(x, rowvar=False)
+        evals, evecs = LA.eigh(cov)
+        idx = np.argsort(evals)[::-1]
+        evecs = evecs[:, idx]
+        result = np.dot(x, evecs)
+        return result
