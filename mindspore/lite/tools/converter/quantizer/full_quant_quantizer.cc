@@ -494,7 +494,7 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
 }
 
 void FullQuantQuantizer::InitCpuConfig() {
-  target_data_type_ = kNumberTypeInt8;
+  weight_target_data_type_ = kNumberTypeInt8;
   activation_symmetry_ = false;
   weight_symmetry_ = true;
   support_int8_ops_ = {prim::kPrimAddFusion,     prim::kPrimActivation,
@@ -513,15 +513,25 @@ void FullQuantQuantizer::InitCpuConfig() {
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
 }
 
+void FullQuantQuantizer::InitKirinConfig() {
+  // `kTypeUnknown` represents the original data type
+  activation_target_data_type_ = kTypeUnknown;
+  weight_target_data_type_ = kNumberTypeInt8;
+  activation_symmetry_ = false;
+  weight_symmetry_ = true;
+  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
+  flags_.fullQuantParam.bias_correction = false;
+}
+
 void FullQuantQuantizer::InitQMinMax() {
-  if (this->target_data_type_ == kNumberTypeInt8) {
+  if (this->weight_target_data_type_ == kNumberTypeInt8) {
     q_max_ = QuantMax(this->bit_num_, false);        // 127
     q_min_ = QuantMin(this->bit_num_, false, true);  // -127
-  } else if (target_data_type_ == kNumberTypeUInt8) {
+  } else if (weight_target_data_type_ == kNumberTypeUInt8) {
     q_max_ = QuantMax(this->bit_num_, true);         // 255
     q_min_ = QuantMin(this->bit_num_, true, false);  // 0
   } else {
-    MS_LOG(ERROR) << "unsupported quant value type: " << target_data_type_;
+    MS_LOG(ERROR) << "unsupported quant value type: " << weight_target_data_type_;
   }
 }
 
@@ -537,38 +547,45 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
                                                           flags_.commonQuantParam.min_quant_weight_channel,
                                                           flags_.commonQuantParam.skip_quant_node);
     CHECK_NULL_RETURN(quant_strategy);
+    auto is_skip_op = quant_strategy->IsSkipOp(anode);
+    if (is_skip_op) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " is skip quant.";
+      continue;
+    }
     //  Mark quantifiable nodes
     auto is_support_op = quant_strategy->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_);
-    auto is_skip_op = quant_strategy->IsSkipOp(anode);
-    if (is_support_op && !is_skip_op) {
+    if (is_support_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " add quantized op failed.";
         return ret;
       }
+      auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+      if (primitive == nullptr) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is null";
+        return RET_ERROR;
+      }
+      auto quant_param_holder = GetCNodeQuantHolder(primitive);
+      if (quant_param_holder == nullptr) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " quant_param_holder is null";
+        return RET_ERROR;
+      }
+      quant_param_holder->ClearInputOutputQuantParam();
     }
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is null";
-      return RET_ERROR;
-    }
-    auto quant_param_holder = GetCNodeQuantHolder(primitive);
-    if (quant_param_holder == nullptr) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " quant_param_holder is null";
-      return RET_ERROR;
-    }
-    quant_param_holder->ClearInputOutputQuantParam();
   }
   return RET_OK;
 }
 
 int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
-  switch (device_) {
+  switch (flags_.commonQuantParam.target_device) {
     case CPU:
       InitCpuConfig();
       break;
+    case KIRIN:
+      InitKirinConfig();
+      break;
     default:
-      MS_LOG(ERROR) << " Unsupported device " << device_;
+      MS_LOG(ERROR) << " Unsupported device " << flags_.commonQuantParam.target_device;
       return RET_ERROR;
       break;
   }
@@ -871,31 +888,32 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "Quant node failed.";
     return status;
   }
-
-  // add quant_cast
-  quant::QuantCast quant_cast;
-  status = quant_cast.Run(func_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "add QuantCast error";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return RET_ERROR;
-  }
-  SessionModel int8_sm;
-  if (this->flags_.fullQuantParam.bias_correction) {
-    // init in8 session
-    MS_LOG(INFO) << "create quant session";
-    flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-    int8_sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
-    int8_session_ = int8_sm.session;
-    int8_model_ = int8_sm.model;
-    if (int8_session_ == nullptr || int8_model_ == nullptr) {
-      MS_LOG(ERROR) << "create session failed!";
+  if (activation_target_data_type_ == kNumberTypeInt8 || activation_target_data_type_ == kNumberTypeUInt8) {
+    // add quant_cast
+    quant::QuantCast quant_cast;
+    status = quant_cast.Run(func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "add QuantCast error";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
     }
-    MS_LOG(INFO) << "do bias correction";
-    status = BiasCorrection(func_graph);
-    if (status != RET_OK) {
-      MS_LOG(WARNING) << "BiasCorrection failed.";
+    SessionModel int8_sm;
+    if (this->flags_.fullQuantParam.bias_correction) {
+      // init in8 session
+      MS_LOG(INFO) << "create quant session";
+      flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
+      int8_sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
+      int8_session_ = int8_sm.session;
+      int8_model_ = int8_sm.model;
+      if (int8_session_ == nullptr || int8_model_ == nullptr) {
+        MS_LOG(ERROR) << "create session failed!";
+        return RET_ERROR;
+      }
+      MS_LOG(INFO) << "do bias correction";
+      status = BiasCorrection(func_graph);
+      if (status != RET_OK) {
+        MS_LOG(WARNING) << "BiasCorrection failed.";
+      }
     }
   }
   return RET_OK;

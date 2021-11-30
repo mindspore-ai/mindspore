@@ -91,7 +91,7 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<Pr
   }
   auto is_support_node = CheckNodeInSet(cnode, support_int8_ops);
   if (!is_support_node) {
-    MS_LOG(WARNING) << "node:" << cnode->fullname_with_scope() << " type:" << type << " is not support quantization.";
+    MS_LOG(WARNING) << "node:" << cnode->fullname_with_scope() << " type:" << type << " will not quantify.";
     return false;
   }
   if (CheckNodeInSet(cnode, skip_check_dtype_ops)) {

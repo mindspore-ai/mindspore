@@ -30,10 +30,12 @@ class QuantParamParser {
 
  private:
   static int ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type);
+  static int ParseTargetDevice(const std::string &target_device_str, quant::TargetDevice *target_device);
 
   static int ParseActivationQuantizedMethod(const std::string &activation_quant_method_str,
                                             quant::ActivationQuantizedMethod *activation_quant_method);
   static int ParseFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
+  static int ParseBitNum(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
 };
 }  // namespace lite
 }  // namespace mindspore

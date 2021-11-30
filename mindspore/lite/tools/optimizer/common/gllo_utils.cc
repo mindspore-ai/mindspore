@@ -1194,7 +1194,12 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
     MS_LOG(ERROR) << "anf_node or type_id is nullptr.";
     return RET_ERROR;
   }
-  auto abstract_base = anf_node->abstract();
+  AbstractBasePtr abstract_base;
+  if (CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+    abstract_base = anf_node->cast<CNodePtr>()->input(1)->abstract();
+  } else {
+    abstract_base = anf_node->abstract();
+  }
   // used for multi output e.g. split.
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
     auto abstract_tuple = abstract_base->cast<abstract::AbstractTuplePtr>();
