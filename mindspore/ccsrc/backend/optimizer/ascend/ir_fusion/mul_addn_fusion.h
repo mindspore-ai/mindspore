@@ -28,6 +28,10 @@ class MulAddNFusion : public PatternProcessPassWithSwitch {
   ~MulAddNFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const CNodePtr &addn,
+                            const size_t &lossscale_input_index) const;
 };
 }  // namespace opt
 }  // namespace mindspore
