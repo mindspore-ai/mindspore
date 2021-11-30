@@ -51,6 +51,10 @@ static const char CALIB_NORM[] = "NORM";
 
 // dims
 static const int32_t DIM_DEFAULT_SIZE = 4;
+// ms cache
+static const char *const kMSCache = "ms_cache";
+static const char *const kMSCacheModelPath = "cache_model_path";
+static const char *const kMSCacheVocabSize = "vocab_size";
 }  // namespace lite
 }  // namespace mindspore
 

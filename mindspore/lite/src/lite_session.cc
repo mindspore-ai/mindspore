@@ -706,70 +706,99 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::Init(InnerContext *context) {
+int LiteSession::ContextInit(InnerContext *context) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
-    is_running_.store(false);
     return RET_NULL_PTR;
   }
   this->context_ = context;
-  bool expected = false;
-  if (!is_running_.compare_exchange_strong(expected, true)) {
-    MS_LOG(ERROR) << "Not support multi-threading";
-    return RET_ERROR;
-  }
 
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
-    is_running_.store(false);
     return ret;
+  }
+
+  ms_context_ = MSContextFromContext(context);
+  if (ms_context_ == nullptr) {
+    MS_LOG(ERROR) << "transfer context to ms context failed.";
+    return RET_NULL_PTR;
   }
 
 #ifdef MS_COMPILE_IOS
   context_->thread_pool()->SetMaxSpinCount(kDefaulLiteIosSpinCount);
   context_->thread_pool()->SetMinSpinCount(kDefaulLiteIosSpinCount);
 #endif
+  return RET_OK;
+}
 
-  if (context->delegate != nullptr) {
-#ifndef DELEGATE_CLIP
-    delegate_ = context->delegate;
-    delegate_device_type_ = -1;
-#else
-    MS_LOG(ERROR) << unsupport_delegate_log;
-    is_running_.store(false);
-    return RET_NOT_SUPPORT;
-#endif
-  }
-  ms_context_ = MSContextFromContext(context);
-  if (ms_context_ == nullptr) {
-    MS_LOG(ERROR) << "transfer context to ms context failed.";
-    is_running_.store(false);
-    return RET_NULL_PTR;
-  }
-#ifndef DELEGATE_CLIP
-#if SUPPORT_NPU
-  if (delegate_ == nullptr && context_->IsNpuEnabled()) {
-    delegate_ = std::make_shared<NPUDelegate>(context_->GetNpuInfo());
-    if (delegate_ == nullptr) {
-      MS_LOG(ERROR) << "New delegate_ failed";
-      return RET_ERROR;
-    }
-    delegate_device_type_ = DT_NPU;
-    this->context_->delegate = delegate_;
-  }
-#endif
+int LiteSession::CreateTensorRTDelegate() {
 #if GPU_TENSORRT
-  if (delegate_ == nullptr && context_->IsGpuEnabled()) {
-    delegate_ = std::make_shared<TensorRTDelegate>(ms_context_);
-    if (delegate_ == nullptr) {
-      MS_LOG(ERROR) << "New tensorrt delegate_ failed";
-      return RET_ERROR;
+  std::string cache_model_path;
+  size_t vocab_size = 0;
+  if (config_info_ != nullptr) {
+    auto ms_cache_iter = config_info_->find(kMSCache);
+    if (ms_cache_iter != config_info_->end()) {
+      auto ms_cache = ms_cache_iter->second;
+      auto model_path_iter = ms_cache.find(kMSCacheModelPath);
+      if (model_path_iter != ms_cache.end()) {
+        cache_model_path = model_path_iter->second;
+      }
+
+      auto vocab_size_iter = ms_cache.find(kMSCacheVocabSize);
+      if (vocab_size_iter != ms_cache.end()) {
+        auto vocab_size_opt = GenericParseValue<size_t>(vocab_size_iter->second);
+        if (!vocab_size_opt.IsNone()) {
+          vocab_size = vocab_size_opt.Get();
+        }
+      }
     }
-    delegate_device_type_ = DT_GPU;
-    this->context_->delegate = delegate_;
   }
+
+  delegate_ = std::make_shared<TensorRTDelegate>(ms_context_, cache_model_path, vocab_size);
+  if (delegate_ == nullptr) {
+    MS_LOG(ERROR) << "New tensorrt delegate_ failed";
+    return RET_ERROR;
+  }
+  delegate_device_type_ = DT_GPU;
+  this->context_->delegate = delegate_;
 #endif
+  return RET_OK;
+}
+
+int LiteSession::CreateNPUDelegate() {
+#if SUPPORT_NPU
+  delegate_ = std::make_shared<NPUDelegate>(context_->GetNpuInfo());
+  if (delegate_ == nullptr) {
+    MS_LOG(ERROR) << "New delegate_ failed";
+    return RET_ERROR;
+  }
+  delegate_device_type_ = DT_NPU;
+  this->context_->delegate = delegate_;
+#endif
+  return RET_OK;
+}
+
+int LiteSession::DelegateInit() {
+#ifndef DELEGATE_CLIP
+  if (context_->delegate != nullptr) {
+    delegate_ = context_->delegate;
+    delegate_device_type_ = -1;
+  } else {
+    if (context_->IsNpuEnabled()) {
+      auto ret = CreateNPUDelegate();
+      if (ret != RET_OK) {
+        return ret;
+      }
+    }
+
+    if (context_->IsGpuEnabled()) {
+      auto ret = CreateTensorRTDelegate();
+      if (ret != RET_OK) {
+        return ret;
+      }
+    }
+  }
 
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
@@ -784,7 +813,36 @@ int LiteSession::Init(InnerContext *context) {
       return RET_ERROR;
     }
   }
+#else
+  if (context_->delegate != nullptr) {
+    MS_LOG(ERROR) << unsupport_delegate_log;
+    return RET_NOT_SUPPORT;
+  }
 #endif
+  return RET_OK;
+}
+
+int LiteSession::Init(InnerContext *context) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
+
+  auto ret = ContextInit(context);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init Context failed";
+    is_running_.store(false);
+    return ret;
+  }
+
+  ret = DelegateInit();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init delegate failed.";
+    is_running_.store(false);
+    return ret;
+  }
+
   ret = InitGPURuntime();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
