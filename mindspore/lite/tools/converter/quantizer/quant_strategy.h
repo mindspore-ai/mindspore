@@ -32,7 +32,8 @@ class QuantStrategy {
 
   ~QuantStrategy() = default;
 
-  bool CanOpFullQuantized(const AnfNodePtr &node);
+  bool CanOpFullQuantized(const AnfNodePtr &node, const std::set<PrimitivePtr> &support_int8_ops,
+                          const std::set<PrimitivePtr> &skip_check_dtype_ops);
   bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim);
   bool IsSkipOp(const AnfNodePtr &input_node);
 

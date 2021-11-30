@@ -494,9 +494,23 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
 }
 
 void FullQuantQuantizer::InitCpuConfig() {
-  this->target_data_type_ = kNumberTypeInt8;
+  target_data_type_ = kNumberTypeInt8;
   activation_symmetry_ = false;
   weight_symmetry_ = true;
+  support_int8_ops_ = {prim::kPrimAddFusion,     prim::kPrimActivation,
+                       prim::kPrimAvgPoolFusion, prim::kPrimConcat,
+                       prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
+                       prim::kPrimCrop,          prim::kPrimFullConnection,
+                       prim::kPrimGather,        prim::kPrimLayerNormFusion,
+                       prim::kPrimMatMul,        prim::kPrimMaxPoolFusion,
+                       prim::kPrimMulFusion,     prim::kPrimReshape,
+                       prim::kPrimSplit,         prim::kPrimTupleGetItem,
+                       prim::kPrimTranspose,     prim::kPrimReduceFusion,
+                       prim::kPrimDivFusion,     prim::kPrimSqrt,
+                       prim::kPrimPowFusion,     prim::kPrimUnsqueeze,
+                       prim::kPrimAffine,        prim::kPrimEltwise,
+                       prim::kPrimShape};
+  skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
 }
 
 void FullQuantQuantizer::InitQMinMax() {
@@ -524,7 +538,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
                                                           flags_.commonQuantParam.skip_quant_node);
     CHECK_NULL_RETURN(quant_strategy);
     //  Mark quantifiable nodes
-    auto is_support_op = quant_strategy->CanOpFullQuantized(anode);
+    auto is_support_op = quant_strategy->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_);
     auto is_skip_op = quant_strategy->IsSkipOp(anode);
     if (is_support_op && !is_skip_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
