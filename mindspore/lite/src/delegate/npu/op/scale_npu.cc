@@ -36,7 +36,7 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
   }
   if (axis_ != NHWC_C && axis_ != NCHW_C) {
     if (in_tensors.size() <= BIAS_INDEX) {
-      MS_LOG(INFO) << "Npu Scale op does not support axis: " << axis_ << ", try to convert to Mul op.";
+      MS_LOG(INFO) << "Npu Scale op does not support axis: " << axis_ << ", trying to convert to Mul op.";
       use_mul_ = true;
     } else {
       MS_LOG(WARNING) << "Npu Scale axis attr only support 1 or channel, now is " << axis_;
@@ -136,7 +136,7 @@ int ScaleNPUOp::ConvertScaleToMul(const std::vector<ge::Operator *> &npu_inputs,
     }
     reshape_ = new (std::nothrow) hiai::op::Reshape(name_ + "_reshape");
     if (reshape_ == nullptr) {
-      MS_LOG(ERROR) << "New Reshape npu operator for op " << name_ << " failed.";
+      MS_LOG(ERROR) << "New Reshape npu operator for op " << name_ << "_reshape failed.";
       return RET_ERROR;
     }
     std::shared_ptr<ge::Tensor> shape_tensor = std::make_shared<ge::Tensor>();

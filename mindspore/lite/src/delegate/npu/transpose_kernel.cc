@@ -59,9 +59,7 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
 }
 
 int TransposeNPUKernel::Execute() {
-  std::vector<int> nh2nc_perm = {0, 3, 1, 2};
-  std::vector<int> nc2nh_perm = {0, 2, 3, 1};
-  if (perm_ != nh2nc_perm && perm_ != nc2nh_perm) {
+  if (perm_ != NHWC2NCHW_PERM && perm_ != NCHW2NHWC_PERM) {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";
     return RET_ERROR;
   }
@@ -76,9 +74,9 @@ int TransposeNPUKernel::Execute() {
   MS_ASSERT(input);
   auto output = out_tensor.MutableData();
   MS_ASSERT(output);
-  if (perm_ == nh2nc_perm) {
+  if (perm_ == NHWC2NCHW_PERM) {
     PackNHWCToNCHWFp32(input, output, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
-  } else if (perm_ == nc2nh_perm) {
+  } else if (perm_ == NCHW2NHWC_PERM) {
     PackNCHWToNHWCFp32(input, output, shape[NCHW_N], shape[NCHW_H] * shape[NCHW_W], shape[NCHW_C]);
   } else {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";

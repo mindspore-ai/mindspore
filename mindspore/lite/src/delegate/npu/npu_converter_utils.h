@@ -31,6 +31,8 @@
 namespace mindspore {
 enum NCHW_SHAPE { NCHW_INVALID = -1, NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
 enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };
+inline const std::vector<int> NHWC2NCHW_PERM = {0, 3, 1, 2};
+inline const std::vector<int> NCHW2NHWC_PERM = {0, 2, 3, 1};
 
 enum NPU_ACTIVATION_MODE {
   ACTIVATION_INVALID = -1,

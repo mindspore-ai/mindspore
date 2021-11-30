@@ -95,6 +95,13 @@ int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vect
       return RET_ERROR;
     }
   }
+  // The shape should be specified not after op Init method since the tensor shape and format may be changed after pass.
+  auto output_shape = out_tensors.at(0).Shape();
+  auto output_batch = static_cast<int32_t>(output_shape.at(NHWC_N));
+  auto output_channel = static_cast<int32_t>(output_shape.at(NHWC_C));
+  auto output_height = static_cast<int32_t>(output_shape.at(NHWC_H));
+  auto output_width = static_cast<int32_t>(output_shape.at(NHWC_W));
+  out_shape_value_ = {output_batch, output_channel, output_height, output_width};
   return RET_OK;
 }
 
@@ -110,6 +117,18 @@ int DeconvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_
   }
   CHECK_NULL_RETURN(weight_);
   deconv_->set_input_filter(*weight_);
+
+  ge::TensorDesc out_shape_desc(ge::Shape({NPU_SHAPE_SIZE}), ge::FORMAT_NCHW, ge::DT_INT32);
+  ge::TensorPtr out_shape_tensor = std::make_shared<hiai::Tensor>(out_shape_desc);
+  out_shape_tensor->SetData(reinterpret_cast<uint8_t *>(out_shape_value_.data()), NPU_SHAPE_SIZE * sizeof(int32_t));
+  out_shape_ = new (std::nothrow) hiai::op::Const(name_ + "_output_shape");
+  if (out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "create const NPU op failed for " << name_ + "_output_shape";
+    return RET_ERROR;
+  }
+  out_shape_->set_attr_value(out_shape_tensor);
+  deconv_->set_input_output_shape(*out_shape_);
+
   if (in_tensors.size() == CONV_INPUT_SIZE) {
     ret = InitBiasConst(in_tensors);
     if (ret != RET_OK) {
@@ -135,6 +154,10 @@ DeconvolutionNPUOp::~DeconvolutionNPUOp() {
   if (deconv_ != nullptr) {
     delete deconv_;
     deconv_ = nullptr;
+  }
+  if (out_shape_ != nullptr) {
+    delete out_shape_;
+    out_shape_ = nullptr;
   }
 }
 }  // namespace mindspore
