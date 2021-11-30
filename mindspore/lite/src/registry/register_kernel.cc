@@ -22,32 +22,35 @@
 
 namespace mindspore {
 namespace registry {
-Status RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                                       const std::string &type, const CreateKernel creator) {
+Status RegisterKernel::RegCustomKernel(const std::vector<char> &arch, const std::vector<char> &provider,
+                                       DataType data_type, const std::vector<char> &type, const CreateKernel creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
+  return RegistryKernelImpl::GetInstance()->RegCustomKernel(CharToString(arch), CharToString(provider), data_type,
+                                                            CharToString(type), creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return kLiteNotSupport;
 #endif
 }
 
-Status RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
-                                 const CreateKernel creator) {
+Status RegisterKernel::RegKernel(const std::vector<char> &arch, const std::vector<char> &provider, DataType data_type,
+                                 int op_type, const CreateKernel creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  return RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+  return RegistryKernelImpl::GetInstance()->RegKernel(CharToString(arch), CharToString(provider), data_type, op_type,
+                                                      creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return kLiteNotSupport;
 #endif
 }
 
-CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
+CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDescHelper *desc) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (desc == nullptr || primitive == nullptr) {
     return nullptr;
   }
-  return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
+  KernelDesc kernel_desc = {desc->data_type, desc->type, CharToString(desc->arch), CharToString(desc->provider)};
+  return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, &kernel_desc);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;

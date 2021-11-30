@@ -18,7 +18,9 @@
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_NODE_PARSER_REGISTRY_H_
 
 #include <string>
+#include <vector>
 #include "include/registry/node_parser.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 namespace registry {
@@ -30,8 +32,8 @@ class MS_API NodeParserRegistry {
   /// \param[in] fmk_type Define the framework.
   /// \param[in] node_type Define the type of the node to be resolved.
   /// \param[in] node_parser Define the NodeParser instance to parse the node.
-  NodeParserRegistry(converter::FmkType fmk_type, const std::string &node_type,
-                     const converter::NodeParserPtr &node_parser);
+  inline NodeParserRegistry(converter::FmkType fmk_type, const std::string &node_type,
+                            const converter::NodeParserPtr &node_parser);
 
   /// \brief Destructor
   ~NodeParserRegistry() = default;
@@ -42,8 +44,21 @@ class MS_API NodeParserRegistry {
   /// \param[in] node_type Define the type of the node to be resolved.
   ///
   /// \return NodeParser instance.
-  static converter::NodeParserPtr GetNodeParser(converter::FmkType fmk_type, const std::string &node_type);
+  inline static converter::NodeParserPtr GetNodeParser(converter::FmkType fmk_type, const std::string &node_type);
+
+ private:
+  NodeParserRegistry(converter::FmkType fmk_type, const std::vector<char> &node_type,
+                     const converter::NodeParserPtr &node_parser);
+  static converter::NodeParserPtr GetNodeParser(converter::FmkType fmk_type, const std::vector<char> &node_type);
 };
+
+NodeParserRegistry::NodeParserRegistry(converter::FmkType fmk_type, const std::string &node_type,
+                                       const converter::NodeParserPtr &node_parser)
+    : NodeParserRegistry(fmk_type, StringToChar(node_type), node_parser) {}
+
+converter::NodeParserPtr NodeParserRegistry::GetNodeParser(converter::FmkType fmk_type, const std::string &node_type) {
+  return GetNodeParser(fmk_type, StringToChar(node_type));
+}
 
 /// \brief Defined registering macro to register NodeParser instance.
 ///

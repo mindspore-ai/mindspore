@@ -343,8 +343,8 @@ Status Serialization::ExportModel(const Model &, ModelType, Buffer *) {
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &, ModelType, const std::string &, QuantizationType, bool,
-                                  std::vector<std::string> output_tensor_name) {
+Status Serialization::ExportModel(const Model &, ModelType, const std::vector<char> &, QuantizationType, bool,
+                                  const std::vector<std::vector<char>> &output_tensor_name) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
