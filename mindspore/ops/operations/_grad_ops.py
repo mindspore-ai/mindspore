@@ -112,21 +112,13 @@ class AsinhGrad(PrimitiveWithInfer):
         return x
 
 
-class ReciprocalGrad(PrimitiveWithInfer):
+class ReciprocalGrad(Primitive):
     """Performs grad of Reciprocal operation."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize ReciprocalGrad"""
 
-    def infer_shape(self, x_shape, dout_shape):
-        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, dout_dtype):
-        args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class RsqrtGrad(PrimitiveWithInfer):
