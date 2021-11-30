@@ -967,6 +967,13 @@ void MindRTBackend::SyncLazyTasks() const { runtime::OpLazyBuilder::GetInstance(
 
 void MindRTBackend::ClearOpBuilderResource() const { runtime::OpLazyBuilder::GetInstance().Reset(); }
 
+void MindRTBackend::SyncStream() {
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  MS_EXCEPTION_IF_NULL(device_context);
+  (void)device_context->SyncStream();
+}
+
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_);

@@ -244,6 +244,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                                const std::vector<int64_t> &tensors_mask) {}
   void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
+  void ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
+                                           const std::vector<tensor::TensorPtr> &input_tensors);
   virtual void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
                                const std::vector<tensor::TensorPtr> &graph_inputs,
                                const std::map<KernelWithIndex, size_t> &cnode_refcount) {}

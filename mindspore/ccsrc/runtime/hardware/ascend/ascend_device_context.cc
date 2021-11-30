@@ -616,7 +616,9 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 }
 
 bool AscendDeviceContext::BindDeviceToCurrentThread() const {
-  runtime_instance_->SetContext();
+  if (initialized_) {
+    runtime_instance_->SetContext();
+  }
   return true;
 }
 
