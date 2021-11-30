@@ -32,13 +32,6 @@ namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
 const int64_t max_loop_size = 100;
-bool IsBpropNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  return node->fullname_with_scope().find(kGradientsFlag) == 0;
-}
 
 CNodePtr CreateStridedSliceCNode(const parallel::Shape &begin, const parallel::Shape &end,
                                  const parallel::Shape &strides, const AnfNodePtr &node) {
@@ -84,50 +77,6 @@ bool IsDuplicateNode(const AnfNodePtr &node) {
                        [](auto node_user) { return IsDuplicateNode(node_user.first); });
   }
   return false;
-}
-
-CNodePtr BpropInput(const CNodePtr cnode) {
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    if (IsBpropNode(cnode->input(i))) {
-      return cnode->input(i)->cast<CNodePtr>();
-    }
-  }
-  return nullptr;
-}
-
-std::vector<CNodePtr> NextBpropNodes(const CNodePtr cnode) {
-  std::vector<CNodePtr> next_brop_nodes;
-  auto manager = cnode->func_graph()->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto cnode_users = manager->node_users()[cnode];
-  std::queue<CNodePtr> cnode_queue;
-  for (auto &node : cnode_users) {
-    if (!node.first->isa<CNode>()) {
-      continue;
-    }
-    cnode_queue.push(node.first->cast<CNodePtr>());
-  }
-  int64_t loop_size = 0;
-  while (!cnode_queue.empty() && loop_size < max_loop_size) {
-    auto cur_cnode = cnode_queue.front();
-    cnode_queue.pop();
-    if (IsBpropNode(cur_cnode)) {
-      next_brop_nodes.push_back(cur_cnode);
-      continue;
-    }
-    auto cur_cnode_users = manager->node_users()[cur_cnode];
-    for (auto &node : cur_cnode_users) {
-      if (!node.first->isa<CNode>()) {
-        continue;
-      }
-      cnode_queue.push(node.first->cast<CNodePtr>());
-    }
-    loop_size++;
-  }
-  if (loop_size < max_loop_size) {
-    return next_brop_nodes;
-  }
-  return {};
 }
 
 void GroupingNextNodes(const CNodePtr &node, std::vector<std::pair<std::shared_ptr<AnfNode>, int>> *duplicate_users,
@@ -207,19 +156,6 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
 void InsertAllGatherDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &slice_allgathers) {
   auto manager = graph->manager();
   auto last_allgather = slice_allgathers.back();
-  auto next_cnodes = NextBpropNodes(last_allgather);
-  CNodePtr next_cnode = nullptr;
-  if (!next_cnodes.empty()) {
-    MS_LOG(INFO) << "The next_cnodes is not empty.";
-    std::list<CNodePtr> orders = graph->GetOrderedCnodes();
-    for (auto &cnode : orders) {
-      if (std::find(next_cnodes.begin(), next_cnodes.end(), cnode) != next_cnodes.end()) {
-        next_cnode = cnode;
-        break;
-      }
-    }
-  }
-
   for (size_t i = slice_allgathers.size() - 1; i > 0; --i) {
     std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), slice_allgathers[i - 1]->input(1),
                                           slice_allgathers[i]};
@@ -229,25 +165,54 @@ void InsertAllGatherDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr
     depend_node->AddAttr("slice_allgather_depend", MakeValue(i));
     manager->SetEdge(slice_allgathers[i - 1], 1, depend_node);
   }
-
-  if (next_cnode == nullptr) {
-    MS_LOG(WARNING) << "cannot find the bprop node in 100 loop";
-    return;
+  CNodePtr allgather_depend_node = nullptr;
+  auto node_users = manager->node_users()[last_allgather];
+  for (auto &node_user : node_users) {
+    if (IsPrimitiveCNode(node_user.first) && node_user.first->cast<CNodePtr>()->HasAttr("recompute_depend") &&
+        GetValue<bool>(node_user.first->cast<CNodePtr>()->GetAttr("recompute_depend"))) {
+      allgather_depend_node = node_user.first->cast<CNodePtr>();
+    }
   }
-  auto allgather_depend_node = BpropInput(next_cnode);
   if (allgather_depend_node == nullptr) {
-    MS_LOG(WARNING) << "cannot find the bprob input for allgather to depend.";
+    MS_LOG(WARNING) << "cannot find the last allgather depend node.";
     return;
   }
   MS_LOG(INFO) << "Insert depend for last slice allgather. The depend node is: "
                << allgather_depend_node->DebugString();
-  std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), last_allgather->input(1),
-                                        allgather_depend_node};
-  auto depend_node = graph->NewCNode(depend_inputs);
-  MS_EXCEPTION_IF_NULL(depend_node);
-  depend_node->set_abstract(last_allgather->input(1)->abstract()->Clone());
-  depend_node->AddAttr("last_slice_allgather_depend", MakeValue(true));
-  manager->SetEdge(last_allgather, 1, depend_node);
+
+  allgather_depend_node->set_input(1, last_allgather->input(1));
+  allgather_depend_node->set_abstract(last_allgather->input(1)->abstract()->Clone());
+  allgather_depend_node->AddAttr("last_slice_allgather_depend", MakeValue(true));
+  manager->Replace(allgather_depend_node, last_allgather);
+  manager->SetEdge(last_allgather, 1, allgather_depend_node);
+}
+
+void SpreadRecomputeDepend(const FuncGraphManagerPtr &manager, const std::vector<CNodePtr> &origin_nodes_topological) {
+  std::vector<CNodePtr> depend_cnodes;
+  for (auto &node : origin_nodes_topological) {
+    if (!node->HasAttr("recompute_depend") || !GetValue<bool>(node->GetAttr("recompute_depend"))) {
+      continue;
+    }
+    std::queue<CNodePtr> node_queue;
+    node_queue.push(node);
+    int64_t loop_size = 0;
+    while (!node_queue.empty() && loop_size < max_loop_size) {
+      auto cnode = node_queue.front();
+      node_queue.pop();
+      auto cnode_users = manager->node_users()[cnode];
+      for (auto &cnode_user : cnode_users) {
+        if (IsPrimitiveCNode(cnode_user.first, prim::kPrimDepend)) {
+          depend_cnodes.push_back(cnode_user.first->cast<CNodePtr>());
+        } else if (IsPrimitiveCNode(cnode_user.first, prim::kPrimUpdateState)) {
+          node_queue.push(cnode_user.first->cast<CNodePtr>());
+        }
+        loop_size++;
+      }
+    }
+  }
+  for (auto &depend_cnode : depend_cnodes) {
+    depend_cnode->cast<CNodePtr>()->AddAttr("recompute_depend", MakeValue(true));
+  }
 }
 }  // namespace
 
@@ -261,6 +226,7 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(manager);
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();
   std::vector<CNodePtr> origin_nodes_topological(orders.begin(), orders.end());
+  SpreadRecomputeDepend(manager, origin_nodes_topological);
   std::vector<CNodePtr> slice_allgathers;
   int64_t recompute_order_id = 0;
   for (auto &node : origin_nodes_topological) {
