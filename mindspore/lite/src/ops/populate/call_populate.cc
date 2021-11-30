@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/call_parameter.h"
 using mindspore::schema::PrimitiveType_Call;
 
 namespace mindspore {
@@ -21,15 +22,21 @@ namespace lite {
 OpParameter *PopulateCallParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Call();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "call param is nullptr";
+    return nullptr;
+  }
 
-  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *param = reinterpret_cast<CallParameter *>(malloc(sizeof(CallParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc CallParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(OpParameter));
+  memset(param, 0, sizeof(CallParameter));
 
-  param->type_ = primitive->value_type();
+  param->op_parameter_.type_ = primitive->value_type();
+  param->is_tail_call = value->is_tail_call();
   return reinterpret_cast<OpParameter *>(param);
 }
 
