@@ -143,7 +143,7 @@ class Tensor(Tensor_):
         else:
             Tensor_.__init__(self, dtype, shape)
 
-        self._virtual_flag = False
+        self.virtual_flag = False
         self.init = init
         self.init_finished = True
 
@@ -163,7 +163,7 @@ class Tensor(Tensor_):
     def __deepcopy__(self, memodict):
         new_obj = Tensor(self)
         new_obj.init = self.init
-        new_obj._virtual_flag = self._virtual_flag  # pylint:disable=w0212
+        new_obj.virtual_flag = self.virtual_flag
         return new_obj
 
     def __repr__(self):
@@ -365,18 +365,6 @@ class Tensor(Tensor_):
     def T(self):
         """Return the transposed tensor."""
         return self.transpose()
-
-    @property
-    def virtual_flag(self):
-        """Used to mark whether the tensor is virtual. If the tensor is virtual, return True."""
-        return self._virtual_flag
-
-    @virtual_flag.setter
-    def virtual_flag(self, value):
-        """The setter of virtual_flag."""
-        if not isinstance(value, bool):
-            raise TypeError("virtual_flag must be bool.")
-        self._virtual_flag = value
 
     @staticmethod
     def from_numpy(array):
