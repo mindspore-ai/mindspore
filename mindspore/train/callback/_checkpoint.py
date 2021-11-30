@@ -94,6 +94,7 @@ class CheckpointConfig:
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
                         mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
+        exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: False.
 
     Raises:
         ValueError: If input parameter is not the correct type.
@@ -144,7 +145,8 @@ class CheckpointConfig:
                  saved_network=None,
                  append_info=None,
                  enc_key=None,
-                 enc_mode='AES-GCM'):
+                 enc_mode='AES-GCM',
+                 exception_save=False):
 
         if save_checkpoint_steps is not None:
             save_checkpoint_steps = Validator.check_non_negative_int(save_checkpoint_steps)
@@ -163,6 +165,11 @@ class CheckpointConfig:
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
             raise ValueError("The input arguments 'save_checkpoint_steps', 'save_checkpoint_seconds', "
                              "'keep_checkpoint_max' and 'keep_checkpoint_per_n_minutes' can't be all None or 0.")
+
+        if not isinstance(exception_save, bool):
+            raise TypeError(f"For 'CheckpointConfig', the argument 'exception_save' should be bool, "
+                            f"but got {str(type(exception_save))}.")
+        self.exception_save = exception_save
 
         self._save_checkpoint_steps = save_checkpoint_steps
         self._save_checkpoint_seconds = save_checkpoint_seconds
@@ -311,6 +318,7 @@ class ModelCheckpoint(Callback):
             raise ValueError("The argument 'prefix' for checkpoint file name is invalid, 'prefix' must be "
                              "string and does not contain '/', but got {}.".format(prefix))
         self._prefix = prefix
+        self._exception_prefix = prefix
 
         if directory is not None:
             self._directory = _make_directory(directory)
