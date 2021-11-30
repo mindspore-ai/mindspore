@@ -226,8 +226,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   MS_EXCEPTION_IF_NULL(parent_context_);
   MS_LOG(DEBUG) << GetInferThread() << "@" << fg->ToString() << ArgsToString(args_abs_list) << " { ";
   if (parent_context_->func_graph() != nullptr) {
-    MS_LOG(DEBUG) << GetInferThread() << "graph_: " << AnalysisSchedule::GetThreadID() << ":"
-                  << parent_context_->func_graph()->ToString() << "()->" << AnalysisSchedule::GetThreadID() << ":"
+    MS_LOG(DEBUG) << GetInferThread() << "graph_: " << AnalysisSchedule::thread_id() << ":"
+                  << parent_context_->func_graph()->ToString() << "()->" << AnalysisSchedule::thread_id() << ":"
                   << fg->ToString() << "();";
   }
 

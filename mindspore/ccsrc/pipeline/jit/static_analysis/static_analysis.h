@@ -133,7 +133,7 @@ class AnfNodeConfig : public Config {
 
   AnalysisEnginePtr engine() const { return engine_.lock(); }
 
-  size_t hash() const {
+  size_t hash() const override {
     std::size_t node_hash = PointerHash<AnfNodePtr>{}(node_);
     if (context_->IsDummyContext()) {
       return node_hash;
