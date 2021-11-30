@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/image/crop_op.h"
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -68,8 +69,8 @@ Status CropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("coordinates") != op_params.end(), "Failed to find coordinates");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "coordinates", kCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kCropOperation));
   std::vector<int32_t> coordinates = op_params["coordinates"];
   std::vector<int32_t> size = op_params["size"];
   *operation = std::make_shared<CropOperation>(coordinates, size);

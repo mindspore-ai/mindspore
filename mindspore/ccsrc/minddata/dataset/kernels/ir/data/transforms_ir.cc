@@ -46,6 +46,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/kernels/py_func_op.h"
 #endif
@@ -175,7 +176,7 @@ Status OneHotOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status OneHotOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_classes") != op_params.end(), "Failed tofind num_classes");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_classes", kOneHotOperation));
   int32_t num_classes = op_params["num_classes"];
   *operation = std::make_shared<transforms::OneHotOperation>(num_classes);
   return Status::OK();
@@ -281,7 +282,7 @@ Status TypeCastOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status TypeCastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data_type") != op_params.end(), "Failed tofind data_type");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "data_type", kTypeCastOperation));
   std::string data_type = op_params["data_type"];
   *operation = std::make_shared<transforms::TypeCastOperation>(data_type);
   return Status::OK();

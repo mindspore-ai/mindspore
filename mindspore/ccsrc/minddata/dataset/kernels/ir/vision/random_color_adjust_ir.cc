@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -95,10 +96,10 @@ Status RandomColorAdjustOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomColorAdjustOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("brightness") != op_params.end(), "Failed to find brightness");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("contrast") != op_params.end(), "Failed to find contrast");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("saturation") != op_params.end(), "Failed to find saturation");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("hue") != op_params.end(), "Failed to find hue");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "brightness", kRandomColorAdjustOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "contrast", kRandomColorAdjustOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "saturation", kRandomColorAdjustOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "hue", kRandomColorAdjustOperation));
   std::vector<float> brightness = op_params["brightness"];
   std::vector<float> contrast = op_params["contrast"];
   std::vector<float> saturation = op_params["saturation"];

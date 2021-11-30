@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/image/resize_op.h"
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -69,8 +70,8 @@ Status ResizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ResizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("interpolation") != op_params.end(), "Failed to find interpolation");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kResizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kResizeOperation));
   std::vector<int32_t> size = op_params["size"];
   InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
   *operation = std::make_shared<vision::ResizeOperation>(size, interpolation);

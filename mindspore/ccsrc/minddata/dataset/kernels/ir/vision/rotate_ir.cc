@@ -103,11 +103,11 @@ Status RotateOperation::to_json(nlohmann::json *out_json) {
 
 Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
 #ifndef ENABLE_ANDROID
-  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("degree") != op_params.end(), "degree"));
-  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("resample") != op_params.end(), "resample"));
-  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("expand") != op_params.end(), "expand"));
-  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("center") != op_params.end(), "center"));
-  RETURN_IF_NOT_OK(ValidateParamInJson(op_params.find("fill_value") != op_params.end(), "fill_value"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degree", kRotateOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resample", kRotateOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "expand", kRotateOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "center", kRotateOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kRotateOperation));
   float degrees = op_params["degree"];
   InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];
@@ -115,7 +115,7 @@ Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   std::vector<uint8_t> fill_value = op_params["fill_value"];
   *operation = std::make_shared<vision::RotateOperation>(degrees, resample, expand, center, fill_value);
 #else
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("angle_id") != op_params.end(), "Failed to find angle_id");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "angle_id", kRotateOperation));
   uint64_t angle_id = op_params["angle_id"];
   std::shared_ptr<RotateOperation> rotate_operation =
     std::make_shared<vision::RotateOperation>(FixRotationAngle::k0Degree);

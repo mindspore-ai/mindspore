@@ -22,6 +22,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -66,8 +67,8 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AutoContrastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("cutoff") != op_params.end(), "Failed to find cutoff");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ignore") != op_params.end(), "Failed to find ignore");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "cutoff", kAutoContrastOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ignore", kAutoContrastOperation));
   float cutoff = op_params["cutoff"];
   std::vector<uint32_t> ignore = op_params["ignore"];
   *operation = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);

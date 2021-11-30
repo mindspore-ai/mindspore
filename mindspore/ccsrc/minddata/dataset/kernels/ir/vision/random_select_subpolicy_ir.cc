@@ -23,6 +23,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -100,14 +101,14 @@ Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
 
 Status RandomSelectSubpolicyOperation::from_json(nlohmann::json op_params,
                                                  std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("policy") != op_params.end(), "Failed to find policy");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "policy", kRandomSelectSubpolicyOperation));
   nlohmann::json policy_json = op_params["policy"];
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy;
   std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> policy_items;
   for (nlohmann::json item : policy_json) {
     for (nlohmann::json item_pair : item) {
-      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("prob") != item_pair.end(), "Failed to find prob");
-      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("tensor_op") != item_pair.end(), "Failed to find tensor_op");
+      RETURN_IF_NOT_OK(ValidateParamInJson(item_pair, "prob", kRandomSelectSubpolicyOperation));
+      RETURN_IF_NOT_OK(ValidateParamInJson(item_pair, "tensor_op", kRandomSelectSubpolicyOperation));
       std::vector<std::shared_ptr<TensorOperation>> operations;
       std::pair<std::shared_ptr<TensorOperation>, double> policy_pair;
       std::shared_ptr<TensorOperation> operation;

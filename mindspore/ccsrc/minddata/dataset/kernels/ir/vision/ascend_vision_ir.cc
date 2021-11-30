@@ -24,6 +24,7 @@
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -78,7 +79,7 @@ Status DvppCropJpegOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status DvppCropJpegOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kDvppCropJpegOperation));
   std::vector<uint32_t> resize = op_params["size"];
   *operation = std::make_shared<vision::DvppCropJpegOperation>(resize);
   return Status::OK();
@@ -132,7 +133,7 @@ Status DvppDecodeResizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status DvppDecodeResizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kDvppDecodeResizeOperation));
   std::vector<uint32_t> resize = op_params["size"];
   *operation = std::make_shared<vision::DvppDecodeResizeOperation>(resize);
   return Status::OK();
@@ -236,8 +237,8 @@ Status DvppDecodeResizeCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status DvppDecodeResizeCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("crop_size") != op_params.end(), "Fail to find crop_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resize_size") != op_params.end(), "Fail to find resize_size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "crop_size", kDvppDecodeResizeCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resize_size", kDvppDecodeResizeCropOperation));
   std::vector<uint32_t> crop = op_params["crop_size"];
   std::vector<uint32_t> resize = op_params["resize_size"];
   *operation = std::make_shared<vision::DvppDecodeResizeCropOperation>(crop, resize);
@@ -304,8 +305,8 @@ Status DvppNormalizeOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status DvppNormalizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("mean") != op_params.end(), "Fail to find mean");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("std") != op_params.end(), "Fail to find std");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "mean", kDvppNormalizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "std", kDvppNormalizeOperation));
   std::vector<float> mean = op_params["mean"];
   std::vector<float> std = op_params["std"];
   *operation = std::make_shared<vision::DvppNormalizeOperation>(mean, std);
@@ -359,7 +360,7 @@ Status DvppResizeJpegOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status DvppResizeJpegOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kDvppResizeJpegOperation));
   std::vector<uint32_t> resize = op_params["size"];
   *operation = std::make_shared<vision::DvppResizeJpegOperation>(resize);
   return Status::OK();

@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/image/affine_op.h"
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -84,12 +85,12 @@ Status AffineOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AffineOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Failed to find degrees");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("translate") != op_params.end(), "Failed to find translate");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Failed to find scale");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("shear") != op_params.end(), "Failed to find shear");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Failed to find resample");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "degrees", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "translate", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "scale", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "shear", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resample", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kAffineOperation));
   float_t degrees = op_params["degrees"];
   std::vector<float> translation = op_params["translate"];
   float scale = op_params["scale"];

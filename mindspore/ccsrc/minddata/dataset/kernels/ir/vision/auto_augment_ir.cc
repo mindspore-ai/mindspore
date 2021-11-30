@@ -20,6 +20,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
@@ -64,9 +65,9 @@ Status AutoAugmentOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status AutoAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("policy") != op_params.end(), "Failed to find degrees");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("interpolation") != op_params.end(), "Failed to find translate");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find scale");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "policy", kAutoAugmentOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kAutoAugmentOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kAutoAugmentOperation));
   AutoAugmentPolicy policy = op_params["policy"];
   InterpolationMode interpolation = op_params["interpolation"];
   std::vector<uint8_t> fill_value = op_params["fill_value"];
