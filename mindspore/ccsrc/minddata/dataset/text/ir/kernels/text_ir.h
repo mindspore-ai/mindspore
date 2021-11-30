@@ -30,6 +30,8 @@ namespace dataset {
 class Vectors;
 class Vocab;
 class SentencePieceVocab;
+class Vectors;
+class Vocab;
 
 // Transform operations for text
 namespace text {

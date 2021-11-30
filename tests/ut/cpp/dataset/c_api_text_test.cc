@@ -23,11 +23,13 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/vectors.h"
 #include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::Status;
+using mindspore::dataset::FastText;
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::Vectors;
@@ -3941,5 +3943,359 @@ TEST_F(MindDataTestPipeline, TestVectorsWithWrongInfoFile) {
   std::string vectors_dir = datasets_root_path_ + "/testVectors/vectors_with_wrong_info.txt";
   std::shared_ptr<Vectors> vectors;
   Status s = Vectors::BuildFromFile(&vectors, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: return correct MSTensor which is equal to the expected
+TEST_F(MindDataTestPipeline, TestFastTextDefaultParam) {
+  // Test with default parameter.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextDefaultParam.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(fast_text);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {0, 0, 0, 0, 0, 0},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {0, 0, 0, 0, 0, 0}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    dsize_t dim = 6;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({dim}), &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FastText
+/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: return correct MSTensor which is equal to the expected
+TEST_F(MindDataTestPipeline, TestFastTextAllBuildfromfileParams) {
+  // Test with two parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextAllBuildfromfileParams.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir, 100);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(fast_text);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {0, 0, 0, 0, 0, 0},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {0, 0, 0, 0, 0, 0}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    dsize_t dim = 6;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({dim}), &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FastText
+/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: return correct MSTensor which is equal to the expected
+TEST_F(MindDataTestPipeline, TestFastTextUnknownInit) {
+  // Test with two parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextUnknownInit.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir, 100);
+  EXPECT_EQ(s, Status::OK());
+
+  std::vector<float> unknown_init = {-1, -1, -1, -1, -1, -1};
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(fast_text, unknown_init);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {-1, -1, -1, -1, -1, -1},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {-1, -1, -1, -1, -1, -1}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    dsize_t dim = 6;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({dim}), &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FastText
+/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
+/// Expectation: return correct MSTensor which is equal to the expected
+TEST_F(MindDataTestPipeline, TestFastTextAllParams) {
+  //  Test with all parameters.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextAllParams.";
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+
+  std::vector<float> unknown_init = {-1, -1, -1, -1, -1, -1};
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(fast_text, unknown_init, true);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {-1, -1, -1, -1, -1, -1},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {-1, -1, -1, -1, -1, -1}};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    TensorPtr de_expected_item;
+    dsize_t dim = 6;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({dim}), &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 7);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FastText
+/// Description: test with pre-vectors set that have the different dimension
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextDifferentDimension) {
+  //  Tokens don't have the same number of vectors.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextDifferentDimension.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fasttext_dim_different.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir, 100);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with the parameter max_vectors that is <= 0
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextMaxVectorsLessThanZero) {
+  //  Test with max_vectors <= 0.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextMaxVectorsLessThanZero.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir, -1);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with the pre-vectors file that is empty
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextWithEmptyFile) {
+  //  Read empty file.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithEmptyFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fasttext_empty.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with the pre-vectors file that is not exist
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextWithNotExistFile) {
+  //  Test with not exist file.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithNotExistFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/no_fasttext.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextWithWrongInfoFile) {
+  //  wrong info.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongInfoFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fasttext_with_wrong_info.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_NE(s, Status::OK());
+}
+
+/// Feature: FastText
+/// Description: test with the pre-vectors set that has a wrong suffix
+/// Expectation: throw correct error and message
+TEST_F(MindDataTestPipeline, TestFastTextWithWrongSuffix) {
+  //  wrong info.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongSuffix.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/test_fast_text/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::string vectors_dir = datasets_root_path_ + "/test_fast_text/fast_text.txt";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
   EXPECT_NE(s, Status::OK());
 }

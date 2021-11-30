@@ -23,11 +23,13 @@
 #include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/vectors.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
+using mindspore::dataset::FastText;
 using mindspore::dataset::Vectors;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
@@ -1660,6 +1662,140 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParam) {
   EXPECT_FALSE(status01.IsOk());
   std::shared_ptr<Vectors> vectors02 = nullptr;
   std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(vectors02);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token, &lookup_result);
+  EXPECT_FALSE(status02.IsOk());
+}
+
+/// Feature: FastText
+/// Description: test basic usage of FastText and the ToVectors with default parameter
+/// Expectation: get correct MSTensor
+TEST_F(MindDataTestExecute, TestFastTextParam) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFastTextParam.";
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateScalar<std::string>("ok", &de_tensor);
+  auto token = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::MSTensor lookup_result;
+
+  // Create expected output.
+  std::shared_ptr<Tensor> de_expected;
+  std::vector<float> expected = {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411};
+  dsize_t dim = 6;
+  ASSERT_OK(Tensor::CreateFromVector(expected, TensorShape({dim}), &de_expected));
+  auto ms_expected = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected));
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text01;
+  Status s01 = FastText::BuildFromFile(&fast_text01, vectors_dir);
+  EXPECT_EQ(s01, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(fast_text01);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected);
+  EXPECT_TRUE(status01.IsOk());
+
+  std::shared_ptr<FastText> fast_text02;
+  Status s02 = FastText::BuildFromFile(&fast_text02, vectors_dir, 100);
+  EXPECT_EQ(s02, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(fast_text02);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected);
+  EXPECT_TRUE(status02.IsOk());
+
+  std::shared_ptr<FastText> fast_text03;
+  Status s03 = FastText::BuildFromFile(&fast_text03, vectors_dir, 3);
+  EXPECT_EQ(s03, Status::OK());
+  std::shared_ptr<TensorTransform> to_vectors03 = std::make_shared<text::ToVectors>(fast_text03);
+  auto transform03 = Execute({to_vectors03});
+  Status status03 = transform03(token, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected);
+  EXPECT_TRUE(status03.IsOk());
+}
+
+/// Feature: ToVectors
+/// Description: test basic usage of ToVectors and the FastText with default parameter
+/// Expectation: get correct MSTensor
+TEST_F(MindDataTestExecute, TestToVectorsParamForFastText) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParamForFastText.";
+  std::shared_ptr<Tensor> de_tensor01;
+  Tensor::CreateScalar<std::string>("none", &de_tensor01);
+  auto token01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor01));
+  std::shared_ptr<Tensor> de_tensor02;
+  Tensor::CreateScalar<std::string>("ok", &de_tensor02);
+  auto token02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor02));
+  std::shared_ptr<Tensor> de_tensor03;
+  Tensor::CreateScalar<std::string>("OK", &de_tensor03);
+  auto token03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor03));
+  mindspore::MSTensor lookup_result;
+
+  // Create expected output.
+  dsize_t dim = 6;
+  std::shared_ptr<Tensor> de_expected01;
+  std::vector<float> expected01 = {0, 0, 0, 0, 0, 0};
+  ASSERT_OK(Tensor::CreateFromVector(expected01, TensorShape({dim}), &de_expected01));
+  auto ms_expected01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected01));
+  std::shared_ptr<Tensor> de_expected02;
+  std::vector<float> expected02 = {-1, -1, -1, -1, -1, -1};
+  ASSERT_OK(Tensor::CreateFromVector(expected02, TensorShape({dim}), &de_expected02));
+  auto ms_expected02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected02));
+  std::shared_ptr<Tensor> de_expected03;
+  std::vector<float> expected03 = {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411};
+  ASSERT_OK(Tensor::CreateFromVector(expected03, TensorShape({dim}), &de_expected03));
+  auto ms_expected03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected03));
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text;
+  Status s = FastText::BuildFromFile(&fast_text, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(fast_text);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token01, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected01);
+  EXPECT_TRUE(status01.IsOk());
+  std::vector<float> unknown_init = {-1, -1, -1, -1, -1, -1};
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(fast_text, unknown_init);
+  auto transform02 = Execute({to_vectors02});
+  Status status02 = transform02(token01, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected02);
+  EXPECT_TRUE(status02.IsOk());
+  std::shared_ptr<TensorTransform> to_vectors03 = std::make_shared<text::ToVectors>(fast_text, unknown_init);
+  auto transform03 = Execute({to_vectors03});
+  Status status03 = transform03(token02, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected03);
+  EXPECT_TRUE(status03.IsOk());
+  std::shared_ptr<TensorTransform> to_vectors04 = std::make_shared<text::ToVectors>(fast_text, unknown_init, true);
+  auto transform04 = Execute({to_vectors04});
+  Status status04 = transform04(token03, &lookup_result);
+  EXPECT_MSTENSOR_EQ(lookup_result, ms_expected03);
+  EXPECT_TRUE(status04.IsOk());
+}
+
+/// Feature: ToVectors
+/// Description: test invalid parameter of ToVectors for FastText
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForFastText) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParamForFastText.";
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateScalar<std::string>("none", &de_tensor);
+  auto token = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::MSTensor lookup_result;
+
+  // Transform params.
+  std::string vectors_dir = "data/dataset/test_fast_text/fast_text.vec";
+  std::shared_ptr<FastText> fast_text01;
+  Status s = FastText::BuildFromFile(&fast_text01, vectors_dir);
+  EXPECT_EQ(s, Status::OK());
+  std::vector<float> unknown_init = {-1, -1, -1, -1};
+  std::shared_ptr<TensorTransform> to_vectors01 = std::make_shared<text::ToVectors>(fast_text01, unknown_init);
+  auto transform01 = Execute({to_vectors01});
+  Status status01 = transform01(token, &lookup_result);
+  EXPECT_FALSE(status01.IsOk());
+  std::shared_ptr<FastText> fast_text02 = nullptr;
+  std::shared_ptr<TensorTransform> to_vectors02 = std::make_shared<text::ToVectors>(fast_text02);
   auto transform02 = Execute({to_vectors02});
   Status status02 = transform02(token, &lookup_result);
   EXPECT_FALSE(status02.IsOk());

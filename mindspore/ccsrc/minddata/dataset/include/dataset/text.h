@@ -630,7 +630,7 @@ class MS_API ToNumber final : public TensorTransform {
 };
 
 /// \brief Look up a token into an vector according to the input Vectors table.
-class ToVectors final : public TensorTransform {
+class MS_API ToVectors final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vectors A Vectors object.
