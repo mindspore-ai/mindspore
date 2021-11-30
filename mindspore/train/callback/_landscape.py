@@ -33,7 +33,7 @@ from mindspore.train.summary import SummaryRecord
 from mindspore.train.summary.enums import PluginEnum
 from mindspore.train.anf_ir_pb2 import DataType
 from mindspore.train._utils import check_value_type, _make_directory
-from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
+from mindspore.train.dataset_helper import DatasetHelper
 from mindspore.nn.metrics import get_metrics
 from mindspore import context
 
@@ -170,9 +170,10 @@ class SummaryLandscape:
         1. SummaryLandscape only supports Linux systems.
 
     Args:
-        summary_dir(str): The path of summary is used to save the model weight,
+        summary_dir (str): The path of summary is used to save the model weight,
             metadata and other data required for create landscape.
-
+        intervals (Union[List[List[int]], None]): Specifies the interval in which the loss landscape.
+            Default: None.
     Examples:
         >>> from mindspore.train.callback import SummaryLandscape
         >>> import mindspore.nn as nn
@@ -224,7 +225,27 @@ class SummaryLandscape:
                 self._epoch_group[i].append(j)
 
     def save_loss_and_model_params(self, cur_num, unit, backbone, loss):
-        """Save model params and loss."""
+        """
+        Save model params and loss.
+
+        Args:
+            cur_num (int): The serial number of the current model and loss to be saved.
+            unit (str): The type of model and loss to save. Optional: epoch/step.
+            backbone (Cell): A backbone network.
+            loss (int): The loss of current model to be saved.
+
+        Examples:
+            >>> from mindspore.train.callback import SummaryLandscape
+            >>>
+            >>> if __name__ == '__main__':
+            ...     summary_dir = './summary/'
+            ...     summary_landscape = SummaryLandscape(summary_dir=summary_dir)
+            ...     cur_num = 1
+            ...     unit = 'epoch'
+            ...     backbone = LeNet5(10)
+            ...     loss = 1.5
+            ...     summary_landscape.save_loss_and_model_params(cur_num, unit, backbone, loss)
+        """
         self._save_model_params(cur_num, unit, backbone, loss)
 
     def _save_model_params(self, cur_num, unit, backbone, loss):
@@ -260,7 +281,30 @@ class SummaryLandscape:
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
     def save_metadata(self, step_per_epoch, unit, num_samples, landscape_size, create_landscape):
-        """Save meta data to json file."""
+        """
+        Save meta data to json file.
+
+        Args:
+            step_per_epoch (int): The steps of an epoch for current model.
+            unit (str): The type of model to save. Optional: epoch/step.
+            num_samples (int): The size of the dataset used to create the loss landscape.
+            landscape_size (int): Specify the image resolution of the generated loss landscape.
+            create_landscape (List[bool, bool]): Select how to create loss landscape.
+                Training process loss landscape(train) and Training result loss landscape(result).
+
+        Examples:
+            >>> from mindspore.train.callback import SummaryLandscape
+            >>>
+            >>> if __name__ == '__main__':
+            ...     summary_dir = './summary/'
+            ...     summary_landscape = SummaryLandscape(summary_dir=summary_dir)
+            ...     step_per_epoch = 175
+            ...     unit = 'epoch'
+            ...     num_samples = 2048
+            ...     landscape_size = 40
+            ...     create_landscape = {"train": True, "result", False}
+            ...     summary_landscape.save_metadata(step_per_epoch, unit, num_samples, landscape_size, create_landscape)
+        """
         data = {
             "epoch_group": self._epoch_group,
             "model_params_file_map": self._model_params_file_map,
@@ -276,12 +320,12 @@ class SummaryLandscape:
 
     def gen_landscapes_with_multi_process(self, callback_fn, collect_landscape=None,
                                           device_ids=None, device_target='Ascend', output=None):
-        """
+        r"""
         Use the multi process to generate landscape.
 
         Args:
             callback_fn (python function): A python function object. User needs to write a function,
-                callback_ fn, it has no input, and the return requirements are as follows.
+                it has no input, and the return requirements are as follows.
 
                 - mindspore.train.Model: User's model object.
                 - mindspore.nn.Cell: User's network object.
@@ -342,16 +386,17 @@ class SummaryLandscape:
             with open(json_path, 'w') as file:
                 json.dump(data, file)
 
-        for interval, landscape in self.list_landscapes(callback_fn=callback_fn,
-                                                        device_ids=device_ids,
-                                                        device_target=device_target):
+        for interval, landscape in self._list_landscapes(callback_fn=callback_fn,
+                                                         device_ids=device_ids,
+                                                         device_target=device_target):
             summary_record.add_value(PluginEnum.LANDSCAPE.value, f'landscape_{str(interval)}', landscape)
             summary_record.record(0)
             summary_record.flush()
         summary_record.close()
 
-    def list_landscapes(self, callback_fn, device_ids=None, device_target='Ascend'):
+    def _list_landscapes(self, callback_fn, device_ids=None, device_target='Ascend'):
         """Create landscape with single device and list all landscape."""
+
         json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
         if not os.path.exists(json_path):
             raise FileNotFoundError(f'train_metadata json file path not exists,'
@@ -708,7 +753,6 @@ class SummaryLandscape:
         """
         logger.info("start to cont loss")
         vals = list()
-        dataset_sink_mode = (context.get_context('device_target') == 'Ascend')
 
         al_item = 0
         for i, _ in enumerate(alph):
@@ -725,7 +769,7 @@ class SummaryLandscape:
 
             load_param_into_net(network, parameters_dict)
             del parameters_dict
-            loss = self._loss_compute(model, ds_eval, metrics, dataset_sink_mode)
+            loss = self._loss_compute(model, ds_eval, metrics)
             logger.info("%s/%s loss: %s." % (i+1, len(alph), loss))
             vals = np.append(vals, loss['Loss'])
 
@@ -740,23 +784,21 @@ class SummaryLandscape:
         parameter.set_data(Tensor(data_target))
         return parameter
 
-    def _loss_compute(self, model, data, metrics, dataset_sink_mode=False):
+    def _loss_compute(self, model, data, metrics):
         """Compute loss."""
+        dataset_sink_mode = False
         self._metric_fns = get_metrics(metrics)
         for metric in self._metric_fns.values():
             metric.clear()
 
         network = model.train_network
         dataset_helper = DatasetHelper(data, dataset_sink_mode)
-        if dataset_sink_mode:
-            network = connect_network_with_dataset(network, dataset_helper)
 
         network.set_train(True)
         network.phase = 'train'
 
         for inputs in dataset_helper:
-            if not dataset_sink_mode:
-                inputs = transfer_tensor_to_tuple(inputs)
+            inputs = transfer_tensor_to_tuple(inputs)
             outputs = network(*inputs)
             self._update_metrics(outputs)
 
