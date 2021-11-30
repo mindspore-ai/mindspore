@@ -156,7 +156,6 @@ def test_div_mod_func2_tensor():
     assert "Not support Tensor or variable type as input during running JIT Fallback, but got" in str(err.value)
 
 
-# NameError: name 'Tensor' is not defined.
 @ms_function
 def select_func(cond, x, y):
     if isinstance(cond, (tuple, list)):
@@ -175,7 +174,6 @@ def test_select_func():
     print(select_func(cond, x, y))
 
 
-# Not interpret 'Tensor'.
 @ms_function
 def select_func2(cond, x, y):
     if isinstance(cond, (tuple, list)):
@@ -194,7 +192,6 @@ def test_select_func2():
     print(select_func2(cond, x, y))
 
 
-# NameError: name 'Tensor' is not defined.
 @ms_function
 def slice_func(a, b):
     a[1:3, ::] = b
@@ -205,29 +202,6 @@ def test_slice_func():
     a = Tensor(np.arange(60).reshape(3, 4, 5), dtype=mstype.float32)
     b = Tensor([1], dtype=mstype.float32)
     print(slice_func(a, b))
-
-
-@ms_function
-def np_fallback_func_tensor_index(x):
-    array_x = tuple([2, 3, 4, 5])
-    np_x = np.array(array_x).astype(np.float32)
-    me_x = Tensor(np_x)
-    me_x = me_x + me_x
-    return me_x[x]
-
-
-# NameError: name 'array_x' is not defined.
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_fallback_func_tensor_index():
-    """
-    Feature: Fallback feature: support Tensor index.
-    Description: Fallback feature: support Tensor index.
-    Expectation: Fallback feature: support Tensor index.
-    """
-    x = Tensor(1, mstype.int32)
-    output = np_fallback_func_tensor_index(x)
-    output_expect = Tensor(6, mstype.float32)
-    assert output == output_expect
 
 
 # EvalCNode: This may be not defined, or it can't be a operator.
