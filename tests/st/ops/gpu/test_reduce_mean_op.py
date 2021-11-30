@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
@@ -100,3 +101,30 @@ def test_dynamic_reduce_mean(dtype, shape, axis, keep_dims):
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
     assert output.shape == expect.shape
+
+
+class ReduceMeanNegativeNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.mean0 = P.ReduceMean(True)
+        self.mean1 = P.ReduceMean(False)
+
+    def construct(self, x):
+        t = self.mean0(x, ())
+        return self.mean1(t, (-1,))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reduce_mean_negative():
+    """
+    Feature: ALL To ALL
+    Description: test cases for ReduceMean with negative axis.
+    Expectation: the result match expectation
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor([[[1, 2, 3,], [3, 2, 1]]], mstype.float32)
+    net = ReduceMeanNegativeNet()
+    out = net(x)
+    assert out.shape == (1, 1)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,14 +67,20 @@ class ReduceOneEliminater : public AnfVisitor {
       }
 
       // {_Reduce, X, axis} -> {Reshape, X, new_shape}
+      size_t x_shape_size = x_shape_.size();
+      std::vector<int64_t> positive_axis;
+      std::transform(axis_.begin(), axis_.end(), std::back_inserter(positive_axis),
+                     [x_shape_size](int64_t idx) { return idx < 0 ? idx + x_shape_size : idx; });
+
       std::vector<ValuePtr> elements;
-      for (size_t i = 0; i < x_shape_.size(); i++) {
-        auto iter = find(axis_.begin(), axis_.end(), i);
-        if (iter == axis_.end()) {
+      for (size_t i = 0; i < x_shape_size; i++) {
+        auto iter = find(positive_axis.begin(), positive_axis.end(), i);
+        if (iter == positive_axis.end()) {
           ValuePtr s = MakeValue(x_shape_[i]);
           elements.push_back(s);
         }
       }
+
       auto new_shape = std::make_shared<ValueTuple>(elements);
       auto reshape_op = prim::GetPythonOps("reshape", "mindspore.ops.functional")->cast<PrimitivePtr>();
       auto node_abstract = node->abstract();
