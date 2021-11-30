@@ -72,7 +72,7 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     MS_EXCEPTION_IF_NULL(cpu_dynamic_kernel);
     cpu_dynamic_kernel->Initialize();
   } catch (std::exception &e) {
-    MS_LOG(EXCEPTION) << e.what() << "\nTrace: " << trace::DumpSourceLines(cast);
+    MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);
   }
   AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;

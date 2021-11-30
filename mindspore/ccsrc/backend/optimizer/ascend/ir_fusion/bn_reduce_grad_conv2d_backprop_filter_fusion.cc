@@ -41,7 +41,7 @@ bool CheckSupported(const CNodePtr &conv_back_filter) {
   if (y_shape.size() != kNCHWShapeSize || x_shape.size() != kNCHWShapeSize || out_shape.size() != kNCHWShapeSize) {
     MS_LOG(EXCEPTION) << "The dim of Conv2dBackpropFilter's input and output should be 4, but got y_shape is "
                       << y_shape.size() << "-D, x_shape is " << x_shape.size() << "-D, out_shape is "
-                      << out_shape.size() << "-D. trace: " << trace::DumpSourceLines(conv_back_filter);
+                      << out_shape.size() << trace::DumpSourceLines(conv_back_filter);
   }
   const std::set<size_t> kSupportedBatchSize = {32, 256};
   if (kSupportedBatchSize.find(x_shape[0]) == kSupportedBatchSize.end()) {

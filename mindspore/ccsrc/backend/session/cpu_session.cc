@@ -360,7 +360,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node) {
     operator_info << ") ";
   }
   operator_info << "is not support.";
-  MS_LOG(EXCEPTION) << operator_info.str() << " Trace: " << trace::DumpSourceLines(kernel_node);
+  MS_LOG(EXCEPTION) << operator_info.str() << trace::DumpSourceLines(kernel_node);
 }
 }  // namespace
 
@@ -389,7 +389,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     try {
       cpu_kernel->Init(kernel_node);
     } catch (std::exception &e) {
-      MS_LOG(EXCEPTION) << e.what() << "\nTrace: " << trace::DumpSourceLines(kernel_node);
+      MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel_node);
     }
     AnfAlgo::SetKernelMod(cpu_kernel, kernel_node.get());
     MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";

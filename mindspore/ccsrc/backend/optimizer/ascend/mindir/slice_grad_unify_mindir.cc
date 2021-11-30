@@ -68,7 +68,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   if (input_num != kSliceGradInputTensorNum && input_num != kSliceGradCangjieInputTensorNum) {
     MS_LOG(EXCEPTION) << "The input tensor size[" << input_num
                       << "] of node " + slice_grad->DebugString() + " is not equal to " << kSliceGradInputTensorNum
-                      << " or " << kSliceGradCangjieInputTensorNum << ". trace: " << trace::DumpSourceLines(node);
+                      << " or " << kSliceGradCangjieInputTensorNum << trace::DumpSourceLines(node);
   }
   std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)),
                                         slice_grad->input(kIndex1)};
@@ -93,7 +93,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
     MS_LOG(EXCEPTION)
       << "For SliceGrad, x_shape dim number should be equal to len(begin) and len(size), but got x_shape dim: "
       << x_shape.size() << ", len(begin): " << begins.size() << ", len(size): " << sizes.size()
-      << ". trace: " << trace::DumpSourceLines(node);
+      << trace::DumpSourceLines(node);
   }
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < x_shape.size(); ++i) {

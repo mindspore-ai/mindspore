@@ -330,8 +330,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   if (!AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
       !AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
     MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
-                      << kAttrPynativeNextOpName << " has not been set yet!"
-                      << " trace: " << trace::DumpSourceLines(kernel_node);
+                      << kAttrPynativeNextOpName << " has not been set yet!" << trace::DumpSourceLines(kernel_node);
   }
   auto next_index = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
   auto next_op_name = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
@@ -342,7 +341,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   }
   if (iter->second.size() < next_index) {
     MS_LOG(EXCEPTION) << "Next input index " << next_index << "is out of range in the next op map max size is "
-                      << iter->second.size() << " trace: " << trace::DumpSourceLines(kernel_node);
+                      << iter->second.size() << trace::DumpSourceLines(kernel_node);
   }
   if (AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name()) {
     MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
@@ -705,7 +704,7 @@ void PrintNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildI
   auto full_name = kernel_node->fullname_with_scope();
   if (ai_core.empty() && ai_cpu.empty()) {
     MS_LOG(EXCEPTION) << "Can not find any available kernel info for: " << full_name
-                      << ". Maybe the operator can not supported on Ascend platform.\nTrace: "
+                      << ". Maybe the operator can not supported on Ascend platform."
                       << trace::DumpSourceLines(kernel_node);
   } else {
     auto candidates = KernelInfoCandidateList(ai_core, ai_cpu);
@@ -714,7 +713,7 @@ void PrintNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildI
                             << "Please check the given data type or shape:\n"
                             << buffer.str()
                             << "\nFor more details, please refer to 'Kernel Select Failed' at "
-                               "https://www.mindspore.cn\nTrace:"
+                               "https://www.mindspore.cn"
                             << trace::DumpSourceLines(kernel_node);
   }
 }

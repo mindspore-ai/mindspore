@@ -53,7 +53,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   if (axis_from_attr < 0 || axis_from_attr >= SizeToLong(output_shape.size()) ||
       axis_from_attr >= SizeToLong(input_shape.size())) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
-                      << " trace: " << trace::DumpSourceLines(origin_concat_cnode);
+                      << trace::DumpSourceLines(origin_concat_cnode);
   }
   auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;

@@ -368,7 +368,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
   if (neighbor_exchange_v2->size() <= kNeighborExchangeV2InputIdx) {
     MS_LOG(EXCEPTION) << "Invalid cnode " << neighbor_exchange_v2->DebugString() << " input size "
                       << neighbor_exchange_v2->size() << ", should be " << kNeighborExchangeV2InputIdx
-                      << ". trace: " << trace::DumpSourceLines(neighbor_exchange_v2);
+                      << trace::DumpSourceLines(neighbor_exchange_v2);
   }
   std::vector<CNodePtr> split_nodes = {};
 
@@ -382,8 +382,8 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
   auto dtype = AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, 0);
   auto shape = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
   if (SizeToLong(shape.size()) != kShapeSize) {  // only support NCHW now
-    MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size()
-                      << ", only support NCHW input now! trace: " << trace::DumpSourceLines(neighbor_exchange_v2);
+    MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
+                      << trace::DumpSourceLines(neighbor_exchange_v2);
   }
 
   // splitv for top & bottom
@@ -419,8 +419,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
     CreateMultipleOutputsOfAnfNode(graph, split_nodes[0], static_cast<size_t>((*split_num)[0]),
                                    &split_outputs_top_bottom);
     if (split_outputs_top_bottom.empty()) {
-      MS_LOG(EXCEPTION) << "The node " << split_nodes[0]->DebugString()
-                        << " should have at least one output, but got 0. trace: "
+      MS_LOG(EXCEPTION) << "The node " << split_nodes[0]->DebugString() << " should have at least one output, but got 0"
                         << trace::DumpSourceLines(split_nodes[0]);
     }
 
@@ -613,8 +612,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
   CreateMultipleOutputsOfAnfNode(graph, all_to_all_v, static_cast<size_t>(all_to_all_output_num),
                                  &all_to_all_v_outputs);
   if (all_to_all_v_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString()
-                      << " should have at least one output, but got 0. trace: " << trace::DumpSourceLines(all_to_all_v);
+    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString() << " should have at least one output, but got 0."
+                      << trace::DumpSourceLines(all_to_all_v);
   }
 
   if (recv_rank_ids[kRankIdZero] == kInvalidId && recv_rank_ids[kRankIdFour] == kInvalidId) {
@@ -650,8 +649,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
     std::vector<AnfNodePtr> concat_left_outputs;
     CreateMultipleOutputsOfAnfNode(graph, concat_left, 1, &concat_left_outputs);
     if (concat_left_outputs.empty()) {
-      MS_LOG(EXCEPTION) << "The node " << concat_left->DebugString()
-                        << " should have at least one output, but got 0. trace: "
+      MS_LOG(EXCEPTION) << "The node " << concat_left->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_left);
     }
     concat_input_all.insert(concat_input_all.end(), concat_left_outputs.begin(), concat_left_outputs.end());
@@ -663,8 +661,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
   std::vector<AnfNodePtr> concat_middle_outputs;
   CreateMultipleOutputsOfAnfNode(graph, concat_middle, 1, &concat_middle_outputs);
   if (concat_middle_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << concat_middle->DebugString()
-                      << " should have at least one output, but got 0. trace: "
+    MS_LOG(EXCEPTION) << "The node " << concat_middle->DebugString() << " should have at least one output, but got 0."
                       << trace::DumpSourceLines(concat_middle);
   }
   concat_input_all.insert(concat_input_all.end(), concat_middle_outputs.begin(), concat_middle_outputs.end());
@@ -677,8 +674,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
     std::vector<AnfNodePtr> concat_right_outputs;
     CreateMultipleOutputsOfAnfNode(graph, concat_right, 1, &concat_right_outputs);
     if (concat_right_outputs.empty()) {
-      MS_LOG(EXCEPTION) << "The node " << concat_right->DebugString()
-                        << " should have at least one output, but got 0. trace: "
+      MS_LOG(EXCEPTION) << "The node " << concat_right->DebugString() << " should have at least one output, but got 0."
                         << trace::DumpSourceLines(concat_right);
     }
     concat_input_all.insert(concat_input_all.end(), concat_right_outputs.begin(), concat_right_outputs.end());
@@ -707,15 +703,15 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   if (neighbor_exchange_v2_grad->size() <= kNeighborExchangeV2InputIdx) {
     MS_LOG(EXCEPTION) << "Invalid cnode " << neighbor_exchange_v2_grad->DebugString() << " input size "
                       << neighbor_exchange_v2_grad->size() << ", should be " << kNeighborExchangeV2InputIdx
-                      << ". trace: " << trace::DumpSourceLines(neighbor_exchange_v2_grad);
+                      << trace::DumpSourceLines(neighbor_exchange_v2_grad);
   }
 
   auto neighbor_exchange_v2_grad_input = neighbor_exchange_v2_grad->input(kNeighborExchangeV2InputIdx);
   auto dtype = AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_grad_input, 0);
   auto shape = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_grad_input, 0);
   if (SizeToLong(shape.size()) != kShapeSize) {
-    MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size()
-                      << ", only support NCHW input now! trace: " << trace::DumpSourceLines(neighbor_exchange_v2_grad);
+    MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
+                      << trace::DumpSourceLines(neighbor_exchange_v2_grad);
   }
 
   std::vector<CNodePtr> split_nodes = {};
@@ -741,8 +737,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
     CreateMultipleOutputsOfAnfNode(graph, split_nodes[0], static_cast<size_t>(num_split_h), &split_outputs_top_bottom);
     if (split_outputs_top_bottom.empty()) {
       MS_LOG(EXCEPTION) << "The node " << split_nodes[0]->DebugString()
-                        << " should have at least one output, but got 0. trace: "
-                        << trace::DumpSourceLines(split_nodes[0]);
+                        << " should have at least one output, but got 0." << trace::DumpSourceLines(split_nodes[0]);
     }
     size_split_h = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(split_nodes[0], kAttrSizeSplits);
   } else {
@@ -842,8 +837,8 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   CreateMultipleOutputsOfAnfNode(graph, all_to_all_v, static_cast<size_t>(all_to_all_output_num),
                                  &all_to_all_v_outputs);
   if (all_to_all_v_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString()
-                      << " should have at least one output, but got 0. trace: " << trace::DumpSourceLines(all_to_all_v);
+    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString() << " should have at least one output, but got 0."
+                      << trace::DumpSourceLines(all_to_all_v);
   }
   // create pad nodes
   // slice begin & size
@@ -887,8 +882,8 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
     std::vector<AnfNodePtr> pad_outputs;
     CreateMultipleOutputsOfAnfNode(graph, pad, 1, &pad_outputs);
     if (pad_outputs.empty()) {
-      MS_LOG(EXCEPTION) << "The node " << pad->DebugString()
-                        << " should have at least one output, but got 0. trace: " << trace::DumpSourceLines(pad);
+      MS_LOG(EXCEPTION) << "The node " << pad->DebugString() << " should have at least one output, but got 0."
+                        << trace::DumpSourceLines(pad);
     }
     addn_inputs.insert(addn_inputs.end(), pad_outputs.begin(), pad_outputs.end());
     ++pad_num;

@@ -96,8 +96,7 @@ const AnfNodePtr LambNextMVWithDecayRule::Process(const FuncGraphPtr &func_graph
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input."
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input." << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_outputs = manager->node_users()[mul4];
   auto iter = std::find_if(mul4_outputs.begin(), mul4_outputs.end(),

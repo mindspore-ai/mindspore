@@ -279,7 +279,7 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
     auto iter_sub0 = (*equiv).find(sub0_var_);
     if (iter_sub0 == (*equiv).end()) {
       MS_LOG(EXCEPTION) << "The equiv map is expected to contains the sub0 var after matched."
-                        << " trace: " << trace::DumpSourceLines(node);
+                        << trace::DumpSourceLines(node);
     }
     sub0 = utils::cast<AnfNodePtr>(iter_sub0->second);
   }
@@ -295,12 +295,12 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   auto iter_add0 = (*equiv).find(add0_var_);
   if (iter_add0 == (*equiv).end()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add0 var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
   auto iter_add1 = (*equiv).find(add1_var_);
   if (iter_add1 == (*equiv).end()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
   auto add0 = utils::cast<AnfNodePtr>(iter_add0->second);
   MS_EXCEPTION_IF_NULL(add0);

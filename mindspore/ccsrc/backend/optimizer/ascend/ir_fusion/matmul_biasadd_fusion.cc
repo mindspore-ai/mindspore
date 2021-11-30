@@ -26,8 +26,7 @@ AnfNodePtr MatmulBiasaddFusion::CreateMatmulWithBias(const FuncGraphPtr &graph, 
                                                      const EquivPtr &equiv) const {
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
   if (matmul == nullptr || !matmul->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!" << trace::DumpSourceLines(node);
   }
 
   // If there is a side-effect operator in the fusion, do not merge

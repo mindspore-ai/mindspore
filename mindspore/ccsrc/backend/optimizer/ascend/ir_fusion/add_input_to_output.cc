@@ -108,8 +108,7 @@ const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const
   MS_EXCEPTION_IF_NULL(new_abstract_tuple);
   CreateMultipleOutputsOfAnfNode(func_graph, cnode, new_abstract_tuple->size(), &new_outputs);
   if (new_outputs.size() != new_abstract_tuple->size()) {
-    MS_LOG(EXCEPTION) << "Failed to create outputs of " << cnode->DebugString()
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Failed to create outputs of " << cnode->DebugString() << trace::DumpSourceLines(node);
   }
   return new_outputs[0];
 }

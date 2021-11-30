@@ -71,7 +71,7 @@ bool GetKernelSize(const AnfNodePtr &node, int64_t *kd, int64_t *kh, int64_t *kw
       *kh = kernel_size[kDim3];
       *kw = kernel_size[kDim4];
     } else {
-      MS_LOG(EXCEPTION) << "Unknown kernel size " << kernel_size.size() << ", trace: " << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Unknown kernel size " << kernel_size.size() << trace::DumpSourceLines(node);
     }
     return true;
   }
@@ -99,7 +99,7 @@ bool GetStrideSize(const AnfNodePtr &node, int64_t *sd, int64_t *sh, int64_t *sw
       *sh = stride_size[kDim3];
       *sw = stride_size[kDim4];
     } else {
-      MS_LOG(EXCEPTION) << "Unknown strides size " << stride_size.size() << ", trace: " << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Unknown strides size " << stride_size.size() << trace::DumpSourceLines(node);
     }
     return true;
   }
@@ -110,7 +110,7 @@ void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *pad_list, bool *coun
               int64_t *divisor_override) {
   MS_EXCEPTION_IF_NULL(node);
   if (!AnfAlgo::HasNodeAttr("pad_list", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list" << trace::DumpSourceLines(node);
   }
   *pad_list = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
   if (AnfAlgo::HasNodeAttr("count_include_pad", node->cast<CNodePtr>())) {
@@ -262,7 +262,7 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   if (dims_in.size() < k5DInferDims || dims_out.size() < k5DInferDims) {
     MS_LOG(EXCEPTION) << "AvgPool3D's in_out infer shape dims can not be less " << k5DInferDims
                       << ", but got in_shape is " << dims_in.size() << "-D, out_shape is " << dims_out.size()
-                      << "-D. trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
   auto fn = SizeToLong(dims_in[kDim0]);
   auto fc = SizeToLong(dims_in[kDim1]);
@@ -277,14 +277,14 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   int64_t kh;
   int64_t kw;
   if (!GetKernelSize(avg_pool_3d_node, &kd, &kh, &kw)) {
-    MS_LOG(EXCEPTION) << "Get kernel size failed, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Get kernel size failed" << trace::DumpSourceLines(node);
   }
   // strides
   int64_t sd;
   int64_t sh;
   int64_t sw;
   if (!GetStrideSize(avg_pool_3d_node, &sd, &sh, &sw)) {
-    MS_LOG(EXCEPTION) << "Get stride size failed, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Get stride size failed" << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> pad_list;
   bool count_include_pad = false;

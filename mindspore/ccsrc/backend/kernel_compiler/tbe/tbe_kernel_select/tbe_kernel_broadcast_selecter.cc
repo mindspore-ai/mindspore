@@ -38,13 +38,13 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
     auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kAttrDynInputSizes);
     constexpr int64_t DYNAMIC_INPUT_NUM = 2;
     if (dynamic_size_vec.empty()) {
-      MS_LOG(EXCEPTION) << "Node [" << AnfAlgo::GetCNodeName(cnode_ptr_)
-                        << "]'s attr [dyn_input_sizes] is empty. trace: " << trace::DumpSourceLines(cnode_ptr_);
+      MS_LOG(EXCEPTION) << "Node [" << AnfAlgo::GetCNodeName(cnode_ptr_) << "]'s attr [dyn_input_sizes] is empty"
+                        << trace::DumpSourceLines(cnode_ptr_);
     }
     if (dynamic_size_vec[0] < DYNAMIC_INPUT_NUM) {
       MS_LOG(EXCEPTION) << "Node [" << AnfAlgo::GetCNodeName(cnode_ptr_)
                         << "]'s attr [dyn_input_sizes] value less than " << DYNAMIC_INPUT_NUM
-                        << ". trace: " << trace::DumpSourceLines(cnode_ptr_);
+                        << trace::DumpSourceLines(cnode_ptr_);
     }
     auto dynamic_input_shape0_ = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
     PadScalarShape(&dynamic_input_shape0_);

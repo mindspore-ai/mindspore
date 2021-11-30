@@ -39,7 +39,7 @@ void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
 
   if (neighbor_exchange->size() == kCNodePrimitiveIdx) {
     MS_LOG(EXCEPTION) << "Inputs should not be empty for cnode " << node->DebugString()
-                      << ". trace: " << trace::DumpSourceLines(neighbor_exchange);
+                      << trace::DumpSourceLines(neighbor_exchange);
   }
 
   auto prim = GetValueNode<PrimitivePtr>(neighbor_exchange->input(kCNodePrimitiveIdx));
@@ -65,7 +65,7 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
 
   if (all_to_all->size() <= kAllToAllInputIdx) {
     MS_LOG(EXCEPTION) << "Inputs should not be empty for cnode " << all_to_all->DebugString()
-                      << ". trace: " << trace::DumpSourceLines(all_to_all);
+                      << trace::DumpSourceLines(all_to_all);
   }
   auto all_to_all_input = all_to_all->input(kAllToAllInputIdx);
   std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
@@ -77,11 +77,11 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
   split_dim = NormalizeDim(shape, split_dim);
   if (SizeToLong(shape.size()) <= split_dim) {
     MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
-                      << ". trace: " << trace::DumpSourceLines(all_to_all);
+                      << trace::DumpSourceLines(all_to_all);
   }
   if (split_count == 0 || shape[LongToSize(split_dim)] % static_cast<size_t>(split_count) != 0) {
     MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_dim
-                      << "] = " << shape[LongToSize(split_dim)] << ". trace: " << trace::DumpSourceLines(all_to_all);
+                      << "] = " << shape[LongToSize(split_dim)] << trace::DumpSourceLines(all_to_all);
   }
   shape[LongToSize(split_dim)] /= static_cast<size_t>(split_count);
   std::vector<TypeId> dtypes(split_count, dtype);
@@ -105,8 +105,8 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   std::vector<AnfNodePtr> split_outputs;
   CreateMultipleOutputsOfAnfNode(graph, split, static_cast<size_t>(split_count), &split_outputs);
   if (split_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << split->DebugString()
-                      << " should have at least one output, but got 0. trace: " << trace::DumpSourceLines(split);
+    MS_LOG(EXCEPTION) << "The node " << split->DebugString() << " should have at least one output, but got 0."
+                      << trace::DumpSourceLines(split);
   }
   std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
   (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
@@ -140,8 +140,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   std::vector<AnfNodePtr> all_to_all_v_outputs;
   CreateMultipleOutputsOfAnfNode(graph, all_to_all_v, static_cast<size_t>(split_count), &all_to_all_v_outputs);
   if (all_to_all_v_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString()
-                      << " should have at least one output, but got 0. trace: " << trace::DumpSourceLines(all_to_all_v);
+    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString() << " should have at least one output, but got 0."
+                      << trace::DumpSourceLines(all_to_all_v);
   }
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.end());
@@ -151,7 +151,7 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   concat_dim = NormalizeDim(single_shape, concat_dim);
   if (LongToSize(concat_dim) >= single_shape.size()) {
     MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size()
-                      << ". trace: " << trace::DumpSourceLines(all_to_all);
+                      << trace::DumpSourceLines(all_to_all);
   }
   single_shape[LongToSize(concat_dim)] *= static_cast<size_t>(split_count);
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)}, {single_shape},

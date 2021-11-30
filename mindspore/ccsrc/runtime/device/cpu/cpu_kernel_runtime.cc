@@ -469,7 +469,7 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
     } catch (std::exception &e) {
-      MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
+      MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel);
     }
 #ifndef ENABLE_SECURITY
     if (iter_dump_flag) {
@@ -483,7 +483,7 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
 #ifdef ENABLE_DUMP_IR
       mindspore::RDR::TriggerAll();
 #endif
-      MS_LOG(EXCEPTION) << "Launch kernel failed. Trace:" << trace::DumpSourceLines(kernel);
+      MS_LOG(EXCEPTION) << "Launch kernel failed." << trace::DumpSourceLines(kernel);
     }
     static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseAddressRefCount(kernel);
 #ifdef ENABLE_PROFILE

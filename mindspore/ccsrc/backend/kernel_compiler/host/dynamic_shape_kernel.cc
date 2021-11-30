@@ -27,7 +27,7 @@ void DynamicShapeKernel::Execute() {
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
-                      << ". trace: " << trace::DumpSourceLines(cnode);
+                      << trace::DumpSourceLines(cnode);
   }
 
   auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);

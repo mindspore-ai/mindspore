@@ -49,7 +49,7 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
     MS_LOG(EXCEPTION)
       << "The size of output_dtypes should be equal to size of output_shapes, but got output_dtypes size: "
       << output_dtypes.size() << ", output_shapes size: " << output_shapes.size() << ". The op name is: " << op_name
-      << ", trace: " << trace::DumpSourceLines(cnode);
+      << trace::DumpSourceLines(cnode);
   }
   AnfAlgo::SetOutputInferTypeAndShape(output_dtypes, output_shapes, cnode.get());
   // set execution order

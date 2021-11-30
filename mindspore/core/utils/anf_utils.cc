@@ -106,8 +106,7 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
     return true;
   }
   if (cnode->size() == 0) {
-    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString()
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString() << trace::DumpSourceLines(node);
   }
   return !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
 }
@@ -145,7 +144,7 @@ std::string AnfUtils::GetCNodeName(const AnfNodePtr &node) {
     }
     return func_graph->ToString();
   }
-  MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
+  MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
 size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
@@ -153,7 +152,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
     MS_LOG(EXCEPTION) << "Only cnode has real input, but this anf is " << node->DebugString()
-                      << " trace: " << trace::DumpSourceLines(node);
+                      << trace::DumpSourceLines(node);
   }
   ssize_t input_tensor_num = cnode->input_tensor_num();
   if (input_tensor_num >= 0) {
@@ -161,8 +160,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
   }
   size_t input_num = cnode->inputs().size();
   if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero"
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
   }
   // Exclude inputs[0].
   --input_num;

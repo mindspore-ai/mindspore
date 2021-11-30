@@ -125,12 +125,11 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   auto type_x = AnfAlgo::GetOutputInferDataType(cnode, index);
   if (type_x != TypeId::kNumberTypeInt64) {
-    MS_LOG(EXCEPTION) << "Input x type must be int64, but got " << type_x
-                      << ". trace: " << trace::DumpSourceLines(cnode);
+    MS_LOG(EXCEPTION) << "Input x type must be int64, but got " << type_x << trace::DumpSourceLines(cnode);
   }
   if (shape_x.size() != 1) {
     MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size()
-                      << "-D. trace: " << trace::DumpSourceLines(cnode);
+                      << trace::DumpSourceLines(cnode);
   }
 
   size_t x_num = shape_x[0];
@@ -188,7 +187,7 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "Invalid input num, should be " << kInputNum << ", but got " << input_num
-                      << ". trace: " << trace::DumpSourceLines(cnode);
+                      << trace::DumpSourceLines(cnode);
   }
 
   std::vector<std::vector<int64_t>> input_shapes(kInputNum);

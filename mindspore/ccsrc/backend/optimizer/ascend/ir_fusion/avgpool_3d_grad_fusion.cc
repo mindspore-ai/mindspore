@@ -44,22 +44,22 @@ void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *kernel_size, std::ve
   MS_EXCEPTION_IF_NULL(node);
   // attr kernel size
   if (!AnfAlgo::HasNodeAttr("kernel_size", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr kernel_size, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr kernel_size" << trace::DumpSourceLines(node);
   }
   *kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
   // attr strides
   if (!AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr strides, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr strides" << trace::DumpSourceLines(node);
   }
   *strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
   // sttr pad_list
   if (!AnfAlgo::HasNodeAttr("pad_list", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list" << trace::DumpSourceLines(node);
   }
   *pad_list = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
   // attr origin input shape
   if (!AnfAlgo::HasNodeAttr("origin_input_shape", node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "AvgPool3D should has attr origin_input_shape, trace: " << trace::DumpSourceLines(node);
+    MS_LOG(EXCEPTION) << "AvgPool3D should has attr origin_input_shape" << trace::DumpSourceLines(node);
   }
   *origin_input_shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "origin_input_shape");
   // attr count include pad
