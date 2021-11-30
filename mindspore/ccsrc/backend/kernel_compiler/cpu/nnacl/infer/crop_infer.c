@@ -16,12 +16,20 @@
 
 #include "nnacl/infer/crop_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/crop_parameter.h"
 
 int CropInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
+  }
+
+  size_t input_shape_size = inputs[0]->shape_size_;
+  CropParameter *param = (CropParameter *)parameter;
+  int64_t axis = param->axis_ < 0 ? param->axis_ + (int64_t)input_shape_size : param->axis_;
+  if (axis < 0 || axis >= input_shape_size) {
+    return NNACL_ERR;
   }
 
   SetDataTypeFormat(outputs[0], inputs[0]);

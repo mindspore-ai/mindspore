@@ -37,7 +37,11 @@ int ReverseCPUKernel::Stride(int index) {
 
 int ReverseCPUKernel::ReSize() {
   // trans negative to positive axis
-  UpdateAxisInfo();
+  auto ret = UpdateAxisInfo();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get axis failed.";
+    return ret;
+  }
 
   data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(op_parameter_->thread_num_, data_size_);
@@ -146,14 +150,19 @@ int ReverseCPUKernel::Run() {
   return RET_OK;
 }
 
-void ReverseCPUKernel::UpdateAxisInfo() {
+int ReverseCPUKernel::UpdateAxisInfo() {
   auto reverse_param = reinterpret_cast<ReverseParameter *>(op_parameter_);
   int in_shape_len = static_cast<int>(in_tensors_.front()->shape().size());
   for (int i = 0; i < reverse_param->num_axis_; ++i) {
     if (reverse_param->axis_[i] < 0) {
       reverse_param->axis_[i] += in_shape_len;
     }
+    if (reverse_param->axis_[i] < 0 || reverse_param->axis_[i] >= in_shape_len) {
+      MS_LOG(ERROR) << "Invalid axis.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReverseV2, LiteKernelCreator<ReverseCPUKernel>)
