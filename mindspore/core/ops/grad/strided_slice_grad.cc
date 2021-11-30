@@ -30,7 +30,7 @@ namespace {
 void CheckSliceType(const AbstractBasePtr &input_arg, const std::string &arg_name, const std::string &prim_name) {
   if (input_arg->isa<abstract::AbstractTuple>()) {
     auto temp_value = input_arg->BuildValue();
-    (void)CheckAndConvertUtils::CheckAttrTupleInt(arg_name, temp_value, prim_name);
+    (void)CheckAndConvertUtils::CheckTupleInt(arg_name, temp_value, prim_name);
     return;
   } else if (input_arg->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64}, prim_name);
@@ -52,7 +52,7 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   abstract::ShapePtr ret_shape;
 
   if (shapex->isa<abstract::AbstractTuple>()) {
-    out_shape = CheckAndConvertUtils::CheckAttrTupleInt("shapex", shape_value, prim_name);
+    out_shape = CheckAndConvertUtils::CheckTupleInt("input[shapex]", shape_value, prim_name);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 

@@ -46,7 +46,7 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     if (input_value->isa<tensor::Tensor>()) {
       tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value, prim_name);
     } else {
-      tmp_input = CheckAndConvertUtils::CheckAttrTupleInt("slice args value", input_value, prim_name);
+      tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value, prim_name);
     }
     (void)input_values.emplace_back(tmp_input);
   }

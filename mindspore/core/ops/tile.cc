@@ -64,9 +64,9 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   std::vector<int64_t> multiples_v;
   auto multiple_value = input_args[1]->BuildValue();
   if (multiple_value->isa<tensor::Tensor>()) {
-    multiples_v = CheckAndConvertUtils::CheckTensorIntValue("tile multiples value", multiple_value, prim_name);
+    multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
   } else {
-    multiples_v = CheckAndConvertUtils::CheckAttrTupleInt("tile multiples value", multiple_value, prim_name);
+    multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
   }
 
   for (auto multiple : multiples_v) {

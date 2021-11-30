@@ -848,9 +848,9 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   if (args_spec_list.size() == 2) {
     auto input_value = args_spec_list[1]->BuildValue();
     if (input_value->isa<tensor::Tensor>()) {
-      shape = CheckAndConvertUtils::CheckTensorIntValue("reshape args value", input_value, op_name);
+      shape = CheckAndConvertUtils::CheckTensorIntValue("shape", input_value, op_name);
     } else {
-      shape = CheckAndConvertUtils::CheckAttrTupleInt("reshape args value", input_value, op_name);
+      shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", input_value, op_name);
     }
   } else {
     ValuePtr sh = primitive->GetAttr("shape");
