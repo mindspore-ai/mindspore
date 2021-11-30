@@ -54,7 +54,6 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   static const auto &kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
   static const auto &kGather = prim::kPrimGather->name();
   static const auto &kGatherV2 = prim::kPrimGatherV2->name();
-  static const auto &kDynamicShape = prim::kPrimDynamicShape->name();
   static const auto &kRange = prim::kPrimRange->name();
   static const auto &kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
@@ -69,7 +68,6 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kUnsortedSegmentMax, ShapeVec{2}},
                                                         {kGather, ShapeVec{2}},
                                                         {kGatherV2, ShapeVec{2}},
-                                                        {kDynamicShape, ShapeVec{0}},
                                                         {kRange, ShapeVec{0, 1, 2}},
                                                         {kConv2DBackpropFilter, ShapeVec{2}},
                                                         {kConv2DBackpropInput, ShapeVec{2}},
