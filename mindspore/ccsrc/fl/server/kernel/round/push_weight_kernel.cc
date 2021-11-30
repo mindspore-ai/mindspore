@@ -33,6 +33,13 @@ void PushWeightKernel::InitKernel(size_t) {
 bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching PushWeightKernel kernel.";
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
+  }
+
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
@@ -141,7 +148,7 @@ void PushWeightKernel::BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb,
   }
   auto fbs_reason = fbb->CreateString(reason);
   schema::ResponsePushWeightBuilder rsp_push_weight_builder(*(fbb.get()));
-  rsp_push_weight_builder.add_retcode(static_cast<int>(retcode));
+  rsp_push_weight_builder.add_retcode(SizeToInt(retcode));
   rsp_push_weight_builder.add_reason(fbs_reason);
   rsp_push_weight_builder.add_iteration(SizeToInt(iteration));
   auto rsp_push_weight = rsp_push_weight_builder.Finish();

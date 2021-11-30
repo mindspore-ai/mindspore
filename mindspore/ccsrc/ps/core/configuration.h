@@ -25,9 +25,10 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
 
-#include "utils/hash_map.h"
 #include "ps/constants.h"
+#include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -51,6 +52,9 @@ class Configuration {
   // Get configuration data from database or config file.
   virtual std::string GetString(const std::string &key, const std::string &defaultvalue) const = 0;
 
+  // Get configuration vector data from database or config file.
+  virtual std::vector<nlohmann::json> GetVector(const std::string &key) const = 0;
+
   // Get configuration data from database or config file.
   virtual int64_t GetInt(const std::string &key, int64_t default_value) const = 0;
 
@@ -59,6 +63,12 @@ class Configuration {
 
   // Determine whether the configuration item exists.
   virtual bool Exists(const std::string &key) const = 0;
+
+  // storage meta data
+  virtual void PersistFile(const core::ClusterConfig &clusterConfig) const = 0;
+
+  // storage meta data without nodes
+  virtual void PersistNodes(const core::ClusterConfig &clusterConfig) const = 0;
 };
 }  // namespace core
 }  // namespace ps

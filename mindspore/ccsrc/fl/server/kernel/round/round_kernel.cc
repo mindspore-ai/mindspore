@@ -124,7 +124,7 @@ void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const v
   outputs[0]->size = len;
 
   std::unique_lock<std::mutex> lock(heap_data_mtx_);
-  (void)heap_data_.emplace(outputs[0], std::move(output_data));
+  (void)heap_data_.insert(std::make_pair(outputs[0], std::move(output_data)));
   return;
 }
 }  // namespace kernel

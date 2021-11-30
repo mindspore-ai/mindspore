@@ -96,6 +96,28 @@ void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *i
   freeifaddrs(if_address);
 }
 
+std::string CommUtil::GetLoopBackInterfaceName() {
+  struct ifaddrs *if_address = nullptr;
+  struct ifaddrs *ifa = nullptr;
+
+  if (getifaddrs(&if_address) == -1) {
+    MS_LOG(WARNING) << "Get ifaddrs failed.";
+  }
+  for (ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr) {
+      continue;
+    }
+
+    if (ifa->ifa_flags & IFF_LOOPBACK) {
+      MS_LOG(INFO) << "Loop back interface name is " << ifa->ifa_name;
+      return ifa->ifa_name;
+    }
+  }
+  MS_EXCEPTION_IF_NULL(if_address);
+  freeifaddrs(if_address);
+  return "";
+}
+
 std::string CommUtil::GenerateUUID() {
   std::stringstream ss;
   int i;
@@ -133,6 +155,18 @@ std::string CommUtil::NodeRoleToString(const NodeRole &role) {
       return "WORKER";
     default:
       MS_LOG(EXCEPTION) << "The node role:" << role << " is illegal!";
+  }
+}
+
+NodeRole CommUtil::StringToNodeRole(const std::string &roleStr) {
+  if (roleStr == "SCHEDULER") {
+    return NodeRole::SCHEDULER;
+  } else if (roleStr == "SERVER") {
+    return NodeRole::SERVER;
+  } else if (roleStr == "WORKER") {
+    return NodeRole::WORKER;
+  } else {
+    MS_LOG(EXCEPTION) << "The node role string:" << roleStr << " is illegal!";
   }
 }
 bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id, const int32_t &total_worker_num,
@@ -183,7 +217,7 @@ bool CommUtil::IsFileExists(const std::string &file) {
 }
 
 std::string CommUtil::ClusterStateToString(const ClusterState &state) {
-  MS_LOG(INFO) << "The cluster state:" << state;
+  MS_LOG(DEBUG) << "The cluster state:" << state;
   if (state < SizeToInt(kClusterState.size())) {
     return kClusterState.at(state);
   } else {
@@ -191,19 +225,48 @@ std::string CommUtil::ClusterStateToString(const ClusterState &state) {
   }
 }
 
-std::string CommUtil::ParseConfig(const Configuration &config, const std::string &data) {
+std::string CommUtil::ParseConfig(const Configuration &config, const std::string &key) {
   if (!config.IsInitialized()) {
     MS_LOG(INFO) << "The config is not initialized.";
     return "";
   }
 
-  if (!const_cast<Configuration &>(config).Exists(data)) {
-    MS_LOG(INFO) << "The data:" << data << " is not exist.";
+  if (!const_cast<Configuration &>(config).Exists(key)) {
+    MS_LOG(INFO) << "The key:" << key << " is not exist.";
     return "";
   }
 
-  std::string path = config.GetString(data, "");
+  std::string path = config.GetString(key, "");
   return path;
+}
+
+bool CommUtil::verifyCertTimeStamp(const X509 *cert) {
+  ASN1_TIME *start = X509_getm_notBefore(cert);
+  ASN1_TIME *end = X509_getm_notAfter(cert);
+
+  int day = 0;
+  int sec = 0;
+  int ret = ASN1_TIME_diff(&day, &sec, start, NULL);
+  if (ret != 1) {
+    return false;
+  }
+
+  if (day < 0 || sec < 0) {
+    MS_LOG(ERROR) << "cert start time is later than now time.";
+    return false;
+  }
+  day = 0;
+  sec = 0;
+  ret = ASN1_TIME_diff(&day, &sec, NULL, end);
+  if (ret != 1) {
+    return false;
+  }
+
+  if (day < 0 || sec < 0) {
+    MS_LOG(ERROR) << "cert end time is sooner than now time.";
+    return false;
+  }
+  return true;
 }
 
 bool CommUtil::VerifyCertTime(const X509 *cert, int64_t time) {
@@ -249,61 +312,55 @@ bool CommUtil::VerifyCRL(const X509 *cert, const std::string &crl_path) {
   MS_ERROR_IF_NULL_W_RET_VAL(cert, false);
   BIO *bio = BIO_new_file(crl_path.c_str(), "r");
   MS_ERROR_IF_NULL_W_RET_VAL(bio, false);
-  X509_CRL *root_crl = PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
-  MS_ERROR_IF_NULL_W_RET_VAL(root_crl, false);
-  EVP_PKEY *evp_pkey = X509_get_pubkey(const_cast<X509 *>(cert));
-  MS_ERROR_IF_NULL_W_RET_VAL(evp_pkey, false);
 
-  int ret = X509_CRL_verify(root_crl, evp_pkey);
+  X509_CRL *root_crl = nullptr;
+  EVP_PKEY *evp_pkey = nullptr;
+  bool result = true;
+  do {
+    root_crl = PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
+
+    MS_ERROR_IF_NULL_W_RET_VAL(root_crl, false);
+    evp_pkey = X509_get_pubkey(const_cast<X509 *>(cert));
+    MS_ERROR_IF_NULL_W_RET_VAL(evp_pkey, false);
+
+    int ret = X509_CRL_verify(root_crl, evp_pkey);
+    if (ret == 1) {
+      MS_LOG(WARNING) << "Equip cert in root crl, verify failed";
+      result = false;
+      break;
+    }
+  } while (0);
+
   BIO_free_all(bio);
-  if (ret == 1) {
-    MS_LOG(WARNING) << "Equip cert in root crl, verify failed";
-    return false;
-  }
+  EVP_PKEY_free(evp_pkey);
+  X509_CRL_free(root_crl);
   MS_LOG(INFO) << "VerifyCRL success.";
-  return true;
+  return result;
 }
 
-bool CommUtil::VerifyCommonName(const X509 *cert, const std::string &ca_path) {
-  MS_ERROR_IF_NULL_W_RET_VAL(cert, false);
-  X509 *cert_temp = const_cast<X509 *>(cert);
-  char subject_cn[256] = "";
-  char issuer_cn[256] = "";
-  X509_NAME *subject_name = X509_get_subject_name(cert_temp);
-  X509_NAME *issuer_name = X509_get_issuer_name(cert_temp);
-  MS_ERROR_IF_NULL_W_RET_VAL(subject_name, false);
-  MS_ERROR_IF_NULL_W_RET_VAL(issuer_name, false);
-  if (!X509_NAME_get_text_by_NID(subject_name, NID_commonName, subject_cn, sizeof(subject_cn))) {
-    MS_LOG(WARNING) << "Get text by nid failed.";
-    return false;
-  }
-  if (!X509_NAME_get_text_by_NID(issuer_name, NID_commonName, issuer_cn, sizeof(issuer_cn))) {
-    MS_LOG(WARNING) << "Get text by nid failed.";
-    return false;
-  }
-  MS_LOG(INFO) << "the subject:" << subject_cn << ", the issuer:" << issuer_cn;
+bool CommUtil::VerifyCommonName(const X509 *caCert, const X509 *subCert) {
+  MS_EXCEPTION_IF_NULL(caCert);
+  MS_EXCEPTION_IF_NULL(subCert);
+  char caSubjectCN[256] = "";
+  char subIssuerCN[256] = "";
 
-  BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
-  MS_EXCEPTION_IF_NULL(ca_bio);
-  X509 *ca_cert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
-  MS_EXCEPTION_IF_NULL(ca_cert);
-  char ca_subject_cn[256] = "";
-  char ca_issuer_cn[256] = "";
-  X509_NAME *ca_subject_name = X509_get_subject_name(ca_cert);
-  X509_NAME *ca_issuer_name = X509_get_issuer_name(ca_cert);
-  MS_ERROR_IF_NULL_W_RET_VAL(ca_subject_name, false);
-  MS_ERROR_IF_NULL_W_RET_VAL(ca_issuer_name, false);
-  if (!X509_NAME_get_text_by_NID(ca_subject_name, NID_commonName, ca_subject_cn, sizeof(subject_cn))) {
-    MS_LOG(WARNING) << "Get text by nid failed.";
+  X509_NAME *caSubjectX509CN = X509_get_subject_name(caCert);
+  X509_NAME *subIssuerX509CN = X509_get_issuer_name(subCert);
+
+  int ret = X509_NAME_get_text_by_NID(caSubjectX509CN, NID_commonName, caSubjectCN, sizeof(caSubjectCN));
+  if (ret < 0) {
     return false;
   }
-  if (!X509_NAME_get_text_by_NID(ca_issuer_name, NID_commonName, ca_issuer_cn, sizeof(issuer_cn))) {
-    MS_LOG(WARNING) << "Get text by nid failed.";
+  ret = X509_NAME_get_text_by_NID(subIssuerX509CN, NID_commonName, subIssuerCN, sizeof(subIssuerCN));
+  if (ret < 0) {
     return false;
   }
-  MS_LOG(INFO) << "the subject:" << ca_subject_cn << ", the issuer:" << ca_issuer_cn;
-  BIO_free_all(ca_bio);
-  if (strcmp(issuer_cn, ca_subject_cn) != 0) {
+
+  std::string caSubjectCNStr = caSubjectCN;
+  std::string subIssuerCNStr = subIssuerCN;
+
+  if (caSubjectCNStr != subIssuerCNStr) {
+    MS_LOG(EXCEPTION) << "root CA cert subject cn is not equal with equip CA cert issuer cn.";
     return false;
   }
   return true;
@@ -330,19 +387,170 @@ bool CommUtil::VerifyCipherList(const std::vector<std::string> &list) {
   return true;
 }
 
-void CommUtil::InitOpenSSLEnv() {
-  if (!SSL_library_init()) {
-    MS_LOG(EXCEPTION) << "SSL_library_init failed.";
+bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
+  MS_EXCEPTION_IF_NULL(caCert);
+  MS_EXCEPTION_IF_NULL(subCert);
+  int crit = 0;
+  ASN1_OCTET_STRING *skid =
+    reinterpret_cast<ASN1_OCTET_STRING *>(X509_get_ext_d2i(caCert, NID_subject_key_identifier, &crit, NULL));
+  MS_EXCEPTION_IF_NULL(skid);
+  const int keyidLen = 512;
+  char subject_keyid[keyidLen] = {0};
+  for (int i = 0; i < skid->length; i++) {
+    char keyid[8] = {0};
+    int base = keyidLen;
+    (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
+    int ret = strcat_s(subject_keyid, base, keyid);
+    if (ret == -1) {
+      return false;
+    }
   }
-  if (!ERR_load_crypto_strings()) {
-    MS_LOG(EXCEPTION) << "ERR_load_crypto_strings failed.";
+
+  AUTHORITY_KEYID *akeyid =
+    reinterpret_cast<AUTHORITY_KEYID *>(X509_get_ext_d2i(subCert, NID_authority_key_identifier, &crit, NULL));
+  MS_EXCEPTION_IF_NULL(akeyid);
+  MS_EXCEPTION_IF_NULL(akeyid->keyid);
+  char issuer_keyid[keyidLen] = {0};
+  for (int i = 0; i < akeyid->keyid->length; i++) {
+    char keyid[8] = {0};
+    int base = keyidLen;
+    (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
+    int ret = strcat_s(issuer_keyid, base, keyid);
+    if (ret == -1) {
+      return false;
+    }
   }
-  if (!SSL_load_error_strings()) {
-    MS_LOG(EXCEPTION) << "SSL_load_error_strings failed.";
+
+  std::string subject_keyid_str = subject_keyid;
+  std::string issuer_keyid_str = issuer_keyid;
+  if (subject_keyid_str != issuer_keyid_str) {
+    return false;
   }
-  if (!OpenSSL_add_all_algorithms()) {
-    MS_LOG(EXCEPTION) << "OpenSSL_add_all_algorithms failed.";
+  return true;
+}
+
+bool CommUtil::verifySingature(const X509 *caCert, const X509 *subCert) {
+  MS_EXCEPTION_IF_NULL(caCert);
+  MS_EXCEPTION_IF_NULL(subCert);
+  EVP_PKEY *caCertPubKey = X509_get_pubkey(const_cast<X509 *>(caCert));
+
+  int ret = 0;
+  ret = X509_verify(const_cast<X509 *>(subCert), caCertPubKey);
+  if (ret != 1) {
+    EVP_PKEY_free(caCertPubKey);
+    MS_LOG(ERROR) << "sub cert verify is failed";
+    return false;
   }
+  MS_LOG(INFO) << "verifyCAChain success.";
+  EVP_PKEY_free(caCertPubKey);
+  return true;
+}
+
+bool CommUtil::verifyExtendedAttributes(const X509 *caCert) {
+  MS_EXCEPTION_IF_NULL(caCert);
+  int cirt = 0;
+  BASIC_CONSTRAINTS *bcons =
+    reinterpret_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(caCert, NID_basic_constraints, &cirt, NULL));
+  if (bcons == nullptr) {
+    return false;
+  }
+  if (!bcons->ca) {
+    MS_LOG(ERROR) << "Subject Type is End Entity.";
+    return false;
+  }
+  MS_LOG(INFO) << "Subject Type is CA.";
+  return true;
+}
+
+void CommUtil::verifyCertPipeline(const X509 *caCert, const X509 *subCert) {
+  if (!CommUtil::VerifyCommonName(caCert, subCert)) {
+    MS_LOG(EXCEPTION) << "Verify common name failed.";
+  }
+
+  if (!CommUtil::verifySingature(caCert, subCert)) {
+    MS_LOG(EXCEPTION) << "Verify Singature failed.";
+  }
+
+  if (!CommUtil::verifyExtendedAttributes(caCert)) {
+    MS_LOG(EXCEPTION) << "Verify Extended Attributes failed.";
+  }
+
+  if (!CommUtil::verifyCertKeyID(caCert, subCert)) {
+    MS_LOG(EXCEPTION) << "Verify Cert KeyID failed.";
+  }
+
+  if (!CommUtil::verifyCertTimeStamp(caCert) || !CommUtil::verifyCertTimeStamp(subCert)) {
+    MS_LOG(EXCEPTION) << "Verify Cert Time failed.";
+  }
+}
+
+bool CommUtil::checkCRLTime(const std::string &crlPath) {
+  if (!IsFileExists(crlPath)) {
+    return true;
+  }
+  BIO *bio = BIO_new_file(crlPath.c_str(), "r");
+  if (bio == nullptr) {
+    return true;
+  }
+  bool result = true;
+  X509_CRL *crl = nullptr;
+  do {
+    crl = PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
+    if (crl == nullptr) {
+      MS_LOG(WARNING) << "crl is nullptr. return true.";
+      result = true;
+      break;
+    }
+    const ASN1_TIME *lastUpdate = X509_CRL_get0_lastUpdate(crl);
+    const ASN1_TIME *nextUpdate = X509_CRL_get0_nextUpdate(crl);
+
+    int day = 0;
+    int sec = 0;
+    int ret = ASN1_TIME_diff(&day, &sec, lastUpdate, NULL);
+    if (ret != 1) {
+      result = false;
+      break;
+    }
+
+    if (day < 0 || sec < 0) {
+      MS_LOG(ERROR) << "crl start time is later than now time.";
+      result = false;
+      break;
+    }
+    day = 0;
+    sec = 0;
+    ret = ASN1_TIME_diff(&day, &sec, NULL, nextUpdate);
+    if (ret != 1) {
+      result = false;
+      break;
+    }
+
+    if (day < 0 || sec < 0) {
+      MS_LOG(WARNING) << "crl update time is sooner than now time. please update crl";
+    }
+    MS_LOG(INFO) << "verifyCRL time success.";
+  } while (0);
+
+  X509_CRL_free(crl);
+  BIO_free_all(bio);
+  return result;
+}
+
+std::string CommUtil::BoolToString(bool alive) {
+  if (alive) {
+    return "True";
+  } else {
+    return "False";
+  }
+}
+
+bool CommUtil::StringToBool(const std::string &alive) {
+  if (alive == "True") {
+    return true;
+  } else if (alive == "False") {
+    return false;
+  }
+  return false;
 }
 }  // namespace core
 }  // namespace ps

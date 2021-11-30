@@ -28,8 +28,8 @@ namespace ps {
 namespace core {
 class TcpMsgHandler : public MessageHandler {
  public:
-  TcpMsgHandler(AbstractNode *const abstract_node, const std::shared_ptr<core::TcpConnection> &conn,
-                const std::shared_ptr<MessageMeta> &meta, const DataPtr &data, size_t size);
+  TcpMsgHandler(AbstractNode *abstract_node, const std::shared_ptr<core::TcpConnection> &conn,
+                const std::shared_ptr<MessageMeta> &meta, DataPtr data, size_t size);
   ~TcpMsgHandler() override = default;
 
   void *data() const override;

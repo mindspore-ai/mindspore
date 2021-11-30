@@ -19,10 +19,10 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include <functional>
 #include <thread>
 
-#include "utils/hash_map.h"
 #include "ps/core/communicator/message_handler.h"
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"
@@ -57,6 +57,7 @@ enum class TcpUserCommand {
   kQueryInstance,
   kEnableFLS,
   kDisableFLS,
+  kSyncAfterRecover,
   kExchangeKeys,
   kGetKeys
 };
@@ -84,10 +85,10 @@ class CommunicatorBase {
 
   bool SendResponse(const void *rsp_data, size_t rsp_len, const std::shared_ptr<MessageHandler> &msg_handler);
 
-  bool running() const;
+  bool running();
 
  protected:
-  mindspore::HashMap<std::string, MessageCallback> msg_callbacks_;
+  std::unordered_map<std::string, MessageCallback> msg_callbacks_;
   std::thread running_thread_;
   bool running_;
 };

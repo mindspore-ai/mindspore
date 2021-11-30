@@ -35,10 +35,12 @@ namespace server {
 namespace kernel {
 // The initial data size sum of federated learning is 0, which will be accumulated in updateModel round.
 constexpr uint64_t kInitialDataSizeSum = 0;
+// results of signature verification
+enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
 class UpdateModelKernel : public RoundKernel {
  public:
-  UpdateModelKernel() : executor_(nullptr), iteration_time_window_(0) {}
+  UpdateModelKernel() = default;
   ~UpdateModelKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;
@@ -55,6 +57,7 @@ class UpdateModelKernel : public RoundKernel {
   std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
+  sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);
   void BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                            const std::string &reason, const std::string &next_req_time);
 
@@ -62,7 +65,7 @@ class UpdateModelKernel : public RoundKernel {
   Executor *executor_;
 
   // The time window of one iteration.
-  size_t iteration_time_window_;
+  size_t iteration_time_window_{0};
 };
 }  // namespace kernel
 }  // namespace server

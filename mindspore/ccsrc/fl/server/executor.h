@@ -24,11 +24,11 @@
 #include <vector>
 #include <mutex>
 #include <condition_variable>
-#include "fl/server/common.h"
-#include "fl/server/parameter_aggregator.h"
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_unmask.h"
 #endif
+#include "fl/server/common.h"
+#include "fl/server/parameter_aggregator.h"
 
 namespace mindspore {
 namespace fl {
@@ -54,28 +54,13 @@ class Executor {
   // After hyper-parameters are updated, some parameter aggregators should be reinitialized.
   bool ReInitForUpdatingHyperParams(size_t aggr_threshold);
 
-  // Called in parameter server training mode to do Push operation.
-  // For the same trainable parameter, HandlePush method must be called aggregation_count_ times before it's considered
-  // as completed.
-  bool HandlePush(const std::string &param_name, const UploadData &upload_data);
-
-  // Called in parameter server training mode to do Pull operation.
-  // Returns the value of parameter param_name.
-  // HandlePull method must be called the same times as HandlePush is called before it's considered as
-  // completed.
-  AddressPtr HandlePull(const std::string &param_name);
-
   // Called in federated learning training mode. Update value for parameter param_name.
   bool HandleModelUpdate(const std::string &param_name, const UploadData &upload_data);
 
-  // Called in asynchronous federated learning training mode. Update current model with the new feature map
-  // asynchronously.
-  bool HandleModelUpdateAsync(const std::map<std::string, UploadData> &feature_map);
-
-  // Overwrite the weights in server using pushed feature map.
+  // Forcibly overwrite specific weights in overwriteWeights message.
   bool HandlePushWeight(const std::map<std::string, Address> &feature_map);
 
-  // Returns multiple trainable parameters passed by weight_names.
+  // Returns value for multiple trainable parameters passed by weight_names.
   std::map<std::string, AddressPtr> HandlePullWeight(const std::vector<std::string> &param_names);
 
   // Reset the aggregation status for all aggregation kernels in the server.
@@ -135,7 +120,7 @@ class Executor {
   armour::CipherUnmask cipher_unmask_;
 #endif
 
-  // The flag represents the unmasking status.
+  // The flag refers to the unmasking status
   std::atomic<bool> unmasked_;
 };
 }  // namespace server

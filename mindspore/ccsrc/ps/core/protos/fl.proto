@@ -139,6 +139,24 @@ message Prime {
   bytes prime = 1;
 }
 
+message PairClientListSign {
+  string fl_id = 1;
+  bytes signature = 2;
+}
+
+message ClientListSign {
+  map<string, bytes> client_list_sign = 1;
+}
+
+message PairKeyAttestation {
+  string fl_id = 1;
+  string certificate = 2;
+}
+
+message KeyAttestation {
+  map<string, string> key_attestations = 1;
+}
+
 message PBMetadata {
   oneof value {
     DeviceMeta device_meta = 1;
@@ -159,6 +177,12 @@ message PBMetadata {
     ClientNoises client_noises = 11;
 
     Prime prime = 12;
+
+    ClientListSign client_list_sign = 13;
+    PairClientListSign pair_client_list_sign = 14;
+
+    KeyAttestation key_attestation = 15;
+    PairKeyAttestation pair_key_attestation = 16;
   }
 }
 
@@ -178,8 +202,8 @@ message SyncIterationResponse {
 }
 
 message PrepareForNextIterRequest {
-  bool is_last_iter_valid = 1;
-  string reason = 2;
+  bool is_last_iter_valid = 2;
+  string reason = 3;
 }
 
 message PrepareForNextIterResponse {
@@ -213,4 +237,8 @@ message EndLastIterRequest {
 
 message EndLastIterResponse {
   string result = 1;
+}
+
+message SyncAfterRecover {
+  uint64 current_iter_num = 1;
 }

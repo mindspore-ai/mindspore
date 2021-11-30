@@ -125,10 +125,6 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
     MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
     return {};
   }
-  if (metadata_.count(name) == 0) {
-    MS_LOG(ERROR) << "The metadata of " << name << " is not registered.";
-    return {};
-  }
   uint32_t stored_rank = router_->Find(name);
   MS_LOG(INFO) << "Rank " << local_rank_ << " get metadata for " << name << " which is stored in rank " << stored_rank;
   if (local_rank_ == stored_rank) {

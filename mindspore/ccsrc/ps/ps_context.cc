@@ -28,7 +28,7 @@ namespace ps {
 std::shared_ptr<PSContext> PSContext::instance() {
   static std::shared_ptr<PSContext> ps_instance = nullptr;
   if (ps_instance == nullptr) {
-    ps_instance.reset(new (std::nothrow) PSContext());
+    ps_instance.reset(new PSContext());
   }
   return ps_instance;
 }
@@ -207,6 +207,7 @@ void PSContext::set_encrypt_type(const std::string &encrypt_type) {
   }
   encrypt_type_ = encrypt_type;
 }
+
 const std::string &PSContext::encrypt_type() const { return encrypt_type_; }
 
 void PSContext::set_dp_eps(float dp_eps) {
@@ -284,7 +285,7 @@ void PSContext::GenerateResetterRound() {
   bool is_parameter_server_mode = false;
   bool is_federated_learning_mode = false;
   bool is_mixed_training_mode = false;
-  bool use_pairwise_encrypt = (encrypt_type_ == kPWEncryptType);
+  bool is_pairwise_encrypt = (encrypt_type_ == kPWEncryptType);
 
   if (server_mode_ == kServerModePS) {
     is_parameter_server_mode = true;
@@ -297,9 +298,11 @@ void PSContext::GenerateResetterRound() {
                       << " or " << kServerModeHybrid;
     return;
   }
-
+  const int training_mode_offset = 2;
+  const int pairwise_encrypt_offset = 3;
   binary_server_context = ((unsigned int)is_parameter_server_mode) | ((unsigned int)is_federated_learning_mode << 1) |
-                          ((unsigned int)is_mixed_training_mode << 2) | ((unsigned int)use_pairwise_encrypt << 3);
+                          ((unsigned int)is_mixed_training_mode << training_mode_offset) |
+                          ((unsigned int)is_pairwise_encrypt << pairwise_encrypt_offset);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
   } else {
@@ -404,9 +407,9 @@ void PSContext::set_worker_step_num_per_iteration(uint64_t worker_step_num_per_i
 
 uint64_t PSContext::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
 
-bool PSContext::enable_ssl() const { return enable_ssl_; }
+void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
 
-void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
+bool PSContext::secure_aggregation() const { return secure_aggregation_; }
 
 core::ClusterConfig &PSContext::cluster_config() {
   if (cluster_config_ == nullptr) {
@@ -416,8 +419,30 @@ core::ClusterConfig &PSContext::cluster_config() {
   return *cluster_config_;
 }
 
-void PSContext::set_scheduler_manage_port(uint16_t sched_port) { scheduler_manage_port_ = sched_port; }
+void PSContext::set_root_first_ca_path(const std::string &root_first_ca_path) {
+  root_first_ca_path_ = root_first_ca_path;
+}
+void PSContext::set_root_second_ca_path(const std::string &root_second_ca_path) {
+  root_second_ca_path_ = root_second_ca_path;
+}
 
+std::string PSContext::root_first_ca_path() const { return root_first_ca_path_; }
+std::string PSContext::root_second_ca_path() const { return root_second_ca_path_; }
+
+void PSContext::set_pki_verify(bool pki_verify) { pki_verify_ = pki_verify; }
+bool PSContext::pki_verify() const { return pki_verify_; }
+
+void PSContext::set_replay_attack_time_diff(uint64_t replay_attack_time_diff) {
+  replay_attack_time_diff_ = replay_attack_time_diff;
+}
+
+uint64_t PSContext::replay_attack_time_diff() const { return replay_attack_time_diff_; }
+
+std::string PSContext::equip_crl_path() const { return equip_crl_path_; }
+
+void PSContext::set_equip_crl_path(const std::string &equip_crl_path) { equip_crl_path_ = equip_crl_path; }
+
+void PSContext::set_scheduler_manage_port(uint16_t sched_port) { scheduler_manage_port_ = sched_port; }
 uint16_t PSContext::scheduler_manage_port() const { return scheduler_manage_port_; }
 
 void PSContext::set_config_file_path(const std::string &path) { config_file_path_ = path; }
@@ -428,10 +453,18 @@ void PSContext::set_node_id(const std::string &node_id) { node_id_ = node_id; }
 
 const std::string &PSContext::node_id() const { return node_id_; }
 
+bool PSContext::enable_ssl() const { return enable_ssl_; }
+
+void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
+
 std::string PSContext::client_password() const { return client_password_; }
 void PSContext::set_client_password(const std::string &password) { client_password_ = password; }
 
 std::string PSContext::server_password() const { return server_password_; }
 void PSContext::set_server_password(const std::string &password) { server_password_ = password; }
+
+std::string PSContext::http_url_prefix() const { return http_url_prefix_; }
+
+void PSContext::set_http_url_prefix(const std::string &http_url_prefix) { http_url_prefix_ = http_url_prefix; }
 }  // namespace ps
 }  // namespace mindspore

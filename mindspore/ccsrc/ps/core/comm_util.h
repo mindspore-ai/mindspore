@@ -44,6 +44,7 @@
 #include <assert.h>
 #include <openssl/pkcs12.h>
 #include <openssl/bio.h>
+#include <openssl/x509v3.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -99,8 +100,12 @@ class CommUtil {
   static bool CheckIp(const std::string &ip);
   static bool CheckPort(const uint16_t &port);
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
+  static std::string GetLoopBackInterfaceName();
   static std::string GenerateUUID();
   static std::string NodeRoleToString(const NodeRole &role);
+  static NodeRole StringToNodeRole(const std::string &roleStr);
+  static std::string BoolToString(bool alive);
+  static bool StringToBool(const std::string &alive);
   static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id, const int32_t &total_worker_num,
                              const int32_t &total_server_num);
   static bool Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds);
@@ -112,19 +117,21 @@ class CommUtil {
   static std::string ClusterStateToString(const ClusterState &state);
 
   // Parse the configuration file according to the key.
-  static std::string ParseConfig(const Configuration &config, const std::string &data);
+  static std::string ParseConfig(const Configuration &config, const std::string &key);
 
   // verify valid of certificate time
   static bool VerifyCertTime(const X509 *cert, int64_t time = 0);
+  static bool verifyCertTimeStamp(const X509 *cert);
   // verify valid of equip certificate with CRL
   static bool VerifyCRL(const X509 *cert, const std::string &crl_path);
-  // Check the common name of the certificate
-  static bool VerifyCommonName(const X509 *cert, const std::string &ca_path);
-  // The string is divided according to delim
+  static bool VerifyCommonName(const X509 *caCert, const X509 *subCert);
   static std::vector<std::string> Split(const std::string &s, char delim);
-  // Check the cipher list of the certificate
   static bool VerifyCipherList(const std::vector<std::string> &list);
-  static void InitOpenSSLEnv();
+  static bool verifyCertKeyID(const X509 *caCert, const X509 *subCert);
+  static bool verifySingature(const X509 *caCert, const X509 *subCert);
+  static bool verifyExtendedAttributes(const X509 *caCert);
+  static void verifyCertPipeline(const X509 *caCert, const X509 *subCert);
+  static bool checkCRLTime(const std::string &crlPath);
 
  private:
   static std::random_device rd;

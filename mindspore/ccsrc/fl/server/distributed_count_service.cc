@@ -329,6 +329,7 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, st
 
   // Broadcast to all follower servers.
   for (uint32_t i = 1; i < server_num_; i++) {
+    MS_LOG(INFO) << "Start sending first count event message to server " << i;
     if (!communicator_->SendPbRequest(first_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating first count event to server " << i << " failed.";
       if (reason != nullptr) {
@@ -343,7 +344,9 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, st
     return false;
   }
   // Leader server directly calls the callback.
+  MS_LOG(INFO) << "Leader server call first count handler for " << name << "...";
   counter_handlers_[name].first_count_handler(nullptr);
+  MS_LOG(INFO) << "First count handler for " << name << " is successfully called.";
   return true;
 }
 
@@ -355,6 +358,7 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std
 
   // Broadcast to all follower servers.
   for (uint32_t i = 1; i < server_num_; i++) {
+    MS_LOG(INFO) << "Start sending last count event message to server " << i;
     if (!communicator_->SendPbRequest(last_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating last count event to server " << i << " failed.";
       if (reason != nullptr) {
@@ -369,7 +373,9 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std
     return false;
   }
   // Leader server directly calls the callback.
+  MS_LOG(INFO) << "Leader server call last count handler for " << name << "...";
   counter_handlers_[name].last_count_handler(nullptr);
+  MS_LOG(INFO) << "Last count handler for " << name << " is successfully called.";
   return true;
 }
 }  // namespace server

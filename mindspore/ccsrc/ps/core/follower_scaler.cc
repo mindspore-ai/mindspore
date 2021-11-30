@@ -132,6 +132,7 @@ void FollowerScaler::ProcessBeforeScaleOut() {
   }
   scaling_state_ = NodeScaleState::kWaiting;
   // Notify scheduler that this node is ready for elastic scaling out.
+  MS_EXCEPTION_IF_NULL(node_);
   node_->set_ready_for_scale_out();
 }
 
@@ -142,6 +143,7 @@ void FollowerScaler::ProcessBeforeScaleIn() {
   }
   scaling_state_ = NodeScaleState::kWaiting;
   // Notify scheduler that this node is ready for elastic scaling in.
+  MS_EXCEPTION_IF_NULL(node_);
   node_->set_ready_for_scale_in();
 }
 
@@ -153,6 +155,7 @@ void FollowerScaler::ProcessAfterScaleOut() {
   }
   scaling_state_ = NodeScaleState::kNormal;
   // Notify scheduler that scaling out of this node is done.
+  MS_EXCEPTION_IF_NULL(node_);
   node_->set_scale_out_done();
 }
 
@@ -164,6 +167,7 @@ void FollowerScaler::ProcessAfterScaleIn() {
   }
   scaling_state_ = NodeScaleState::kNormal;
   // Notify scheduler that scaling out of this node is done.
+  MS_EXCEPTION_IF_NULL(node_);
   node_->set_scale_in_done();
 }
 

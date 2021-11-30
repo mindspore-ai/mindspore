@@ -17,6 +17,8 @@
 #include "fl/server/kernel/round/get_keys_kernel.h"
 #include <vector>
 #include <memory>
+#include <map>
+#include <utility>
 
 namespace mindspore {
 namespace fl {
@@ -26,24 +28,16 @@ void GetKeysKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-
-  executor_ = &Executor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor_);
-  if (!executor_->initialized()) {
-    MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
-  }
-
   cipher_key_ = &armour::CipherKeys::GetInstance();
 }
 
 bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const schema::GetExchangeKeys *get_keys_req,
-                                    const int iter_num) {
+                                    const size_t iter_num) {
   MS_ERROR_IF_NULL_W_RET_VAL(get_keys_req, false);
   if (!DistributedCountService::GetInstance().Count(name_, get_keys_req->fl_id()->str())) {
     std::string reason = "Counting for getkeys kernel request failed. Please retry later.";
     cipher_key_->BuildGetKeysRsp(
-      fbb, schema::ResponseCode_OutOfTime, IntToSize(iter_num),
+      fbb, schema::ResponseCode_OutOfTime, iter_num,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)), false);
     MS_LOG(ERROR) << reason;
     return false;
@@ -51,16 +45,52 @@ bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const
   return true;
 }
 
+sigVerifyResult GetKeysKernel::VerifySignature(const schema::GetExchangeKeys *get_keys_req) {
+  std::string fl_id = get_keys_req->fl_id()->str();
+  std::string timestamp = get_keys_req->timestamp()->str();
+  int iteration = get_keys_req->iteration();
+  std::string iter_str = std::to_string(iteration);
+  auto fbs_signature = get_keys_req->signature();
+  std::vector<unsigned char> signature;
+  if (fbs_signature == nullptr) {
+    MS_LOG(ERROR) << "signature in get_keys_req is nullptr";
+    return sigVerifyResult::FAILED;
+  }
+  signature.assign(fbs_signature->begin(), fbs_signature->end());
+  std::map<std::string, std::string> key_attestations;
+  const fl::PBMetadata &key_attestations_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(kCtxClientKeyAttestation);
+  const fl::KeyAttestation &key_attestation_pb = key_attestations_pb_out.key_attestation();
+  auto iter = key_attestation_pb.key_attestations().begin();
+  for (; iter != key_attestation_pb.key_attestations().end(); ++iter) {
+    (void)key_attestations.emplace(std::pair<std::string, std::string>(iter->first, iter->second));
+  }
+  if (key_attestations.find(fl_id) == key_attestations.end()) {
+    MS_LOG(ERROR) << "can not find key attestation for fl_id: " << fl_id;
+    return sigVerifyResult::FAILED;
+  }
+
+  std::vector<unsigned char> src_data;
+  (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
+  (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
+  mindspore::ps::server::CertVerify certVerify;
+  unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
+  certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
+  if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {
+    return sigVerifyResult::FAILED;
+  }
+  if (!certVerify.verifyTimeStamp(fl_id, timestamp)) {
+    return sigVerifyResult::TIMEOUT;
+  }
+  MS_LOG(INFO) << "verify signature for fl_id: " << fl_id << " success.";
+  return sigVerifyResult::PASSED;
+}
+
 bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                            const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "Launching GetKeys kernel.";
-  bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
-  MS_LOG(INFO) << "ITERATION NUMBER IS : " << iter_num << ", Total GetKeysKernel allowed Duration Is "
-               << total_duration;
-  clock_t start_time = clock();
-
+  MS_LOG(INFO) << "Launching GetKeys kernel, ITERATION NUMBER IS : " << iter_num;
+  bool response = false;
   if (inputs.size() != 1 || outputs.size() != 1) {
     std::string reason = "inputs or outputs size is invalid.";
     MS_LOG(ERROR) << reason;
@@ -74,12 +104,54 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
     MS_LOG(ERROR) << reason;
     return false;
   }
-
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
-    MS_LOG(ERROR) << "Current amount for GetKeysKernel is enough.";
+    MS_LOG(WARNING) << "Current amount for GetKeysKernel is enough.";
+  }
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::GetExchangeKeys>()) {
+    std::string reason = "The schema of GetExchangeKeys is invalid.";
+    cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
+                                 std::to_string(CURRENT_TIME_MILLI.count()), false);
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  const schema::GetExchangeKeys *get_exchange_keys_req = flatbuffers::GetRoot<schema::GetExchangeKeys>(req_data);
+  if (get_exchange_keys_req == nullptr) {
+    std::string reason = "Building flatbuffers schema failed for GetExchangeKeys.";
+    cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
+                                 std::to_string(CURRENT_TIME_MILLI.count()), false);
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
   }
 
-  const schema::GetExchangeKeys *get_exchange_keys_req = flatbuffers::GetRoot<schema::GetExchangeKeys>(req_data);
+  // verify signature
+  if (ps::PSContext::instance()->pki_verify()) {
+    sigVerifyResult verify_result = VerifySignature(get_exchange_keys_req);
+    if (verify_result == sigVerifyResult::FAILED) {
+      std::string reason = "verify signature failed.";
+      cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
+                                   std::to_string(CURRENT_TIME_MILLI.count()), false);
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+
+    if (verify_result == sigVerifyResult::TIMEOUT) {
+      std::string reason = "verify signature timestamp failed.";
+      cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
+                                   std::to_string(CURRENT_TIME_MILLI.count()), false);
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+
+    if (verify_result == sigVerifyResult::PASSED) {
+      MS_LOG(INFO) << "verify signature passed!";
+    }
+  }
+
   size_t iter_client = IntToSize(get_exchange_keys_req->iteration());
   if (iter_num != iter_client) {
     MS_LOG(ERROR) << "GetKeysKernel iteration invalid. server now iteration is " << iter_num
@@ -91,18 +163,15 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
   }
   response = cipher_key_->GetKeys(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), get_exchange_keys_req, fbb);
   if (!response) {
-    MS_LOG(WARNING) << "get public keys is failed.";
+    MS_LOG(WARNING) << "get public keys not ready.";
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  if (!CountForGetKeys(fbb, get_exchange_keys_req, SizeToInt(iter_num))) {
+  if (!CountForGetKeys(fbb, get_exchange_keys_req, iter_num)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   GenerateOutput(outputs, fbb->GetCurrentBufferPointer(), fbb->GetSize());
-  clock_t end_time = clock();
-  double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
-  MS_LOG(INFO) << "GetKeysKernel DURATION TIME IS : " << duration;
   return true;
 }
 

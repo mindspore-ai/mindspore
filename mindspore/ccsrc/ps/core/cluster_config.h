@@ -21,8 +21,10 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <unordered_map>
 
 #include "utils/log_adapter.h"
+#include "ps/core/node_info.h"
 
 namespace mindspore {
 namespace ps {
@@ -38,10 +40,12 @@ struct ClusterConfig {
         scheduler_host(host),
         scheduler_port(port),
         heartbeat_timeout(30),
-        cluster_available_timeout(300),
+        cluster_available_timeout(900),
         connect_interval(3000),
-        scheduler_timeout(30) {}
-
+        scheduler_timeout(30),
+        initial_total_node_num(0),
+        initial_next_worker_rank_id(0),
+        initial_next_server_rank_id(0) {}
   // Configure through environment variables:MS_WORKER_NUM
   uint32_t initial_worker_num;
   // Configure through environment variables:MS_SERVER_NUM
@@ -59,6 +63,11 @@ struct ClusterConfig {
   uint32_t connect_interval;
   // When the scheduler exits, the worker and server can continue to work for 5 hours
   int64_t scheduler_timeout;
+  // the node that has bean registered to scheduler
+  std::unordered_map<std::string, NodeInfo> initial_registered_nodes_infos;
+  uint32_t initial_total_node_num;
+  uint32_t initial_next_worker_rank_id;
+  uint32_t initial_next_server_rank_id;
 };
 }  // namespace core
 }  // namespace ps

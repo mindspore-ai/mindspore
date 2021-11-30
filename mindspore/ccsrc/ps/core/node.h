@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 #include <condition_variable>
 #include <utility>
 #include <tuple>
 #include <map>
 
-#include "utils/hash_map.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
@@ -42,8 +42,8 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-constexpr int kTimeoutInSeconds = 180;
-constexpr int kCommTimeoutInSeconds = 180;
+constexpr int kTimeoutInSeconds = 30;
+constexpr int kCommTimeoutInSeconds = 10;
 class Node {
  public:
   Node()
@@ -92,9 +92,7 @@ class Node {
   void RunMessageCallback(const uint64_t &request_id);
 
   NodeInfo node_info_;
-  // Whether the cluster is ready
   std::atomic<bool> is_ready_;
-  // Whether the cluster is finished.
   std::atomic<bool> is_finish_;
 
   std::atomic<bool> is_already_stopped_;
@@ -108,7 +106,7 @@ class Node {
   std::mutex finish_mutex_;
 
   // the key is: request_id, the value is: <expected responses, actual responses>
-  mindspore::HashMap<uint64_t, std::pair<uint32_t, uint32_t>> message_tracker_;
+  std::unordered_map<uint64_t, std::pair<uint32_t, uint32_t>> message_tracker_;
   std::mutex message_tracker_mutex_;
   std::condition_variable message_tracker_cond_;
 
@@ -128,13 +126,13 @@ class Node {
   std::mutex client_mutex_;
 
   // the key is: request_id
-  mindspore::HashMap<uint64_t, MessageCallback> message_callbacks_;
+  std::unordered_map<uint64_t, MessageCallback> message_callbacks_;
   std::mutex message_callbacks_mutex_;
 
   // the key is: request_id, the value is: <rank_id, RecvMessage>
-  mindspore::HashMap<uint64_t, mindspore::HashMap<uint32_t, VectorPtr>> receive_messages_;
+  std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> receive_messages_;
   // the key is: request_id, the value is: <rank_id, RecvMessage>
-  mindspore::HashMap<uint64_t, mindspore::HashMap<uint32_t, VectorPtr>> workder_receive_messages_;
+  std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> workder_receive_messages_;
   std::map<std::pair<uint32_t, uint64_t>, bool> receive_messages_done_;
   std::mutex receive_messages_mutex_;
 };

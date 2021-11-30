@@ -29,6 +29,9 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+// results of signature verification
+enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
+
 class ClientListKernel : public RoundKernel {
  public:
   ClientListKernel() = default;
@@ -37,12 +40,13 @@ class ClientListKernel : public RoundKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
-  void BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &client_list_resp_builder,
-                          const schema::ResponseCode retcode, const string &reason, std::vector<std::string> clients,
-                          const string &next_req_time, const int iteration);
+  void BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                          const string &reason, std::vector<std::string> clients, const string &next_req_time,
+                          const size_t iteration);
 
  private:
   armour::CipherInit *cipher_init_;
+  sigVerifyResult VerifySignature(const schema::GetClientList *get_clients_req);
   bool DealClient(const size_t iter_num, const schema::GetClientList *get_clients_req,
                   const std::shared_ptr<server::FBBuilder> &fbb);
   Executor *executor_;

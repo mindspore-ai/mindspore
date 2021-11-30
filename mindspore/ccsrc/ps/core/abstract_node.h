@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <unordered_map>
 
-#include "utils/hash_map.h"
 #include "ps/core/node.h"
 #include "ps/core/communicator/message.h"
 #include "ps/core/follower_scaler.h"
@@ -44,10 +44,12 @@ class AbstractNode : public Node {
       : heart_beat_thread_(nullptr),
         client_to_scheduler_thread_(nullptr),
         client_to_scheduler_(nullptr),
+        client_to_server_(nullptr),
         server_(nullptr),
         server_thread_(nullptr),
         worker_num_(-1),
         server_num_(-1),
+        is_connected_to_scheduler_(false),
         is_current_node_scale_in_(false),
         follower_scaler_(nullptr),
         node_recovery_(nullptr),
@@ -94,14 +96,14 @@ class AbstractNode : public Node {
   void RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb);
 
   bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
-            const uint32_t &timeout = kTimeoutInSeconds);
+            const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
-            const std::vector<size_t> &lens, int command, const uint32_t &timeout = kTimeoutInSeconds);
+            const std::vector<size_t> &lens, int command, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
-            VectorPtr *output, const uint32_t &timeout = kTimeoutInSeconds);
+            VectorPtr *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &data_lens, int command, std::vector<VectorPtr> *output,
-            const uint32_t &timeout = kTimeoutInSeconds);
+            const uint32_t &timeout = kCommTimeoutInSeconds);
 
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
@@ -170,6 +172,10 @@ class AbstractNode : public Node {
   void ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                           const Protos &protos, const void *data, size_t size);
 
+  // The worker/server processes the scheduler recovery message from scheduelr
+  void ProcessSchedulerRecovery(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                                const Protos &, const void *data, size_t size);
+
   // The worker/server processes the SEND_EVENT message from scheduelr
   void ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                     const Protos &protos, const void *data, size_t size);
@@ -180,6 +186,7 @@ class AbstractNode : public Node {
   bool Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout);
   bool WaitForDisconnect(const uint32_t &timeout);
   bool InitClientToScheduler();
+  void InitClientToServer();
   const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id,
                                                          const NodeRole &role = NodeRole::SERVER);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
@@ -212,14 +219,18 @@ class AbstractNode : public Node {
   // Trigger the callback corresponding to the custom event.
   void OnCustomEventCallback(const uint32_t &event);
 
-  bool IsWorkerOrServer0(const mindspore::HashMap<std::string, NodeInfo> &info);
+  bool IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info);
 
   void CreateTcpServer();
+
+  void UpdateClusterState(const ClusterState &state);
+
+  void PersistMetaData();
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
   std::shared_ptr<TcpClient> client_to_scheduler_;
-
+  std::shared_ptr<TcpClient> client_to_server_;
   // the key is: <node_role,rank_id>, the value is: <ip, port>
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
   // the map's key is: rank_id
@@ -233,13 +244,13 @@ class AbstractNode : public Node {
   std::condition_variable receive_cond_;
 
   // the key is rank_id, the value is rank_id's expected request_id
-  mindspore::HashMap<uint32_t, uint64_t> expected_rank_request_ids_;
+  std::unordered_map<uint32_t, uint64_t> expected_rank_request_ids_;
   // the key is rank_id, the value is rank_id's actual request_id
-  mindspore::HashMap<uint32_t, uint64_t> actual_rank_request_ids_;
+  std::unordered_map<uint32_t, uint64_t> actual_rank_request_ids_;
   std::mutex rank_request_ids_mutex;
   timeval scheduler_time_{0, 0};
-  mindspore::HashMap<NodeCommand, ResponseHandler> handlers_;
-  mindspore::HashMap<NodeCommand, ServerHandler> server_handler_;
+  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
+  std::unordered_map<NodeCommand, ServerHandler> server_handler_;
 
   // Workers and servers launch the server to process command: FINISH,SCALE_OUT,SCALE_IN,SEND_METADATA
   std::shared_ptr<TcpServer> server_;
@@ -247,7 +258,7 @@ class AbstractNode : public Node {
 
   int32_t worker_num_;
   int32_t server_num_;
-
+  std::atomic<bool> is_connected_to_scheduler_;
   // Identify whether the current node is a scale in node.
   std::atomic<bool> is_current_node_scale_in_;
 
@@ -273,11 +284,12 @@ class AbstractNode : public Node {
   uint16_t scheduler_port_;
 
   // Synchronize all node metadata from the scheduler.
-  mindspore::HashMap<std::string, NodeInfo> all_nodes_info_;
+  std::unordered_map<std::string, NodeInfo> all_nodes_info_;
   RequestHandler request_handler_;
 
-  mindspore::HashMap<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
+  std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
   std::mutex communicator_mutex_;
+  std::mutex cluster_state_mutex_;
 };
 }  // namespace core
 }  // namespace ps

@@ -879,6 +879,10 @@ bool StartServerAction(const ResourcePtr &res) {
     std::max(static_cast<size_t>(std::ceil(share_secrets_threshold * share_secrets_ratio)), update_model_threshold);
   size_t client_list_threshold = std::max(static_cast<size_t>(std::ceil(update_model_threshold * share_secrets_ratio)),
                                           reconstruct_secrets_threshold);
+  size_t push_list_sign_threshold = std::max(
+    static_cast<size_t>(std::ceil(client_list_threshold * share_secrets_ratio)), reconstruct_secrets_threshold);
+  size_t get_list_sign_threshold = std::max(
+    static_cast<size_t>(std::ceil(push_list_sign_threshold * share_secrets_ratio)), reconstruct_secrets_threshold);
 #ifdef ENABLE_ARMOUR
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
   if (encrypt_type == ps::kPWEncryptType) {
@@ -889,6 +893,10 @@ bool StartServerAction(const ResourcePtr &res) {
     rounds_config.push_back({"getSecrets", true, cipher_time_window, true, get_secrets_threshold});
     rounds_config.push_back({"getClientList", true, cipher_time_window, true, client_list_threshold});
     rounds_config.push_back({"reconstructSecrets", true, cipher_time_window, true, reconstruct_secrets_threshold});
+    if (ps::PSContext::instance()->pki_verify()) {
+      rounds_config.push_back({"pushListSign", true, cipher_time_window, true, push_list_sign_threshold});
+      rounds_config.push_back({"getListSign", true, cipher_time_window, true, get_list_sign_threshold});
+    }
   }
   if (encrypt_type == ps::kStablePWEncryptType) {
     MS_LOG(INFO) << "Add stable secure aggregation rounds.";
@@ -897,8 +905,9 @@ bool StartServerAction(const ResourcePtr &res) {
   }
 #endif
   fl::server::CipherConfig cipher_config = {
-    share_secrets_ratio,     cipher_time_window,    exchange_keys_threshold, get_keys_threshold,
-    share_secrets_threshold, get_secrets_threshold, client_list_threshold,   reconstruct_secrets_threshold};
+    share_secrets_ratio,     cipher_time_window,           exchange_keys_threshold, get_keys_threshold,
+    share_secrets_threshold, get_secrets_threshold,        client_list_threshold,   push_list_sign_threshold,
+    get_list_sign_threshold, reconstruct_secrets_threshold};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

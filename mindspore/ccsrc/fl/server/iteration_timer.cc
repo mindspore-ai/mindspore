@@ -19,6 +19,13 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+IterationTimer::~IterationTimer() {
+  running_ = false;
+  if (monitor_thread_.joinable()) {
+    monitor_thread_.join();
+  }
+}
+
 void IterationTimer::Start(const std::chrono::milliseconds &duration) {
   if (running_.load()) {
     MS_LOG(WARNING) << "The timer already started.";
@@ -50,7 +57,7 @@ void IterationTimer::SetTimeOutCallBack(const TimeOutCb &timeout_cb) {
   return;
 }
 
-bool IterationTimer::IsTimeOut(const std::chrono::milliseconds &timestamp) const {
+bool IterationTimer::IsTimeOut(const std::chrono::milliseconds &timestamp) {
   return timestamp > end_time_ ? true : false;
 }
 

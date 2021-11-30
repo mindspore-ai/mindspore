@@ -87,7 +87,7 @@ class PushMetricsKernel : public CPUKernel {
       case schema::ResponseCode_OutOfTime:
         break;
       default:
-        MS_LOG(EXCEPTION) << "Launching push metrics for worker failed.";
+        MS_LOG(WARNING) << "Launching push metrics for worker failed.";
     }
 
     MS_LOG(INFO) << "Push metrics for loss and accuracy success.";

@@ -403,6 +403,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set threshold count ratio for share secrets round.")
     .def("share_secrets_ratio", &PSContext::share_secrets_ratio, "Get threshold count ratio for share secrets round.")
     .def("set_cipher_time_window", &PSContext::set_cipher_time_window, "Set time window for each cipher round.")
+    .def("cipher_time_window", &PSContext::cipher_time_window, "Get time window for cipher rounds.")
     .def("set_reconstruct_secrets_threshold", &PSContext::set_reconstruct_secrets_threshold,
          "Set threshold count for reconstruct secrets round.")
     .def("reconstruct_secrets_threshold", &PSContext::reconstruct_secrets_threshold,
@@ -416,16 +417,38 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
     .def("client_batch_size", &PSContext::client_batch_size, "Get federated learning client batch size.")
     .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
-         "Set worker's standalone training step number before communicating with server.")
+         "Set federated learning client learning rate.")
     .def("client_learning_rate", &PSContext::client_learning_rate,
          "Get worker's standalone training step number before communicating with server.")
     .def("set_worker_step_num_per_iteration", &PSContext::set_worker_step_num_per_iteration,
-         "Set federated learning client learning rate.")
+         "Set worker's standalone training step number before communicating with server..")
     .def("worker_step_num_per_iteration", &PSContext::worker_step_num_per_iteration,
          "Get federated learning client learning rate.")
+    .def("set_secure_aggregation", &PSContext::set_secure_aggregation,
+         "Set federated learning client using secure aggregation.")
+    .def("set_dp_eps", &PSContext::set_dp_eps, "Set dp epsilon for federated learning secure aggregation.")
+    .def("dp_eps", &PSContext::dp_eps, "Get dp epsilon for federated learning secure aggregation.")
+    .def("set_dp_delta", &PSContext::set_dp_delta, "Set dp delta for federated learning secure aggregation.")
+    .def("dp_delta", &PSContext::dp_delta, "Get dp delta for federated learning secure aggregation.")
+    .def("set_dp_norm_clip", &PSContext::set_dp_norm_clip,
+         "Set dp norm clip for federated learning secure aggregation.")
+    .def("dp_norm_clip", &PSContext::dp_norm_clip, "Get dp norm clip for federated learning secure aggregation.")
+    .def("set_encrypt_type", &PSContext::set_encrypt_type,
+         "Set encrypt type for federated learning secure aggregation.")
+    .def("encrypt_type", &PSContext::encrypt_type, "Get encrypt type for federated learning secure aggregation.")
+    .def("set_root_first_ca_path", &PSContext::set_root_first_ca_path, "Set root first ca path.")
+    .def("root_first_ca_path", &PSContext::root_first_ca_path, "Get root first ca path.")
+    .def("set_root_second_ca_path", &PSContext::set_root_second_ca_path, "Set root second ca path.")
+    .def("root_second_ca_path", &PSContext::root_second_ca_path, "Get root second ca path.")
+    .def("set_pki_verify", &PSContext::set_pki_verify, "Set pki verify.")
+    .def("pki_verify", &PSContext::pki_verify, "Get pki verify.")
     .def("set_scheduler_manage_port", &PSContext::set_scheduler_manage_port,
          "Set scheduler manage port used to scale out/in.")
     .def("scheduler_manage_port", &PSContext::scheduler_manage_port, "Get scheduler manage port used to scale out/in.")
+    .def("set_equip_crl_path", &PSContext::set_equip_crl_path, "Set root second crl path.")
+    .def("set_replay_attack_time_diff", &PSContext::set_replay_attack_time_diff, "Set replay attack time diff.")
+    .def("equip_crl_path", &PSContext::equip_crl_path, "Get root second crl path.")
+    .def("replay_attack_time_diff", &PSContext::replay_attack_time_diff, "Get replay attack time diff.")
     .def("set_enable_ssl", &PSContext::set_enable_ssl, "Set PS SSL mode enabled or disabled.")
     .def("enable_ssl", &PSContext::enable_ssl, "Get PS SSL mode enabled or disabled.")
     .def("set_client_password", &PSContext::set_client_password, "Set the client password to decode the p12 file.")
@@ -441,7 +464,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_dp_norm_clip", &PSContext::set_dp_norm_clip,
          "Set dp norm clip for federated learning secure aggregation.")
     .def("set_encrypt_type", &PSContext::set_encrypt_type,
-         "Set encrypt type for federated learning secure aggregation.");
+         "Set encrypt type for federated learning secure aggregation.")
+    .def("set_http_url_prefix", &PSContext::set_http_url_prefix, "Set http url prefix for http communication.")
+    .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.");
 
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");

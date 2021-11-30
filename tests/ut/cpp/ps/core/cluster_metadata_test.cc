@@ -43,7 +43,7 @@ TEST_F(TestClusterConfig, HeartbeatInterval) {
   common::SetEnv(kEnvSchedulerHost, host.c_str());
   common::SetEnv(kEnvSchedulerPort, port.c_str());
   PSContext::instance()->SetPSEnable(true);
-  EXPECT_EQ(300, PSContext::instance()->cluster_config().cluster_available_timeout);
+  EXPECT_EQ(900, PSContext::instance()->cluster_config().cluster_available_timeout);
 }
 }  // namespace core
 }  // namespace ps

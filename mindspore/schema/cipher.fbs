@@ -33,6 +33,10 @@ table ClientPublicKeys {
   s_pk: [ubyte];
   pw_iv: [ubyte];
   pw_salt: [ubyte];
+  timestamp: string;
+  iteration: int;
+  signature: [ubyte];
+  certificate_chain: [string];
 }
 
 table ClientShare {
@@ -50,6 +54,8 @@ table RequestExchangeKeys{
   ind_iv:[ubyte];
   pw_iv:[ubyte];
   pw_salt:[ubyte];
+  signature:[ubyte];
+  certificate_chain:[string];
 }
 
 table ResponseExchangeKeys{
@@ -63,6 +69,7 @@ table GetExchangeKeys{
   fl_id:string;
   iteration:int;
   timestamp:string;
+  signature:[ubyte];
 }
 
 table ReturnExchangeKeys{
@@ -72,11 +79,13 @@ table ReturnExchangeKeys{
   next_req_time:string;
 }
 
+
 table RequestShareSecrets{
   fl_id:string;
   encrypted_shares:[ClientShare];
   iteration:int;
   timestamp:string;
+  signature:[ubyte];
 }
 
 table ResponseShareSecrets{
@@ -90,6 +99,7 @@ table GetShareSecrets{
   fl_id:string;
   iteration:int;
   timestamp:string;
+  signature:[ubyte];
 }
 
 table ReturnShareSecrets{
@@ -103,6 +113,7 @@ table GetClientList{
   fl_id:string;
   iteration:int;
   timestamp:string;
+  signature:[ubyte];
 }
 
 table ReturnClientList{
@@ -113,11 +124,47 @@ table ReturnClientList{
   next_req_time:string;
 }
 
+table ClientListSign {
+  fl_id:string;
+  signature:[ubyte];
+}
+
+table SendClientListSign{
+  fl_id:string;
+  iteration:int;
+  timestamp:string;
+  signature:[ubyte];
+  req_signature:[ubyte];
+}
+
+table ResponseClientListSign{
+  retcode:int;
+  reason:string;
+  iteration:int;
+  next_req_time:string;
+}
+
+table RequestAllClientListSign{
+  fl_id:string;
+  iteration:int;
+  timestamp:string;
+  signature:[ubyte];
+}
+
+table ReturnAllClientListSign{
+  retcode:int;
+  reason:string;
+  client_list_sign:[ClientListSign];
+  iteration:int;
+  next_req_time:string;
+}
+
 table SendReconstructSecret{
   fl_id:string;
   reconstruct_secret_shares:[ClientShare];
   iteration:int;
   timestamp:string;
+  signature:[ubyte];
 }
 
 table ReconstructSecret{

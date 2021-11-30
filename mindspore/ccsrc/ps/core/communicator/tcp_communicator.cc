@@ -90,6 +90,7 @@ bool TcpCommunicator::Stop() {
 }
 
 void TcpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {
+  MS_LOG(INFO) << "msg_type is: " << msg_type;
   msg_callbacks_.try_emplace(msg_type, cb);
   return;
 }

@@ -265,7 +265,7 @@ void HttpMessageHandler::SimpleResponse(int code, const HttpHeaders &headers, co
 }
 
 void HttpMessageHandler::ErrorResponse(int code, const RequestProcessResult &result) {
-  nlohmann::json error_json = {{"error_message", result.StatusMessage()}};
+  nlohmann::json error_json = {{"error_message", result.StatusMessage()}, {"code", kErrorCode}};
   std::string out_error = error_json.dump();
   AddRespString(out_error);
   SetRespCode(code);

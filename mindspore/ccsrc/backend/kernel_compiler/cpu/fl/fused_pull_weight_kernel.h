@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two PullWeights requests when return code is ResponseCode_SucNotReady.
+// The duration between two PullWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
 template <typename T>
 class FusedPullWeightKernel : public CPUKernel {
@@ -52,11 +52,11 @@ class FusedPullWeightKernel : public CPUKernel {
     total_iteration_++;
     uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     if (step_num_per_iteration == 0) {
-      MS_LOG(EXCEPTION) << "Step numbers of per iteration should not be equal to 0";
+      MS_LOG(EXCEPTION) << "step number per iteration should not be 0";
     }
-    // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
     MS_LOG(INFO) << "Try to pull weights. Local step number: " << total_iteration_
                  << ", step number needs to run per iteration: " << step_num_per_iteration;
+    // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
     if (step_num_per_iteration != fl::kOneStepPerIteration &&
         total_iteration_ % step_num_per_iteration != fl::kTrainBeginStepNum) {
       return true;
@@ -86,6 +86,7 @@ class FusedPullWeightKernel : public CPUKernel {
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
 
       pull_weight_rsp = flatbuffers::GetRoot<schema::ResponsePullWeight>(pull_weight_rsp_msg->data());
+      MS_EXCEPTION_IF_NULL(pull_weight_rsp);
       retcode = pull_weight_rsp->retcode();
       if (retcode == schema::ResponseCode_SucNotReady) {
         std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
@@ -95,12 +96,12 @@ class FusedPullWeightKernel : public CPUKernel {
         // Recreate fbb to avoid memory leak of FlatBuffers.
         fbb = std::make_shared<fl::FBBuilder>();
         if (!BuildPullWeightReq(fbb)) {
-          MS_LOG(EXCEPTION) << "Building request for FusedDownloadWeightsByKeys failed.";
+          MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
         }
         continue;
       } else if (retcode != schema::ResponseCode_SUCCEED) {
-        MS_LOG(EXCEPTION) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()
-                          << ", reason: " << pull_weight_rsp->reason()->str();
+        MS_LOG(WARNING) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()
+                        << ", reason: " << pull_weight_rsp->reason()->str();
       } else {
         MS_LOG(DEBUG) << "FusedPullWeight succeed.";
       }

@@ -16,8 +16,8 @@
 
 #include "fl/server/iteration.h"
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
 #include <numeric>
 #include "fl/server/model_store.h"
 #include "fl/server/server.h"
@@ -38,6 +38,7 @@ Iteration::~Iteration() {
 void Iteration::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
+  MS_EXCEPTION_IF_NULL(communicator_);
   communicator_->RegisterMsgCallBack("syncIteration",
                                      std::bind(&Iteration::HandleSyncIterationRequest, this, std::placeholders::_1));
   communicator_->RegisterMsgCallBack(
@@ -54,10 +55,10 @@ void Iteration::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommu
 void Iteration::RegisterEventCallback(const std::shared_ptr<ps::core::ServerNode> &server_node) {
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
-  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning),
-                                           std::bind(&Iteration::HandleIterationRunningEvent, this));
-  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted),
-                                           std::bind(&Iteration::HandleIterationCompletedEvent, this));
+  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::UserDefineEvent::kIterationRunning),
+                                           std::bind(&Iteration::ProcessIterationRunningEvent, this));
+  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::UserDefineEvent::kIterationCompleted),
+                                           std::bind(&Iteration::ProcessIterationEndEvent, this));
 }
 
 void Iteration::AddRound(const std::shared_ptr<Round> &round) {
@@ -97,6 +98,7 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
       if (!move_to_next_thread_running_.load()) {
         break;
       }
+      lock.unlock();
       MoveToNextIteration(is_last_iteration_valid_, move_to_next_reason_);
     }
   });
@@ -113,6 +115,7 @@ void Iteration::NotifyNext(bool is_last_iter_valid, const std::string &reason) {
 }
 
 void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &reason) {
+  iteration_num_ = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Notify cluster starts to proceed to next iteration. Iteration is " << iteration_num_
                << " validation is " << is_last_iter_valid << ". Reason: " << reason;
   if (IsMoveToNextIterRequestReentrant(iteration_num_)) {
@@ -147,7 +150,13 @@ void Iteration::SetIterationRunning() {
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
-    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning));
+    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::UserDefineEvent::kIterationRunning));
+    if (server_recovery_ != nullptr) {
+      // Save data to the persistent storage in case the recovery happens at the beginning.
+      if (!server_recovery_->Save(iteration_num_)) {
+        MS_LOG(WARNING) << "Save recovery data failed.";
+      }
+    }
   }
 
   std::unique_lock<std::mutex> lock(iteration_state_mtx_);
@@ -155,12 +164,12 @@ void Iteration::SetIterationRunning() {
   start_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
 }
 
-void Iteration::SetIterationCompleted() {
-  MS_LOG(INFO) << "Iteration " << iteration_num_ << " completes.";
+void Iteration::SetIterationEnd() {
+  MS_LOG(INFO) << "Iteration " << iteration_num_ << " ends.";
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
-    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted));
+    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::UserDefineEvent::kIterationCompleted));
   }
 
   std::unique_lock<std::mutex> lock(iteration_state_mtx_);
@@ -274,7 +283,7 @@ bool Iteration::DisableServerInstance(std::string *result) {
   instance_state_ = InstanceState::kDisable;
   if (!ForciblyMoveToNextIteration()) {
     *result = "Disabling instance failed. Can't drop current iteration and move to the next.";
-    MS_LOG(ERROR) << *result;
+    MS_LOG(ERROR) << result;
     return false;
   }
   *result = "Disabling FL-Server succeeded.";
@@ -295,6 +304,11 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
     return false;
   }
 
+  if (iteration_num_ == 1) {
+    MS_LOG(INFO) << "This is just the first iteration.";
+    return true;
+  }
+
   // Start new server instance.
   is_instance_being_updated_ = true;
 
@@ -312,7 +326,7 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   ModelStore::GetInstance().Reset();
   if (metrics_ != nullptr) {
     if (!metrics_->Clear()) {
-      MS_LOG(WARNING) << "Clear metrics fil failed.";
+      MS_LOG(WARNING) << "Clear metrics file failed.";
     }
   }
 
@@ -340,6 +354,16 @@ void Iteration::WaitAllRoundsFinish() const {
   }
 }
 
+void Iteration::set_recovery_handler(const std::shared_ptr<ServerRecovery> &server_recovery) {
+  MS_EXCEPTION_IF_NULL(server_recovery);
+  server_recovery_ = server_recovery;
+}
+
+bool Iteration::SyncAfterRecovery(uint64_t) {
+  NotifyNext(false, "Move to next iteration after recovery.");
+  return true;
+}
+
 bool Iteration::SyncIteration(uint32_t rank) {
   MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   SyncIterationRequest sync_iter_req;
@@ -348,7 +372,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
   std::shared_ptr<std::vector<unsigned char>> sync_iter_rsp_msg = nullptr;
   if (!communicator_->SendPbRequest(sync_iter_req, kLeaderServerRank, ps::core::TcpUserCommand::kSyncIteration,
                                     &sync_iter_rsp_msg)) {
-    MS_LOG(ERROR) << "Sending synchronizing iteration message to leader server failed.";
+    MS_LOG(ERROR) << "Sending sync iter message to leader server failed.";
     return false;
   }
 
@@ -356,8 +380,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
   SyncIterationResponse sync_iter_rsp;
   (void)sync_iter_rsp.ParseFromArray(sync_iter_rsp_msg->data(), SizeToInt(sync_iter_rsp_msg->size()));
   iteration_num_ = sync_iter_rsp.iteration();
-  MS_LOG(INFO) << "After synchronizing, server " << rank << " current iteration number is "
-               << sync_iter_rsp.iteration();
+  MS_LOG(INFO) << "After synchronizing, server " << rank << " current iteration number is " << iteration_num_;
   return true;
 }
 
@@ -496,7 +519,9 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
 void Iteration::PrepareForNextIter() {
   MS_LOG(INFO) << "Prepare for next iteration. Switch the server to safemode.";
   Server::GetInstance().SwitchToSafeMode();
+  MS_LOG(INFO) << "Start waiting for rounds to finish.";
   WaitAllRoundsFinish();
+  MS_LOG(INFO) << "End waiting for rounds to finish.";
 }
 
 bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason) {
@@ -627,12 +652,22 @@ void Iteration::EndLastIter() {
   pinned_iter_num_ = 0;
   lock.unlock();
 
-  SetIterationCompleted();
+  SetIterationEnd();
   if (!SummarizeIteration()) {
     MS_LOG(WARNING) << "Summarizing iteration data failed.";
   }
   iteration_num_++;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
+
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
+  if (server_node_->rank_id() == kLeaderServerRank) {
+    // Save current iteration number for recovery.
+    MS_ERROR_IF_NULL_WO_RET_VAL(server_recovery_);
+    if (!server_recovery_->Save(iteration_num_)) {
+      MS_LOG(WARNING) << "Can't save current iteration number into persistent storage.";
+    }
+  }
+
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";

@@ -24,19 +24,19 @@
 #include "ps/core/communicator/tcp_communicator.h"
 #include "ps/core/communicator/task_executor.h"
 #include "ps/core/file_configuration.h"
-#include "fl/server/common.h"
-#include "fl/server/executor.h"
-#include "fl/server/iteration.h"
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_init.h"
 #endif
+#include "fl/server/common.h"
+#include "fl/server/executor.h"
+#include "fl/server/iteration.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
 // The sleeping time of the server thread before the networking is completed.
 constexpr uint32_t kServerSleepTimeForNetworking = 1000;
-
+constexpr uint64_t kDefaultReplayAttackTimeDiff = 60000;
 // Class Server is the entrance of MindSpore's parameter server training mode and federated learning.
 class Server {
  public:
@@ -51,6 +51,21 @@ class Server {
   // According to the current MindSpore framework, method Run is a step of the server pipeline. This method will be
   // blocked until the server is finalized.
   // func_graph is the frontend graph which will be parse in server's exector and aggregator.
+
+  // Each step of the server pipeline may have dependency on other steps, which includes:
+  // InitServerContext must be the first step to set contexts for later steps.
+
+  // Server Running relies on URL or Message Type Register:
+  // StartCommunicator---->InitIteration
+
+  // Metadata Register relies on Hash Ring of Servers which relies on Network Building Completion:
+  // RegisterRoundKernel---->StartCommunicator
+
+  // Kernel Initialization relies on Executor Initialization:
+  // RegisterRoundKernel---->InitExecutor
+
+  // Getting Model Size relies on ModelStorage Initialization which relies on Executor Initialization:
+  // InitCipher---->InitExecutor
   void Run();
 
   void SwitchToSafeMode();
@@ -74,17 +89,25 @@ class Server {
         communicators_with_worker_({}),
         iteration_(nullptr),
         safemode_(true),
+        server_recovery_(nullptr),
         scheduler_ip_(""),
         scheduler_port_(0),
         server_num_(0),
         worker_num_(0),
         fl_server_port_(0),
+        pki_verify_(false),
+        root_first_ca_path_(""),
+        root_second_ca_path_(""),
+        equip_crl_path_(""),
+        replay_attack_time_diff_(kDefaultReplayAttackTimeDiff),
         cipher_initial_client_cnt_(0),
         cipher_exchange_keys_cnt_(0),
         cipher_get_keys_cnt_(0),
         cipher_share_secrets_cnt_(0),
         cipher_get_secrets_cnt_(0),
         cipher_get_clientlist_cnt_(0),
+        cipher_push_list_sign_cnt_(0),
+        cipher_get_list_sign_cnt_(0),
         cipher_reconstruct_secrets_up_cnt_(0),
         cipher_reconstruct_secrets_down_cnt_(0),
         cipher_time_window_(0) {}
@@ -94,9 +117,6 @@ class Server {
 
   // Load variables which is set by ps_context.
   void InitServerContext();
-
-  // Try to recover server config from persistent storage.
-  void Recovery();
 
   // Initialize the server cluster, server node and communicators.
   void InitCluster();
@@ -130,6 +150,12 @@ class Server {
   // The communicators should be started after all initializations are completed.
   void StartCommunicator();
 
+  // Try to recover server config from persistent storage.
+  void Recover();
+
+  // load pki huks cbg root certificate and crl
+  void InitPkiCertificate();
+
   // The barriers before scaling operations.
   void ProcessBeforeScalingOut();
   void ProcessBeforeScalingIn();
@@ -147,6 +173,9 @@ class Server {
 
   // Query current instance information.
   void HandleQueryInstanceRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
+  // Synchronize after recovery is completed to ensure consistency.
+  void HandleSyncAfterRecoveryRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // The server node is initialized in Server.
   std::shared_ptr<ps::core::ServerNode> server_node_;
@@ -179,7 +208,7 @@ class Server {
   // communicators.
   std::vector<std::shared_ptr<ps::core::CommunicatorBase>> communicators_with_worker_;
 
-  // Mutex for scaling operations. We must wait server's initialization done before handle scaling events.
+  // Mutex for scaling operations.
   std::mutex scaling_mtx_;
 
   // Iteration consists of multiple kinds of rounds.
@@ -189,21 +218,33 @@ class Server {
   // If true, the server is not available to workers and clients.
   std::atomic_bool safemode_;
 
+  // The recovery object for server.
+  std::shared_ptr<ServerRecovery> server_recovery_;
+
   // Variables set by ps context.
 #ifdef ENABLE_ARMOUR
-  armour::CipherInit *cipher_init_{nullptr};
+  armour::CipherInit *cipher_init_;
 #endif
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
   uint32_t server_num_;
   uint32_t worker_num_;
   uint16_t fl_server_port_;
+  bool pki_verify_;
+
+  std::string root_first_ca_path_;
+  std::string root_second_ca_path_;
+  std::string equip_crl_path_;
+  uint64_t replay_attack_time_diff_;
+
   size_t cipher_initial_client_cnt_;
   size_t cipher_exchange_keys_cnt_;
   size_t cipher_get_keys_cnt_;
   size_t cipher_share_secrets_cnt_;
   size_t cipher_get_secrets_cnt_;
   size_t cipher_get_clientlist_cnt_;
+  size_t cipher_push_list_sign_cnt_;
+  size_t cipher_get_list_sign_cnt_;
   size_t cipher_reconstruct_secrets_up_cnt_;
   size_t cipher_reconstruct_secrets_down_cnt_;
   uint64_t cipher_time_window_;

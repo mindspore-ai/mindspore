@@ -23,6 +23,7 @@ bool NodeRecovery::Recover() {
   if (recovery_storage_ == nullptr) {
     return false;
   }
+
   // 1. recover worker num
   MS_ERROR_IF_NULL_W_RET_VAL(node_, false);
   if (recovery_storage_->Exists(kRecoveryWorkerNum)) {
@@ -42,8 +43,7 @@ bool NodeRecovery::Recover() {
 
   // 3. recover scheduler ip
   if (recovery_storage_->Exists(kRecoverySchedulerIp)) {
-    std::string scheduler_ip = recovery_storage_->Get(kRecoverySchedulerIp, "");
-    node_->set_scheduler_ip(scheduler_ip);
+    node_->set_scheduler_ip(recovery_storage_->GetString(kRecoverySchedulerIp, ""));
   } else {
     node_->set_scheduler_ip(PSContext::instance()->cluster_config().scheduler_host);
   }

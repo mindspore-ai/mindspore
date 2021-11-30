@@ -19,18 +19,19 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-void RecoveryBase::Initialize(const std::string &config_json) {
+bool RecoveryBase::Initialize(const std::string &config_json) {
   nlohmann::json recovery_config;
   try {
     recovery_config = nlohmann::json::parse(config_json);
   } catch (nlohmann::json::exception &e) {
     MS_LOG(ERROR) << "Parse the json:" << config_json;
+    return false;
   }
 
   MS_LOG(INFO) << "The node is support recovery.";
   if (!recovery_config.contains(kStoreType)) {
     MS_LOG(WARNING) << "The " << kStoreType << " is not existed.";
-    return;
+    return false;
   }
   std::string storage_file_path = "";
   std::string type = recovery_config.at(kStoreType).dump();
@@ -39,23 +40,67 @@ void RecoveryBase::Initialize(const std::string &config_json) {
 
     if (!recovery_config.contains(kStoreFilePath)) {
       MS_LOG(WARNING) << "The " << kStoreFilePath << " is not existed.";
-      return;
+      return false;
     }
     storage_file_path = recovery_config.at(kStoreFilePath);
     if (storage_file_path == "") {
       MS_LOG(EXCEPTION) << "If the scheduler support recovery, and if the persistent storage is a file, the path of "
                            "the file must be configured";
     }
-
     recovery_storage_ = std::make_unique<FileConfiguration>(storage_file_path);
     MS_EXCEPTION_IF_NULL(recovery_storage_);
-
     if (!recovery_storage_->Initialize()) {
-      MS_LOG(INFO) << "The storage file path " << storage_file_path << " is empty.";
+      MS_LOG(WARNING) << "The storage file path " << storage_file_path << " is empty.";
     }
   }
 
   MS_LOG(INFO) << "The storage type is:" << storage_type_ << ", the storage file path is:" << storage_file_path;
+  return true;
+}
+
+bool RecoveryBase::InitializeNodes(const std::string &config_json) {
+  nlohmann::json recovery_config;
+  try {
+    recovery_config = nlohmann::json::parse(config_json);
+  } catch (nlohmann::json::exception &e) {
+    MS_LOG(ERROR) << "Parse the json:" << config_json;
+    return false;
+  }
+
+  if (!recovery_config.contains(kSchedulerStoreFilePath)) {
+    MS_LOG(WARNING) << "The " << kStoreFilePath << " is not existed.";
+    return false;
+  }
+
+  // this is only for scheduler
+  std::string scheduler_storage_file_path = recovery_config.at(kSchedulerStoreFilePath);
+  if (scheduler_storage_file_path == "") {
+    MS_LOG(WARNING) << "scheduler storage file path is not exist!";
+  }
+  scheduler_recovery_storage_ = std::make_unique<FileConfiguration>(scheduler_storage_file_path);
+  MS_EXCEPTION_IF_NULL(scheduler_recovery_storage_);
+  if (!scheduler_recovery_storage_->Initialize()) {
+    MS_LOG(WARNING) << "The scheduler storage file path " << scheduler_storage_file_path << " is empty.";
+  }
+
+  MS_LOG(INFO) << "the scheduler storage file path is:" << scheduler_storage_file_path;
+  return true;
+}
+
+void RecoveryBase::Persist(const core::ClusterConfig &clusterConfig) const {
+  if (recovery_storage_ == nullptr) {
+    MS_LOG(WARNING) << "recovery storage is null, so don't persist meta data";
+    return;
+  }
+  recovery_storage_->PersistFile(clusterConfig);
+}
+
+void RecoveryBase::PersistNodesInfo(const core::ClusterConfig &clusterConfig) const {
+  if (scheduler_recovery_storage_ == nullptr) {
+    MS_LOG(WARNING) << "scheduler recovery  storage is null, so don't persist nodes meta data";
+    return;
+  }
+  scheduler_recovery_storage_->PersistNodes(clusterConfig);
 }
 }  // namespace core
 }  // namespace ps

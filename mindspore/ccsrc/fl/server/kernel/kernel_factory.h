@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "utils/hash_map.h"
+#include <unordered_map>
 #include "fl/server/common.h"
 #include "fl/server/kernel/params_info.h"
 
@@ -83,7 +83,7 @@ class KernelFactory {
 
   // Generally, a server kernel can correspond to several ParamsInfo which is registered by the method 'Register' in
   // server kernel's *.cc files.
-  mindspore::HashMap<std::string, std::vector<std::pair<ParamsInfo, C>>> name_to_creator_map_;
+  std::unordered_map<std::string, std::vector<std::pair<ParamsInfo, C>>> name_to_creator_map_;
 };
 }  // namespace kernel
 }  // namespace server

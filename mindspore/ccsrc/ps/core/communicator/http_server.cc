@@ -68,7 +68,7 @@ bool HttpServer::InitServer() {
     return false;
   }
 
-  fd_ = ::socket(static_cast<int>(AF_INET), static_cast<int>(SOCK_STREAM), 0);
+  fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
   if (fd_ < 0) {
     MS_LOG(ERROR) << "Socker error!";
     return false;
@@ -84,7 +84,8 @@ bool HttpServer::InitServer() {
   }
 
   struct sockaddr_in addr;
-  if (memset_s(&addr, sizeof(addr), 0, sizeof(addr)) != EOK) {
+  errno_t ret = memset_s(&addr, sizeof(addr), 0, sizeof(addr));
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Memset failed.";
   }
 
@@ -132,6 +133,7 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   if (!function) {
     return false;
   }
+  MS_LOG(INFO) << "request handler url is: " << url;
   request_handlers_[url] = function;
   return true;
 }

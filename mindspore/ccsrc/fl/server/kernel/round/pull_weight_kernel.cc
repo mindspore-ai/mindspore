@@ -37,6 +37,13 @@ void PullWeightKernel::InitKernel(size_t) {
 bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launching PullWeightKernel kernel.";
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
+  }
+
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
@@ -71,7 +78,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
   }
   std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t pull_weight_iter = IntToSize(pull_weight_req->iteration());
+  size_t pull_weight_iter = static_cast<size_t>(pull_weight_req->iteration());
   // The iteration from worker should be the same as server's, otherwise return SucNotReady so that worker could retry.
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
@@ -91,7 +98,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
     weight_names.push_back(weights_names_fbs->Get(i)->str());
   }
   if (!executor_->IsWeightAggrDone(weight_names) || !executor_->unmasked()) {
-    (void)++retry_count_;
+    ++retry_count_;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
     if (retry_count_.load() % kPrintPullWeightForEveryRetryTime == 1) {
@@ -134,7 +141,7 @@ void PullWeightKernel::BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb,
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
   schema::ResponsePullWeightBuilder rsp_pull_weight_builder(*(fbb.get()));
-  rsp_pull_weight_builder.add_retcode(static_cast<int>(retcode));
+  rsp_pull_weight_builder.add_retcode(SizeToInt(retcode));
   rsp_pull_weight_builder.add_reason(fbs_reason);
   rsp_pull_weight_builder.add_iteration(SizeToInt(iteration));
   rsp_pull_weight_builder.add_feature_map(fbs_feature_maps_vector);

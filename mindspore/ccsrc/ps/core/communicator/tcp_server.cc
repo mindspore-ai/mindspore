@@ -175,8 +175,9 @@ void TcpServer::Init() {
   listener_ = evconnlistener_new_bind(base_, ListenerCallback, reinterpret_cast<void *>(this),
                                       LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
                                       reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
-
-  MS_EXCEPTION_IF_NULL(listener_);
+  if (listener_ == nullptr) {
+    MS_LOG(EXCEPTION) << "bind ip & port failed. please check.";
+  }
 
   if (server_port_ == 0) {
     struct sockaddr_in sin_bound {};
@@ -306,6 +307,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
     });
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
                     reinterpret_cast<void *>(conn.get()));
+  MS_LOG(INFO) << "A client is connected, fd is " << fd;
   if (bufferevent_enable(bev, EV_READ | EV_WRITE) == -1) {
     MS_LOG(EXCEPTION) << "Buffer event enable read and write failed!";
   }
@@ -411,7 +413,7 @@ void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
 
 void TcpServer::SetTcpNoDelay(const evutil_socket_t &fd) {
   const int one = 1;
-  int ret = setsockopt(fd, static_cast<int>(IPPROTO_TCP), static_cast<int>(TCP_NODELAY), &one, sizeof(int));
+  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
   if (ret < 0) {
     MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }

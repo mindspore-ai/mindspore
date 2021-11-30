@@ -24,6 +24,9 @@ bool ServerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Server start]: 1. Begin to start server node!";
   Initialize();
   Register(client_to_scheduler_);
+  if (node_info_.rank_id_ == UINT32_MAX) {
+    MS_LOG(EXCEPTION) << "Register to scheduler failed, so finish the node.";
+  }
   MS_LOG(INFO) << "[Server start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
 
@@ -34,7 +37,6 @@ bool ServerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
-
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Server start]: 6. Successfully start server node!";
   return true;
@@ -61,6 +63,7 @@ void ServerNode::Initialize() {
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node connect to scheduler timedout!";
   }
+  InitClientToServer();
   is_already_stopped_ = false;
   MS_LOG(INFO) << "[Server start]: 3. Server node crete tcp client to scheduler successful!";
 }

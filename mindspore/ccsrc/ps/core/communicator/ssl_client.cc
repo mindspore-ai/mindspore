@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -37,7 +38,18 @@ SSLClient::SSLClient() : ssl_ctx_(nullptr), check_time_thread_(nullptr), running
 SSLClient::~SSLClient() { CleanSSL(); }
 
 void SSLClient::InitSSL() {
-  CommUtil::InitOpenSSLEnv();
+  if (!SSL_library_init()) {
+    MS_LOG(EXCEPTION) << "SSL_library_init failed.";
+  }
+  if (!ERR_load_crypto_strings()) {
+    MS_LOG(EXCEPTION) << "ERR_load_crypto_strings failed.";
+  }
+  if (!SSL_load_error_strings()) {
+    MS_LOG(EXCEPTION) << "SSL_load_error_strings failed.";
+  }
+  if (!OpenSSL_add_all_algorithms()) {
+    MS_LOG(EXCEPTION) << "OpenSSL_add_all_algorithms failed.";
+  }
   ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
   if (!ssl_ctx_) {
     MS_LOG(EXCEPTION) << "SSL_CTX_new failed";
@@ -65,6 +77,7 @@ void SSLClient::InitSSL() {
   EVP_PKEY *pkey = nullptr;
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
+  MS_LOG(INFO) << "cliet cert: " << client_cert;
   BIO *bio = BIO_new_file(client_cert.c_str(), "rb");
   MS_EXCEPTION_IF_NULL(bio);
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
@@ -83,27 +96,26 @@ void SSLClient::InitSSL() {
   }
 
   // 3. load ca cert.
-  std::string client_ca = kCAcrt;
   std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
   if (!CommUtil::IsFileExists(ca_path)) {
     MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
   }
-  client_ca = ca_path;
-
+  BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
+  MS_EXCEPTION_IF_NULL(ca_bio);
+  X509 *caCert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
   std::string crl_path = CommUtil::ParseConfig(*(config_), kCrlPath);
   if (crl_path.empty()) {
     MS_LOG(INFO) << "The crl path is empty.";
+  } else if (!CommUtil::checkCRLTime(crl_path)) {
+    MS_LOG(EXCEPTION) << "check crl time failed";
   } else if (!CommUtil::VerifyCRL(cert, crl_path)) {
     MS_LOG(EXCEPTION) << "Verify crl failed.";
   }
 
-  if (!CommUtil::VerifyCommonName(cert, client_ca)) {
-    MS_LOG(EXCEPTION) << "Verify common name failed.";
-  }
+  CommUtil::verifyCertPipeline(caCert, cert);
 
   SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
-
-  if (!SSL_CTX_load_verify_locations(ssl_ctx_, client_ca.c_str(), nullptr)) {
+  if (!SSL_CTX_load_verify_locations(ssl_ctx_, ca_path.c_str(), nullptr)) {
     MS_LOG(EXCEPTION) << "SSL load ca location failed!";
   }
 
@@ -115,13 +127,21 @@ void SSLClient::InitSSL() {
   if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
     MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
   }
+  InitSSLCtx(cert, pkey);
+  StartCheckCertTime(*config_, cert);
 
-  // 4. load client cert
-  if (!SSL_CTX_use_certificate(ssl_ctx_, cert)) {
+  EVP_PKEY_free(pkey);
+  X509_free(caCert);
+  X509_free(cert);
+  (void)BIO_free(ca_bio);
+}
+
+void SSLClient::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey) {
+  if (!SSL_CTX_use_certificate(ssl_ctx_, const_cast<X509 *>(cert))) {
     MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
   }
 
-  if (!SSL_CTX_use_PrivateKey(ssl_ctx_, pkey)) {
+  if (!SSL_CTX_use_PrivateKey(ssl_ctx_, const_cast<EVP_PKEY *>(pkey))) {
     MS_LOG(EXCEPTION) << "SSL use private key file failed!";
   }
 
@@ -138,7 +158,7 @@ void SSLClient::InitSSL() {
     MS_LOG(EXCEPTION) << "SSL set mode auto retry failed!";
   }
 
-  StartCheckCertTime(*config_, cert);
+  SSL_CTX_set_security_level(ssl_ctx_, kSecurityLevel);
 }
 
 void SSLClient::CleanSSL() {
