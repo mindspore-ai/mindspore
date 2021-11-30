@@ -45,7 +45,7 @@ def test_no_default_asgd_graph():
         no_default_fc1_bias_asgd, no_default_fc2_weight_asgd, no_default_fc2_bias_asgd
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     config = {'name': 'ASGD', 'lr': 0.001, 'lambd': 1e-3, 'alpha': 0.8, 't0': 50., 'weight_decay': 0.001}
-    loss, cells = build_network(config, is_group=True)
+    loss, cells = build_network(config)
     assert np.allclose(cells.ax[0].asnumpy(), no_default_fc1_weight_asgd, atol=1.e-5)
     assert np.allclose(cells.ax[1].asnumpy(), no_default_fc1_bias_asgd, atol=1.e-5)
     assert np.allclose(cells.ax[2].asnumpy(), no_default_fc2_weight_asgd, atol=1.e-5)

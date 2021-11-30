@@ -24,7 +24,8 @@ def test_sparse():
     Description: Initialize a 2 dimension sparse matrix to fill the input tensor.
     Expectation: The Tensor is initialized with a 2 dimension sparse matrix.
     """
-    initializer(Sparse(sparsity=0.1, sigma=0.01), [5, 8], mindspore.float32)
+    tensor1 = initializer(Sparse(sparsity=0.1, sigma=0.01), [5, 8], mindspore.float32)
+    tensor1.init_data()
 
 
 def test_orthogonal():
@@ -33,8 +34,10 @@ def test_orthogonal():
     Description: Initialize a (semi) orthogonal matrix to fill the input tensor.
     Expectation: The Tensor is initialized with values from orthogonal matrix.
     """
-    initializer(Orthogonal(gain=2.), [2, 3, 4], mindspore.float32)
-    initializer('orthogonal', [2, 3, 4], mindspore.float32)
+    tensor1 = initializer(Orthogonal(gain=2.), [2, 3, 4], mindspore.float32)
+    tensor2 = initializer('orthogonal', [2, 3, 4], mindspore.float32)
+    tensor1.init_data()
+    tensor2.init_data()
 
 
 def test_variancescaling():
@@ -43,13 +46,17 @@ def test_variancescaling():
     Description: Randomly initialize an array with scaling to fill the input tensor.
     Expectation: The Tensor is initialized successfully.
     """
-    initializer('varianceScaling', [2, 3], mindspore.float32)
-    initializer(VarianceScaling(scale=1.0, mode='fan_out', distribution='untruncated_normal'), [2, 3],
-                mindspore.float32)
-    initializer(VarianceScaling(scale=2.0, mode='fan_in', distribution='truncated_normal'), [2, 3],
-                mindspore.float32)
-    initializer(VarianceScaling(scale=3.0, mode='fan_avg', distribution='uniform'), [2, 3],
-                mindspore.float32)
+    tensor1 = initializer('varianceScaling', [2, 3], mindspore.float32)
+    tensor2 = initializer(VarianceScaling(scale=1.0, mode='fan_out', distribution='untruncated_normal'), [2, 3],
+                          mindspore.float32)
+    tensor3 = initializer(VarianceScaling(scale=2.0, mode='fan_in', distribution='truncated_normal'), [2, 3],
+                          mindspore.float32)
+    tensor4 = initializer(VarianceScaling(scale=3.0, mode='fan_avg', distribution='uniform'), [2, 3],
+                          mindspore.float32)
+    tensor1.init_data()
+    tensor2.init_data()
+    tensor3.init_data()
+    tensor4.init_data()
 
 
 def test_identity():
