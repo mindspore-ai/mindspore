@@ -1428,6 +1428,13 @@ bool OperatorInfo::IsReshape() {
   return false;
 }
 
+bool OperatorInfo::IsTmpIdentity() {
+  if (name_.find(IDENTITY_INFO) != std::string::npos) {
+    return true;
+  }
+  return false;
+}
+
 // Keep at most (1.0 / epsilon) number of available strategies for each operator.
 void OperatorInfo::ApproximateStrategies() {
   auto enable_approxi = CostModelContext::GetInstance()->dp_algo_enable_approxi();
