@@ -14,7 +14,7 @@
 # ============================================================================
 """
 Parallel Loss for the Parallel Training
-This is an experimental interface that is subject to change and/or deletion.
+This is an experimental interface that is subject to change or deletion.
 """
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype

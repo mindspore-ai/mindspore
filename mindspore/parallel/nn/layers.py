@@ -14,7 +14,7 @@
 # ============================================================================
 """
 The basic layer of the Transformer Networks. This is an experimental interface that is subject to
-change and/or deletion.
+change or deletion.
 """
 from functools import wraps, partial
 import inspect
@@ -30,7 +30,7 @@ from mindspore import nn
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.primitive import constexpr
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = [
@@ -321,6 +321,16 @@ class _Linear(Cell):
     """
 
     @cell_attr_register
+    @_args_type_validator_check(in_channels=Validator.check_positive_int,
+                                out_channels=Validator.check_positive_int,
+                                has_bias=Validator.check_bool,
+                                activation=_valid_type_checks([type(None), str], "Linear"),
+                                transpose_b=Validator.check_bool,
+                                expert_num=Validator.check_positive_int,
+                                param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                    "Linear"),
+                                compute_dtype=_valid_value_checks([mstype.float32, mstype.float16],
+                                                                  "Linear"))
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -333,14 +343,8 @@ class _Linear(Cell):
                  param_init_type=mstype.float32,
                  compute_dtype=mstype.float16):
         super(_Linear, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        if param_init_type not in [mstype.float32, mstype.float16]:
-            raise TypeError("The type of parameter 'param_init_type' should in [float32, float16], "
-                            "but got the type : {}.".format(type(param_init_type)))
-
-        if activation and not isinstance(activation, str):
-            raise TypeError("The type of parameter 'activation' must be str, but got type {}".format(type(activation)))
+        self.in_channels = in_channels
+        self.out_channels = out_channels
         if isinstance(weight_init, Tensor) and (weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels):
             raise ValueError("The shape of parameter 'weight_init' is error, please check shape of 'weight_init'.")
@@ -364,9 +368,6 @@ class _Linear(Cell):
             self.bias_add = P.Add()
         self.act_name = activation
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
-        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
-            raise TypeError("The type of parameter 'activation' must be str or Cell or Primitive, "
-                            "but got the type {}".format(type(activation)))
         self.activation_flag = self.activation is not None
         self.dtype = compute_dtype
         self.cast = P.Cast()
@@ -432,21 +433,21 @@ class FixedSparseAttention(nn.Cell):
     2. An implementation of "strided" and "fixed" attention, as in the Sparse Transformers paper.
 
     Args:
-        batch_size (int): Number of input batch size.
-        num_heads (int): Number of attention heads.
-        block_size (int): An integer determining the block size. Current implementation of sparse self-attention
-                          is based on blocked sparse matrices. In which this parameter defines size of such blocks,
-                          Block X Block. only supports 64 for now.
-        seq_length (int): length of input sequence, only supports 1024 for now.
-        num_different_global_patterns (int):An integer determining number of different global attentions layouts.
-                                            While global attention can be fixed by which block/s are representative of
-                                            any local window, since there are multi-heads, each head can use a
-                                            different global representative, only supports 4 for now
-        size_per_head (int): An integer determining embedding size of each attention head,
-                             only supports 64, 128 for now.
+        batch_size: (int): Number of input batch size.
+        num_heads: (int): Number of attention heads.
+        size_per_head: (int): An integer determining embedding size of each attention head,
+            only supports 64, 128 for now.
+        block_size: (int): An integer determining the block size. Current implementation of sparse self-attention
+            is based on blocked sparse matrices. In which this parameter defines size of such blocks,
+            Block X Block. only supports 64 for now.
+        seq_length: (int): length of input sequence, only supports 1024 for now.
+        num_different_global_patterns: (int):An integer determining number of different global attentions layouts.
+            While global attention can be fixed by which block/s are representative of
+            any local window, since there are multi-heads, each head can use a
+            different global representative, only supports 4 for now
         parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
-                                           Default `default_dpmp_config`, an instance of `OpParallelConfig` with
-                                           default args.
+            Default `default_dpmp_config`, an instance of `OpParallelConfig` with
+            default args.
 
     Inputs:
         - **q** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
