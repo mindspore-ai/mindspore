@@ -55,6 +55,7 @@ constexpr auto kStackDestroy = "StackDestroy";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
+constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kUpdateCache = "UpdateCache";
 constexpr auto kCacheSwapTable = "CacheSwapTable";
 constexpr auto kSubAndFilter = "SubAndFilter";
@@ -73,6 +74,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaske
                                           kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kScatterElements};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
                                             kPadAndShift, kDropout3D,      kDropout2D};
+const std::set<std::string> kCpuKernelBaseOps{kGetNext, kInitData, kRandomChoiceWithMask};
 const std::set<std::string> kDynamicInputOps{
   kPrint, kPack, kMeshgrid, kStackInitOpName, kStackDestroyOpName, kStackPushOpName, kStackPopOpName, kDynamicStitch};
 struct AicpuParamHead {

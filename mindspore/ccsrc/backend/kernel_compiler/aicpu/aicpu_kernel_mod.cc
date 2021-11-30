@@ -85,6 +85,10 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
         node_so_ = kLibAicpuKernelSoName;
       }
     }
+  } else {
+    if (kCpuKernelBaseOps.find(node_name_) == kCpuKernelBaseOps.end()) {
+      node_name_ = kCpuRunApi;
+    }
   }
   // InputOutputAddr
   vector<void *> io_addrs;
@@ -186,6 +190,10 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
       if (node_so_ != kLibCpuKernelSoName) {
         node_so_ = kLibAicpuKernelSoName;
       }
+    }
+  } else {
+    if (kCpuKernelBaseOps.find(node_name_) == kCpuKernelBaseOps.end()) {
+      node_name_ = kCpuRunApi;
     }
   }
   std::vector<void *> input_data_addrs;

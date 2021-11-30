@@ -230,6 +230,31 @@ class Custom(ops.PrimitiveWithInfer):
         ...         res = self.square_with_bias(x, 1.0)
         ...         return res
         >>>
+        >>> # Example, func_type = "aicpu"
+        >>> resize_bilinear_op_info = CustomRegOp("ResizeBilinear") \
+        ...     .fusion_type("OPAQUE") \
+        ...     .input(0, "input", "required") \
+        ...     .output(1, "output", "required") \
+        ...     .attr("align_corners", "required", "bool") \
+        ...     .attr("cust_aicpu", "optional", "str", "aicpu_kernels") \
+        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+        ...     .dtype_format(DataType.F16_Default, DataType.F32_Default) \
+        ...     .target("Ascend") \
+        ...     .get_op_info()
+        >>>
+        >>> @custom_info_register(resize_bilinear_op_info)
+        ... def resize_bilinear_aicpu():
+        ...     return
+        >>>
+        >>> class AicpuNet(Cell):
+        ...     def __init__(self):
+        ...         super(AicpuNet, self).__init__()
+        ...         self.resize_bilinear_op = ops.Custom(resize_bilinear_aicpu, out_shape=[1, 1, 9, 9], \
+        ...                                              out_dtype=mstype.float32, func_type="aicpu")
+        ...     def construct(self, x):
+        ...         res = self.resize_bilinear_op(x, True, "aicpu_kernels")
+        ...         return res
+        >>>
         >>> # Example, func_type = "aot"
         >>> class AOTSingleOutputNet(Cell):
         ...     def __init__(self, func, out_shapes, out_types, reg=None):
@@ -257,7 +282,7 @@ class Custom(ops.PrimitiveWithInfer):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
-        self.supported_func_type = ["akg", "tbe", "aot", "pyfunc"]
+        self.supported_func_type = ["akg", "tbe", "aicpu", "aot", "pyfunc"]
         self.func = func
         self.func_type = func_type
         self.func_name = ""
@@ -368,6 +393,8 @@ class Custom(ops.PrimitiveWithInfer):
         reg_info = info
         if reg_info is None and hasattr(self.func, "reg_info"):
             reg_info = getattr(self.func, "reg_info")
+        if self.func_type == "aicpu" and reg_info is None:
+            raise ValueError("custom aicpu ops must set reg_info, but current reg_info is None.")
         reg_info_list = self._get_expanded_list(reg_info)
         for reg_info in reg_info_list:
             if not isinstance(reg_info, (str, dict)):
@@ -433,11 +460,17 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 Custom.registered_func[self.func] = [target]
 
+    def _get_op_name(self, reg_info):
+        if self.func_type == "aicpu":
+            self.uniq_name = reg_info["op_name"]
+            self.add_prim_attr("uniq_name", self.uniq_name)
+        return self.uniq_name
+
     def _reformat_reg_info(self, reg_info, target):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
             raise TypeError("reg_info should be of type dict, but got {}".format(type(reg_info)))
-        reg_info["op_name"] = self.uniq_name
+        reg_info["op_name"] = self._get_op_name(reg_info)
         reg_info["imply_type"] = self._get_imply_type(reg_info, target)
         if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
             reg_info["fusion_type"] = "OPAQUE"
@@ -489,7 +522,7 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "pyfunc": target}
+        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target, "pyfunc": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def _save_attr(self, reg_info):

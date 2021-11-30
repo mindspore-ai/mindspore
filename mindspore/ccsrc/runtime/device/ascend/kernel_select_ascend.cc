@@ -485,12 +485,21 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
     *kernel_type = KernelType::TBE_KERNEL;
   } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
+  } else if (func_type == kCustomTypeAICPU) {
+    *kernel_type = KernelType::AICPU_KERNEL;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported func type for Custom op on Ascend, it should be 'tbe', 'ir_builder', "
                       << "'tvm_compute' or 'hybrid', but got [" << func_type << "] for Custom op [" << op_name << "]";
   }
-  kernel::OpImplyType imply_type =
-    *kernel_type == KernelType::TBE_KERNEL ? kernel::OpImplyType::kTBE : kernel::OpImplyType::kAKG;
+  static const std::map<KernelType, kernel::OpImplyType> kKernelImplyTypeMap{
+    {KernelType::TBE_KERNEL, kernel::OpImplyType::kTBE},
+    {KernelType::AKG_KERNEL, kernel::OpImplyType::kAKG},
+    {KernelType::AICPU_KERNEL, kernel::OpImplyType::kAICPU}};
+  auto it = kKernelImplyTypeMap.find(*kernel_type);
+  kernel::OpImplyType imply_type = kernel::OpImplyType::kAKG;
+  if (it != kKernelImplyTypeMap.end()) {
+    imply_type = it->second;
+  }
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
   // Only process Custom op that does not has reg info
   if (op_info_ptr != nullptr) {
