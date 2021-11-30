@@ -138,21 +138,21 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
   /// \brief obtain provider's name
   ///
   /// \return provider's name.
-  std::string GetProvider() const;
+  inline std::string GetProvider() const;
   /// \brief set provider's name.
   ///
   /// \param[in] provider define the provider's name.
 
-  void SetProvider(const std::string &provider);
+  inline void SetProvider(const std::string &provider);
   /// \brief obtain provider's device type.
   ///
   /// \return provider's device type.
 
-  std::string GetProviderDevice() const;
+  inline std::string GetProviderDevice() const;
   /// \brief set provider's device type.
   ///
   /// \param[in] device define the provider's device type.EG: CPU.
-  void SetProviderDevice(const std::string &device);
+  inline void SetProviderDevice(const std::string &device);
 
   /// \brief set memory allocator.
   ///
@@ -165,8 +165,18 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
   std::shared_ptr<Allocator> GetAllocator() const;
 
  protected:
+  std::vector<char> GetProviderChar() const;
+  void SetProvider(const std::vector<char> &provider);
+  std::vector<char> GetProviderDeviceChar() const;
+  void SetProviderDevice(const std::vector<char> &device);
+
   std::shared_ptr<Data> data_;
 };
+
+std::string DeviceInfoContext::GetProvider() const { return CharToString(GetProviderChar()); }
+void DeviceInfoContext::SetProvider(const std::string &provider) { SetProvider(StringToChar(provider)); }
+std::string DeviceInfoContext::GetProviderDevice() const { return CharToString(GetProviderDeviceChar()); }
+void DeviceInfoContext::SetProviderDevice(const std::string &device) { SetProviderDevice(StringToChar(device)); }
 
 /// \brief Derived from DeviceInfoContext, The configuration of the model running on the CPU. This option is only valid
 /// for MindSpore Lite.

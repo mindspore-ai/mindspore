@@ -164,36 +164,38 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
 
 DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
 
-std::string DeviceInfoContext::GetProvider() const {
+std::vector<char> DeviceInfoContext::GetProviderChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
-    return "";
+    return std::vector<char>();
   }
-  return GetValue<std::string>(data_, kModelOptionProvider);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionProvider);
+  return StringToChar(ref);
 }
 
-void DeviceInfoContext::SetProvider(const std::string &provider) {
+void DeviceInfoContext::SetProvider(const std::vector<char> &provider) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionProvider] = provider;
+  data_->params[kModelOptionProvider] = CharToString(provider);
 }
 
-std::string DeviceInfoContext::GetProviderDevice() const {
+std::vector<char> DeviceInfoContext::GetProviderDeviceChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
-    return "";
+    return std::vector<char>();
   }
-  return GetValue<std::string>(data_, kModelOptionProviderDevice);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionProviderDevice);
+  return StringToChar(ref);
 }
 
-void DeviceInfoContext::SetProviderDevice(const std::string &device) {
+void DeviceInfoContext::SetProviderDevice(const std::vector<char> &device) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionProviderDevice] = device;
+  data_->params[kModelOptionProviderDevice] = CharToString(device);
 }
 
 void DeviceInfoContext::SetAllocator(const std::shared_ptr<Allocator> &allocator) {
