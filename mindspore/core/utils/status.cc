@@ -32,6 +32,59 @@ struct Status::Data {
   std::string err_description;
 };
 
+static std::map<enum StatusCode, std::string> status_info_map = {
+  {kSuccess, "No error occurs."},
+  // Core
+  {kCoreFailed, "Common error code."},
+  // MD
+  {kMDOutOfMemory, "Out of memory"},
+  {kMDShapeMisMatch, "Shape is incorrect"},
+  {kMDInterrupted, "Interrupted system call"},
+  {kMDNoSpace, "No space left on device"},
+  {kMDPyFuncException, "Exception thrown from PyFunc"},
+  {kMDDuplicateKey, "Duplicate key"},
+  {kMDPythonInterpreterFailure, ""},
+  {kMDTDTPushFailure, "Unexpected error"},
+  {kMDFileNotExist, "Unexpected error"},
+  {kMDProfilingError, "Error encountered while profiling"},
+  {kMDBoundingBoxOutOfBounds, "Unexpected error"},
+  {kMDBoundingBoxInvalidShape, "Unexpected error"},
+  {kMDSyntaxError, "Syntax error"},
+  {kMDTimeOut, "Unexpected error"},
+  {kMDBuddySpaceFull, "BuddySpace full"},
+  {kMDNetWorkError, "Network error"},
+  {kMDNotImplementedYet, "Unexpected error"},
+  {kMDUnexpectedError, "Unexpected error"},
+  // ME
+  {kMEFailed, "Common error code."},
+  {kMEInvalidInput, "Invalid input."},
+  // MC
+  {kMCFailed, "Common error code."},
+  {kMCDeviceError, "Device error."},
+  {kMCInvalidInput, "Invalid input."},
+  {kMCInvalidArgs, "Invalid arguments."},
+  // Lite
+  {kLiteError, "Common error code."},
+  {kLiteNullptr, "NULL pointer returned."},
+  {kLiteParamInvalid, "Invalid parameter."},
+  {kLiteNoChange, "No change."},
+  {kLiteSuccessExit, "No error but exit."},
+  {kLiteMemoryFailed, "Fail to create memory."},
+  {kLiteNotSupport, "Fail to support."},
+  {kLiteThreadPoolError, "Thread pool error."},
+  {kLiteOutOfTensorRange, "Failed to check range."},
+  {kLiteInputTensorError, "Failed to check input tensor."},
+  {kLiteReentrantError, "Exist executor running."},
+  {kLiteGraphFileError, "Failed to verify graph file."},
+  {kLiteNotFindOp, "Failed to find operator."},
+  {kLiteInvalidOpName, "Invalid operator name."},
+  {kLiteInvalidOpAttr, "Invalid operator attr."},
+  {kLiteOpExecuteFailure, "Failed to execution operator."},
+  {kLiteFormatError, "Failed to checking tensor format."},
+  {kLiteInferError, "Failed to infer shape."},
+  {kLiteInferInvalid, "Invalid infer shape before runtime."},
+  {kLiteInputParamInvalid, "Invalid input param by user."}};
+
 Status::Status() : data_(std::make_shared<Data>()) {}
 
 Status::Status(enum StatusCode status_code, const std::vector<char> &status_msg) : data_(std::make_shared<Data>()) {
@@ -87,7 +140,11 @@ std::vector<char> Status::ToCString() const {
   if (data_ == nullptr) {
     return std::vector<char>();
   }
-  return StringToChar(data_->status_msg);
+  if (!data_->status_msg.empty()) {
+    return StringToChar(data_->status_msg);
+  } else {
+    return CodeAsCString(data_->status_code);
+  }
 }
 
 int Status::GetLineOfCode() const {
@@ -105,59 +162,8 @@ std::vector<char> Status::GetErrDescriptionChar() const {
 }
 
 std::vector<char> Status::CodeAsCString(enum StatusCode c) {
-  static std::map<enum StatusCode, std::string> info_map = {{kSuccess, "No error occurs."},
-                                                            // Core
-                                                            {kCoreFailed, "Common error code."},
-                                                            // MD
-                                                            {kMDOutOfMemory, "Out of memory"},
-                                                            {kMDShapeMisMatch, "Shape is incorrect"},
-                                                            {kMDInterrupted, "Interrupted system call"},
-                                                            {kMDNoSpace, "No space left on device"},
-                                                            {kMDPyFuncException, "Exception thrown from PyFunc"},
-                                                            {kMDDuplicateKey, "Duplicate key"},
-                                                            {kMDPythonInterpreterFailure, ""},
-                                                            {kMDTDTPushFailure, "Unexpected error"},
-                                                            {kMDFileNotExist, "Unexpected error"},
-                                                            {kMDProfilingError, "Error encountered while profiling"},
-                                                            {kMDBoundingBoxOutOfBounds, "Unexpected error"},
-                                                            {kMDBoundingBoxInvalidShape, "Unexpected error"},
-                                                            {kMDSyntaxError, "Syntax error"},
-                                                            {kMDTimeOut, "Unexpected error"},
-                                                            {kMDBuddySpaceFull, "BuddySpace full"},
-                                                            {kMDNetWorkError, "Network error"},
-                                                            {kMDNotImplementedYet, "Unexpected error"},
-                                                            {kMDUnexpectedError, "Unexpected error"},
-                                                            // ME
-                                                            {kMEFailed, "Common error code."},
-                                                            {kMEInvalidInput, "Invalid input."},
-                                                            // MC
-                                                            {kMCFailed, "Common error code."},
-                                                            {kMCDeviceError, "Device error."},
-                                                            {kMCInvalidInput, "Invalid input."},
-                                                            {kMCInvalidArgs, "Invalid arguments."},
-                                                            // Lite
-                                                            {kLiteError, "Common error code."},
-                                                            {kLiteNullptr, "NULL pointer returned."},
-                                                            {kLiteParamInvalid, "Invalid parameter."},
-                                                            {kLiteNoChange, "No change."},
-                                                            {kLiteSuccessExit, "No error but exit."},
-                                                            {kLiteMemoryFailed, "Fail to create memory."},
-                                                            {kLiteNotSupport, "Fail to support."},
-                                                            {kLiteThreadPoolError, "Thread pool error."},
-                                                            {kLiteOutOfTensorRange, "Failed to check range."},
-                                                            {kLiteInputTensorError, "Failed to check input tensor."},
-                                                            {kLiteReentrantError, "Exist executor running."},
-                                                            {kLiteGraphFileError, "Failed to verify graph file."},
-                                                            {kLiteNotFindOp, "Failed to find operator."},
-                                                            {kLiteInvalidOpName, "Invalid operator name."},
-                                                            {kLiteInvalidOpAttr, "Invalid operator attr."},
-                                                            {kLiteOpExecuteFailure, "Failed to execution operator."},
-                                                            {kLiteFormatError, "Failed to checking tensor format."},
-                                                            {kLiteInferError, "Failed to infer shape."},
-                                                            {kLiteInferInvalid, "Invalid infer shape before runtime."},
-                                                            {kLiteInputParamInvalid, "Invalid input param by user."}};
-  auto iter = info_map.find(c);
-  return StringToChar(iter == info_map.end() ? "Unknown error" : iter->second);
+  auto iter = status_info_map.find(c);
+  return StringToChar(iter == status_info_map.end() ? "Unknown error" : iter->second);
 }
 
 std::ostream &operator<<(std::ostream &os, const Status &s) {
