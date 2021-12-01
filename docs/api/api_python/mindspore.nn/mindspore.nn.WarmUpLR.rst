@@ -41,11 +41,11 @@ mindspore.nn.WarmUpLR
 
     **样例：**
 
-        >>> learning_rate = 0.1
-        >>> warmup_steps = 2
-        >>> global_step = Tensor(2, mstype.int32)
-        >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
-        >>> result = warmup_lr(global_step)
-        >>> print(result)
-        0.1
+    >>> learning_rate = 0.1
+    >>> warmup_steps = 2
+    >>> global_step = Tensor(2, mstype.int32)
+    >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
+    >>> result = warmup_lr(global_step)
+    >>> print(result)
+    0.1
     

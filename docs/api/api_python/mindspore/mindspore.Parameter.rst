@@ -44,7 +44,6 @@
     >>> print(net(x))
     [[0.]]
     
-
     .. py:method:: cache_enable
         :property: 
 
@@ -67,7 +66,6 @@
 
         `Parameter` ，返回克隆的新参数。
         
-
     .. py:method:: comm_fusion
         :property:
 
@@ -75,7 +73,6 @@
 
         在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下，一些用于参数或梯度聚合的通信算子将自动插入。fusion的值必须大于等于0。当fusion的值为0时，算子不会融合在一起。
         
-
     .. py:method:: data
         :property:
 
@@ -89,28 +86,25 @@
 
         - **layout** (Union[None, tuple])：参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]：默认值：None。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下layout不是None。
 
-            - **dev_mat** (list(int))：该参数的设备矩阵。
-            - **tensor_map** (list(int))：该参数的张量映射。
-            - **slice_shape** (list(int))：该参数的切片shape。
-            - **filed_size** (int)：该权重的行数。
-            - **uniform_split** (bool)：该参数是否进行均匀切分。
-            - **opt_shard_group** (str)：该参数进行优化器切分时的group。
+          - **dev_mat** (list(int))：该参数的设备矩阵。
+          - **tensor_map** (list(int))：该参数的张量映射。
+          - **slice_shape** (list(int))：该参数的切片shape。
+          - **filed_size** (int)：该权重的行数。
+          - **uniform_split** (bool)：该参数是否进行均匀切分。
+          - **opt_shard_group** (str)：该参数进行优化器切分时的group。
 
         - **set_sliced** (bool)：参数初始化时被设定为分片，则为True。默认值：False。
 
         **异常：**
 
         - **RuntimeError：** 参数使用 `Initializer` 模块进行初始化，初始化后并行模式发生更改。
-
         - **ValueError：** `layout` 长度小于6。
-
         - **TypeError：** `layout` 不是元组。
 
         **返回：**
 
         初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
         
-
     .. py:method:: is_init
         :property:
 
@@ -118,7 +112,6 @@
 
         此属性仅在GE（Graph Engine）中有效，在其他后端将设为False。
         
-
     .. py:method:: layerwise_parallel
         :property:
 
@@ -126,7 +119,6 @@
 
         在 `DATA_PARALLEL` 和 `HYBRID_PARALLEL` 模式下，如果 `layerwise_parallel` 为True，则广播和gradients通信将不会应用到参数。
         
-
     .. py:method:: name
         :property:
 
@@ -139,7 +131,6 @@
 
         用于在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下过滤权重切分操作。当在 `mindspore.context.set_auto_parallel_context()` 中启用优化器并行时，它才有效。
         
-
     .. py:method:: parallel_optimizer_comm_recompute
         :property:
 
@@ -151,7 +142,6 @@
             - 仅支持 `Graph` 模式。
             - 建议使用(cell.recompute(parallel_optimizer_comm_recompute=True/False)去配置由优化器并行生成的 :class:`mindspore.ops.AllGather` 算子，而不是直接使用该接口。
         
-
     .. py:method:: requires_grad
         :property:
 
@@ -170,7 +160,6 @@
     
         完成数据设置的新参数。
         
-
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
         设置参数和服务器的互动方式。
@@ -181,7 +170,6 @@
         - **pull_from_server** (bool)：表示是否应从服务器中拉取参数。默认值：False。
         - **requires_aggr** (bool)：表示是否应在服务器中聚合参数。默认值：True。
         
-
     .. py:method:: set_param_ps(init_in_server=False)
 
         表示可训练参数是否由参数服务器更新，以及可训练参数是否在服务器上初始化。
