@@ -74,10 +74,3 @@ from .pyfunc import _pyfunc_cpu
 from .buffer_append import _buffer_append_cpu
 from .buffer_get import _buffer_get_cpu
 from .buffer_sample import _buffer_sample_cpu
-from .tensor_array_clear import _tensor_array_clear_cpu
-from .tensor_array_close import _tensor_array_close_cpu
-from .tensor_array_create import _tensor_array_create_cpu
-from .tensor_array_read import _tensor_array_read_cpu
-from .tensor_array_size import _tensor_array_size_cpu
-from .tensor_array_stack import _tensor_array_stack_cpu
-from .tensor_array_write import _tensor_array_write_cpu

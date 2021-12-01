@@ -46,7 +46,7 @@ class TensorArrayCPUCreateKernel : public CPUKernel {
   std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(TensorArray, KernelAttr(), TensorArrayCPUCreateKernel)
+MS_REG_CPU_KERNEL(TensorArray, KernelAttr().AddOutputAttr(kNumberTypeInt64), TensorArrayCPUCreateKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

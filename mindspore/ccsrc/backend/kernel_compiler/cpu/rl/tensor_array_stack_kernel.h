@@ -53,7 +53,26 @@ class TensorArrayCPUStackKernel : public CPUKernel {
   std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr(), TensorArrayCPUStackKernel)
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+                  TensorArrayCPUStackKernel);
+MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+                  TensorArrayCPUStackKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

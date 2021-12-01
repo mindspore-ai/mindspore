@@ -45,8 +45,88 @@ class TensorArrayCPUReadKernel : public CPUKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 };
-
-MS_REG_CPU_KERNEL(TensorArrayRead, KernelAttr(), TensorArrayCPUReadKernel)
+// index int64
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  TensorArrayCPUReadKernel);
+// index int32
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  TensorArrayCPUReadKernel);
+MS_REG_CPU_KERNEL(
+  TensorArrayRead,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  TensorArrayCPUReadKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
