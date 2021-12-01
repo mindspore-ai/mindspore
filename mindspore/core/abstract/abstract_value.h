@@ -1516,6 +1516,7 @@ class MS_CORE_API AbstractCSRTensor : public AbstractUndetermined {
   AbstractTensorPtr values_;
   AbstractTuplePtr dense_shape_;
 };
+using AbstractCSRTensorPtr = std::shared_ptr<AbstractCSRTensor>;
 
 class AbstractMonad : public AbstractBase {
  public:

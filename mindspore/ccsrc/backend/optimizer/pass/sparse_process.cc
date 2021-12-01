@@ -26,6 +26,24 @@
 
 namespace mindspore {
 namespace opt {
+// Convert CSRTensor Parameter or ValueNode to Tuple by setting its abstract.
+void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
+  MS_EXCEPTION_IF_NULL(sparse);
+  if (!(sparse->isa<Parameter>() || sparse->isa<ValueNode>())) {
+    return;
+  }
+  auto param_abs = sparse->abstract();
+  MS_EXCEPTION_IF_NULL(param_abs);
+  if (param_abs->isa<abstract::AbstractCSRTensor>()) {
+    auto abs_sparse = param_abs->cast<abstract::AbstractCSRTensorPtr>();
+    std::vector<AbstractBasePtr> abstract_list{abs_sparse->indptr(), abs_sparse->indices(), abs_sparse->values(),
+                                               abs_sparse->dense_shape()};
+    auto abs_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+    abs_tuple->set_type(abs_tuple->BuildType());
+    sparse->set_abstract(abs_tuple);
+  }
+}
+
 const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -60,14 +78,16 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
   } else if (sparse_attr_map.find(prim_name) != sparse_attr_map.end()) {
     const auto &inputs = cnode->inputs();
     // Inputs should be [sparse_getattr, sparse]
+    if (inputs.size() <= 1) {
+      MS_LOG_EXCEPTION << "For SparseGetAttr, CNode must have 2 inputs (Prim, Sparse)";
+    }
     constexpr size_t sparse_index = 1;
-    AnfNodePtr sparse = inputs[sparse_index];
-    MS_EXCEPTION_IF_NULL(sparse);
+    AbstractCSRToAbstractTuple(inputs[sparse_index]);
     int64_t index = sparse_attr_map.at(prim_name);
     auto cons_node = NewValueNode(index);
     AbstractBasePtr aptr = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(index));
     cons_node->set_abstract(aptr);
-    auto new_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, cons_node}, func_graph);
+    auto new_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), inputs[sparse_index], cons_node}, func_graph);
     new_node->set_abstract(node->abstract());
     return new_node;
   }
