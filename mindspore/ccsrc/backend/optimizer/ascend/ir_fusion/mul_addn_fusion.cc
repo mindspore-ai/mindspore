@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace opt {
-CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const CNodePtr &addn,
-                          const size_t &lossscale_input_index) {
+CNodePtr MulAddNFusion::CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const CNodePtr &addn,
+                                         const size_t &lossscale_input_index) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mul);
   MS_EXCEPTION_IF_NULL(addn);
