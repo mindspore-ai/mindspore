@@ -23,8 +23,6 @@ from mindspore.common import Tensor
 from mindspore.scipy.sparse.linalg import cg as msp_cg
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix
 
-onp.random.seed(0)
-
 
 def _fetch_preconditioner(preconditioner, A):
     """
@@ -58,6 +56,7 @@ def test_cg_against_scipy(dtype_tol, shape, preconditioner, maxiter):
     Description: test cases for cg
     Expectation: the result match scipy
     """
+    onp.random.seed(0)
     dtype, tol = dtype_tol
     A = create_sym_pos_matrix(shape, dtype)
     b = onp.random.random(shape[:1]).astype(dtype)
@@ -93,6 +92,7 @@ def test_cg_against_numpy(dtype, shape):
     Description: test cases for cg
     Expectation: the result match numpy
     """
+    onp.random.seed(0)
     A = create_sym_pos_matrix(shape, dtype)
     b = onp.random.random(shape[:1]).astype(dtype)
     expected = onp.linalg.solve(A, b)
@@ -114,7 +114,7 @@ def test_cg_against_numpy(dtype, shape):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [5])
+@pytest.mark.parametrize('n', [3, 5, 7])
 @pytest.mark.parametrize('dtype,tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
 def test_gmres_incremental_against_scipy(n, tol, dtype, preconditioner):
@@ -123,6 +123,7 @@ def test_gmres_incremental_against_scipy(n, tol, dtype, preconditioner):
     Description:  test cases for [N x N] X [N X 1]
     Expectation: the result match scipy
     """
+    onp.random.seed(0)
     context.set_context(mode=context.PYNATIVE_MODE)
     A = create_full_rank_matrix((n, n), dtype)
     b = onp.random.rand(n).astype(dtype)
@@ -144,7 +145,7 @@ def test_gmres_incremental_against_scipy(n, tol, dtype, preconditioner):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [5])
+@pytest.mark.parametrize('n', [3, 5, 7])
 @pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
 def test_gmres_incremental_against_scipy_graph(n, tol, dtype, preconditioner):
@@ -153,6 +154,7 @@ def test_gmres_incremental_against_scipy_graph(n, tol, dtype, preconditioner):
     Description:  test cases for [N x N] X [N X 1]
     Expectation: the result match scipy
     """
+    onp.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE)
     A = create_full_rank_matrix((n, n), dtype)
     b = onp.random.rand(n).astype(dtype)
@@ -175,15 +177,17 @@ def test_gmres_incremental_against_scipy_graph(n, tol, dtype, preconditioner):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
-@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
 @pytest.mark.parametrize('maxiter', [1, 2])
-def test_pynative_batched_gmres_against_scipy(n, dtype, preconditioner, maxiter):
+def test_pynative_batched_gmres_against_scipy(n, dtype, tol, preconditioner, maxiter):
     """
     Feature: ALL TO ALL
     Description: test cases for gmres
     Expectation: the result match scipy
     """
+    onp.random.seed(0)
+    context.set_context(mode=context.PYNATIVE_MODE)
     shape = (n, n)
     a = create_full_rank_matrix(shape, dtype)
     b = onp.random.rand(n).astype(dtype=dtype)
@@ -196,7 +200,7 @@ def test_pynative_batched_gmres_against_scipy(n, dtype, preconditioner, maxiter)
 
     msp_x, _ = msp.sparse.linalg.gmres(tensor_a, tensor_b, maxiter=maxiter, M=M, atol=1e-6,
                                        solve_method='batched')
-    assert onp.allclose(msp_x.asnumpy(), osp_x)
+    onp.testing.assert_almost_equal(msp_x.asnumpy(), osp_x, decimal=tol)
 
 
 @pytest.mark.level0
@@ -204,15 +208,16 @@ def test_pynative_batched_gmres_against_scipy(n, dtype, preconditioner, maxiter)
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [5, 6])
-@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
 @pytest.mark.parametrize('maxiter', [1, 2])
-def test_graph_batched_gmres_against_scipy(n, dtype, preconditioner, maxiter):
+def test_graph_batched_gmres_against_scipy(n, dtype, tol, preconditioner, maxiter):
     """
     Feature: ALL TO ALL
     Description: test cases for gmres
     Expectation: the result match scipy
     """
+    onp.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE)
     shape = (n, n)
     a = create_full_rank_matrix(shape, dtype)
@@ -223,4 +228,4 @@ def test_graph_batched_gmres_against_scipy(n, dtype, preconditioner, maxiter):
     M = Tensor(M) if M is not None else M
     osp_x, _ = osp.sparse.linalg.gmres(a, b, maxiter=maxiter, atol=0.0)
     msp_x, _ = msp.sparse.linalg.gmres(tensor_a, tensor_b, maxiter=maxiter, M=M, atol=0.0, solve_method='batched')
-    assert onp.allclose(msp_x.asnumpy(), osp_x)
+    onp.testing.assert_almost_equal(msp_x.asnumpy(), osp_x, decimal=tol)
