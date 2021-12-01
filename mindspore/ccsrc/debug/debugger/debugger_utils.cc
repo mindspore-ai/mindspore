@@ -201,9 +201,27 @@ int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
       E2eDump::DumpOpDebugToFile(file_name, dump_data, data_buf.data());
     } else {
       // save tensor data
-      auto op_type = file_base_name.substr(0, file_base_name.find("."));
-      auto file_base_name_no_scope = GetOpNameWithoutScope(file_base_name, "_");
-      E2eDump::DumpTensorToFile(path_name + "/" + op_type + "." + file_base_name_no_scope, dump_data, data_buf.data());
+      // generate fully qualified file name
+      // before: op_type.op_name.task_id.stream_id.timestamp
+      // after: op_type.op_name_no_scope.task_id.stream_id.timestamp
+      size_t first_dot = file_base_name.find(".");
+      size_t second_dot = file_base_name.size();
+      const int kNumDots = 3;
+      int nth_dot_from_back = 0;
+      while (nth_dot_from_back != kNumDots && second_dot != std::string::npos) {
+        second_dot = file_base_name.rfind(".", second_dot - 1);
+        nth_dot_from_back++;
+      }
+      if (first_dot == std::string::npos || second_dot == std::string::npos) {
+        MS_LOG(ERROR) << "Failed to generate fully qualified file name for " << file_name;
+        return 0;
+      }
+      auto op_type = file_base_name.substr(0, first_dot);
+      auto task_stream_timestamp = file_base_name.substr(second_dot);
+      std::string op_name = dump_data.op_name();
+      auto op_name_no_scope = GetOpNameWithoutScope(op_name, "/");
+      E2eDump::DumpTensorToFile(path_name + "/" + op_type + "." + op_name_no_scope + task_stream_timestamp, dump_data,
+                                data_buf.data());
     }
 
     debugger->ClearDumpDataBuilder(file_name);
