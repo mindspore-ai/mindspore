@@ -187,4 +187,9 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
 
   return check_model->CheckModelSupport(model_type);
 }
+
+Status Model::LoadConfig(const std::vector<char> &config_path) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMCFailed;
+}
 }  // namespace mindspore
