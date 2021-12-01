@@ -284,8 +284,10 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
+  ProcessInputTensorsForHeterogeneous("CPU", *input_tensors);
   const auto &kernel_graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
+
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);

@@ -754,7 +754,7 @@ void AscendSession::PrepareForOutputTensor(const KernelGraphPtr &graph,
                                            std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
                                            VectorRef *outputs) const {
   // Create DeviceAddress For Output Tensor(contain: Shape, Format, DType)
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   runtime_instance->RunOpMallocPre(*graph, input_tensors);
   runtime_instance->UpdateRefNodeOutputMem(*graph);
   // CREATE OUTPUT TENSOR ADDRESS
@@ -810,6 +810,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   }
 
   MS_EXCEPTION_IF_NULL(input_tensors);
+  ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
   bool cache_miss = run_op_graphs_.find(graph_info) == run_op_graphs_.end();
   auto graph = CreateKernelGraph(graph_info, op_run_info, input_tensors, tensors_mask, cache_miss);
   EraseValueNodeTensor(tensors_mask, input_tensors);
@@ -847,8 +848,8 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
                                     const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
+  ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
   const auto &graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
-
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // wait for allreduce
@@ -857,6 +858,7 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
       tensor->WaitDevice();
     }
   }
+
   // malloc mem
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
@@ -1758,7 +1760,7 @@ void AscendSession::SyncStream() const {
 std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
   auto bucket = std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size);
 
-  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(kernel_runtime);
   auto compute_stream = kernel_runtime->compute_stream();
   auto communication_stream = kernel_runtime->communication_stream();

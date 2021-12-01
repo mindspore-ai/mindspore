@@ -288,9 +288,14 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
 
       auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
       if (host_tensor_address != nullptr) {
-        AnfAlgo::SetOutputAddr(host_tensor_address, 0, input_node.get());
-        host_tensor_address->SetNodeIndex(input_node, 0);
-        continue;
+        if (host_tensor_address->DeviceType() != device_context->GetDeviceAddressType()) {
+          input_tensor->data_sync();
+          input_tensor->set_device_address(nullptr);
+        } else {
+          AnfAlgo::SetOutputAddr(host_tensor_address, 0, input_node.get());
+          host_tensor_address->SetNodeIndex(input_node, 0);
+          continue;
+        }
       }
 
       if (!AnfAlgo::OutputAddrExist(input_node, 0, false)) {
@@ -496,6 +501,12 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     } else {
       MS_LOG(INFO) << "The device type is not equal, host tensor type:" << host_tensor_address->DeviceType()
                    << ", device tensor type:" << device_tensor->DeviceType();
+      if (strategy_ == GraphExecutionStrategy::kStep) {
+        tensor->data_sync();
+        host_tensor_address = device_tensor;
+        tensor->set_device_address(host_tensor_address);
+        is_need_sync = true;
+      }
     }
   }
   // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,

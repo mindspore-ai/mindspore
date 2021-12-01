@@ -358,6 +358,7 @@ class ForwardExecutor {
   py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
   void DoSignatureCast(const PrimitivePyPtr &prim, const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
+  void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
 
  private:
   GradExecutorWeakPtr grad_executor_;
@@ -365,6 +366,7 @@ class ForwardExecutor {
   ImplicitCastCache implicit_cast_map_;
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> node_abs_map_;
   bool lazy_build_{false};
+  std::string last_target_{"Unknown"};
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {

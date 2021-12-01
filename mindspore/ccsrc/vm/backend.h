@@ -121,6 +121,10 @@ class MindRTBackend : public Backend {
   void SyncLazyTasks() const;
   // Clear resource when python exit.
   void ClearOpBuilderResource() const;
+  // Get the device target.
+  std::string GetDeviceTarget() { return device_name_; }
+  // Sync default stream in PyNative mode.
+  void SyncStream();
 
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
@@ -194,6 +198,7 @@ class MindRTBackend : public Backend {
   int ms_execution_mode_{kGraphMode};
   int real_execution_mode_{kGraphMode};
 };
+using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile
 }  // namespace mindspore
 #endif

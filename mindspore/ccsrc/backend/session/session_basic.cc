@@ -20,6 +20,7 @@
 #include <queue>
 #include <utility>
 #include <functional>
+#include <unordered_map>
 
 #include "utils/hash_map.h"
 #include "ops/primitive_c.h"
@@ -2287,6 +2288,33 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
   ExecuteGraph(kernel_graph);
   PostExecuteGraph(kernel_graph, inputs, outputs);
   MS_LOG(INFO) << "Status record: end run graph. graph id: " << graph_id;
+}
+
+device::DeviceAddressType DeviceTargetToDeviceType(const std::string &device_target) {
+  static const std::unordered_map<std::string, device::DeviceAddressType> target_type = {
+    {"Unknown", device::DeviceAddressType::kUnknown},
+    {"Ascend", device::DeviceAddressType::kAscend},
+    {"CPU", device::DeviceAddressType::kCPU},
+    {"GPU", device::DeviceAddressType::kGPU},
+    {"Davinci", device::DeviceAddressType::kAscend}};
+  auto iter = target_type.find(device_target);
+  if (iter == target_type.end()) {
+    MS_LOG(EXCEPTION) << "Not support device target: " << device_target;
+  }
+  return iter->second;
+}
+
+void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
+                                                       const std::vector<tensor::TensorPtr> &input_tensors) {
+  for (auto &tensor : input_tensors) {
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    if (device_address != nullptr) {
+      if (device_address->DeviceType() != DeviceTargetToDeviceType(cur_target)) {
+        tensor->data_sync();
+        tensor->set_device_address(nullptr);
+      }
+    }
+  }
 }
 
 void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

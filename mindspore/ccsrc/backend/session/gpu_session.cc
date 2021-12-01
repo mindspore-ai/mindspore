@@ -321,6 +321,30 @@ size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::Tenso
   }
   return size;
 }
+
+bool CheckIfNeedSync(const tensor::TensorPtr &tensor, const DeviceAddressPtr &device_address,
+                     const ParameterPtr &pk_node) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(pk_node);
+  auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  bool need_sync = false;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    if (tensor_address == nullptr || tensor_address != device_address) {
+      need_sync = true;
+    }
+  } else if (tensor->NeedSyncHostToDevice() || tensor_address == nullptr) {
+    need_sync = true;
+  } else if (tensor_address != device_address) {
+    if (tensor_address->DeviceType() == device_address->DeviceType()) {
+      AnfAlgo::SetOutputAddr(tensor_address, 0, pk_node.get());
+    } else {
+      need_sync = true;
+    }
+  }
+  return need_sync;
+}
 }  // namespace
 
 void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -348,21 +372,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
-      auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-      bool need_sync = false;
-      if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-        if (tensor_address == nullptr || tensor_address != device_address) {
-          need_sync = true;
-        }
-      } else if (tensor->NeedSyncHostToDevice() || tensor_address == nullptr) {
-        need_sync = true;
-      } else if (tensor_address != device_address) {
-        if (tensor_address->DeviceType() == device_address->DeviceType()) {
-          AnfAlgo::SetOutputAddr(tensor_address, 0, pk_node.get());
-        } else {
-          need_sync = true;
-        }
-      }
+      bool need_sync = CheckIfNeedSync(tensor, device_address, pk_node);
       if (need_sync) {
         if (AnfAlgo::IsParameterWeight(pk_node) || UpdatedByAssign(kernel_graph, input_node) ||
             ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
@@ -681,6 +691,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
+  ProcessInputTensorsForHeterogeneous("GPU", *input_tensors);
   const auto &kernel_graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
   // wait for allreduce
@@ -690,6 +701,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
       tensor->WaitDevice();
     }
   }
+
   // run op
   MS_EXCEPTION_IF_NULL(kernel_graph);
   RunOpRemoveNopNode(kernel_graph);

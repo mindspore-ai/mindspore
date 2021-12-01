@@ -83,8 +83,8 @@ const std::set<std::string> kVmOperators = {"make_ref", "HookBackward", "InsertG
                                             "mixed_precision_cast"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 const char kGrad[] = "grad";
-std::shared_ptr<session::SessionBasic> kSession = nullptr;
-std::shared_ptr<compile::MindRTBackend> mind_rt_backend = nullptr;
+std::map<std::string, std::shared_ptr<session::SessionBasic>> kSessionBackends;
+std::map<std::string, std::shared_ptr<compile::MindRTBackend>> kMindRtBackends;
 PyObjectIdCache g_pyobj_id_cache;
 
 template <typename T, typename... Args>
@@ -222,6 +222,41 @@ TypeId JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_in
     max_type = TypeId::kNumberTypeInt16;
   }
   return max_type;
+}
+
+std::string GetCurrentDeviceTarget(const std::string &device_target, const PrimitivePyPtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  const auto &attr_map = op_prim->attrs();
+  auto iter = attr_map.find("primitive_target");
+  if (iter != attr_map.end()) {
+    return GetValue<std::string>(iter->second);
+  }
+  return device_target;
+}
+
+session::SessionPtr GetCurrentSession(const std::string &device_target, uint32_t device_id) {
+  auto iter = kSessionBackends.find(device_target);
+  if (iter == kSessionBackends.end()) {
+    auto session = session::SessionFactory::Get().Create(device_target);
+    MS_EXCEPTION_IF_NULL(session);
+    session->Init(device_id);
+    kSessionBackends[device_target] = session;
+    return session;
+  } else {
+    return iter->second;
+  }
+}
+
+compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target, uint32_t device_id) {
+  auto iter = kMindRtBackends.find(device_target);
+  if (iter == kMindRtBackends.end()) {
+    auto backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id);
+    MS_EXCEPTION_IF_NULL(backend);
+    kMindRtBackends[device_target] = backend;
+    return backend;
+  } else {
+    return iter->second;
+  }
 }
 
 void GetDstType(const py::tuple &py_args,
@@ -748,12 +783,15 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
                   << new_tensor->GetShapeAndDataTypeInfo();
     pre_tensor->set_shape(new_tensor->shape());
     pre_tensor->set_data_type(new_tensor->data_type());
-    if (device_target != kCPUDevice) {
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_target != kCPUDevice && device_address->DeviceType() != device::DeviceAddressType::kCPU) {
       pre_tensor->set_device_address(new_tensor->device_address());
       continue;
     }
-    if (mind_rt_backend != nullptr) {
-      mind_rt_backend->SyncLazyTasks();
+    for (auto &item : kMindRtBackends) {
+      MS_EXCEPTION_IF_NULL(item.second);
+      item.second->SyncLazyTasks();
     }
     // Replace data in device address when run in CPU device.
     if (pre_tensor->device_address() != nullptr) {
@@ -773,6 +811,11 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
         auto ret_code = std::memcpy(old_ptr, new_ptr, old_device_address->GetSize());
         MS_EXCEPTION_IF_CHECK_FAIL(ret_code == old_ptr, "Memory copy failed");
       }
+    } else {
+      pre_tensor->set_device_address(device_address);
+      pre_tensor->data_sync();
+      pre_tensor->set_device_address(nullptr);
+      pre_tensor->set_sync_status(kNeedSyncHostToDevice);
     }
   }
 }
@@ -1998,21 +2041,28 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, Pynativ
   return std::move(tuple_result);
 }
 
+void ForwardExecutor::CheckIfNeedSyncForHeterogeneous(const std::string &cur_target) {
+  if (last_target_ != "Unknown" && last_target_ != cur_target) {
+    auto executor = PynativeExecutor::GetInstance();
+    executor->Sync();
+  }
+  last_target_ = cur_target;
+}
+
 py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(status);
+  compile::SetMindRTEnable();
   MS_LOG(DEBUG) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
-  compile::SetMindRTEnable();
+  const std::string &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto enable_mind_rt = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
 
-  if (kSession == nullptr && !ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    kSession = session::SessionFactory::Get().Create(device_target);
-    MS_EXCEPTION_IF_NULL(kSession);
-    kSession->Init(ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
-  }
+  std::string cur_target = GetCurrentDeviceTarget(device_target, op_exec_info->py_primitive);
+  CheckIfNeedSyncForHeterogeneous(cur_target);
 
   std::vector<tensor::TensorPtr> input_tensors;
   std::vector<int64_t> tensors_mask;
@@ -2021,7 +2071,6 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   ConvertAttrToUnifyMindIR(op_exec_info);
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_exec_info, input_tensors, tensors_mask, &graph_info);
-  VectorRef outputs;
 #if defined(__APPLE__)
   session::OpRunInfo op_run_info = {op_exec_info->op_name,
                                     op_exec_info->py_primitive.get(),
@@ -2048,17 +2097,16 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     input_tensors};
 #endif
 
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    kSession->RunOp(&op_run_info, &outputs);
+  VectorRef outputs;
+  if (!enable_mind_rt || cur_target == "Ascend") {
+    auto cur_session = GetCurrentSession(cur_target, device_id);
+    MS_EXCEPTION_IF_NULL(cur_session);
+    cur_session->RunOp(&op_run_info, &outputs);
   } else {
-    if (mind_rt_backend == nullptr) {
-      const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-      uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      mind_rt_backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id);
-    }
-
+    auto cur_mind_rt_backend = GetMindRtBackend(cur_target, device_id);
+    MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
     mindspore::ScopedLongRunning long_running;
-    mind_rt_backend->RunOp(&op_run_info, &outputs);
+    cur_mind_rt_backend->RunOp(&op_run_info, &outputs);
   }
 
   if (op_exec_info->is_dynamic_shape) {
@@ -3240,8 +3288,9 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
   session::PynativeTaskManager::GetInstance().Reset();
-  if (mind_rt_backend != nullptr) {
-    mind_rt_backend->ClearOpBuilderResource();
+  for (auto &item : kMindRtBackends) {
+    MS_EXCEPTION_IF_NULL(item.second);
+    item.second->ClearOpBuilderResource();
   }
   SetLazyBuild(false);
   cell_depth_ = 0;
@@ -3260,8 +3309,8 @@ void PynativeExecutor::ClearRes() {
   }
   ad::CleanRes();
   pipeline::ReclaimOptimizer();
-  kSession = nullptr;
-  mind_rt_backend = nullptr;
+  kSessionBackends.clear();
+  kMindRtBackends.clear();
   g_pyobj_id_cache.clear();
 }
 
@@ -3303,17 +3352,19 @@ void PynativeExecutor::Sync() {
   ExecuteAllTask();
 
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    if (kSession == nullptr) {
-      MS_EXCEPTION(NotExistsError) << "No session has been created!";
+    for (auto &item : kSessionBackends) {
+      MS_EXCEPTION_IF_NULL(item.second);
+      item.second->SyncStream();
     }
-    kSession->SyncStream();
   } else {
-    std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    const auto &device_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-    MS_EXCEPTION_IF_NULL(device_context);
-    (void)device_context->SyncStream();
+    for (auto &item : kMindRtBackends) {
+      MS_EXCEPTION_IF_NULL(item.second);
+      item.second->SyncStream();
+    }
+    for (auto &item : kSessionBackends) {
+      MS_EXCEPTION_IF_NULL(item.second);
+      item.second->SyncStream();
+    }
   }
 }
 
@@ -3337,8 +3388,9 @@ bool PynativeExecutor::IsTopCell() const { return cell_depth_ == 0; }
 
 void PynativeExecutor::ExecuteAllTask() {
   session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
-  if (mind_rt_backend != nullptr) {
-    mind_rt_backend->SyncLazyTasks();
+  for (auto &item : kMindRtBackends) {
+    MS_EXCEPTION_IF_NULL(item.second);
+    item.second->SyncLazyTasks();
   }
 }
 
