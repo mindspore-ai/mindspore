@@ -17,6 +17,37 @@
 
 namespace mindspore {
 namespace device {
+bool TensorArray::CheckValue(const TypeId &dtype, const std::vector<size_t> &shape) {
+  MS_LOG(DEBUG) << "Check the data shape and type for " << name_;
+  if (dtype != dtype_->type_id()) {
+    MS_LOG(ERROR) << "Invalid data type " << TypeIdLabel(dtype) << " for " << name_ << ", the origin type is "
+                  << TypeIdLabel(dtype_->type_id());
+    return false;
+  }
+  if (shape != shapes_) {
+    MS_LOG(ERROR) << "Invalid data shape " << shape << " for " << name_ << ", the origin shape is " << shapes_;
+    return false;
+  }
+  return true;
+}
+
+bool TensorArray::CheckReadIndexLogical(const int64_t index) {
+  if (LongToSize(index) >= valid_size_) {
+    MS_LOG(ERROR) << "Index " << index << " out of range " << valid_size_ << ", " << name_;
+    return false;
+  }
+  return true;
+}
+
+// Function Read() can get the tensors in the scope of tensors_.
+mindspore::kernel::AddressPtr TensorArray::Read(const int64_t index) {
+  if (LongToSize(index) >= tensors_.size()) {
+    MS_LOG(EXCEPTION) << "Index " << index << " out of range " << tensors_.size() << ", " << name_;
+  }
+  MS_LOG(DEBUG) << "Read tensor index = " << index << ", addr = " << tensors_[LongToSize(index)]->addr;
+  return tensors_[LongToSize(index)];
+}
+
 void TensorArray::Clear() {
   valid_size_ = 0;
   return;
