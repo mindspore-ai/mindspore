@@ -82,7 +82,22 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     std::string error_info = "Launch graph exception, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
-
+  for (auto item : ref_node_addr_map_) {
+    const auto &input_node = item.first;
+    auto formal_param_addr = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    MS_EXCEPTION_IF_NULL(formal_param_addr);
+    auto device_address = item.second;
+    MS_EXCEPTION_IF_NULL(device_address);
+    MS_LOG(INFO) << "The input ref_node: " << input_node->DebugString()
+                 << " need copy back, from address: " << formal_param_addr->GetPtr()
+                 << " to address: " << device_address->GetPtr() << ".";
+    if (!device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(input_node, 0), formal_param_addr->GetSize(),
+                                            formal_param_addr->type_id(), formal_param_addr->GetPtr(),
+                                            formal_param_addr->format())) {
+      MS_LOG(EXCEPTION) << "Sync device to device failed.";
+    }
+  }
+  ref_node_addr_map_.clear();
   PostRun(context);
 }
 
@@ -125,6 +140,9 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
                                             input_device_tensor->GetPtr(), input_device_tensor->format())) {
       MS_LOG(ERROR) << "Sync device to device failed.";
       return false;
+    }
+    if (HasAbstractRef(input_node) && ref_node_addr_map_.count(input_node) == 0) {
+      ref_node_addr_map_[input_node] = input_device_tensor;
     }
   }
 
