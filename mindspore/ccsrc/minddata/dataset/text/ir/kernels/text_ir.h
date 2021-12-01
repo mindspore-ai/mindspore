@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
+class Vectors;
 class Vocab;
 class SentencePieceVocab;
 
@@ -45,6 +46,7 @@ constexpr char kRegexTokenizerOperation[] = "RegexTokenizer";
 constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
 constexpr char kSlidingWindowOperation[] = "SlidingWindow";
 constexpr char kToNumberOperation[] = "ToNumber";
+constexpr char kToVectorsOperation[] = "ToVectors";
 constexpr char kTruncateSequencePairOperation[] = "TruncateSequencePair";
 constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
 constexpr char kUnicodeScriptTokenizerOperation[] = "UnicodeScriptTokenizer";
@@ -292,6 +294,25 @@ class ToNumberOperation : public TensorOperation {
 
  private:
   DataType data_type_;
+};
+
+class ToVectorsOperation : public TensorOperation {
+ public:
+  ToVectorsOperation(const std::shared_ptr<Vectors> &vectors, const std::vector<float> &unk_init,
+                     bool lower_case_backup);
+
+  ~ToVectorsOperation();
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kToVectorsOperation; }
+
+ private:
+  std::shared_ptr<Vectors> vectors_;
+  std::vector<float> unk_init_;
+  bool lower_case_backup_;
 };
 
 class TruncateSequencePairOperation : public TensorOperation {

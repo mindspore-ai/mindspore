@@ -31,13 +31,13 @@
 namespace mindspore {
 namespace dataset {
 
-class Vocab;
 class SentencePieceVocab;
 class TensorOperation;
+class Vectors;
+class Vocab;
 
 // Transform operations for text
 namespace text {
-
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
 /// \note BasicTokenizer is not supported on the Windows platform yet.
@@ -618,6 +618,30 @@ class MS_API ToNumber final : public TensorTransform {
 
   /// \brief Destructor
   ~ToNumber() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Look up a token into an vector according to the input Vectors table.
+class ToVectors final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] vectors A Vectors object.
+  /// \param[in] unk_init In case of the token is out-of-vectors (OOV), the result will be initialized with `unk_init`.
+  ///     (default={}, means to initialize with zero vectors).
+  /// \param[in] lower_case_backup Whether to look up the token in the lower case (default=false).
+  explicit ToVectors(const std::shared_ptr<Vectors> &vectors, std::vector<float> unk_init = {},
+                     bool lower_case_backup = false);
+
+  /// \brief Destructor
+  ~ToVectors() = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.

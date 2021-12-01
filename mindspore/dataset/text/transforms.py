@@ -48,7 +48,7 @@ import mindspore._c_dataengine as cde
 from mindspore.common import dtype as mstype
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
-from .validators import check_lookup, check_jieba_add_dict, \
+from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
     check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
     check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow, \
@@ -345,6 +345,7 @@ class SentencePieceTokenizer(TextTensorOperation):
         >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer)
     """
+
     @check_sentence_piece_tokenizer
     def __init__(self, mode, out_type):
         self.mode = mode
@@ -419,6 +420,36 @@ class ToNumber(TextTensorOperation):
 
     def parse(self):
         return cde.ToNumberOperation(self.data_type)
+
+
+class ToVectors(TextTensorOperation):
+    """
+    Look up a token into vectors according to the input vector table.
+
+    Args:
+        vectors (Vectors): A vectors object.
+        unk_init (sequence, optional): Sequence used to initialize out-of-vectors (OOV) token
+            (default=None, initialize with zero vectors).
+        lower_case_backup (bool, optional): Whether to look up the token in the lower case. If False, each token in the
+            original case will be looked up; if True, each token in the original case will be looked up first, if not
+            found in the keys of the property stoi, the token in the lower case will be looked up (default=False).
+
+    Examples:
+        >>> # Load vectors from file
+        >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
+        >>> # Use ToVectors operator to map tokens to vectors
+        >>> to_vectors = text.ToVectors(vectors)
+        >>> text_file_dataset = text_file_dataset.map(operations=[to_vectors])
+    """
+
+    @check_to_vectors
+    def __init__(self, vectors, unk_init=None, lower_case_backup=False):
+        self.vectors = vectors
+        self.unk_init = unk_init if unk_init is not None else []
+        self.lower_case_backup = lower_case_backup
+
+    def parse(self):
+        return cde.ToVectorsOperation(self.vectors, self.unk_init, self.lower_case_backup)
 
 
 class TruncateSequencePair(TextTensorOperation):
