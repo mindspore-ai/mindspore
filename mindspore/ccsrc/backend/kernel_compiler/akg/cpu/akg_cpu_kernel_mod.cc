@@ -33,26 +33,13 @@ namespace kernel {
 class AkgParallelLaunch {
  public:
   using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
-  static size_t num_workers;
   static int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
-#pragma omp parallel num_threads(num_workers)
-    { flambda(omp_get_thread_num(), num_workers, cdata); }
+    auto nthreads = omp_get_max_threads();
+#pragma omp parallel num_threads(nthreads)
+    { flambda(omp_get_thread_num(), nthreads, cdata); }
     return 0;
   }
-  // the GetFunc should be called only once.
-  static void *GetFunc() {
-    const char *omp_num_threads = getenv("OMP_NUM_THREADS");
-    if (omp_num_threads != nullptr) {
-      auto env_thread = std::stoi(std::string(omp_num_threads));
-      if (env_thread > 0) {
-        AkgParallelLaunch::num_workers = static_cast<size_t>(env_thread);
-      }
-    }
-    MS_LOG(INFO) << "AKG threads is : " << AkgParallelLaunch::num_workers;
-    return reinterpret_cast<void *>(&AkgParallelLaunch::AkgLaunchFunc);
-  }
 };
-size_t AkgParallelLaunch::num_workers = 1;
 
 struct AkgCallBack {
   void *parallel_launch_func;
@@ -60,7 +47,7 @@ struct AkgCallBack {
   void (*free_func)(void *);
 
   AkgCallBack() {
-    parallel_launch_func = AkgParallelLaunch::GetFunc();
+    parallel_launch_func = reinterpret_cast<void *>(&AkgParallelLaunch::AkgLaunchFunc);
     malloc_func = &malloc;
     free_func = &free;
   }
