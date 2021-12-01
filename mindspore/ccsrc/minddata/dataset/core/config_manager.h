@@ -106,7 +106,7 @@ class ConfigManager {
 
   /// getter function
   /// \return Prefetch size
-  int32_t prefetch_size() const { return prefetch_size_; }
+  int32_t cache_prefetch_size() const { return cache_prefetch_size_; }
 
   /// getter function
   /// \return auto_num_workers_
@@ -142,8 +142,8 @@ class ConfigManager {
   void set_num_connections(int32_t num_connections);
 
   /// setter function
-  /// \param prefetch_size
-  void set_prefetch_size(int32_t prefetch_size);
+  /// \param cache_prefetch_size
+  void set_cache_prefetch_size(int32_t cache_prefetch_size);
 
   /// setter function
   /// \param numa_switch
@@ -262,7 +262,7 @@ class ConfigManager {
   int32_t cache_port_;
   int32_t num_connections_;
   bool numa_enable_;
-  int32_t prefetch_size_;
+  int32_t cache_prefetch_size_;
   bool auto_num_workers_;
   int32_t num_cpu_threads_;
   int32_t auto_num_workers_num_shards_;

@@ -53,7 +53,7 @@ void CachePerfRun::PrintHelp() {
             << std::boolalpha << kDftShuffle
             << "\n"
                "    -p,--prefetch_size:  Set the prefetch size for cache. Default = "
-            << kDftPrefetchSize << "\n"
+            << kDftCachePrefetchSize << "\n"
             << "    -a,--cache_size:     Set cache size. Default = " << kDftCacheSize
             << " (Mb)\n"
                "       --spill:          Set spill to disk to True. Default = "
