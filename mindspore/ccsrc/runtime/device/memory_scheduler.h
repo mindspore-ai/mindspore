@@ -70,7 +70,7 @@ class MemScheduler {
 
   void Clear();
 
-  bool IsHighPriorityMem(const void *key);
+  void ClearTempMem();
 
   void SetMemPriority(const void *key, MemPriority priority);
 
@@ -78,6 +78,8 @@ class MemScheduler {
   void Record(const void *key, const MemEventType &event_type, size_t mem_size = 0);
 
   void OptMemUsage(float mem_used_factor = 1.0f);
+
+  void AdjustFirstEventIndex();
 
   std::map<const void *, MemPriority> mem_priority_;
   std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> mem_events_;

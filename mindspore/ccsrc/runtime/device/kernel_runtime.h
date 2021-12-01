@@ -95,6 +95,7 @@ class KernelRuntime {
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
   static bool UseMemScheduler();
+  void SyncUpdatedParameter(const session::KernelGraph &graph, const std::shared_ptr<MemScheduler> &mem_scheduler);
 
 #ifdef ENABLE_DEBUGGER
   // set debugger
@@ -156,9 +157,9 @@ class KernelRuntime {
                                  const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr);
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
   void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
-                             const AnfNodePtr &kernel, bool mock);
+                             const AnfNodePtr &kernel);
   void SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &mem_scheduler, const KernelWithIndex &output,
-                            const session::KernelGraph &graph, bool mock);
+                            const session::KernelGraph &graph);
 
   void AssignCommunicationMem(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);

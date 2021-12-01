@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace device {
 namespace {
-constexpr float kMaxMemReuseFactor = 0.9;
+constexpr float kMaxMemReuseFactor = 1.0;
 constexpr float kMinMemReuseFactor = 0.5;
 constexpr float kRetryFactor = 0.1;
 
@@ -51,12 +51,25 @@ void MemScheduler::Clear() {
   high_priority_device_ptr_.clear();
 }
 
-bool MemScheduler::IsHighPriorityMem(const void *key) {
-  auto iter = mem_priority_.find(key);
-  if (iter != mem_priority_.end()) {
-    return iter->second == kMemPriorityHigh;
+void MemScheduler::ClearTempMem() {
+  if (mem_handler_ == nullptr) {
+    return;
   }
-  return false;
+  for (auto &item : mem_result_) {
+    const auto device_ptr = item.second;
+    if (device_ptr == nullptr) {
+      mem_handler_->FreeDevice(device_ptr);
+    }
+  }
+  mem_result_.clear();
+  high_priority_device_ptr_.clear();
+  for (const auto &item : swap_host_ptr_) {
+    const auto host_ptr = item.second;
+    if (host_ptr != nullptr) {
+      mem_handler_->FreeHost(host_ptr);
+    }
+  }
+  swap_host_ptr_.clear();
 }
 
 void MemScheduler::SetMemPriority(const void *key, MemPriority priority) { mem_priority_[key] = priority; }
@@ -88,9 +101,8 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
     if (mem_priority_.find(key) == mem_priority_.end()) {
       mem_priority_[key] = priority;
       Record(key, kMalloc, mem_size);
-    } else {
-      Record(key, kGet, mem_size);
     }
+    Record(key, kGet, mem_size);
     return nullptr;
   }
   if (strategy_ == nullptr) {
@@ -101,9 +113,8 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
     auto ptr = iter->second;
     MS_EXCEPTION_IF_NULL(ptr);
     return ptr;
-  } else {
-    MS_LOG_EXCEPTION << "Mem extender get nullptr result!";
   }
+  return nullptr;
 }
 
 bool MemScheduler::PreCompute(void *stream) {
@@ -151,6 +162,9 @@ bool MemScheduler::PreCompute(void *stream) {
       MS_EXCEPTION_IF_NULL(host_ptr);
       mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
       mem_result_[event->key] = device_ptr;
+      if (mem_priority_[event->key] == kMemPriorityHigh) {
+        high_priority_device_ptr_[event->key] = device_ptr;
+      }
       if (!from_init) {
         mem_handler_->FreeHost(host_ptr);
         (void)swap_host_ptr_.erase(event->key);
@@ -199,6 +213,9 @@ bool MemScheduler::PostCompute(void *stream) {
       mem_handler_->SwapOut(device_ptr, host_ptr, event->mem_size, stream);
       mem_handler_->FreeDevice(device_ptr);
       (void)mem_result_.erase(event->key);
+      if (mem_priority_[event->key] == kMemPriorityHigh) {
+        high_priority_device_ptr_.erase(event->key);
+      }
     }
   }
   ++current_step_;
@@ -221,6 +238,7 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
 }
 
 void MemScheduler::Optimize() {
+  AdjustFirstEventIndex();
   float mem_used_factor = kMaxMemReuseFactor;
   while (!optimized_ && mem_used_factor >= kMinMemReuseFactor) {
     OptMemUsage(mem_used_factor);
@@ -247,7 +265,26 @@ void MemScheduler::Optimize() {
     if (ret) {
       optimized_ = true;
     } else {
+      ClearTempMem();
       mem_used_factor -= kRetryFactor;
+    }
+  }
+}
+
+void MemScheduler::AdjustFirstEventIndex() {
+  for (const auto &item : mem_events_) {
+    const auto &mem_events = item.second;
+    if (mem_events.empty()) {
+      continue;
+    }
+    auto &first_event = mem_events[0];
+    MS_EXCEPTION_IF_NULL(first_event);
+    const auto &priority_iter = mem_priority_.find(item.first);
+    const bool is_high_priority = (priority_iter != mem_priority_.end() && priority_iter->second == kMemPriorityHigh);
+    if (first_event->type == kInit && !is_high_priority && mem_events.size() > 1) {
+      const auto &second_event = mem_events[1];
+      MS_EXCEPTION_IF_NULL(second_event);
+      first_event->index = second_event->index;
     }
   }
 }
