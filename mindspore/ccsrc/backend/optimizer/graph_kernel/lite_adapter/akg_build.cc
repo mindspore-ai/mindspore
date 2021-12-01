@@ -35,8 +35,12 @@ namespace mindspore::graphkernel {
 bool CompileSingleJson(const std::string &json_name) {
   std::string attrs = "None";
   std::ostringstream py_cmd;
-  py_cmd << "from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler_with_json_name\n";
-  py_cmd << "run_compiler_with_json_name(\'" << json_name << "\', " << attrs << ")";
+  py_cmd << "from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path\n";
+  py_cmd << "import sys\n";
+  py_cmd << "sys.path.insert(0, get_akg_path())\n";
+  py_cmd << "from akg.ms import compilewithjsonname\n";
+  py_cmd << "if not compilewithjsonname(\'" << json_name << "\', " << attrs << "):\n";
+  py_cmd << "    raise RuntimeError(\'Compile fail for json: " << json_name << "\')";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
   auto ret = system(cmd.c_str());
   if (!WIFEXITED(ret)) {
