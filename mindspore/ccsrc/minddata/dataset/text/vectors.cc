@@ -113,6 +113,7 @@ Vectors::Vectors(const std::unordered_map<std::string, std::vector<float>> &map,
 }
 
 Status Vectors::BuildFromFile(std::shared_ptr<Vectors> *vectors, const std::string &path, int32_t max_vectors) {
+  RETURN_UNEXPECTED_IF_NULL(vectors);
   std::unordered_map<std::string, std::vector<float>> map;
   int vector_dim = -1;
   RETURN_IF_NOT_OK(Load(path, max_vectors, &map, &vector_dim));

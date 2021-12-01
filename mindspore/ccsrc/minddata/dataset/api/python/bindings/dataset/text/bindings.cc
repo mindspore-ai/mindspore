@@ -20,6 +20,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/text/fast_text.h"
+#include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/text/vectors.h"
 #include "minddata/dataset/text/vocab.h"
@@ -96,6 +97,16 @@ PYBIND_REGISTER(FastText, 1, ([](const py::module *m) {
                       std::shared_ptr<FastText> fast_text;
                       THROW_IF_ERROR(FastText::BuildFromFile(&fast_text, path, max_vectors));
                       return fast_text;
+                    });
+                }));
+
+PYBIND_REGISTER(GloVe, 1, ([](const py::module *m) {
+                  (void)py::class_<GloVe, Vectors, std::shared_ptr<GloVe>>(*m, "GloVe")
+                    .def(py::init<>())
+                    .def_static("from_file", [](const std::string &path, int32_t max_vectors) {
+                      std::shared_ptr<GloVe> glove;
+                      THROW_IF_ERROR(GloVe::BuildFromFile(&glove, path, max_vectors));
+                      return glove;
                     });
                 }));
 

@@ -28,13 +28,14 @@ import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \
     TruncateSequencePair, ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer, ToVectors
 from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
-    SPieceTokenizerOutType, SPieceTokenizerLoadType, Vectors, FastText
+    SPieceTokenizerOutType, SPieceTokenizerLoadType, Vectors, FastText, GloVe
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
     "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
     "PythonTokenizer", "SlidingWindow", "SentencePieceVocab", "SentencePieceTokenizer", "SPieceTokenizerOutType",
-    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm", "Vectors", "ToVectors", "FastText"
+    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm", "Vectors", "ToVectors", "FastText",
+    "GloVe"
 ]
 
 if platform.system().lower() != 'windows':
