@@ -477,3 +477,95 @@ class TestSummaryCollector:
             with pytest.raises(ValueError) as exc:
                 SummaryCollector(summary_dir=summary_dir)
             assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
+
+    @security_off_wrap
+    @pytest.mark.parametrize("collect_specified_data", [
+        {
+            'collect_landscape': 123
+        }
+    ])
+    def test_params_collect_specified_data_value_type_error(self, collect_specified_data):
+        """Test the value of collect_specified_data_param."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        with pytest.raises(TypeError) as exc:
+            SummaryCollector(summary_dir, collect_specified_data=collect_specified_data)
+
+        param_name = list(collect_specified_data)[0]
+        param_value = collect_specified_data[param_name]
+        expected_type = "['dict', 'NoneType']"
+        expected_msg = f'For `{param_name}` the type should be a valid type of {expected_type}, ' \
+                       f'but got {type(param_value).__name__}.'
+
+        assert expected_msg == str(exc.value)
+
+    @security_off_wrap
+    def test_params_with_collect_landscape_unexpected_key(self):
+        """Test the collect landscape parameter with unexpected key."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        data = {'unexpected_key': "value"}
+        with pytest.raises(ValueError) as exc:
+            SummaryCollector(summary_dir, collect_specified_data={'collect_landscape': data})
+        expected_msg = f"For `collect_landscape` the keys {set(data)} are unsupported"
+        assert expected_msg in str(exc.value)
+
+    @security_off_wrap
+    @pytest.mark.parametrize("collect_specified_data", [
+        {
+            'collect_landscape': {'landscape_size': None}
+        },
+        {
+            'collect_landscape': {'unit': 123}
+        },
+        {
+            'collect_landscape': {'create_landscape': 123}
+        },
+        {
+            'collect_landscape': {'num_samples': None}
+        },
+        {
+            'collect_landscape': {'intervals': None}
+        },
+    ])
+    def test_params_collect_landscape_value_type_error(self, collect_specified_data):
+        """Test the value of collect_landscape_param."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        with pytest.raises(TypeError) as exc:
+            SummaryCollector(summary_dir, collect_specified_data=collect_specified_data)
+
+        param_name = list(collect_specified_data["collect_landscape"])[0]
+        param_value = collect_specified_data["collect_landscape"][param_name]
+        if param_name in ['landscape_size', 'num_samples']:
+            expected_type = "['int']"
+        elif param_name == 'unit':
+            expected_type = "['str']"
+        elif param_name == 'create_landscape':
+            expected_type = "['dict']"
+        else:
+            expected_type = "['list']"
+
+        expected_msg = f'For `{param_name}` the type should be a valid type of {expected_type}, ' \
+                       f'but got {type(param_value).__name__}.'
+        assert expected_msg == str(exc.value)
+
+    @security_off_wrap
+    @pytest.mark.parametrize("collect_specified_data", [
+        {
+            'collect_landscape': {'create_landscape': {'train': None}}
+        },
+        {
+            'collect_landscape': {'create_landscape': {'result': 123}}
+        }
+    ])
+    def test_params_create_landscape_value_type_error(self, collect_specified_data):
+        """Test the value of create_landscape_param."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        with pytest.raises(TypeError) as exc:
+            SummaryCollector(summary_dir, collect_specified_data=collect_specified_data)
+
+        param_name = list(collect_specified_data["collect_landscape"]["create_landscape"])[0]
+        param_value = collect_specified_data["collect_landscape"]["create_landscape"][param_name]
+
+        expected_type = "['bool']"
+        expected_msg = f'For `{param_name}` the type should be a valid type of {expected_type}, ' \
+                       f'but got {type(param_value).__name__}.'
+        assert expected_msg == str(exc.value)

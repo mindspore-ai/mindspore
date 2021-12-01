@@ -38,7 +38,6 @@ from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
 from ..._c_expression import security
-from ...common.api import _cell_graph_executor
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
 HYPER_CONFIG_LEN_LIMIT = 100000
@@ -115,23 +114,23 @@ class SummaryCollector(Callback):
               Default: None, it means only the first five parameters are collected.
             - collect_landscape (Union[dict,None]): Collect the parameters needed to create the loss landscape.
 
-                - landscape_size (int): Specify the image resolution of the generated loss landscape.
-                  For example, if it is set to 128, the resolution of the landscape is 128 * 128.
-                  The calculation time increases with the increase of resolution.
-                  Default: 40. Optional values: between 3 and 256.
-                - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
-                - create_landscape (List[bool, bool]): Select how to create loss landscape.
-                  Training process loss landscape(train) and Training result loss landscape(result).
-                  Default: {"train": True, "result": True}. Optional: True/False.
-                - num_samples (int): The size of the dataset used to create the loss landscape.
-                  For example, in image dataset, You can set num_samples is 128,
-                  which means that 128 images are used to create loss landscape.
-                  Default: 128.
-                - intervals (List[List[int]]): Specifies the interval
-                  in which the loss landscape. For example: If the user wants to
-                  crate loss landscape of two training processes, they are 1-5 epoch
-                  and 6-10 epoch respectively. They anc set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
-                  Note: Each interval have at least three epochs.
+              - landscape_size (int): Specify the image resolution of the generated loss landscape.
+                For example, if it is set to 128, the resolution of the landscape is 128 * 128.
+                The calculation time increases with the increase of resolution.
+                Default: 40. Optional values: between 3 and 256.
+              - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
+              - create_landscape (List[bool, bool]): Select how to create loss landscape.
+                Training process loss landscape(train) and Training result loss landscape(result).
+                Default: {"train": True, "result": True}. Optional: True/False.
+              - num_samples (int): The size of the dataset used to create the loss landscape.
+                For example, in image dataset, You can set num_samples is 128,
+                which means that 128 images are used to create loss landscape.
+                Default: 128.
+              - intervals (List[List[int]]): Specifies the interval
+                in which the loss landscape. For example: If the user wants to
+                create loss landscape of two training processes, they are 1-5 epoch
+                and 6-10 epoch respectively. They anc set [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].
+                Note: Each interval have at least three epochs.
 
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
             True: it means that after specified data is set, non-specified data is collected as the default behavior.
@@ -495,14 +494,15 @@ class SummaryCollector(Callback):
                 self._collect_at_step_end(cb_params, lambda plugin: plugin != PluginEnum.TENSOR.value)
 
         collect_landscape = self._collect_specified_data.get('collect_landscape')
-        intervals = collect_landscape.get('intervals')
-        collect_interval = False
-        for interval in intervals:
-            if "cur_step_num" in cb_params:
-                if cb_params.cur_step_num in interval:
-                    collect_interval = True
-                    break
-                break
+        if collect_landscape is not None:
+            intervals = collect_landscape.get('intervals')
+            collect_interval = False
+            for interval in intervals:
+                if "cur_step_num" in cb_params:
+                    if cb_params.cur_step_num in interval:
+                        collect_interval = True
+                        break
+
         if collect_landscape and collect_landscape.get('unit', 'step') == 'step' and collect_interval:
             self._save_model_params_for_landscape(cb_params)
 
@@ -533,14 +533,15 @@ class SummaryCollector(Callback):
     def epoch_end(self, run_context):
         cb_params = run_context.original_args()
         collect_landscape = self._collect_specified_data.get('collect_landscape')
-        intervals = collect_landscape.get('intervals')
-        collect_interval = False
-        for interval in intervals:
-            if "cur_epoch_num" in cb_params:
-                if cb_params.cur_epoch_num in interval:
-                    collect_interval = True
-                    break
-                break
+        if collect_landscape is not None:
+            intervals = collect_landscape.get('intervals')
+            collect_interval = False
+            for interval in intervals:
+                if "cur_epoch_num" in cb_params:
+                    if cb_params.cur_epoch_num in interval:
+                        collect_interval = True
+                        break
+
         if collect_landscape and collect_landscape.get('unit', 'step') == 'epoch' and collect_interval:
             self._save_model_params_for_landscape(cb_params)
         self._record.flush()
@@ -686,11 +687,12 @@ class SummaryCollector(Callback):
             return
 
         network = cb_params.train_network if cb_params.mode == ModeEnum.TRAIN.value else cb_params.eval_network
-        graph_proto = _cell_graph_executor.get_optimize_graph_proto(network)
+        graph_proto = network.get_func_graph_proto()
         if graph_proto is None:
             logger.warning("Can not get graph proto, it may not be 'GRAPH_MODE' in context currently, "
                            "so SummaryCollector will not collect graph.")
             return
+
         self._record.add_value(PluginEnum.GRAPH.value, 'train_network/auto', graph_proto)
 
     def _collect_metric(self, cb_params):
