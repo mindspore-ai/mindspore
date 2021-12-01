@@ -422,6 +422,7 @@ if(ENABLE_GPU)
     endif()
     if(ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+        target_link_libraries(mindspore nvidia_collective)
     endif()
 endif()
 

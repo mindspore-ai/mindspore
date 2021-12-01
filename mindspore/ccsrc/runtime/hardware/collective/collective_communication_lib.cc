@@ -20,7 +20,7 @@ namespace mindspore {
 namespace device {
 bool CollectiveCommunicationLib::Finalize() {
   if (!initialized_) {
-    return false;
+    return true;
   }
 
   for (const auto &group : groups_) {

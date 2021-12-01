@@ -602,9 +602,12 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
 
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     if (node_recovery_ == nullptr || is_worker_or_server0) {
-      MS_LOG(INFO) << "The recovery is disable.";
+      MS_LOG(INFO) << "The recovery is disabled. Trigger NODE_TIMEOUT event.";
+      // Avoid other methods blocking endlessly when NODE_TIMEOUT event is triggered.
       is_ready_ = true;
       wait_start_cond_.notify_all();
+      is_finish_ = true;
+      wait_finish_cond_.notify_all();
       OnEventCallback(ClusterEvent::NODE_TIMEOUT);
     } else {
       MS_LOG(INFO) << "The nodes:" << timeoutNodeId
@@ -855,15 +858,20 @@ bool AbstractNode::Disconnect(const std::shared_ptr<TcpClient> &client, const ui
   return WaitForDisconnect(timeout);
 }
 
-bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
+bool AbstractNode::WaitForDisconnect(const uint32_t &) {
+  // If the cluster state is NODE_TIMEOUT, this node is already disconnected.
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    return true;
+  }
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  bool res = wait_finish_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
+  // Caller should use this method to help block the thread.
+  wait_finish_cond_.wait(lock, [&] {
     if (is_finish_.load()) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success finish!";
     }
     return is_finish_.load();
   });
-  return res;
+  return true;
 }
 
 void AbstractNode::InitClientToServer() {

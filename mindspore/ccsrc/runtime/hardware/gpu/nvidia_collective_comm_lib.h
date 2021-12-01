@@ -61,23 +61,41 @@ class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicati
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
+  // For each collective operation, it has two APIs.
+  // One overrides the base class methods.
+  // The other is provided for kernels to call.
   bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  const std::string &group_name, void *stream = nullptr) override;
+  ncclResult_t AllGather(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                         const std::string &group_name, cudaStream_t stream);
 
   bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override;
+  ncclResult_t AllReduce(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                         ncclRedOp_t reduce_op, const std::string &group_name, cudaStream_t stream);
 
   bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, uint32_t root_rank,
                  const std::string &group_name, void *stream = nullptr) override;
+  ncclResult_t Broadcast(const void *send_buff, void *recv_buff, size_t send_count, ncclDataType_t data_type,
+                         uint32_t root_rank, const std::string &group_name, cudaStream_t stream);
 
   bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
                      CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override;
+  ncclResult_t ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, ncclDataType_t data_type,
+                             ncclRedOp_t reduce_op, const std::string &group_name, cudaStream_t stream);
 
   bool Send(const void *send_buff, size_t count, TypeId data_type, uint32_t peer, const std::string &group_name,
             void *stream = nullptr) override;
+  ncclResult_t Send(const void *send_buff, size_t count, ncclDataType_t data_type, uint32_t peer,
+                    const std::string &group_name, cudaStream_t stream);
 
   bool Recv(void *recv_buff, size_t count, TypeId data_type, uint32_t peer, const std::string &group_name,
             void *stream = nullptr) override;
+  ncclResult_t Recv(void *recv_buff, size_t count, ncclDataType_t data_type, uint32_t peer,
+                    const std::string &group_name, cudaStream_t stream);
+
+  ncclResult_t GroupStart();
+  ncclResult_t GroupEnd();
 
  private:
   NvidiaCollectiveCommLib();

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+#include <mutex>
 #include <vector>
+#include <string>
+#include <memory>
 #include "distributed/cluster/cluster_context.h"
+#include "distributed/collective/collective_manager.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "debug/common.h"
@@ -37,6 +41,7 @@ ClusterContext::~ClusterContext() {
   if (!finalized_) {
     Finalize();
   }
+  finalized_ = true;
 }
 
 std::shared_ptr<ClusterContext> ClusterContext::instance() {
@@ -52,6 +57,12 @@ bool ClusterContext::Initialize() {
   if (inited_) {
     MS_LOG(INFO) << "The cluster has been initialized.";
     return true;
+  }
+
+  // MindSpore cluster does not support PyNative mode.
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_LOG(EXCEPTION) << "PyNative mode is not supported in MindSpore cluster.";
+    return false;
   }
 
   // Step 1: Initialize cluster configuration.
@@ -86,7 +97,6 @@ bool ClusterContext::Finalize() {
     return false;
   }
   finalized_ = true;
-  wait_finish_cond_.notify_all();
   return true;
 }
 
@@ -170,9 +180,21 @@ void ClusterContext::RegisterEventCallback() {
   auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(node_);
   if (abstract_node != nullptr) {
     abstract_node->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
+      std::unique_lock<std::mutex> lock(finish_mutex_);
       MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured.";
-      Finalize();
       try {
+        MS_LOG(INFO) << "Start finalize cluster...";
+        if (!Finalize()) {
+          MS_LOG(EXCEPTION) << "Failed to finalize cluster.";
+        }
+        MS_LOG(INFO) << "Successfully finalize cluster.";
+
+        MS_LOG(INFO) << "Start finalize collective communication...";
+        if (!collective::CollectiveManager::instance()->Finalize()) {
+          MS_LOG(EXCEPTION) << "Failed to finalize collective communication.";
+        }
+        MS_LOG(INFO) << "Successfully finalize collective communication.";
+
         MS_LOG(EXCEPTION)
           << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
       } catch (std::exception &) {
@@ -181,9 +203,21 @@ void ClusterContext::RegisterEventCallback() {
     });
 
     abstract_node->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [this]() {
+      std::unique_lock<std::mutex> lock(finish_mutex_);
       MS_LOG(ERROR) << "Event NODE_TIMEOUT is captured.";
-      Finalize();
       try {
+        MS_LOG(INFO) << "Start finalize cluster...";
+        if (!Finalize()) {
+          MS_LOG(EXCEPTION) << "Failed to finalize cluster.";
+        }
+        MS_LOG(INFO) << "Successfully finalize cluster.";
+
+        MS_LOG(INFO) << "Start finalize collective communication...";
+        if (!collective::CollectiveManager::instance()->Finalize()) {
+          MS_LOG(EXCEPTION) << "Failed to finalize collective communication.";
+        }
+        MS_LOG(INFO) << "Successfully finalize collective communication.";
+
         MS_LOG(EXCEPTION) << "Event NODE_TIMEOUT is captured. This is because some nodes are finalized or crashed.";
       } catch (std::exception &) {
         MsException::Instance().SetException();
