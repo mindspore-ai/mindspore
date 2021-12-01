@@ -22,8 +22,7 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-using mindspore::device::cpu::CPUTensorArray;
-using mindspore::device::cpu::CPUTensorArrayPtr;
+using mindspore::device::TensorArrayPtr;
 TensorArrayCPUReadKernel::TensorArrayCPUReadKernel() : value_size_(0), type_(nullptr) {}
 
 const std::vector<size_t> &TensorArrayCPUReadKernel::GetInputSizeList() const { return input_size_list_; }
@@ -54,8 +53,7 @@ bool TensorArrayCPUReadKernel::Launch(const std::vector<AddressPtr> &inputs, con
   MS_EXCEPTION_IF_NULL(index);
   MS_EXCEPTION_IF_NULL(out_value);
   int64_t index_host = index[0];
-  CPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<CPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
   MS_ERROR_IF_NULL(tensors_);
   if (!tensors_->CheckReadIndexLogical(index_host)) {
     MS_LOG(EXCEPTION) << "Invalid index " << index_host << " for read.";

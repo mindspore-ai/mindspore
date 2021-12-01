@@ -22,8 +22,7 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-using mindspore::device::gpu::GPUTensorArray;
-using mindspore::device::gpu::GPUTensorArrayPtr;
+using mindspore::device::TensorArrayPtr;
 TensorArrayReadKernel::TensorArrayReadKernel() : value_size_(0), type_(nullptr) {}
 
 const std::vector<size_t> &TensorArrayReadKernel::GetInputSizeList() const { return input_size_list_; }
@@ -61,8 +60,7 @@ bool TensorArrayReadKernel::Launch(const std::vector<AddressPtr> &inputs, const 
                              cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                              reinterpret_cast<cudaStream_t>(stream)),
                              "Get index failed");
-  GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
   MS_ERROR_IF_NULL(tensors_);
   if (!tensors_->CheckReadIndexLogical(index_host)) {
     MS_LOG(EXCEPTION) << "Invalid index " << index_host << " for read.";

@@ -25,8 +25,7 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-using mindspore::device::gpu::GPUTensorArray;
-using mindspore::device::gpu::GPUTensorArrayPtr;
+using mindspore::device::TensorArrayPtr;
 TensorArrayStackKernel::TensorArrayStackKernel()
     : handle_(nullptr), value_size_(0), ele_size_(0), stream_ptr_(nullptr), type_(nullptr) {
   ResetResource();
@@ -59,8 +58,7 @@ bool TensorArrayStackKernel::Init(const CNodePtr &kernel_node) {
 void TensorArrayStackKernel::PostExecute() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "TensorArrayStack cudaStreamSynchronized failed");
-  GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_));
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   size_t tensor_size = tensors_->GetValidSize();
   auto shape = shapes_;
   shape.insert(shape.begin(), tensor_size);
@@ -90,8 +88,7 @@ bool TensorArrayStackKernel::Launch(const std::vector<AddressPtr> &inputs, const
   handle_ = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_ERROR_IF_NULL(out_value);
-  GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_));
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   if (tensors_->GetValidSize() > tensors_->GetRealSize()) {
     MS_LOG(EXCEPTION) << "Invalid TensorArray size, maybe should Clear() TensorArray before next usage.";
   }

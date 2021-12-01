@@ -31,32 +31,9 @@ class GPUTensorArray : public TensorArray {
   GPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~GPUTensorArray() override = default;
-
-  // Add tensor to the TensorArray and increase the size.
-  bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) override;
-
-  // FreeTensorArray() will free the memory in TensorArray.
-  void Free() override;
-
-  // ClearTensorArray() will only set the valid size of TensorArray to zero. The memory in TensorArray is still
-  // kept, In this situation， we can reuse the memory for next use.
-  void Clear() override { valid_size_ = 0; }
-
-  size_t GetValidSize() const override { return valid_size_; }
-  size_t GetRealSize() const override { return tensors_.size(); }
-
-  void *GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
-
-  void SetMaxSize(const int64_t size, const bool is_dynamic) override {
-    is_dynamic_ = is_dynamic;
-    if (!is_dynamic) {
-      max_size_ = size;
-    }
-  }
-
- private:
-  int64_t max_size_;
-  bool is_dynamic_;
+  void ReleaseMemory(void *addr) override;
+  void *CreateMemory(const size_t size) override;
+  void ClearMemory(void *addr, const size_t size) override;
 };
 using GPUTensorArray = GPUTensorArray;
 using GPUTensorArrayPtr = std::shared_ptr<GPUTensorArray>;

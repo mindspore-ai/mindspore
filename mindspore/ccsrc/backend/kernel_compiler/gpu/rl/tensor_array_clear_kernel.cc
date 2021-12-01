@@ -22,8 +22,7 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
-using mindspore::device::gpu::GPUTensorArray;
-using mindspore::device::gpu::GPUTensorArrayPtr;
+using mindspore::device::TensorArrayPtr;
 TensorArrayClearKernel::TensorArrayClearKernel() {}
 
 const std::vector<size_t> &TensorArrayClearKernel::GetInputSizeList() const { return input_size_list_; }
@@ -46,8 +45,7 @@ void TensorArrayClearKernel::InitSizeLists() {
 bool TensorArrayClearKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                     const std::vector<AddressPtr> &, void *) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
-  GPUTensorArrayPtr tensors_ =
-    std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle_addr));
+  TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr);
   MS_ERROR_IF_NULL(tensors_);
   // Clear TensorArray valid size, but keep the memory.
   tensors_->Clear();
