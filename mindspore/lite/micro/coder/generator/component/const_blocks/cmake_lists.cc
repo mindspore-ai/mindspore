@@ -70,6 +70,7 @@ string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--gc-sections")
 add_subdirectory(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${HEADER_PATH})
+include_directories(${HEADER_PATH}/include)
 set(SRC_FILES
         benchmark/benchmark.cc
         benchmark/calib_output.cc
@@ -102,6 +103,7 @@ add_compile_definitions(NOT_USE_STL)
 
 include_directories(${OP_HEADER_PATH})
 include_directories(${HEADER_PATH})
+include_directories(${HEADER_PATH}/include)
 
 if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
   include_directories(${PKG_PATH}/tools/codegen/third_party/include)

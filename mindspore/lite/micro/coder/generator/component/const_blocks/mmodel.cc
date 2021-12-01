@@ -36,7 +36,7 @@ const char model_header[] = R"RAW(
 #ifndef MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
 #define MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
 
-#include "include/model.h"
+#include "model.h"
 #include "session.h"
 #include <new>
 #include <string.h>

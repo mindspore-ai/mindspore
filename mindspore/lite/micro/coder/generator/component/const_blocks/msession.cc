@@ -37,8 +37,8 @@ const char session_header[] = R"RAW(
 #ifndef MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_SESSION_H_
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_SESSION_H_
 
-#include "include/errorcode.h"
-#include "include/lite_session.h"
+#include "errorcode.h"
+#include "lite_session.h"
 
 #include "tensor.h"
 
