@@ -205,7 +205,8 @@ Status ShuffleOp::InitShuffleBuffer() {
   // rows.
   if (shuffle_buffer_state_ != kShuffleStateInit) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid shuffle buffer state, shuffle buffer should be init first or reset after each epoch.");
+                  "[Internal ERROR] Invalid shuffle buffer state, shuffle buffer should be init first or reset "
+                  "after each epoch.");
   }
 
   // Before we drop into the fetching loop, call the fetch once for the first time
@@ -220,7 +221,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   }
 
   if (new_row.empty()) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, unable to fetch a single row for shuffle buffer.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unable to fetch a single row for shuffle buffer.");
   }
 
   // Now fill the rest of the shuffle buffer until we are unable to get the next row or we reached

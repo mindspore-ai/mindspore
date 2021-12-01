@@ -56,7 +56,8 @@ Status CityscapesOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   } else {
     std::ifstream file_handle(data.second);
     if (!file_handle.is_open()) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + data.second);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + data.second +
+                               ", the json is damaged or permission denied.");
     }
     std::string contents((std::istreambuf_iterator<char>(file_handle)), std::istreambuf_iterator<char>());
     nlohmann::json contents_js = nlohmann::json::parse(contents);
@@ -71,13 +72,15 @@ Status CityscapesOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + data.first;
+      std::string err =
+        "Invalid image, failed to decode " + data.first + ", the image is damaged or permission denied.";
       RETURN_STATUS_UNEXPECTED(err);
     }
     if (task_ != taskSuffix) {
       Status rc_t = Decode(task, &task);
       if (rc_t.IsError()) {
-        std::string err_t = "Invalid data, failed to decode image: " + data.second;
+        std::string err_t =
+          "Invalid image, failed to decode " + data.second + ", the image is damaged or permission denied.";
         RETURN_STATUS_UNEXPECTED(err_t);
       }
     }
@@ -106,8 +109,8 @@ void CityscapesOp::Print(std::ostream &out, bool show_all) const {
 Status CityscapesOp::PrepareData() {
   auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
   if (!real_dataset_dir.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + dataset_dir_);
+    MS_LOG(ERROR) << "Invalid file path, Cityscapes Dataset dir: " << dataset_dir_ << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, Cityscapes Dataset dir: " + dataset_dir_ + " does not exist.");
   }
 
   Path dataset_dir(real_dataset_dir.value());
@@ -143,15 +146,18 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
 
   Path images_dir_p(images_dir);
   if (!images_dir_p.IsDirectory()) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, " + images_dir_p.ToString() + " is an invalid directory path.");
+    RETURN_STATUS_UNEXPECTED("Invalid path, Cityscapes Dataset image dir: " + images_dir_p.ToString() +
+                             " is not a directory path.");
   }
   Path task_dir_p(task_dir);
   if (!task_dir_p.IsDirectory()) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, " + task_dir_p.ToString() + " is an invalid directory path.");
+    RETURN_STATUS_UNEXPECTED("Invalid path, Cityscapes Dataset task dir: " + task_dir_p.ToString() +
+                             " is not a directory path.");
   }
   std::shared_ptr<Path::DirIterator> d_it = Path::DirIterator::OpenDirectory(&images_dir_p);
   if (d_it == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + images_dir_p.ToString());
+    RETURN_STATUS_UNEXPECTED("Invalid path, failed to open Cityscapes Dataset image directory: " +
+                             images_dir_p.ToString());
   }
 
   while (d_it->HasNext()) {
@@ -165,7 +171,8 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
       Path task_city_dir = task_dir_p / city_dir.Basename();
       std::shared_ptr<Path::DirIterator> img_city_it = Path::DirIterator::OpenDirectory(&img_city_dir);
       if (img_city_it == nullptr) {
-        RETURN_STATUS_UNEXPECTED("Invalid path, failed to open directory: " + img_city_dir.ToString());
+        RETURN_STATUS_UNEXPECTED("Invalid path, failed to open Cityscapes Dataset image city directory: " +
+                                 img_city_dir.ToString());
       }
 
       while (img_city_it->HasNext()) {
@@ -179,13 +186,15 @@ Status CityscapesOp::GetCityscapesDataByUsage(const std::string &images_dir, con
         Path task_file_path = task_city_dir / (img_file_name.substr(0, img_file_name.find("_leftImg8bit")) + "_" +
                                                GetTaskSuffix(task_, real_quality_mode));
         if (!task_file_path.Exists()) {
-          RETURN_STATUS_UNEXPECTED("Invalid file, " + task_file_path.ToString() + " not found.");
+          RETURN_STATUS_UNEXPECTED("Invalid file, Cityscapes Dataset task file: " + task_file_path.ToString() +
+                                   " does not exist.");
         }
 
         image_task_map_[image_file_path.ToString()] = task_file_path.ToString();
       }
     } catch (const std::exception &err) {
-      RETURN_STATUS_UNEXPECTED("Invalid path, failed to load Cityscapes Dataset: " + dataset_dir_);
+      RETURN_STATUS_UNEXPECTED("Invalid path, failed to load Cityscapes Dataset from " + dataset_dir_ + ": " +
+                               std::string(err.what()));
     }
   }
 
@@ -213,7 +222,9 @@ Status CityscapesOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_task_pairs_.size());
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CityscapesDataset. Please check file path or dataset API.");
+      "Invalid data, no valid data matching the dataset API 'CityscapesDataset'. Please check dataset API or file "
+      "path: " +
+      dataset_dir_ + ".");
   }
   return Status::OK();
 }

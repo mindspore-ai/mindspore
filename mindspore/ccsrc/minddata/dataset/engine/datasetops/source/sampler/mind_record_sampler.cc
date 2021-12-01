@@ -29,7 +29,7 @@ Status MindRecordSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED(
-      "Sampler index must be less than or equal to num_samples(total rows in dataset), but got: " +
+      "[Internal ERROR] Sampler index must be less than or equal to num_samples(total rows in dataset), but got: " +
       std::to_string(next_id_) + ", num_samples_: " + std::to_string(num_samples_));
   } else if (next_id_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
@@ -53,8 +53,8 @@ Status MindRecordSamplerRT::InitSampler() {
   if (!sample_ids_) {
     // Note, sample_ids_.empty() is okay and will just give no sample ids.
     RETURN_STATUS_UNEXPECTED(
-      "Init Sampler failed as sample_ids is empty, here ShardReader did not provide a valid sample ids vector via"
-      " MindRecordSamplerRT");
+      "[Internal ERROR]Init Sampler failed as sample_ids is empty, here ShardReader did not provide a valid sample ids "
+      "vector via MindRecordSamplerRT.");
   }
 
   // Usually, the num samples is given from the user interface. In our case, that data is in mindrecord.

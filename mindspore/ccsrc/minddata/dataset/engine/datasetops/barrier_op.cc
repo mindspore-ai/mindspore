@@ -90,7 +90,7 @@ Status BarrierOp::blockCond() {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
     }
     // we have condition name, however the flexibility is in python today
     try {
@@ -99,7 +99,8 @@ Status BarrierOp::blockCond() {
       // Process the return value
       if (!py::isinstance<py::bool_>(ret_py_obj)) {
         return Status(StatusCode::kMDPyFuncException,
-                      "Invalid parameter, condition wait function should return true/false.");
+                      "Invalid parameter, condition wait function should return boolean, but got " +
+                        std::string(ret_py_obj.get_type().str()));
       }
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kMDPyFuncException, e.what());

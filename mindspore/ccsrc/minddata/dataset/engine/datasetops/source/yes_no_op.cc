@@ -49,12 +49,12 @@ YesNoOp::YesNoOp(const std::string &file_dir, int32_t num_workers, int32_t queue
 Status YesNoOp::PrepareData() {
   auto realpath = FileUtils::GetRealPath(dataset_dir_.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + dataset_dir_);
+    MS_LOG(ERROR) << "Invalid file path, " << dataset_dir_ << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + dataset_dir_ + " does not exist.");
   }
   Path dir(realpath.value());
   if (dir.Exists() == false || dir.IsDirectory() == false) {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, failed to open speech commands: " + dataset_dir_);
+    RETURN_STATUS_UNEXPECTED("Invalid directory, " + dataset_dir_ + " does not exist or is not a directory.");
   }
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(&dir);
   RETURN_UNEXPECTED_IF_NULL(dir_itr);
@@ -101,8 +101,9 @@ Status YesNoOp::Split(const std::string &line, std::vector<int32_t> *split_num) 
       split_num->emplace_back(stoi(split[i]));
     }
   } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "Converting char to int confront with an error in function stoi().";
-    RETURN_STATUS_UNEXPECTED("Converting char to int confront with an error in function stoi().");
+    MS_LOG(ERROR) << "[Internal ERROR] Converting char to int confront with an error in function stoi: " << e.what();
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Converting char to int confront with an error in function stoi: " +
+                             std::string(e.what()));
   }
   return Status::OK();
 }

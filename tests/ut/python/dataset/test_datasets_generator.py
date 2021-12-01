@@ -638,7 +638,7 @@ def test_generator_error_2():
         for _ in data1:
             pass
     print("========", str(info.value))
-    assert "Generator should return a tuple of NumPy arrays" in str(info.value)
+    assert "'GeneratorDataset' should return a tuple of NumPy arrays" in str(info.value)
 
 
 def test_generator_error_3():
@@ -663,7 +663,8 @@ def test_generator_error_4():
 
         for _ in data1:
             pass
-    assert "Unexpected error. Result of a tensorOp doesn't match output column names" in str(info.value)
+    assert "the number of columns returned in 'map' operations should match the number of 'output_columns'"\
+           in str(info.value)
 
 
 def test_generator_sequential_sampler():

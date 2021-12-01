@@ -141,7 +141,8 @@ Status PhotoTourOp::GetFileContent(const std::string &info_file, std::string *an
   RETURN_UNEXPECTED_IF_NULL(ans);
   std::ifstream reader;
   reader.open(info_file);
-  CHECK_FAIL_RETURN_UNEXPECTED(!reader.fail(), "Invalid file, failed to open PhotoTour info file: " + info_file);
+  CHECK_FAIL_RETURN_UNEXPECTED(!reader.fail(), "Invalid file, failed to open " + info_file +
+                                                 ": PhotoTour info file is damaged or permission denied.");
   (void)reader.seekg(0, std::ios::end);
   std::size_t size = reader.tellg();
   (void)reader.seekg(0, std::ios::beg);
@@ -183,7 +184,9 @@ Status PhotoTourOp::ReadInfoFile(const std::string &data_dir, const std::string 
     switch (col_idx) {
       case ID_3DPOINT: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour info file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, reading PhotoTour info file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         int id_3dpoint = std::atoi(item.c_str());
         labels_.push_back(id_3dpoint);
         col_idx = UNKNOWN;
@@ -191,7 +194,9 @@ Status PhotoTourOp::ReadInfoFile(const std::string &data_dir, const std::string 
       }
       case UNKNOWN: {
         std::string item2 = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item2.empty(), "Reading PhotoTour info file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          !item2.empty(), "Invalid data, Reading PhotoTour info file failed: " + info_file_path +
+                            " at line: " + std::to_string(pos) + ", the content in file should not be empty.");
         col_idx = ID_3DPOINT;
         break;
       }
@@ -225,34 +230,44 @@ Status PhotoTourOp::ReadMatchedFile(const std::string &data_dir, const std::stri
     switch (col_idx) {
       case PATCH_ID1: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data，Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         patch_id1 = std::atoi(item.c_str());
         col_idx = LABEL1;
         break;
       }
       case LABEL1: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         label1 = std::atoi(item.c_str());
         col_idx = UNUSED1;
         break;
       }
       case UNUSED1: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         col_idx = PATCH_ID2;
         break;
       }
       case PATCH_ID2: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         patch_id2 = std::atoi(item.c_str());
         col_idx = LABEL2;
         break;
       }
       case LABEL2: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         label2 = std::atoi(item.c_str());
         col_idx = UNUSED2;
         matches_.push_back(std::make_tuple(patch_id1, patch_id2, uint32_t(label1 == label2)));
@@ -260,13 +275,17 @@ Status PhotoTourOp::ReadMatchedFile(const std::string &data_dir, const std::stri
       }
       case UNUSED2: {
         std::string item = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         col_idx = UNUSED3;
         break;
       }
       case UNUSED3: {
         std::string item2 = get_splited_str(pos);
-        CHECK_FAIL_RETURN_UNEXPECTED(!item2.empty(), "Reading PhotoTour matched file failed: " + info_file_path);
+        CHECK_FAIL_RETURN_UNEXPECTED(!item2.empty(),
+                                     "Invalid data, Reading PhotoTour matched file failed: " + info_file_path +
+                                       " at line: " + std::to_string(pos) + ", the content should not be empty.");
         col_idx = PATCH_ID1;
         break;
       }
@@ -281,8 +300,9 @@ Status PhotoTourOp::ReadMatchedFile(const std::string &data_dir, const std::stri
 
 Status PhotoTourOp::GetPhotoTourDataTensor(uint32_t index, std::shared_ptr<Tensor> *image_tensor) {
   RETURN_UNEXPECTED_IF_NULL(image_tensor);
-  CHECK_FAIL_RETURN_UNEXPECTED(index < kLens.at(name_),
-                               "Index exceeds the maximum count of image, got: " + std::to_string(index));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    index < kLens.at(name_),
+    "[Internal ERROR] Index exceeds the maximum count of image, got: " + std::to_string(index));
 
   int image_id = index / (kPatchNumPerRow * kPatchNumPerCol);
   int row_in_image = (index % (kPatchNumPerRow * kPatchNumPerCol)) / kPatchNumPerRow;
@@ -320,7 +340,7 @@ Status PhotoTourOp::PrepareData() {
   chosen_dataset_folder_path_ = (Path(dataset_dir_) / Path(name_)).ToString();
   train_ = kTrain.at(usage_);
   auto real_folder_path = FileUtils::GetRealPath(chosen_dataset_folder_path_.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Get real path failed: " + chosen_dataset_folder_path_);
+  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), chosen_dataset_folder_path_ + " does not exist.");
 
   std::vector<cv::String> file_names;
   cv::glob(real_folder_path.value(), file_names);

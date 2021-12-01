@@ -128,7 +128,7 @@ class MindRecordOp : public MappableLeafOp {
                        const mindrecord::json &columns_json, const mindrecord::TaskType task_type);
 
   Status LoadTensorRow(row_id_type row_id, TensorRow *row) override {
-    return Status(StatusCode::kMDSyntaxError, "Cannot call this method.");
+    return Status(StatusCode::kMDSyntaxError, "[Internal ERROR] Cannot call this method.");
   }
   // Private function for computing the assignment of the column name map.
   // @return - Status

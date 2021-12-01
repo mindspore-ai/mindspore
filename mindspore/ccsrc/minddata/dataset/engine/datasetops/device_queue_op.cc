@@ -118,8 +118,8 @@ Status DeviceQueueOp::FilterMetadata(TensorRow *row) {
 Status DeviceQueueOp::CheckExceptions(const TensorRow &row) const {
   // this method checks if the row meets the conditions to be sent to TDT
   for (const auto &item : row) {
-    CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Invalid data, cannot send string tensor to device.");
-    CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Invalid data, cannot send tensor with no data to device.");
+    CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Invalid datatype, cannot send string data to device.");
+    CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Invalid data, the data send to device is null.");
   }
   return Status::OK();
 }
@@ -151,7 +151,8 @@ Status DeviceQueueOp::operator()() {
       }
     }
     if (tdtInstancePtr->acl_handle_ == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Create channel for sending data failed, please check DEVICE ID setting.");
+      RETURN_STATUS_UNEXPECTED(
+        "[Internal ERROR] Create channel for sending data failed, please check DEVICE ID setting.");
     }
     RETURN_IF_NOT_OK(SendDataToAscend());
 #endif
@@ -342,7 +343,8 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable,
 #ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
   if (!create_data_info_queue_) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "DataInfo queue is not created.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] DataInfo queue is not created.");
   }
   // This place has a race condition with operator(), so the first one
   // arrive here will do the initialize work.
@@ -358,7 +360,7 @@ Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
 }
 #else
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
-  return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "GetDataInfo is not supported yet.");
+  return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "'GetDataInfo' only supported on Ascend.");
 }
 #endif
 
@@ -445,7 +447,7 @@ Status DeviceQueueOp::PushDataToGPU() {
       if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
                                                           items[0].data_type_)) {
         return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
-                      "Failed to prefetch data in current PS mode(cache data when sending).");
+                      "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
       RETURN_IF_NOT_OK(RetryPushData(handle, items));
 #ifndef ENABLE_SECURITY
@@ -622,18 +624,19 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
   for (auto &sub_item : *items) {
     auto rc = pool_[worker_id]->Allocate(sub_item.data_len_, &sub_item.data_ptr_);
     if (rc.IsError() || sub_item.data_ptr_ == nullptr) {
-      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
+      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed, check memory usage.");
     }
     if (curr_row[i] == nullptr) {
-      MS_LOG(ERROR) << "The pointer curr_row[" << i << "] is null";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "TensorRow 'curr_row' contains nullptr.");
+      MS_LOG(ERROR) << "[Internal ERROR] The pointer curr_row[" << i << "] is null";
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                    "[Internal ERROR] TensorRow 'curr_row' contains nullptr.");
     }
     sub_item.data_type_ = curr_row[i]->type().ToString();
     const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
-      MS_LOG(ERROR) << "memcpy_s failed!";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "memcpy failed when using memcpy_s do copy.");
+      MS_LOG(ERROR) << "[Internal ERROR] memcpy_s failed.";
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "[Internal ERROR] memcpy_s failed.");
     }
   }
 

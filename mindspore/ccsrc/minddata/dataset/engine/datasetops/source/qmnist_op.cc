@@ -111,7 +111,9 @@ Status QMnistOp::CountTotalRows(const std::string &dir, const std::string &usage
     uint32_t num_labels;
     RETURN_IF_NOT_OK(op->CheckLabel(op->label_names_[i], &label_reader, &num_labels));
     CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                                 "Invalid data, num of images is not equal to num of labels.");
+                                 "Invalid data, num of images should be equal to num of labels loading from " + dir +
+                                   ", but got num of images: " + std::to_string(num_images) +
+                                   ", num of labels: " + std::to_string(num_labels) + ".");
 
     if (usage == "test10k") {
       // only use the first 10k samples and drop the last 50k samples
@@ -141,7 +143,8 @@ Status QMnistOp::WalkAllFiles() {
   const std::string nist_prefix = "xnist";
 
   auto real_folder_path = FileUtils::GetRealPath(folder_path_.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Get real path failed: " + folder_path_);
+  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(),
+                               "Invalid QMnist folder, " + folder_path_ + " does not exist or permission denied!");
   Path root_dir(real_folder_path.value());
 
   if (usage_ == "train") {
@@ -162,20 +165,25 @@ Status QMnistOp::WalkAllFiles() {
     label_names_.push_back((root_dir / Path(nist_prefix + "-" + label_ext)).ToString());
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
-                               "Invalid data, num of images is not equal to num of labels.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    image_names_.size() == label_names_.size(),
+    "Invalid data, num of Qmnist image files should be equal to num of Qmnist label files under directory:" +
+      folder_path_ + ", but got num of image files: " + std::to_string(image_names_.size()) +
+      ", num of label files: " + std::to_string(label_names_.size()) + ".");
 
   for (size_t i = 0; i < image_names_.size(); i++) {
     Path file_path(image_names_[i]);
-    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
-                                 "Failed to find " + DatasetName() + " image file: " + file_path.ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      file_path.Exists() && !file_path.IsDirectory(),
+      "Invalid file path, Qmnist data file: " + file_path.ToString() + " does not exist or is a directory.");
     MS_LOG(INFO) << DatasetName(true) << " operator found image file at " << file_path.ToString() << ".";
   }
 
   for (size_t i = 0; i < label_names_.size(); i++) {
     Path file_path(label_names_[i]);
-    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
-                                 "Failed to find " + DatasetName() + " label file: " + file_path.ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      file_path.Exists() && !file_path.IsDirectory(),
+      "Invalid file path, Qmnist data file: " + file_path.ToString() + " does not exist or is a directory.");
     MS_LOG(INFO) << DatasetName(true) << " operator found label file at " << file_path.ToString() << ".";
   }
 
@@ -189,7 +197,9 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
   RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
   RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));
   CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                               "Invalid data, num_images is not equal to num_labels. Ensure data file is not damaged.");
+                               "Invalid data, num of images should be equal to num of labels loading from " +
+                                 folder_path_ + ", but got num of images: " + std::to_string(num_images) +
+                                 ", num of labels: " + std::to_string(num_labels) + ".");
 
   // The image size of the QMNIST dataset is fixed at [28,28]
   int64_t image_size = kQMnistImageRows * kQMnistImageCols;
@@ -216,16 +226,16 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
   }
   (void)image_reader->read(images_buf.get(), image_size * num_images);
   if (image_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " image: " + image_names_[index] +
-                             ", size:" + std::to_string(image_size * num_images) +
-                             ". Ensure data file is not damaged.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + std::to_string(image_size * num_images) +
+                             " bytes from " + image_names_[index] +
+                             ": the data file is damaged or the content is incomplete.");
   }
   // uint32_t use 4 bytes in memory
   (void)label_reader->read(reinterpret_cast<char *>(labels_buf.get()), label_length * num_labels * 4);
   if (label_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " label:" + label_names_[index] +
-                             ", size: " + std::to_string(label_length * num_labels) +
-                             ". Ensure data file is not damaged.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + std::to_string(label_length * num_labels * 4) +
+                             " bytes from " + label_names_[index] +
+                             ": the data file is damaged or content is incomplete.");
   }
   TensorShape image_tensor_shape = TensorShape({kQMnistImageRows, kQMnistImageCols, 1});
   TensorShape label_tensor_shape = TensorShape({kQMnistLabelLength});
@@ -258,23 +268,32 @@ Status QMnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_r
   RETURN_UNEXPECTED_IF_NULL(label_reader);
   RETURN_UNEXPECTED_IF_NULL(num_labels);
   CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(),
-                               "Invalid file, failed to open " + DatasetName() + " label file: " + file_name);
+                               "Invalid file, failed to open " + file_name + ": the label file is permission denied.");
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 12 bytes of the label file are type, number and length
-  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 12, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 12,
+                               "Invalid file, load " + file_name +
+                                 " failed: the first 12 bytes of the label file should be type, number and length, " +
+                                 "but got the first read bytes : " + std::to_string(label_len));
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kQMnistLabelFileMagicNumber,
-                               "Invalid file, this is not the " + DatasetName() + " label file: " + file_name);
+                               "Invalid label file, the number of labels loading from " + file_name + " should be " +
+                                 std::to_string(kQMnistLabelFileMagicNumber) + ", but got " +
+                                 std::to_string(magic_number) + ".");
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
   uint32_t length;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &length));
-  CHECK_FAIL_RETURN_UNEXPECTED(length == kQMnistLabelLength, "Invalid data, length of labels is not equal to 8.");
+  CHECK_FAIL_RETURN_UNEXPECTED(length == kQMnistLabelLength, "Invalid data, length of every label loading from " +
+                                                               file_name + " should be equal to 8, but got " +
+                                                               std::to_string(length) + ".");
 
   CHECK_FAIL_RETURN_UNEXPECTED((label_len - 12) == num_items * kQMnistLabelLength * 4,
-                               "Invalid data, number of labels is wrong.");
+                               "Invalid data, the total bytes of labels loading from Qmnist label file: " + file_name +
+                                 " should be " + std::to_string(label_len - 12) + ", but got " +
+                                 std::to_string(num_items * kQMnistLabelLength * 4) + ".");
   *num_labels = num_items;
   return Status::OK();
 }

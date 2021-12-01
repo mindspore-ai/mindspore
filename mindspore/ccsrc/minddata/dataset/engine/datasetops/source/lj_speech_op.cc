@@ -38,15 +38,15 @@ LJSpeechOp::LJSpeechOp(const std::string &file_dir, int32_t num_workers, int32_t
 Status LJSpeechOp::PrepareData() {
   auto real_path = FileUtils::GetRealPath(folder_path_.data());
   if (!real_path.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid file path, LJSpeech Dataset folder: " + folder_path_ + " does not exist.");
   }
   Path root_folder(real_path.value());
   Path metadata_file_path = root_folder / "metadata.csv";
   CHECK_FAIL_RETURN_UNEXPECTED(metadata_file_path.Exists() && !metadata_file_path.IsDirectory(),
-                               "Invalid file, failed to find metadata file: " + metadata_file_path.ToString());
+                               "Invalid file, failed to find LJSpeech metadata file: " + metadata_file_path.ToString());
   std::ifstream csv_reader(metadata_file_path.ToString());
   CHECK_FAIL_RETURN_UNEXPECTED(csv_reader.is_open(),
-                               "Invalid file, failed to open metadata file: " + metadata_file_path.ToString() +
+                               "Invalid file, failed to open LJSpeech metadata file: " + metadata_file_path.ToString() +
                                  ", make sure file not damaged or permission denied.");
   std::string line = "";
   while (getline(csv_reader, line)) {
@@ -64,8 +64,8 @@ Status LJSpeechOp::PrepareData() {
   }
   if (meta_info_list_.empty()) {
     csv_reader.close();
-    RETURN_STATUS_UNEXPECTED(
-      "Reading failed, unable to read valid data from the metadata file: " + metadata_file_path.ToString() + ".");
+    RETURN_STATUS_UNEXPECTED("Reading failed, unable to read valid data from the LJSpeech metadata file: " +
+                             metadata_file_path.ToString() + ".");
   }
   num_rows_ = meta_info_list_.size();
   csv_reader.close();
@@ -76,7 +76,7 @@ Status LJSpeechOp::PrepareData() {
 // 1 function call produces 1 TensorTow
 Status LJSpeechOp::LoadTensorRow(row_id_type index, TensorRow *trow) {
   int32_t num_items = meta_info_list_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(index >= 0 && index < num_items, "The input index is out of range.");
+  CHECK_FAIL_RETURN_UNEXPECTED(index >= 0 && index < num_items, "[Internal ERROR] The input index is out of range.");
   std::shared_ptr<Tensor> waveform;
   std::shared_ptr<Tensor> sample_rate_scalar;
   std::shared_ptr<Tensor> transcription, normalized_transcription;
@@ -118,7 +118,7 @@ void LJSpeechOp::Print(std::ostream &out, bool show_all) const {
 Status LJSpeechOp::CountTotalRows(const std::string &dir, int64_t *count) {
   auto real_path = FileUtils::GetRealPath(dir.data());
   if (!real_path.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + dir);
+    RETURN_STATUS_UNEXPECTED("Invalid file, " + dir + " does not exist.");
   }
   Path root_folder(real_path.value());
   Path metadata_file_path = root_folder / "metadata.csv";

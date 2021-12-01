@@ -42,7 +42,7 @@ class RandomAccessOp {
   // @param std::map<int64_t, std::vector<int64_t>> * map
   // @return Status The status code returned
   virtual Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *map) const {
-    RETURN_STATUS_UNEXPECTED("GetClassIds needs to be override to support PK");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] GetClassIds needs to be override to support PK.");
   }
 
   // default destructor

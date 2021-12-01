@@ -107,7 +107,7 @@ int64_t USPSOp::CountRows(const std::string &data_file) {
   std::ifstream data_file_reader;
   data_file_reader.open(data_file, std::ios::in);
   if (!data_file_reader.is_open()) {
-    MS_LOG(ERROR) << "Invalid file, failed to open file: " << data_file;
+    MS_LOG(ERROR) << "Invalid file, failed to open " << data_file << ": the file is permission denied.";
     return 0;
   }
 
@@ -124,7 +124,8 @@ int64_t USPSOp::CountRows(const std::string &data_file) {
 
 Status USPSOp::GetFiles() {
   auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(), "Get real path failed: " + dataset_dir_);
+  CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(),
+                               "Invalid file path, USPS dataset dir: " + dataset_dir_ + " does not exist.");
   Path root_dir(real_dataset_dir.value());
 
   const Path train_file_name("usps");
@@ -144,16 +145,18 @@ Status USPSOp::GetFiles() {
 
   if (use_train) {
     Path train_path = root_dir / train_file_name;
-    CHECK_FAIL_RETURN_UNEXPECTED(train_path.Exists() && !train_path.IsDirectory(),
-                                 "Invalid file, failed to find USPS train data file: " + train_path.ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      train_path.Exists() && !train_path.IsDirectory(),
+      "Invalid file, USPS dataset train file: " + train_path.ToString() + " does not exist or is a directory.");
     data_files_list_.emplace_back(train_path.ToString());
     MS_LOG(INFO) << "USPS operator found train data file " << train_path.ToString() << ".";
   }
 
   if (use_test) {
     Path test_path = root_dir / test_file_name;
-    CHECK_FAIL_RETURN_UNEXPECTED(test_path.Exists() && !test_path.IsDirectory(),
-                                 "Invalid file, failed to find USPS test data file: " + test_path.ToString());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      test_path.Exists() && !test_path.IsDirectory(),
+      "Invalid file, USPS dataset test file: " + test_path.ToString() + " does not exist or is a directory.");
     data_files_list_.emplace_back(test_path.ToString());
     MS_LOG(INFO) << "USPS operator found test data file " << test_path.ToString() << ".";
   }
@@ -163,7 +166,8 @@ Status USPSOp::GetFiles() {
 Status USPSOp::LoadFile(const std::string &data_file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   std::ifstream data_file_reader(data_file);
   if (!data_file_reader.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + data_file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open USPS dataset file: " + data_file +
+                             ", the file is permission denied.");
   }
 
   int64_t rows_total = 0;
@@ -210,8 +214,8 @@ Status USPSOp::LoadTensor(std::string *line, TensorRow *trow) {
   auto images_buffer = std::make_unique<unsigned char[]>(kUSPSImageSize);
   auto labels_buffer = std::make_unique<uint32_t[]>(1);
   if (images_buffer == nullptr || labels_buffer == nullptr) {
-    MS_LOG(ERROR) << "Failed to allocate memory for USPS buffer.";
-    RETURN_STATUS_UNEXPECTED("Failed to allocate memory for USPS buffer.");
+    MS_LOG(ERROR) << "[Internal ERROR] Failed to allocate memory for USPS buffer.";
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to allocate memory for USPS buffer.");
   }
 
   RETURN_IF_NOT_OK(this->ParseLine(line, images_buffer, labels_buffer));
@@ -245,10 +249,12 @@ Status USPSOp::ParseLine(std::string *line, const std::unique_ptr<unsigned char[
     } else {
       size_t split_pos = item.find(":");
 
-      CHECK_FAIL_RETURN_UNEXPECTED(split_pos != std::string::npos, "Invalid data, USPS data file is corrupted.");
+      CHECK_FAIL_RETURN_UNEXPECTED(split_pos != std::string::npos,
+                                   "Invalid data, split character ':' is missing in USPS data file.");
       // check pixel index
       CHECK_FAIL_RETURN_UNEXPECTED(std::stoi(item.substr(0, split_pos)) == (split_num - 1),
-                                   "Invalid data, USPS data file is corrupted.");
+                                   "Invalid data, the character before ':' should be " + std::to_string(split_num - 1) +
+                                     ", but got " + item.substr(0, split_pos) + ".");
 
       std::string pixel_str = item.substr(split_pos + 1, item.length() - split_pos);
       // transform the real pixel value from [-1, 1] to the integers within [0, 255]
@@ -257,7 +263,10 @@ Status USPSOp::ParseLine(std::string *line, const std::unique_ptr<unsigned char[
     line->erase(0, pos + 1);
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(split_num == (kUSPSImageSize + 1), "Invalid data, USPS data file is corrupted.");
+  CHECK_FAIL_RETURN_UNEXPECTED(split_num == (kUSPSImageSize + 1),
+                               "Invalid data, the number of split characters ':' in USPS data file is corrupted, "
+                               "should be " +
+                                 std::to_string(kUSPSImageSize + 1) + ", but got " + std::to_string(split_num) + ".");
   return Status::OK();
 }
 
@@ -274,7 +283,7 @@ Status USPSOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, USPSDataset API can't read the data file (interface mismatch or no data found). "
+      "Invalid data, 'USPSDataset' API can't read the data file (interface mismatch or no data found). "
       "Check file: " +
       file_list);
   }

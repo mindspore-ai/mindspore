@@ -63,7 +63,7 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   }
   if (operator_id_ == kInvalidOperatorId) {
     std::string err_msg(
-      "Cannot add child node. Tree node connections can only "
+      "[Internal ERROR] Cannot add child node. Tree node connections can only "
       "be made if the node belongs to a tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -71,7 +71,7 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   // disallow relationships with other trees
   if (tree_ != child->tree_) {
     std::string err_msg(
-      "Cannot add child node. Tree node connections can only be made if both nodes belong to the same tree.");
+      "Invalid operator structure, the relationship of operators should be one by one, but got too many branches.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   child_.push_back(child);
@@ -82,7 +82,7 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
 Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
   if (operator_id_ == kInvalidOperatorId) {
     std::string err_msg(
-      "Cannot remove child node. Tree node connections can only "
+      "[Internal ERROR] Cannot remove child node. Tree node connections can only "
       "be made if the node belongs to a tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -90,7 +90,7 @@ Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
   // disallow relationships with other trees
   if (tree_ != child->tree_) {
     std::string err_msg(
-      "Cannot remove child node. Tree node connections can only be made if both nodes belong to the same tree.");
+      "Invalid operator structure, the relationship of operators should be one by one, but got too many branches.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -132,11 +132,15 @@ void DatasetOp::RemoveParent(const DatasetOp *parent) {
 // Removes this node from the tree and connects it's parent/child together
 Status DatasetOp::Remove() {
   if (parent_.size() > 1) {
-    std::string err_msg("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
+    std::string err_msg(
+      "Invalid operator structure, the relationship between operators should be one-to-one, but encountered more than "
+      "one parent, namely: " +
+      std::to_string(parent_.size()));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (child_.size() > 1) {
-    std::string err_msg("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
+    std::string err_msg(
+      "Invalid operator structure, the relationship of operators should be one by one, but got too many branches.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -151,7 +155,8 @@ Status DatasetOp::Remove() {
     // If we have a parent, then assign child's parent to point to our parent.
     if (!parent_.empty()) {
       CHECK_FAIL_RETURN_UNEXPECTED(parent_[0]->Children().size() == 1,
-                                   "Removing a node whose parent has more than 1 child is not supported.");
+                                   "Invalid operator structure, the relationship of operators should be one by one, "
+                                   "but got too many branches.");
       child_[0]->parent_[0] = parent_[0];
     } else {
       // We don't have a parent, so we are the root node being removed.
@@ -293,7 +298,8 @@ Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vecto
     return child_[child_.size() - 1]->GetClassIndexing(output_class_indexing);
   } else {
     *output_class_indexing = {};
-    RETURN_STATUS_UNEXPECTED("Trying to get class index from leaf node, missing override.");
+    RETURN_STATUS_UNEXPECTED("Unsupported scenario, GetClassIndexing failed for " + Name() +
+                             " doesn't support GetClassIndexing yet.");
   }
 }
 
@@ -343,12 +349,14 @@ std::string DatasetOp::ColumnNameMapAsString() const {
 // Operations changing the column map must overwrite this function.
 Status DatasetOp::ComputeColMap() {
   if (child_.size() > 1) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR], no support for the relationship between operators is not one-to-one.");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid operator structure, the relationship of operators should be one by one, but got too many branches.");
   }
   if (column_name_id_map_.empty()) {
     column_name_id_map_ = child_[0]->column_name_id_map();
     if (column_name_id_map_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
+      RETURN_STATUS_UNEXPECTED("Invalid column list, the column list of " + child_[0]->Name() +
+                               " should have one column at least, but got empty.");
     }
     MS_LOG(DEBUG) << "Setting column map:\n" << DatasetOp::ColumnNameMapAsString();
   } else {

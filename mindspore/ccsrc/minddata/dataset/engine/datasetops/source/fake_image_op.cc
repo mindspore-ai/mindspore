@@ -90,7 +90,8 @@ void FakeImageOp::Print(std::ostream &out, bool show_all) const {
 Status FakeImageOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || label_list_.empty()) {
     if (label_list_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No image found in dataset. Check if image was generated successfully.");
+      RETURN_STATUS_UNEXPECTED(
+        "[Internal ERROR] No image found in dataset. Check if image was generated successfully.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for storing image-index pair is nullptr or has been set in other place, "
@@ -126,7 +127,7 @@ Status FakeImageOp::PrepareData() {
 
   label_list_.shrink_to_fit();
   num_rows_ = label_list_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "Generate image failed, please check dataset API.");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "Invalid data, generate fake data failed, please check dataset API.");
   image_tensor_.clear();
   image_tensor_.resize(num_rows_);
   return Status::OK();

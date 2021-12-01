@@ -29,7 +29,7 @@ namespace dataset {
 Status CacheLookupOp::operator()() {
   if (!sampler_) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, CacheLookupOp requires a sampler before it can be executed, but got nullptr.");
+                  "Invalid sampler, Cache requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());
 

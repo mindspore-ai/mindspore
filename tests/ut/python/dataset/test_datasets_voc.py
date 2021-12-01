@@ -240,7 +240,7 @@ def test_voc_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "Invalid bndbox: {321, 121, 421, 120}" in str(e)
+        assert "should be greater than 0, but got {321, 121, 421, 120}" in str(e)
 
     def exception_func(item):
         raise Exception("Error occur!")

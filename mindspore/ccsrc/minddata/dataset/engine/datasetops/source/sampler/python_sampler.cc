@@ -39,7 +39,7 @@ Status PythonSamplerRT::GetNextSample(TensorRow *out) {
     {
       py::gil_scoped_acquire gil_acquire;
       if (Py_IsInitialized() == 0) {
-        return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+        return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
       }
       try {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
@@ -57,7 +57,8 @@ Status PythonSamplerRT::GetNextSample(TensorRow *out) {
         return Status(StatusCode::kMDPyFuncException, e.what());
       } catch (const py::cast_error &e) {
         return Status(StatusCode::kMDPyFuncException,
-                      "Invalid data, python sampler iterator should return an integer index.");
+                      "Invalid data, Python sampler iterator should return an integer index, but error raised: " +
+                        std::string(e.what()));
       }
     }
     (*out) = {sample_ids};
@@ -71,7 +72,7 @@ Status PythonSamplerRT::InitSampler() {
     return Status::OK();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
-    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_));
+    num_rows_ > 0, "[Internal ERROR] num_rows must be greater than 0, but got " + std::to_string(num_rows_));
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
@@ -80,12 +81,13 @@ Status PythonSamplerRT::InitSampler() {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
     }
     try {
       py_sampler_instance.attr("_handshake")(num_rows_, num_samples_);
     } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kMDPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException,
+                    "[Internal ERROR] python sampler execute _handshake failed: " + std::string(e.what()));
     }
   }
 
@@ -98,7 +100,7 @@ Status PythonSamplerRT::ResetSampler() {
   need_to_reset_ = false;
   py::gil_scoped_acquire gil_acquire;
   if (Py_IsInitialized() == 0) {
-    return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+    return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
   }
   try {
     py_sampler_instance.attr("reset")();

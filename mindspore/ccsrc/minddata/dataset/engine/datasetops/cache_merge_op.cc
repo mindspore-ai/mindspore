@@ -147,7 +147,8 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
     } else {
       row_id_type row_id = new_row.getId();
       if (row_id < 0) {
-        std::string errMsg = "Expect positive row id, but got: " + std::to_string(row_id);
+        std::string errMsg =
+          "[Internal ERROR] row id should be greater than or equal to 0, but got: " + std::to_string(row_id);
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
       if (cache_missing_rows_) {
@@ -213,7 +214,8 @@ Status CacheMergeOp::PrepareOperator() {  // Run any common code from super clas
                                           // specific logic
   CHECK_FAIL_RETURN_UNEXPECTED(
     child_.size() == kNumChildren,
-    "Incorrect number of children of CacheMergeOp, required num is 2, but got:" + std::to_string(child_.size()));
+    "[Internal ERROR] Incorrect number of children of CacheMergeOp, required num is 2, but got:" +
+      std::to_string(child_.size()));
   RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
   // Get the computed check sum from all ops in the cache miss class
   uint32_t cache_crc = DatasetOp::GenerateCRC(child_[kCacheMissChildIdx]);
@@ -231,7 +233,7 @@ Status CacheMergeOp::PrepareOperator() {  // Run any common code from super clas
 }
 
 Status CacheMergeOp::ComputeColMap() {
-  CHECK_FAIL_RETURN_UNEXPECTED(child_[kCacheMissChildIdx] != nullptr, "Invalid data, cache miss stream is empty.");
+  CHECK_FAIL_RETURN_UNEXPECTED(child_[kCacheMissChildIdx] != nullptr, "[Internal ERROR] cache miss stream is empty.");
   if (column_name_id_map().empty()) {
     column_name_id_map_ = child_[kCacheMissChildIdx]->column_name_id_map();
   }
@@ -270,7 +272,7 @@ Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheReque
       RETURN_IF_NOT_OK(mem.allocate(1));
       *out = mem.GetMutablePointer();
     } else {
-      RETURN_STATUS_UNEXPECTED("Invalid data, map insert fail.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] map insert fail.");
     }
   }
   return Status::OK();

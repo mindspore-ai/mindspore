@@ -43,7 +43,7 @@ Status CacheOp::operator()() {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   if (!sampler_) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, CacheOp requires a sampler before it can be executed, but got nullptr.");
+                  "Invalid sampler, CacheOp requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());
 
@@ -145,9 +145,9 @@ Status CacheOp::WaitForCachingAllRows() {
         BuildPhaseDone = true;
         break;
       case CacheServiceState::kOutOfMemory:
-        return Status(StatusCode::kMDOutOfMemory, "Cache server is running out of memory");
+        return Status(StatusCode::kMDOutOfMemory, "Cache server is running out of memory, check memory usage.");
       case CacheServiceState::kNoSpace:
-        return Status(StatusCode::kMDNoSpace, "Cache server is running of out spill storage");
+        return Status(StatusCode::kMDNoSpace, "Cache server is running of out spill storage, check memory usage.");
       case CacheServiceState::kNone:
       case CacheServiceState::kError:
       default:

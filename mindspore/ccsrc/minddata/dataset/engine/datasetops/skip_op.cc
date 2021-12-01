@@ -43,7 +43,7 @@ void SkipOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
+Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] SkipOp is an inlined operator."); }
 
 Status SkipOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);

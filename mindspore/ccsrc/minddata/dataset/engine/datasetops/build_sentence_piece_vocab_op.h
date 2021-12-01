@@ -69,7 +69,9 @@ class BuildSentencePieceVocabOp : public PipelineOp {
 
   Status operator()() override;
 
-  Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildSentencePieceVocabOp"); }
+  Status Reset() override {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Reset shouldn't be called in BuildSentencePieceVocabOp.");
+  }
 
   std::string Name() const override { return kBuildSentencePieceVocabOp; }
 

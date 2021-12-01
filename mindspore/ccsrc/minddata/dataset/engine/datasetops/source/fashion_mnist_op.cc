@@ -56,12 +56,12 @@ Status FashionMnistOp::CountTotalRows(const std::string &dir, const std::string 
   for (size_t i = 0; i < op->image_names_.size(); ++i) {
     std::ifstream image_reader;
     image_reader.open(op->image_names_[i], std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(image_reader.is_open(),
-                                 "Invalid file, failed to open image file: " + op->image_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(image_reader.is_open(), "Invalid file, failed to open " + op->image_names_[i] +
+                                                           ": the image file is damaged or permission denied.");
     std::ifstream label_reader;
     label_reader.open(op->label_names_[i], std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(),
-                                 "Invalid file, failed to open label file: " + op->label_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(label_reader.is_open(), "Invalid file, failed to open " + op->label_names_[i] +
+                                                           ": the label file is damaged or permission denied.");
     uint32_t num_images;
     Status s = op->CheckImage(op->image_names_[i], &image_reader, &num_images);
     image_reader.close();
@@ -72,8 +72,10 @@ Status FashionMnistOp::CountTotalRows(const std::string &dir, const std::string 
     label_reader.close();
     RETURN_IF_NOT_OK(s);
 
-    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
-                                 "Invalid data, num of images is not equal to num of labels.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (num_images == num_labels),
+      "Invalid data, num of images should be equal to num of labels, but got num of images: " +
+        std::to_string(num_images) + ", num of labels: " + std::to_string(num_labels) + ".");
     *count = *count + num_images;
   }
 

@@ -192,7 +192,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       }
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(in_row)));
     } else {
-      CHECK_FAIL_RETURN_UNEXPECTED(in_row.size() != 0, "MapOp got an empty TensorRow.");
+      CHECK_FAIL_RETURN_UNEXPECTED(in_row.size() != 0, "[Internal ERROR] MapOp got an empty TensorRow.");
       TensorRow out_row;
       // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
       RETURN_IF_NOT_OK(WorkerCompute(in_row, &out_row, job_list));
@@ -244,7 +244,11 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
 
   // Sanity check a row in result_table
   if (!result_table.empty() && out_columns_.size() != result_table[0].size()) {
-    RETURN_STATUS_UNEXPECTED("Result of a tensorOp doesn't match output column names");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid columns, the number of columns returned in 'map' operations should match "
+      "the number of 'output_columns', but got the number of columns returned in 'map' operations: " +
+      std::to_string(result_table[0].size()) +
+      ", the number of 'output_columns': " + std::to_string(out_columns_.size()) + ".");
   }
 
   // Merging the data processed by job (result_table) with the data that are not used.
@@ -299,7 +303,8 @@ Status MapOp::InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_
   if (in_columns_.empty()) {
     auto itr =
       std::find_if(col_name_id_map->begin(), col_name_id_map->end(), [](const auto &it) { return it.second == 0; });
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != col_name_id_map->end(), "Column name id map doesn't have id 0");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != col_name_id_map->end(),
+                                 "[Internal ERROR] Column name id map doesn't have id 0");
     MS_LOG(INFO) << "Input columns empty for map op, will apply to the first column in the current table.";
     in_columns_.push_back(itr->first);
 

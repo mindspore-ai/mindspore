@@ -28,7 +28,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   // Here, it is just a getter method to return the value.  However, it is invalid if there is
   // not a value set for this count, so generate a failure if that is the case.
   if (num == nullptr || num_rows_ == -1) {
-    RETURN_STATUS_UNEXPECTED("Get num rows in Dataset failed, num_rows has not been set yet.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Get num rows in Dataset failed, num_rows has not been set yet.");
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -55,7 +55,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
     RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp init failed, as it is nullptr.");
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "[Internal ERROR] RandomAccessOp init failed, as it is nullptr.");
 
   // If there's a child sampler, set the row count to be it's sample count
   if (HasChildSampler()) {
@@ -114,7 +114,7 @@ Status SamplerRT::GetAllIdsThenReset(py::array *data) {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized");
     }
     try {
       RETURN_IF_NOT_OK(sample_ids->GetDataAsNumpy(data));
@@ -127,7 +127,9 @@ Status SamplerRT::GetAllIdsThenReset(py::array *data) {
 #endif
 
 Status SamplerRT::SetNumSamples(int64_t num_samples) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "Invalid parameter, num_samples must be greater than or equal to 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_samples >= 0,
+    "Invalid parameter, 'num_samples' must be greater than or equal to 0, but got " + std::to_string(num_samples));
   num_samples_ = num_samples;
   return Status::OK();
 }
@@ -161,13 +163,13 @@ Status SamplerRT::AddChild(std::shared_ptr<SamplerRT> child) {
   // Only samplers can be added, not any other DatasetOp.
   std::shared_ptr<SamplerRT> sampler = std::dynamic_pointer_cast<SamplerRT>(child);
   if (!sampler) {
-    std::string err_msg("Cannot add child, child is not a sampler object.");
+    std::string err_msg("[Internal ERROR] Cannot add child, child is not a sampler object.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   // Samplers can have at most 1 child.
   if (!child_.empty()) {
-    std::string err_msg("Cannot add child sampler, this sampler already has a child.");
+    std::string err_msg("[Internal ERROR] Cannot add child sampler, this sampler already has a child.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 

@@ -307,7 +307,7 @@ def test_tf_wrong_schema():
             pass
     except RuntimeError as e:
         exception_occurred = True
-        assert "shape in schema's column 'image' is incorrect" in str(e)
+        assert "Data dimensions of 'image' do not match" in str(e)
 
     assert exception_occurred, "test_tf_wrong_schema failed."
 
@@ -318,7 +318,7 @@ def test_tfrecord_invalid_columns():
     data = ds.TFRecordDataset(FILES, columns_list=invalid_columns_list)
     with pytest.raises(RuntimeError) as info:
         _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
-    assert "Invalid data, failed to find column name: not_exist" in str(info.value)
+    assert "Invalid columns_list, tfrecord file failed to find column name: not_exist" in str(info.value)
 
 
 def test_tfrecord_exception():

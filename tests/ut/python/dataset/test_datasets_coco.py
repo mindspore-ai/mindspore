@@ -300,7 +300,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "required node not found in JSON" in str(e)
+        assert "the attribute of 'images' is missing" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_CATEGORY_ID_FILE, task="Detection")
@@ -308,7 +308,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "category_id can't find in categories" in str(e)
+        assert "the attribute of 'category_id': 7 is missing" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_FILE, task="Detection")
@@ -316,7 +316,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "failed to open JSON file" in str(e)
+        assert "Invalid annotation file, Coco Dataset annotation file:" in str(e)
 
     try:
         sampler = ds.PKSampler(3)

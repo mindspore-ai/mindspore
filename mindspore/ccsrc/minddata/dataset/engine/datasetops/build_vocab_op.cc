@@ -54,7 +54,8 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
   while (!new_row.empty()) {
     for (int32_t col : col_ids_) {
       CHECK_FAIL_RETURN_UNEXPECTED(!new_row[col]->type().IsNumeric(),
-                                   "Invalid data, build_vocab only works on string data, but got numeric data type: " +
+                                   "Invalid datatype, 'build_vocab' only supports string type of input, but got "
+                                   "numeric type: " +
                                      new_row[col]->type().ToString());
       for (auto itr = new_row[col]->begin<std::string_view>(); itr != new_row[col]->end<std::string_view>(); ++itr) {
         (*wrkr_map)[std::string(*itr)] += 1;
@@ -79,7 +80,8 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
 Status BuildVocabOp::operator()() {
   // launch the collector thread
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(distributor_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(collector_queue_->Register(tree_->AllTasks()));
@@ -96,8 +98,9 @@ Status BuildVocabOp::operator()() {
     col_ids_.reserve(col_names_.size());
     for (std::string col : col_names_) {
       auto itr = column_name_id_map_.find(col);
-      CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                   "Invalid parameter, column name: " + col + " does not exist in dataset.");
+      CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), "Invalid column name, column name: " + col +
+                                                                       " does not exist, check existed column "
+                                                                       "with dataset API 'get_col_names'");
       col_ids_.push_back(itr->second);
     }
   } else {
@@ -113,7 +116,8 @@ Status BuildVocabOp::operator()() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no operator should be after from_dataset (repeat detected)");
+    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning,
+                                 "Invalid repeat operator, BuildVocab does not support 'repeat' operator.");
     eoe_warning = true;
   }
 
@@ -137,7 +141,8 @@ Status BuildVocabOp::CollectorThread() {
       ++num_quited_worker;
     }
   }  // all frequencies are obtained
-  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(), "Invalid data, there are no words in the dataset.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(),
+                               "Invalid data, BuildVocab load data failed that no words found in vocab, check vocab.");
   std::vector<std::string> words;
   // make sure enough is reserved, this will become a partially sorted list eventually
   words.reserve(wrkr_map->size());
@@ -158,7 +163,7 @@ Status BuildVocabOp::CollectorThread() {
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(err_msg.empty(),
-                               "Invalid data, these special words are already in the dataset: " + err_msg + ".");
+                               "Invalid special words, these special words are already in the vocab: " + err_msg + ".");
 
   int64_t num_words = std::min(static_cast<int64_t>(words.size()), top_k_);
   if (num_words == 0) {

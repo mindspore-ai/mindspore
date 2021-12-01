@@ -101,9 +101,7 @@ Status ZipOp::ComputeColMap() {
         int32_t old_id = pair.second;
         // check if name already exists in column name descriptor
         if (column_name_id_map_.count(name) == 1) {
-          RETURN_STATUS_UNEXPECTED("Invalid parameter, key: " + name +
-                                   " already exists when zipping datasets. Check for duplicate key names in different "
-                                   "dataset.");
+          RETURN_STATUS_UNEXPECTED("Invalid data, duplicate column " + name + " already exists when zipping datasets.");
         }
         column_name_id_map_[name] = old_id + colsCurrent;
       }
@@ -115,7 +113,7 @@ Status ZipOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
+Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] ZipOp is an inlined operator."); }
 
 Status ZipOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);

@@ -76,7 +76,8 @@ Status SBUOp::ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor>
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, failed to decode image: " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid image, failed to decode image:" + path +
+                               ", the image is damaged or permission denied.");
     }
   }
   return Status::OK();
@@ -129,18 +130,21 @@ Status SBUOp::PrepareData() {
   Path root_dir(real_folder_path.value());
 
   url_path_ = root_dir / url_file_name;
-  CHECK_FAIL_RETURN_UNEXPECTED(url_path_.Exists() && !url_path_.IsDirectory(),
-                               "Invalid file, failed to find SBU url file: " + url_path_.ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    url_path_.Exists() && !url_path_.IsDirectory(),
+    "Invalid file, SBU url file: " + url_path_.ToString() + " does not exist or is a directory.");
   MS_LOG(INFO) << "SBU operator found url file " << url_path_.ToString() << ".";
 
   caption_path_ = root_dir / caption_file_name;
-  CHECK_FAIL_RETURN_UNEXPECTED(caption_path_.Exists() && !caption_path_.IsDirectory(),
-                               "Invalid file, failed to find SBU caption file: " + caption_path_.ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    caption_path_.Exists() && !caption_path_.IsDirectory(),
+    "Invalid file, SBU caption file: " + caption_path_.ToString() + " does not exist or is a directory.");
   MS_LOG(INFO) << "SBU operator found caption file " << caption_path_.ToString() << ".";
 
   image_folder_ = root_dir / image_folder_name;
-  CHECK_FAIL_RETURN_UNEXPECTED(image_folder_.Exists() && image_folder_.IsDirectory(),
-                               "Invalid folder, failed to find SBU image folder: " + image_folder_.ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    image_folder_.Exists() && image_folder_.IsDirectory(),
+    "Invalid folder, SBU image folder:" + image_folder_.ToString() + " does not exist or is not a directory.");
   MS_LOG(INFO) << "SBU operator found image folder " << image_folder_.ToString() << ".";
 
   std::ifstream url_file_reader;
@@ -149,10 +153,11 @@ Status SBUOp::PrepareData() {
   url_file_reader.open(url_path_.ToString(), std::ios::in);
   caption_file_reader.open(caption_path_.ToString(), std::ios::in);
 
-  CHECK_FAIL_RETURN_UNEXPECTED(url_file_reader.is_open(),
-                               "Invalid file, failed to open SBU url file: " + url_path_.ToString());
-  CHECK_FAIL_RETURN_UNEXPECTED(caption_file_reader.is_open(),
-                               "Invalid file, failed to open SBU caption file: " + caption_path_.ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(url_file_reader.is_open(), "Invalid file, failed to open " + url_path_.ToString() +
+                                                            ": the SBU url file is permission denied.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    caption_file_reader.is_open(),
+    "Invalid file, failed to open " + caption_path_.ToString() + ": the SBU caption file is permission denied.");
 
   Status rc = GetAvailablePairs(url_file_reader, caption_file_reader);
   url_file_reader.close();
@@ -172,8 +177,8 @@ Status SBUOp::GetAvailablePairs(std::ifstream &url_file_reader, std::ifstream &c
   while (std::getline(url_file_reader, url_line) && std::getline(caption_file_reader, caption_line)) {
     CHECK_FAIL_RETURN_UNEXPECTED(
       (url_line.empty() && caption_line.empty()) || (!url_line.empty() && !caption_line.empty()),
-      "Invalid data, SBU url and caption file are mismatched: " + url_path_.ToString() + " and " +
-        caption_path_.ToString());
+      "Invalid data, SBU url: " + url_path_.ToString() + " and caption file: " + caption_path_.ToString() +
+        " load empty data at line: " + std::to_string(line_num) + ".");
     if (!url_line.empty() && !caption_line.empty()) {
       line_num++;
       RETURN_IF_NOT_OK(this->ParsePair(url_line, caption_line));
@@ -182,7 +187,8 @@ Status SBUOp::GetAvailablePairs(std::ifstream &url_file_reader, std::ifstream &c
 
   image_caption_pairs_.shrink_to_fit();
 
-  CHECK_FAIL_RETURN_UNEXPECTED(image_caption_pairs_.size() > 0, "No valid images in " + image_folder_.ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(image_caption_pairs_.size() > 0,
+                               "Invalid data, no valid images in " + image_folder_.ToString() + ", check SBU dataset.");
 
   // base field of RandomAccessOp
   num_rows_ = image_caption_pairs_.size();

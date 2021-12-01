@@ -41,7 +41,8 @@ BuildSentencePieceVocabOp::BuildSentencePieceVocabOp(std::shared_ptr<SentencePie
 
 Status BuildSentencePieceVocabOp::operator()() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(sentence_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
@@ -58,7 +59,7 @@ Status BuildSentencePieceVocabOp::operator()() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no operator should be after from_dataset (repeat detected)");
+    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "'build_sentencepiece_vocab' does not support 'repeat'.)");
     eoe_warning = true;
   }
   // add empty tensorRow for quit
@@ -71,13 +72,13 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   TaskManager::FindMe()->Post();
   if (col_names_.empty() == true) {
     auto itr = column_name_id_map_.find("text");
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                 "Invalid data, 'text' column does not exist in dataset.");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), "Invalid data, 'text' column does not exist.");
     col_id_ = itr->second;
   } else {
     auto itr = column_name_id_map_.find(col_names_[0]);
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                 "Invalid parameter, column name: " + col_names_[0] + " does not exist in dataset.");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), "Invalid column, column name: " + col_names_[0] +
+                                                                     " does not exist, check existed "
+                                                                     "column with dataset API 'get_col_names'");
     col_id_ = itr->second;
   }
   std::unique_ptr<DatasetSentenceIterator> sentence_iter = std::make_unique<DatasetSentenceIterator>(this);
@@ -89,7 +90,7 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   } else {
     if (vocab_ == nullptr) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "Invalid parameter, SentencePiece vocab not set.");
+                    "[Internal ERROR] SentencePiece vocab should not be null.");
     }
     vocab_->set_model_proto(model_proto);
   }
@@ -131,7 +132,7 @@ bool BuildSentencePieceVocabOp::Done() { return read_done_; }
 
 void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   if (sentence == nullptr) {
-    MS_LOG(ERROR) << "BuildSentencePieceVocab get nullptr element, please check data.";
+    MS_LOG(ERROR) << "[Internal ERROR] BuildSentencePieceVocab get nullptr element, please check data.";
     return;
   }
   TensorRow new_row;
@@ -151,8 +152,8 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   if (new_row[col_id_]->type().IsNumeric() || new_row[col_id_]->Rank() > 1) {
     ret_status_ =
       Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-             "Invalid data, build_sentence_piece_vocab only works on string data with rank equal to 1, got type: " +
-               new_row[col_id_]->type().ToString() + "and rank: " + std::to_string(new_row[col_id_]->Rank()));
+             "Invalid data, build_sentence_piece_vocab only supports string data with rank equal to 1, but got type: " +
+               new_row[col_id_]->type().ToString() + ", rank: " + std::to_string(new_row[col_id_]->Rank()));
     read_done_ = true;
     return;
   }

@@ -48,7 +48,8 @@ Status FlickrOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + data.first;
+      std::string err =
+        "Invalid image, failed to decode " + data.first + ": the image is damaged or permission denied!";
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -76,13 +77,14 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
 Status FlickrOp::PrepareData() {
   auto real_file_path = FileUtils::GetRealPath(file_path_.data());
   if (!real_file_path.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_path_;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_path_);
+    MS_LOG(ERROR) << "Invalid file path, " << file_path_ << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_path_ + " does not exist.");
   }
 
   std::ifstream file_handle(real_file_path.value());
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Flickr annotation file: " + file_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid annotation file, failed to open " + file_path_ +
+                             " : the file is damaged or permission denied.");
   }
 
   std::string line;
@@ -102,16 +104,16 @@ Status FlickrOp::PrepareData() {
       image_name = line.substr(0, flag_idx - 2);  // -2 because "#[0-4]\t"
       if (image_name.empty()) {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, image_name is not found in Flickr annotation file: " + file_path_ +
-                                 "; line: " + line);
+        RETURN_STATUS_UNEXPECTED("Invalid file, the attribute of image_name is missing in flickr dataset file: " +
+                                 file_path_ + ", line: " + line);
       }
 
       image_file_path = (dataset_dir / image_name).ToString();
       std::string annotation = line.substr(flag_idx + 1);
       if (annotation.empty()) {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, annotation is not found in Flickr annotation file: " + file_path_ +
-                                 "; line: " + line);
+        RETURN_STATUS_UNEXPECTED("Invalid file, the attribute of annotation is missing in flickr dataset file: " +
+                                 file_path_ + ", line: " + line);
       }
 
       bool valid = false;
@@ -127,7 +129,8 @@ Status FlickrOp::PrepareData() {
       image_annotation_map_[image_file_path].emplace_back(annotation);
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Flickr annotation file: " + file_path_);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse flickr dataset file: " + file_path_ + ": " +
+                               std::string(err.what()));
     }
   }
 
@@ -146,8 +149,8 @@ Status FlickrOp::PrepareData() {
 Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
   auto real_file_name = FileUtils::GetRealPath(file_name.data());
   if (!real_file_name.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);
+    MS_LOG(ERROR) << "Invalid file path, flickr dataset file: " << file_name << " does not exist.";
+    RETURN_STATUS_UNEXPECTED("Invalid file path, flickr dataset file: " + file_name + " does not exist.");
   }
 
   std::ifstream file_handle;
@@ -155,14 +158,16 @@ Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
   *valid = false;
   file_handle.open(real_file_name.value(), std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image file: " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid flickr file, failed to open " + file_name +
+                             ": the file is damaged or permission denied.");
   }
   unsigned char file_type[read_num];
   (void)file_handle.read(reinterpret_cast<char *>(file_type), read_num);
 
   if (file_handle.fail()) {
     file_handle.close();
-    RETURN_STATUS_UNEXPECTED("Invalid data, failed to read image file: " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid flickr file, failed to read " + file_name +
+                             ": the file is damaged or the file content is incomplete.");
   }
   file_handle.close();
   if (file_type[0] == 0xff && file_type[1] == 0xd8 && file_type[2] == 0xff) {

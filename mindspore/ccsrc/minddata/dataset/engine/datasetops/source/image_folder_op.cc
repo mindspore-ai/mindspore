@@ -93,7 +93,8 @@ Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + folder_path_ + (pair_ptr->first);
+      std::string err = "Invalid image, " + folder_path_ + (pair_ptr->first) +
+                        " decode failed, the image is broken or permission denied.";
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -121,7 +122,7 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
 Status ImageFolderOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+      RETURN_STATUS_UNEXPECTED("Invalid dataset_dir, " + DatasetName(true) +
                                "Dataset API can't read the data file(interface mismatch or no data found). Check " +
                                DatasetName() + " file path: " + folder_path_);
     } else {
@@ -156,7 +157,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
     Path folder(folder_path_ + folder_name);
     std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
     if (folder.Exists() == false || dirItr == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + folder_name);
+      RETURN_STATUS_UNEXPECTED("Invalid dataset_dir, " + folder_name + " does not exist or permission denied.");
     }
     std::set<std::string> imgs;  // use this for ordering
     while (dirItr->HasNext()) {
@@ -193,8 +194,8 @@ Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
         RETURN_IF_NOT_OK(folder_name_queue_->EmplaceBack(subdir.ToString().substr(dirname_offset_)));
       }
       if (recursive_ == true) {
-        MS_LOG(ERROR) << "RecursiveWalkFolder(&subdir) functionality is disabled permanently. No recursive walk of "
-                      << "directory will be performed.";
+        MS_LOG(ERROR) << "[Internal ERROR] RecursiveWalkFolder(&subdir) functionality is disabled permanently. "
+                      << "No recursive walk of directory will be performed.";
       }
     }
   }
@@ -206,7 +207,7 @@ Status ImageFolderOp::StartAsyncWalk() {
   TaskManager::FindMe()->Post();
   Path dir(folder_path_);
   if (dir.Exists() == false || dir.IsDirectory() == false) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid dataset_dir, " + folder_path_ + " may not exist or the path is not a directory.");
   }
   dirname_offset_ = folder_path_.length();
   RETURN_IF_NOT_OK(RecursiveWalkFolder(&dir));
@@ -242,10 +243,9 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   std::string err_msg = "";
   int64_t row_cnt = 0;
   err_msg += (dir.Exists() == false || dir.IsDirectory() == false)
-               ? "Invalid parameter, input path is invalid or not set, path: " + path
+               ? "Invalid dataset_dir, " + path + " does not exist or the path is not a directory. "
                : "";
-  err_msg +=
-    (num_classes == nullptr && num_rows == nullptr) ? "Invalid parameter, num_class and num_rows are null.\n" : "";
+  err_msg += (num_classes == nullptr && num_rows == nullptr) ? "[Internal ERROR] num_class and num_rows are null." : "";
   if (err_msg.empty() == false) {
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -266,7 +266,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     } else {
       for (const auto &p : class_index) {
         CHECK_FAIL_RETURN_UNEXPECTED(folder_names.find(p.first) != folder_names.end(),
-                                     "Invalid parameter, folder: " + p.first + " doesn't exist in " + path + " .");
+                                     "Invalid subdirectory, class: " + p.first + " doesn't exist in " + path + " .");
       }
       (*num_classes) = class_index.size();
     }
@@ -277,7 +277,8 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     Path subdir(folder_paths.front());
     dir_itr = Path::DirIterator::OpenDirectory(&subdir);
     if (subdir.Exists() == false || dir_itr == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + subdir.ToString());
+      RETURN_STATUS_UNEXPECTED("Invalid subdirectory, ImageFolder Dataset subdirectory: " + subdir.ToString() +
+                               " does not exist or permission denied");
     }
     while (dir_itr->HasNext()) {
       if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {

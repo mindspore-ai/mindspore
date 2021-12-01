@@ -143,7 +143,7 @@ Status FilterOp::WorkerCompute(const TensorRow &in_row, bool *out_predicate) {
 Status FilterOp::CheckInput(const TensorRow &input) const {
   for (auto &item : input) {
     if (item == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, input tensor is null.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] input tensor is null.");
     }
   }
   return Status::OK();

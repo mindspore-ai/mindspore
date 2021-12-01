@@ -60,7 +60,7 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 Status RepeatOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   if (child_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }
 
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
@@ -108,7 +108,7 @@ Status RepeatOp::EoeReceived(int32_t worker_id) {
 // However, the RepeatOp is defined as a inlined operator, so it is invalid to launch the
 // functor since this op runs inlined inside another operator.  The function is overloaded to
 // ensure that it is not called by mistake (it will generate an error).
-Status RepeatOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. RepeatOp is an inlined operator."); }
+Status RepeatOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] RepeatOp is an inlined operator."); }
 
 // Base-class override for handling cases when an eof is received.
 Status RepeatOp::EofReceived(int32_t worker_id) {

@@ -43,7 +43,7 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
 Status EpochCtrlOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   if (child_.empty()) {
-    RETURN_STATUS_UNEXPECTED("EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }
 
   // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
