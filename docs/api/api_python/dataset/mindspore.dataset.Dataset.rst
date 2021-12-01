@@ -1,4 +1,4 @@
-.. py:method:: get_dataset_size()
+    .. py:method:: get_dataset_size()
 
         返回一个epoch中的batch数。
 
@@ -6,7 +6,7 @@
         
         int，batch的数目。
         
-.. py:method:: get_repeat_count()
+    .. py:method:: get_repeat_count()
 
         获取 `RepeatDataset` 中的repeat次数（默认为1）。
 
@@ -14,8 +14,8 @@
         
         int，repeat次数。
         
-.. py:method:: input_indexs
-    :property:
+    .. py:method:: input_indexs
+        :property:
 
         获取input index信息。
 
@@ -31,7 +31,7 @@
         >>> print(dataset.input_indexs)
         10
    
-.. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None)
+    .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None)
 
         将operations列表中的每个operation作用于数据集。
 
@@ -148,7 +148,7 @@
         ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
         ...                       column_order=["mod7", "mod3", "col2"])
         
-.. py:method:: num_classes()
+    .. py:method:: num_classes()
 
         获取数据集中的样本的class数目。
 
@@ -156,7 +156,7 @@
         
         int，class数目。
         
-.. py:method:: output_shapes()
+    .. py:method:: output_shapes()
 
         获取输出数据的shape。
 
@@ -164,7 +164,7 @@
         
         list，每列shape的列表。
         
-.. py:method:: output_types()
+    .. py:method:: output_types()
 
         获取输出数据类型。
 
@@ -172,7 +172,7 @@
         
         list，每列类型的列表。
 
-.. py:method:: project(columns)
+    .. py:method:: project(columns)
 
         在输入数据集上投影某些列。
 
@@ -181,7 +181,7 @@
 
         **参数：**
         
-        - **columns** (Union[str, list[str]]) - 要投影列的列名列表。
+        **columns** (Union[str, list[str]]) - 要投影列的列名列表。
 
         **返回：**
         
@@ -195,7 +195,7 @@
         >>> # 创建一个数据集，无论列的原始顺序如何，依次包含column3, column1, column2。
         >>> dataset = dataset.project(columns=columns_to_project)
         
-.. py:method:: rename(input_columns, output_columns)
+    .. py:method:: rename(input_columns, output_columns)
 
         重命名输入数据集中的列。
 
@@ -219,17 +219,16 @@
         >>> # 为output_col3。
         >>> dataset = dataset.rename(input_columns=input_columns, output_columns=output_columns)
         
-.. py:method:: repeat(count=None)
+    .. py:method:: repeat(count=None)
 
-        重复此数据集`count`次。如果count为None或-1，则无限重复。
+        重复此数据集 `count` 次。如果count为None或-1，则无限重复。
 
         .. note::
-
             repeat和batch的顺序反映了batch的数量。建议：repeat操作在batch操作之后使用。
 
         **参数：**
 
-        - **count** (int) - 数据集重复的次数（默认为None）。
+        **count** (int) - 数据集重复的次数（默认为None）。
 
         **返回：**
         
@@ -252,14 +251,13 @@
         >>> dataset = dataset.repeat(50)
         >>> dataset = dataset.shuffle(10)
         
-..py:method:: reset()
+    ..py:method:: reset()
         
         重置下一个epoch的数据集。
 
-..py:method:: save(file_name, num_files=1, file_type='mindrecord')
+    ..py:method:: save(file_name, num_files=1, file_type='mindrecord')
 
-        将流水线正在处理的数据保存为通用的数据集格式。
-        支持的数据集格式：'mindrecord'。
+        将流水线正在处理的数据保存为通用的数据集格式。支持的数据集格式：'mindrecord'。
 
         将数据保存为'mindrecord'格式时存在隐式类型转换。转换表展示如何执行类型转换。
 
@@ -311,7 +309,6 @@
              - 不支持多维字符串
 
         .. note::
-
             1. 如需按顺序保存示例，请将数据集的shuffle设置为False，将 `num_files` 设置为1。
             2. 在调用函数之前，不要使用batch算子、repeat算子或具有随机属性的数据增强的map算子。
             3. 当数据的维度可变时，只支持1维数组或者在0维变化的多维数组。
@@ -323,29 +320,31 @@
         - **num_files** (int, optional) - 数据集文件的数量（默认为1）。
         - **file_type** (str, optional) - 数据集格式（默认为'mindrecord'）。
 
-..py:method:: set_dynamic_columns(columns=None)
+    ..py:method:: set_dynamic_columns(columns=None)
 
         设置源数据的动态shape信息，需要在定义数据处理流水线后设置。
 
         **参数：**
         
-        - **columns** (dict) - 包含数据集中每列shape信息的字典。shape[i]为`None`表示shape[i]的数据长度是动态的。
+        **columns** (dict) - 包含数据集中每列shape信息的字典。shape[i]为 `None` 表示shape[i]的数据长度是动态的。
         
-..py:method:: shuffle(buffer_size)
+    ..py:method:: shuffle(buffer_size)
 
         使用以下策略随机打乱此数据集的行：
 
         1. 生成一个shuffle缓冲区包含buffer_size条数据行。
-        2. 从shuffle缓冲区中随机选择一个元素，作为下一行传播到子节点。
-           
+
+        2. 从shuffle缓冲区中随机选择一个元素，作为下一行传播到子节点。 
+
         3. 从父节点获取下一行（如果有的话），并将其放入shuffle缓冲区中。
+
         4. 重复步骤2和3，直到打乱缓冲区中没有数据行为止。
 
         可以提供随机种子，在第一个epoch中使用。在随后的每个epoch，种子都会被设置成一个新产生的随机值。
         
         **参数：**
         
-        - **buffer_size** (int) - 用于shuffle的缓冲区大小（必须大于1）。将buffer_size设置为等于数据集大小将导致在全局shuffle。
+        **buffer_size** (int) - 用于shuffle的缓冲区大小（必须大于1）。将buffer_size设置为等于数据集大小将导致在全局shuffle。
                 
         **返回：**
         
@@ -353,7 +352,7 @@
 
         **异常：**
         
-        - **RuntimeError** - 打乱前存在同步操作。
+        **RuntimeError** - 打乱前存在同步操作。
 
         **样例：**
 
@@ -363,13 +362,13 @@
         >>> # 使用大小为4的shuffle缓冲区创建打乱后的数据集。
         >>> dataset = dataset.shuffle(4)
         
-..py:method:: skip(count)
+    ..py:method:: skip(count)
 
         跳过此数据集的前N个元素。
 
         **参数：**
 
-        - **count** (int) - 要跳过的数据集中的元素个数。
+        **count** (int) - 要跳过的数据集中的元素个数。
 
         **返回：**
 
@@ -381,7 +380,7 @@
         >>> # 创建一个数据集，跳过前3个元素
         >>> dataset = dataset.skip(3)
         
-..py:method:: split(sizes, randomize=True)
+    ..py:method:: split(sizes, randomize=True)
 
         将数据集拆分为多个不重叠的数据集。
 
@@ -401,7 +400,6 @@
         - **randomize** (bool, optional)：确定是否随机拆分数据（默认为True）。如果为True，则数据集将被随机拆分。否则，将使用数据集中的连续行创建每个拆分子集。
                 
         .. note::
-
             1. 如果要调用 split，则无法对数据集进行分片。
             2. 强烈建议不要对数据集进行打乱，而是使用随机化（randomize=True）。对数据集进行打乱的结果具有不确定性，每个拆分子集中的数据在每个epoch可能都不同。
                
@@ -424,7 +422,7 @@
         >>> dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
         >>> train_dataset, test_dataset = dataset.split([0.9, 0.1])
         
-..py:method:: sync_update(condition_name, num_batch=None, data=None)
+    ..py:method:: sync_update(condition_name, num_batch=None, data=None)
 
         释放阻塞条件并使用给定数据触发回调函数。
 
@@ -434,7 +432,7 @@
         - **num_batch** (Union[int, None]) - 释放的batch（row）数。当 `num_batch` 为None时，将默认为 `sync_wait` 算子指定的值（默认为None）。        
         - **data** (Any) - 用户自定义传递给回调函数的数据（默认为None）。
         
-..py:method:: sync_wait(condition_name, num_batch=1, callback=None)
+    ..py:method:: sync_wait(condition_name, num_batch=1, callback=None)
 
         向输入数据集添加阻塞条件。 将应用同步操作。
 
@@ -450,7 +448,7 @@
 
         **异常：**
         
-        - **RuntimeError** - 条件名称已存在。
+        **RuntimeError** - 条件名称已存在。
 
         **样例：**
 
@@ -483,18 +481,17 @@
         ...     data = {"loss": count}
         ...     dataset.sync_update(condition_name="policy", data=data)
         
-..py:method:: take(count=-1)
+    ..py:method:: take(count=-1)
 
         从数据集中获取最多给定数量的元素。
 
         .. note::
-
             1. 如果count大于数据集中的元素数或等于-1，则取数据集中的所有元素。     
             2. take和batch操作顺序很重要，如果take在batch操作之前，则取给定行数；否则取给定batch数。
                
         **参数：**
         
-        - **count** (int, optional) - 要从数据集中获取的元素数（默认为-1）。
+        **count** (int, optional) - 要从数据集中获取的元素数（默认为-1）。
 
         **返回：**
         
@@ -506,7 +503,7 @@
         >>> # 创建一个数据集，包含50个元素。
         >>> dataset = dataset.take(50)
         
-..py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
+    ..py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
 
         将数据从CPU传输到GPU、Ascend或其他设备。
 
@@ -516,7 +513,6 @@
         - **create_data_info_queue** (bool, optional) - 是否创建存储数据类型和shape的队列（默认为False）。
                 
         .. note::
-        
             如果设备为Ascend，则逐个传输数据。每次传输的数据大小限制为256M。
             
         **返回：**
@@ -525,27 +521,27 @@
 
         **异常：**
         
-        - **RuntimeError** - 如果提供了分布式训练的文件路径但读取失败。
+        **RuntimeError** - 如果提供了分布式训练的文件路径但读取失败。
         
-..py:method:: to_json(filename='')
+    ..py:method:: to_json(filename='')
 
         将数据处理流水线序列化为JSON字符串，如果提供了文件名，则转储到文件中。
 
         **参数：**
 
-        - **filename** (str) - 另存为JSON格式的文件名。
+        **filename** (str) - 另存为JSON格式的文件名。
 
         **返回：**
         
         str，流水线的JSON字符串。
         
-..py:method:: zip(datasets)
+    ..py:method:: zip(datasets)
 
         将数据集和输入的数据集或者数据集元组按列进行合并压缩。输入数据集中的列名必须不同。
 
         **参数：**
         
-        - **datasets** (Union[tuple, class Dataset]) - 数据集对象的元组或单个数据集对象与当前数据集一起合并压缩。
+        **datasets** (Union[tuple, class Dataset]) - 数据集对象的元组或单个数据集对象与当前数据集一起合并压缩。
 
         **返回：**
             
