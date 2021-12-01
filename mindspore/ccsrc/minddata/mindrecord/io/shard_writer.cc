@@ -44,19 +44,22 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
   // Get full path from file name
   for (const auto &path : paths) {
     CHECK_FAIL_RETURN_UNEXPECTED(CheckIsValidUtf8(path),
-                                 "Invalid data, file name: " + path + " contains invalid uft-8 character.");
+                                 "Invalid file, mindrecord file name: " + path +
+                                   " contains invalid uft-8 character. Please rename mindrecord file name.");
     char resolved_path[PATH_MAX] = {0};
     char buf[PATH_MAX] = {0};
     CHECK_FAIL_RETURN_UNEXPECTED(strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) == EOK,
-                                 "Failed to call securec func [strncpy_s], path: " + path);
+                                 "[Internal ERROR] Failed to call securec func [strncpy_s], path: " + path);
 #if defined(_WIN32) || defined(_WIN64)
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, dirname(&(buf[0])), PATH_MAX));
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, common::SafeCStr(path), PATH_MAX));
 #else
-    CHECK_FAIL_RETURN_UNEXPECTED(realpath(dirname(&(buf[0])), resolved_path) != nullptr,
-                                 "Invalid file, path: " + std::string(resolved_path));
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      realpath(dirname(&(buf[0])), resolved_path) != nullptr,
+      "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
+        std::string(resolved_path));
     if (realpath(common::SafeCStr(path), resolved_path) == nullptr) {
-      MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check success.";
+      MS_LOG(DEBUG) << "Succeed to check path: " << common::SafeCStr(path);
     }
 #endif
     file_paths_.emplace_back(string(resolved_path));
@@ -75,7 +78,8 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
     }
 
     auto realpath = FileUtils::GetRealPath(dir.value().data());
-    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + file);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      realpath.has_value(), "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
 
     std::optional<std::string> whole_path = "";
     FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
@@ -91,19 +95,25 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
         if (overwrite) {
           auto res1 = std::remove(whole_path.value().c_str());
           CHECK_FAIL_RETURN_UNEXPECTED(!std::ifstream(whole_path.value()) == true,
-                                       "Failed to delete file, path: " + file);
+                                       "Invalid file, failed to remove the old files when trying to overwrite "
+                                       "mindrecord files. Please check file path and permission: " +
+                                         file);
           if (res1 == 0) {
-            MS_LOG(WARNING) << "Succeed to delete file, path: " << file;
+            MS_LOG(WARNING) << "Succeed to remove the old mindrecord files, path: " << file;
           }
           auto db_file = whole_path.value() + ".db";
           auto res2 = std::remove(db_file.c_str());
           CHECK_FAIL_RETURN_UNEXPECTED(!std::ifstream(whole_path.value() + ".db") == true,
-                                       "Failed to delete db file, path: " + file + ".db");
+                                       "Invalid file, failed to remove the old mindrecord meta files when trying to "
+                                       "overwrite mindrecord files. Please check file path and permission: " +
+                                         file + ".db");
           if (res2 == 0) {
-            MS_LOG(WARNING) << "Succeed to delete metadata file, path: " << file + ".db";
+            MS_LOG(WARNING) << "Succeed to remove the old mindrecord metadata files, path: " << file + ".db";
           }
         } else {
-          RETURN_STATUS_UNEXPECTED("Invalid file, Mindrecord files already existed in path: " + file);
+          RETURN_STATUS_UNEXPECTED(
+            "Invalid file, mindrecord files already exist. Please check file path: " + file +
+            +".\nIf you do not want to keep the files, set the 'overwrite' parameter to True and try again.");
         }
       } else {
         fs->close();
@@ -112,17 +122,23 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
       // open the mindrecord file to write
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
-        RETURN_STATUS_UNEXPECTED("Failed to open file, path: " + file);
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid file, failed to open files for writing mindrecord files. Please check file path, permission and "
+          "open file limit: " +
+          file);
       }
     } else {
       // open the mindrecord file to append
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary);
       if (!fs->good()) {
         fs->close();
-        RETURN_STATUS_UNEXPECTED("Failed to open file for append data, path: " + file);
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid file, failed to open files for appending mindrecord files. Please check file path, permission and "
+          "open file limit: " +
+          file);
       }
     }
-    MS_LOG(INFO) << "Succeed to open shard file, path: " << file;
+    MS_LOG(INFO) << "Succeed to open mindrecord shard file, path: " << file;
     file_streams_.push_back(fs);
   }
   return Status::OK();
@@ -143,7 +159,7 @@ Status ShardWriter::RemoveLockFile() {
 }
 
 Status ShardWriter::InitLockFile() {
-  CHECK_FAIL_RETURN_UNEXPECTED(file_paths_.size() != 0, "Invalid data, file_paths_ is not initialized.");
+  CHECK_FAIL_RETURN_UNEXPECTED(file_paths_.size() != 0, "[Internal ERROR] 'file_paths_' is not initialized.");
 
   lock_file_ = file_paths_[0] + kLockFileSuffix;
   pages_file_ = file_paths_[0] + kPageFileSuffix;
@@ -154,8 +170,8 @@ Status ShardWriter::InitLockFile() {
 Status ShardWriter::Open(const std::vector<std::string> &paths, bool append, bool overwrite) {
   shard_count_ = paths.size();
   CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ <= kMaxSchemaCount,
-                               "Invalid data, schema_count_ must be less than or equal to " +
-                                 std::to_string(kMaxSchemaCount) + ", but got " + std::to_string(schema_count_));
+                               "[Internal ERROR] 'schema_count_' must be less than or equal to " +
+                                 std::to_string(kMaxSchemaCount) + ", but got: " + std::to_string(schema_count_));
 
   // Get full path from file name
   RETURN_IF_NOT_OK(GetFullPathFromFileName(paths));
@@ -167,7 +183,8 @@ Status ShardWriter::Open(const std::vector<std::string> &paths, bool append, boo
 }
 
 Status ShardWriter::OpenForAppend(const std::string &path) {
-  CHECK_FAIL_RETURN_UNEXPECTED(IsLegalFile(path), "Invalid file, path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    IsLegalFile(path), "Invalid file, failed to verify files for append mindrecord files. Please check file: " + path);
   std::shared_ptr<json> header_ptr;
   RETURN_IF_NOT_OK(ShardHeader::BuildSingleHeader(path, &header_ptr));
   auto ds = std::make_shared<std::vector<std::string>>();
@@ -262,7 +279,9 @@ void ShardWriter::DeleteErrorData(std::map<uint64_t, std::vector<json>> &raw_dat
     for (auto &subMg : sub_err_mg) {
       int loc = subMg.first;
       std::string message = subMg.second;
-      MS_LOG(ERROR) << "Invalid input, the " << loc + 1 << " th data is invalid, " << message;
+      MS_LOG(ERROR) << "Invalid input, the " << loc + 1
+                    << " th data provided by user is invalid while writing mindrecord files. Please fix the error: "
+                    << message;
       (void)delete_set.insert(loc);
     }
   }
@@ -299,8 +318,8 @@ Status ShardWriter::CheckDataTypeAndValue(const std::string &key, const json &va
       (data_type == "int64" && !data[key].is_number_integer()) ||
       (data_type == "float32" && !data[key].is_number_float()) ||
       (data_type == "float64" && !data[key].is_number_float()) || (data_type == "string" && !data[key].is_string())) {
-    std::string message =
-      "field: " + key + " ,type : " + data_type + " ,value: " + data[key].dump() + " is not matched.";
+    std::string message = "Invalid input, for field: " + key + ", type: " + data_type +
+                          " and value: " + data[key].dump() + " do not match while writing mindrecord files.";
     PopulateMutexErrorData(i, message, err_raw_data);
     RETURN_STATUS_UNEXPECTED(message);
   }
@@ -309,8 +328,8 @@ Status ShardWriter::CheckDataTypeAndValue(const std::string &key, const json &va
     int64_t temp_value = data[key];
     if (static_cast<int64_t>(temp_value) < static_cast<int64_t>(std::numeric_limits<int32_t>::min()) &&
         static_cast<int64_t>(temp_value) > static_cast<int64_t>(std::numeric_limits<int32_t>::max())) {
-      std::string message =
-        "field: " + key + " ,type : " + data_type + " ,value: " + data[key].dump() + " is out of range.";
+      std::string message = "Invalid input, for field: " + key + "and its type: " + data_type +
+                            ", value: " + data[key].dump() + " is out of range while writing mindrecord files.";
       PopulateMutexErrorData(i, message, err_raw_data);
       RETURN_STATUS_UNEXPECTED(message);
     }
@@ -366,7 +385,7 @@ Status ShardWriter::CheckData(const std::map<uint64_t, std::vector<json>> &raw_d
     // calculate start position and end position for each thread
     int batch_size = rawdata_iter->second.size() / shard_count_;
     int thread_num = shard_count_;
-    CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid data, thread_num should be positive.");
+    CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "[Internal ERROR] 'thread_num' should be positive.");
     if (thread_num > kMaxThreadCount) {
       thread_num = kMaxThreadCount;
     }
@@ -387,7 +406,7 @@ Status ShardWriter::CheckData(const std::map<uint64_t, std::vector<json>> &raw_d
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       thread_num <= kMaxThreadCount,
-      "Invalid data, thread_num should be less than or equal to " + std::to_string(kMaxThreadCount));
+      "[Internal ERROR] 'thread_num' should be less than or equal to " + std::to_string(kMaxThreadCount));
     // Wait for threads done
     for (int x = 0; x < thread_num; ++x) {
       thread_set[x].join();
@@ -404,7 +423,8 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
   RETURN_UNEXPECTED_IF_NULL(count_ptr);
   auto rawdata_iter = raw_data.begin();
   schema_count_ = raw_data.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ > 0, "Invalid data, schema count should be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ > 0, "Invalid data, the number of schema should be positive but got: " +
+                                                    std::to_string(schema_count_) + ". Please check the input schema.");
 
   // keep schema_id
   std::set<int64_t> schema_ids;
@@ -412,17 +432,18 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
 
   // Determine if the number of schemas is the same
   CHECK_FAIL_RETURN_UNEXPECTED(shard_header_->GetSchemas().size() == schema_count_,
-                               "Invalid data, schema count: " + std::to_string(schema_count_) + " is not matched.");
+                               "[Internal ERROR] 'schema_count_' and the schema count in schema: " +
+                                 std::to_string(schema_count_) + " do not match.");
   // Determine raw_data size == blob_data size
   CHECK_FAIL_RETURN_UNEXPECTED(raw_data[0].size() == blob_data.size(),
-                               "Invalid data, raw data size: " + std::to_string(raw_data[0].size()) +
+                               "[Internal ERROR] raw data size: " + std::to_string(raw_data[0].size()) +
                                  " is not equal to blob data size: " + std::to_string(blob_data.size()) + ".");
 
   // Determine whether the number of samples corresponding to each schema is the same
   for (rawdata_iter = raw_data.begin(); rawdata_iter != raw_data.end(); ++rawdata_iter) {
     CHECK_FAIL_RETURN_UNEXPECTED(row_count_ == rawdata_iter->second.size(),
-                                 "Invalid data, number of samples: " + std::to_string(rawdata_iter->second.size()) +
-                                   " for schema is not matched.");
+                                 "[Internal ERROR] 'row_count_': " + std::to_string(rawdata_iter->second.size()) +
+                                   " for each schema is not the same.");
     (void)schema_ids.insert(rawdata_iter->first);
   }
   const std::vector<std::shared_ptr<Schema>> &schemas = shard_header_->GetSchemas();
@@ -431,7 +452,7 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
                                             [schema_ids](const std::shared_ptr<Schema> &schema) {
                                               return schema_ids.find(schema->GetSchemaID()) == schema_ids.end();
                                             }),
-                               "Invalid data, schema id of data is not matched.");
+                               "[Internal ERROR] schema id in 'schemas' can not found in 'schema_ids'.");
   if (!sign) {
     *count_ptr = std::make_shared<std::pair<int, int>>(schema_count_, row_count_);
     return Status::OK();
@@ -487,7 +508,7 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
     flock(fd, LOCK_EX);
   } else {
     close(fd);
-    RETURN_STATUS_UNEXPECTED("Failed to lock file, path: " + lock_file_);
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to lock file, path: " + lock_file_);
   }
 #endif
 
@@ -497,20 +518,20 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
     auto realpath = FileUtils::GetRealPath(file.data());
     if (!realpath.has_value()) {
       close(fd);
-      RETURN_STATUS_UNEXPECTED("Failed to get real path, path: " + file);
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get real path, path: " + file);
     }
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(realpath.value(), std::ios::in | std::ios::out | std::ios::binary);
     if (fs->fail()) {
       close(fd);
-      RETURN_STATUS_UNEXPECTED("Failed to open file, path: " + file);
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open file, path: " + file);
     }
     file_streams_.push_back(fs);
   }
   auto status = shard_header_->FileToPages(pages_file_);
   if (status.IsError()) {
     close(fd);
-    RETURN_STATUS_UNEXPECTED("Error raised in FileToPages function.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Error raised in FileToPages function.");
   }
   *fd_ptr = std::make_unique<int>(fd);
   return Status::OK();
@@ -540,8 +561,9 @@ Status ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &
   // check the free disk size
   std::shared_ptr<uint64_t> size_ptr;
   RETURN_IF_NOT_OK(GetDiskSize(file_paths_[0], kFreeSize, &size_ptr));
-  CHECK_FAIL_RETURN_UNEXPECTED(*size_ptr >= kMinFreeDiskSize,
-                               "No free disk to be used, free disk size: " + std::to_string(*size_ptr));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    *size_ptr >= kMinFreeDiskSize,
+    "No free disk to be used while writing mindrecord files, available free disk size: " + std::to_string(*size_ptr));
   // compress blob
   if (shard_column_->CheckCompressBlob()) {
     for (auto &blob : blob_data) {
@@ -615,7 +637,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data
 
   // Serialize raw data
   RETURN_IF_NOT_OK(WriteRawDataPreCheck(raw_data, blob_data, sign, &schema_count, &row_count));
-  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "Invalid data, raw data size should be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "[Internal ERROR] the size of raw data should be positive.");
   if (row_count == kInt0) {
     return Status::OK();
   }
@@ -676,7 +698,7 @@ Status ShardWriter::ParallelWriteData(const std::vector<std::vector<uint8_t>> &b
   auto shards = BreakIntoShards();
   // define the number of thread
   int thread_num = static_cast<int>(shard_count_);
-  CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid data, thread_num should be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "[Internal ERROR] 'thread_num' should be positive.");
   if (thread_num > kMaxThreadCount) {
     thread_num = kMaxThreadCount;
   }
@@ -741,13 +763,13 @@ Status ShardWriter::CutRowGroup(int start_row, int end_row, const std::vector<st
 
   int page_start_row = start_row;
   CHECK_FAIL_RETURN_UNEXPECTED(start_row <= end_row,
-                               "Invalid data, start row: " + std::to_string(start_row) +
-                                 " should be less than or equal to end row: " + std::to_string(end_row));
+                               "[Internal ERROR] 'start_row': " + std::to_string(start_row) +
+                                 " should be less than or equal to 'end_row': " + std::to_string(end_row));
 
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_row <= static_cast<int>(blob_data_size_.size()) && end_row <= static_cast<int>(raw_data_size_.size()),
-    "Invalid data, end row: " + std::to_string(end_row) + " should be less than blob data size: " +
-      std::to_string(blob_data_size_.size()) + " and raw data size: " + std::to_string(raw_data_size_.size()) + ".");
+    "[Internal ERROR] 'end_row': " + std::to_string(end_row) + " should be less than 'blob_data_size': " +
+      std::to_string(blob_data_size_.size()) + " and 'raw_data_size': " + std::to_string(raw_data_size_.size()) + ".");
   for (int i = start_row; i < end_row; ++i) {
     // n_byte_blob(0) indicate appendBlobPage
     if (n_byte_blob == 0 || n_byte_blob + blob_data_size_[i] > page_size_ ||
@@ -780,7 +802,7 @@ Status ShardWriter::AppendBlobPage(const int &shard_id, const std::vector<std::v
   auto &io_seekp = file_streams_[shard_id]->seekp(page_size_ * page_id + header_size_ + bytes_page, std::ios::beg);
   if (!io_seekp.good() || io_seekp.fail() || io_seekp.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
   }
 
   (void)FlushBlobChunk(file_streams_[shard_id], blob_data, blob_row);
@@ -808,7 +830,7 @@ Status ShardWriter::NewBlobPage(const int &shard_id, const std::vector<std::vect
     auto &io_seekp = file_streams_[shard_id]->seekp(page_size_ * (page_id + 1) + header_size_, std::ios::beg);
     if (!io_seekp.good() || io_seekp.fail() || io_seekp.bad()) {
       file_streams_[shard_id]->close();
-      RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
     }
 
     (void)FlushBlobChunk(file_streams_[shard_id], blob_data, blob_row);
@@ -847,32 +869,32 @@ Status ShardWriter::ShiftRawPage(const int &shard_id, const std::vector<std::pai
   // Read last row group from previous raw data page
   CHECK_FAIL_RETURN_UNEXPECTED(
     shard_id >= 0 && shard_id < file_streams_.size(),
-    "Invalid data, shard_id should be in range [0, " + std::to_string(file_streams_.size()) + ").");
+    "[Internal ERROR] 'shard_id' should be in range [0, " + std::to_string(file_streams_.size()) + ").");
 
   auto &io_seekg = file_streams_[shard_id]->seekg(
     page_size_ * last_raw_page_id + header_size_ + last_row_group_id_offset, std::ios::beg);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
   }
 
   auto &io_read = file_streams_[shard_id]->read(reinterpret_cast<char *>(&buf[0]), buf.size());
   if (!io_read.good() || io_read.fail() || io_read.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to read file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to read file.");
   }
 
   // Merge into new row group at new raw data page
   auto &io_seekp = file_streams_[shard_id]->seekp(page_size_ * (page_id + 1) + header_size_, std::ios::beg);
   if (!io_seekp.good() || io_seekp.fail() || io_seekp.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
   }
 
   auto &io_handle = file_streams_[shard_id]->write(reinterpret_cast<char *>(&buf[0]), buf.size());
   if (!io_handle.good() || io_handle.fail() || io_handle.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to write file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
   }
   last_raw_page->DeleteLastGroupId();
   (void)shard_header_->SetPage(last_raw_page);
@@ -935,7 +957,7 @@ Status ShardWriter::AppendRawPage(const int &shard_id, const std::vector<std::pa
     file_streams_[shard_id]->seekp(page_size_ * last_raw_page_id + header_size_ + n_bytes, std::ios::beg);
   if (!io_seekp.good() || io_seekp.fail() || io_seekp.bad()) {
     file_streams_[shard_id]->close();
-    RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekg file.");
   }
 
   if (chunk_id > 0) {
@@ -958,7 +980,7 @@ Status ShardWriter::FlushBlobChunk(const std::shared_ptr<std::fstream> &out,
                                    const std::pair<int, int> &blob_row) {
   CHECK_FAIL_RETURN_UNEXPECTED(
     blob_row.first <= blob_row.second && blob_row.second <= static_cast<int>(blob_data.size()) && blob_row.first >= 0,
-    "Invalid data, blob_row: " + std::to_string(blob_row.first) + ", " + std::to_string(blob_row.second) +
+    "[Internal ERROR] 'blob_row': " + std::to_string(blob_row.first) + ", " + std::to_string(blob_row.second) +
       " is invalid.");
   for (int j = blob_row.first; j < blob_row.second; ++j) {
     // Write the size of blob
@@ -966,7 +988,7 @@ Status ShardWriter::FlushBlobChunk(const std::shared_ptr<std::fstream> &out,
     auto &io_handle = out->write(reinterpret_cast<char *>(&line_len), kInt64Len);
     if (!io_handle.good() || io_handle.fail() || io_handle.bad()) {
       out->close();
-      RETURN_STATUS_UNEXPECTED("Failed to write file.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
     }
 
     // Write the data of blob
@@ -974,7 +996,7 @@ Status ShardWriter::FlushBlobChunk(const std::shared_ptr<std::fstream> &out,
     auto &io_handle_data = out->write(reinterpret_cast<char *>(&line[0]), line_len);
     if (!io_handle_data.good() || io_handle_data.fail() || io_handle_data.bad()) {
       out->close();
-      RETURN_STATUS_UNEXPECTED("Failed to write file.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
     }
   }
   return Status::OK();
@@ -990,7 +1012,7 @@ Status ShardWriter::FlushRawChunk(const std::shared_ptr<std::fstream> &out,
       auto &io_handle = out->write(reinterpret_cast<char *>(&line_len), kInt64Len);
       if (!io_handle.good() || io_handle.fail() || io_handle.bad()) {
         out->close();
-        RETURN_STATUS_UNEXPECTED("Failed to write file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
       }
     }
     // Write the data of multi schemas
@@ -999,7 +1021,7 @@ Status ShardWriter::FlushRawChunk(const std::shared_ptr<std::fstream> &out,
       auto &io_handle = out->write(reinterpret_cast<char *>(&line[0]), line.size());
       if (!io_handle.good() || io_handle.fail() || io_handle.bad()) {
         out->close();
-        RETURN_STATUS_UNEXPECTED("Failed to write file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
       }
     }
   }
@@ -1041,32 +1063,32 @@ Status ShardWriter::WriteShardHeader() {
   // Write header data to multi files
   CHECK_FAIL_RETURN_UNEXPECTED(
     shard_count_ <= static_cast<int>(file_streams_.size()) && shard_count_ <= static_cast<int>(shard_header.size()),
-    "Invalid data, shard count should be less than or equal to file size: " + std::to_string(file_streams_.size()) +
-      ", and header size: " + std::to_string(shard_header.size()) + ".");
+    "[Internal ERROR] 'shard_count_' should be less than or equal to 'file_stream_' size: " +
+      std::to_string(file_streams_.size()) + ", and 'shard_header' size: " + std::to_string(shard_header.size()) + ".");
   if (shard_count_ <= kMaxShardCount) {
     for (int shard_id = 0; shard_id < shard_count_; ++shard_id) {
       auto &io_seekp = file_streams_[shard_id]->seekp(0, std::ios::beg);
       if (!io_seekp.good() || io_seekp.fail() || io_seekp.bad()) {
         file_streams_[shard_id]->close();
-        RETURN_STATUS_UNEXPECTED("Failed to seekp file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to seekp file.");
       }
 
       std::vector<uint8_t> bin_header(shard_header[shard_id].begin(), shard_header[shard_id].end());
       uint64_t line_len = bin_header.size();
       if (line_len + kInt64Len > header_size_) {
         file_streams_[shard_id]->close();
-        RETURN_STATUS_UNEXPECTED("shard header is too big.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] shard header is too big.");
       }
       auto &io_handle = file_streams_[shard_id]->write(reinterpret_cast<char *>(&line_len), kInt64Len);
       if (!io_handle.good() || io_handle.fail() || io_handle.bad()) {
         file_streams_[shard_id]->close();
-        RETURN_STATUS_UNEXPECTED("Failed to write file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
       }
 
       auto &io_handle_header = file_streams_[shard_id]->write(reinterpret_cast<char *>(&bin_header[0]), line_len);
       if (!io_handle_header.good() || io_handle_header.fail() || io_handle_header.bad()) {
         file_streams_[shard_id]->close();
-        RETURN_STATUS_UNEXPECTED("Failed to write file.");
+        RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to write file.");
       }
       file_streams_[shard_id]->close();
     }
@@ -1100,7 +1122,7 @@ Status ShardWriter::SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_
     // Set obstacles to prevent the main thread from running
     thread_set[x].join();
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(flag_ != true, "Error raised in FillArray function.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(flag_ != true, "[Internal ERROR] Error raised in FillArray function.");
   return Status::OK();
 }
 
@@ -1111,9 +1133,10 @@ Status ShardWriter::SetRawDataSize(const std::vector<std::vector<uint8_t>> &bin_
       bin_raw_data.begin() + (i * schema_count_), bin_raw_data.begin() + (i * schema_count_) + schema_count_, 0,
       [](uint64_t accumulator, const std::vector<uint8_t> &row) { return accumulator + kInt64Len + row.size(); });
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(
-    *std::max_element(raw_data_size_.begin(), raw_data_size_.end()) <= page_size_,
-    "Invalid data, Page size: " + std::to_string(page_size_) + " is too small to save a raw row!");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(*std::max_element(raw_data_size_.begin(), raw_data_size_.end()) <= page_size_,
+                                 "Invalid data, Page size: " + std::to_string(page_size_) +
+                                   " is too small to save a raw row. Please try to use the mindrecord api "
+                                   "'set_page_size(1<<25)' to enable 64MB page size.");
   return Status::OK();
 }
 
@@ -1121,16 +1144,17 @@ Status ShardWriter::SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blo
   blob_data_size_ = std::vector<uint64_t>(row_count_);
   (void)std::transform(blob_data.begin(), blob_data.end(), blob_data_size_.begin(),
                        [](const std::vector<uint8_t> &row) { return kInt64Len + row.size(); });
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(
-    *std::max_element(blob_data_size_.begin(), blob_data_size_.end()) <= page_size_,
-    "Invalid data, Page size: " + std::to_string(page_size_) + " is too small to save a blob row!");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(*std::max_element(blob_data_size_.begin(), blob_data_size_.end()) <= page_size_,
+                                 "Invalid data, Page size: " + std::to_string(page_size_) +
+                                   " is too small to save a blob row. Please try to use the mindrecord api "
+                                   "'set_page_size(1<<25)' to enable 64MB page size.");
   return Status::OK();
 }
 
 Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page) {
   // Get last raw page
   auto last_raw_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeRaw);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "Invalid data, last_raw_page_id: " +
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "[Internal ERROR] 'last_raw_page_id': " +
                                                           std::to_string(last_raw_page_id) + " should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_raw_page_id, &last_raw_page));
   return Status::OK();
@@ -1139,7 +1163,7 @@ Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &l
 Status ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page) {
   // Get last blob page
   auto last_blob_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeBlob);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "Invalid data, last_blob_page_id: " +
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "[Internal ERROR] 'last_blob_page_id': " +
                                                            std::to_string(last_blob_page_id) + " should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_blob_page_id, &last_blob_page));
   return Status::OK();

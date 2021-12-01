@@ -1224,7 +1224,7 @@ def test_cv_file_overwrite_exception_01():
                           "label": {"type": "int64"}, "data": {"type": "bytes"}}
         writer.add_schema(cv_schema_json, "img_schema")
         writer.write_raw_data(data)
-    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 def test_cv_file_overwrite_exception_02():
@@ -1243,5 +1243,5 @@ def test_cv_file_overwrite_exception_02():
                           "label": {"type": "int64"}, "data": {"type": "bytes"}}
         writer.add_schema(cv_schema_json, "img_schema")
         writer.write_raw_data(data)
-    assert 'Unexpected error. Invalid file, Mindrecord files already existed in path:' in str(err.value)
+    assert 'Unexpected error. Invalid file, mindrecord files already exist. Please check file path:' in str(err.value)
     remove_multi_files(mindrecord_file_name, FILES_NUM)
