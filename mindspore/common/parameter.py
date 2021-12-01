@@ -183,7 +183,7 @@ class Parameter(Tensor_):
         # this flag for tensor copy data.
         self.init_flag = False
         # this flag is for ge variable copy data.
-        self._is_init = False
+        self.is_init = False
         self._inited_param = None
         self._sliced = False
         self.is_param_ps = False
@@ -393,25 +393,6 @@ class Parameter(Tensor_):
     @unique.setter
     def unique(self, unique_):
         self._unique = unique_
-
-    @property
-    def is_init(self):
-        """
-        Get the initialization status of the parameter.
-
-        This flag only work in GE, and it will be set to False in other backend.
-        """
-        return self._is_init
-
-    @is_init.setter
-    def is_init(self, is_init_):
-        """
-        Set init status of the parameter.
-
-        Args:
-            is_init_ (bool): The init status of the parameter.
-        """
-        self._is_init = is_init_
 
     def clone(self, init='same'):
         """
