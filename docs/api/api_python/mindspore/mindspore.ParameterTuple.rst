@@ -7,7 +7,6 @@ mindspore.ParameterTuple
 
     .. note::该类把网络参数存储到参数元组集合中。
     
-
     .. py:method:: clone(prefix, init='same')
 
         按元素克隆 `ParameterTuple` 中的数值，以生成新的 `ParameterTuple` 。

@@ -44,7 +44,6 @@ mindspore.Tensor
 
         返回转置后的张量。
 
-
     .. py:method:: abs()
 
         返回每个元素的绝对值。
@@ -64,7 +63,6 @@ mindspore.Tensor
         >>> output = a.abs()
         >>> print(output)
         [1.1 2.1]
-
 
     .. py:method:: all(axis=(), keep_dims=False)
 
