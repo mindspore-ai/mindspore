@@ -501,11 +501,7 @@ void Debugger::PostExecute() {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     // analyze tensor data and send the watchpoints been hit
     if (debugger_enabled_ && !is_dataset_graph_) {
-      if (device_target_ != kGPUDevice) {
-        num_step_++;
-      }
       SendWatchpoints(CheckWatchpoints());
-
       // no need to suspend at each graph for GPU old runtime, suspension happens in preExecute
       if (device_target_ == kAscendDevice) {
         CommandLoop();
@@ -513,6 +509,9 @@ void Debugger::PostExecute() {
         if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
           CommandLoop();
         }
+      }
+      if (device_target_ != kGPUDevice) {
+        num_step_++;
       }
     }
     // Only keep parameters in th current map
