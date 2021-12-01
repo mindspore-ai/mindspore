@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/host/dynamic_shape_kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/trace_base.h"
+#include "runtime/device/ascend/ascend_kernel_runtime.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,6 +46,14 @@ void DynamicShapeKernel::Execute() {
 
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
+
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Sync stream error!";
+  }
+
   output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
                                 output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
                                 output_tensor_for_sync->device_info().host_format_);
