@@ -342,7 +342,9 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
       has_const_input = true;
       auto dtype = input_tensors[index]->Dtype();
       MS_EXCEPTION_IF_NULL(dtype);
-      if (dtype->type_id() == kNumberTypeInt64) {
+      if (dtype->type_id() == kNumberTypeBool) {
+        buf << *reinterpret_cast<bool *>(input_tensors[index]->data_c());
+      } else if (dtype->type_id() == kNumberTypeInt64) {
         buf << *reinterpret_cast<int *>(input_tensors[index]->data_c());
       } else if (dtype->type_id() == kNumberTypeFloat32 || dtype->type_id() == kNumberTypeFloat16) {
         buf << *reinterpret_cast<float *>(input_tensors[index]->data_c());
@@ -475,6 +477,9 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
   } else if (py::isinstance<py::float_>(input_object)) {
     double input_value = py::cast<py::float_>(input_object);
     tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
+    *tensor_mask = kValueNodeTensorMask;
+  } else if (py::isinstance<py::bool_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<bool>(input_object), kBool);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
