@@ -18,7 +18,7 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr char kMsAscendFusionSwitch[] = "MS_ASCEND_FUSION_SWITCH";
+constexpr char kMsAscendFusionSwitch[] = "MS_DEV_ASCEND_FUSION_SWITCH";
 }  // namespace
 
 bool PassWithSwitch::Run(const FuncGraphPtr &func_graph) {

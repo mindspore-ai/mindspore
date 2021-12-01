@@ -19,7 +19,7 @@
 #undef private
 
 namespace {
-constexpr char kMsAscendFusionSwitch[] = "MS_ASCEND_FUSION_SWITCH";
+constexpr char kMsAscendFusionSwitch[] = "MS_DEV_ASCEND_FUSION_SWITCH";
 }  // namespace
 namespace mindspore {
 namespace opt {
@@ -95,7 +95,7 @@ class TestAscendPassControl : public UT::Common {
 };
 
 /// Feature: Pass Switch
-/// Description: no MS_ASCEND_FUSION_SWITCH set and run pass
+/// Description: no MS_DEV_ASCEND_FUSION_SWITCH set and run pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_no_env_for_pass) {
   (void)unsetenv(kMsAscendFusionSwitch);
@@ -111,7 +111,7 @@ TEST_F(TestAscendPassControl, test_no_env_for_pass) {
 }
 
 /// Feature: Pass Switch
-/// Description: set MS_ASCEND_FUSION_SWITCH as "on" and run pass
+/// Description: set MS_DEV_ASCEND_FUSION_SWITCH as "on" and run pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_env_on_for_pass_0) {
   (void)setenv(kMsAscendFusionSwitch, "on", 1);
@@ -127,7 +127,7 @@ TEST_F(TestAscendPassControl, test_env_on_for_pass_0) {
 }
 
 /// Feature: Pass Switch
-/// Description: set invalid MS_ASCEND_FUSION_SWITCH and run pass
+/// Description: set invalid MS_DEV_ASCEND_FUSION_SWITCH and run pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_env_on_for_pass_1) {
   (void)setenv(kMsAscendFusionSwitch, "invalidxxxxxxxx", 1);
@@ -143,7 +143,7 @@ TEST_F(TestAscendPassControl, test_env_on_for_pass_1) {
 }
 
 /// Feature: Pass Switch
-/// Description: set MS_ASCEND_FUSION_SWITCH as "0" and run pass
+/// Description: set MS_DEV_ASCEND_FUSION_SWITCH as "0" and run pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pass_0) {
   (void)setenv(kMsAscendFusionSwitch, "0", 1);
@@ -159,7 +159,7 @@ TEST_F(TestAscendPassControl, test_env_off_for_pass_0) {
 }
 
 /// Feature: Pass Switch
-/// Description: set MS_ASCEND_FUSION_SWITCH as "off" and run pass
+/// Description: set MS_DEV_ASCEND_FUSION_SWITCH as "off" and run pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pass_1) {
   (void)setenv(kMsAscendFusionSwitch, "off", 1);
@@ -175,7 +175,7 @@ TEST_F(TestAscendPassControl, test_env_off_for_pass_1) {
 }
 
 /// Feature: Pass Switch
-/// Description: set MS_ASCEND_FUSION_SWITCH as "OFF" and run pass
+/// Description: set MS_DEV_ASCEND_FUSION_SWITCH as "OFF" and run pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pass_2) {
   (void)setenv(kMsAscendFusionSwitch, "OFF", 1);
@@ -191,7 +191,7 @@ TEST_F(TestAscendPassControl, test_env_off_for_pass_2) {
 }
 
 /// Feature: Pass Switch
-/// Description: no MS_ASCEND_FUSION_SWITCH set and run pattern pass
+/// Description: no MS_DEV_ASCEND_FUSION_SWITCH set and run pattern pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_no_env_for_pattern_pass) {
   (void)unsetenv(kMsAscendFusionSwitch);
@@ -209,7 +209,7 @@ TEST_F(TestAscendPassControl, test_no_env_for_pattern_pass) {
 }
 
 /// Feature: Pass Switch
-/// Description: MS_ASCEND_FUSION_SWITCH set on and run pattern pass
+/// Description: MS_DEV_ASCEND_FUSION_SWITCH set on and run pattern pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_env_on_for_pattern_pass) {
   (void)setenv(kMsAscendFusionSwitch, "on", 1);
@@ -227,7 +227,7 @@ TEST_F(TestAscendPassControl, test_env_on_for_pattern_pass) {
 }
 
 /// Feature: Pass Switch
-/// Description: MS_ASCEND_FUSION_SWITCH set invalid and run pattern pass
+/// Description: MS_DEV_ASCEND_FUSION_SWITCH set invalid and run pattern pass
 /// Expectation: switch pass run, plant pass run
 TEST_F(TestAscendPassControl, test_env_invalid_for_pattern_pass) {
   (void)setenv(kMsAscendFusionSwitch, "invalid_xxasdasdasfsldjmg", 1);
@@ -245,7 +245,7 @@ TEST_F(TestAscendPassControl, test_env_invalid_for_pattern_pass) {
 }
 
 /// Feature: Pass Switch
-/// Description: MS_ASCEND_FUSION_SWITCH set off and run pattern pass
+/// Description: MS_DEV_ASCEND_FUSION_SWITCH set off and run pattern pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pattern_pass_0) {
   (void)setenv(kMsAscendFusionSwitch, "off", 1);
@@ -263,7 +263,7 @@ TEST_F(TestAscendPassControl, test_env_off_for_pattern_pass_0) {
 }
 
 /// Feature: Pass Switch
-/// Description: MS_ASCEND_FUSION_SWITCH set OFF and run pattern pass
+/// Description: MS_DEV_ASCEND_FUSION_SWITCH set OFF and run pattern pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pattern_pass_1) {
   (void)setenv(kMsAscendFusionSwitch, "OFF", 1);
@@ -281,7 +281,7 @@ TEST_F(TestAscendPassControl, test_env_off_for_pattern_pass_1) {
 }
 
 /// Feature: Pass Switch
-/// Description: MS_ASCEND_FUSION_SWITCH set 0 and run pattern pass
+/// Description: MS_DEV_ASCEND_FUSION_SWITCH set 0 and run pattern pass
 /// Expectation: switch pass dont run, plant pass run
 TEST_F(TestAscendPassControl, test_env_off_for_pattern_pass_2) {
   (void)setenv(kMsAscendFusionSwitch, "0", 1);

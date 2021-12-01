@@ -160,6 +160,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr char kDisablePrebuildEnv[] = "MS_DEV_DISABLE_PREBUILD";
+
 void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
@@ -491,7 +493,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     MS_LOG(INFO) << "Dynamic shape skip fusion";
     return;
   }
-  auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
+  auto pre_build = common::GetEnv(kDisablePrebuildEnv);
   if (pre_build.empty() || (pre_build != "true" && pre_build != "True")) {
     auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
     build_manager.TbePreBuild(kernel_graph);
