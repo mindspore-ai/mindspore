@@ -16,13 +16,13 @@
 
 #include "src/scheduler.h"
 #include <map>
-#include <set>
 #include <queue>
 #include <string>
 #include <vector>
 #include <algorithm>
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#include "src/runtime/kernel/arm/base/partial_fusion.h"
 #endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
@@ -54,24 +54,10 @@
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 #include "include/registry/register_kernel_interface.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-#include "src/runtime/kernel/arm/base/partial_fusion.h"
-#endif
 
 namespace mindspore::lite {
 namespace {
 constexpr int kMainSubGraphIndex = 0;
-kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &&input_kernels,
-                                             std::vector<kernel::LiteKernel *> &&output_kernels,
-                                             const std::vector<kernel::LiteKernel *> &kernels, kernel::Kernel *kernel) {
-  auto sub_kernel = new (std::nothrow) kernel::CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
-  if (sub_kernel == nullptr) {
-    MS_LOG(ERROR) << "create custom subgraph failed!";
-    delete kernel;
-    return nullptr;
-  }
-  return sub_kernel;
-}
 }  // namespace
 
 namespace {
@@ -1126,84 +1112,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
 }
 
 namespace {
-kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                             const std::vector<lite::Tensor *> *in_tensors,
-                                             const std::vector<lite::Tensor *> *out_tensors, kernel::SubGraphType type,
-                                             const InnerContext &context, int schema_version) {
-  if (type == kernel::kApuSubGraph) {
-    return nullptr;
-  }
-  std::vector<Tensor *> input_tensors;
-  std::vector<Tensor *> output_tensors;
-  if (in_tensors != nullptr) {
-    input_tensors = *in_tensors;
-  } else {
-    input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
-  }
-  if (out_tensors != nullptr) {
-    output_tensors = *out_tensors;
-  } else {
-    output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
-  }
-  auto inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, input_tensors, output_tensors, &context);
-  if (inner_kernel == nullptr) {
-    return nullptr;
-  }
-  std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
-  std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
-  kernel::SubGraphKernel *sub_graph = nullptr;
-  if (type == kernel::kCustomSubGraph) {
-    sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
-  }
-  if (type == kernel::kGpuFp16SubGraph || type == kernel::kGpuFp32SubGraph) {
-#if GPU_OPENCL
-    sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
-      delete inner_kernel;
-      return nullptr;
-    }
-#else
-    delete inner_kernel;
-    return nullptr;
-#endif
-  }
-  if (type == kernel::kCpuFP16SubGraph) {
-#ifdef ENABLE_FP16
-    sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "FP16 subgraph new failed.";
-      delete inner_kernel;
-      return nullptr;
-    }
-    for (auto out_tensor : output_tensors) {
-      if (out_tensor->data_type() == kNumberTypeFloat32) {
-        out_tensor->set_data_type(kNumberTypeFloat16);
-      }
-    }
-#else
-    delete inner_kernel;
-    MS_LOG(ERROR) << "FP16 subgraph is not supported!";
-    return nullptr;
-#endif
-  }
-  if (type == kernel::kCpuFP32SubGraph) {
-    sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "FP32 subgraph new failed.";
-      delete inner_kernel;
-      return nullptr;
-    }
-  }
-  if (sub_graph == nullptr) {
-    MS_LOG(ERROR) << "create sub graph failed.";
-    return nullptr;
-  }
-  sub_graph->set_context(&context);
-  sub_graph->SetSchemaVersion(schema_version);
-  return sub_graph;
-}
-
 kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, const InnerContext &context,
                                            bool is_controlflow = false) {
   if (kernel == nullptr) {
@@ -1349,8 +1257,8 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
   }
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
-  auto subgraph_kernel =
-    CreateSubGraphKernel(kernels, &in_tensors, &out_tensors, cur_sub_graph_type, *context_, schema_version_);
+  auto subgraph_kernel = kernel::LiteKernelUtil::CreateSubGraphKernel(kernels, &in_tensors, &out_tensors,
+                                                                      cur_sub_graph_type, *context_, schema_version_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
     return nullptr;
@@ -1552,7 +1460,8 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
     }
     sub_kernels.emplace_back(cur_kernel);
   }
-  return CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context, schema_version);
+  return kernel::LiteKernelUtil::CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context,
+                                                      schema_version);
 }
 }  // namespace
 
@@ -1753,8 +1662,8 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
     }
   }
   auto cur_subgraph_type = PartialSubGraphType(main_graph_kernels);
-  auto subgraph_kernel =
-    CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr, cur_subgraph_type, *context_, schema_version_);
+  auto subgraph_kernel = kernel::LiteKernelUtil::CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr,
+                                                                      cur_subgraph_type, *context_, schema_version_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "create main graph for control flow model failed.";
     return RET_ERROR;

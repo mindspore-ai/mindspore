@@ -19,6 +19,8 @@
 #include <vector>
 #include <set>
 #include "src/lite_kernel.h"
+#include "src/sub_graph_kernel.h"
+#include "src/inner_context.h"
 
 namespace mindspore::kernel {
 
@@ -32,12 +34,18 @@ class LiteKernelUtil {
   static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchTypeCall(kernel::LiteKernel *kernel);
+  static bool IsNonTailCall(kernel::LiteKernel *node);
 #endif
   static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                    const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const kernel::LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
+  static kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
+                                                      const std::vector<lite::Tensor *> *in_tensors,
+                                                      const std::vector<lite::Tensor *> *out_tensors,
+                                                      kernel::SubGraphType type, const lite::InnerContext &context,
+                                                      int schema_version);
 
  private:
   static std::set<lite::Tensor *> AllOutTensor(const std::vector<kernel::LiteKernel *> &kernels);

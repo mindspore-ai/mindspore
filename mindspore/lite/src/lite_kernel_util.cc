@@ -15,10 +15,16 @@
  */
 
 #include "src/lite_kernel_util.h"
+#include <utility>
 #include <queue>
 #include <unordered_map>
 #include <set>
 #include "src/sub_graph_kernel.h"
+#include "nnacl/call_parameter.h"
+#if GPU_OPENCL
+#include "src/runtime/kernel/opencl/opencl_subgraph.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
+#endif
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -214,6 +220,11 @@ bool LiteKernelUtil::IsSwitchTypeCall(kernel::LiteKernel *kernel) {
 
   return false;
 }
+
+bool LiteKernelUtil::IsNonTailCall(kernel::LiteKernel *node) {
+  return node->type() == schema::PrimitiveType_Call &&
+         !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
+}
 #endif
 
 kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
@@ -269,4 +280,96 @@ void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *>
   }
 }
 
+namespace {
+kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &&input_kernels,
+                                             std::vector<kernel::LiteKernel *> &&output_kernels,
+                                             const std::vector<kernel::LiteKernel *> &kernels, kernel::Kernel *kernel) {
+  auto sub_kernel = new (std::nothrow) kernel::CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
+  if (sub_kernel == nullptr) {
+    MS_LOG(ERROR) << "create custom subgraph failed!";
+    delete kernel;
+    return nullptr;
+  }
+  return sub_kernel;
+}
+}  // namespace
+
+kernel::SubGraphKernel *LiteKernelUtil::CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
+                                                             const std::vector<lite::Tensor *> *in_tensors,
+                                                             const std::vector<lite::Tensor *> *out_tensors,
+                                                             kernel::SubGraphType type,
+                                                             const lite::InnerContext &context, int schema_version) {
+  if (type == kernel::kApuSubGraph) {
+    return nullptr;
+  }
+  std::vector<lite::Tensor *> input_tensors;
+  std::vector<lite::Tensor *> output_tensors;
+  if (in_tensors != nullptr) {
+    input_tensors = *in_tensors;
+  } else {
+    input_tensors = SubgraphInputTensors(kernels);
+  }
+  if (out_tensors != nullptr) {
+    output_tensors = *out_tensors;
+  } else {
+    output_tensors = SubgraphOutputTensors(kernels);
+  }
+  auto inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, input_tensors, output_tensors, &context);
+  if (inner_kernel == nullptr) {
+    return nullptr;
+  }
+  std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputNodes(kernels);
+  std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputNodes(kernels);
+  kernel::SubGraphKernel *sub_graph = nullptr;
+  if (type == kernel::kCustomSubGraph) {
+    sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
+  }
+  if (type == kernel::kGpuFp16SubGraph || type == kernel::kGpuFp32SubGraph) {
+#if GPU_OPENCL
+    sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+    if (sub_graph == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
+      delete inner_kernel;
+      return nullptr;
+    }
+#else
+    delete inner_kernel;
+    return nullptr;
+#endif
+  }
+  if (type == kernel::kCpuFP16SubGraph) {
+#ifdef ENABLE_FP16
+    sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+    if (sub_graph == nullptr) {
+      MS_LOG(ERROR) << "FP16 subgraph new failed.";
+      delete inner_kernel;
+      return nullptr;
+    }
+    for (auto out_tensor : output_tensors) {
+      if (out_tensor->data_type() == kNumberTypeFloat32) {
+        out_tensor->set_data_type(kNumberTypeFloat16);
+      }
+    }
+#else
+    delete inner_kernel;
+    MS_LOG(ERROR) << "FP16 subgraph is not supported!";
+    return nullptr;
+#endif
+  }
+  if (type == kernel::kCpuFP32SubGraph) {
+    sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+    if (sub_graph == nullptr) {
+      MS_LOG(ERROR) << "FP32 subgraph new failed.";
+      delete inner_kernel;
+      return nullptr;
+    }
+  }
+  if (sub_graph == nullptr) {
+    MS_LOG(ERROR) << "create sub graph failed.";
+    return nullptr;
+  }
+  sub_graph->set_context(&context);
+  sub_graph->SetSchemaVersion(schema_version);
+  return sub_graph;
+}
 }  // namespace mindspore::kernel

@@ -73,7 +73,8 @@ enum SubGraphType {
   kGpuFp16SubGraph,
   kNpuSubGraph,
   kApuSubGraph,
-  kCustomSubGraph
+  kCustomSubGraph,
+  kStackSubGraph
 };
 
 class LiteKernel {
