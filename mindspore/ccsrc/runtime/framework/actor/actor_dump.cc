@@ -66,7 +66,7 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
     MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes, arrow num:"
                       << actor->output_data_arrows().size() << " node num:" << actor->output_data_nodes().size()
-                      << " for actor:" << actor->GetAID();
+                      << " for actor:" << actor->GetAID().Name();
   }
   if (actor->output_data_arrows().size() > 0) {
     ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() << "\n ";

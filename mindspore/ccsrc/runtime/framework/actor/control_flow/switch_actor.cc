@@ -35,7 +35,7 @@ void SwitchActor::Init() {
   // Init output data.
   for (const auto &data_arrow : output_data_arrows_) {
     if (data_arrow->from_output_index_ != 0) {
-      MS_LOG(ERROR) << "Invalid from index:" << data_arrow->from_output_index_ << " for actor:" << GetAID();
+      MS_LOG(EXCEPTION) << "Invalid from index:" << data_arrow->from_output_index_ << " for actor:" << GetAID().Name();
     }
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
     MS_EXCEPTION_IF_NULL(data);

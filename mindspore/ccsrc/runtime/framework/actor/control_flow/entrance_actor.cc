@@ -82,8 +82,10 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
     for (auto &input_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(input_data);
       if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
-        MS_LOG(ERROR) << "The input index is out of range, need:" << input_data->index_
-                      << " current:" << input_device_tensors_.size() << " for actor:" << GetAID();
+        std::string error_info = "The input index is out of range, need:" + std::to_string(input_data->index_) +
+                                 " current:" + std::to_string(input_device_tensors_.size()) +
+                                 " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       MS_EXCEPTION_IF_NULL(input_data->data_);
       input_device_tensors_[input_data->index_] = input_data->data_;
@@ -98,13 +100,17 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
     // Collect the device tensors.
     if (device_tensors.size() + partials.size() != formal_parameters_.size()) {
-      MS_LOG(ERROR) << "Invalid input num, need:" << formal_parameters_.size()
-                    << " device tensor num:" << device_tensors.size() << " partial num:" << partials.size();
+      std::string error_info = "Invalid input num, need:" + std::to_string(formal_parameters_.size()) +
+                               " device tensor num:" + std::to_string(device_tensors.size()) +
+                               " partial num:" + std::to_string(partials.size());
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     for (const auto &device_tensor : device_tensors) {
       if (device_tensor.first >= input_device_tensors_.size()) {
-        MS_LOG(ERROR) << "Invalid device tensor index:" << device_tensor.first
-                      << " vector size:" << input_device_tensors_.size() << " for actor:" << GetAID();
+        std::string error_info = "Invalid device tensor index:" + std::to_string(device_tensor.first) +
+                                 " vector size:" + std::to_string(input_device_tensors_.size()) +
+                                 " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       input_device_tensors_[device_tensor.first] = device_tensor.second;
     }
@@ -112,8 +118,9 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
     // Collect the partials.
     for (const auto &partial : partials) {
       if (partial.first >= input_partials_.size()) {
-        MS_LOG(ERROR) << "Invalid partial index:" << partial.first << " vector size:" << partials.size()
-                      << " for actor:" << GetAID();
+        std::string error_info = "Invalid partial index:" + std::to_string(partial.first) +
+                                 " vector size:" + std::to_string(partials.size()) + " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       input_partials_[partial.first] = partial.second;
     }
@@ -126,7 +133,8 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
     }
     const auto &data = input_device_tensors_[i];
     if (data == nullptr) {
-      MS_LOG(ERROR) << "Input data index:" << i << " for actor:" << GetAID() << " is empty!";
+      std::string error_info = "Input data index:" + std::to_string(i) + " for actor:" + GetAID().Name() + " is empty!";
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     for (auto &output_data : output_data_by_output_index_[i]) {
       MS_EXCEPTION_IF_NULL(output_data);

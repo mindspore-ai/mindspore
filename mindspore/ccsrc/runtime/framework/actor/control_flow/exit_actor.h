@@ -57,7 +57,7 @@ class ExitActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
-  void CopyDeviceAddress();
+  void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,
   // and partial arrows will have branch.

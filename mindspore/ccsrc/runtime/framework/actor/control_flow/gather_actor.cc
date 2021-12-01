@@ -64,13 +64,17 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
     // an real parameter, so the subsequent index needs to be reduced by one.
     for (auto &device_tensor : output.device_tensors_) {
       if (device_tensor.first == 0) {
-        MS_LOG(ERROR) << "Invalid device tensor index:" << device_tensor.first << " for actor:" << GetAID();
+        std::string error_info =
+          "Invalid device tensor index:" + std::to_string(device_tensor.first) + " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       device_tensor.first--;
     }
     for (auto &partial : output.partials_) {
       if (partial.first == 0) {
-        MS_LOG(ERROR) << "Invalid partial index:" << partial.first << " for actor:" << GetAID();
+        std::string error_info =
+          "Invalid partial index:" + std::to_string(partial.first) + " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       partial.first--;
     }
