@@ -1335,13 +1335,7 @@ void KernelGraph::SetOptimizerFlag() {
   has_optimizer_ = false;
   for (const auto &cnode : execution_order_) {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto node_name = AnfAlgo::GetCNodeName(cnode);
-    if (AnfAlgo::HasNodeAttr(kAttrAsync, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrAsync)) {
-      continue;
-    }
-    if (kOptOperatorSet.find(node_name) != kOptOperatorSet.end()) {
-      has_optimizer_ = true;
-    } else if (node_name.find("Assign") == string::npos) {
+    if (!AnfAlgo::IsUpdateParameterKernel(cnode)) {
       continue;
     }
     for (auto &input : cnode->inputs()) {

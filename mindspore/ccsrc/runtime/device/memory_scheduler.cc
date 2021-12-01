@@ -45,10 +45,10 @@ void MemScheduler::Clear() {
   if (mem_handler_ == nullptr) {
     return;
   }
-  for (auto &item : high_priority_device_ptr_) {
+  for (auto &item : mem_result_) {
     mem_handler_->FreeDevice(item.second);
   }
-  high_priority_device_ptr_.clear();
+  mem_result_.clear();
 }
 
 void MemScheduler::ClearAllocatedMem() {
@@ -57,12 +57,11 @@ void MemScheduler::ClearAllocatedMem() {
   }
   for (auto &item : mem_result_) {
     const auto device_ptr = item.second;
-    if (device_ptr == nullptr) {
+    if (device_ptr != nullptr) {
       mem_handler_->FreeDevice(device_ptr);
     }
   }
   mem_result_.clear();
-  high_priority_device_ptr_.clear();
   for (const auto &item : swap_host_ptr_) {
     const auto host_ptr = item.second;
     if (host_ptr != nullptr) {
@@ -125,22 +124,19 @@ bool MemScheduler::PreCompute(void *stream) {
     MS_EXCEPTION_IF_NULL(event);
     MS_LOG(DEBUG) << "Pre compute " << current_step_ << ": " << event->key << " v " << event->type;
     if (event->type == kInit || event->type == kMalloc) {
-      auto priority = mem_priority_[event->key];
-      auto iter = high_priority_device_ptr_.find(event->key);
-      if (priority != kMemPriorityLow && iter != high_priority_device_ptr_.end()) {
-        MS_EXCEPTION_IF_NULL(iter->second);
-        mem_result_[event->key] = iter->second;
-        continue;
-      }
-      auto device_ptr = mem_handler_->MallocDevice(event->mem_size);
-      if (device_ptr == nullptr) {
-        return false;
-      }
-      if (priority != kMemPriorityLow) {
-        high_priority_device_ptr_[event->key] = device_ptr;
+      const auto &iter = mem_result_.find(event->key);
+      const bool new_malloc = iter == mem_result_.end();
+      void *device_ptr;
+      if (new_malloc) {
+        device_ptr = mem_handler_->MallocDevice(event->mem_size);
+        if (device_ptr == nullptr) {
+          return false;
+        }
+      } else {
+        device_ptr = iter->second;
       }
 
-      if (event->type == kInit) {
+      if (event->type == kInit && (new_malloc || high_priority_mem_need_init_.count(event->key) != 0)) {
         auto host_ptr = init_host_ptr_[event->key];
         MS_EXCEPTION_IF_NULL(host_ptr);
         mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
@@ -160,9 +156,6 @@ bool MemScheduler::PreCompute(void *stream) {
       MS_EXCEPTION_IF_NULL(host_ptr);
       mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
       mem_result_[event->key] = device_ptr;
-      if (mem_priority_[event->key] == kMemPriorityHigh) {
-        high_priority_device_ptr_[event->key] = device_ptr;
-      }
       if (!from_init) {
         mem_handler_->FreeHost(host_ptr);
         (void)swap_host_ptr_.erase(event->key);
@@ -211,9 +204,6 @@ bool MemScheduler::PostCompute(void *stream) {
       mem_handler_->SwapOut(device_ptr, host_ptr, event->mem_size, stream);
       mem_handler_->FreeDevice(device_ptr);
       (void)mem_result_.erase(event->key);
-      if (mem_priority_[event->key] == kMemPriorityHigh) {
-        high_priority_device_ptr_.erase(event->key);
-      }
     }
   }
   ++current_step_;
@@ -225,7 +215,8 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
 
   if (strategy_ == nullptr) {
-    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_, total_step_);
+    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_,
+                                                     high_priority_updated_step_, total_step_);
     if (manual_offload_keys_.empty()) {
       compute_time_.resize(total_step_);
     } else {

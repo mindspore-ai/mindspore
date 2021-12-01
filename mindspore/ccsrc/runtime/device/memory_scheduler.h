@@ -53,6 +53,14 @@ class MemScheduler {
 
   void *GetOrMalloc(const void *key, size_t mem_size, MemPriority priority = kMemPriorityLow);
 
+  bool HasDeviceMem(const void *key) const { return mem_result_.find(key) != mem_result_.end(); }
+
+  void UpdateHighPriorityMem(const void *key) {
+    if (need_record_event_) {
+      high_priority_updated_step_[key].emplace_back(current_step_);
+    }
+  }
+
   void SetTotalStep(size_t step) {
     total_step_ = step;
     step_events_.resize(total_step_);
@@ -72,6 +80,10 @@ class MemScheduler {
 
   void SetOffload(const void *key) { (void)manual_offload_keys_.insert(key); }
 
+  void AddMemNeedInit(const void *key) { high_priority_mem_need_init_.insert(key); }
+
+  void ClearMemNeedInit() { high_priority_mem_need_init_.clear(); }
+
  private:
   void Record(const void *key, const MemEventType &event_type, size_t mem_size = 0);
 
@@ -86,7 +98,8 @@ class MemScheduler {
   std::map<const void *, void *> mem_result_;
   std::map<const void *, void *> init_host_ptr_;
   std::map<const void *, void *> swap_host_ptr_;
-  std::map<const void *, void *> high_priority_device_ptr_;
+  std::map<const void *, std::vector<size_t>> high_priority_updated_step_;
+  std::set<const void *> high_priority_mem_need_init_;
   size_t total_step_{0};
   size_t current_step_{0};
   bool need_record_event_{true};
