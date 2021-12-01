@@ -27,7 +27,7 @@ def run_compiler(op_json, attrs=None):
     Returns:
         None
     """
-    from .get_file_path import get_akg_path
+    from get_file_path import get_akg_path
     sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
@@ -35,18 +35,6 @@ def run_compiler(op_json, attrs=None):
     if not res:
         raise ValueError("Compile error")
 
-def run_compiler_with_json_name(op_json_name, attrs=None):
-    """
-    Run AKG compiler with json file name
-
-    Args:
-        op_json_name (str): json file name of the op
-
-    Returns:
-        None
-    """
-    with open(op_json_name, 'r') as f:
-        return run_compiler(f.read().strip(), attrs)
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
