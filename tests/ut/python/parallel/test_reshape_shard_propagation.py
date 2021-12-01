@@ -334,3 +334,56 @@ def test_reshape_depend_reshape():
     net = GradWrapTwoInput(NetWithLoss1(Net()))
     with pytest.raises(RuntimeError):
         compile_graph_two_input(net, device_num, x, y)
+
+def test_reshape_auto_8():
+    """
+    Feature: Sharding propagation for common parameter being used by multiple ops.
+    Description: relu->add->mul->mean
+    Expectation: compile done without error.
+    """
+    device_num = 8
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.gamma = Parameter(Tensor(np.ones([2048, 2048]), dtype=ms.float32), name="gamma")
+            self.add = P.TensorAdd()
+            self.relu = P.ReLU().shard(((1, 1),))
+            self.mul2 = P.MatMul().shard(((1, 1), (1, 8)))
+            self.mean = P.ReduceMean(keep_dims=True)
+
+        def construct(self, x):
+            out = self.add(x, self.relu(self.gamma))
+            out = self.mul2(out, self.gamma)
+            out = self.mean(out, -1)
+            return out
+
+    x = Tensor(np.ones([2048, 2048]), dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net()))
+    with pytest.raises(RuntimeError):
+        compile_graph(net, device_num, x)
+
+def test_reshape_auto_9():
+    """
+    Feature: Sharding propagation for common parameter being used by multiple ops.
+    Description: relu->add->mul->mean
+    Expectation: compile done without error.
+    """
+    device_num = 8
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.gamma = Parameter(Tensor(np.ones([2048, 2048]), dtype=ms.float32), name="gamma")
+            self.add = P.TensorAdd()
+            self.relu = P.ReLU().shard(((1, 1),))
+            self.mul2 = P.MatMul().shard(((8, 1), (1, 1)))
+            self.mean = P.ReduceMean(keep_dims=True)
+
+        def construct(self, x):
+            out = self.add(x, self.relu(self.gamma))
+            out = self.mul2(out, self.gamma)
+            out = self.mean(out, -1)
+            return out
+
+    x = Tensor(np.ones([2048, 2048]), dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net()))
+    compile_graph(net, device_num, x)

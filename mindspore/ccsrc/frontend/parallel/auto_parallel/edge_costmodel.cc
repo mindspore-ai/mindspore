@@ -520,8 +520,20 @@ bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra
   }
   auto cost = GetCostByStrategyPair({prev_stra, next_stra});
   if (cost == nullptr || cost->communication_cost_ > 0.0) {
+    MS_LOG(INFO) << "The edge " << edge_name_ << "'s strategy: ";
+    PrintStrategy(prev_stra);
     PrintStrategy(next_stra);
-    PrintStrategy(next_stra);
+    if (prev_op_->IsTmpIdentity()) {
+      MS_LOG(ERROR) << "The parameter: " << prev_op_->refkey_parameter_name()
+                    << " has been used by operators with "
+                       "different sharding strategies. These operators are: ";
+      auto const &succ_edges = prev_op_->succ_edges();
+      for (auto const &succ_edge : succ_edges) {
+        MS_LOG(ERROR) << succ_edge->next_operator()->name() << ", the corresponding fullname is: "
+                      << succ_edge->next_operator()->cnode()->fullname_with_scope();
+      }
+      MS_LOG(EXCEPTION) << "Configure these operators with consistent sharding strategies.";
+    }
     MS_LOG(WARNING) << "There are redistribution cost occurs at edge: " << edge_name() << ".";
     return false;
   }
