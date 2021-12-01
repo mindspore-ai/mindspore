@@ -50,23 +50,13 @@ void CLUENode::Print(std::ostream &out) const {
 
 Status CLUENode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUENode", dataset_files_));
-
-  RETURN_IF_NOT_OK(ValidateStringValue("CLUENode", task_, {"AFQMC", "TNEWS", "IFLYTEK", "CMNLI", "WSC", "CSL"}));
-
-  RETURN_IF_NOT_OK(ValidateStringValue("CLUENode", usage_, {"train", "test", "eval"}));
-
-  if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
-    std::string err_msg = "CLUENode: Invalid ShuffleMode, check input value of enum.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  if (num_samples_ < 0) {
-    std::string err_msg = "CLUENode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CLUENode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUEDataset", dataset_files_));
+  RETURN_IF_NOT_OK(ValidateStringValue("CLUEDataset", task_, {"AFQMC", "TNEWS", "IFLYTEK", "CMNLI", "WSC", "CSL"}));
+  RETURN_IF_NOT_OK(ValidateStringValue("CLUEDataset", usage_, {"train", "test", "eval"}));
+  RETURN_IF_NOT_OK(ValidateEnum("CLUEDataset", "ShuffleMode", shuffle_,
+                                {ShuffleMode::kFalse, ShuffleMode::kFiles, ShuffleMode::kGlobal}));
+  RETURN_IF_NOT_OK(ValidateScalar("CLUEDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CLUEDataset", num_shards_, shard_id_));
 
   return Status::OK();
 }
@@ -250,15 +240,14 @@ Status CLUENode::to_json(nlohmann::json *out_json) {
 }
 
 Status CLUENode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "task", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_samples", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", kCLUENode));
   std::vector<std::string> dataset_files = json_obj["dataset_dir"];
   std::string task = json_obj["task"];
   std::string usage = json_obj["usage"];

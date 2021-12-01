@@ -24,7 +24,7 @@ Status NativeRuntimeContext::Terminate() {
   if (tree_consumer_ != nullptr) {
     return TerminateImpl();
   }
-  MS_LOG(WARNING) << "Dataset TreeConsumer was not initialized.";
+  MS_LOG(INFO) << "Dataset TreeConsumer was not initialized.";
   return Status::OK();
 }
 
@@ -35,7 +35,9 @@ Status NativeRuntimeContext::TerminateImpl() {
 
 NativeRuntimeContext::~NativeRuntimeContext() {
   Status rc = NativeRuntimeContext::Terminate();
-  if (rc.IsError()) MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
+  }
 }
 
 TreeConsumer *RuntimeContext::GetConsumer() { return tree_consumer_.get(); }

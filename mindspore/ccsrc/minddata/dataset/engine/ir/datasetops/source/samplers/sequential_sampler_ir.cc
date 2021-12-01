@@ -64,7 +64,7 @@ Status SequentialSamplerObj::to_json(nlohmann::json *const out_json) {
 #ifndef ENABLE_ANDROID
 Status SequentialSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
                                        std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("start_index") != json_obj.end(), "Failed to find start_index");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "start_index", "SequentialSampler"));
   int64_t start_index = json_obj["start_index"];
   *sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
   // Run common code in super class to add children samplers
@@ -89,11 +89,14 @@ std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDat
   return mind_sampler;
 }
 #endif
+
 std::shared_ptr<SamplerObj> SequentialSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

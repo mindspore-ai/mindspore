@@ -49,29 +49,21 @@ void FakeImageNode::Print(std::ostream &out) const {
 Status FakeImageNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("FakeImageNode", sampler_));
-  if (num_images_ <= 0) {
-    std::string err_msg = "FakeImageNode: num_images must be greater than 0, but got: " + std::to_string(num_images_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("FakeImageDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateScalar("FakeImageDataset", "num_images", num_images_, {0}, true));
 
   if (image_size_.size() != 3) {
-    std::string err_msg =
-      "FakeImageNode: image_size expecting size 3, but got image_size.size(): " + std::to_string(image_size_.size());
+    std::string err_msg = "FakeImageDataset: 'image_size' expecting size 3, but got image_size.size(): " +
+                          std::to_string(image_size_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   for (auto i = 0; i < 3; i++) {
-    if (image_size_[i] <= 0) {
-      std::string err_msg = "FakeImageNode: image_size[" + std::to_string(i) +
-                            "] must be greater than 0, but got: " + std::to_string(image_size_[i]);
-      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
+    RETURN_IF_NOT_OK(
+      ValidateScalar("FakeImageDataset", "image_size[" + std::to_string(i) + "]", image_size_[i], {0}, true));
   }
-  if (num_classes_ <= 0) {
-    std::string err_msg = "FakeImageNode: num_classes must be greater than 0, but got: " + std::to_string(num_classes_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+
+  RETURN_IF_NOT_OK(ValidateScalar("FakeImageDataset", "num_classes", num_classes_, {0}, true));
   return Status::OK();
 }
 

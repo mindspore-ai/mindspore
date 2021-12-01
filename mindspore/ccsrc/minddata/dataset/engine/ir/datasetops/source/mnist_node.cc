@@ -44,11 +44,11 @@ void MnistNode::Print(std::ostream &out) const { out << Name(); }
 
 Status MnistNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistNode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistDataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("MnistNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("MnistDataset", sampler_));
 
-  RETURN_IF_NOT_OK(ValidateStringValue("MnistNode", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateStringValue("MnistDataset", usage_, {"train", "test", "all"}));
 
   return Status::OK();
 }
@@ -117,11 +117,10 @@ Status MnistNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status MnistNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kMnistNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;

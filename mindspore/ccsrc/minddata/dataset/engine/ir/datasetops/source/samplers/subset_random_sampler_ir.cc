@@ -67,7 +67,7 @@ Status SubsetRandomSamplerObj::to_json(nlohmann::json *const out_json) {
 #ifndef ENABLE_ANDROID
 Status SubsetRandomSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
                                          std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("indices") != json_obj.end(), "Failed to find indices");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "indices", "SubsetRandomSampler"));
   std::vector<int64_t> indices = json_obj["indices"];
   *sampler = std::make_shared<SubsetRandomSamplerObj>(indices, num_samples);
   // Run common code in super class to add children samplers
@@ -80,7 +80,9 @@ std::shared_ptr<SamplerObj> SubsetRandomSamplerObj::SamplerCopy() {
   auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

@@ -103,27 +103,27 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 Status MapNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (operations_.empty()) {
-    std::string err_msg = "MapNode: No operation is specified.";
+    std::string err_msg = "Map: No 'operations' are specified.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (const auto &op : operations_) {
     if (op == nullptr) {
-      std::string err_msg = "MapNode: operation must not be nullptr.";
+      std::string err_msg = "Map: 'operations' must not be nullptr.";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     } else {
       RETURN_IF_NOT_OK(op->ValidateParams());
     }
   }
   if (!input_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "input_columns", input_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Map", "input_columns", input_columns_));
   }
 
   if (!output_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "output_columns", output_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Map", "output_columns", output_columns_));
   }
 
   if (!project_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "project_columns", project_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Map", "project_columns", project_columns_));
   }
 
   return Status::OK();
@@ -191,12 +191,11 @@ Status MapNode::to_json(nlohmann::json *out_json) {
 #ifndef ENABLE_ANDROID
 Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                           std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("project_columns") != json_obj.end(), "Failed to find project_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("operations") != json_obj.end(), "Failed to find operations");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kMapNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "input_columns", kMapNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "output_columns", kMapNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "project_columns", kMapNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "operations", kMapNode));
   std::vector<std::string> input_columns = json_obj["input_columns"];
   std::vector<std::string> output_columns = json_obj["output_columns"];
   std::vector<std::string> project_columns = json_obj["project_columns"];

@@ -110,12 +110,12 @@ Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
 #ifndef ENABLE_ANDROID
 Status DistributedSamplerObj::from_json(nlohmann::json json_obj, int64_t num_samples,
                                         std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("seed") != json_obj.end(), "Failed to find seed");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("offset") != json_obj.end(), "Failed to find offset");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("even_dist") != json_obj.end(), "Failed to find even_dist");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", "DistributedSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", "DistributedSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", "DistributedSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "seed", "DistributedSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "offset", "DistributedSampler"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "even_dist", "DistributedSampler"));
   int64_t num_shards = json_obj["num_shards"];
   int64_t shard_id = json_obj["shard_id"];
   bool shuffle = json_obj["shuffle"];
@@ -135,7 +135,7 @@ std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
     std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
   }
   return sampler;
 }

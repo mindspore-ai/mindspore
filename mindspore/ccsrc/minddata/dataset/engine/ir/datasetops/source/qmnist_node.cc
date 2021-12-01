@@ -51,9 +51,10 @@ void QMnistNode::Print(std::ostream &out) const {
 
 Status QMnistNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("QMnistNode", dataset_dir_));
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("QMnistNode", sampler_));
-  RETURN_IF_NOT_OK(ValidateStringValue("QMnistNode", usage_, {"train", "test", "test10k", "test50k", "nist", "all"}));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("QMnistDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("QMnistDataset", sampler_));
+  RETURN_IF_NOT_OK(
+    ValidateStringValue("QMnistDataset", usage_, {"train", "test", "test10k", "test50k", "nist", "all"}));
   return Status::OK();
 }
 
@@ -128,12 +129,11 @@ Status QMnistNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status QMnistNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("compat") != json_obj.end(), "Failed to find compat");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kQMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kQMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kQMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "compat", kQMnistNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kQMnistNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   bool compat = json_obj["compat"];

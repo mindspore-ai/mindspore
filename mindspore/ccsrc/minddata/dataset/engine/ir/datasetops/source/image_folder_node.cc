@@ -57,9 +57,9 @@ void ImageFolderNode::Print(std::ostream &out) const {
 
 Status ImageFolderNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderDataset", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderDataset", sampler_));
 
   return Status::OK();
 }
@@ -131,14 +131,13 @@ Status ImageFolderNode::to_json(nlohmann::json *out_json) {
 
 #ifndef ENABLE_ANDROID
 Status ImageFolderNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("recursive") != json_obj.end(), "Failed to find recursive");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Failed to find extension");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "decode", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "recursive", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "extensions", kImageFolderNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "class_indexing", kImageFolderNode));
   std::string dataset_dir = json_obj["dataset_dir"];
   bool decode = json_obj["decode"];
   std::shared_ptr<SamplerObj> sampler;

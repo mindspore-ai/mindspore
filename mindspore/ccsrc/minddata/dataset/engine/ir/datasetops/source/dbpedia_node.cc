@@ -56,15 +56,10 @@ void DBpediaNode::Print(std::ostream &out) const {
 
 Status DBpediaNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("DBpediaNode", dataset_dir_));
-  RETURN_IF_NOT_OK(ValidateStringValue("DBpediaNode", usage_, {"train", "test", "all"}));
-
-  if (num_samples_ < 0) {
-    std::string err_msg = "DBpediaNode: Invalid number of samples: " + std::to_string(num_samples_);
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("DBpediaNode", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("DBpediaDataset", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateStringValue("DBpediaDataset", usage_, {"train", "test", "all"}));
+  RETURN_IF_NOT_OK(ValidateScalar("DBpediaDataset", "num_samples", num_samples_, {0}, false));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("DBpediaDataset", num_shards_, shard_id_));
 
   return Status::OK();
 }

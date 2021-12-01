@@ -94,7 +94,8 @@ Status ValidateDatasetDirParam(const std::string &dataset_name, std::string data
 }
 
 // Helper function to validate dataset files parameter
-Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files) {
+Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files,
+                                 const std::string &file_name) {
   if (dataset_files.empty()) {
     std::string err_msg = dataset_name + ": dataset_files is not specified.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -103,11 +104,11 @@ Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vec
   for (auto f : dataset_files) {
     Path dataset_file(f);
     if (!dataset_file.Exists()) {
-      std::string err_msg = dataset_name + ": dataset file: [" + f + "] is invalid or does not exist.";
+      std::string err_msg = dataset_name + ": " + file_name + ": [" + f + "] is invalid or does not exist.";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (access(dataset_file.ToString().c_str(), R_OK) == -1) {
-      std::string err_msg = dataset_name + ": No access to specified dataset file: " + f;
+      std::string err_msg = dataset_name + ": No access to specified " + file_name + ": " + f;
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
@@ -158,12 +159,12 @@ Status ValidateStringValue(const std::string &dataset_name, const std::string &s
 Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::string &column_param,
                                   const std::vector<std::string> &columns) {
   if (columns.empty()) {
-    std::string err_msg = dataset_name + ":" + column_param + " should not be empty string";
+    std::string err_msg = dataset_name + ": '" + column_param + "' should not be empty string";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (uint32_t i = 0; i < columns.size(); ++i) {
     if (columns[i].empty()) {
-      std::string err_msg = dataset_name + ":" + column_param + "[" + std::to_string(i) + "] must not be empty";
+      std::string err_msg = dataset_name + ": '" + column_param + "' [" + std::to_string(i) + "] must not be empty";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
@@ -171,8 +172,8 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
   for (auto &column_name : columns) {
     auto result = columns_set.insert(column_name);
     if (result.second == false) {
-      std::string err_msg = dataset_name + ":" + column_param +
-                            ": Invalid parameter, duplicate column names are not allowed: " + *result.first;
+      std::string err_msg = dataset_name + ": '" + column_param +
+                            "' : Invalid parameter, duplicate column names are not allowed: " + *result.first;
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }

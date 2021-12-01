@@ -59,10 +59,10 @@ void FlickrNode::Print(std::ostream &out) const {
 
 Status FlickrNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("FlickrNode", dataset_dir_));
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("FlickrDataset", dataset_dir_));
 
   if (annotation_file_.empty()) {
-    std::string err_msg = "FlickrNode: annotation_file is not specified.";
+    std::string err_msg = "FlickrDataset: 'annotation_file' is not specified.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -70,17 +70,14 @@ Status FlickrNode::ValidateParams() {
   for (char c : annotation_file_) {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
     if (p != forbidden_symbols.end()) {
-      std::string err_msg = "FlickrNode: annotation_file: [" + annotation_file_ + "] should not contain :*?\"<>|`&;\'.";
+      std::string err_msg =
+        "FlickrDataset: 'annotation_file': [" + annotation_file_ + "] should not contain :*?\"<>|`&;\'.";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  Path annotation_file(annotation_file_);
-  if (!annotation_file.Exists()) {
-    std::string err_msg = "FlickrNode: annotation_file: [" + annotation_file_ + "] is invalid or not exist.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("FlickrNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("FlickrDataset", {annotation_file_}, "annotation file"));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("FlickrDataset", sampler_));
   return Status::OK();
 }
 
@@ -149,8 +146,7 @@ Status FlickrNode::to_json(nlohmann::json *out_json) {
 }
 
 Status FlickrNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
-                               "Failed to find num_parallel_workers");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kFlickrNode));
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Failed to find annotation_file");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");

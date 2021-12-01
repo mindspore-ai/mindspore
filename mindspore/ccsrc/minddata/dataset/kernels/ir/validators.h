@@ -50,8 +50,8 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
   }
   if ((left_open_interval && scalar <= range[0]) || (!left_open_interval && scalar < range[0])) {
     std::string interval_description = left_open_interval ? " greater than " : " greater than or equal to ";
-    std::string err_msg = op_name + ":" + scalar_name + " must be" + interval_description + std::to_string(range[0]) +
-                          ", got: " + std::to_string(scalar);
+    std::string err_msg = op_name + ": '" + scalar_name + "' must be" + interval_description +
+                          std::to_string(range[0]) + ", got: " + std::to_string(scalar);
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
@@ -67,6 +67,15 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
     }
   }
   return Status::OK();
+}
+
+// Helper function to validate enum
+template <typename T>
+Status ValidateEnum(const std::string &op_name, const std::string &enum_name, const T enumeration,
+                    const std::vector<T> &enum_list) {
+  auto existed = std::find(enum_list.begin(), enum_list.end(), enumeration);
+  std::string err_msg = op_name + ": Invalid " + enum_name + ", check input value of enum.";
+  return existed != enum_list.end() ? Status::OK() : Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
 }
 
 // Helper function to validate color attribute

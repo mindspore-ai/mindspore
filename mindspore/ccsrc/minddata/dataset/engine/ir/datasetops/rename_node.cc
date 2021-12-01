@@ -45,13 +45,13 @@ void RenameNode::Print(std::ostream &out) const {
 Status RenameNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (input_columns_.size() != output_columns_.size()) {
-    std::string err_msg = "RenameNode: input and output columns must be the same size";
+    std::string err_msg = "Rename: 'input columns' and 'output columns' must have the same size.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameNode", "input_columns", input_columns_));
+  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Rename", "input_columns", input_columns_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameNode", "output_columns", output_columns_));
+  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("Rename", "output_columns", output_columns_));
 
   return Status::OK();
 }
@@ -74,8 +74,8 @@ Status RenameNode::to_json(nlohmann::json *out_json) {
 
 Status RenameNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                              std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "input_columns", kRenameNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "output_columns", kRenameNode));
   std::vector<std::string> input_columns = json_obj["input_columns"];
   std::vector<std::string> output_columns = json_obj["output_columns"];
   *result = std::make_shared<RenameNode>(ds, input_columns, output_columns);

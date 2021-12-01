@@ -25,6 +25,7 @@
 #include <nlohmann/json.hpp>
 
 #include "include/api/status.h"
+#include "minddata/dataset/util/validators.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_operator.h"
 #endif
