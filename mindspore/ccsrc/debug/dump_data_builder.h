@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <algorithm>
 #include "utils/log_adapter.h"
 #ifdef ENABLE_D
 #include "proto/dump_data.pb.h"
@@ -70,9 +71,24 @@ class DumpDataBuilder {
     }
     auto data_sz = total_sz_ - header_len_offset - header_len;
     data_ptr->resize(data_sz);
-    auto ret = memcpy_s(data_ptr->data(), data_sz, dump_proto_str.c_str() + header_len_offset + header_len, data_sz);
+    // The security memory copy function 'memcpy_s' has a size limit (SECUREC_MEM_MAX_LEN). If the data size is greater
+    // than that, it should be cut into segments to copy. Otherwise, memcpy_s will fail.
+    int ret;
+    if (data_sz < SECUREC_MEM_MAX_LEN) {
+      ret = memcpy_s(data_ptr->data(), data_sz, dump_proto_str.c_str() + header_len_offset + header_len, data_sz);
+    } else {
+      size_t mem_cpy_len;
+      for (size_t pos = 0; pos < data_sz; pos += SECUREC_MEM_MAX_LEN) {
+        mem_cpy_len = std::min(data_sz - pos, SECUREC_MEM_MAX_LEN);
+        ret = memcpy_s(data_ptr->data() + pos, mem_cpy_len,
+                       dump_proto_str.c_str() + header_len_offset + header_len + pos, mem_cpy_len);
+        if (ret != 0) {
+          break;
+        }
+      }
+    }
     if (ret != 0) {
-      MS_LOG(ERROR) << "Failed to get data from Adx";
+      MS_LOG(ERROR) << "Failed to memcpy: error code (" << ret << ").";
       return false;
     }
     return true;
