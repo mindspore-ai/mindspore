@@ -406,6 +406,15 @@ Status CpuSampler::Init() {
   return Status::OK();
 }
 
+void CpuSampler::Clear() {
+  ts_.clear();
+  tasks_.clear();
+  main_thread_cpu_info_.reset();
+  main_process_cpu_info_.reset();
+  op_info_by_id_.clear();
+  fetched_all_python_multiprocesses_ = false;
+}
+
 Status CpuSampler::ChangeFileMode(const std::string &dir_path, const std::string &rank_id) {
   Path path = GetFileName(dir_path, rank_id);
   std::string file_path = path.ToString();

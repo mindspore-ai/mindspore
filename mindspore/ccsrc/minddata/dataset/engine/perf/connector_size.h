@@ -68,6 +68,9 @@ class ConnectorSize : public Sampling {
   // Get the vector of connector sizes of given op for samples taken between start and end time
   Status GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time, std::vector<int32_t> *result);
 
+  // Clear all collected data
+  void Clear() override;
+
  private:
   json initial_nodes_data;  // store data when execution tree is running. (all information for ops except sampled data)
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer

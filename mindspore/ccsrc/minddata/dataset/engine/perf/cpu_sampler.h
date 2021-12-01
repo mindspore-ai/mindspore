@@ -151,6 +151,9 @@ class CpuSampler : public Sampling {
   Status GetOpUserCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
   Status GetOpSysCpuUtil(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
 
+  // Clear all collected data
+  void Clear() override;
+
  private:
   Status UpdateTaskList();
   bool fetched_all_python_multiprocesses_{};

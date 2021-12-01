@@ -222,6 +222,12 @@ Status Tracing::Init() {
 
 size_t Tracing::GetNumberSteps() { return ts_.size(); }
 
+void Tracing::Clear() {
+  value_.clear();
+  records_.clear();
+  ts_.clear();
+}
+
 // Constructor
 ProfilingManager::ProfilingManager()
     : profiling_state_(ProfilingState::kProfilingStateUnBegun), tree_(nullptr), autotuning_(false), profiling_(false) {}
@@ -646,12 +652,14 @@ void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
 }
 
 Status ProfilingManager::Reset() {
-  tracing_nodes_.clear();
-  sampling_nodes_.clear();
+  for (auto node : tracing_nodes_) {
+    node.second->Clear();
+  }
+  for (auto node : sampling_nodes_) {
+    node.second->Clear();
+  }
   epoch_end_ts_.clear();
   epoch_end_step_.clear();
-  perf_monitor_.reset();
-  tree_ = nullptr;
   profiling_state_ = ProfilingState::kProfilingStateUnBegun;
   autotuning_ = false;
   profiling_ = false;
@@ -666,6 +674,9 @@ Status ProfilingManager::Init(const bool for_autotune) {
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
                                "Stop MD Profiler before reinitializing it.");
   Reset();
+  tracing_nodes_.clear();
+  sampling_nodes_.clear();
+  tree_ = nullptr;
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ == ProfilingState::kProfilingStateUnBegun,
                                "MD Profiler is in an unexpected state.");
   if (for_autotune) {
@@ -681,8 +692,19 @@ Status ProfilingManager::Init(const bool for_autotune) {
 Status ProfilingManager::Start() {
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
                                "MD ProfilingManager is already running.");
-  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateFinished,
-                               "MD ProfilingManager is already finished.");
+  if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
+    // This scenario (start, stop, and then start again) only happens in profiling, not autotune.
+    MS_LOG(INFO) << "MD ProfilingManager had already stopped. Resetting...";
+    Reset();
+    for (const auto &node : sampling_nodes_) {
+      RETURN_IF_NOT_OK(node.second->Init());
+    }
+    for (const auto &node : tracing_nodes_) {
+      RETURN_IF_NOT_OK(node.second->Init());
+    }
+    profiling_ = true;
+    MS_LOG(INFO) << "MD profiler is reset successfully for profiling.";
+  }
 
   profiling_state_ = ProfilingState::kProfilingStateRunning;
   for (const auto &node : tracing_nodes_) {

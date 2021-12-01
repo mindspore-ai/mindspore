@@ -68,6 +68,9 @@ class Profiling : std::enable_shared_from_this<Profiling> {
   // Stop collecting data
   Status Stop();
 
+  // Clear all collected data
+  virtual void Clear() = 0;
+
  protected:
   bool active_;  // show current state of ProfilingManager (running, or paused)
   std::mutex lock_;
@@ -114,6 +117,9 @@ class Tracing : public Profiling {
   Status TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts);
   Status StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step);
   size_t GetNumberSteps();
+
+  // Clear all collected data
+  void Clear() override;
 
  protected:
   Tracing() = default;

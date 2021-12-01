@@ -31,10 +31,11 @@ SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 # Add file name to rank id mapping so that each profiling file name is unique,
 # to support parallel test execution
 file_name_map_rank_id = {"test_profiling_early_stop": "0",
-                         "test_profiling_delay_start": "1",
+                         "test_profiling_delayed_start": "1",
                          "test_profiling_start_start": "2",
-                         "test_profiling_stop_stop": "3",
-                         "test_profiling_stop_nostart": "4"}
+                         "test_profiling_multiple_start_stop": "3",
+                         "test_profiling_stop_stop": "4",
+                         "test_profiling_stop_nostart": "5"}
 
 
 @pytest.mark.forked
@@ -109,11 +110,14 @@ class TestMindDataProfilingStartStop:
             op_info = data["op_info"]
             assert len(op_info) == num_pipeline_ops
 
-    def confirm_dataset_iterator_file(self):
+    def confirm_dataset_iterator_file(self, num_batches):
         """
-        Confirm dataset iterator file exists
+        Confirm dataset iterator file exists with the correct number of rows in the file
         """
         assert os.path.exists(self.dataset_iterator_file)
+        actual_num_lines = sum(1 for _ in open(self.dataset_iterator_file))
+        # Confirm there are 4 lines for each batch in the dataset iterator file
+        assert actual_num_lines == 4 * num_batches
 
     def test_profiling_early_stop(self):
         """
@@ -156,9 +160,9 @@ class TestMindDataProfilingStartStop:
         # Confirm the content of the profiling files, including 4 ops in the pipeline JSON file
         self.confirm_pipeline_file(4, ["GeneratorOp", "BatchOp", "MapOp", "EpochCtrlOp"])
         self.confirm_cpuutil_file(4)
-        self.confirm_dataset_iterator_file()
+        self.confirm_dataset_iterator_file(401)
 
-    def test_profiling_delay_start(self):
+    def test_profiling_delayed_start(self):
         """
         Test MindData Profiling with Delayed Start; profile for subset of iterations
         """
@@ -199,7 +203,58 @@ class TestMindDataProfilingStartStop:
         # Confirm the content of the profiling files, including 3 ops in the pipeline JSON file
         self.confirm_pipeline_file(3, ["GeneratorOp", "BatchOp", "MapOp"])
         self.confirm_cpuutil_file(3)
-        self.confirm_dataset_iterator_file()
+        self.confirm_dataset_iterator_file(395)
+
+    def test_profiling_multiple_start_stop(self):
+        """
+        Test MindData Profiling with Delayed Start and Multiple Start-Stop Sequences
+        """
+
+        def source1():
+            for i in range(8000):
+                yield (np.array([i]),)
+
+        # Get instance pointer for MindData profiling manager
+        md_profiler = cde.GlobalContext.profiling_manager()
+
+        # Initialize MindData profiling manager
+        md_profiler.init()
+
+        # Create this basic and common pipeline
+        # Leaf/Source-Op -> Map -> Batch
+        data1 = ds.GeneratorDataset(source1, ["col1"])
+
+        type_cast_op = C.TypeCast(mstype.int32)
+        data1 = data1.map(operations=type_cast_op, input_columns="col1")
+        data1 = data1.batch(16)
+
+        num_iter = 0
+        # Note: If create_dict_iterator() is called with num_epochs=1, then EpochCtrlOp is not added to the pipeline
+        for _ in data1.create_dict_iterator(num_epochs=1):
+            if num_iter == 5:
+                # Start MindData Profiling
+                md_profiler.start()
+            elif num_iter == 40:
+                # Stop MindData Profiling
+                md_profiler.stop()
+            if num_iter == 200:
+                # Start MindData Profiling
+                md_profiler.start()
+            elif num_iter == 400:
+                # Stop MindData Profiling
+                md_profiler.stop()
+
+            num_iter += 1
+
+        # Save MindData Profiling Output
+        md_profiler.save(os.getcwd())
+        assert num_iter == 500
+
+        # Confirm the content of the profiling files, including 3 ops in the pipeline JSON file
+        self.confirm_pipeline_file(3, ["GeneratorOp", "BatchOp", "MapOp"])
+        self.confirm_cpuutil_file(3)
+        # Note: The dataset iterator file should only contain data for batches 200 to 400
+        self.confirm_dataset_iterator_file(200)
 
     def test_profiling_start_start(self):
         """
@@ -259,3 +314,8 @@ class TestMindDataProfilingStartStop:
             md_profiler.stop()
 
         assert "MD ProfilingManager has not started yet." in str(info)
+
+        # Start MindData Profiling
+        md_profiler.start()
+        # Stop MindData Profiling - to return profiler to a healthy state
+        md_profiler.stop()
