@@ -58,6 +58,11 @@ int TransposeInt8CPUKernel::ReSize() {
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
   CHECK_NULL_RETURN(perm_data);
   transpose_param_->num_axes_ = perm_tensor->ElementsNum();
+  if (in_shape.size() != static_cast<size_t>(perm_tensor->ElementsNum())) {
+    MS_LOG(ERROR) << "in_shape size" << in_shape.size() << "is not equal perm element" << perm_tensor->ElementsNum();
+    return RET_ERROR;
+  }
+
   for (int i = 0; i < transpose_param_->num_axes_; ++i) {
     transpose_param_->perm_[i] = perm_data[i];
   }
