@@ -43,6 +43,9 @@ class ControlNodeScheduler {
 
   bool CheckActorValid(const ControlActorSetPtr &control_actor_set);
 
+  // The control flow actor will generate some data in the loop body execution, so need clear on the end of execution.
+  void ClearActorData(const ControlActorSet *control_actor_set);
+
  private:
   // Interface to create control actors.
   std::vector<SwitchActorPtr> BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info);
@@ -77,14 +80,16 @@ class ControlNodeScheduler {
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, bool is_call_input_graph,
                                   ControlActor *const entrance_actor);
+  void LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowForLoopCountActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
-  void LinkDataArrowForHostDSActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForKernelActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
                                    const ControlNodeParserPtr &parser);
 
   // Interface tool to link arrows between actors.
   void LinkControlArrow(AbstractActor *from_actor, AbstractActor *to_actor);
+  void LinkLoopBodyControlArrow(AbstractActor *from_actor, EntranceActor *to_actor);
   // Data arrow with branch id is only exists from gather actor to entrance actor.
   void LinkDataWithBranchIDArrow(GatherActor *const gather_actor, EntranceActor *const entrance_actor,
                                  const FuncGraphPtr &func_graph);

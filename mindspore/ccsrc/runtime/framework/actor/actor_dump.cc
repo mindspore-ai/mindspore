@@ -255,6 +255,13 @@ void DumpEntranceActor(const EntranceActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
+
+  if (actor->loop_body_input_control_arrow_aids().size() > 0) {
+    ofs << "\t\tinput_loop_body_control_arrow_actors:" << actor->loop_body_input_control_arrow_aids().size() << "\n ";
+    for (const auto &loop_body_input_control_arrow_aid : actor->loop_body_input_control_arrow_aids()) {
+      ofs << "\t\t\tfrom_actor_name:" << loop_body_input_control_arrow_aid.Name() << "\n";
+    }
+  }
 }
 
 void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
@@ -376,6 +383,9 @@ void DumpLoopCountActor(const LoopCountActorPtr &actor, std::ofstream &ofs) {
   DumpAbstractActor(actor.get(), ofs);
 
   ofs << "\t\t\tto_data_prepare_actor:" << actor->data_prepare_aid().Name() << "\n";
+  for (auto &entrance_aid : actor->entrance_aids()) {
+    ofs << "\t\t\tto_entrance_actor:" << entrance_aid.Name() << "\n";
+  }
 }
 
 void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {

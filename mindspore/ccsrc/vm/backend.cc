@@ -882,6 +882,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     size_t output_position = 0;
     ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
+  runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 

@@ -380,11 +380,11 @@ void ControlNodeScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &gr
   // Link data arrows and partial arrows between control actors.
   LinkArrowForControlActor(actor_set->control_actors_.get(), graph_compiler_info);
 
+  // Link arrows from host data source actor or data prepare actor to entrance actor of root graph.
+  LinkArrowForRootGraphEntranceActor(graph_compiler_info);
+
   // Link output data arrows from control actors to output actor.
   LinkDataArrowForOutputActor(actor_set, graph_compiler_info);
-
-  // Link data arrows from host data source actor to control actors.
-  LinkDataArrowForHostDSActor(graph_compiler_info);
 
   // Link data arrows from entrance actors to kernel actors.
   LinkDataArrowForKernelActor(graph_compiler_info);
@@ -397,6 +397,19 @@ void ControlNodeScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &gr
 
   // Link control arrows for no input and no output kernel actor.
   LinkControlArrowForKernelActor(actor_set, graph_compiler_info);
+
+  LinkControlArrowForLoopCountActor(actor_set, graph_compiler_info);
+}
+
+void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_set) {
+  if (control_actor_set == nullptr) {
+    return;
+  }
+
+  for (auto &exit_actor : control_actor_set->exit_actors_) {
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    exit_actor->created_device_tensors_.clear();
+  }
 }
 
 void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const control_actor_set,
@@ -657,21 +670,11 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
 
 void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor_set,
                                                            const GraphCompilerInfo &graph_compiler_info) {
-  // Get the exit actor of root graph, In control flow, the final output is always sent by the exit of the root graph.
   MS_EXCEPTION_IF_NULL(actor_set);
   auto control_actor_set = actor_set->control_actors_.get();
   MS_EXCEPTION_IF_NULL(control_actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-  const auto &root_graph = parser->root_func_graph_;
-  MS_EXCEPTION_IF_NULL(root_graph);
-  const auto &exit_actor_name = root_graph->ToString() + kExitActorNameSuffix;
-  auto actor = FetchActor(exit_actor_name);
-  MS_EXCEPTION_IF_NULL(actor);
-  MS_EXCEPTION_IF_NULL(actor_set->loop_count_actor_);
-  auto root_exit_actor = dynamic_cast<ExitActor *>(actor);
-  // link control arrow from root exit actor to loop count actor.
-  LinkControlArrowForExitActor(root_exit_actor, actor_set->loop_count_actor_.get(), kMainBranchID);
 
   // Since only one set of real parameters are allowed to be executed in funcgraph at the same time, when the funcgraph
   // stops running, it is necessary to send the control arrow to the corresponding entrance actor at the exit of the
@@ -682,9 +685,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     const auto &func_graph = graph_to_nodes.first;
     MS_EXCEPTION_IF_NULL(func_graph);
     auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
-    actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
-    auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
+    auto entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
     MS_EXCEPTION_IF_NULL(entrance_actor);
 
     const auto &nodes = graph_to_nodes.second;
@@ -696,11 +697,9 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       } else {
         actor_name = GetActorName(node);
       }
-      actor = FetchActor(actor_name);
-      MS_EXCEPTION_IF_NULL(actor);
-      auto from_actor = dynamic_cast<ControlActor *>(actor);
+      auto from_actor = dynamic_cast<ControlActor *>(FetchActor(actor_name));
       MS_EXCEPTION_IF_NULL(from_actor);
-      LinkControlArrow(from_actor, entrance_actor);
+      LinkLoopBodyControlArrow(from_actor, entrance_actor);
     }
   }
 
@@ -720,9 +719,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       const FuncGraphPtr &func_graph = control_actor->node_->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
-      actor = FetchActor(actor_name);
-      MS_EXCEPTION_IF_NULL(actor);
-      const auto &entrance_actor = dynamic_cast<EntranceActor *>(actor);
+      const auto &entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
       MS_EXCEPTION_IF_NULL(entrance_actor);
       LinkControlArrow(entrance_actor, control_actor);
     }
@@ -754,6 +751,31 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
         LinkControlArrowByAutoMonad(control_actor, input, parser);
       }
     }
+  }
+}
+
+void ControlNodeScheduler::LinkControlArrowForLoopCountActor(const ActorSet *actor_set,
+                                                             const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto loop_count_actor = actor_set->loop_count_actor_;
+  MS_EXCEPTION_IF_NULL(loop_count_actor);
+
+  // The final output is always sent by the exit of the root graph in control flow.
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+  const auto &root_graph = parser->root_func_graph_;
+  MS_EXCEPTION_IF_NULL(root_graph);
+  auto exit_actor_name = root_graph->ToString() + kExitActorNameSuffix;
+  auto root_exit_actor = dynamic_cast<ExitActor *>(FetchActor(exit_actor_name));
+  MS_EXCEPTION_IF_NULL(root_exit_actor);
+  // link control arrow from root exit actor to loop count actor.
+  LinkControlArrowForExitActor(root_exit_actor, loop_count_actor.get(), kMainBranchID);
+
+  // The entrance actor will generate some data in the loop body execution, so need clear on the end of step.
+  MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
+  for (auto &entrance_actor : actor_set->control_actors_->entrance_actors_) {
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    (void)loop_count_actor->entrance_aids_.emplace_back(entrance_actor->GetAID());
   }
 }
 
@@ -1024,21 +1046,26 @@ void ControlNodeScheduler::LinkDataArrowForOutputActor(ActorSet *const actor_set
   actor_set->output_actor_->device_contexts_ = iter->second;
 }
 
-void ControlNodeScheduler::LinkDataArrowForHostDSActor(const GraphCompilerInfo &graph_compiler_info) {
-  // In control flow, the host data source actor sends all the input to the entrance actor of the root graph.
-  const auto &host_ds_actor_name = graph_compiler_info.name_ + "_HostDSActor";
-  auto actor = FetchActor(host_ds_actor_name);
-  MS_EXCEPTION_IF_NULL(actor);
-  const auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
-  MS_EXCEPTION_IF_NULL(host_ds_actor);
-
+void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   const auto &root_graph = graph_compiler_info.control_node_parser_->root_func_graph_;
   MS_EXCEPTION_IF_NULL(root_graph);
   const auto &entrance_actor_name = root_graph->ToString() + kEntranceActorNameSuffix;
-  actor = FetchActor(entrance_actor_name);
-  MS_EXCEPTION_IF_NULL(actor);
-  auto to_actor = dynamic_cast<EntranceActor *>(actor);
+  auto to_actor = dynamic_cast<EntranceActor *>(FetchActor(entrance_actor_name));
+  MS_EXCEPTION_IF_NULL(to_actor);
 
+  const auto &host_ds_actor_name = graph_compiler_info.name_ + "_HostDSActor";
+  auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(host_ds_actor_name));
+  // No host data source actor scenario.
+  if (host_ds_actor == nullptr) {
+    const auto &data_prepare_actor_name = graph_compiler_info.name_ + "_DataPrepareActor";
+    auto data_prepare_actor = FetchActor(data_prepare_actor_name);
+    MS_EXCEPTION_IF_NULL(data_prepare_actor);
+    LinkControlArrow(data_prepare_actor, to_actor);
+    return;
+  }
+
+  // The host data source actor sends all the input to the entrance actor of the root graph.
   for (size_t i = 0; i < to_actor->formal_parameters_.size(); ++i) {
     const auto &formal_parameter = to_actor->formal_parameters_[i];
     MS_EXCEPTION_IF_NULL(formal_parameter.first);
@@ -1074,6 +1101,14 @@ void ControlNodeScheduler::LinkControlArrow(AbstractActor *from_actor, AbstractA
   (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
+}
+
+void ControlNodeScheduler::LinkLoopBodyControlArrow(AbstractActor *from_actor, EntranceActor *to_actor) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
+  to_actor->loop_body_input_controls_nums_++;
+  (void)to_actor->loop_body_input_control_arrow_aids_.emplace_back(from_actor->GetAID());
 }
 
 void ControlNodeScheduler::LinkDataArrowForExitActor(ExitActor *const exit_actor, AbstractActor *const to_actor,
