@@ -18,145 +18,72 @@ package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
- * dataset class
+ * Defining the dataset base loss.
  *
  * @since v1.0
  */
-public class DataSet {
+public abstract class DataSet {
     private static final Logger logger = Logger.getLogger(DataSet.class.toString());
 
     /**
-     * init dataset
-     *
-     * @param trainFile   train file path
-     * @param vocabFile   vocab file path
-     * @param idsFile     id file path
-     * @param isTrainMode train mod
-     * @param maxSeqLen   max seq len to clamp
-     * @return features
+     * dataset sample size.
      */
-    public static List<Feature> init(String trainFile, String vocabFile, String idsFile, boolean isTrainMode,
-                                     int maxSeqLen) {
-        if (trainFile == null || vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("dataset init failed,trainFile,idsFile,vocabFile cannot be empty"));
-            return new ArrayList<>();
-        }
-        // read train file
-        CustomTokenizer customTokenizer = new CustomTokenizer();
-        customTokenizer.init(vocabFile, idsFile, maxSeqLen);
-        List<String> allLines = readTxtFile(trainFile);
-        List<String> examples = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (String line : allLines) {
-            String[] tokens = line.split(">>>");
-            if (tokens.length != 2) {
-                logger.warning(Common.addTag("line may have format problem,need include >>>"));
-                continue;
-            }
-            examples.add(tokens[1]);
-            tokens = tokens[0].split("<<<");
-            if (tokens.length != 2) {
-                logger.warning(Common.addTag("line may have format problem,need include >>>"));
-                continue;
-            }
-            labels.add(tokens[1]);
-        }
-
-        List<Feature> features = new ArrayList<>(examples.size());
-        for (int i = 0; i < examples.size(); i++) {
-            List<Integer> tokens = customTokenizer.tokenize(examples.get(i), isTrainMode);
-            if (tokens.isEmpty()) {
-                continue;
-            }
-            Optional<Feature> feature = customTokenizer.getFeatures(tokens, labels.get(i));
-            if (isTrainMode) {
-                customTokenizer.addRandomMaskAndReplace(feature.get(), true, true);
-            }
-            features.add(feature.get());
-        }
-        return features;
-    }
+    public int sampleSize;
 
     /**
-     * read infer data
-     *
-     * @param inferFile infer file path
-     * @param vocabFile vocab file path
-     * @param idsFile ids file path
-     * @param isTrainMode if in train mod
-     * @return infer features
+     * batch nums each epoch.
      */
-    public static List<Feature> readInferData(String inferFile, String vocabFile, String idsFile, boolean isTrainMode
-            , int maxSeqLen) {
-        if (inferFile == null || vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("dataset init failed,trainFile,idsFile,vocabFile cannot be empty"));
-            return new ArrayList<>();
-        }
-        // read train file
-        CustomTokenizer customTokenizer = new CustomTokenizer();
-        customTokenizer.init(vocabFile, idsFile, maxSeqLen);
-        List<String> allLines = readTxtFile(inferFile);
-        List<Feature> features = new ArrayList<>(allLines.size());
-        for (String line : allLines) {
-            if (line.isEmpty()) {
-                continue;
-            }
-            List<Integer> tokens = customTokenizer.tokenize(line, isTrainMode);
-            Optional<Feature> feature = customTokenizer.getFeatures(tokens, "other");
-            if (!feature.isPresent()) {
-                continue;
-            }
-            features.add(feature.get());
-        }
-        return features;
-    }
+    public int batchNum;
 
     /**
-     * read bin file
-     *
-     * @param dataFile data file
-     * @return data array
+     * batch size.
      */
-    public static byte[] readBinFile(String dataFile) {
-        if (dataFile == null || dataFile.isEmpty()) {
-            logger.severe(Common.addTag("file cannot be empty"));
-            return new byte[0];
-        }
-        // read train file
-        Path path = Paths.get(dataFile);
-        byte[] data = new byte[0];
-        try {
-            data = Files.readAllBytes(path);
-        } catch (IOException e) {
-            logger.severe(Common.addTag("read data file failed,please check data file path"));
-        }
-        return data;
-    }
+    public int batchSize;
 
-    private static List<String> readTxtFile(String file) {
-        if (file == null) {
-            logger.severe(Common.addTag("file cannot be empty"));
-            return new ArrayList<>();
+    /**
+     * Fill inputs buffer.
+     *
+     * @param inputsBuffer to be filled buffer.
+     * @param batchIdx     batch index.
+     */
+    public abstract void fillInputBuffer(List<ByteBuffer> inputsBuffer, int batchIdx);
+
+    /**
+     * Shuffle dataset.
+     */
+    public abstract void shuffle();
+
+    /**
+     * Padding dataset.
+     */
+    public abstract void padding();
+
+    /**
+     * Dataset preprocess.
+     *
+     * @param files data files.
+     * @return preprocess status.
+     */
+    public abstract int dataPreprocess(List<String> files);
+
+    /**
+     * Init dataset.
+     *
+     * @param files data files.
+     * @return dataset size.
+     */
+    public int init(List<String> files) {
+        int status = dataPreprocess(files);
+        if (status != 0) {
+            logger.severe(Common.addTag("data preprocess failed"));
+            return status;
         }
-        Path path = Paths.get(file);
-        List<String> allLines = new ArrayList<>();
-        try {
-            allLines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.severe(Common.addTag("read txt file failed,please check txt file path"));
-        }
-        return allLines;
+        shuffle();
+        return sampleSize;
     }
 }
-

@@ -129,11 +129,11 @@ public class TrainLenet extends TrainModel {
      */
     public int initDataSet(String imageFile, String labelFile) {
         if (imageFile != null && !imageFile.isEmpty()) {
-            imageArray = DataSet.readBinFile(imageFile);
+            imageArray = FileUtil.readBinFile(imageFile);
         }
         // train mod
         if (labelFile != null && !labelFile.isEmpty()) {
-            byte[] labelByteArray = DataSet.readBinFile(labelFile);
+            byte[] labelByteArray = FileUtil.readBinFile(labelFile);
             int trainSize = labelByteArray.length;
             trainSampleSize = trainSize / Integer.BYTES;
             // label is 32,need pad 32*62

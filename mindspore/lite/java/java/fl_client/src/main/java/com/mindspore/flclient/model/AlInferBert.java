@@ -68,9 +68,9 @@ public class AlInferBert extends AlBert {
             return -1;
         }
         if (isEvalMode) {
-            features = DataSet.init(exampleFile, vocabFile, idsFile, false, maxSeqLen);
+            features = FileUtil.init(exampleFile, vocabFile, idsFile, false, maxSeqLen);
         } else {
-            features = DataSet.readInferData(exampleFile, vocabFile, idsFile, false, maxSeqLen);
+            features = FileUtil.readInferData(exampleFile, vocabFile, idsFile, false, maxSeqLen);
         }
         return features.size();
     }
