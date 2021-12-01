@@ -25,6 +25,36 @@
 #include "proto/mind_ir.pb.h"
 
 namespace mindspore {
+class Layout {
+ public:
+  Layout() = default;
+
+  const std::vector<int64_t> &get_device_arrangement() const { return device_arrangement_; }
+  void set_device_arrangement(const std::vector<int64_t> &device_arrangement) {
+    device_arrangement_ = device_arrangement;
+  }
+  const std::vector<int64_t> &get_tensor_map() const { return tensor_map_; }
+  void set_tensor_map(const std::vector<int64_t> &tensor_map) { tensor_map_ = tensor_map; }
+  const std::vector<int64_t> &get_slice_shape() const { return slice_shape_; }
+  void set_slice_shape(const std::vector<int64_t> &slice_shape) { slice_shape_ = slice_shape; }
+  int64_t get_field_size() const { return field_size_; }
+  void set_field_size(int64_t field_size) { field_size_ = field_size; }
+  bool get_uniform_split() const { return uniform_split_; }
+  void set_uniform_split(bool uniform_split) { uniform_split_ = uniform_split; }
+  const std::string &get_opt_shard_group() const { return opt_shard_group_; }
+  void set_opt_shard_group(const std::string &opt_shard_group) { opt_shard_group_ = opt_shard_group; }
+
+ private:
+  std::vector<int64_t> device_arrangement_{};
+  std::vector<int64_t> tensor_map_{};
+  std::vector<int64_t> slice_shape_{};
+  int64_t field_size_ = 0;
+  bool uniform_split_ = false;
+  std::string opt_shard_group_ = "";
+};
+using LayoutPtr = std::shared_ptr<Layout>;
+using LayoutMap = std::map<string, LayoutPtr>;
+
 class MindIRLoader {
  public:
   MindIRLoader() = default;
@@ -35,9 +65,11 @@ class MindIRLoader {
 
   bool get_need_renormalize() const { return need_renormalize_; }
   void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
+  void set_need_layout(bool need_layout) { need_layout_ = need_layout; }
   void set_weights_value_map(const std::map<string, ValuePtr> &weights_value_map) {
     weights_value_map_ = weights_value_map;
   }
+  LayoutMap get_layout_map() { return layout_map_; }
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> file_names);
@@ -52,6 +84,8 @@ class MindIRLoader {
   bool inc_load_ = false;
   bool need_renormalize_ = true;
   std::map<string, ValuePtr> weights_value_map_;
+  bool need_layout_ = false;
+  LayoutMap layout_map_;
 };
 
 std::string LoadPreprocess(const std::string &file_name);

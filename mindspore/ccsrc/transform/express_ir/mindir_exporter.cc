@@ -30,6 +30,7 @@
 #include "debug/dump_proto.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"
+#include "frontend/parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -83,7 +84,7 @@ class IrExporter {
   explicit IrExporter(IrExportBuilderPtr builder) : builder_(std::move(builder)) {}
   virtual ~IrExporter() = default;
   std::string GetDumpString(const FuncGraphPtr &func_graph);
-  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph);
+  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg = nullptr);
 
  private:
   IrExportBuilderPtr builder_;
@@ -97,6 +98,8 @@ class IrExportBuilder {
   void BuildModelInfo();
   bool BuildModel(const FuncGraphPtr &func_graph);
   ModelProtoPtr Model() { return model_; }
+
+  void BuildLayout(const FuncGraphPtr &func_graph);
 
   bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
@@ -161,7 +164,7 @@ std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   return builder_->GetProtoString();
 }
 
-ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph) {
+ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg) {
   if ((builder_ == nullptr) || (func_graph == nullptr)) {
     MS_LOG(EXCEPTION) << "Input params is null.";
   }
@@ -172,6 +175,11 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph) {
   // Export model and return string
   if (!builder_->BuildModel(func_graph)) {
     return nullptr;
+  }
+
+  // Export layout information
+  if (param_layout_fg) {
+    builder_->BuildLayout(param_layout_fg);
   }
   return builder_->Model();
 }
@@ -188,6 +196,44 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_producer_name(mindspore_name);
   model_->set_model_version(VERSION);
   model_->set_little_endian(common::IsLittleByteOrder());
+}
+
+void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> graph_params = func_graph->parameters();
+  mind_ir::ParallelProto *parallel_proto = model_->mutable_parallel();
+  for (auto para : graph_params) {
+    std::string name = std::static_pointer_cast<Parameter>(para)->name();
+    auto tensor_layout = para->user_data<parallel::TensorLayout>();
+    if (tensor_layout == nullptr) {
+      MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
+    } else {
+      mind_ir::LayoutProto *layoutProto = parallel_proto->add_layout();
+
+      // Get all the information for layput
+      auto device_arrangement = tensor_layout->device_arrangement().array();
+      auto tensor_map = tensor_layout->tensor_map().array();
+      auto slice_shape = tensor_layout->slice_shape().array();
+      int64_t field_size = tensor_layout->get_field_size();
+      bool uniform_split = tensor_layout->uniform_split();
+      std::string opt_shard_group = tensor_layout->opt_shard_group();
+
+      // Save all information to Layout Proto
+      layoutProto->set_name(name);
+      for (auto device_arrangement_element : device_arrangement) {
+        layoutProto->add_device_arrangement_int(device_arrangement_element);
+      }
+      for (auto tensor_map_element : tensor_map) {
+        layoutProto->add_tensor_map_int(tensor_map_element);
+      }
+      for (auto slice_shape_element : slice_shape) {
+        layoutProto->add_slice_shape_int(slice_shape_element);
+      }
+      layoutProto->set_field_size(field_size);
+      layoutProto->set_uniform_split(uniform_split);
+      layoutProto->set_opt_shard_group(opt_shard_group);
+    }
+  }
 }
 
 bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
@@ -1089,12 +1135,13 @@ std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
   if (exporter == nullptr) {
     return "";
   }
-  return exporter->GetDumpString(func_graph);
+  auto ret = exporter->GetDumpString(func_graph);
+  return ret;
 }
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph) {
+ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg) {
   auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
-  auto result = exporter->GetDumpProto(func_graph);
+  auto result = exporter->GetDumpProto(func_graph, param_layout_fg);
   return result;
 }
 }  // namespace mindspore

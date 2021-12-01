@@ -230,6 +230,9 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
     model_parser.SetLite();
   }
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_);
+  if (need_layout_) {
+    layout_map_ = model_parser.ParseLayout(origin_model);
+  }
   return dstgraph_ptr;
 }
 

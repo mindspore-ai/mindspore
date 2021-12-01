@@ -34,6 +34,7 @@
 #include "pipeline/jit/resource_base.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "load_mindir/load_model.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -87,6 +88,9 @@ class Resource : public ResourceBase {
   bool vm_loop_flag() { return vm_loop_flag_; }
   int64_t loop_size() { return loop_size_; }
 
+  void set_layout_map(const LayoutMap &layout_map) { layout_map_ = layout_map; }
+  const LayoutMap get_layout_map() const { return layout_map_; }
+
   bool enable_compile_cache() { return enable_compile_cache_; }
   void set_enable_compile_cache(bool enable_compile_cache) { enable_compile_cache_ = enable_compile_cache; }
 
@@ -118,6 +122,7 @@ class Resource : public ResourceBase {
   bool enable_compile_cache_{false};
   size_t compile_cache_id_{0};
   std::string compile_cache_dep_files_hash_;
+  LayoutMap layout_map_{};
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;

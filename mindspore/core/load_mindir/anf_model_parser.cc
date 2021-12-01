@@ -1337,6 +1337,41 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
   return dstGraph;
 }
 
+const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_proto) {
+  LayoutMap ret;
+  mind_ir::ParallelProto parallel_proto = model_proto.parallel();
+  for (int i = 0; i < parallel_proto.layout_size(); ++i) {
+    const mind_ir::LayoutProto &layout_proto = parallel_proto.layout(i);
+    LayoutPtr cur_layout = std::make_shared<Layout>();
+    const std::string name = layout_proto.name();
+    std::vector<int64_t> device_arrangement;
+    for (int num = 0; num < layout_proto.device_arrangement_int_size(); ++num) {
+      device_arrangement.emplace_back(layout_proto.device_arrangement_int(num));
+    }
+    std::vector<int64_t> tensor_map;
+    for (int num = 0; num < layout_proto.tensor_map_int_size(); ++num) {
+      tensor_map.emplace_back(layout_proto.tensor_map_int(num));
+    }
+    std::vector<int64_t> slice_shape;
+    for (int num = 0; num < layout_proto.slice_shape_int_size(); ++num) {
+      slice_shape.emplace_back(layout_proto.slice_shape_int(num));
+    }
+    int64_t field_size = layout_proto.field_size();
+    bool uniform_spilt = layout_proto.uniform_split();
+    const std::string opt_shard_group = layout_proto.opt_shard_group();
+
+    cur_layout->set_device_arrangement(device_arrangement);
+    cur_layout->set_tensor_map(tensor_map);
+    cur_layout->set_slice_shape(slice_shape);
+    cur_layout->set_field_size(field_size);
+    cur_layout->set_uniform_split(uniform_spilt);
+    cur_layout->set_opt_shard_group(opt_shard_group);
+
+    ret[name] = cur_layout;
+  }
+  return ret;
+}
+
 AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
   auto it = anfnode_build_map_.find(node_name);
   if (it == anfnode_build_map_.end()) {

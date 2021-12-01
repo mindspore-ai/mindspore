@@ -20,13 +20,16 @@
 #include "pybind11/stl.h"
 #include "pybind11/pybind11.h"
 #include "ir/anf.h"
+#include "pipeline/jit/resource.h"
 
 namespace py = pybind11;
 namespace mindspore {
 namespace parallel {
-py::dict GetParameterLayout(const FuncGraphPtr &graph);
+py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph);
+py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource);
 py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
-py::list GetParallelParameterNameList(const FuncGraphPtr &graph);
+py::list GetParallelParameterNameListFromGraph(const FuncGraphPtr &graph);
+py::list GetParallelParameterNameListFromResource(const pipeline::ResourcePtr &resource);
 }  // namespace parallel
 }  // namespace mindspore
 
