@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/ONNX/repository/archive/v1.6.0.tar.gz")
-    set(MD5 "1bdbcecdd68ea8392630467646776e02")
+    set(MD5 "c8749101e45b17345af8e9f929d10a0e")
 else()
     set(REQ_URL "https://github.com/onnx/onnx/releases/download/v1.6.0/onnx-1.6.0.tar.gz")
     set(MD5 "512f2779d6215d4a36f366b6b9acdf1e")
