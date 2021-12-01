@@ -55,7 +55,8 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
   } else if (input->type() == DataType::DE_UINT8) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<uint8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
   } else {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot unsigned only supports unsigned int as input.");
+    RETURN_STATUS_UNEXPECTED("OneHot: unsigned input case only supports unsigned int as input, but got:" +
+                             input->type().ToString());
   }
   return Status::OK();
 }
@@ -81,7 +82,8 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
   } else if (input->type() == DataType::DE_INT8) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<int8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
   } else {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot signed only supports signed int as input.");
+    RETURN_STATUS_UNEXPECTED("OneHot: signed input case only supports signed int as input but got:" +
+                             input->type().ToString());
   }
   return Status::OK();
 }
@@ -94,7 +96,7 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
                              std::to_string(input->Rank()));
   }
   if (!input->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only not support input of int type.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only support input of int type, but got:" + input->type().ToString());
   }
   try {
     dsize_t num_elements = 1;
@@ -209,7 +211,7 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
       break;
     }
     case DataType::DE_UNKNOWN: {
-      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype.");
+      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype, check input datatype of this operator.");
       break;
     }
     default:
@@ -228,8 +230,9 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   CHECK_FAIL_RETURN_UNEXPECTED(!((fill_type == DataType::DE_STRING) && (input_type != DataType::DE_STRING)),
                                "Fill: fill datatype is string but the input datatype is not string.");
 
-  CHECK_FAIL_RETURN_UNEXPECTED(fill_value->shape() == TensorShape({}),
-                               "Fill: the shape of fill_value is not a scalar.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    fill_value->shape() == TensorShape({}),
+    "Fill: the shape of fill_value is not a scalar, got shape:" + fill_value->shape().ToString());
 
   std::shared_ptr<Tensor> out, fill_output;
 
@@ -297,7 +300,8 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       Cast<T, double>(input, output);
       break;
     case DataType::DE_UNKNOWN:
-      MS_LOG(ERROR) << "TypeCast: unknown datatype.";
+      MS_LOG(ERROR) << "TypeCast: unknown datatype of input data, supported datatype is: [bool, int8, uint8, int16, "
+                       "uint16, int32, uint32, int64, uint64, float16, float32, float64].";
       break;
   }
 }
@@ -367,8 +371,9 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     float float16_max = static_cast<float>(std::numeric_limits<float16>::max());
     float float16_min = static_cast<float>(std::numeric_limits<float16>::lowest());
     if (element > float16_max || element < float16_min) {
-      RETURN_STATUS_UNEXPECTED("ToFloat16: value " + std::to_string(element) + " is outside of valid float16 range [" +
-                               std::to_string(float16_max) + ", " + std::to_string(float16_min) + "].");
+      RETURN_STATUS_UNEXPECTED("ToFloat16: value " + std::to_string(element) +
+                               "in input data is outside of valid float16 range [" + std::to_string(float16_max) +
+                               ", " + std::to_string(float16_min) + "].");
     }
 
     *out_itr = float16(*in_itr);
@@ -440,7 +445,9 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
     } else if (tensor_type == DataType::DE_FLOAT64) {
       RETURN_IF_NOT_OK((*dst)->Fill<double>(static_cast<double>(pad_val)));
     } else {
-      RETURN_STATUS_UNEXPECTED("PadEnd: Incorrect/Unknown datatype");
+      RETURN_STATUS_UNEXPECTED(
+        "PadEnd: Incorrect/Unknown datatype, supported datatype is: [bool, int8, uint8, int16, uint16, int32, uint32, "
+        "int64, uint64, float16, float32, float64].");
     }
     std::vector<dsize_t> cur_ind(src->Rank(), 0);
     RETURN_IF_NOT_OK(PadEndNumericHelper(src, *dst, cur_ind, 0));
@@ -535,7 +542,8 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
         *out_itr = (*in_itr <= value);
         break;
       default:
-        RETURN_STATUS_UNEXPECTED("Mask: unknown relational operator.");
+        RETURN_STATUS_UNEXPECTED(
+          "Mask: unknown relational operator, supported operator is: equal, notEqual, greater, less, lessEqual.");
     }
   }
   return Status::OK();
@@ -546,7 +554,8 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsNumeric() == value->type().IsNumeric(),
                                "Mask: input datatype does not match the value datatype, both should be numeric or "
                                "non-numerical in the same time.");
-  CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Mask: value shape is not a scalar");
+  CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(),
+                               "Mask: value shape should be a scalar, got shape:" + value->shape().ToString());
 
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_BOOL), output));
 
@@ -599,7 +608,9 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
       break;
     case DataType::DE_UNKNOWN:
-      RETURN_STATUS_UNEXPECTED("Mask: unsupported input datatype.");
+      RETURN_STATUS_UNEXPECTED(
+        "Mask: unsupported input datatype, support datatype is:[bool, int8, uint8, int16, uint16, int32, uint32, "
+        "int64, uint64, float16, float32, float64, string].");
       break;
   }
   return Status::OK();
@@ -609,7 +620,8 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
                    std::shared_ptr<Tensor> append) {
   CHECK_FAIL_RETURN_UNEXPECTED(input.size() > 0, "Concatenate: input is null");
   axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
-  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Concatenate: only 1D input supported, got rank: " + std::to_string(axis));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    axis == 0, "Concatenate: only 1D input supported, input 'axis' should be 0, but got: " + std::to_string(axis));
 
   TensorShape t = TensorShape::CreateScalar();
 
@@ -620,10 +632,11 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   if (prepend != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(
       first_dtype == prepend->type(),
-      "Concatenate: input datatype does not match the prepend datatype: " + prepend->type().ToString());
+      "Concatenate: input datatype does not match the prepend datatype, got input datatype: " + first_dtype.ToString() +
+        ", prepend datatype:" + prepend->type().ToString());
     CHECK_FAIL_RETURN_UNEXPECTED(
       prepend->shape().Rank() == 1,
-      "Concatenate: only 1D input supported, got rank of input: " + std::to_string(prepend->shape().Rank()));
+      "Concatenate: only 1D input supported, got rank of prepend: " + std::to_string(prepend->shape().Rank()));
     tensor_list.emplace_back(prepend);
   }
 
@@ -638,10 +651,11 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   if (append != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(
       first_dtype == append->type(),
-      "Concatenate: input datatype does not match the append datatype: " + append->type().ToString());
+      "Concatenate: input datatype does not match the append datatype, got input datatype: " + first_dtype.ToString() +
+        ", append datatype:" + append->type().ToString());
     CHECK_FAIL_RETURN_UNEXPECTED(
       append->shape().Rank() == 1,
-      "Concatenate: only 1D append supported, got rank of input: " + std::to_string(append->shape().Rank()));
+      "Concatenate: only 1D append supported, got rank of append:" + std::to_string(append->shape().Rank()));
     tensor_list.emplace_back(append);
   }
 

@@ -89,7 +89,7 @@ Status RandomSelectSubpolicyOp::OutputType(const std::vector<DataType> &inputs, 
 RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &policy)
     : gen_(GetSeed()), policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {
   if (policy_.empty()) {
-    MS_LOG(ERROR) << "RandomSelectSubpolicy: policy in RandomSelectSubpolicyOp is empty.";
+    MS_LOG(ERROR) << "RandomSelectSubpolicy: input 'policy' in RandomSelectSubpolicy is empty, check input parameter.";
   }
   is_deterministic_ = false;
 }

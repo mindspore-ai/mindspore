@@ -53,9 +53,9 @@ Status ComposeOp::Compute(const TensorRow &inputs, TensorRow *outputs) {
 
 ComposeOp::ComposeOp(const std::vector<std::shared_ptr<TensorOp>> &ops) : ops_(ops) {
   if (ops_.empty()) {
-    MS_LOG(ERROR) << "Compose: op_list is empty, this might lead to Segmentation Fault.";
+    MS_LOG(ERROR) << "Compose: input 'transforms'(op_list) is empty, this might lead to Segmentation Fault.";
   } else if (ops_.size() == 1) {
-    MS_LOG(WARNING) << "Compose: op_list has only 1 op. Compose is probably not needed.";
+    MS_LOG(WARNING) << "Compose: input 'transforms'(op_list) has only 1 op. Compose is probably not needed.";
   }
 }
 

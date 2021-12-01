@@ -83,7 +83,7 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
 Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
     RETURN_STATUS_UNEXPECTED("MixUpBatch: size of input data should be 2 (including images or labels), but got: " +
-                             std::to_string(input.size()));
+                             std::to_string(input.size()) + ", check 'input_columns' when call this operator.");
   }
 
   std::vector<std::shared_ptr<CVTensor>> images;
@@ -112,7 +112,8 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   }
   if ((image_shape[dimension_one] != value_one && image_shape[dimension_one] != value_three) &&
       (image_shape[dimension_three] != value_one && image_shape[dimension_three] != value_three)) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: images shape is not <H,W,C> or <C,H,W>.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: images shape should in <N,H,W,C> or <N,C,H,W>, got shape:" +
+                             input.at(0)->shape().ToString());
   }
 
   // Move images into a vector of CVTensors

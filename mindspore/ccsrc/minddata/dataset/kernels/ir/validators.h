@@ -44,7 +44,7 @@ template <typename T>
 Status ValidateScalar(const std::string &op_name, const std::string &scalar_name, const T scalar,
                       const std::vector<T> &range, bool left_open_interval = false, bool right_open_interval = false) {
   if (range.empty() || range.size() > 2) {
-    std::string err_msg = "Range check expecting size 1 or 2, but got: " + std::to_string(range.size());
+    std::string err_msg = op_name + ": expecting range size 1 or 2, but got: " + std::to_string(range.size());
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }

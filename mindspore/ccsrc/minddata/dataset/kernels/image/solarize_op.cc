@@ -29,8 +29,10 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
   uint8_t threshold_min_ = threshold_[0], threshold_max_ = threshold_[1];
 
-  CHECK_FAIL_RETURN_UNEXPECTED(threshold_min_ <= threshold_max_,
-                               "Solarize: threshold_min must be smaller or equal to threshold_max.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    threshold_min_ <= threshold_max_,
+    "Solarize: threshold[0] must be smaller or equal to threshold[1], got 'threshold' value: (" +
+      std::to_string(threshold_min_) + "," + std::to_string(threshold_max_) + ").");
 
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);

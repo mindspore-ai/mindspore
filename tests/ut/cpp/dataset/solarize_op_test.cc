@@ -161,7 +161,7 @@ TEST_F(MindDataTestSolarizeOp, TestOp6) {
   Status s = op->Compute(test_input_tensor, &test_output_tensor);
 
   EXPECT_TRUE(s.IsError());
-  EXPECT_NE(s.ToString().find("Solarize: threshold_min must be smaller or equal to threshold_max."),
+  EXPECT_NE(s.ToString().find("Solarize: threshold[0] must be smaller or equal to threshold[1], got 'threshold' value"),
           std::string::npos);
   ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 }

@@ -128,7 +128,9 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
-        RETURN_STATUS_UNEXPECTED("RandomCropOp: Input images must have the same size.");
+        RETURN_STATUS_UNEXPECTED(
+          "RandomCropOp: Input images in different column must have the same shape, check the output shape in "
+          "specified 'input_columns' before call this operation.");
       }
     }
   }

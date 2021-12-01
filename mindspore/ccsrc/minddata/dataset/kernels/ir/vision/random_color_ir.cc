@@ -39,14 +39,14 @@ std::string RandomColorOperation::Name() const { return kRandomColorOperation; }
 Status RandomColorOperation::ValidateParams() {
   if (t_lb_ < 0 || t_ub_ < 0) {
     std::string err_msg =
-      "RandomColor: lower bound or upper bound must be greater than or equal to 0, got t_lb: " + std::to_string(t_lb_) +
-      ", t_ub: " + std::to_string(t_ub_);
+      "RandomColor: lower bound or upper bound must be greater than or equal to 0, got 'degree'(t_lb): " +
+      std::to_string(t_lb_) + ", 'degree'(t_ub): " + std::to_string(t_ub_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (t_lb_ > t_ub_) {
     std::string err_msg =
-      "RandomColor: lower bound must be less or equal to upper bound, got t_lb: " + std::to_string(t_lb_) +
-      ", t_ub: " + std::to_string(t_ub_);
+      "RandomColor: lower bound must be less or equal to upper bound, got 'degree'(t_lb): " + std::to_string(t_lb_) +
+      ", 'degree'(t_ub): " + std::to_string(t_ub_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();

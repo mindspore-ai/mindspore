@@ -55,7 +55,8 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
-        RETURN_STATUS_UNEXPECTED("RandomCropAndResizeOp: Input images must have the same size.");
+        RETURN_STATUS_UNEXPECTED(
+          "RandomCropAndResizeOp: Input images in different column of each row must have the same size.");
       }
     }
   }
@@ -100,9 +101,11 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
   CHECK_FAIL_RETURN_UNEXPECTED(crop_width != nullptr, "crop_width is nullptr.");
   *crop_width = w_in;
   *crop_height = h_in;
-  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width cannot be 0.");
-  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "RandomCropAndResize: Height cannot be 0.");
-  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "RandomCropAndResize: aspect lower bound must be greater than zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width of input cannot be 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "RandomCropAndResize: Height of input cannot be 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    aspect_lb_ > 0,
+    "RandomCropAndResize: 'ratio'(aspect) lower bound must be greater than 0, but got:" + std::to_string(aspect_lb_));
   for (int32_t i = 0; i < max_iter_; i++) {
     double const sample_scale = rnd_scale_(rnd_);
     // In case of non-symmetrical aspect ratios, use uniform distribution on a logarithmic sample_scale.
