@@ -656,11 +656,10 @@ void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
   for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto dump_flag = AnfAlgo::GetDumpFlag(kernel);
-    if (!dump_flag) {
-      continue;
+    if (dump_flag.has_value() && dump_flag.value().compare("true") == 0) {
+      MS_LOG(DEBUG) << "Dump flag is true for " << GetKernelNodeName(kernel);
+      cell_dump_kernels_.push_back(GetKernelNodeName(kernel));
     }
-    MS_LOG(INFO) << "Dump flag is true for " << GetKernelNodeName(kernel);
-    cell_dump_kernels_.push_back(GetKernelNodeName(kernel));
   }
 }
 
