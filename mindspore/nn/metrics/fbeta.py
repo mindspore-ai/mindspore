@@ -49,7 +49,7 @@ class Fbeta(Metric):
         super(Fbeta, self).__init__()
         self.eps = sys.float_info.min
         if not beta > 0:
-            raise ValueError("For Fbeta, the argument 'beta' must be greater than 0, but got {}.".format(beta))
+            raise ValueError("For 'Fbeta', the argument 'beta' must be greater than 0, but got {}.".format(beta))
         self.beta = beta
         self.clear()
 
@@ -83,13 +83,13 @@ class Fbeta(Metric):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError("Class number not match, last input predicted data contain {} classes, "
-                             "but current predicted data contain {} classes, please check your "
+            raise ValueError("For 'Fbeta.update', class number not match, last input predicted data contain {} "
+                             "classes, but current predicted data contain {} classes, please check your "
                              "predicted value(inputs[0]).".format(self._class_num, y_pred.shape[1]))
         class_num = self._class_num
 
         if y.max() + 1 > class_num:
-            raise ValueError("For 'Fbeta', predicted value(inputs[0]) and true value(inputs[1]) "
+            raise ValueError("For 'Fbeta.update', predicted value(inputs[0]) and true value(inputs[1]) "
                              "should contain same classes, but got predicted value contains {} classes"
                              " and true value contains {} classes.".format(class_num, y.max() + 1))
         y = np.eye(class_num)[y.reshape(-1)]

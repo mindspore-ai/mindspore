@@ -146,7 +146,7 @@ class BleuScore(Metric):
 
         """
         if self._is_update is False:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
         if min(self._numerator) == 0.0:
             return np.array(0.0)
 

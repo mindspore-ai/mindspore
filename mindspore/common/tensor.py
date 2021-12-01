@@ -80,7 +80,7 @@ class Tensor(Tensor_):
         >>> print(t2.shape)
         ()
         >>> print(t2.dtype)
-        Float64
+        Float32
         >>>
         >>> # initialize a tensor with a tuple
         >>> t3 = Tensor((1, 2))
@@ -125,8 +125,8 @@ class Tensor(Tensor_):
             if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
                 input_data.dtype.kind != 'U':  # Support dtype np.str_
                 raise TypeError(f"For Tensor, the input_data is a numpy array, "
-                                f"but it's data type: {input_data.dtype} is not in supported list:\
-                                {list(i.__name__ for i in valid_dtypes)}.")
+                                f"but it's data type: {input_data.dtype} is not in supported list: "
+                                f"{list(i.__name__ for i in valid_dtypes)}.")
             if isinstance(input_data, (tuple, list)):
                 if np.array(input_data).dtype not in valid_dtypes:
                     raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
@@ -454,7 +454,7 @@ class Tensor(Tensor_):
             >>> import numpy as np
             >>> from mindspore import Tensor
             >>> x = Tensor(np.array([[1,2,3],[4,5,6]], dtype=np.float32))
-            >>> print(itemset((0,1), 4))
+            >>> print(x.itemset((0,1), 4))
             [[1. 4. 3.]
             [4. 5. 6.]]
             >>> print(x)
@@ -477,7 +477,7 @@ class Tensor(Tensor_):
             >>> import numpy as np
             >>> x = Tensor(np.array([1, 2], dtype=np.float32))
             >>> y = x.asnumpy()
-            >>> x[0] = 100
+            >>> y[0] = 11
             >>> print(x)
             [11.  2.]
             >>> print(y)
@@ -888,15 +888,12 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> x = Tensor(np.ones((1,2,2,1), dtype=np.float32))
+            >>> x = Tensor(np.ones((1,2,2), dtype=np.float32))
             >>> print(x)
-            [[[[1.]
-            [1.]]
-
-            [[1.]
-            [1.]]]]
+            [[[1. 1.]
+            [1. 1.]]]
             >>> print(x.shape)
-            (1, 2, 2, 1)
+            (1, 2, 2)
             >>> y = x.squeeze()
             >>> print(y)
             [[1. 1.]
@@ -905,13 +902,10 @@ class Tensor(Tensor_):
             (2, 2)
             >>> y = x.squeeze(axis=0)
             >>> print(y)
-            [[[1.]
-            [1.]]
-
-            [[1.]
-            [1.]]]
+            [[1. 1.]
+            [1. 1.]]
             >>> print(y.shape)
-            (2, 2, 1)
+            (2, 2)
         """
         self._init_check()
         if axis is None:
@@ -1911,8 +1905,8 @@ class Tensor(Tensor_):
         if not isinstance(ddof, int):
             raise TypeError("For 'Tensor.var', the type of the argument 'ddof' must be int, but got "
                             "{}.".format(type(ddof)))
-        if not isinstance(keepdims, int):
-            raise TypeError("For 'Tensor.var', the type of the argument 'keepdims' must be int, but "
+        if not isinstance(keepdims, bool):
+            raise TypeError("For 'Tensor.var', the type of the argument 'keepdims' must be bool, but "
                             "got {}.".format(type(keepdims)))
 
         if axis is None:

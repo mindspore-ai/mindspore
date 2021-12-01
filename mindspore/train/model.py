@@ -65,7 +65,7 @@ def _check_bpckpt_file_name_if_same_exist(directory, prefix):
     suffix_num = 0
     pre_len = len(prefix)
     for filename in files:
-        if filename[-16:] != "breakpoint.ckpt":
+        if filename[-16:] != "_breakpoint.ckpt":
             continue
         # find same prefix file
         if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
@@ -78,7 +78,7 @@ def _check_bpckpt_file_name_if_same_exist(directory, prefix):
                 if num.isdigit():
                     suffix_num = max(suffix_num, int(num)+1)
     if suffix_num != 0:
-        prefix = prefix + "" + str(suffix_num)
+        prefix = prefix + "_" + str(suffix_num)
     return prefix
 
 
@@ -100,7 +100,7 @@ def _save_final_ckpt(func):
             try:
                 func(self, *args, **kwargs)
             except BaseException as e:
-                prefix = self._check_bpckpt_file_name_if_same_exist(obj._directory, obj._exception_prefix)
+                prefix = _check_bpckpt_file_name_if_same_exist(obj._directory, obj._exception_prefix)
                 cur_ckpoint_file = prefix + "-" + str(self._current_epoch_num) + "_" \
                     + str(self._current_step_num) + "_breakpoint.ckpt"
                 cur_file = os.path.join(obj._directory, cur_ckpoint_file)

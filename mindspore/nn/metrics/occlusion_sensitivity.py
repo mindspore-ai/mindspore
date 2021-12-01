@@ -205,7 +205,7 @@ class OcclusionSensitivity(Metric):
 
         """
         if not self._is_update:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
         sensitivity = self._baseline - np.squeeze(self._sensitivity_im)
 

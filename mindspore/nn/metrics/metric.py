@@ -94,7 +94,8 @@ class Metric(metaclass=ABCMeta):
         elif isinstance(data, np.ndarray):
             pass
         else:
-            raise TypeError(f'The Input data type must be tensor, list or numpy.ndarray, but got {type(data)}.')
+            raise TypeError(f"For 'Metric' and its derived classes, the input data type must be tensor, list or "
+                            f"numpy.ndarray, but got {type(data)}.")
         return data
 
     def _check_onehot_data(self, data):

@@ -92,7 +92,7 @@ class CosineSimilarity(Metric):
             RuntimeError: If the update method is not called first, an error will be reported.
         """
         if not self._is_update:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
         if self.zero_diagonal:
             np.fill_diagonal(self.sqr_mtx_res, 0)

@@ -202,7 +202,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
-        logger.critical("Failed to save the checkpoint file %s. May don't have the permission to write files, "
+        logger.critical("Failed to save the checkpoint file %s. Maybe don't have the permission to write files, "
                         "or the disk space is insufficient and so on.", ckpt_file_name)
         raise e
 
@@ -438,7 +438,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         else:
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
             if pb_content is None:
-                raise ValueError('Failed to decrypt the checkpoint file.')
+                raise ValueError("For 'load_checkpoint', Failed to decrypt the checkpoint file.")
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
@@ -447,8 +447,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         else:
             logger.critical("Failed to read the checkpoint file '%s' , may not have permission to read it, please "
                             "check the correct of the file.", ckpt_file_name)
-        raise ValueError(e.__str__() + "\nFailed to read the checkpoint file {}, may not have permission to "
-                                       "read it.".format(ckpt_file_name))
+        raise ValueError(e.__str__() + "\nFor 'load_checkpoint', failed to read the checkpoint file {}, may not have "
+                         "permission to read it.".format(ckpt_file_name))
 
     parameter_dict = {}
     try:
@@ -1413,11 +1413,12 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         if parameter.name != parameter_name \
                 or len(parameter.data.shape) != parameter_shape_length \
                 or parameter.data.shape[1:] != parameter_shape[1:]:
-            raise ValueError(f"Please make sure that the elements in 'slice_parameters' have the same name, "
-                             f"dimension length and shape except 0 axis. The name, dimension length, shape except "
-                             f"0 axis should be {parameter_name}, {parameter_shape_length}, {parameter_shape[1:]}, "
-                             f"but got name: {parameter.name}, dimension length: {len(parameter.data.shape)}, "
-                             f"shape except 0 axis: {parameter.data.shape[1:]} at index {index}.")
+            raise ValueError(f"For 'merge_sliced_parameter', please make sure that the elements in 'slice_parameters'"
+                             f" have the same name, dimension length and shape except 0 axis. The name, dimension "
+                             f"length, shape except 0 axis should be {parameter_name}, {parameter_shape_length}, "
+                             f"{parameter_shape[1:]}, but got name: {parameter.name}, dimension length: "
+                             f"{len(parameter.data.shape)}, shape except 0 axis: {parameter.data.shape[1:]} "
+                             f"at index {index}.")
 
         if parameter.data.shape != parameter_shape:
             is_even = False
@@ -1432,8 +1433,8 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     else:
         if parameter_name not in strategy.keys():
-            raise KeyError(f"The parameter name {parameter_name} should be a key in the 'strategy'. Please check "
-                           f"'sliced_parameter' and 'strategy'.")
+            raise KeyError(f"For 'merge_sliced_parameter', the parameter name {parameter_name} should be a key in "
+                           f"the 'strategy'. Please check 'sliced_parameter' and 'strategy'.")
         merged_tensor = _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even)
         merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
 
@@ -1553,9 +1554,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             except BaseException as e:
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
-                raise RuntimeError(e.__str__() + f"\nFailed to load opt shard slice in load distributed "
-                                                 f"checkpoint for {param.name}. Data shape is {split_param.data.shape} "
-                                                 f"and group is {opt_shard_group}.")
+                raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
+                                   f" in load distributed checkpoint for {param.name}. Data shape is "
+                                   f"{split_param.data.shape} and group is {opt_shard_group}.")
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param

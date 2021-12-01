@@ -395,8 +395,8 @@ class Optimizer(Cell):
             return Tensor(np.array(list(learning_rate)).astype(np.float32))
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim > 1:
-                raise ValueError(f"For 'Optimizer', the dim of Tensor type 'learning_rate' should be a 0 or 1, "
-                                 f"but got {learning_rate.ndim}.")
+                raise ValueError(f"For 'Optimizer', if 'learning_rate' is Tensor type, then the dimension of it should "
+                                 f"be 0 or 1, but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
                 logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number "
                                "of elements in the tensor is greater than 1.")
@@ -523,8 +523,8 @@ class Optimizer(Cell):
             for param in group_param['params']:
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                 if param.name in params_store:
-                    raise RuntimeError(f"The {param.name} parameter already exists, it does not support "
-                                       f"repeated setting. Please check whether the optimizer parameter "
+                    raise RuntimeError(f"For 'Optimizer', the {param.name} parameter already exists, it does not "
+                                       f"support repeated setting. Please check whether the optimizer parameter "
                                        f"has been set multiple times.")
 
                 params_store.append(param.name)
@@ -627,8 +627,8 @@ class Optimizer(Cell):
         for p in param_list:
             validator.check_value_type("parameter", p, [Parameter], self.cls_name)
             if id(p) not in ids:
-                raise ValueError(f"The parameter {p.name} is not in optimizer, please check whether the "
-                                 f"argument 'param' is correct.")
+                raise ValueError(f"For 'get_lr_parameter', the parameter {p.name} is not in optimizer, please check "
+                                 f"whether the argument 'param' is correct.")
             if self.is_group_lr:
                 index = ids.index(id(p))
                 lr.append(get_lr_value(self.learning_rate[index]))
@@ -797,7 +797,7 @@ class _ConvertToCell(LearningRateSchedule):
     def __init__(self, learning_rate):
         super(_ConvertToCell, self).__init__()
         if not isinstance(learning_rate, Parameter):
-            raise TypeError("For '_ConvertToCell', the argument 'learning_rate' must be Parameter, "
+            raise TypeError("For 'Optimizer', the argument 'learning_rate' must be Parameter, "
                             "but got {}.".format(type(learning_rate)))
         self.learning_rate = learning_rate
 
@@ -811,10 +811,10 @@ class _IteratorLearningRate(LearningRateSchedule):
         super(_IteratorLearningRate, self).__init__()
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim != 1:
-                raise ValueError(f"For '_IteratorLearningRate', the dimension of the argument 'learning_rate' should "
+                raise ValueError(f"For 'Optimizer', the dimension of the argument 'learning_rate' should "
                                  f"be 1, but got {learning_rate.ndim}.")
         else:
-            raise TypeError("For '_IteratorLearningRate', the argument 'learning_rate' should be Tensor, "
+            raise TypeError("For 'Optimizer', the argument 'learning_rate' should be Tensor, "
                             "but got {}.".format(type(learning_rate)))
 
         self.learning_rate = Parameter(learning_rate, name)
