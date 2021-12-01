@@ -37,7 +37,7 @@ void ExitActor::Init() {
 void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   ControlActor::FetchInput(context);
-  CopyDeviceAddress();
+  CopyDeviceAddress(context);
 
   auto data_iter = output_branch_data_.find(output_branch_id_);
   if (data_iter != output_branch_data_.end()) {
@@ -79,8 +79,9 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
     for (const auto &partial_arrow : partial_iter->second) {
       MS_EXCEPTION_IF_NULL(partial_arrow);
       if (IntToSize(partial_arrow->from_output_index_) >= input_partials_.size()) {
-        MS_LOG(ERROR) << "Invalid partial input:" << partial_arrow->from_output_index_
-                      << " current:" << input_partials_.size() << " for actor:" << GetAID();
+        std::string error_info = "Invalid partial input:" + std::to_string(partial_arrow->from_output_index_) +
+                                 " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       auto output_partial = input_partials_[partial_arrow->from_output_index_];
       MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
@@ -90,14 +91,17 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 
-void ExitActor::CopyDeviceAddress() {
+void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.
   if (node_ != nullptr) {
     return;
   }
   if (input_device_tensors_.size() != is_need_copy_device_tensors_.size()) {
-    MS_LOG(ERROR) << "Invalid input device tensor size:" << input_device_tensors_.size()
-                  << " need:" << is_need_copy_device_tensors_.size() << " for actor:" << GetAID();
+    std::string error_info = "Invalid input device tensor size:" + std::to_string(input_device_tensors_.size()) +
+                             " need:" + std::to_string(is_need_copy_device_tensors_.size()) +
+                             " for actor:" + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
   std::vector<DeviceTensor *> new_device_tensors;
