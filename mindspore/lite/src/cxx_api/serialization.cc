@@ -52,7 +52,7 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
     MS_LOG(ERROR) << "graph is nullptr.";
     return kLiteNullptr;
   }
-  if (model_type != kMindIR) {
+  if (model_type != kMindIR && model_type != kMindIR_Opt) {
     MS_LOG(ERROR) << "Unsupported IR.";
     return kLiteInputParamInvalid;
   }
@@ -82,7 +82,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     MS_LOG(ERROR) << "graph is nullptr.";
     return kLiteNullptr;
   }
-  if (model_type != kMindIR) {
+  if (model_type != kMindIR && model_type != kMindIR_Opt) {
     MS_LOG(ERROR) << "Unsupported IR.";
     return kLiteInputParamInvalid;
   }
