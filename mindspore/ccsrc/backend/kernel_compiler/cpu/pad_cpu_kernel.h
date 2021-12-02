@@ -37,7 +37,7 @@ class PadCPUKernel : public CPUKernel {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   std::vector<std::vector<int64_t>> paddings_;
