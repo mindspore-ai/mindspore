@@ -106,8 +106,12 @@ public class ReconstructSecretReq {
             }
             int reconstructShareSecrets = SendReconstructSecret.createReconstructSecretSharesVector(builder,
                     decryptShareList);
-            int reconstructSecretRoot = SendReconstructSecret.createSendReconstructSecret(builder, desFlId,
-                    reconstructShareSecrets, iteration, time);
+            SendReconstructSecret.startSendReconstructSecret(builder);
+            SendReconstructSecret.addFlId(builder, desFlId);
+            SendReconstructSecret.addReconstructSecretShares(builder, reconstructShareSecrets);
+            SendReconstructSecret.addIteration(builder, iteration);
+            SendReconstructSecret.addTimestamp(builder, time);
+            int reconstructSecretRoot = SendReconstructSecret.endSendReconstructSecret(builder);
             builder.finish(reconstructSecretRoot);
             byte[] msg = builder.sizedByteArray();
             try {

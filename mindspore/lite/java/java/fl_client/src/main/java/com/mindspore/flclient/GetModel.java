@@ -260,7 +260,11 @@ public class GetModel {
         }
 
         private byte[] build() {
-            int root = RequestGetModel.createRequestGetModel(this.builder, nameOffset, iteration, timeStampOffset);
+            RequestGetModel.startRequestGetModel(builder);
+            RequestGetModel.addFlName(builder, nameOffset);
+            RequestGetModel.addIteration(builder, iteration);
+            RequestGetModel.addTimestamp(builder, timeStampOffset);
+            int root = RequestGetModel.endRequestGetModel(builder);
             builder.finish(root);
             return builder.sizedByteArray();
         }
