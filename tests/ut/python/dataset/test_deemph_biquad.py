@@ -26,9 +26,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, \
-        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-        format(data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
+        data_expected[greater], data_me[greater], error[greater])
 
 
 def test_func_deemph_biquad_eager():
@@ -63,6 +62,7 @@ def test_func_deemph_biquad_pipeline():
 
 def test_invalid_input_all():
     waveform = np.random.rand(2, 1000)
+
     def test_invalid_input(test_name, sample_rate, error, error_msg):
         logger.info("Test DeemphBiquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
@@ -76,7 +76,7 @@ def test_invalid_input_all():
                        "Argument sample_rate with value 44100 is not of type [<class 'int'>],"
                        + " but got <class 'str'>.")
     test_invalid_input("invalid sample_rate parameter value", 45000, ValueError,
-                       "Input sample_rate should be 44100 or 48000, but got 45000.")
+                       "Argument sample_rate should be 44100 or 48000, but got 45000.")
 
 
 if __name__ == '__main__':

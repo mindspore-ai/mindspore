@@ -73,7 +73,7 @@ def test_func_angle_003():
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     num_itr = 0
-    with pytest.raises(RuntimeError, match="input tensor type should be int, float or double"):
+    with pytest.raises(RuntimeError, match="the data type of input tensor does not match the requirement of operator"):
         for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_itr += 1
 

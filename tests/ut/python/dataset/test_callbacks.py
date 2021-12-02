@@ -393,7 +393,7 @@ def test_callbacks_validations():
         data = data.map(operations=(lambda x: x), callbacks=my_cb)
         for _ in data:
             pass
-    assert "Provided Callback class did not override any of the 6 callback methods." in str(err.value)
+    assert "Inheriting Callback class without overriding any methods" in str(err.value)
 
 
 def test_callbacks_sink_simulation():

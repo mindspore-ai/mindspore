@@ -117,9 +117,9 @@ def test_time_masking_invalid_input():
                        "Argument iid_masks with value True is not of type [<class 'bool'>], but got <class 'str'>.")
 
     test_invalid_input("invalid mask_start", False, 2, 100, RuntimeError,
-                       "MaskAlongAxis: mask_start should be less than the length of chosen dimension.")
+                       "'mask_start' should be less than the length of the masked dimension")
     test_invalid_input("invalid mask_width", False, 200, 2, RuntimeError,
-                       "TimeMasking: time_mask_param should be less than or equal to the length of time dimension.")
+                       "'time_mask_param' should be less than or equal to the length of time dimension")
 
 
 if __name__ == "__main__":

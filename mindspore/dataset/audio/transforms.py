@@ -319,7 +319,7 @@ class ComputeDeltas(AudioTensorOperation):
 
     Args:
         win_length (int): The window length used for computing delta, must be no less than 3 (default=5).
-        mode (BorderType): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
+        pad_mode (BorderType): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
             [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC].
 
             - BorderType.CONSTANT, means it fills the border with constant values.

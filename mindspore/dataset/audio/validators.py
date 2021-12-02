@@ -18,7 +18,7 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32,\
+from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
 from .utils import BorderType, FadeShape, GainType, Interpolation, Modulation, ScaleType
@@ -62,10 +62,10 @@ def check_biquad_central_freq(central_freq):
     check_float32(central_freq, "central_freq")
 
 
-def check_biquad_Q(Q):
+def check_biquad_q(q):
     """Wrapper method to check the parameters of Q."""
-    type_check(Q, (float, int), "Q")
-    check_value(Q, [0, 1], "Q", True)
+    type_check(q, (float, int), "Q")
+    check_value(q, [0, 1], "Q", True)
 
 
 def check_biquad_noise(noise):
@@ -89,11 +89,11 @@ def check_band_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, central_freq, Q, noise], _ = parse_user_args(
+        [sample_rate, central_freq, q, noise], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         check_biquad_noise(noise)
         return method(self, *args, **kwargs)
 
@@ -111,10 +111,10 @@ def check_highpass_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, cutoff_freq, Q], _ = parse_user_args(method, *args, **kwargs)
+        [sample_rate, cutoff_freq, q], _ = parse_user_args(method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_cutoff_freq(cutoff_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -125,11 +125,11 @@ def check_allpass_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, central_freq, Q], _ = parse_user_args(
+        [sample_rate, central_freq, q], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -140,11 +140,11 @@ def check_bandpass_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, central_freq, Q, const_skirt_gain], _ = parse_user_args(
+        [sample_rate, central_freq, q, const_skirt_gain], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         check_biquad_const_skirt_gain(const_skirt_gain)
         return method(self, *args, **kwargs)
 
@@ -156,11 +156,11 @@ def check_bandreject_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, central_freq, Q], _ = parse_user_args(
+        [sample_rate, central_freq, q], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -171,12 +171,12 @@ def check_bass_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, gain, central_freq, Q], _ = parse_user_args(
+        [sample_rate, gain, central_freq, q], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_gain(gain)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -221,6 +221,7 @@ def check_dc_shift(method):
         if limiter_gain is not None:
             type_check(limiter_gain, (float, int), "limiter_gain")
         return method(self, *args, **kwargs)
+
     return new_method
 
 
@@ -232,7 +233,7 @@ def check_deemph_biquad(method):
         [sample_rate], _ = parse_user_args(method, *args, **kwargs)
         type_check(sample_rate, (int,), "sample_rate")
         if sample_rate not in (44100, 48000):
-            raise ValueError("Input sample_rate should be 44100 or 48000, but got {0}.".format(sample_rate))
+            raise ValueError("Argument sample_rate should be 44100 or 48000, but got {0}.".format(sample_rate))
         return method(self, *args, **kwargs)
 
     return new_method
@@ -243,11 +244,11 @@ def check_equalizer_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, center_freq, gain, Q], _ = parse_user_args(method, *args, **kwargs)
+        [sample_rate, center_freq, gain, q], _ = parse_user_args(method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_central_freq(center_freq)
         check_biquad_gain(gain)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -279,10 +280,10 @@ def check_lowpass_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, cutoff_freq, Q], _ = parse_user_args(method, *args, **kwargs)
+        [sample_rate, cutoff_freq, q], _ = parse_user_args(method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_cutoff_freq(cutoff_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -382,12 +383,12 @@ def check_treble_biquad(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [sample_rate, gain, central_freq, Q], _ = parse_user_args(
+        [sample_rate, gain, central_freq, q], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
         check_biquad_gain(gain)
         check_biquad_central_freq(central_freq)
-        check_biquad_Q(Q)
+        check_biquad_q(q)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -420,6 +421,7 @@ def check_power(power):
 
 def check_complex_norm(method):
     """Wrapper method to check the parameters of ComplexNorm."""
+
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [power], _ = parse_user_args(method, *args, **kwargs)
@@ -580,6 +582,7 @@ def check_sliding_window_cmn(method):
 
 def check_compute_deltas(method):
     """Wrapper method to check the parameter of ComputeDeltas."""
+
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [win_length, pad_mode], _ = parse_user_args(method, *args, **kwargs)

@@ -72,21 +72,21 @@ def test_magphase_exception():
         _ = magphase_window(input_number)
     except RuntimeError as error:
         logger.info("Got an exception in Magphase: {}".format(str(error)))
-        assert "Magphase: input tensor is not in shape of <..., 2>." in str(error)
+        assert "the shape of input tensor does not match the requirement of operator" in str(error)
     try:
         input_number = np.array([1, 2, 3, 4]).reshape(1, 4).astype("double")
         magphase_window = audio.Magphase(power=2.0)
         _ = magphase_window(input_number)
     except RuntimeError as error:
         logger.info("Got an exception in Magphase: {}".format(str(error)))
-        assert "Magphase: input tensor is not in shape of <..., 2>." in str(error)
+        assert "the shape of input tensor does not match the requirement of operator" in str(error)
     try:
         input_number = np.array(['test', 'test']).reshape(1, 2)
         magphase_window = audio.Magphase(power=2.0)
         _ = magphase_window(input_number)
     except RuntimeError as error:
         logger.info("Got an exception in Magphase: {}".format(str(error)))
-        assert "Magphase: input tensor type should be int, float or double" in str(error)
+        assert "the data type of input tensor does not match the requirement of operator" in str(error)
     try:
         input_number = np.array([1, 2, 3, 4]).reshape(2, 2).astype("double")
         magphase_window = audio.Magphase(power=-1.0)

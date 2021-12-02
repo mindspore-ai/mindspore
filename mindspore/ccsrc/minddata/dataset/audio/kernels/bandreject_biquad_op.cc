@@ -23,13 +23,8 @@ namespace dataset {
 Status BandrejectBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // check input type and input shape
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0,
-                               "BandrejectBiquad: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "BandrejectBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateLowRank("BandrejectBiquad", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorFloat("BandrejectBiquad", input));
   double w0 = 2 * PI * central_freq_ / sample_rate_;
   double alpha = sin(w0) / 2 / Q_;
   double b0 = 1;

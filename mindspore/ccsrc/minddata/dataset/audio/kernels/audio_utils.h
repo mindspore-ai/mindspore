@@ -29,9 +29,11 @@
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/util/validators.h"
 
 constexpr double PI = 3.141592653589793;
-constexpr int kMinAudioRank = 2;
+constexpr int kMinAudioDim = 1;
+constexpr int kDefaultAudioDim = 2;
 
 namespace mindspore {
 namespace dataset {
@@ -997,19 +999,19 @@ Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out
 
 // A brief structure of wave file header.
 struct WavHeader {
-  int8_t chunkID[4] = {0};
-  int32_t chunkSize = 0;
+  int8_t chunk_id[4] = {0};
+  int32_t chunk_size = 0;
   int8_t format[4] = {0};
-  int8_t subChunk1ID[4] = {0};
-  int32_t subChunk1Size = 0;
-  int16_t audioFormat = 0;
-  int16_t numChannels = 0;
-  int32_t sampleRate = 0;
-  int32_t byteRate = 0;
-  int16_t byteAlign = 0;
-  int16_t bitsPerSample = 0;
-  int8_t subChunk2ID[4] = {0};
-  int32_t subChunk2Size = 0;
+  int8_t sub_chunk1_id[4] = {0};
+  int32_t sub_chunk1_size = 0;
+  int16_t audio_format = 0;
+  int16_t num_channels = 0;
+  int32_t sample_rate = 0;
+  int32_t byte_rate = 0;
+  int16_t byte_align = 0;
+  int16_t bits_per_sample = 0;
+  int8_t sub_chunk2_id[4] = {0};
+  int32_t sub_chunk2_size = 0;
   WavHeader() {}
 };
 

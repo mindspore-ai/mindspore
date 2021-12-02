@@ -39,7 +39,7 @@ Status MagphaseOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status MagphaseOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("power") != op_params.end(), "Fail to find power");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "power", kMagphaseOperation));
   float power = op_params["power"];
   *operation = std::make_shared<audio::MagphaseOperation>(power);
   return Status::OK();

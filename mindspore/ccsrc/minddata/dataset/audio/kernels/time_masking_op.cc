@@ -32,16 +32,17 @@ TimeMaskingOp::TimeMaskingOp(bool iid_masks, int32_t time_mask_param, int32_t ma
 Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // input <..., freq, time>
-  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2, "TimeMasking: input tensor is not in shape of <..., freq, time>.");
-  TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input_shape[-1] >= time_mask_param_,
-    "TimeMasking: time_mask_param should be less than or equal to the length of time dimension.");
+  RETURN_IF_NOT_OK(ValidateLowRank("TimeMasking", input, kDefaultAudioDim, "<..., freq, time>"));
+  const int32_t kTimeIndex = -1;
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape()[kTimeIndex] >= time_mask_param_,
+                               "TimeMasking: invalid parameter, 'time_mask_param' should be less than or equal to "
+                               "the length of time dimension, but got: 'frequency_mask_param' " +
+                                 std::to_string(time_mask_param_) + " and length " +
+                                 std::to_string(input->shape()[kTimeIndex]));
 
   std::shared_ptr<Tensor> input_tensor;
   // typecast
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "TimeMasking: input tensor type should be float, but got: string.");
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("TimeMasking", input));
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
   } else {
@@ -54,6 +55,18 @@ Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   } else {
     return RandomMaskAlongAxis(input_tensor, output, time_mask_param_, mask_value_, 2, rnd_);
   }
+}
+
+Status TimeMaskingOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
+  RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  RETURN_IF_NOT_OK(
+    ValidateTensorType("TimeMasking", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
+  if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
+    outputs[0] = DataType(DataType::DE_FLOAT64);
+  } else {
+    outputs[0] = DataType(DataType::DE_FLOAT32);
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

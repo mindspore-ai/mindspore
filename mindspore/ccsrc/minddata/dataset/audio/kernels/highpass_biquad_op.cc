@@ -22,14 +22,10 @@ namespace mindspore {
 namespace dataset {
 Status HighpassBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "HighpassBiquad: input tensor in not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("HighpassBiquad", input, kMinAudioDim, "<..., time>"));
   // check input tensor type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "HighpassBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("HighpassBiquad", input));
   double w0 = 2 * PI * cutoff_freq_ / sample_rate_;
   double alpha = sin(w0) / 2 / Q_;
 

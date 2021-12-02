@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 
-#include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/audio/kernels/deemph_biquad_op.h"
 
 namespace mindspore {
@@ -28,7 +27,7 @@ DeemphBiquadOperation::DeemphBiquadOperation(int32_t sample_rate) : sample_rate_
 Status DeemphBiquadOperation::ValidateParams() {
   if ((sample_rate_ != 44100 && sample_rate_ != 48000)) {
     std::string err_msg =
-      "DeemphBiquad: sample_rate should be 44100 (hz) or 48000 (hz), but got: " + std::to_string(sample_rate_);
+      "DeemphBiquad: sample_rate can only be 44100 or 48000, but got: " + std::to_string(sample_rate_);
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }

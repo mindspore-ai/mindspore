@@ -16,7 +16,6 @@
 """
 Built-in validators.
 """
-
 from functools import wraps
 
 from ..core.validator_helpers import parse_user_args, check_pos_int32

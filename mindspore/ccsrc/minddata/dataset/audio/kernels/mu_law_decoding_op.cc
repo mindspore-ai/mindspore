@@ -25,27 +25,19 @@ MuLawDecodingOp::MuLawDecodingOp(int32_t quantization_channels) : quantization_c
 // main function
 Status MuLawDecodingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-
-  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 1, "MuLawDecoding: input tensor is not in shape of <..., time>.");
-
-  if (input->type().IsNumeric()) {
-    return MuLawDecoding(input, output, quantization_channels_);
-  } else {
-    RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
-                             input->type().ToString());
-  }
+  RETURN_IF_NOT_OK(ValidateLowRank("MuLawDecoding", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("MuLawDecoding", input));
+  return MuLawDecoding(input, output, quantization_channels_);
 }
 
 Status MuLawDecodingOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  RETURN_IF_NOT_OK(
+    ValidateTensorType("MuLawDecoding", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
   if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
     outputs[0] = DataType(DataType::DE_FLOAT64);
-  } else if (inputs[0].IsInt() || inputs[0] == DataType(DataType::DE_FLOAT16) ||
-             inputs[0] == DataType(DataType::DE_FLOAT32)) {
-    outputs[0] = DataType(DataType::DE_FLOAT32);
   } else {
-    RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
-                             inputs[0].ToString());
+    outputs[0] = DataType(DataType::DE_FLOAT32);
   }
   return Status::OK();
 }

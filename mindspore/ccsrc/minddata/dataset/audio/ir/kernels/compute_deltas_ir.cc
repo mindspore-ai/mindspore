@@ -41,7 +41,7 @@ Status ComputeDeltasOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("ComputeDeltas", "win_length", win_length_, {3}, false));
   if (pad_mode_ != BorderType::kConstant && pad_mode_ != BorderType::kEdge && pad_mode_ != BorderType::kReflect &&
       pad_mode_ != BorderType::kSymmetric) {
-    std::string err_msg = "ComputeDeltas: invalid BorderType, please check input value of enum.";
+    std::string err_msg = "ComputeDeltas: invalid pad_mode value, check the optional value of BorderType.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();

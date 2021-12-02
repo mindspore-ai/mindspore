@@ -36,17 +36,17 @@ FrequencyMaskingOp::FrequencyMaskingOp(bool iid_masks, int32_t frequency_mask_pa
 Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // input <..., freq, time>
-  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2,
-                               "FrequencyMasking: input tensor is not in shape of <..., freq, time>.");
-  TensorShape input_shape = input->shape();
+  RETURN_IF_NOT_OK(ValidateLowRank("FrequencyMasking", input, kDefaultAudioDim, "<..., freq, time>"));
+  const int32_t kFreqIndex = -2;
   CHECK_FAIL_RETURN_UNEXPECTED(
-    input_shape[-2] >= frequency_mask_param_,
-    "FrequencyMasking: frequency_mask_param should be less than or equal to the length of frequency dimension.");
+    input->shape()[kFreqIndex] >= frequency_mask_param_,
+    "FrequencyMasking: invalid parameter, 'frequency_mask_param' should be less than or equal to "
+    "the length of frequency dimension, but got: 'frequency_mask_param' " +
+      std::to_string(frequency_mask_param_) + " and length " + std::to_string(input->shape()[kFreqIndex]));
 
   std::shared_ptr<Tensor> input_tensor;
   // typecast
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "FrequencyMasking: input tensor type should be float, but got: string.");
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("FrequencyMasking", input));
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
   } else {
@@ -58,6 +58,18 @@ Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   } else {
     return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_value_, 1, rnd_);
   }
+}
+
+Status FrequencyMaskingOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
+  RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
+  RETURN_IF_NOT_OK(
+    ValidateTensorType("FrequencyMasking", inputs[0].IsNumeric(), "[int, float, double]", inputs[0].ToString()));
+  if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
+    outputs[0] = DataType(DataType::DE_FLOAT64);
+  } else {
+    outputs[0] = DataType(DataType::DE_FLOAT32);
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

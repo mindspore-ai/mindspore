@@ -317,6 +317,9 @@ class Tensor {
   /// Check if tensor is complex
   /// \return bool - true if tensor is complex
   bool IsComplex() const {
+    if (shape_.empty()) {
+      return false;
+    }
     // check the last dim all be 2
     return shape_[-1] == 2;
   }

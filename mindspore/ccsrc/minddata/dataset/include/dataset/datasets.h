@@ -3543,7 +3543,7 @@ inline std::shared_ptr<SBUDataset> MS_API SBU(const std::string &dataset_dir, bo
 
 /// \class SpeechCommandsDataset.
 /// \brief A source dataset that reads and parses SpeechCommands dataset.
-class SpeechCommandsDataset : public Dataset {
+class MS_API SpeechCommandsDataset : public Dataset {
  public:
   /// \brief Constructor of SpeechCommandsDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3581,10 +3581,10 @@ class SpeechCommandsDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the SpeechCommandsDataset.
-inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(
-  const std::string &dataset_dir, const std::string &usage = "all",
-  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
-  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+inline std::shared_ptr<SpeechCommandsDataset> MS_API
+SpeechCommands(const std::string &dataset_dir, const std::string &usage = "all",
+               const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+               const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
@@ -3595,9 +3595,9 @@ inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the SpeechCommandsDataset.
-inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &dataset_dir, const std::string &usage,
-                                                             const Sampler *sampler,
-                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+inline std::shared_ptr<SpeechCommandsDataset> MS_API
+SpeechCommands(const std::string &dataset_dir, const std::string &usage, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
@@ -3608,9 +3608,9 @@ inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
 /// \return Shared pointer to the SpeechCommandsDataset.
-inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &dataset_dir, const std::string &usage,
-                                                             const std::reference_wrapper<Sampler> sampler,
-                                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+inline std::shared_ptr<SpeechCommandsDataset> MS_API
+SpeechCommands(const std::string &dataset_dir, const std::string &usage, const std::reference_wrapper<Sampler> sampler,
+               const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 

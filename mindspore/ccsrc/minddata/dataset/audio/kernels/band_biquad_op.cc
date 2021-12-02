@@ -22,23 +22,20 @@ namespace mindspore {
 namespace dataset {
 Status BandBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "BandBiquad: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("BandBiquad", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
-                                 input->type() == DataType(DataType::DE_FLOAT16) ||
-                                 input->type() == DataType(DataType::DE_FLOAT64),
-                               "BandBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("BandBiquad", input));
   double w0 = 2 * PI * central_freq_ / sample_rate_;
   double bw_Hz = central_freq_ / Q_;
   double a0 = 1.;
   double a2 = exp(-2 * PI * bw_Hz / sample_rate_);
   double a1 = -4 * a2 / (1 + a2) * cos(w0);
-  CHECK_FAIL_RETURN_UNEXPECTED(a2 != 0, "BandBiquad: ZeroDivisionError.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    a2 != 0, "BandBiquad: zero division error, 'central_freq / Q / sample_rate' got a big negative value.");
   double b0 = sqrt(1 - a1 * a1 / (4 * a2)) * (1 - a2);
   if (noise_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(b0 != 0, "BandBiquad: ZeroDivisionError.");
+    CHECK_FAIL_RETURN_UNEXPECTED(b0 != 0, "BandBiquad: zero division error, 'b0' can not be zero.");
     double mutl = sqrt(((1 + a2) * (1 + a2) - a1 * a1) * (1 - a2) / (1 + a2)) / b0;
     b0 *= mutl;
   }

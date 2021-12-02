@@ -26,14 +26,10 @@ RiaaBiquadOp::RiaaBiquadOp(int32_t sample_rate) : sample_rate_(sample_rate) {}
 
 Status RiaaBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "RiaaBiquad: input tensor is not in shape of <..., time>.");
+  RETURN_IF_NOT_OK(ValidateLowRank("RiaaBiquad", input, kMinAudioDim, "<..., time>"));
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64.
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
-                                 input->type() == DataType(DataType::DE_FLOAT16) ||
-                                 input->type() == DataType(DataType::DE_FLOAT64),
-                               "RiaaBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  RETURN_IF_NOT_OK(ValidateTensorFloat("RiaaBiquad", input));
   // indicate array zeros and poles.
   const std::map<int32_t, std::vector<float>> kZeros = {
     {44100, {-0.2014898, 0.9233820}},
