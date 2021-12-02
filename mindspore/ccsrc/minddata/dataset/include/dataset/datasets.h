@@ -2510,6 +2510,83 @@ inline std::shared_ptr<ImageFolderDataset> MS_API ImageFolder(const std::string 
                                               MapStringToChar(class_indexing), cache);
 }
 
+/// \class KMnistDataset.
+/// \brief A source dataset for reading and parsing KMnist dataset.
+class MS_API KMnistDataset : public Dataset {
+ public:
+  /// \brief Function to create a KMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage of KMNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  /// \return Shared pointer to the current KMnistDataset.
+  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Function to create a KMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage of Kmnist, can be "train", "test" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  /// \return Shared pointer to the current KMnistDataset.
+  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                         const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Function to create a KMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage of Kmnist, can be "train", "test" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  /// \return Shared pointer to the current KMnistDataset.
+  explicit KMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of KMnistDataset.
+  ~KMnistDataset() = default;
+};
+
+/// \brief Function to create a KMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of KMNIST, can be "train", "test" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current KMnistDataset.
+inline std::shared_ptr<KMnistDataset> MS_API
+KMnist(const std::string &dataset_dir, const std::string &usage = "all",
+       const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a KMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage of Kmnist, can be "train", "test" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current KMnistDataset.
+inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_dir, const std::string &usage,
+                                                    const Sampler *sampler,
+                                                    const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a KMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage of Kmnist, can be "train", "test" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current KMnistDataset.
+inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_dir, const std::string &usage,
+                                                    const std::reference_wrapper<Sampler> sampler,
+                                                    const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class LJSpeechDataset
 /// \brief A source dataset for reading and parsing LJSpeech dataset.
 class MS_API LJSpeechDataset : public Dataset {

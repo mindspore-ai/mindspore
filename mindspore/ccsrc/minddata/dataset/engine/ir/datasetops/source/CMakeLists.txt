@@ -19,6 +19,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         fashion_mnist_node.cc
         flickr_node.cc
         image_folder_node.cc
+        kmnist_node.cc
         lj_speech_node.cc
         manifest_node.cc
         minddata_node.cc

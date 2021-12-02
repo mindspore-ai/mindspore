@@ -19,6 +19,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     flickr_op.cc
     image_folder_op.cc
     io_block.cc
+    kmnist_op.cc
     lj_speech_op.cc
     mappable_leaf_op.cc
     mnist_op.cc

@@ -29,6 +29,7 @@ SET(DE_UT_SRCS
         c_api_dataset_fashion_mnist_test.cc
         c_api_dataset_flickr_test.cc
         c_api_dataset_iterator_test.cc
+        c_api_dataset_kmnist_test.cc
         c_api_dataset_lj_speech_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
