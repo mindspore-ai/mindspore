@@ -69,7 +69,7 @@ class ProximalAdagrad(Optimizer):
     .. math::
         var_{t+1} = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
 
-    Here : where grad, lr, var, accum and t denote the gradients, learning_rate, params and accumulation and current
+    Here : where grad, lr, var, accum and t denote the `grads`, `learning_rate`, `params`, accumulation and current
     step respectively.
 
     Note:
@@ -105,7 +105,7 @@ class ProximalAdagrad(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
+        accum (float): The starting value for accumulators `accum`, must be zero or positive values. Default: 0.1.
         learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 0.001.
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.

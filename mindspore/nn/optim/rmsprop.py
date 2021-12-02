@@ -75,13 +75,14 @@ class RMSProp(Optimizer):
         w = w - m_{t+1}
 
     where :math:`w` represents `params`, which will be updated.
-    :math:`g_{t+1}` is mean gradients, :math:`g_{t}` is the last moment of :math:`g_{t+1}`.
-    :math:`s_{t+1}` is the mean square gradients, :math:`s_{t}` is the last moment of :math:`s_{t+1}`,
-    :math:`m_{t+1}` is moment, the delta of `w`, :math:`m_{t}` is the last moment of :math:`m_{t+1}`.
+    :math:`g_{t+1}` is mean gradients.
+    :math:`s_{t+1}` is the mean square gradients.
+    :math:`m_{t+1}` is moment, the delta of `w`.
     :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
     :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\\eta` is learning rate, represents `learning_rate`. :math:`\\nabla Q_{i}(w)` is gradients,
     represents `gradients`.
+    :math:`t` represents the current step.
 
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
@@ -131,9 +132,9 @@ class RMSProp(Optimizer):
                           greater than 0. Default: 0.0.
         epsilon (float): Term added to the denominator to improve numerical stability. Should be greater than
                          0. Default: 1e-10.
-        use_locking (bool):  Whether to enable a lock to protect the variable and accumulation tensors from being
-                             updated. Default: False.
-        centered (bool): If true, gradients are normalized by the estimated variance of the gradient. Default: False.
+        use_locking (bool):  Whether to enable a lock to protect the updating process of variable tensors.
+            Default: False.
+        centered (bool): If True, gradients are normalized by the estimated variance of the gradient. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in

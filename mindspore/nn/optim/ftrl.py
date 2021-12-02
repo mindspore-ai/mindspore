@@ -98,9 +98,9 @@ class FTRL(Optimizer):
             \end{cases}\\
         \end{array}
 
-    :math:`m` represents `accum`, :math:`g` represents `grads`, :math:`t` represents updating step,
-    :math:`u` represents `linear`, :math:`p` represents `lr_power`, :math:`\alpha` represents `learning_rate`,
-    :math:`\omega` represents `params`.
+    :math:`m` represents accumulators, :math:`g` represents `grads`, :math:`t` represents the current step,
+    :math:`u` represents the linear coefficient to be updated,, :math:`p` represents `lr_power`, :math:`\alpha`
+    represents `learning_rate`, :math:`\omega` represents `params`.
 
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
@@ -134,7 +134,7 @@ class FTRL(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        initial_accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
+        initial_accum (float): The starting value for accumulators `m`, must be zero or positive values. Default: 0.1.
         learning_rate (float): The learning rate value, must be zero or positive, dynamic learning rate is currently
             not supported. Default: 0.001.
         lr_power (float): Learning rate power controls how the learning rate decreases during training, must be less
@@ -183,7 +183,8 @@ class FTRL(Optimizer):
         >>> optim = nn.FTRL(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
-        >>> # The no_conv_params's parameters will use default weight decay of 0.0 and grad centralization of False.
+        >>> # The no_conv_params's parameters will use default learning rate of 0.1 will use default weight decay
+        >>> # of 0.0 and grad centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()

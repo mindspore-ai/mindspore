@@ -38,7 +38,7 @@ mindspore.DynamicLossScaleManager
         
     .. py:method:: get_update_cell()
 
-        返回用于在 :class:`mindspore.TrainOneStepWithLossScaleCell` 中更新梯度放大系数的 `Cell` 实例。
+        返回用于更新梯度放大系数的 `Cell` 实例，:class:`mindspore.TrainOneStepWithLossScaleCell` 会调用该实例。
 
         **返回：**
 

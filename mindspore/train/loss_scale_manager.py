@@ -25,8 +25,8 @@ class LossScaleManager:
     Derived class needs to implement all of its methods. `get_loss_scale` is used to get current loss scale value.
     `update_loss_scale` is used to update loss scale value, `update_loss_scale` will be called during the training.
     `get_update_cell` is used to get the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale,
-    the instance will be called during the training. When using sink mode, only the `get_update_cell` works, otherwise
-    both `update_loss_scale` and `get_update_cell` works.
+    the instance will be called during the training. Currently, the `get_update_cell` is mostly used.
+
     For example, :class:`mindspore.FixedLossScaleManager` and :class:`mindspore.DynamicLossScaleManager`.
     """
     def get_loss_scale(self):
@@ -105,7 +105,8 @@ class FixedLossScaleManager(LossScaleManager):
     def get_update_cell(self):
         """
         Returns the instance of :class:`mindspore.nn.Cell` that used to update the loss scale which will be called at
-        :class:`mindspore.nn.TrainOneStepWithLossScaleCell`.
+        :class:`mindspore.nn.TrainOneStepWithLossScaleCell`. As the loss scale is fixed in this class, the instance
+        will do nothing.
 
         Returns:
             None or :class:`mindspore.FixedLossScaleUpdateCell`. Instance of
