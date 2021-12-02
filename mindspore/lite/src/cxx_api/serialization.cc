@@ -24,6 +24,7 @@
 #include "src/cxx_api/model/model_impl.h"
 #include "src/cxx_api/converters.h"
 #include "src/common/log_adapter.h"
+#include "src/lite_session.h"
 
 namespace mindspore {
 Key::Key(const char *dec_key, size_t key_len) {
@@ -57,10 +58,22 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
     return kLiteInputParamInvalid;
   }
 
-  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(static_cast<const char *>(model_data), data_size));
+  size_t lite_buf_size = 0;
+  char *lite_buf = nullptr;
+  auto buf_model_type = lite::LiteSession::LoadModelByBuff(reinterpret_cast<const char *>(model_data), data_size,
+                                                           &lite_buf, &lite_buf_size, model_type);
+  if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
+    MS_LOG(ERROR) << "Invalid model_buf";
+    return kLiteNullptr;
+  }
+  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(static_cast<const char *>(lite_buf), data_size));
   if (model == nullptr) {
     MS_LOG(ERROR) << "New model failed.";
     return kLiteNullptr;
+  }
+  if (buf_model_type == mindspore::ModelType::kMindIR) {
+    free(lite_buf);
+    lite_buf = nullptr;
   }
   auto graph_data = std::shared_ptr<Graph::GraphData>(new (std::nothrow) Graph::GraphData(model));
   if (graph_data == nullptr) {
@@ -95,7 +108,14 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     filename = filename + ".ms";
   }
 
-  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(filename.c_str()));
+  size_t model_size;
+  auto model_buf = lite::LiteSession::LoadModelByPath(filename, model_type, &model_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed";
+    return kLiteNullptr;
+  }
+  auto model =
+    std::shared_ptr<lite::Model>(lite::ImportFromBuffer(static_cast<const char *>(model_buf), model_size, true));
   if (model == nullptr) {
     MS_LOG(ERROR) << "New model failed.";
     return kLiteNullptr;
