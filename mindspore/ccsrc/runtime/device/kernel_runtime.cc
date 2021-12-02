@@ -1449,6 +1449,13 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
       return ret;
     }
     AssignKernelAddress(mem_scheduler, kernel, &kernel_launch_info);
+    auto cnode = kernel->cast<CNodePtr>();
+    if (mock && AnfAlgo::HasNodeAttr(kAttrOffload, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrOffload)) {
+      for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
+        auto device_address = AnfAlgo::GetOutputAddr(kernel, i, true);
+        mem_scheduler->SetOffload(device_address);
+      }
+    }
   } else if (!kernel_mod->GetInputsAddr().empty() || !kernel_mod->GetOutputsAddr().empty()) {
     kernel_launch_info.inputs_ = kernel_mod->GetInputsAddr();
     kernel_launch_info.outputs_ = kernel_mod->GetOutputsAddr();
@@ -1462,15 +1469,15 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
     } else {
       ret = kernel_mod->Launch(kernel_launch_info, stream);
     }
+    if (!ret) {
+      return ret;
+    }
   }
   if (mem_scheduler != nullptr) {
     if (!mock) {
       SyncNodeOutputTensors(mem_scheduler, graph, kernel);
     }
     ret = mem_scheduler->PostCompute(stream);
-    if (!ret) {
-      return ret;
-    }
   }
   return ret;
 }
@@ -1483,7 +1490,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
   if (UseMemScheduler()) {
     mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     MS_EXCEPTION_IF_NULL(mem_scheduler);
-    mem_scheduler->ResetCurrentStep();
+    mem_scheduler->Reset();
     mem_scheduler->Update();
     InitGraphInputTensors(mem_scheduler, graph);
   }
@@ -1594,8 +1601,8 @@ void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
     (void)LaunchKernelMod(graph, true);
     mem_scheduler->set_need_record_event(false);
   }
-  mem_scheduler->Optimize();
-  if (!mem_scheduler->optimized()) {
+  auto ret = mem_scheduler->Optimize();
+  if (!ret) {
     MS_LOG_EXCEPTION << "Can't run graph " << graph.graph_id() << " for memory limit.";
   }
 }

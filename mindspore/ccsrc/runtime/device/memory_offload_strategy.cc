@@ -16,7 +16,6 @@
 #include "runtime/device/memory_offload_strategy.h"
 #include <vector>
 #include <map>
-#include <set>
 #include <memory>
 #include <utility>
 #include "utils/log_adapter.h"
@@ -100,7 +99,7 @@ void MemOffloadStrategy::CheckMemSize() {
                       << min_mem_needed_;
   }
 
-  if (mem_size_ < mem_used_without_swap_) {
+  if (mem_size_ < mem_used_without_swap_ || !manual_offload_keys_.empty()) {
     need_swap_ = true;
   }
 
@@ -141,6 +140,18 @@ void MemOffloadStrategy::GenEventSpan() {
 
 void MemOffloadStrategy::GenSwapEventSet() {
   swap_events_.clear();
+  // manual offload strategy
+  if (!manual_offload_keys_.empty()) {
+    for (const auto &iter : event_span_) {
+      auto &event = iter.second.first;
+      if (manual_offload_keys_.find(event->key) != manual_offload_keys_.end()) {
+        (void)swap_events_.emplace(event);
+      }
+    }
+    return;
+  }
+
+  // greedy span filter
   std::vector<size_t> cur_mem_used(min_mem_used_.begin(), min_mem_used_.end());
   for (const auto &iter : event_span_) {
     auto span = iter.second.second;
@@ -179,9 +190,6 @@ void MemOffloadStrategy::GenComputeMemEvents() {
   post_compute_events_.resize(total_step_);
   for (auto &item : mem_events_) {
     auto &mem_events = item.second;
-    if (mem_events.empty()) {
-      continue;
-    }
     // No need to generate events for memory that has only one event, which means it is never used by any kernel.
     if (mem_events.size() <= 1) {
       continue;
@@ -211,10 +219,13 @@ void MemOffloadStrategy::GenComputeMemEvents() {
         swap_out_event->key = item.first;
         swap_out_event->mem_size = first_event->mem_size;
         post_compute_events_[pre_index].emplace_back(swap_out_event);
-        auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
-        swap_in_event->key = item.first;
-        swap_in_event->mem_size = first_event->mem_size;
-        (void)pre_compute_events_[event->index].emplace_back(swap_in_event);
+        // avoid swap-in-event follow init-event
+        if (first_event->type != kInit || i != 1) {
+          auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
+          swap_in_event->key = item.first;
+          swap_in_event->mem_size = first_event->mem_size;
+          (void)pre_compute_events_[event->index].emplace_back(swap_in_event);
+        }
       }
       if (event->index < pre_compute_events_.size()) {
         (void)pre_compute_events_[event->index].emplace_back(event);

@@ -349,6 +349,7 @@ constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrAsync = "async";
+constexpr auto kAttrOffload = "offload";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrShape = "shape";
 constexpr auto kAttrMomentum = "momentum";
