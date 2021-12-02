@@ -19,14 +19,13 @@
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
+void InitRandState(int seed, int num, curandState *state, cudaStream_t stream);
 template <typename T>
-void Multinomial(int seed, int seed2, T *input, int num_sample, curandState *globalState, int *output,
-                 size_t distributions, size_t categories, cudaStream_t cuda_stream);
+void Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample, int *output,
+                 cudaStream_t stream);
 template <typename T>
 void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);
 template <typename T>
 void CheckZero(const size_t distributions, const size_t categories, const T *input, T *output, cudaStream_t stream);
-template <typename T>
-void NormInput(T *input, const size_t distributions, const size_t categories, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MULTINOMIAL_IMPL_CUH_
