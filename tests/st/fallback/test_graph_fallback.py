@@ -134,3 +134,29 @@ def test_list_insert():
         x.insert(1, 2)
         return Tensor(x)
     assert np.all(list_insert().asnumpy() == np.array([1, 2, 3, 4]))
+
+
+@ms_function
+def np_fallback_func_tensor_index(x):
+    array_x = tuple([2, 3, 4, 5])
+    np_x = np.array(array_x).astype(np.float32)
+    me_x = Tensor(np_x)
+    me_x = me_x + me_x
+    return me_x[x]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_fallback_func_tensor_index():
+    """
+    Feature: Fallback feature: support Tensor index.
+    Description: Fallback feature: support Tensor index.
+    Expectation: Fallback feature: support Tensor index.
+    """
+    x = Tensor(1, mstype.int32)
+    output = np_fallback_func_tensor_index(x)
+    output_expect = Tensor(6, mstype.float32)
+    assert output == output_expect

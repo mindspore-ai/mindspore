@@ -1375,11 +1375,23 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()
                   << ", filtered_local_dict:" << filtered_local_dict->ToString();
     ValuePtr local_dict_value = filtered_local_dict->BuildValue();
-    py::object local_params_dict = ValueToPyData(local_dict_value);
+    py::dict local_params_dict = ReCheckLocalDict(filtered_local_dict);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
     params[1] = local_params_dict;
     return params;
+  }
+
+  py::dict ReCheckLocalDict(const AbstractDictionaryPtr &filtered_local_dict) const {
+    const auto &keys_values = filtered_local_dict->elements();
+    py::dict local_params_dict;
+    for (auto &key_value : keys_values) {
+      ValuePtr element_value = key_value.second->BuildValue();
+      MS_EXCEPTION_IF_NULL(element_value);
+      auto py_data = ValueToPyData(element_value);
+      local_params_dict[py::str(key_value.first)] = py_data;
+    }
+    return local_params_dict;
   }
 
   AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
