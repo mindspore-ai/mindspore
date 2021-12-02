@@ -44,6 +44,7 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/util/path.h"
+#include "minddata/dataset/util/validators.h"
 
 #include "minddata/dataset/text/ir/validators.h"
 
@@ -233,7 +234,7 @@ NgramOperation::NgramOperation(const std::vector<int32_t> &ngrams, const std::pa
 
 Status NgramOperation::ValidateParams() {
   if (ngrams_.size() == 0) {
-    std::string err_msg = "Ngram : The size of the parameter 'ngrams_' is not to be 0.";
+    std::string err_msg = "Ngram : The size of the parameter 'ngrams' is not to be 0.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   } else {
     for (int32_t i = 0; i < ngrams_.size(); ++i) {
@@ -415,7 +416,7 @@ Status ToNumberOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status ToNumberOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data_type") != op_params.end(), "Failed to find param 'data_type'.");
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "data_type", kToNumberOperation));
   std::string data_type = op_params["data_type"];
   *operation = std::make_shared<text::ToNumberOperation>(data_type);
   return Status::OK();

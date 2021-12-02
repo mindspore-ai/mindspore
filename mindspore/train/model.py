@@ -259,7 +259,8 @@ class Model:
         if not hasattr(dataset, '__model_hash__'):
             dataset.__model_hash__ = hash(self)
         if hasattr(dataset, '__model_hash__') and dataset.__model_hash__ != hash(self):
-            raise RuntimeError('The Dataset cannot be bound to different models, please create a new dataset.')
+            raise RuntimeError("The dataset object had been used in other model by model.train(...), "
+                               "please create a new dataset.")
 
     def _build_boost_network(self, kwargs):
         """Build the boost network."""
