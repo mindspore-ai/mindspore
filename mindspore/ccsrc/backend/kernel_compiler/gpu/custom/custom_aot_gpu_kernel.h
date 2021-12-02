@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -105,7 +106,13 @@ class CustomAOTGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
-      file_path_ = exec_info.substr(0, pos);
+      auto path = exec_info.substr(0, pos);
+      auto real_path = FileUtils::GetRealPath(path.c_str());
+      if (!real_path.has_value()) {
+        MS_LOG(ERROR) << "Invalid file path, " << path << " does not exist.";
+        return false;
+      }
+      file_path_ = real_path.value();
       func_name_ = exec_info.substr(pos + 1);
     } else {
       MS_LOG(ERROR) << "Wrong execute info:" << exec_info;
