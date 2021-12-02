@@ -37,6 +37,7 @@ file_name_map_rank_id = {"test_profiling_early_stop": "0",
                          "test_profiling_stop_nostart": "4"}
 
 
+@pytest.mark.forked
 class TestMindDataProfilingStartStop:
     """
     Test MindData Profiling Manager Start-Stop Support
@@ -46,9 +47,9 @@ class TestMindDataProfilingStartStop:
         """
         Run once for the class
         """
-        self._PIPELINE_FILE = "./pipeline_profiling"
-        self._CPU_UTIL_FILE = "./minddata_cpu_utilization"
-        self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
+        self._pipeline_file = "./pipeline_profiling"
+        self._cpu_util_file = "./minddata_cpu_utilization"
+        self._dataset_iterator_file = "./dataset_iterator_profiling"
 
     def setup_method(self):
         """
@@ -57,9 +58,9 @@ class TestMindDataProfilingStartStop:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        self.pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        self.cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
-        self.dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        self.pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        self.cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
+        self.dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         # Confirm MindData Profiling files do not yet exist
         assert os.path.exists(self.pipeline_file) is False
