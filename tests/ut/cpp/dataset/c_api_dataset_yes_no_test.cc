@@ -116,6 +116,64 @@ TEST_F(MindDataTestPipeline, YesNoDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: TestYesNoDatasetIteratorOneColumn.
+/// Description: test iterator of  YesNo dataset with only the "waveform" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestYesNoDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoDatasetIteratorOneColumn.";
+  // Create a YesNo dataset
+  std::string folder_path = datasets_root_path_ + "/testYesNoData/";
+  std::shared_ptr<Dataset> ds = YesNo(folder_path, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "waveform" column and drop others
+  std::vector<std::string> columns = {"waveform"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_image = {1, 1, 16000};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "waveform shape:" << v.Shape();
+      EXPECT_EQ(expect_image, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestYesNoGetDatasetIteratorWrongColumn.
+/// Description: test iterator of YesNoGetDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestYesNoGetDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoGetDatasetIteratorWrongColumn.";
+  // Create a YesNo dataset
+  std::string folder_path = datasets_root_path_ + "/testYesNoData/";
+  std::shared_ptr<Dataset> ds = YesNo(folder_path, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: Test YesNo dataset.
 /// Description: get the size of YesNo dataset.
 /// Expectation: the data is processed successfully.

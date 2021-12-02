@@ -123,6 +123,62 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: TestLJSpeechDatasetIteratorOneColumn.
+/// Description: test iterator of LJSpeechDataset with only the "waveform" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetIteratorOneColumn.";
+  // Create a  LJSpeech dataset
+  std::string folder_path = datasets_root_path_ + "/testLJSpeechData/";
+  std::shared_ptr<Dataset> ds = LJSpeech(folder_path, std::make_shared<RandomSampler>(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "waveform" column and drop others
+  std::vector<std::string> columns = {"waveform"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "waveform shape:" << v.Shape();
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestLJSpeechDatasetIteratorWrongColumn.
+/// Description: test iterator of LJSpeechDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetIteratorWrongColumn.";
+  // Create a LJSpeech Dataset
+  std::string folder_path = datasets_root_path_ + "/testLJSpeechData/";
+  std::shared_ptr<Dataset> ds = LJSpeech(folder_path, std::make_shared<RandomSampler>(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: LJSpeechDataset
 /// Description: test getting size of LJSpeechDataset
 /// Expectation: the size is correct

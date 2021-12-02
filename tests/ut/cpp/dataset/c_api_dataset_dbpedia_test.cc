@@ -119,6 +119,66 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetUsageAll) {
   iter->Stop();
 }
 
+/// Feature: TestDBpediaDatasetIteratorOneColumn.
+/// Description: test iterator of DBpediaDataset with only the "class" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetIteratorOneColumn.";
+  // Create a DBpedia Dataset
+  std::string folder_path = datasets_root_path_ + "/testDBpedia/";
+  std::vector<std::string> column_names = {"class", "title", "content"};
+  std::shared_ptr<Dataset> ds = DBpedia(folder_path, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "class" column and drop others
+  std::vector<std::string> columns = {"class"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_class = {1};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "class shape:" << v.Shape();
+      EXPECT_EQ(expect_class, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: DBpediaDatasetIteratorWrongColumn.
+/// Description: test iterator of DBpediaDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetIteratorWrongColumn.";
+  // Create a DBpedia Dataset
+  std::string folder_path = datasets_root_path_ + "/testDBpedia/";
+  std::vector<std::string> column_names = {"class", "title", "content"};
+  std::shared_ptr<Dataset> ds = DBpedia(folder_path, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: DBpedia.
 /// Description: includes tests for shape, type, size.
 /// Expectation: the data is processed successfully.

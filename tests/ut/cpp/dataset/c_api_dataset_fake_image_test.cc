@@ -122,56 +122,56 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
 /// Description: test iterator of FakeImageDataset with only the "image" column.
 /// Expectation: get correct data.
 TEST_F(MindDataTestPipeline, TestFakeImageIteratorOneColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorOneColumn.";
-// Create a FakeImage Dataset
-std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorOneColumn.";
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
 
-// Create a Batch operation on ds
-int32_t batch_size = 2;
-ds = ds->Batch(batch_size);
-EXPECT_NE(ds, nullptr);
+  // Create a Batch operation on ds
+  int32_t batch_size = 2;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
 
-// Create an iterator over the result of the above dataset
-// Only select "image" column and drop others
-std::vector<std::string> columns = {"image"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
-EXPECT_NE(iter, nullptr);
+  // Create an iterator over the result of the above dataset
+  // Only select "image" column and drop others
+  std::vector<std::string> columns = {"image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
 
-// Iterate the dataset and get each row
-std::vector<mindspore::MSTensor> row;
-ASSERT_OK(iter->GetNextRow(&row));
-std::vector<int64_t> expect_image = {2, 28, 28, 3};
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_image = {2, 28, 28, 3};
 
-uint64_t i = 0;
-while (row.size() != 0) {
-for (auto &v : row) {
-MS_LOG(INFO) << "image shape:" << v.Shape();
-EXPECT_EQ(expect_image, v.Shape());
-}
-ASSERT_OK(iter->GetNextRow(&row));
-i++;
-}
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+      EXPECT_EQ(expect_image, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
 
-EXPECT_EQ(i, 5);
+  EXPECT_EQ(i, 5);
 
-// Manually terminate the pipeline
-iter->Stop();
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 /// Feature: FakeImageIteratorWrongColumn.
 /// Description: test iterator of FakeImageDataset with wrong column.
 /// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestFakeImageIteratorWrongColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorWrongColumn.";
-// Create a FakeImage Dataset
-std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
-EXPECT_NE(ds, nullptr);
-
-// Pass wrong column name
-std::vector<std::string> columns = {"digital"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
-EXPECT_EQ(iter, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorWrongColumn.";
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+  
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: GetFakeImageDatasetSize
