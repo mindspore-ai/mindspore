@@ -16,11 +16,13 @@
 
 from .run_check import run_check
 from . import common, dataset, mindrecord, train, log
+from . import profiler, communication, numpy, parallel
 from .common import *
 from .mindrecord import *
 from .ops import _op_impl
 from .train import *
 from .log import *
+from .context import *
 from .version import __version__
 
 
@@ -29,3 +31,4 @@ __all__.extend(__version__)
 __all__.extend(common.__all__)
 __all__.extend(train.__all__)
 __all__.extend(log.__all__)
+__all__.extend(context.__all__)
