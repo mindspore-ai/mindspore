@@ -399,6 +399,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   py::object GradMsFunction(const py::object &out, const py::args &args);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
+  void set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position);
   py::object Run(const py::object &cell, const py::tuple &args);
 
   // Used by graph clean

@@ -265,6 +265,7 @@ def jvp(fn, inputs, v):
          [28. 49.]]
     """
     jvp_inner = _JvpInner()
+
     @ms_function
     def _wrap_container(*arg):
         args = arg[1:]
@@ -318,6 +319,7 @@ def vjp(fn, inputs, v):
          [ 1.00000000e+00,  1.00000000e+00]]))
     """
     vjp_inner = _VjpInner()
+
     @ms_function
     def wrap_container(*arg):
         args = arg[:-1]
