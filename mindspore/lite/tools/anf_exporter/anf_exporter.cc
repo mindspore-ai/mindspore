@@ -236,7 +236,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
   lite::DataInfo data_info;
   auto param_node = input->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_NULL_PTR, "cast ptr failed");
-  if (FetchFromDefaultParam(param_node, converter::FmkType(meta_graphT->fmkType), &data_info) != RET_OK) {
+  if (FetchFromDefaultParam(param_node, converter::FmkType(meta_graphT->fmkType), &data_info, true) != RET_OK) {
     MS_LOG(ERROR) << "FetchFromDefaultParam failed.";
     return RET_ERROR;
   }
@@ -733,8 +733,8 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     return RET_OK;
   }
   DataInfo data_info;
-  if (FetchDataFromParameterNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info) !=
-      RET_OK) {
+  if (FetchDataFromParameterNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info,
+                                 true) != RET_OK) {
     MS_LOG(ERROR) << "parse const node failed.";
     return RET_ERROR;
   }
@@ -762,7 +762,8 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        schema::CNodeT *op_node) {
   DataInfo data_info;
-  auto status = FetchDataFromValueNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info);
+  auto status =
+    FetchDataFromValueNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info, true);
   if (status == RET_NO_CHANGE) {
     return RET_OK;
   }
