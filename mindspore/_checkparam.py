@@ -206,7 +206,7 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
             arg_name, prim_name, value_type.__name__, type(arg_value).__name__))
     if not rel_fn(arg_value, lower_limit, upper_limit):
         rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
-        raise ValueError("{} {} should be in range of {}, but got {:.3e} with type `{}`.".format(
+        raise ValueError("{} {} should be in range of {}, but got {} with type `{}`.".format(
             arg_name, prim_name, rel_str, arg_value, type(arg_value).__name__))
     return arg_value
 
