@@ -26,6 +26,7 @@ class Loss(Metric):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import nn, Tensor
         >>>
         >>> x = Tensor(np.array(0.2), mindspore.float32)
@@ -33,6 +34,8 @@ class Loss(Metric):
         >>> loss.clear()
         >>> loss.update(x)
         >>> result = loss.eval()
+        >>> print(result)
+        0.20000000298023224
     """
     def __init__(self):
         super(Loss, self).__init__()

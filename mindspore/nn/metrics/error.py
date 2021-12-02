@@ -97,7 +97,7 @@ class MSE(Metric):
     Measures the mean squared error(MSE).
 
     Creates a criterion that measures the MSE (squared L2 norm) between
-    each element in the predition and the ground truth: :math:`x` and: :math:`y`.
+    each element in the prediction and the ground truth: :math:`x` and: :math:`y`.
 
     .. math::
         \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
@@ -106,6 +106,7 @@ class MSE(Metric):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import nn, Tensor
         >>>
         >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
@@ -114,6 +115,8 @@ class MSE(Metric):
         >>> error.clear()
         >>> error.update(x, y)
         >>> result = error.eval()
+        >>> print(result)
+        0.0031250009778887033
     """
     def __init__(self):
         super(MSE, self).__init__()
