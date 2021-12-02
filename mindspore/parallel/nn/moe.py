@@ -41,8 +41,8 @@ class MoEConfig:
                 which is >=1.0. Default: 1.1.
             aux_loss_factor (float): The factor is used to indicate how much the load balance loss (produced by the
                 router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
-            num_experts_chosen (int): The number of experts is chosen by each token. This value should be less
-                than or equal to 'expert_num'. Default: 1.
+            num_experts_chosen (int): The number of experts is chosen by each token. Since only 'Top1' routing policy
+                is supported currently, the value should be 1. Default: 1.
         Supported Platforms:
             ``Ascend`` ``GPU``
 
@@ -62,10 +62,9 @@ class MoEConfig:
         if aux_loss_factor >= 1.0:
             raise ValueError(f"'aux_loss_factor' should be less than 1.0, "
                              f"but got {aux_loss_factor}.")
-        if num_experts_chosen > expert_num:
-            raise ValueError(f"'num_experts_chosen' should be less than or equal to 'expert_num', "
-                             f"but got {num_experts_chosen} for 'num_experts_chosen', "
-                             f"and {expert_num} for 'expert_num'.")
+        if num_experts_chosen != 1:
+            raise ValueError(f"'num_experts_chosen' should be 1. Since only 'Top1' routing policy supported currently, "
+                             f"the value should be 1.")
         self.expert_num = expert_num
         self.capacity_factor = capacity_factor
         self.aux_loss_factor = aux_loss_factor
@@ -73,7 +72,15 @@ class MoEConfig:
 
 default_moe_config = MoEConfig()
 
-
+def _check_moe_config(moe_config=None, parallel_config=None):
+    if not isinstance(moe_config, MoEConfig):
+        raise TypeError(f"'moe_config' should be an instance of MoEConfig, but got {type(moe_config).__name__}.")
+    use_moe = (moe_config.expert_num > 1)
+    if use_moe and moe_config.expert_num % parallel_config.data_parallel != 0:
+        raise ValueError(f"When using MoE, the 'expert_num' in {type(moe_config).__name__} must be a multiple "
+                         f"of 'data_parallel' value in {type(parallel_config).__name__}, but got "
+                         f"{moe_config.expert_num} for 'expert_num' and {parallel_config.data_parallel} for "
+                         f"'data_parallel'.")
 @constexpr
 def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
     return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)

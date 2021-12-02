@@ -35,7 +35,7 @@ from .layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
 from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
-from .moe import default_moe_config, MoE
+from .moe import default_moe_config, MoE, _check_moe_config
 
 __all__ = [
     "AttentionMask",
@@ -1304,6 +1304,7 @@ class TransformerEncoderLayer(Cell):
                                             param_init_type=param_init_type,
                                             use_past=use_past,
                                             parallel_config=parallel_config)
+        _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         if self.use_moe is True:
             self.output = MoE(hidden_size=hidden_size,
@@ -1625,6 +1626,7 @@ class TransformerDecoderLayer(Cell):
         self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
             layernorm_compute_type)
         self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
+        _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         if self.use_moe is True:
             self.output = MoE(hidden_size=hidden_size,
@@ -2004,7 +2006,7 @@ class TransformerEncoder(Cell):
                  parallel_config=default_transformer_config):
         super(TransformerEncoder, self).__init__()
         _check_config(parallel_config)
-
+        _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         self.add = P.Add().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
@@ -2205,6 +2207,7 @@ class TransformerDecoder(Cell):
             raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
         self.num_layers = num_layers
         self.blocks = nn.CellList()
+        _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         for i in range(num_layers):
             block = TransformerDecoderLayer(hidden_size=hidden_size,
@@ -2433,7 +2436,7 @@ class Transformer(Cell):
         # The shard setting of Transformer is set within the TransformerEncoderLayer
         if not lambda_func:
             lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
-
+        _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         self.add = P.Add().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
