@@ -3614,6 +3614,109 @@ inline std::shared_ptr<SpeechCommandsDataset> SpeechCommands(const std::string &
   return std::make_shared<SpeechCommandsDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class TedliumDataset
+/// \brief A source dataset for reading and parsing tedlium dataset.
+class MS_API TedliumDataset : public Dataset {
+ public:
+  /// \brief Constructor of TedliumDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+  /// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+  ///     can be "train", "test" or "all".
+  /// \param[in] extensions The extensions of audio file. Only support ".sph" now.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  TedliumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &release, const std::vector<char> &usage,
+                 const std::vector<char> &extensions, const std::shared_ptr<Sampler> &sampler,
+                 const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of TedliumDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+  /// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+  ///     can be "train", "test" or "all".
+  /// \param[in] extensions The extensions of audio file. Only support ".sph" now.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  TedliumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &release, const std::vector<char> &usage,
+                 const std::vector<char> &extensions, const Sampler *sampler,
+                 const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of TedliumDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+  /// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+  ///     can be "train", "test" or "all".
+  /// \param[in] extensions The extensions of audio file. Only support ".sph" now.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  TedliumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &release, const std::vector<char> &usage,
+                 const std::vector<char> &extensions, const std::reference_wrapper<Sampler> &samlper,
+                 const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of TedliumDataset.
+  ~TedliumDataset() = default;
+};
+
+/// \brief Function to create a TedliumDataset.
+/// \note The generated dataset has six columns ["waveform", "sample_rate", "transcript", "talk_id", "speaker_id",
+///     "identifier"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+/// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+///     can be "train", "test" or "all" (default = "all").
+/// \param[in] extensions The extensions of audio file. Only support ".sph" now (default = ".sph").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the TedliumDataset.
+inline std::shared_ptr<TedliumDataset> MS_API Tedlium(
+  const std::string &dataset_dir, const std::string &release, const std::string &usage = "all",
+  const std::string &extensions = ".sph", const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<TedliumDataset>(StringToChar(dataset_dir), StringToChar(release), StringToChar(usage),
+                                          StringToChar(extensions), sampler, cache);
+}
+
+/// \brief Function to create a TedliumDataset.
+/// \note The generated dataset has six columns ["waveform", "sample_rate","transcript", "talk_id", "speaker_id",
+///     "identifier"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+/// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+///     can be "train", "test" or "all".
+/// \param[in] extensions The extensions of audio file. Only support ".sph" now.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the TedliumDataset.
+inline std::shared_ptr<TedliumDataset> MS_API Tedlium(const std::string &dataset_dir, const std::string &release,
+                                                      const std::string &usage, const std::string &extensions,
+                                                      const std::reference_wrapper<Sampler> sampler,
+                                                      const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<TedliumDataset>(StringToChar(dataset_dir), StringToChar(release), StringToChar(usage),
+                                          StringToChar(extensions), sampler, cache);
+}
+
+/// \brief Function to create a TedliumDataset.
+/// \note The generated dataset has six columns ["waveform", "sample_rate","transcript", "talk_id", "speaker_id",
+///     "identifier"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] release Release of the dataset, can be "release1", "release2", "release3".
+/// \param[in] usage Part of dataset of TEDLIUM, for release3, only can be "all", for release1 and release2,
+///     can be "train", "test" or "all".
+/// \param[in] extensions The extensions of audio file. Only support ".sph" now.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the TedliumDataset.
+inline std::shared_ptr<TedliumDataset> MS_API Tedlium(const std::string &dataset_dir, const std::string &release,
+                                                      const std::string &usage, const std::string &extensions,
+                                                      Sampler *sampler,
+                                                      const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<TedliumDataset>(StringToChar(dataset_dir), StringToChar(release), StringToChar(usage),
+                                          StringToChar(extensions), sampler, cache);
+}
+
 /// \class TextFileDataset
 /// \brief A source dataset that reads and parses datasets stored on disk in text format.
 class MS_API TextFileDataset : public Dataset {
