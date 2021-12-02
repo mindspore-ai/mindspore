@@ -15,7 +15,7 @@
  */
 
 #include "src/custom_common.h"
-#include "include/errorcode.h"
+#include "include/api/status.h"
 #include "include/registry/register_kernel_interface.h"
 
 namespace mindspore {
@@ -33,10 +33,10 @@ class CustomAddInfer : public kernel::KernelInterface {
     (*outputs)[0].SetFormat((*inputs)[0].format());
     (*outputs)[0].SetDataType((*inputs)[0].DataType());
     auto ret = common::CheckInputs(*inputs);
-    if (ret == lite::RET_INFER_INVALID) {
+    if (ret == kLiteInferInvalid) {
       (*outputs)[0].SetShape({-1});  // shape{-1} shows that shape need to be inferred when running.
       return kLiteInferInvalid;
-    } else if (ret != lite::RET_OK) {
+    } else if (ret != kSuccess) {
       return kLiteError;
     }
     (*outputs)[0].SetShape((*inputs)[0].Shape());

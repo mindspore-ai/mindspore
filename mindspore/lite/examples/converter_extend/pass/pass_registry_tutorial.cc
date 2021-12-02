@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/pass_registry_tutorial.h"
+#include "pass/pass_registry_tutorial.h"
 #include <map>
 #include <memory>
 #include <string>
