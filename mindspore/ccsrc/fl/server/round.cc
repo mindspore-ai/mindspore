@@ -38,17 +38,16 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
                        const FinishIterCb &finish_iteration_cb) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
-
-  // Register callback for round kernel.
+  MS_LOG(INFO) << "Round " << name_ << " start initialize.";
   communicator_->RegisterMsgCallBack(name_, [&](std::shared_ptr<ps::core::MessageHandler> message) {
     MS_ERROR_IF_NULL_WO_RET_VAL(message);
     LaunchRoundKernel(message);
   });
 
   // Callback when the iteration is finished.
-  finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid, const std::string &) -> void {
+  finish_iteration_cb_ = [this, finish_iteration_cb](bool, const std::string &) -> void {
     std::string reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
-    finish_iteration_cb(is_iteration_valid, reason);
+    finish_iteration_cb(true, reason);
   };
 
   // Callback for finalizing the server. This can only be called once.
@@ -62,9 +61,9 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
     MS_EXCEPTION_IF_NULL(iter_timer_);
 
     // 1.Set the timeout callback for the timer.
-    iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool is_iteration_valid, const std::string &) -> void {
+    iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool, const std::string &) -> void {
       std::string reason = "Round " + name_ + " timeout! This iteration is invalid. Proceed to next iteration.";
-      timeout_cb(is_iteration_valid, reason);
+      timeout_cb(false, reason);
     });
 
     // 2.Stopping timer callback which will be set to the round kernel.
@@ -139,7 +138,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     return;
   }
 
-  ++Iteration::GetInstance().running_round_num_;
+  (void)(Iteration::GetInstance().running_round_num_++);
   AddressPtr input = std::make_shared<Address>();
   AddressPtr output = std::make_shared<Address>();
   MS_ERROR_IF_NULL_WO_RET_VAL(input);
@@ -167,7 +166,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     reason = "Launching round kernel of round " + name_ + " failed.";
     Iteration::GetInstance().NotifyNext(false, reason);
   }
-  --Iteration::GetInstance().running_round_num_;
+  (void)(Iteration::GetInstance().running_round_num_--);
   return;
 }
 

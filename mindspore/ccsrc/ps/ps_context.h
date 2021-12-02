@@ -81,18 +81,14 @@ class PSContext {
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
   void set_cache_enable(bool cache_enable) const;
   void set_rank_id(uint32_t rank_id) const;
-  bool enable_ssl() const;
-  void set_enable_ssl(bool enabled);
-
-  std::string client_password() const;
-  void set_client_password(const std::string &password);
-  std::string server_password() const;
-  void set_server_password(const std::string &password);
 
   // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set
   // by ps_context.
   void set_server_mode(const std::string &server_mode);
   const std::string &server_mode() const;
+
+  void set_encrypt_type(const std::string &encrypt_type);
+  const std::string &encrypt_type() const;
 
   void set_ms_role(const std::string &role);
 
@@ -163,13 +159,9 @@ class PSContext {
   void set_worker_step_num_per_iteration(uint64_t worker_step_num_per_iteration);
   uint64_t worker_step_num_per_iteration() const;
 
-  core::ClusterConfig &cluster_config();
-
-  void set_scheduler_manage_port(uint16_t sched_port);
-  uint16_t scheduler_manage_port() const;
-
-  void set_config_file_path(const std::string &path);
-  std::string config_file_path() const;
+  // Set true if using secure aggregation for federated learning.
+  void set_secure_aggregation(bool secure_aggregation);
+  bool secure_aggregation() const;
 
   void set_dp_eps(float dp_eps);
   float dp_eps() const;
@@ -180,11 +172,43 @@ class PSContext {
   void set_dp_norm_clip(float dp_norm_clip);
   float dp_norm_clip() const;
 
-  void set_encrypt_type(const std::string &encrypt_type);
-  const std::string &encrypt_type() const;
+  core::ClusterConfig &cluster_config();
+
+  void set_root_first_ca_path(const std::string &root_first_ca_path);
+  void set_root_second_ca_path(const std::string &root_second_ca_path);
+
+  std::string root_first_ca_path() const;
+  std::string root_second_ca_path() const;
+
+  void set_pki_verify(bool pki_verify);
+  bool pki_verify() const;
+
+  void set_equip_crl_path(const std::string &equip_crl_path);
+  std::string equip_crl_path() const;
+
+  void set_replay_attack_time_diff(uint64_t replay_attack_time_diff);
+  uint64_t replay_attack_time_diff() const;
+
+  void set_scheduler_manage_port(uint16_t sched_port);
+  uint16_t scheduler_manage_port() const;
+
+  void set_config_file_path(const std::string &path);
+  std::string config_file_path() const;
 
   void set_node_id(const std::string &node_id);
   const std::string &node_id() const;
+
+  bool enable_ssl() const;
+  void set_enable_ssl(bool enabled);
+
+  std::string client_password() const;
+  void set_client_password(const std::string &password);
+
+  std::string server_password() const;
+  void set_server_password(const std::string &password);
+
+  std::string http_url_prefix() const;
+  void set_http_url_prefix(const std::string &http_url_prefix);
 
  private:
   PSContext()
@@ -192,7 +216,6 @@ class PSContext {
         is_worker_(false),
         is_pserver_(false),
         is_sched_(false),
-        enable_ssl_(false),
         rank_id_(0),
         worker_num_(0),
         server_num_(0),
@@ -218,20 +241,26 @@ class PSContext {
         worker_step_num_per_iteration_(65),
         secure_aggregation_(false),
         cluster_config_(nullptr),
+        root_first_ca_path_(""),
+        root_second_ca_path_(""),
+        pki_verify_(false),
+        equip_crl_path_(""),
+        replay_attack_time_diff_(60000),
         scheduler_manage_port_(11202),
         config_file_path_(""),
+        node_id_(""),
         dp_eps_(50),
         dp_delta_(0.01),
         dp_norm_clip_(1.0),
         encrypt_type_(kNotEncryptType),
-        node_id_(""),
+        enable_ssl_(false),
         client_password_(""),
-        server_password_("") {}
+        server_password_(""),
+        http_url_prefix_("") {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
   bool is_sched_;
-  bool enable_ssl_;
   uint32_t rank_id_;
   uint32_t worker_num_;
   uint32_t server_num_;
@@ -298,11 +327,29 @@ class PSContext {
   // The cluster config read through environment variables, the value does not change.
   std::unique_ptr<core::ClusterConfig> cluster_config_;
 
+  // The first generation CBG root certificate
+  std::string root_first_ca_path_;
+
+  // The second generation CBG root certificate
+  std::string root_second_ca_path_;
+
+  // if open pki verify
+  bool pki_verify_;
+
+  // The second generation CBG root CRL
+  std::string equip_crl_path_;
+
+  // The replay attack time diff
+  uint64_t replay_attack_time_diff_;
+
   // The port used by scheduler to receive http requests for scale out or scale in.
   uint16_t scheduler_manage_port_;
 
   // The path of the configuration file, used to configure the certification path and persistent storage type, etc.
   std::string config_file_path_;
+
+  // Unique id of the node
+  std::string node_id_;
 
   // Epsilon budget of differential privacy mechanism. Used in federated learning for now.
   float dp_eps_;
@@ -316,13 +363,14 @@ class PSContext {
   // Secure mechanism for federated learning. Used in federated learning for now.
   std::string encrypt_type_;
 
-  // Unique id of the node
-  std::string node_id_;
-
+  // Whether to enable ssl for network communication.
+  bool enable_ssl_;
   // Password used to decode p12 file.
   std::string client_password_;
   // Password used to decode p12 file.
   std::string server_password_;
+  // http url prefix for http communication
+  std::string http_url_prefix_;
 };
 }  // namespace ps
 }  // namespace mindspore

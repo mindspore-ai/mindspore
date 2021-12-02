@@ -108,8 +108,8 @@ class FedAvgKernel : public AggregationKernel {
       done_ = true;
       return;
     };
-    GenerateReuseKernelNodeInfo();
     DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
+    GenerateReuseKernelNodeInfo();
     return;
   }
 
@@ -119,14 +119,9 @@ class FedAvgKernel : public AggregationKernel {
       MS_LOG(ERROR) << "The inputs number of FedAvgKernel should be 4, but got " << inputs.size();
       return false;
     }
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0], false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1], false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[2], false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[3], false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0]->addr, false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1]->addr, false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[2]->addr, false);
-    MS_ERROR_IF_NULL_W_RET_VAL(inputs[3]->addr, false);
+    for (size_t i = 0; i < inputs.size(); i++) {
+      MS_ERROR_IF_NULL_W_RET_VAL(inputs[i]->addr, false);
+    }
 
     std::unique_lock<std::mutex> lock(weight_mutex_);
     // The weight and new_weight values should be multiplied by clients already, so we don't need to do multiplication
@@ -181,7 +176,7 @@ class FedAvgKernel : public AggregationKernel {
   bool ReInitForUpdatingHyperParams(size_t aggr_threshold) override {
     done_count_ = aggr_threshold;
     if (!DistributedCountService::GetInstance().ReInitCounter(name_, done_count_)) {
-      MS_LOG(ERROR) << "Reinitializing counter for " << name_ << " failed.";
+      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
       return false;
     }
     return true;

@@ -30,7 +30,7 @@ namespace server {
 class IterationTimer {
  public:
   IterationTimer() : running_(false), end_time_(0) {}
-  ~IterationTimer() = default;
+  ~IterationTimer();
 
   // Start timing. The timer will stop after parameter 'duration' milliseconds.
   void Start(const std::chrono::milliseconds &duration);
@@ -42,7 +42,7 @@ class IterationTimer {
   void SetTimeOutCallBack(const TimeOutCb &timeout_cb);
 
   // Judge whether current timestamp is out of time window's range since the Start function is called.
-  bool IsTimeOut(const std::chrono::milliseconds &timestamp) const;
+  bool IsTimeOut(const std::chrono::milliseconds &timestamp);
 
   // Judge whether the timer is keeping timing.
   bool IsRunning() const;

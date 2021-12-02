@@ -220,9 +220,9 @@ void FLWorker::InitializeFollowerScaler() {
                                                            std::bind(&FLWorker::ProcessAfterScalingOut, this));
   worker_node_->RegisterFollowerScalerHandlerAfterScaleIn("WorkerPipeline",
                                                           std::bind(&FLWorker::ProcessAfterScalingIn, this));
-  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning),
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::UserDefineEvent::kIterationRunning),
                                             std::bind(&FLWorker::HandleIterationRunningEvent, this));
-  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted),
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::UserDefineEvent::kIterationCompleted),
                                             std::bind(&FLWorker::HandleIterationCompletedEvent, this));
 }
 

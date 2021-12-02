@@ -19,11 +19,11 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "fl/server/model_store.h"
-#include "fl/server/iteration.h"
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_init.h"
 #endif
+#include "fl/server/model_store.h"
+#include "fl/server/iteration.h"
 
 namespace mindspore {
 namespace fl {
@@ -46,6 +46,9 @@ void StartFLJobKernel::InitKernel(size_t) {
 
   PBMetadata devices_metas;
   DistributedMetadataStore::GetInstance().RegisterMetadata(kCtxDeviceMetas, devices_metas);
+
+  PBMetadata client_key_attestation;
+  DistributedMetadataStore::GetInstance().RegisterMetadata(kCtxClientKeyAttestation, client_key_attestation);
   return;
 }
 
@@ -93,6 +96,17 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     return true;
   }
 
+  if (ps::PSContext::instance()->pki_verify()) {
+    if (!JudgeFLJobCert(fbb, start_fl_job_req)) {
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+    if (!StoreKeyAttestation(fbb, start_fl_job_req)) {
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+  }
+
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
@@ -122,16 +136,87 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
+bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
+                                      const schema::RequestFLJob *start_fl_job_req) {
+  std::string fl_id = start_fl_job_req->fl_id()->str();
+  std::string timestamp = start_fl_job_req->timestamp()->str();
+  auto sign_data_vector = start_fl_job_req->sign_data();
+  if (sign_data_vector == nullptr || sign_data_vector->size() == 0) {
+    std::string reason = "sign data is empty.";
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_RequestError, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    MS_LOG(ERROR) << reason;
+    return false;
+  }
+  unsigned char sign_data[sign_data_vector->size()];
+
+  for (unsigned int i = 0; i < sign_data_vector->size(); i++) {
+    sign_data[i] = sign_data_vector->Get(i);
+  }
+
+  std::string key_attestation = start_fl_job_req->key_attestation()->str();
+  std::string equip_cert = start_fl_job_req->equip_cert()->str();
+  std::string equip_ca_cert = start_fl_job_req->equip_ca_cert()->str();
+  std::string root_first_ca_path = ps::PSContext::instance()->root_first_ca_path();
+  std::string root_second_ca_path = ps::PSContext::instance()->root_second_ca_path();
+  std::string equip_crl_path = ps::PSContext::instance()->equip_crl_path();
+
+  mindspore::ps::server::CertVerify certVerify;
+  bool ret =
+    certVerify.verifyCertAndSign(fl_id, timestamp, (const unsigned char *)sign_data, key_attestation, equip_cert,
+                                 equip_ca_cert, root_first_ca_path, root_second_ca_path, equip_crl_path);
+  if (!ret) {
+    std::string reason = "startFLJob sign and certificate verify failed.";
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_RequestError, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    MS_LOG(ERROR) << reason;
+  } else {
+    MS_LOG(INFO) << "JudgeFLJobVerify success." << ret;
+  }
+
+  return ret;
+}
+
+bool StartFLJobKernel::StoreKeyAttestation(const std::shared_ptr<FBBuilder> &fbb,
+                                           const schema::RequestFLJob *start_fl_job_req) {
+  // update key attestation
+  if (start_fl_job_req == nullptr) {
+    return false;
+  }
+  std::string fl_id = start_fl_job_req->fl_id()->str();
+  std::string key_attestation = start_fl_job_req->key_attestation()->str();
+
+  fl::PairKeyAttestation pair_key_attestation_pb;
+  pair_key_attestation_pb.set_fl_id(fl_id);
+  pair_key_attestation_pb.set_certificate(key_attestation);
+
+  fl::PBMetadata pb_data;
+  pb_data.mutable_pair_key_attestation()->MergeFrom(pair_key_attestation_pb);
+  bool ret = fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxClientKeyAttestation, pb_data);
+  if (!ret) {
+    std::string reason = "startFLJob: store key attestation failed";
+    MS_LOG(ERROR) << reason;
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    return false;
+  }
+  return true;
+}
+
 bool StartFLJobKernel::Reset() {
   MS_LOG(INFO) << "Starting fl job kernel reset!";
   StopTimer();
   DistributedCountService::GetInstance().ResetCounter(name_);
   DistributedMetadataStore::GetInstance().ResetMetadata(kCtxDeviceMetas);
+  DistributedMetadataStore::GetInstance().ResetMetadata(kCtxClientKeyAttestation);
   return true;
 }
 
 void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
-  iter_next_req_timestamp_ = LongToSize(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
+  iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
   // The first startFLJob request means a new iteration starts running.
   Iteration::GetInstance().SetIterationRunning();
@@ -241,9 +326,11 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   fl_plan_builder.add_epochs(SizeToInt(ps::PSContext::instance()->client_epoch_num()));
   fl_plan_builder.add_mini_batch(SizeToInt(ps::PSContext::instance()->client_batch_size()));
   fl_plan_builder.add_lr(ps::PSContext::instance()->client_learning_rate());
+
 #ifdef ENABLE_ARMOUR
   fl_plan_builder.add_cipher(cipher_public_params);
 #endif
+
   auto fbs_fl_plan = fl_plan_builder.Finish();
 
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;

@@ -58,6 +58,10 @@ class StartFLJobKernel : public RoundKernel {
 
   void StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta);
 
+  bool JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
+
+  bool StoreKeyAttestation(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
+
   // Build response for startFLJob round no matter success or failure.
   void BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                           const std::string &reason, const bool is_selected, const std::string &next_req_time,

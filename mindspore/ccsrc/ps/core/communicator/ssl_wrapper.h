@@ -60,6 +60,7 @@ class SSLWrapper {
   time_t ConvertAsn1Time(const ASN1_TIME *const time) const;
   void StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path);
   void StopCheckCertTime();
+  void InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey);
 
   SSL_CTX *ssl_ctx_;
 

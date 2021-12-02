@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +50,18 @@ void AbstractNode::ProcessRegisterResp(const std::shared_ptr<MessageMeta> &meta,
   MS_EXCEPTION_IF_NULL(data);
   RegisterRespMessage register_resp_message;
   CHECK_RETURN_TYPE(register_resp_message.ParseFromArray(data, SizeToInt(size)));
+  MS_LOG(INFO) << "The node id get from scheduler is:" << register_resp_message.node_id()
+               << ", rank_id is:" << register_resp_message.rank_id();
+
   if (register_resp_message.node_id() != node_info_.node_id_) {
-    MS_LOG(EXCEPTION) << "The node id received:" << register_resp_message.node_id()
-                      << " is not match the current node id:" << node_info_.node_id_;
+    MS_LOG(ERROR) << "The node id received:" << register_resp_message.node_id()
+                  << " is not match the current node id:" << node_info_.node_id_;
+    return;
+  }
+  node_info_.rank_id_ = register_resp_message.rank_id();
+  if (node_info_.rank_id_ == UINT32_MAX) {
+    MS_LOG(ERROR) << "The rank id received:" << register_resp_message.rank_id();
+    return;
   }
 
   // Receive the Register message, indicating that the scheduler is alive, so update the time point at which the
@@ -70,7 +79,7 @@ bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, 
   }
 
   uint32_t broadcast_size = 0;
-  std::for_each(nodes_address_.begin(), nodes_address_.end(), [&broadcast_size, &node_role](const auto &addr) {
+  (void)std::for_each(nodes_address_.begin(), nodes_address_.end(), [&broadcast_size, &node_role](const auto &addr) {
     if (addr.first.first == node_role) {
       ++broadcast_size;
     }
@@ -160,19 +169,24 @@ void AbstractNode::BroadcastEvent(const uint32_t &event) {
   MS_EXCEPTION_IF_NULL(message_meta);
   message_meta->set_cmd(NodeCommand::SEND_EVENT);
 
-  EventMessage event_message;
-  event_message.set_event(event);
-  event_message.set_node_id(node_info_.node_id_);
+  EventRespMessage event_resp_message;
+  event_resp_message.set_event(event);
 
-  if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF, event_message.SerializeAsString().data(),
-                       event_message.ByteSizeLong())) {
-    MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                  << " the node id:" << node_info_.node_id_ << " send event timeout!";
-    return;
+  for (auto it = nodes_address_.begin(); it != nodes_address_.end(); ++it) {
+    const uint32_t rank_id = (*it).first.second;
+    const NodeRole role = (*it).first.first;
+    auto client = GetOrCreateTcpClient(rank_id, role);
+    if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, event_resp_message.SerializeAsString().data(),
+                         event_resp_message.ByteSizeLong())) {
+      MS_LOG(ERROR) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
+                    << " timeout!";
+    } else {
+      MS_LOG(INFO) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
+                   << " successful!";
+    }
   }
-
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is send event to scheduler!";
+               << " the node id:" << node_info_.node_id_ << "is send event to server/worker!";
 }
 
 void AbstractNode::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
@@ -185,10 +199,6 @@ void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const Even
 
 bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
-  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
-    return false;
-  }
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
@@ -209,11 +219,6 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
                         const std::vector<DataPtr> &data, const std::vector<size_t> &lens, int command,
                         const uint32_t &timeout) {
-  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
-    return false;
-  }
-
   uint64_t request_id = AddMessageTrack(data.size());
 
   if (rank_ids.size() != data.size() || rank_ids.size() != lens.size()) {
@@ -248,10 +253,6 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 
 bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
                         int command, VectorPtr *output, const uint32_t &timeout) {
-  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
-    return false;
-  }
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
@@ -289,10 +290,6 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
                         const std::vector<DataPtr> &data, const std::vector<size_t> &data_lens, int command,
                         std::vector<VectorPtr> *output, const uint32_t &timeout) {
-  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
-    return false;
-  }
   MS_EXCEPTION_IF_NULL(output);
   uint64_t request_id = AddMessageTrack(data.size());
 
@@ -493,10 +490,6 @@ std::shared_ptr<CommunicatorBase> AbstractNode::GetOrCreateTcpComm(const std::st
   if (!communicators_.count(kTcpCommunicator)) {
     MS_LOG(INFO) << "Create Tcp communicator.";
     auto tcp_comm = std::make_shared<TcpCommunicator>(task_executor, this);
-    PSContext::instance()->cluster_config().scheduler_host = scheduler_ip;
-    PSContext::instance()->cluster_config().scheduler_port = static_cast<uint16_t>(scheduler_port);
-    PSContext::instance()->cluster_config().initial_worker_num = worker_num;
-    PSContext::instance()->cluster_config().initial_server_num = server_num;
     MS_EXCEPTION_IF_NULL(tcp_comm);
     PSContext::instance()->cluster_config().scheduler_host = scheduler_ip;
     PSContext::instance()->cluster_config().scheduler_port = static_cast<uint16_t>(scheduler_port);
@@ -521,13 +514,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
         MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                         << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
         if (CheckSchedulerTimeout()) {
-          MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                          << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
-          is_finish_ = true;
-          wait_finish_cond_.notify_all();
-          if (!is_already_stopped_) {
-            OnEventCallback(ClusterEvent::SCHEDULER_TIMEOUT);
-          }
+          MS_LOG(WARNING) << "Scheduler is Timeout, please recovery.";
         }
       } else {
         UpdateSchedulerTime();
@@ -549,6 +536,7 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
   HeartbeatMessage heartbeat_message;
   heartbeat_message.set_node_id(node_info_.node_id_);
 
+  MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " Send heartbeat!";
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
                        heartbeat_message.ByteSizeLong(), kCommTimeoutInSeconds)) {
     MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
@@ -580,19 +568,30 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   HeartbeatRespMessage heartbeat_resp_message;
   CHECK_RETURN_TYPE(heartbeat_resp_message.ParseFromArray(data, SizeToInt(size)));
 
+  if (heartbeat_resp_message.cluster_state() != current_cluster_state_) {
+    MS_LOG(INFO) << "cluster change state from:" << CommUtil::ClusterStateToString(current_cluster_state_) << " to "
+                 << CommUtil::ClusterStateToString(heartbeat_resp_message.cluster_state());
+  }
+
   current_cluster_state_ = heartbeat_resp_message.cluster_state();
   MS_LOG(DEBUG) << "The current cluster state from heartbeat:"
                 << CommUtil::ClusterStateToString(current_cluster_state_);
+
+  std::string timeoutNodeId;
 
   all_nodes_info_.clear();
   for (const auto &it : heartbeat_resp_message.servers_meta()) {
     NodeInfo info;
     info.ip_ = it.ip();
     info.node_id_ = it.node_id();
-    info.port_ = static_cast<uint16_t>(it.port());
+    info.port_ = it.port();
     info.node_role_ = it.role();
     info.rank_id_ = it.rank_id();
     info.is_alive = it.is_alive();
+
+    if (!info.is_alive) {
+      timeoutNodeId += (info.node_id_ + " ");
+    }
 
     all_nodes_info_[info.node_id_] = info;
     MS_LOG(DEBUG) << "The node id:" << info.node_id_ << ", the rank id:" << info.rank_id_
@@ -608,7 +607,8 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
       wait_start_cond_.notify_all();
       OnEventCallback(ClusterEvent::NODE_TIMEOUT);
     } else {
-      MS_LOG(INFO) << "The node is support recovery, users can pull up this node to restore the cluster.";
+      MS_LOG(INFO) << "The nodes:" << timeoutNodeId
+                   << "is support recovery, users can pull up this node to restore the cluster.";
     }
   }
 }
@@ -653,14 +653,14 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
     return;
   }
   SendMetadataMessage send_meta_message;
-  CHECK_RETURN_TYPE(send_meta_message.ParseFromArray(data, SizeToInt(size)));
+  send_meta_message.ParseFromArray(data, SizeToInt(size));
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
   if (send_meta_message.rank_id() < 0) {
     MS_LOG(EXCEPTION) << "The rank id is wrong.";
   }
   node_info_.rank_id_ = send_meta_message.rank_id();
-  current_cluster_state_ = send_meta_message.cluster_state();
+  UpdateClusterState(send_meta_message.cluster_state());
   MS_LOG(INFO) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_
                << ", cluster state is:" << CommUtil::ClusterStateToString(current_cluster_state_)
                << ", the rank id:" << node_info_.rank_id_;
@@ -669,7 +669,8 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
     nodes_address_[std::make_pair(it.role(), it.rank_id())] = std::make_pair(it.ip(), it.port());
-    MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port() << ", the rank id:" << it.rank_id();
+    MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(it.role()) << ", node id:" << it.node_id()
+                 << ", rank id:" << it.rank_id() << ", ip:" << it.ip() << ", port:" << it.port();
   }
   client_mutex_.unlock();
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
@@ -690,6 +691,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
 
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
+  PersistMetaData();
 }
 
 void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -710,11 +712,13 @@ void AbstractNode::ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &con
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
+  MS_LOG(INFO) << "This node receive a scale out done from scheduler.";
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
     MS_LOG(WARNING) << "Server response message failed.";
   }
   is_ready_ = true;
-  current_cluster_state_ = ClusterState::CLUSTER_READY;
+  UpdateClusterState(ClusterState::CLUSTER_READY);
+  PersistMetaData();
 }
 
 void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn,
@@ -727,7 +731,8 @@ void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn
     MS_LOG(WARNING) << "Server response message failed.";
   }
   is_ready_ = true;
-  current_cluster_state_ = ClusterState::CLUSTER_READY;
+  UpdateClusterState(ClusterState::CLUSTER_READY);
+  PersistMetaData();
 }
 
 void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -736,12 +741,17 @@ void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, cons
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   EventRespMessage event_resp_message;
-  CHECK_RETURN_TYPE(event_resp_message.ParseFromArray(data, SizeToInt(size)));
+  event_resp_message.ParseFromArray(data, SizeToInt(size));
   uint32_t event = event_resp_message.event();
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
     MS_LOG(WARNING) << "Server response message failed.";
   }
-  OnCustomEventCallback(event);
+  MS_LOG(INFO) << "This node receive a event:" << event;
+  if (event == static_cast<uint32_t>(ps::UserDefineEvent::kNodeTimeout)) {
+    OnEventCallback(ClusterEvent::NODE_TIMEOUT);
+  } else {
+    OnCustomEventCallback(event);
+  }
 }
 
 void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -751,7 +761,7 @@ void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, c
   MS_EXCEPTION_IF_NULL(data);
 
   ScaleOutMessage scale_out_message;
-  CHECK_RETURN_TYPE(scale_out_message.ParseFromArray(data, SizeToInt(size)));
+  scale_out_message.ParseFromArray(data, SizeToInt(size));
   int32_t worker_num = scale_out_message.worker_num();
   int32_t server_num = scale_out_message.server_num();
   MS_LOG(WARNING) << "The scale out worker num:" << worker_num << ", the server num:" << server_num;
@@ -760,7 +770,7 @@ void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, c
     MS_LOG(WARNING) << "Server response message failed.";
   }
   OnEventCallback(ClusterEvent::READY_FOR_SCALE_OUT);
-  current_cluster_state_ = ClusterState::CLUSTER_SCALE_OUT;
+  UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
   is_ready_ = false;
 }
 
@@ -771,7 +781,7 @@ void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, co
   MS_EXCEPTION_IF_NULL(data);
 
   ScaleInMessage scale_in_message;
-  CHECK_RETURN_TYPE(scale_in_message.ParseFromArray(data, SizeToInt(size)));
+  scale_in_message.ParseFromArray(data, SizeToInt(size));
   int32_t worker_num = scale_in_message.worker_num();
   int32_t server_num = scale_in_message.server_num();
   MS_LOG(WARNING) << "The scale in worker num:" << worker_num << ", the server num:" << server_num;
@@ -789,7 +799,44 @@ void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, co
     MS_LOG(WARNING) << "Server response message failed.";
   }
   OnEventCallback(ClusterEvent::READY_FOR_SCALE_IN);
-  current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
+  UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
+  is_ready_ = false;
+}
+
+void AbstractNode::ProcessSchedulerRecovery(const std::shared_ptr<TcpConnection> &conn,
+                                            const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
+                                            size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  if (is_connected_to_scheduler_.load()) {
+    MS_LOG(WARNING) << "This node has been connected to scheduler.";
+    return;
+  }
+  SendMetadataMessage scheduler_recovery_message;
+  (void)scheduler_recovery_message.ParseFromArray(data, SizeToInt(size));
+  worker_num_ = scheduler_recovery_message.worker_num();
+  server_num_ = scheduler_recovery_message.server_num();
+  uint32_t rank_id = scheduler_recovery_message.rank_id();
+
+  MS_LOG(INFO) << "[Scheduler Recovery]: The scheduler recovery worker num:" << worker_num_
+               << ", the server num:" << server_num_ << ", the rank id: " << rank_id;
+
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "[Scheduler Recovery]: Server response message failed.";
+  }
+  MS_LOG(INFO) << "[Scheduler Recovery]: Server response message success!.";
+
+  if (!InitClientToScheduler()) {
+    MS_LOG(WARNING) << "[Scheduler Recovery]: Server node connect to scheduler timedout!";
+  }
+
+  Register(client_to_scheduler_);
+  std::lock_guard<std::mutex> lock(client_mutex_);
+  connected_nodes_.clear();
+  MS_LOG(INFO) << "[Scheduler Recovery]: This node connect to scheduler successful!";
+
+  UpdateClusterState(ClusterState::CLUSTER_SCHEDULER_RECOVERY);
   is_ready_ = false;
 }
 
@@ -819,6 +866,14 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
   return res;
 }
 
+void AbstractNode::InitClientToServer() {
+  // create tcp client to myself in case of event dispatch failed when Send msg to server 0 failed
+  client_to_server_ = std::make_shared<TcpClient>(node_info_.ip_, node_info_.port_, config_.get());
+  MS_EXCEPTION_IF_NULL(client_to_server_);
+  client_to_server_->Init();
+  MS_LOG(INFO) << "The node start a tcp client to this node!";
+}
+
 bool AbstractNode::InitClientToScheduler() {
   if (config_ == nullptr) {
     MS_LOG(WARNING) << "The config is empty.";
@@ -843,7 +898,6 @@ bool AbstractNode::InitClientToScheduler() {
         MsException::Instance().SetException();
       }
     });
-
   client_to_scheduler_->Init();
   client_to_scheduler_thread_ = std::make_unique<std::thread>([&]() {
     MS_LOG(INFO) << "The node start a tcp client!";
@@ -851,11 +905,14 @@ bool AbstractNode::InitClientToScheduler() {
   });
   client_to_scheduler_thread_->detach();
 
+  client_to_scheduler_->set_connected_callback([&]() { is_connected_to_scheduler_ = true; });
+
   client_to_scheduler_->set_disconnected_callback([&]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(PSContext::instance()->cluster_config().connect_interval));
     if (is_ready_.load() == false) {
       client_to_scheduler_->Init();
     }
+    is_connected_to_scheduler_ = false;
   });
   bool wait_res = client_to_scheduler_->WaitConnected();
   if (!wait_res) {
@@ -891,6 +948,9 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
           break;
         case NodeCommand::COLLECTIVE_SEND_DATA:
           MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a collective_send_data message response!";
+          break;
+        case NodeCommand::SEND_EVENT:
+          MS_LOG(INFO) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
           break;
         default:
           MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
@@ -964,8 +1024,9 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   if (size > 0) {
     size_t dest_size = size;
     size_t src_size = size;
-    if (memcpy_s(res.get(), dest_size, data, src_size) != EOK) {
-      MS_LOG(EXCEPTION) << "The memcpy_s error";
+    auto ret = memcpy_s(res.get(), dest_size, data, src_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
     }
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -1066,6 +1127,7 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SCALE_OUT_DONE] = &AbstractNode::ProcessScaleOutDone;
   server_handler_[NodeCommand::SCALE_IN_DONE] = &AbstractNode::ProcessScaleInDone;
   server_handler_[NodeCommand::SEND_EVENT] = &AbstractNode::ProcessEvent;
+  server_handler_[NodeCommand::SCHEDULER_RECOVERY] = &AbstractNode::ProcessSchedulerRecovery;
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
@@ -1090,8 +1152,8 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 }
 
 void AbstractNode::InitNodeNum() {
-  worker_num_ = SizeToInt(PSContext::instance()->cluster_config().initial_worker_num);
-  server_num_ = SizeToInt(PSContext::instance()->cluster_config().initial_server_num);
+  worker_num_ = UintToInt(PSContext::instance()->cluster_config().initial_worker_num);
+  server_num_ = UintToInt(PSContext::instance()->cluster_config().initial_server_num);
   scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
   scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
   MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
@@ -1104,7 +1166,10 @@ bool AbstractNode::Recover() {
     MS_LOG(INFO) << "The node is support recovery.";
     node_recovery_ = std::make_unique<NodeRecovery>(this);
     MS_EXCEPTION_IF_NULL(node_recovery_);
-    node_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
+    if (!node_recovery_->Initialize(config_->Get(kKeyRecovery, ""))) {
+      MS_LOG(ERROR) << "Initializing node recovery failed.";
+      return false;
+    }
     return node_recovery_->Recover();
   }
   return false;
@@ -1132,7 +1197,7 @@ void AbstractNode::OnCustomEventCallback(const uint32_t &event) {
   }
 }
 
-bool AbstractNode::IsWorkerOrServer0(const mindspore::HashMap<std::string, NodeInfo> &info) {
+bool AbstractNode::IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info) {
   for (const auto &it : info) {
     if (it.second.is_alive == true && it.second.node_role_ == NodeRole::WORKER) {
       return true;
@@ -1149,7 +1214,12 @@ void AbstractNode::CreateTcpServer() {
   MS_EXCEPTION_IF_NULL(config_);
   std::string interface;
   std::string server_ip;
-  CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+  if (ps::PSContext::instance()->server_mode().empty()) {
+    // If the server mode is not set, use 127.0.0.1 as server ip address for distributed learning.
+    server_ip = "127.0.0.1";
+  } else {
+    CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+  }
   server_ = std::make_shared<TcpServer>(server_ip, 0, config_.get());
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -1178,6 +1248,29 @@ void AbstractNode::CreateTcpServer() {
   });
   MS_EXCEPTION_IF_NULL(server_thread_);
   server_thread_->detach();
+}
+
+void AbstractNode::UpdateClusterState(const ClusterState &state) {
+  std::lock_guard<std::mutex> lk(cluster_state_mutex_);
+  MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(current_cluster_state_)
+               << " to " << CommUtil::ClusterStateToString(state);
+  current_cluster_state_ = state;
+}
+
+void AbstractNode::PersistMetaData() {
+  if (node_recovery_ == nullptr) {
+    MS_LOG(WARNING) << "node recovery is null, so don't persist meta data";
+    return;
+  }
+  if (config_->Exists(kKeyRecovery)) {
+    ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+    clusterConfig.scheduler_host = this->scheduler_ip();
+    clusterConfig.scheduler_port = this->scheduler_port();
+    clusterConfig.initial_worker_num = worker_num_;
+    clusterConfig.initial_server_num = server_num_;
+
+    node_recovery_->Persist(clusterConfig);
+  }
 }
 }  // namespace core
 }  // namespace ps

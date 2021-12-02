@@ -111,39 +111,6 @@ bool ParameterAggregator::LaunchAggregators() {
   return true;
 }
 
-bool ParameterAggregator::LaunchOptimizers() {
-  for (auto &optimizer_with_params : optimizer_kernel_parameters_) {
-    KernelParams &params = optimizer_with_params.second;
-    std::shared_ptr<kernel::OptimizerKernel> optimizer_kernel = optimizer_with_params.first;
-    MS_ERROR_IF_NULL_W_RET_VAL(optimizer_kernel, false);
-    bool ret = optimizer_kernel->Launch(params.inputs, params.workspace, params.outputs);
-    if (!ret) {
-      MS_LOG(ERROR) << "Launching optimizer kernel " << typeid(optimizer_kernel.get()).name() << " failed.";
-      continue;
-    }
-  }
-  // As long as all the optimizer kernels are launched, consider optimizing for this ParameterAggregator as done.
-  optimizing_done_ = true;
-  return true;
-}
-
-AddressPtr ParameterAggregator::Pull() {
-  if (memory_register_ == nullptr) {
-    MS_LOG(ERROR)
-      << "The memory register of ParameterAggregator is nullptr. Please initialize ParameterAggregator first.";
-    return nullptr;
-  }
-
-  current_pull_count_++;
-  if (current_pull_count_ == required_pull_count_) {
-    pulling_done_ = true;
-  }
-  MS_LOG(DEBUG) << "The " << current_pull_count_ << " time of Pull. Pulling done status: " << pulling_done_;
-
-  std::map<std::string, AddressPtr> &name_to_addr = memory_register_->addresses();
-  return name_to_addr["weight"];
-}
-
 AddressPtr ParameterAggregator::GetWeight() {
   if (memory_register_ == nullptr) {
     MS_LOG(ERROR)
@@ -193,8 +160,8 @@ bool ParameterAggregator::requires_aggr() const { return requires_aggr_; }
 
 bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!JudgeRequiresAggr(cnode)) {
-    MS_LOG(WARNING) << "Aggregation for weight for kernel " << AnfAlgo::GetCNodeName(cnode) << " is not required.";
+  if (!JudgeRequiredAggr(cnode)) {
+    MS_LOG(WARNING) << "Aggregation for weight of kernel " << AnfAlgo::GetCNodeName(cnode) << " is not required.";
   }
 
   std::vector<std::string> aggr_kernel_names = SelectAggregationAlgorithm(cnode);
@@ -223,31 +190,11 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
   return true;
 }
 
-bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
+bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &) {
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
       ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
     MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
     return true;
-  }
-  MS_EXCEPTION_IF_NULL(cnode);
-  const std::string &name = AnfAlgo::GetCNodeName(cnode);
-  auto optimizer_kernel = kernel::OptimizerKernelFactory::GetInstance().Create(name, cnode);
-  if (optimizer_kernel == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to create optimizer kernel for " << name;
-    return false;
-  }
-
-  optimizer_kernel->InitKernel(cnode);
-
-  const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info = optimizer_kernel->reuse_kernel_node_inputs_info();
-  if (!AssignMemory(optimizer_kernel, cnode, reuse_kernel_node_inputs_info, memory_register_)) {
-    MS_LOG(EXCEPTION) << "Assigning memory for kernel " << name << " failed.";
-    return false;
-  }
-
-  if (!GenerateOptimizerKernelParams(optimizer_kernel, memory_register_)) {
-    MS_LOG(ERROR) << "Generating optimizer kernel parameters failed.";
-    return false;
   }
   return true;
 }
@@ -323,29 +270,6 @@ bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<
   return true;
 }
 
-bool ParameterAggregator::GenerateOptimizerKernelParams(
-  const std::shared_ptr<kernel::OptimizerKernel> &optimizer_kernel,
-  const std::shared_ptr<MemoryRegister> &memory_register) {
-  MS_ERROR_IF_NULL_W_RET_VAL(optimizer_kernel, false);
-  MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
-  KernelParams optimizer_params = {};
-
-  const std::vector<std::string> &input_names = optimizer_kernel->input_names();
-  (void)std::transform(input_names.begin(), input_names.end(), std::back_inserter(optimizer_params.inputs),
-                       [&](const std::string &name) { return memory_register->addresses()[name]; });
-
-  const std::vector<std::string> &workspace_names = optimizer_kernel->workspace_names();
-  (void)std::transform(workspace_names.begin(), workspace_names.end(), std::back_inserter(optimizer_params.workspace),
-                       [&](const std::string &name) { return memory_register->addresses()[name]; });
-
-  const std::vector<std::string> &output_names = optimizer_kernel->output_names();
-  (void)std::transform(output_names.begin(), output_names.end(), std::back_inserter(optimizer_params.outputs),
-                       [&](const std::string &name) { return memory_register->addresses()[name]; });
-
-  optimizer_kernel_parameters_.push_back(std::make_pair(optimizer_kernel, optimizer_params));
-  return true;
-}
-
 std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &) {
   std::vector<std::string> aggregation_algorithm = {};
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
@@ -362,7 +286,7 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
   return aggregation_algorithm;
 }
 
-bool ParameterAggregator::JudgeRequiresAggr(const CNodePtr &cnode) {
+bool ParameterAggregator::JudgeRequiredAggr(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
   if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
@@ -375,7 +299,7 @@ bool ParameterAggregator::JudgeRequiresAggr(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(weight_node);
 
   if (!weight_node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << weight_node->fullname_with_scope() << " is not a parameter node.";
+    MS_LOG(EXCEPTION) << weight_node->fullname_with_scope() << " is not a parameter.";
     return false;
   }
   auto param_info = weight_node->cast<ParameterPtr>()->param_info();

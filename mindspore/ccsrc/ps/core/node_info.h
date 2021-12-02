@@ -32,7 +32,9 @@ enum class ClusterEvent {
   READY_FOR_SCALE_OUT = 3,
   READY_FOR_SCALE_IN = 4,
   CLUSTER_SCALE_OUT_DONE = 5,
-  CLUSTER_SCALE_IN_DONE = 6
+  CLUSTER_SCALE_IN_DONE = 6,
+  READY_FOR_RECOVERY = 7,
+  RECOVERY_DONE = 8,
 };
 
 struct NodeInfo {

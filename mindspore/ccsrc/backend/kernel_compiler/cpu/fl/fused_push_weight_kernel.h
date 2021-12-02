@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two PushWeights requests when return code is ResponseCode_SucNotReady.
+// The duration between two PushWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
 template <typename T>
 class FusedPushWeightKernel : public CPUKernel {
@@ -50,11 +50,11 @@ class FusedPushWeightKernel : public CPUKernel {
     total_iteration_++;
     uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     if (step_num_per_iteration == 0) {
-      MS_LOG(EXCEPTION) << "Step numbers of per iteration should not be equal to 0";
+      MS_LOG(EXCEPTION) << "step number per iterationb should not be 0";
     }
-    // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
     MS_LOG(INFO) << "Try to push weights. Local step number: " << total_iteration_
                  << ", step number needs to run per iteration: " << step_num_per_iteration;
+    // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
     if (step_num_per_iteration != fl::kOneStepPerIteration &&
         total_iteration_ % step_num_per_iteration != fl::kTrainEndStepNum) {
       return true;
@@ -87,6 +87,7 @@ class FusedPushWeightKernel : public CPUKernel {
         MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
 
         push_weight_rsp = flatbuffers::GetRoot<schema::ResponsePushWeight>(push_weight_rsp_msg->data());
+        MS_EXCEPTION_IF_NULL(push_weight_rsp);
         retcode = push_weight_rsp->retcode();
         if (retcode == schema::ResponseCode_SucNotReady) {
           std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPushWeights));
@@ -98,8 +99,8 @@ class FusedPushWeightKernel : public CPUKernel {
           }
           continue;
         } else if (retcode != schema::ResponseCode_SUCCEED) {
-          MS_LOG(EXCEPTION) << "FusedPushWeight failed. Server return code: " << push_weight_rsp->retcode()
-                            << ", reason: " << push_weight_rsp->reason()->str();
+          MS_LOG(WARNING) << "FusedPushWeight failed. Server return code: " << push_weight_rsp->retcode()
+                          << ", reason: " << push_weight_rsp->reason()->str();
         } else {
           MS_LOG(DEBUG) << "FusedPushWeight succeed.";
         }

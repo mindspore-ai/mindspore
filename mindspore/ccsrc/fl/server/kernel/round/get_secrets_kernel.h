@@ -29,6 +29,9 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+// results of signature verification
+enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
+
 class GetSecretsKernel : public RoundKernel {
  public:
   GetSecretsKernel() = default;
@@ -42,8 +45,9 @@ class GetSecretsKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_;
   armour::CipherShares *cipher_share_;
+  sigVerifyResult VerifySignature(const schema::GetShareSecrets *get_secrets_req);
   bool CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb, const schema::GetShareSecrets *get_secrets_req,
-                          const int iter_num);
+                          const size_t iter_num);
 };
 }  // namespace kernel
 }  // namespace server

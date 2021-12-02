@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 #include "fl/server/kernel/round/update_model_kernel.h"
 
 namespace mindspore {
@@ -85,6 +86,29 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
 
+  // verify signature
+  if (ps::PSContext::instance()->pki_verify()) {
+    sigVerifyResult verify_result = VerifySignature(update_model_req);
+    if (verify_result == sigVerifyResult::FAILED) {
+      std::string reason = "verify signature failed.";
+      BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+
+    if (verify_result == sigVerifyResult::TIMEOUT) {
+      std::string reason = "verify signature timestamp failed.";
+      BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, "");
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+    if (verify_result == sigVerifyResult::PASSED) {
+      MS_LOG(INFO) << "verify signature passed!";
+    }
+  }
+
   result_code = UpdateModel(update_model_req, fbb);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(ERROR) << "Updating model failed.";
@@ -144,12 +168,11 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
   size_t iteration = IntToSize(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
+    auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
     std::string reason = "UpdateModel iteration number is invalid:" + std::to_string(iteration) +
                          ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num()) +
-                         ". Retry later.";
-    BuildUpdateModelRsp(
-      fbb, schema::ResponseCode_OutOfTime, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+                         ". Retry later at time: " + std::to_string(next_req_time);
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));
     MS_LOG(WARNING) << reason;
     return ResultCode::kSuccessAndReturn;
   }
@@ -257,6 +280,47 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
     return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
+}
+
+sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateModel *update_model_req) {
+  std::string fl_id = update_model_req->fl_id()->str();
+  std::string timestamp = update_model_req->timestamp()->str();
+  int iteration = update_model_req->iteration();
+  std::string iter_str = std::to_string(iteration);
+  auto fbs_signature = update_model_req->signature();
+  std::vector<unsigned char> signature;
+  if (fbs_signature == nullptr) {
+    MS_LOG(ERROR) << "signature in client_list_sign_req is nullptr";
+    return sigVerifyResult::FAILED;
+  }
+  signature.assign(fbs_signature->begin(), fbs_signature->end());
+  std::map<std::string, std::string> key_attestations;
+  const fl::PBMetadata &key_attestations_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(kCtxClientKeyAttestation);
+  const fl::KeyAttestation &key_attestation_pb = key_attestations_pb_out.key_attestation();
+  auto iter = key_attestation_pb.key_attestations().begin();
+  for (; iter != key_attestation_pb.key_attestations().end(); ++iter) {
+    (void)key_attestations.emplace(std::pair<std::string, std::string>(iter->first, iter->second));
+  }
+  if (key_attestations.find(fl_id) == key_attestations.end()) {
+    MS_LOG(ERROR) << "can not find key attestation for fl_id: " << fl_id;
+    return sigVerifyResult::TIMEOUT;
+  }
+
+  std::vector<unsigned char> src_data;
+  (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
+  (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
+  mindspore::ps::server::CertVerify certVerify;
+  unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
+  certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
+  if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {
+    return sigVerifyResult::FAILED;
+  }
+  if (!certVerify.verifyTimeStamp(fl_id, timestamp)) {
+    return sigVerifyResult::TIMEOUT;
+  }
+  MS_LOG(INFO) << "verify signature for fl_id: " << fl_id << " success.";
+  return sigVerifyResult::PASSED;
 }
 
 void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,

@@ -53,7 +53,7 @@ class SSLHTTP {
 
   void InitSSL();
   void CleanSSL();
-
+  void InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey, const std::string &default_cipher_list);
   SSL_CTX *ssl_ctx_;
 };
 }  // namespace core

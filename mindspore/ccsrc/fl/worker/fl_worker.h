@@ -51,7 +51,7 @@ constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 // The time duration between retrying when server is in safemode.
 constexpr uint32_t kWorkerRetryDurationForSafeMode = 500;
 
-// The rank of the leader server.
+// The leader server rank.
 constexpr uint32_t kLeaderServerRank = 0;
 
 // The timeout for worker sending message to server in case of network jitter.

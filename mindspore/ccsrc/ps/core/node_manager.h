@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 #include <condition_variable>
+#include <unordered_set>
 #include <deque>
 #include <algorithm>
 
-#include "utils/hash_map.h"
-#include "utils/hash_set.h"
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -53,10 +53,11 @@ class NodeManager {
         node_state_(NodeState::NODE_STARTING),
         cluster_state_(ClusterState::ClUSTER_STARTING) {}
   virtual ~NodeManager() = default;
-
+  using OnPersist = std::function<void()>;
   // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
   void InitNode();
   uint32_t NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
+  uint32_t checkIfRankIdExist(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
 
   void UpdateHeartbeat(const std::string &node_id);
   std::vector<ServersMeta> FetchServersMeta();
@@ -86,8 +87,8 @@ class NodeManager {
   // nodes and Determine whether the nodes are equal to total_node_num_.
   bool IsAllNodesScaleInDone() const;
 
-  const mindspore::HashMap<std::string, NodeInfo> &nodes_info() const;
-  const mindspore::HashMap<std::string, NodeInfo> &registered_nodes_info() const;
+  const std::unordered_map<std::string, NodeInfo> &nodes_info() const;
+  const std::unordered_map<std::string, NodeInfo> &registered_nodes_info() const;
   // After all the nodes are registered successfully, the nodes info can be updated.
   void UpdateNodesInfo();
 
@@ -98,6 +99,9 @@ class NodeManager {
   int32_t worker_num() const;
   int32_t server_num() const;
 
+  int32_t next_worker_rank_id() const;
+  int32_t next_server_rank_id() const;
+
   void UpdateNodeState(const NodeState &state);
   void UpdateClusterState(const ClusterState &state);
   NodeState GetNodeState();
@@ -107,10 +111,17 @@ class NodeManager {
   // will re-register.
   void ResetMetadata(const std::vector<std::string> &scale_in_nodes = {});
 
+  void SaveRecoveryRankId(const NodeInfo &info);
+
   bool IsWorkerOrServer0();
 
   // Determine whether the node id has been registered.
   bool IsNodeRegistered(const std::string &node_id);
+
+  void set_registered_nodes_info(const std::unordered_map<std::string, NodeInfo> registered_nodes_info);
+  void set_next_worker_rank_id(const int32_t &next_worker_rank_id);
+  void set_next_server_rank_id(const int32_t &next_server_rank_id);
+  void setPersistCallback(const OnPersist &onPersist);
 
  private:
   std::mutex node_mutex_;
@@ -124,28 +135,33 @@ class NodeManager {
   std::atomic<int> next_server_rank_id_;
 
   // Whenever a node is registered, it will be stored in this map.
-  mindspore::HashMap<std::string, NodeInfo> registered_nodes_info_;
+  std::unordered_map<std::string, NodeInfo> registered_nodes_info_;
   // When all nodes are registered successfully, then all nodes info will be stored in this map. In other words, the
   // nodes_info_ is a snapshot of the registered_nodes_info_.
-  mindspore::HashMap<std::string, NodeInfo> nodes_info_;
+  std::unordered_map<std::string, NodeInfo> nodes_info_;
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
 
-  mindspore::HashMap<std::string, timeval> heartbeats_;
+  std::unordered_map<std::string, timeval> heartbeats_;
   // timeout nodes
-  mindspore::HashMap<std::string, NodeInfo> timeout_nodes_info_;
-  mindspore::HashSet<std::string> finish_nodes_id_;
+  std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
+  std::unordered_set<std::string> finish_nodes_id_;
 
   // The scheduler aggregates scale_out_done messages from workers/servers
-  mindspore::HashSet<std::string> scale_out_done_nodes_id_;
+  std::unordered_set<std::string> scale_out_done_nodes_id_;
   // The scheduler aggregates scale_in_done messages from workers/servers
-  mindspore::HashSet<std::string> scale_in_done_nodes_id_;
+  std::unordered_set<std::string> scale_in_done_nodes_id_;
 
   // Cluster metadata information can be dynamically changed
   std::unique_ptr<ClusterMetadata> meta_data_;
 
   NodeState node_state_;
   ClusterState cluster_state_;
+
+  std::deque<uint32_t> recovery_worker_rank_id_;
+  std::deque<uint32_t> recovery_server_rank_id_;
+
+  OnPersist onPersist;
 };
 }  // namespace core
 }  // namespace ps

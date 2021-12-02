@@ -51,7 +51,7 @@ class GetModelKernel : public RoundKernel {
   Executor *executor_;
 
   // The time window of one iteration.
-  size_t iteration_time_window_;
+  size_t iteration_time_window_{0};
 
   // The count of retrying because the iteration is not finished.
   std::atomic<uint64_t> retry_count_;

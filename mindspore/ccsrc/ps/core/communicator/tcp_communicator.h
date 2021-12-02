@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "utils/hash_map.h"
+#include <unordered_map>
 #include "proto/ps.pb.h"
 #include "ps/core/server_node.h"
 #include "ps/core/cluster_metadata.h"
@@ -36,7 +36,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-const mindspore::HashMap<TcpUserCommand, std::string> kUserCommandToMsgType = {
+const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kPush, "push"},
   {TcpUserCommand::kPull, "pull"},
   {TcpUserCommand::kCount, "count"},
@@ -61,7 +61,8 @@ const mindspore::HashMap<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kNewInstance, "newInstance"},
   {TcpUserCommand::kQueryInstance, "queryInstance"},
   {TcpUserCommand::kEnableFLS, "enableFLS"},
-  {TcpUserCommand::kDisableFLS, "disableFLS"}};
+  {TcpUserCommand::kDisableFLS, "disableFLS"},
+  {TcpUserCommand::kSyncAfterRecover, "syncAfterRecover"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:
@@ -92,8 +93,9 @@ class TcpCommunicator : public CommunicatorBase {
     MS_ERROR_IF_NULL_W_RET_VAL(msg, false);
     size_t dest_size = msg_str.size();
     size_t src_size = msg_str.size();
-    if (memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size) != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy_s error";
+    auto ret = memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
     }
 
     if (output != nullptr) {

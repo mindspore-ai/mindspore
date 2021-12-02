@@ -25,12 +25,11 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
 
-#include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
-#include "nlohmann/json.hpp"
 #include "ps/core/configuration.h"
 
 namespace mindspore {
@@ -58,11 +57,17 @@ class FileConfiguration : public Configuration {
 
   std::string GetString(const std::string &key, const std::string &defaultvalue) const override;
 
+  std::vector<nlohmann::json> GetVector(const std::string &key) const override;
+
   int64_t GetInt(const std::string &key, int64_t default_value) const override;
 
   void Put(const std::string &key, const std::string &value) override;
 
   bool Exists(const std::string &key) const override;
+
+  void PersistFile(const core::ClusterConfig &clusterConfig) const override;
+
+  void PersistNodes(const core::ClusterConfig &clusterConfig) const override;
 
  private:
   // The path of the configuration file.

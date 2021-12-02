@@ -43,7 +43,7 @@ void CommunicatorBase::Join() {
   return;
 }
 
-bool CommunicatorBase::running() const { return running_; }
+bool CommunicatorBase::running() { return running_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

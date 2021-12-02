@@ -93,7 +93,6 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return false;
     }
-
     // Step 3: Reduce the data so we can overlap the time cost of send.
     for (size_t j = 0; j < chunk_sizes[recv_chunk_index]; j++) {
       recv_chunk[j] += tmp_recv_chunk[j];
@@ -164,9 +163,9 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
     for (uint32_t i = 1; i < rank_size; i++) {
       std::shared_ptr<std::vector<unsigned char>> recv_str;
       MS_LOG(DEBUG) << "Reduce rank 0 receive from rank " << i;
-      auto recv_req_id = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, i, &recv_str);
-      if (!server_node_->CollectiveWait(recv_req_id, kCollectiveCommTimeout)) {
-        MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
+      auto recv_req_id1 = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, i, &recv_str);
+      if (!server_node_->CollectiveWait(recv_req_id1, kCollectiveCommTimeout)) {
+        MS_LOG(ERROR) << "CollectiveWait " << recv_req_id1 << " failed.";
         return false;
       }
       ret = memcpy_s(tmp_recv_buff.get(), count * sizeof(T), recv_str->data(), recv_str->size());
@@ -180,9 +179,9 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
     }
   } else {
     MS_LOG(DEBUG) << "Reduce send data to rank 0 process.";
-    auto send_req_id = server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, 0, sendbuff, count * sizeof(T));
-    if (!server_node_->Wait(send_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
+    auto send_req_id1 = server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, 0, sendbuff, count * sizeof(T));
+    if (!server_node_->Wait(send_req_id1, kCollectiveCommTimeout)) {
+      MS_LOG(ERROR) << "CollectiveWait " << send_req_id1 << " failed.";
       return false;
     }
   }
@@ -193,19 +192,19 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   if (rank_id_ == 0) {
     for (uint32_t i = 1; i < rank_size; i++) {
       MS_LOG(DEBUG) << "Broadcast data to process " << i;
-      auto send_req_id =
+      auto send_req_id2 =
         server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, i, output_buff, count * sizeof(T));
-      if (!server_node_->Wait(send_req_id, kCollectiveCommTimeout)) {
-        MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
+      if (!server_node_->Wait(send_req_id2, kCollectiveCommTimeout)) {
+        MS_LOG(ERROR) << "CollectiveWait " << send_req_id2 << " failed.";
         return false;
       }
     }
   } else {
     MS_LOG(DEBUG) << "Broadcast receive from rank 0.";
     std::shared_ptr<std::vector<unsigned char>> recv_str;
-    auto recv_req_id = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, 0, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
+    auto recv_req_id2 = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, 0, &recv_str);
+    if (!server_node_->CollectiveWait(recv_req_id2, kCollectiveCommTimeout)) {
+      MS_LOG(ERROR) << "CollectiveWait " << recv_req_id2 << " failed.";
       return false;
     }
     ret = memcpy_s(output_buff, count * sizeof(T), recv_str->data(), recv_str->size());
@@ -219,7 +218,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
 }
 
 template <typename T>
-bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *recvbuff, size_t send_count) {
+bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff, size_t send_count) {
   MS_ERROR_IF_NULL_W_RET_VAL(node_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
@@ -230,8 +229,8 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *recvbuff, size
   // Store offsets to get every data chunk's address.
   std::vector<size_t> chunk_offset;
   for (size_t i = 0; i < rank_size_; i++) {
-    size_t ofs =
-      std::accumulate(chunk_sizes.begin(), chunk_sizes.begin() + i, static_cast<size_t>(0), std::plus<size_t>());
+    size_t ofs = std::accumulate(chunk_sizes.begin(), chunk_sizes.begin() + SizeToLong(i), static_cast<size_t>(0),
+                                 std::plus<size_t>());
     chunk_offset.push_back(ofs);
   }
 
@@ -295,7 +294,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
     MS_LOG(ERROR) << "The group is empty.";
     return false;
   }
-  uint32_t group_rank_size = group_info.group_ranks.size();
+  uint32_t group_rank_size = SizeToUint(group_info.group_ranks.size());
   uint32_t global_root_rank = group_to_global_ranks[root];
 
   // Broadcast data to processes which are not the root.
@@ -349,7 +348,7 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
 }
 
 template <typename T>
-bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t send_count,
+bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, size_t send_count,
                                   const std::shared_ptr<ps::core::AbstractNode> &node) {
   std::unique_lock<std::mutex> lock(mtx_);
   MS_ERROR_IF_NULL_W_RET_VAL(node, false);
@@ -362,10 +361,10 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t s
   rank_id_ = node_->rank_id();
   switch (node_role_) {
     case ps::core::WORKER:
-      rank_size_ = node_->worker_num();
+      rank_size_ = IntToUint(node_->worker_num());
       break;
     case ps::core::SERVER:
-      rank_size_ = node_->server_num();
+      rank_size_ = IntToUint(node_->server_num());
       break;
     default:
       MS_LOG(ERROR) << "The node role " << node_role_ << " for collective communication is invalid.";
@@ -380,7 +379,7 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t s
 }
 
 template <typename T>
-bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t count, uint32_t root,
+bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, size_t count, uint32_t root,
                                   const std::shared_ptr<ps::core::AbstractNode> &node,
                                   const CommunicationGroupInfo &group_info) {
   std::unique_lock<std::mutex> lock(mtx_);

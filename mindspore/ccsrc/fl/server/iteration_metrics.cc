@@ -17,6 +17,7 @@
 #include "fl/server/iteration_metrics.h"
 #include <string>
 #include <fstream>
+#include "utils/file_utils.h"
 #include "debug/common.h"
 #include "ps/constants.h"
 
@@ -68,7 +69,7 @@ bool IterationMetrics::Initialize() {
 }
 
 bool IterationMetrics::Summarize() {
-  metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
+  metrics_file_.open(metrics_file_path_, std::ios::out | std::ios::app);
   if (!metrics_file_.is_open()) {
     MS_LOG(ERROR) << "The metrics file is not opened.";
     return false;

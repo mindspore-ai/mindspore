@@ -17,6 +17,8 @@
 #include "fl/server/kernel/round/share_secrets_kernel.h"
 #include <vector>
 #include <memory>
+#include <map>
+#include <utility>
 
 namespace mindspore {
 namespace fl {
@@ -25,13 +27,6 @@ namespace kernel {
 void ShareSecretsKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
-  }
-
-  executor_ = &Executor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor_);
-  if (!executor_->initialized()) {
-    MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
   }
   cipher_share_ = &armour::CipherShares::GetInstance();
 }
@@ -49,21 +44,58 @@ bool ShareSecretsKernel::CountForShareSecrets(const std::shared_ptr<FBBuilder> &
   return true;
 }
 
+sigVerifyResult ShareSecretsKernel::VerifySignature(const schema::RequestShareSecrets *share_secrets_req) {
+  std::string fl_id = share_secrets_req->fl_id()->str();
+  std::string timestamp = share_secrets_req->timestamp()->str();
+  int iteration = share_secrets_req->iteration();
+  std::string iter_str = std::to_string(iteration);
+  auto fbs_signature = share_secrets_req->signature();
+  std::vector<unsigned char> signature;
+  if (fbs_signature == nullptr) {
+    MS_LOG(ERROR) << "signature in share_secrets_req is nullptr";
+    return sigVerifyResult::FAILED;
+  }
+  signature.assign(fbs_signature->begin(), fbs_signature->end());
+  std::map<std::string, std::string> key_attestations;
+  const fl::PBMetadata &key_attestations_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(kCtxClientKeyAttestation);
+  const fl::KeyAttestation &key_attestation_pb = key_attestations_pb_out.key_attestation();
+  auto iter = key_attestation_pb.key_attestations().begin();
+  for (; iter != key_attestation_pb.key_attestations().end(); ++iter) {
+    (void)key_attestations.emplace(std::pair<std::string, std::string>(iter->first, iter->second));
+  }
+  if (key_attestations.find(fl_id) == key_attestations.end()) {
+    MS_LOG(ERROR) << "can not find key attestation for fl_id: " << fl_id;
+    return sigVerifyResult::FAILED;
+  }
+
+  std::vector<unsigned char> src_data;
+  (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
+  (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
+  mindspore::ps::server::CertVerify certVerify;
+  unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
+  certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
+  if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {
+    return sigVerifyResult::FAILED;
+  }
+  if (!certVerify.verifyTimeStamp(fl_id, timestamp)) {
+    return sigVerifyResult::TIMEOUT;
+  }
+  MS_LOG(INFO) << "verify signature for fl_id: " << fl_id << " success.";
+  return sigVerifyResult::PASSED;
+}
+
 bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                 const std::vector<AddressPtr> &outputs) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
-  MS_LOG(INFO) << "ITERATION NUMBER IS : " << iter_num << ", Total ShareSecretsKernel allowed Duration Is "
-               << total_duration;
-  clock_t start_time = clock();
+  MS_LOG(INFO) << "Launching ShareSecretsKernel, ITERATION NUMBER IS : " << iter_num;
 
   if (inputs.size() != 1 || outputs.size() != 1) {
     std::string reason = "inputs or outputs size is invalid.";
     MS_LOG(ERROR) << reason;
     return false;
   }
-
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
   void *req_data = inputs[0]->addr;
   if (fbb == nullptr || req_data == nullptr) {
@@ -71,7 +103,6 @@ bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     MS_LOG(ERROR) << reason;
     return false;
   }
-
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(ERROR) << "Current amount for ShareSecretsKernel is enough.";
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
@@ -80,7 +111,50 @@ bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::RequestShareSecrets>()) {
+    std::string reason = "The schema of RequestShareSecrets is invalid.";
+    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
+                                        std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
   const schema::RequestShareSecrets *share_secrets_req = flatbuffers::GetRoot<schema::RequestShareSecrets>(req_data);
+  if (share_secrets_req == nullptr) {
+    std::string reason = "Building flatbuffers schema failed for RequestShareSecrets.";
+    cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
+                                        std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  // verify signature
+  if (ps::PSContext::instance()->pki_verify()) {
+    sigVerifyResult verify_result = VerifySignature(share_secrets_req);
+    if (verify_result == sigVerifyResult::FAILED) {
+      std::string reason = "verify signature failed.";
+      cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
+                                          std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+
+    if (verify_result == sigVerifyResult::TIMEOUT) {
+      std::string reason = "verify signature timestamp failed.";
+      cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason,
+                                          std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+
+    if (verify_result == sigVerifyResult::PASSED) {
+      MS_LOG(INFO) << "verify signature passed!";
+    }
+  }
+
   size_t iter_client = IntToSize(share_secrets_req->iteration());
   if (iter_num != iter_client) {
     MS_LOG(ERROR) << "ShareSecretsKernel iteration invalid. server now iteration is " << iter_num
@@ -93,7 +167,7 @@ bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   response = cipher_share_->ShareSecrets(SizeToInt(iter_num), share_secrets_req, fbb,
                                          std::to_string(CURRENT_TIME_MILLI.count()));
   if (!response) {
-    MS_LOG(WARNING) << "update secret shares is failed.";
+    MS_LOG(ERROR) << "update secret shares is failed.";
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
@@ -102,9 +176,6 @@ bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     return true;
   }
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-  clock_t end_time = clock();
-  double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
-  MS_LOG(INFO) << "share_secrets_kernel success time is : " << duration;
   return true;
 }
 

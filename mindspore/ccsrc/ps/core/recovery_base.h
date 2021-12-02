@@ -41,14 +41,26 @@ class RecoveryBase {
   virtual ~RecoveryBase() = default;
 
   // Initialize the recovery configuration item and get the storage type of recovery.
-  virtual void Initialize(const std::string &json_config);
+  virtual bool Initialize(const std::string &json_config);
+
+  // Initialize the recovery configuration item and get the storage type of recovery.
+  virtual bool InitializeNodes(const std::string &json_config);
 
   // The node needs to recover metadata information when it starts.
   virtual bool Recover() = 0;
 
+  // Persist metadata to storage.
+  virtual void Persist(const core::ClusterConfig &clusterConfig) const;
+
+  // Persist metadata to storage.
+  virtual void PersistNodesInfo(const core::ClusterConfig &clusterConfig) const;
+
  protected:
   // Persistent storage used to save metadata.
   std::unique_ptr<Configuration> recovery_storage_;
+
+  // Persistent storage used to save server nodes metadata.
+  std::unique_ptr<Configuration> scheduler_recovery_storage_;
 
   // Storage type for recovery,Currently only supports storage of file types
   StorageType storage_type_;

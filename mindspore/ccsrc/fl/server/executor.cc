@@ -65,47 +65,6 @@ bool Executor::ReInitForUpdatingHyperParams(size_t aggr_threshold) {
 
 bool Executor::initialized() const { return initialized_; }
 
-bool Executor::HandlePush(const std::string &param_name, const UploadData &upload_data) {
-  MS_LOG(DEBUG) << "Do Push for parameter " << param_name;
-  if (param_aggrs_.count(param_name) == 0) {
-    MS_LOG(WARNING) << "Parameter " << param_name << " is not registered in server.";
-    return false;
-  }
-
-  std::mutex &mtx = parameter_mutex_[param_name];
-  std::unique_lock<std::mutex> lock(mtx);
-  auto &param_aggr = param_aggrs_[param_name];
-  MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
-  // Push operation needs to wait until the pulling process is done.
-  while (!param_aggr->IsPullingDone()) {
-    lock.unlock();
-    std::this_thread::sleep_for(std::chrono::milliseconds(kThreadSleepTime));
-    lock.lock();
-  }
-
-  // 1.Update data with the uploaded data of the worker.
-  if (!param_aggr->UpdateData(upload_data)) {
-    MS_LOG(ERROR) << "Updating data for parameter " << param_name << " failed.";
-    return false;
-  }
-  // 2.Launch aggregation for this trainable parameter.
-  if (!param_aggr->LaunchAggregators()) {
-    MS_LOG(ERROR) << "Launching aggregators for parameter " << param_name << " failed.";
-    return false;
-  }
-  if (param_aggr->IsAggregationDone()) {
-    // 3.After the aggregation is done, optimize the trainable parameter.
-    if (!param_aggr->LaunchOptimizers()) {
-      MS_LOG(ERROR) << "Optimizing for parameter " << param_name << " failed.";
-      return false;
-    }
-    // 4.Reset pulling and aggregation status after optimizing is done.
-    param_aggr->ResetPullingStatus();
-    param_aggr->ResetAggregationStatus();
-  }
-  return true;
-}
-
 bool Executor::HandleModelUpdate(const std::string &param_name, const UploadData &upload_data) {
   MS_LOG(DEBUG) << "Do UpdateModel for parameter " << param_name;
   if (param_aggrs_.count(param_name) == 0) {
@@ -127,32 +86,6 @@ bool Executor::HandleModelUpdate(const std::string &param_name, const UploadData
   if (!param_aggr->LaunchAggregators()) {
     MS_LOG(ERROR) << "Launching aggregators for parameter " << param_name << " failed.";
     return false;
-  }
-  return true;
-}
-
-bool Executor::HandleModelUpdateAsync(const std::map<std::string, UploadData> &feature_map) {
-  std::unique_lock<std::mutex> model_lock(model_mutex_);
-  for (const auto &trainable_param : feature_map) {
-    const std::string &param_name = trainable_param.first;
-    if (param_aggrs_.count(param_name) == 0) {
-      MS_LOG(WARNING) << "Parameter " << param_name << " is not registered in server.";
-      continue;
-    }
-
-    std::mutex &mtx = parameter_mutex_[param_name];
-    std::unique_lock<std::mutex> lock(mtx);
-    auto &param_aggr = param_aggrs_[param_name];
-    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
-    const UploadData &upload_data = trainable_param.second;
-    if (!param_aggr->UpdateData(upload_data)) {
-      MS_LOG(ERROR) << "Updating data for parameter " << param_name << " failed.";
-      return false;
-    }
-    if (!param_aggr->LaunchAggregators()) {
-      MS_LOG(ERROR) << "Launching aggregators for parameter " << param_name << " failed.";
-      return false;
-    }
   }
   return true;
 }
@@ -181,31 +114,6 @@ bool Executor::HandlePushWeight(const std::map<std::string, Address> &feature_ma
     }
   }
   return true;
-}
-
-AddressPtr Executor::HandlePull(const std::string &param_name) {
-  MS_LOG(INFO) << "Handle blocking pull message for parameter " << param_name;
-  if (param_aggrs_.count(param_name) == 0) {
-    MS_LOG(WARNING) << "Parameter " << param_name << " is not registered in server.";
-    return nullptr;
-  }
-
-  std::mutex &mtx = parameter_mutex_[param_name];
-  std::unique_lock<std::mutex> lock(mtx);
-  auto &param_aggr = param_aggrs_[param_name];
-  MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, nullptr);
-  // Pulling must wait until the optimizing process is done.
-  while (!param_aggr->IsOptimizingDone()) {
-    lock.unlock();
-    std::this_thread::sleep_for(std::chrono::milliseconds(kThreadSleepTime));
-    lock.lock();
-  }
-  AddressPtr addr = param_aggr->Pull();
-  // If this Pull is the last one, reset pulling and optimizing status.
-  if (param_aggr->IsPullingDone()) {
-    param_aggr->ResetOptimizingStatus();
-  }
-  return addr;
 }
 
 std::map<std::string, AddressPtr> Executor::HandlePullWeight(const std::vector<std::string> &param_names) {
@@ -298,7 +206,7 @@ bool Executor::unmasked() const {
   if (encrypt_type == ps::kPWEncryptType) {
     return unmasked_.load();
   } else {
-    // If the algorithm of pairwise encrypt is not enabled, consider_ unmasked flag as true.
+    // If the algorithm of mind armour is not enabled, consider unmasked_ flag as true.
     return true;
   }
 }
@@ -340,7 +248,7 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
     param_aggrs_[param_name] = param_aggr;
     parameter_mutex_[param_name];
     if (!param_aggr->Init(cnode, aggregation_count_)) {
-      MS_LOG(EXCEPTION) << "Initializing parameter aggregator for " << param_name << " failed.";
+      MS_LOG(EXCEPTION) << "Initializing parameter aggregator for param_name " << param_name << " failed.";
       return false;
     }
     MS_LOG(DEBUG) << "Initializing parameter aggregator for param_name " << param_name << " success.";

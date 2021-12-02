@@ -22,11 +22,8 @@ file_extension "fl";
 
 enum ResponseCode: int {
   SUCCEED=200,  
-  SucNotReady=201,  
-  RepeatRequest=202,
-  SucNotMatch=204,
+  SucNotReady=201,
   OutOfTime=300,
-  NotSelected=301,
   RequestError=400, 
   SystemError=500
 }
@@ -56,6 +53,11 @@ table RequestFLJob{
   iteration:int;
   data_size:int;
   timestamp:string;
+  sign_data:[ubyte];
+  key_attestation:string;
+  equip_cert:string;
+  equip_ca_cert:string;
+  root_cert:string;
 }
 table ResponseFLJob {
   retcode:int;
@@ -88,7 +90,9 @@ table RequestUpdateModel{
   iteration:int;
   feature_map:[FeatureMap];
   timestamp:string;
+  signature:[ubyte];
 }
+
 table ResponseUpdateModel{
   retcode:int;
   reason:string;

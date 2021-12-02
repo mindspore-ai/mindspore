@@ -25,6 +25,7 @@
 #include "fl/server/round.h"
 #include "fl/server/local_meta_store.h"
 #include "fl/server/iteration_metrics.h"
+#include "fl/server/server_recovery.h"
 
 namespace mindspore {
 namespace fl {
@@ -52,7 +53,7 @@ class Iteration {
   // Register callbacks for other servers to synchronize iteration information from leader server.
   void RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
 
-  // Register event callbacks for iteration state synchronization.
+  // Register event callback for iteration state synchronization.
   void RegisterEventCallback(const std::shared_ptr<ps::core::ServerNode> &server_node);
 
   // Add a round for the iteration. This method will be called multiple times for each round.
@@ -70,14 +71,14 @@ class Iteration {
 
   // This method will control servers to proceed to next iteration.
   // There's communication between leader and follower servers in this method.
-  // The server moves to next iteration only after the last round finishes or the time expires.
+  // The server moves to the next iteration only after the last round finishes or the timer expires.
   void MoveToNextIteration(bool is_last_iter_valid, const std::string &reason);
 
-  // Set current iteration state to running and trigger events about kIterationRunning.
+  // Set current iteration state to running and trigger the event.
   void SetIterationRunning();
 
-  // Set current iteration state to completed and trigger the event about kIterationCompleted.
-  void SetIterationCompleted();
+  // Set current iteration state to end and trigger the event.
+  void SetIterationEnd();
 
   // The barrier function for elastic scaling. The scaling out/in operation should be done only after this iteration is
   // completed.
@@ -118,6 +119,12 @@ class Iteration {
   // Need to wait all the rounds to finish before proceed to next iteration.
   void WaitAllRoundsFinish() const;
 
+  // Set server's recovery handler.
+  void set_recovery_handler(const std::shared_ptr<ServerRecovery> &server_recovery);
+
+  // Synchronize server iteration after another server's recovery is completed.
+  bool SyncAfterRecovery(uint64_t iteration_num);
+
   // The round kernels whose Launch method has not returned yet.
   std::atomic_uint32_t running_round_num_;
 
@@ -150,10 +157,10 @@ class Iteration {
   Iteration &operator=(const Iteration &) = delete;
 
   // The server does not need to handle the iteration events for now.
-  void HandleIterationRunningEvent() {}
-  void HandleIterationCompletedEvent() {}
+  void ProcessIterationRunningEvent() {}
+  void ProcessIterationEndEvent() {}
 
-  // Synchronize iteration form the leader server(Rank 0).
+  // Synchronize iteration from the leader server(Rank 0).
   bool SyncIteration(uint32_t rank);
   void HandleSyncIterationRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
@@ -165,13 +172,13 @@ class Iteration {
   bool NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const std::string &reason);
   void HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
-  // Step 2: leader server broadcast to all follower servers to prepare for next iteration and switch to safemode.
+  // Step 2: leader server broadcasts to all follower servers to prepare for next iteration and switch to safemode..
   bool BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, const std::string &reason);
   void HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
   // The server prepare for the next iteration. This method will switch the server to safemode.
   void PrepareForNextIter();
 
-  // Step 3: leader server broadcast to all follower servers to move to next iteration.
+  // Step 3: leader server broadcasts to all follower servers to move to next iteration.
   bool BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason);
   void HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
   // Move to next iteration. Store last iterations model and reset all the rounds.
@@ -200,6 +207,9 @@ class Iteration {
 
   // All the rounds in the server.
   std::vector<std::shared_ptr<Round>> rounds_;
+
+  // The recovery object for server.
+  std::shared_ptr<ServerRecovery> server_recovery_;
 
   // The iteration is either running or completed at any time.
   std::mutex iteration_state_mtx_;

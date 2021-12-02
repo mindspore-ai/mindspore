@@ -50,6 +50,15 @@ std::string FileConfiguration::Get(const std::string &key, const std::string &de
   return res;
 }
 
+std::vector<nlohmann::json> FileConfiguration::GetVector(const std::string &key) const {
+  if (!js.contains(key)) {
+    MS_LOG(WARNING) << "The key:" << key << " is not exist.";
+    return std::vector<nlohmann::json>();
+  }
+
+  return js.at(key);
+}
+
 std::string FileConfiguration::GetString(const std::string &key, const std::string &defaultvalue) const {
   if (!js.contains(key)) {
     MS_LOG(WARNING) << "The key:" << key << " is not exist.";
@@ -68,19 +77,60 @@ int64_t FileConfiguration::GetInt(const std::string &key, int64_t default_value)
   return res;
 }
 
-void FileConfiguration::Put(const std::string &key, const std::string &value) {
-  std::ofstream output_file(file_path_);
-  js[key] = value;
-  output_file << js.dump();
-
-  output_file.close();
-}
+void FileConfiguration::Put(const std::string &key, const std::string &value) { js[key] = value; }
 
 bool FileConfiguration::Exists(const std::string &key) const {
   if (!js.contains(key)) {
     return false;
   }
   return true;
+}
+
+void FileConfiguration::PersistNodes(const core::ClusterConfig &clusterConfig) const {
+  if (!CommUtil::IsFileExists(file_path_)) {
+    MS_LOG(WARNING) << "The file path:" << file_path_ << " is not exist. create one";
+  }
+
+  nlohmann::json persist_js;
+  persist_js[kRecoveryTotalNodeNum] = clusterConfig.initial_total_node_num;
+  persist_js[kRecoveryNextWorkerRankId] = clusterConfig.initial_next_worker_rank_id;
+  persist_js[kRecoveryNextServerRankId] = clusterConfig.initial_next_server_rank_id;
+
+  auto node_infos = clusterConfig.initial_registered_nodes_infos;
+  for (const auto kvs : node_infos) {
+    std::unordered_map<std::string, std::string> res;
+    res["ip"] = kvs.second.ip_;
+    res["port"] = std::to_string(kvs.second.port_);
+    res["node_id"] = kvs.second.node_id_;
+    res["rank_id"] = std::to_string(kvs.second.rank_id_);
+    res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
+    res["alive"] = CommUtil::BoolToString(kvs.second.is_alive);
+    persist_js["node_ids"].push_back(res);
+  }
+
+  std::ofstream output_file(file_path_);
+  output_file << persist_js.dump();
+
+  output_file.close();
+  MS_LOG(INFO) << "The nodes meta data persist to " << file_path_;
+}
+
+void FileConfiguration::PersistFile(const core::ClusterConfig &clusterConfig) const {
+  if (!CommUtil::IsFileExists(file_path_)) {
+    MS_LOG(WARNING) << "The file path:" << file_path_ << " is not exist. create one";
+  }
+
+  nlohmann::json persist_js;
+  persist_js[kRecoveryWorkerNum] = clusterConfig.initial_worker_num;
+  persist_js[kRecoveryServerNum] = clusterConfig.initial_server_num;
+  persist_js[kRecoverySchedulerIp] = clusterConfig.scheduler_host;
+  persist_js[kRecoverySchedulerPort] = clusterConfig.scheduler_port;
+
+  std::ofstream output_file(file_path_);
+  output_file << persist_js.dump();
+
+  output_file.close();
+  MS_LOG(INFO) << "The meta data persist to " << file_path_;
 }
 }  // namespace core
 }  // namespace ps

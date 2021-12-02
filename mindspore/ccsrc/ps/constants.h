@@ -76,27 +76,14 @@ constexpr int64_t kPullCmd = 51;
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
-constexpr int64_t kGradIndex = 0;
-constexpr int64_t kIndiceIndex = 1;
-constexpr int64_t kFirstDimSize = 2;
-constexpr int64_t kOutDimSize = 3;
-
-constexpr int64_t kBase = 10;
-constexpr float kStdDev = 0.01;
-
-constexpr int64_t kSparseLazyAdamIndex = 2;
-constexpr int64_t kSparseFtrlIndex = 3;
-constexpr int64_t kSparseGradIndex = 6;
-constexpr int64_t kSparseIndiceIndex = 7;
-
-constexpr int64_t kHeartbeatTimes = 2;
-constexpr int64_t kGradValue = -100;
-
 constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) << 20));
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";
 constexpr char kNodesIds[] = "node_ids";
 constexpr char kNodeId[] = "node_id";
+
+constexpr char kSuccessCode[] = "0";
+constexpr char kErrorCode[] = "1";
 
 constexpr int64_t kSubmitTaskIntervalInMs = 1;
 constexpr int64_t kMaxTaskNum = 10240;
@@ -105,7 +92,13 @@ constexpr int64_t kRetryCount = 60;
 constexpr int64_t kRetryIntervalInMs = 10;
 
 constexpr int64_t kThreadNum = 32;
+constexpr int64_t kGradIndex = 0;
+constexpr int64_t kIndiceIndex = 1;
+constexpr int64_t kFirstDimSize = 2;
+constexpr int64_t kOutDimSize = 3;
 
+constexpr int64_t kBase = 10;
+constexpr float kStdDev = 0.01;
 // The timeout period for the scale in node to send the finish message to scheduler.
 constexpr uint32_t kScaleInTimeoutInSenconds = 30;
 // The number of retries to determine whether all nodes are successfully registered.
@@ -113,10 +106,26 @@ constexpr uint32_t kCheckRegisteredRetryCount = 30;
 // The timeout interval for judging whether all nodes are successfully registered.
 constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 
+// The barrier function which should be called before doing scaling out/in operations.
+// It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
+using BarrierBeforeScaleOut = std::function<void(void)>;
+using BarrierBeforeScaleIn = std::function<void(void)>;
+
+constexpr int64_t kSparseLazyAdamIndex = 2;
+constexpr int64_t kSparseFtrlIndex = 3;
+constexpr int64_t kSparseGradIndex = 6;
+constexpr int64_t kSparseIndiceIndex = 7;
+
+constexpr int64_t kHeartbeatTimes = 2;
+constexpr int64_t kGradValue = -100;
+// Whether to support recovery.
+constexpr char kIsRecovery[] = "is_recovery";
 // The type of persistent storage, currently only supports file storage.
 constexpr char kStoreType[] = "storage_type";
 // The file used to storage metadata.
 constexpr char kStoreFilePath[] = "storage_file_path";
+// The file used to storage scheduler metadata.
+constexpr char kSchedulerStoreFilePath[] = "scheduler_storage_file_path";
 // 1 indicates that the persistent storage type is file.
 constexpr char kFileStorage[] = "1";
 // The recovery key of json_config.
@@ -125,6 +134,10 @@ constexpr char kRecoveryWorkerNum[] = "worker_num";
 constexpr char kRecoveryServerNum[] = "server_num";
 constexpr char kRecoverySchedulerIp[] = "scheduler_ip";
 constexpr char kRecoverySchedulerPort[] = "scheduler_port";
+constexpr char kRecoveryTotalNodeNum[] = "total_node_num";
+constexpr char kRecoveryNextWorkerRankId[] = "next_worker_rank_id";
+constexpr char kRecoveryNextServerRankId[] = "next_server_rank_id";
+constexpr char kRecoveryRegisteredNodesInfos[] = "node_ids";
 
 constexpr char kServerCertPath[] = "server_cert_path";
 constexpr char kServerPassword[] = "server_password";
@@ -132,7 +145,6 @@ constexpr char kCrlPath[] = "crl_path";
 constexpr char kClientCertPath[] = "client_cert_path";
 constexpr char kClientPassword[] = "client_password";
 constexpr char kCaCertPath[] = "ca_cert_path";
-
 constexpr char kCipherList[] = "cipher_list";
 constexpr char kCertCheckInterval[] = "cert_check_interval_in_hour";
 // 7 * 24
@@ -154,6 +166,7 @@ constexpr int64_t kMaxWarningTime = 180;
 
 constexpr int64_t kLength = 100;
 constexpr int64_t kMaxPort = 65535;
+constexpr int64_t kSecurityLevel = 3;
 
 constexpr char kTcpCommunicator[] = "TCP";
 constexpr char kHttpCommunicator[] = "HTTP";
@@ -162,35 +175,14 @@ constexpr char kServerCert[] = "server.p12";
 constexpr char kClientCert[] = "client.p12";
 constexpr char kCaCert[] = "ca.crt";
 constexpr char kColon = ':';
-const std::map<std::string, size_t> kCiphers = {{"ECDHE-RSA-AES128-GCM-SHA256", 0},
-                                                {"ECDHE-ECDSA-AES128-GCM-SHA256", 1},
-                                                {"ECDHE-RSA-AES256-GCM-SHA384", 2},
-                                                {"ECDHE-ECDSA-AES256-GCM-SHA384", 3},
-                                                {"DHE-RSA-AES128-GCM-SHA256", 4},
-                                                {"DHE-DSS-AES128-GCM-SHA256", 5},
-                                                {"ECDHE-RSA-AES128-SHA256", 6},
-                                                {"ECDHE-ECDSA-AES128-SHA256", 7},
-                                                {"ECDHE-RSA-AES128-SHA", 8},
-                                                {"ECDHE-ECDSA-AES128-SHA", 9},
-                                                {"ECDHE-RSA-AES256-SHA384", 10},
-                                                {"ECDHE-ECDSA-AES256-SHA384", 11},
-                                                {"ECDHE-RSA-AES256-SHA", 12},
-                                                {"ECDHE-ECDSA-AES256-SHA", 13},
-                                                {"DHE-RSA-AES128-SHA256", 14},
-                                                {"DHE-RSA-AES128-SHA", 15},
-                                                {"DHE-DSS-AES128-SHA256", 16},
-                                                {"DHE-RSA-AES256-SHA256", 17},
-                                                {"DHE-DSS-AES256-SHA", 18},
-                                                {"DHE-RSA-AES256-SHA", 19},
-                                                {"!aNULL", 20},
-                                                {"!eNULL", 21},
-                                                {"!EXPORT", 22},
-                                                {"!DES", 23},
-                                                {"!RC4", 24},
-                                                {"!3DES", 25},
-                                                {"!MD5", 26},
-                                                {"!PSK", 27},
-                                                {"kEDH+AESGCM", 28}};
+const std::map<std::string, size_t> kCiphers = {
+  {"ECDHE-RSA-AES128-GCM-SHA256", 0},   {"ECDHE-ECDSA-AES128-GCM-SHA256", 1}, {"ECDHE-RSA-AES256-GCM-SHA384", 2},
+  {"ECDHE-ECDSA-AES256-GCM-SHA384", 3}, {"DHE-RSA-AES128-GCM-SHA256", 4},     {"DHE-DSS-AES128-GCM-SHA256", 5},
+  {"DHE-RSA-AES256-GCM-SHA384", 6},     {"DHE-DSS-AES256-GCM-SHA384", 7},     {"DHE-PSK-AES128-GCM-SHA256", 8},
+  {"DHE-PSK-AES256-GCM-SHA384", 9},     {"DHE-PSK-CHACHA20-POLY1305", 10},    {"ECDHE-RSA-CHACHA20-POLY1305", 11},
+  {"ECDHE-PSK-CHACHA20-POLY1305", 12},  {"DHE-RSA-AES128-CCM", 13},           {"DHE-RSA-AES256-CCM", 14},
+  {"DHE-RSA-CHACHA20-POLY1305", 15},    {"DHE-PSK-AES128-CCM", 16},           {"DHE-PSK-AES256-CCM", 17},
+  {"ECDHE-ECDSA-AES128-CCM", 18},       {"ECDHE-ECDSA-AES256-CCM", 19},       {"ECDHE-ECDSA-CHACHA20-POLY1305", 20}};
 
 #ifdef __APPLE__
 using DataPtr = std::shared_ptr<unsigned char>;
@@ -262,7 +254,7 @@ using HandlerAfterScaleIn = std::function<void(void)>;
 constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
 constexpr char kJobNotAvailable[] = "The server's training job is disabled or finished.";
 
-enum class CustomEvent { kIterationRunning = 0, kIterationCompleted };
+enum class UserDefineEvent { kIterationRunning = 0, kIterationCompleted, kNodeTimeout };
 
 #define EXC_IF_VEC_IDX_OOB(vec, idx)                                                            \
   {                                                                                             \

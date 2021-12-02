@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 
 #include "ps/core/scheduler_node.h"
-#include <unordered_map>
-#include <utility>
+#include "ps/core/scheduler_recovery.h"
 
 namespace mindspore {
 namespace ps {
@@ -30,13 +29,28 @@ SchedulerNode::~SchedulerNode() {
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Scheduler start]: 1. Begin to start scheduler node!";
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(config_);
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty, then init node by context.";
+    InitNodeMetaData();
+  } else {
+    if (!RecoverScheduler()) {
+      MS_LOG(WARNING) << "Recover the server node is failed.";
+    }
+  }
+
   if (PSContext::instance()->scheduler_manage_port() != 0) {
-    MS_LOG(WARNING) << "Start the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
+    MS_LOG(WARNING) << "Start the restful scheduler http service, the ip is 127.0.0.1 "
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
     StartRestfulServer(kLocalIp, PSContext::instance()->scheduler_manage_port(), 1);
   }
   Initialize();
   StartUpdateClusterStateTimer();
+  RunRecovery();
+  if (is_worker_timeout_) {
+    BroadcastTimeoutEvent();
+  }
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start Scheduler node timeout!";
     return false;
@@ -46,6 +60,67 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
                << " workers and " << node_manager_.server_num() << " servers registered.";
 
   return true;
+}
+
+void SchedulerNode::RunRecovery() {
+  core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  // create tcp client to myself in case of event dispatch failed when Send reconnect msg to server failed
+  client_to_scheduler_ =
+    std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port, config_.get());
+  MS_EXCEPTION_IF_NULL(client_to_scheduler_);
+  client_to_scheduler_->Init();
+  client_thread_ = std::make_unique<std::thread>([&]() {
+    MS_LOG(INFO) << "The node start a tcp client!";
+    client_to_scheduler_->Start();
+  });
+  MS_EXCEPTION_IF_NULL(client_thread_);
+
+  auto initial_node_infos = clusterConfig.initial_registered_nodes_infos;
+  if (initial_node_infos.empty()) {
+    MS_LOG(WARNING) << "There is no registered nodes in scheduler!";
+    return;
+  }
+  MS_LOG(INFO) << "The scheduler start run recovery!";
+  int worker_num = clusterConfig.initial_worker_num;
+  int server_num = clusterConfig.initial_server_num;
+
+  node_manager_.set_worker_num(worker_num);
+  node_manager_.set_server_num(server_num);
+  node_manager_.set_next_worker_rank_id(clusterConfig.initial_next_worker_rank_id);
+  node_manager_.set_next_server_rank_id(clusterConfig.initial_next_server_rank_id);
+  node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
+
+  for (const auto kvs : initial_node_infos) {
+    auto client = std::make_shared<TcpClient>(kvs.second.ip_, kvs.second.port_, config_.get());
+    client->SetMessageCallback(
+      [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+        MS_LOG(INFO) << "received the response. ";
+        NotifyMessageArrival(meta);
+      });
+    client->Init();
+    MS_EXCEPTION_IF_NULL(client);
+
+    auto message_meta = std::make_shared<MessageMeta>();
+    MS_EXCEPTION_IF_NULL(message_meta);
+    message_meta->set_cmd(NodeCommand::SCHEDULER_RECOVERY);
+
+    int rank_id = kvs.second.rank_id_;
+    SendMetadataMessage scheduler_recovery_message;
+    scheduler_recovery_message.set_worker_num(worker_num);
+    scheduler_recovery_message.set_server_num(server_num);
+    scheduler_recovery_message.set_rank_id(rank_id);
+    if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, scheduler_recovery_message.SerializeAsString().data(),
+                         scheduler_recovery_message.ByteSizeLong())) {
+      if (kvs.second.node_role_ == NodeRole::WORKER) {
+        is_worker_timeout_ = true;
+        break;
+      }
+      MS_LOG(WARNING) << "Scheduler send recovery msg to " << kvs.first << " timeout!";
+    } else {
+      MS_LOG(INFO) << "Scheduler send recovery msg to " << kvs.first << " successful.";
+    }
+  }
+  MS_LOG(INFO) << "Scheduler recovery finish.";
 }
 
 void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
@@ -59,6 +134,7 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
   node_manager_.UpdateHeartbeat(heartbeat_message.node_id());
+  MS_LOG(DEBUG) << "The scheduler get a heartbeat from node id :" << heartbeat_message.node_id();
 
   HeartbeatRespMessage heartbeat_resp_message;
 
@@ -78,11 +154,6 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
 }
 
 void SchedulerNode::Initialize() {
-  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
-  MS_EXCEPTION_IF_NULL(config_);
-  if (!config_->Initialize()) {
-    MS_LOG(INFO) << "The config file is empty.";
-  }
   InitCommandHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
@@ -95,6 +166,7 @@ void SchedulerNode::Initialize() {
   if (node_info_.node_id_.empty()) {
     node_info_.node_id_ = CommUtil::GenerateUUID();
   }
+  node_info_.rank_id_ = 0;
   node_info_.node_role_ = NodeRole::SCHEDULER;
   leader_scaler_ = std::make_unique<LeaderScaler>(this);
   MS_EXCEPTION_IF_NULL(leader_scaler_);
@@ -118,6 +190,7 @@ void SchedulerNode::CreateTcpServer() {
 
   std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
   uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
+  MS_LOG(INFO) << "scheduler ip: " << scheduler_host << ", scheduler ip: " << scheduler_port;
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port, config_.get());
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -129,6 +202,18 @@ void SchedulerNode::CreateTcpServer() {
     (this->*handler_ptr)(server_, conn, meta, data, size);
   });
 
+  const auto client_disconn = [&](const TcpServer &, const TcpConnection &conn) {
+    int fd = conn.GetFd();
+    if (register_connection_fd_.count(fd) <= 0) {
+      return;
+    }
+    MS_LOG(WARNING) << "remove client fd:" << fd << ", remove client id:" << register_connection_fd_[fd];
+    register_connection_fd_.erase(fd);
+    MS_LOG(WARNING) << "Register node number is:" << register_connection_fd_.size()
+                    << ", total node num is:" << node_manager_.total_node_num()
+                    << ", scale in node size is: " << scale_in_node_ids_.size();
+  };
+  server_->SetServerCallback(nullptr, client_disconn, nullptr);
   server_->Init();
 
   scheduler_thread_ = std::make_unique<std::thread>([this]() {
@@ -147,9 +232,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(data);
   RegisterMessage register_message;
   CHECK_RETURN_TYPE(register_message.ParseFromArray(data, SizeToInt(size)));
-
   const std::string &node_id = register_message.node_id();
-  node_manager_.UpdateHeartbeat(node_id);
 
   MS_LOG(INFO) << "The node id:" << node_id << " is registering to scheduler.";
   client_mutex_.lock();
@@ -164,16 +247,26 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   // assign worker node and server node rank id
   uint32_t rank_id = node_manager_.NextRankId(register_message, meta);
   if (rank_id == UINT32_MAX) {
-    MS_LOG(WARNING) << "The rank id is wrong!";
+    MS_LOG(ERROR) << "The rank id is wrong, return register rejected message!";
+    RegisterRespMessage register_rejected_message;
+    register_rejected_message.set_node_id(node_id);
+    register_rejected_message.set_rank_id(rank_id);
+    if (!server->SendMessage(conn, meta, Protos::PROTOBUF, register_rejected_message.SerializeAsString().data(),
+                             register_rejected_message.ByteSizeLong())) {
+      MS_LOG(WARNING) << "Server response message failed.";
+    }
+    return;
   }
 
+  node_manager_.UpdateHeartbeat(node_id);
   RegisterRespMessage register_resp_message;
   register_resp_message.set_node_id(node_id);
-
+  register_resp_message.set_rank_id(rank_id);
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
                            register_resp_message.ByteSizeLong())) {
     MS_LOG(WARNING) << "Server response message failed.";
   }
+  SetRegisterConnectionFd(conn, node_id);
 
   if (node_manager_.IsAllNodesRegistered()) {
     is_ready_ = true;
@@ -199,6 +292,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
       node_manager_.UpdateHeartbeat(kvs.first);
     }
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    PersistMetaData();
     wait_start_cond_.notify_all();
   }
 }
@@ -284,6 +378,7 @@ void SchedulerNode::ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server
     }
     is_ready_ = true;
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    PersistMetaData();
   }
 }
 
@@ -312,6 +407,7 @@ void SchedulerNode::ProcessScaleInDone(const std::shared_ptr<TcpServer> &server,
     }
     is_ready_ = true;
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    PersistMetaData();
   }
 }
 
@@ -440,6 +536,7 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
   MS_LOG(INFO) << "[Scheduler start]: 3. The scheduler start a heartbeat timer!";
+  node_manager_.setPersistCallback([&]() { PersistMetaData(); });
   update_state_thread_ = std::make_unique<std::thread>([&]() {
     auto start_time = std::chrono::steady_clock::now();
     while (!is_finish_.load()) {
@@ -472,6 +569,7 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     }
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
+    MS_LOG(DEBUG) << "ip:" << ip << ", port:" << port << ", node id:" << node_info.node_id_;
     auto client = std::make_shared<TcpClient>(ip, port, config_.get());
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback(
@@ -487,15 +585,6 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
         NotifyMessageArrival(meta);
       });
     client->Init();
-    if (is_client_started_ == false) {
-      is_client_started_ = true;
-      client_thread_ = std::make_unique<std::thread>([&]() {
-        MS_LOG(INFO) << "The node start a tcp client!";
-        client->Start();
-      });
-      MS_EXCEPTION_IF_NULL(client_thread_);
-    }
-
     connected_nodes_[node_info.node_id_] = client;
     return connected_nodes_[node_info.node_id_];
   }
@@ -524,7 +613,7 @@ bool SchedulerNode::Stop() {
     is_ready_ = true;
   }
   if (PSContext::instance()->scheduler_manage_port() != 0) {
-    MS_LOG(WARNING) << "Stop the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
+    MS_LOG(WARNING) << "Stop the restful scheduler http service, the ip is 127.0.0.1 "
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
     StopRestfulServer();
   }
@@ -532,7 +621,7 @@ bool SchedulerNode::Stop() {
 }
 
 bool SchedulerNode::Finish(const uint32_t &) {
-  MS_LOG(INFO) << "[Scheduler finish]: 1. Begin to finish scheduler node!";
+  MS_LOG(INFO) << "[Scheduler finish]: 1. Begin to listen finish scheduler node!";
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
   wait_finish_cond_.wait(lock, [this] {
     if (this->is_finish_.load()) {
@@ -541,6 +630,45 @@ bool SchedulerNode::Finish(const uint32_t &) {
     return this->is_finish_.load();
   });
   return true;
+}
+
+void SchedulerNode::ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHandler> &resp) {
+  MS_EXCEPTION_IF_NULL(resp);
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_SCALE_OUT) {
+    std::string message = "The cluster state is not CLUSTER_SCALE_OUT, does not need to rollback.";
+    ERROR_STATUS(status, RequestProcessResultCode::kSystemError, message);
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+  // set the last worker num and last server num
+  ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  node_manager_.set_worker_num(clusterConfig.initial_worker_num);
+  node_manager_.set_server_num(clusterConfig.initial_server_num);
+  node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
+
+  MS_LOG(INFO) << "After scale out rollback, the last worker num:" << clusterConfig.initial_worker_num
+               << ", the last server num:" << clusterConfig.initial_server_num;
+
+  auto node_infos = node_manager_.nodes_info();
+  node_manager_.ResetMetadata();
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    MS_EXCEPTION_IF_NULL(client);
+    MS_EXCEPTION_IF_NULL(leader_scaler_);
+    leader_scaler_->ScaleOutAsync(client, node_manager_);
+  }
+
+  MS_LOG(INFO) << "Scheduler send scale out rollback successful.";
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
+  nlohmann::json js;
+  js["message"] = "Cluster scale out rollback success.";
+  js["code"] = kSuccessCode;
+  resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content-Type", "application/json");
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
 }
 
 void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp) {
@@ -595,6 +723,7 @@ void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &r
 
   nlohmann::json js;
   js["message"] = "Cluster begin to scale out.";
+  js["code"] = kSuccessCode;
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
 
@@ -637,7 +766,7 @@ void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &re
 
   MS_LOG(WARNING) << "The scale in node ids:" << scale_in_node_ids_;
 
-  mindspore::HashMap<std::string, bool> scale_in_nodes;
+  std::unordered_map<std::string, bool> scale_in_nodes;
 
   int32_t scale_worker_num = 0;
   int32_t scale_server_num = 0;
@@ -676,6 +805,7 @@ void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &re
 
   nlohmann::json js;
   js["message"] = "Cluster begin to scale in.";
+  js["code"] = kSuccessCode;
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
 
@@ -705,14 +835,23 @@ void SchedulerNode::ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler
   MS_EXCEPTION_IF_NULL(resp);
   nlohmann::json js;
   js["message"] = "Get nodes info successful.";
-  auto node_infos = node_manager_.nodes_info();
+  js["code"] = kSuccessCode;
+  auto node_infos = node_manager_.registered_nodes_info();
   for (const auto &kvs : node_infos) {
     std::unordered_map<std::string, std::string> res;
-    res["node_id"] = kvs.second.node_id_;
-    res["rank_id"] = std::to_string(kvs.second.rank_id_);
+    res["nodeId"] = kvs.second.node_id_;
+    res["rankId"] = std::to_string(kvs.second.rank_id_);
     res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
-    js["node_ids"].push_back(std::move(res));
+    res["alive"] = kvs.second.is_alive ? "true" : "false";
+    js["nodeIds"].push_back(res);
   }
+
+  std::unordered_map<std::string, std::string> scheduler_info;
+  scheduler_info["nodeId"] = node_info_.node_id_;
+  scheduler_info["rankId"] = std::to_string(node_info_.rank_id_);
+  scheduler_info["role"] = CommUtil::NodeRoleToString(node_info_.node_role_);
+  scheduler_info["alive"] = "true";
+  js["nodeIds"].push_back(scheduler_info);
 
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
@@ -734,6 +873,7 @@ void SchedulerNode::ProcessGetClusterState(const std::shared_ptr<HttpMessageHand
   js["message"] = "Get cluster state successful.";
   auto cluster_state = node_manager_.GetClusterState();
   js["cluster_state"] = CommUtil::ClusterStateToString(cluster_state);
+  js["code"] = kSuccessCode;
 
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
@@ -765,12 +905,12 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  mindspore::HashMap<uint32_t, VectorPtr> outputs;
+  std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
     outputs = receive_messages_[request_id];
-    receive_messages_.erase(request_id);
+    (void)receive_messages_.erase(request_id);
     receive_messages_mutex_.unlock();
   });
 
@@ -793,7 +933,8 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
 
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
   nlohmann::json js;
-  js["message"] = "Start update flPlan successful.";
+  js["message"] = "Start new instance successful.";
+  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
     js["result"][output.first] = data;
@@ -819,12 +960,12 @@ void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandle
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  mindspore::HashMap<uint32_t, VectorPtr> outputs;
+  std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
     outputs = receive_messages_[request_id];
-    receive_messages_.erase(request_id);
+    (void)receive_messages_.erase(request_id);
     receive_messages_mutex_.unlock();
   });
 
@@ -845,10 +986,13 @@ void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandle
   }
 
   nlohmann::json js;
-  js["message"] = "Start update flPlan successful.";
+  js["message"] = "Query Instance successful.";
+  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
-    js["result"][output.first] = data;
+    nlohmann::json dataJson = nlohmann::json::parse(data);
+    js["result"] = dataJson;
+    break;
   }
 
   resp->AddRespString(js.dump());
@@ -873,12 +1017,12 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  mindspore::HashMap<uint32_t, VectorPtr> outputs;
+  std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
     outputs = receive_messages_[request_id];
-    receive_messages_.erase(request_id);
+    (void)receive_messages_.erase(request_id);
     receive_messages_mutex_.unlock();
   });
 
@@ -902,6 +1046,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
   nlohmann::json js;
   js["message"] = "start enabling FL-Server successful.";
+  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
     js["result"][output.first] = data;
@@ -929,12 +1074,12 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
 
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
 
-  mindspore::HashMap<uint32_t, VectorPtr> outputs;
+  std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
     outputs = receive_messages_[request_id];
-    receive_messages_.erase(request_id);
+    (void)receive_messages_.erase(request_id);
     receive_messages_mutex_.unlock();
   });
 
@@ -958,6 +1103,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
   nlohmann::json js;
   js["message"] = "start disabling FL-Server successful.";
+  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
     js["result"][output.first] = data;
@@ -972,7 +1118,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
 
 RequestProcessResult SchedulerNode::CheckIfClusterReady() {
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
-  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY) {
+  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY || CheckIfNodeDisconnected()) {
     std::string message = "The cluster is not ready.";
     ERROR_STATUS(result, RequestProcessResultCode::kSystemError, message);
     return result;
@@ -1039,19 +1185,23 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
 
   OnRequestReceive new_instance = std::bind(&SchedulerNode::ProcessNewInstance, this, std::placeholders::_1);
   callbacks_["/newInstance"] = new_instance;
-  http_server_->RegisterRoute("/newInstance", &callbacks_["/newInstance"]);
+  (void)http_server_->RegisterRoute("/newInstance", &callbacks_["/newInstance"]);
 
   OnRequestReceive query_instance = std::bind(&SchedulerNode::ProcessQueryInstance, this, std::placeholders::_1);
   callbacks_["/queryInstance"] = query_instance;
-  http_server_->RegisterRoute("/queryInstance", &callbacks_["/queryInstance"]);
+  (void)http_server_->RegisterRoute("/queryInstance", &callbacks_["/queryInstance"]);
 
   OnRequestReceive enable_fls = std::bind(&SchedulerNode::ProcessEnableFLS, this, std::placeholders::_1);
   callbacks_["/enableFLS"] = enable_fls;
-  http_server_->RegisterRoute("/enableFLS", &callbacks_["/enableFLS"]);
+  (void)http_server_->RegisterRoute("/enableFLS", &callbacks_["/enableFLS"]);
 
   OnRequestReceive disable_fls = std::bind(&SchedulerNode::ProcessDisableFLS, this, std::placeholders::_1);
   callbacks_["/disableFLS"] = disable_fls;
-  http_server_->RegisterRoute("/disableFLS", &callbacks_["/disableFLS"]);
+  (void)http_server_->RegisterRoute("/disableFLS", &callbacks_["/disableFLS"]);
+
+  OnRequestReceive scale_out_rollback = std::bind(&SchedulerNode::ProcessScaleoutRollback, this, std::placeholders::_1);
+  callbacks_["/scaleoutRollback"] = scale_out_rollback;
+  (void)http_server_->RegisterRoute("/scaleoutRollback", &callbacks_["/scaleoutRollback"]);
 
   if (!http_server_->InitServer()) {
     MS_LOG(EXCEPTION) << "The scheduler init http server failed.";
@@ -1074,6 +1224,78 @@ void SchedulerNode::StopRestfulServer() {
   if (restful_thread_ != nullptr && restful_thread_->joinable()) {
     restful_thread_->join();
   }
+}
+
+void SchedulerNode::InitNodeMetaData() {
+  ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  clusterConfig.scheduler_host = PSContext::instance()->scheduler_host();
+  clusterConfig.scheduler_port = PSContext::instance()->scheduler_port();
+  clusterConfig.initial_worker_num = PSContext::instance()->initial_worker_num();
+  clusterConfig.initial_server_num = PSContext::instance()->initial_server_num();
+  MS_LOG(INFO) << "The cluster worker num:" << clusterConfig.initial_worker_num
+               << ", the server num:" << clusterConfig.initial_server_num
+               << ", the scheduler ip:" << clusterConfig.scheduler_host
+               << ", the scheduler port:" << clusterConfig.scheduler_port;
+}
+
+bool SchedulerNode::RecoverScheduler() {
+  MS_EXCEPTION_IF_NULL(config_);
+  if (config_->Exists(kKeyRecovery)) {
+    MS_LOG(INFO) << "The scheduler node is support recovery.";
+    scheduler_recovery_ = std::make_unique<SchedulerRecovery>();
+    MS_EXCEPTION_IF_NULL(scheduler_recovery_);
+    (void)scheduler_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
+    (void)scheduler_recovery_->InitializeNodes(config_->Get(kKeyRecovery, ""));
+
+    return scheduler_recovery_->Recover();
+  }
+  return false;
+}
+
+void SchedulerNode::PersistMetaData() {
+  if (scheduler_recovery_ == nullptr) {
+    MS_LOG(WARNING) << "scheduler recovery is null, so don't persist meta data";
+    return;
+  }
+  if (config_->Exists(kKeyRecovery)) {
+    ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+    clusterConfig.initial_worker_num = node_manager_.worker_num();
+    clusterConfig.initial_server_num = node_manager_.server_num();
+    clusterConfig.initial_total_node_num = node_manager_.total_node_num();
+    clusterConfig.initial_next_worker_rank_id = node_manager_.next_worker_rank_id();
+    clusterConfig.initial_next_server_rank_id = node_manager_.next_server_rank_id();
+    clusterConfig.initial_registered_nodes_infos.clear();
+    clusterConfig.initial_registered_nodes_infos = node_manager_.registered_nodes_info();
+
+    scheduler_recovery_->Persist(clusterConfig);
+    scheduler_recovery_->PersistNodesInfo(clusterConfig);
+  }
+}
+
+bool SchedulerNode::CheckIfNodeDisconnected() const {
+  return UintToInt(register_connection_fd_.size()) != node_manager_.total_node_num();
+}
+
+void SchedulerNode::BroadcastTimeoutEvent() {
+  core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  auto initial_node_infos = clusterConfig.initial_registered_nodes_infos;
+  const uint32_t event = static_cast<uint32_t>(ps::UserDefineEvent::kNodeTimeout);
+  MS_LOG(INFO) << "Broad timeout event:" << event;
+  for (const auto kvs : initial_node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    SendEvent(client, event);
+  }
+  MS_LOG(INFO) << "Broad timeout event finish.";
+}
+
+void SchedulerNode::SetRegisterConnectionFd(const std::shared_ptr<TcpConnection> &conn, const std::string &node_id) {
+  int fd = conn->GetFd();
+  if (register_connection_fd_.count(fd) > 0) {
+    MS_LOG(WARNING) << "This server has contained the fd:" << fd;
+    return;
+  }
+  MS_LOG(INFO) << "register client fd:" << fd << ", register client id:" << node_id;
+  register_connection_fd_[fd] = node_id;
 }
 }  // namespace core
 }  // namespace ps

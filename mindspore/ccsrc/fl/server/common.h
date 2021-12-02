@@ -45,17 +45,17 @@ enum CommType { HTTP = 0, TCP };
 enum AggregationType { FedAvg = 0, FedAdam, FedAdagarg, FedMeta, qffl, DenseGradAccum, SparseGradAccum };
 
 struct RoundConfig {
-  // The name of round. Please refer to round kernel *.cc files.
+  // The name of the round. Please refer to round kernel *.cc files.
   std::string name;
   // Whether this round has the time window limit.
   bool check_timeout = false;
   // The length of the time window. Only used when check_timeout is set to true.
   size_t time_window = 3000;
-  // Whether this round has to check the request count has reached the threshold.
+  // Whether this round has to check the request count has reach the threshold.
   bool check_count = false;
-  // This round's request threshold count. Only used when check_count is set to true.
+  // This round's request threshold count. Only used when threshold_count is set to true.
   size_t threshold_count = 0;
-  // Whether this round uses the server as threshold count. This is vital for some rounds in elastic scaling scenario.
+  // Whether this round uses the server number as threshold. This is vital for some rounds in elastic scaling scenario.
   bool server_num_as_threshold = false;
 };
 
@@ -67,6 +67,8 @@ struct CipherConfig {
   size_t share_secrets_threshold = 0;
   size_t get_secrets_threshold = 0;
   size_t client_list_threshold = 0;
+  size_t push_list_sign_threshold = 0;
+  size_t get_list_sign_threshold = 0;
   size_t reconstruct_secrets_threshold = 0;
 };
 
@@ -130,7 +132,6 @@ constexpr auto kAdamEps = "eps";
 constexpr auto kFtrlLinear = "linear";
 constexpr auto kDataSize = "data_size";
 constexpr auto kNewDataSize = "new_data_size";
-constexpr auto kStat = "stat";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.
@@ -175,14 +176,11 @@ const OptimParamNameToIndex kAdamWeightDecayNameToIdx = {{"inputs",
                                                            {"weight_decay", 7},
                                                            {"grad", 8}}},
                                                          {"outputs", {}}};
-const OptimParamNameToIndex kSGDNameToIdx = {
-  {"inputs", {{kWeight, 0}, {kGradient, 1}, {kLearningRate, 2}, {kAccumulation, 3}, {kMomentum, 4}, {kStat, 5}}},
-  {"outputs", {}}};
-
-const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {
-  {kApplyMomentumOpName, kMomentumNameToIdx},     {kFusedSparseAdamName, kSparseAdamNameToIdx},
-  {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx}, {kApplyAdamOpName, kAdamNameToIdx},
-  {"AdamWeightDecay", kAdamWeightDecayNameToIdx}, {kSGDName, kSGDNameToIdx}};
+const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {{kApplyMomentumOpName, kMomentumNameToIdx},
+                                                                    {kFusedSparseAdamName, kSparseAdamNameToIdx},
+                                                                    {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
+                                                                    {kApplyAdamOpName, kAdamNameToIdx},
+                                                                    {"AdamWeightDecay", kAdamWeightDecayNameToIdx}};
 
 constexpr uint32_t kLeaderServerRank = 0;
 constexpr size_t kWorkerMgrThreadPoolSize = 32;
@@ -215,9 +213,12 @@ constexpr auto kCtxGetSecretsClientList = "get_secrets_client_list";
 constexpr auto kCtxReconstructClientList = "reconstruct_client_list";
 constexpr auto kCtxExChangeKeysClientList = "exchange_keys_client_list";
 constexpr auto kCtxGetUpdateModelClientList = "get_update_model_client_list";
+constexpr auto kCtxClientListSigns = "client_list_signs";
+constexpr auto kCtxClientKeyAttestation = "client_key_attestation";
 constexpr auto kCtxGetKeysClientList = "get_keys_client_list";
 constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
 constexpr auto kCtxCipherPrimer = "cipher_primer";
+constexpr auto kCurrentIteration = "current_iteration";
 
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIME_MILLI \
@@ -250,6 +251,14 @@ inline AddressPtr GenerateParameterNodeAddrPtr(const CNodePtr &kernel_node, size
   addr->addr = param_tensor->data_c();
   addr->size = param_tensor->data().nbytes();
   return addr;
+}
+
+template <typename T>
+inline T JsonGetKeyWithException(const nlohmann::json &json, const std::string &key) {
+  if (!json.contains(key)) {
+    MS_LOG(EXCEPTION) << "The key " << key << "does not exist in json " << json.dump();
+  }
+  return json[key].get<T>();
 }
 
 // Definitions for Federated Learning.

@@ -32,7 +32,6 @@ namespace core {
  */
 struct ClusterMetadata {
   ClusterMetadata(const uint32_t &worker, const uint32_t &server) : worker_num(worker), server_num(server) {}
-
   uint32_t worker_num;
   uint32_t server_num;
 };

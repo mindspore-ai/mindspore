@@ -26,7 +26,7 @@ HttpRequestHandler::~HttpRequestHandler() {
   }
 }
 
-bool HttpRequestHandler::Initialize(int fd, const mindspore::HashMap<std::string, OnRequestReceive *> &handlers) {
+bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers) {
   evbase_ = event_base_new();
   MS_EXCEPTION_IF_NULL(evbase_);
   struct evhttp *http = evhttp_new(evbase_);
@@ -115,8 +115,7 @@ bufferevent *HttpRequestHandler::BuffereventCallback(event_base *base, void *arg
   SSL_CTX *ctx = reinterpret_cast<SSL_CTX *>(arg);
   SSL *ssl = SSL_new(ctx);
   MS_EXCEPTION_IF_NULL(ssl);
-  bufferevent *bev =
-    bufferevent_openssl_socket_new(base, -1, ssl, BUFFEREVENT_SSL_ACCEPTING, static_cast<int>(BEV_OPT_CLOSE_ON_FREE));
+  bufferevent *bev = bufferevent_openssl_socket_new(base, -1, ssl, BUFFEREVENT_SSL_ACCEPTING, BEV_OPT_CLOSE_ON_FREE);
   MS_EXCEPTION_IF_NULL(bev);
   return bev;
 }

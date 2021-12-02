@@ -94,7 +94,6 @@ void TcpClient::Init() {
   if (event_base_ == nullptr) {
     event_base_ = event_base_new();
     MS_EXCEPTION_IF_NULL(event_base_);
-    is_stop_ = false;
   }
 
   sockaddr_in sin{};
@@ -160,7 +159,7 @@ void TcpClient::Stop() {
 
 void TcpClient::SetTcpNoDelay(const evutil_socket_t &fd) {
   const int one = 1;
-  int ret = setsockopt(fd, static_cast<int>(IPPROTO_TCP), static_cast<int>(TCP_NODELAY), &one, sizeof(int));
+  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
   if (ret < 0) {
     MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }
@@ -178,10 +177,10 @@ void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
   auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
 
   char read_buffer[kMessageChunkLength];
-  size_t read = 0;
+  int read = 0;
 
-  while ((read = bufferevent_read(bev, &read_buffer, sizeof(read_buffer))) > 0) {
-    tcp_client->OnReadHandler(read_buffer, read);
+  while ((read = bufferevent_read(bev, &read_buffer, SizeToInt(sizeof(read_buffer)))) > 0) {
+    tcp_client->OnReadHandler(read_buffer, IntToSize(read));
   }
 }
 
@@ -252,6 +251,8 @@ void TcpClient::Start() {
   event_base_mutex_.unlock();
   MS_EXCEPTION_IF_NULL(event_base_);
   int ret = event_base_dispatch(event_base_);
+  // is_started_ should be false when finish dispatch
+  is_started_ = false;
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
     << "Event base dispatch failed with no events pending or active!";

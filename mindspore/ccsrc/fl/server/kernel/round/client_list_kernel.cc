@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "schema/cipher_generated.h"
 
 namespace mindspore {
@@ -29,14 +30,48 @@ void ClientListKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-
-  executor_ = &Executor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor_);
-  if (!executor_->initialized()) {
-    MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
-  }
   cipher_init_ = &armour::CipherInit::GetInstance();
+}
+
+sigVerifyResult ClientListKernel::VerifySignature(const schema::GetClientList *get_clients_req) {
+  std::string fl_id = get_clients_req->fl_id()->str();
+  std::string timestamp = get_clients_req->timestamp()->str();
+  int iteration = get_clients_req->iteration();
+  std::string iter_str = std::to_string(iteration);
+  auto fbs_signature = get_clients_req->signature();
+  std::vector<unsigned char> signature;
+  if (fbs_signature == nullptr) {
+    MS_LOG(ERROR) << "signature in get_clients_req is nullptr";
+    return sigVerifyResult::FAILED;
+  }
+  signature.assign(fbs_signature->begin(), fbs_signature->end());
+  std::map<std::string, std::string> key_attestations;
+  const fl::PBMetadata &key_attestations_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(kCtxClientKeyAttestation);
+  const fl::KeyAttestation &key_attestation_pb = key_attestations_pb_out.key_attestation();
+  auto iter = key_attestation_pb.key_attestations().begin();
+  for (; iter != key_attestation_pb.key_attestations().end(); ++iter) {
+    (void)key_attestations.emplace(std::pair<std::string, std::string>(iter->first, iter->second));
+  }
+  if (key_attestations.find(fl_id) == key_attestations.end()) {
+    MS_LOG(ERROR) << "can not find key attestation for fl_id: " << fl_id;
+    return sigVerifyResult::FAILED;
+  }
+
+  std::vector<unsigned char> src_data;
+  (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
+  (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
+  mindspore::ps::server::CertVerify certVerify;
+  unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
+  certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
+  if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {
+    return sigVerifyResult::FAILED;
+  }
+  if (!certVerify.verifyTimeStamp(fl_id, timestamp)) {
+    return sigVerifyResult::TIMEOUT;
+  }
+  MS_LOG(INFO) << "verify signature for fl_id: " << fl_id << " success.";
+  return sigVerifyResult::PASSED;
 }
 
 bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClientList *get_clients_req,
@@ -48,7 +83,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   if (!LocalMetaStore::GetInstance().has_value(kCtxUpdateModelThld)) {
     MS_LOG(ERROR) << "update_model_client_threshold is not set.";
     BuildClientListRsp(fbb, schema::ResponseCode_SystemError, "update_model_client_threshold is not set.",
-                       empty_client_list, std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       empty_client_list, std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     return false;
   }
   uint64_t update_model_client_needed = LocalMetaStore::GetInstance().value<uint64_t>(kCtxUpdateModelThld);
@@ -57,11 +92,11 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   for (size_t i = 0; i < IntToSize(client_list_pb.fl_id_size()); ++i) {
     client_list.push_back(client_list_pb.fl_id(SizeToInt(i)));
   }
-  if (static_cast<uint64_t>(client_list.size()) < update_model_client_needed) {
+  if (client_list.size() < update_model_client_needed) {
     MS_LOG(INFO) << "The server is not ready. update_model_client_needed: " << update_model_client_needed;
     MS_LOG(INFO) << "now update_model_client_num: " << client_list_pb.fl_id_size();
     BuildClientListRsp(fbb, schema::ResponseCode_SucNotReady, "The server is not ready.", empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     return false;
   }
 
@@ -69,7 +104,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     std::string reason = "fl_id: " + fl_id + " is not in the update_model_clients";
     MS_LOG(INFO) << reason;
     BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     return false;
   }
 
@@ -79,34 +114,27 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     std::string reason = "update get update model clients failed";
     MS_LOG(ERROR) << reason;
     BuildClientListRsp(fbb, schema::ResponseCode_SucNotReady, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     return false;
   }
+
   if (!DistributedCountService::GetInstance().Count(name_, get_clients_req->fl_id()->str())) {
     std::string reason = "Counting for get user list request failed. Please retry later.";
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
     return false;
   }
-  MS_LOG(INFO) << "send clients_list succeed!";
-  MS_LOG(INFO) << "UpdateModel client list: ";
-  for (size_t i = 0; i < client_list.size(); ++i) {
-    MS_LOG(INFO) << " fl_id : " << client_list[i];
-  }
   MS_LOG(INFO) << "update_model_client_needed: " << update_model_client_needed;
   BuildClientListRsp(fbb, schema::ResponseCode_SUCCEED, "send clients_list succeed!", client_list,
-                     std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                     std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
   return true;
 }
 
 bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
-  MS_LOG(INFO) << "Iteration number is " << iter_num << ", ClientListKernel total duration is " << total_duration;
-  clock_t start_time = clock();
-
+  MS_LOG(INFO) << "Launching ClientListKernel, Iteration number is " << iter_num;
   if (inputs.size() != 1 || outputs.size() != 1) {
     std::string reason = "inputs or outputs size is invalid.";
     MS_LOG(ERROR) << reason;
@@ -121,26 +149,66 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
   std::vector<string> client_list;
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::GetClientList>()) {
+    std::string reason = "The schema of GetClientList is invalid.";
+    BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
   const schema::GetClientList *get_clients_req = flatbuffers::GetRoot<schema::GetClientList>(req_data);
+  if (get_clients_req == nullptr) {
+    std::string reason = "Building flatbuffers schema failed for GetClientList.";
+    BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+  // verify signature
+  if (ps::PSContext::instance()->pki_verify()) {
+    sigVerifyResult verify_result = VerifySignature(get_clients_req);
+    if (verify_result == sigVerifyResult::FAILED) {
+      std::string reason = "verify signature failed.";
+      BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
+                         std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+    if (verify_result == sigVerifyResult::TIMEOUT) {
+      std::string reason = "verify signature timestamp failed.";
+      BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, reason, client_list,
+                         std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+      MS_LOG(ERROR) << reason;
+      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+    if (verify_result == sigVerifyResult::PASSED) {
+      MS_LOG(INFO) << "verify signature passed!";
+    }
+  }
+
   size_t iter_client = IntToSize(get_clients_req->iteration());
   if (iter_num != iter_client) {
     MS_LOG(ERROR) << "client list iteration number is invalid: server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.", client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
+                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
-    MS_LOG(ERROR) << "Current amount for GetClientList is enough.";
+    MS_LOG(WARNING) << "Current amount for GetClientList is enough.";
   }
 
-  (void)DealClient(iter_num, get_clients_req, fbb);
+  if (!DealClient(iter_num, get_clients_req, fbb)) {
+    MS_LOG(WARNING) << "Get Client List not ready.";
+  }
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-  clock_t end_time = clock();
-  double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
-  MS_LOG(INFO) << "client_list_kernel success time is : " << duration;
   return true;
 }  // namespace fl
 
@@ -153,28 +221,28 @@ bool ClientListKernel::Reset() {
   return true;
 }
 
-void ClientListKernel::BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &client_list_resp_builder,
+void ClientListKernel::BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &fbb,
                                           const schema::ResponseCode retcode, const string &reason,
                                           std::vector<std::string> clients, const string &next_req_time,
-                                          const int iteration) {
-  auto rsp_reason = client_list_resp_builder->CreateString(reason);
-  auto rsp_next_req_time = client_list_resp_builder->CreateString(next_req_time);
+                                          const size_t iteration) {
+  auto rsp_reason = fbb->CreateString(reason);
+  auto rsp_next_req_time = fbb->CreateString(next_req_time);
   std::vector<flatbuffers::Offset<flatbuffers::String>> clients_vector;
   for (auto client : clients) {
-    auto client_fb = client_list_resp_builder->CreateString(client);
+    auto client_fb = fbb->CreateString(client);
     clients_vector.push_back(client_fb);
     MS_LOG(WARNING) << "update client list: ";
     MS_LOG(WARNING) << client;
   }
-  auto clients_fb = client_list_resp_builder->CreateVector(clients_vector);
-  schema::ReturnClientListBuilder rsp_builder(*(client_list_resp_builder.get()));
-  rsp_builder.add_retcode(retcode);
+  auto clients_fb = fbb->CreateVector(clients_vector);
+  schema::ReturnClientListBuilder rsp_builder(*(fbb.get()));
+  rsp_builder.add_retcode(SizeToInt(retcode));
   rsp_builder.add_reason(rsp_reason);
   rsp_builder.add_clients(clients_fb);
-  rsp_builder.add_iteration(iteration);
+  rsp_builder.add_iteration(SizeToInt(iteration));
   rsp_builder.add_next_req_time(rsp_next_req_time);
   auto rsp_exchange_keys = rsp_builder.Finish();
-  client_list_resp_builder->Finish(rsp_exchange_keys);
+  fbb->Finish(rsp_exchange_keys);
   return;
 }
 

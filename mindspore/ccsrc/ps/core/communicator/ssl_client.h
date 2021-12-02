@@ -37,6 +37,7 @@
 #include "ps/core/comm_util.h"
 #include "ps/constants.h"
 #include "ps/core/file_configuration.h"
+#include "ps/ps_context.h"
 
 namespace mindspore {
 namespace ps {
@@ -60,6 +61,7 @@ class SSLClient {
 
   void StartCheckCertTime(const Configuration &config, const X509 *cert);
   void StopCheckCertTime();
+  void InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey);
 
   SSL_CTX *ssl_ctx_;
   std::unique_ptr<std::thread> check_time_thread_;

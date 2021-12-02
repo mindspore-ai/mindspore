@@ -39,19 +39,10 @@ constexpr auto kRejectedClientNum = "rejectedClientNum";
 constexpr auto kMetricsAuc = "metricsAuc";
 constexpr auto kMetricsLoss = "metricsLoss";
 constexpr auto kIterExecutionTime = "iterationExecutionTime";
+constexpr auto kMetrics = "metrics";
 
 const std::map<InstanceState, std::string> kInstanceStateName = {
   {InstanceState::kRunning, "running"}, {InstanceState::kDisable, "disable"}, {InstanceState::kFinish, "finish"}};
-
-template <typename T>
-inline T JsonGetKeyWithException(const nlohmann::json &json, const std::string &key) {
-  if (!json.contains(key)) {
-    MS_LOG(EXCEPTION) << "The key " << key << "does not exist in json " << json.dump();
-  }
-  return json[key].get<T>();
-}
-
-constexpr auto kMetrics = "metrics";
 
 class IterationMetrics {
  public:

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_EXCHANGE_KEYS_KERNEL_H
-#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_EXCHANGE_KEYS_KERNEL_H
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_LIST_SIGN_KERNEL_H
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_LIST_SIGN_KERNEL_H
 
 #include <vector>
 #include <string>
@@ -23,9 +23,8 @@
 #include "fl/server/common.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
+#include "fl/armour/cipher/cipher_init.h"
 #include "fl/server/executor.h"
-#include "fl/armour/cipher/cipher_keys.h"
-#include "fl/armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {
 namespace fl {
@@ -34,27 +33,31 @@ namespace kernel {
 // results of signature verification
 enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
-class ExchangeKeysKernel : public RoundKernel {
+class PushListSignKernel : public RoundKernel {
  public:
-  ExchangeKeysKernel() = default;
-  ~ExchangeKeysKernel() override = default;
+  PushListSignKernel() = default;
+  ~PushListSignKernel() override = default;
   void InitKernel(size_t required_cnt) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
+  bool LaunchForPushListSign(const schema::SendClientListSign *client_list_sign_req, const size_t &iter_num,
+                             const std::shared_ptr<server::FBBuilder> &fbb, const std::vector<AddressPtr> &outputs);
   bool Reset() override;
+  void BuildPushListSignKernelRsp(const std::shared_ptr<server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                                  const string &reason, const string &next_req_time, const size_t iteration);
 
  private:
+  armour::CipherInit *cipher_init_;
   Executor *executor_;
   size_t iteration_time_window_;
-  armour::CipherKeys *cipher_key_;
-  sigVerifyResult VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req);
-  bool ReachThresholdForExchangeKeys(const std::shared_ptr<FBBuilder> &fbb, const size_t iter_num);
-  bool CountForExchangeKeys(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestExchangeKeys *exchange_keys_req,
-                            const size_t iter_num);
+  sigVerifyResult VerifySignature(const schema::SendClientListSign *client_list_sign_req);
+  bool PushListSign(const size_t cur_iterator, const std::string &next_req_time,
+                    const schema::SendClientListSign *client_list_sign_req,
+                    const std::shared_ptr<fl::server::FBBuilder> &fbb,
+                    const std::vector<std::string> &update_model_clients);
 };
 }  // namespace kernel
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_EXCHANGE_KEYS_KERNEL_H
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_LIST_SIGN_KERNEL_H

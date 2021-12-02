@@ -22,11 +22,11 @@ namespace mindspore {
 namespace ps {
 namespace core {
 bool HttpCommunicator::Start() {
+  MS_EXCEPTION_IF_NULL(http_server_);
   MS_LOG(INFO) << "Initialize http server IP:" << ip_ << ", PORT:" << port_;
   if (!http_server_->InitServer()) {
     MS_LOG(EXCEPTION) << "The communicator init http server failed.";
   }
-  MS_EXCEPTION_IF_NULL(http_server_);
   if (!http_server_->Start()) {
     MS_LOG(EXCEPTION) << "Http server starting failed.";
   }
@@ -51,9 +51,11 @@ bool HttpCommunicator::Stop() {
 }
 
 void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {
+  MS_LOG(INFO) << "msg_type is: " << msg_type;
   msg_callbacks_[msg_type] = cb;
   http_msg_callbacks_[msg_type] = std::bind(
     [&](std::shared_ptr<HttpMessageHandler> http_msg) -> void {
+      MS_EXCEPTION_IF_NULL(http_msg);
       std::shared_ptr<MessageHandler> http_msg_handler = std::make_shared<HttpMsgHandler>(http_msg);
       MS_EXCEPTION_IF_NULL(http_msg_handler);
       msg_callbacks_[msg_type](http_msg_handler);
@@ -61,7 +63,8 @@ void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Me
     },
     std::placeholders::_1);
 
-  std::string url = "/";
+  std::string url = ps::PSContext::instance()->http_url_prefix();
+  url += "/";
   url += msg_type;
   MS_EXCEPTION_IF_NULL(http_server_);
   bool is_succeed = http_server_->RegisterRoute(url, &http_msg_callbacks_[msg_type]);
