@@ -27,8 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-class Vectors;
-class Vocab;
 class SentencePieceVocab;
 class Vectors;
 class Vocab;
