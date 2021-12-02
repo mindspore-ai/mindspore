@@ -160,8 +160,7 @@ set_context(**kwargs)
 
             - dump_as_text：将详细信息转储为文本文件。默认值：False。
 
-            有关更多选项，可以参考实现代码。这些选项也可以通过环境变量MS_GRAPH_KERNEL_FLAGS设置，而无需修改网络源代码。
-            例如，导出MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text"。
+            有关更多选项，可以参考实现代码。
         enable_reduce_precision (bool)：表示是否开启降低精度计算。默认值：True。
             设置为True时，不支持用户指定的精度，且精度将自动更改。
             设置为False时，如果未指定用例的精度，则会报错并退出。

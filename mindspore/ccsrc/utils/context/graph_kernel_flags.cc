@@ -150,11 +150,19 @@ class FlagRegister {
 }  // namespace
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
-  // Use the environment variable in priority and not in lite
+  // This environment variable is deprecated.
   auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
-  std::string flags = env_flags ? std::string(env_flags) : "";
+  bool use_env = (env_flags != nullptr);
+  std::string flags = use_env ? std::string(env_flags) : "";
   bool enable_context{false};
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
+  static bool print_warning = true;
+  if (use_env && print_warning) {
+    print_warning = false;
+    MS_LOG(WARNING) << "The environment variable \"MS_GRAPH_KERNEL_FLAGS\" is deprecated from version 1.6 "
+                    << "and will be removed in a future version, "
+                    << "use context \"graph_kernel_flags\" instead.";
+  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (flags.empty()) {
