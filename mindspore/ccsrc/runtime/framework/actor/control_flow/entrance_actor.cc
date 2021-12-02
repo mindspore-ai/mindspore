@@ -78,7 +78,15 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
   // There are two kinds of run conditions for entrance actor:
   // 1.Data comes from the data source actor, it is in the form of data arrow.
   const auto &data_iter = input_op_datas_.find(sequential_num);
-  if (data_iter != input_op_datas_.end()) {
+  const auto &control_iter = input_op_controls_.find(sequential_num);
+  if (data_iter != input_op_datas_.end() || control_iter != input_op_controls_.end()) {
+    // If the data comes from the data source actor, use the default branch id.
+    output_branch_id_ = 0;
+
+    if (data_iter == input_op_datas_.end()) {
+      return;
+    }
+
     for (auto &input_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(input_data);
       if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
@@ -90,8 +98,6 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
       MS_EXCEPTION_IF_NULL(input_data->data_);
       input_device_tensors_[input_data->index_] = input_data->data_;
     }
-    // If the data comes from the data source actor, use the default branch id.
-    output_branch_id_ = 0;
   } else {
     // 2.Data comes from the gather actor, it is in the form of data with branch id.
     output_branch_id_ = real_parameters_with_branch_id_[sequential_num].front().branch_id_;
