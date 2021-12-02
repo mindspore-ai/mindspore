@@ -201,7 +201,7 @@ void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
   if (CheckDebuggerDumpEnabled() && sink_mode) {
     MS_EXCEPTION(NotSupportError)
-      << "e2e_dump not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+      << "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }
 
   if (CheckDebuggerEnabled() && sink_mode) {
@@ -331,7 +331,10 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  CheckDatasetSinkMode(graph_ptr);
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    // Checking dataset_sink_mode for mindRT is done in debug_actor
+    CheckDatasetSinkMode(graph_ptr);
+  }
   auto graph_id = graph_ptr->graph_id();
   MS_LOG(DEBUG) << "PreExecute for graph: " << graph_id << " in step: " << num_step_ << ".";
   StoreRunGraphIdList(graph_id);

@@ -80,6 +80,12 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
 #ifdef ENABLE_DEBUGGER
+  // First graph is the dataset graph when dataset_sink_mode = True
+  auto graph = graphs[0];
+  std::string error_info = CheckDatasetSinkMode(graph);
+  if (!error_info.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+  }
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr && debugger->DebuggerBackendEnabled()) {
     debugger->PreExecuteGraphDebugger(graphs);
