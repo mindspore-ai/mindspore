@@ -509,14 +509,46 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
   false_block->Mature();
 }
 
+AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
+                                        const py::object &value_object) {
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  if (!use_fallback) {
+    return return_expr_node;
+  }
+
+  // Handle the case of returning tuple.
+  py::object obj = python_adapter::GetPyObjAttr(value_object, "elts");
+  if (!py::isinstance<py::none>(obj)) {
+    auto elts = py::cast<py::tuple>(obj);
+    if (!elts.empty()) {
+      auto cnode = return_expr_node->cast<CNodePtr>();
+      // The first input of cnode is MakeTuple.
+      if (cnode->size() != elts.size() + 1) {
+        MS_LOG(EXCEPTION) << "The size of make_tuple's inputs must be equal to " << (elts.size() + 1) << ".";
+      }
+      for (size_t i = 0; i < elts.size(); i++) {
+        auto input = cnode->input(i + 1);
+        if (input->interpret()) {
+          auto interpreted_node = HandleInterpret(block, input, elts[i]);
+          cnode->set_input(i + 1, interpreted_node);
+        }
+      }
+      return cnode;
+    }
+  }
+
+  // Handle the case of a single return value.
+  return HandleInterpret(block, return_expr_node, value_object);
+}
+
 FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast return";
   MS_EXCEPTION_IF_NULL(block);
   // Parse the return Statements value.
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   AnfNodePtr return_expr_node = ParseExprNode(block, value_object);
-  // Check if need interpreting.
-  return_expr_node = HandleInterpret(block, return_expr_node, value_object);
+  return_expr_node = HandelReturnExprNode(block, return_expr_node, value_object);
   // Create the `return` CNode.
   auto func_graph = block->func_graph();
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
