@@ -9,7 +9,7 @@
 
       **参数：**
 
-      **predict_data** (`Tensor`) – 单个或多个张量的预测数据。
+      **predict_data** (Tensor) – 单个或多个张量的预测数据。
 
       **返回：** 
 
@@ -45,9 +45,9 @@
 
       **参数：**
 
-      - **train_dataset** (`Dataset`) – 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
-      - **dataset_sink_mode** (`bool`) – 决定是否以数据集下沉模式进行训练。默认值：True。配置项是PyNative模式或CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
-      - **sink_size** (`int`) – 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值：-1。
+      - **train_dataset** (Dataset) – 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
+      - **dataset_sink_mode** (bool) – 决定是否以数据集下沉模式进行训练。默认值：True。配置项是PyNative模式或CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
+      - **sink_size** (int) – 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值：-1。
 
       **返回：** 
 

@@ -9,7 +9,7 @@ mindspore.common.initializer
    
     **参数：**
 
-    **kwargs** (`dict`) – **Initializer** 的关键字参数。
+    **kwargs** (dict) – **Initializer** 的关键字参数。
 
     .. py:method:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
    
@@ -17,14 +17,14 @@ mindspore.common.initializer
    
         **参数：**
 
-        - **init** (`Union[Tensor, str, Initializer, numbers.Number]`) – 初始化方式。
+        - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
 
           - **str** - `init` 是继承自 Initializer 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
           - **Initializer** - `init` 是继承自Initializer，用于初始化Tensor的类。
           - **numbers.Number** - 调用常量来初始化张量。
 
-        - **shape** (`Union[[tuple, list, int]`) - 被初始化的Tensor的shape，默认值为None。   
-        - **dtype** (`mindspore.dtype`) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。 
+        - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。   
+        - **dtype** (mindspore.dtype) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。 
 
         **返回：**
 
@@ -49,7 +49,7 @@ mindspore.common.initializer
     
     **参数：**
 
-    **sigma** (`float`) - 截断正态分布的标准差，默认值为0.01。
+    **sigma** (float) - 截断正态分布的标准差，默认值为0.01。
    
 .. py:class:: mindspore.common.initializer.Normal(sigma=0.01, mean=0.0)
 
@@ -60,8 +60,8 @@ mindspore.common.initializer
      
     **参数：**
 
-    - **sigma** (`float`) - 正态分布的标准差，默认值为0.01。
-    - **mean** (`float`) - 正态分布的均值，默认值为0.0。
+    - **sigma** (float) - 正态分布的标准差，默认值为0.01。
+    - **mean** (float) - 正态分布的均值，默认值为0.0。
           
 .. py:class:: mindspore.common.initializer.Uniform(scale=0.07)
 
@@ -69,7 +69,7 @@ mindspore.common.initializer
     
     **参数：**
 
-    **scale** (`float`) - 均匀分布的边界，默认值为0.07。
+    **scale** (float) - 均匀分布的边界，默认值为0.07。
     
 .. py:class:: mindspore.common.initializer.HeUniform(negative_slope=0, mode="fan_in", nonlinearity="leaky_relu")
 
@@ -82,9 +82,9 @@ mindspore.common.initializer
     
     **参数：**
 
-    - **negative_slope** (`int, float, bool`) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数"leaky_relu"），默认值为0。
-    - **mode** (`str`) - 可选"fan_in"或"fan_out"，"fan_in"会保留前向传递中权重方差的量级，"fan_out"会保留反向传递的量级，默认为"fan_in"。
-    - **nonlinearity** (`str`) - 非线性激活函数，推荐使用"relu"或"leaky_relu"，默认为"leaky_relu"。
+    - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数"leaky_relu"），默认值为0。
+    - **mode** (str) - 可选"fan_in"或"fan_out"，"fan_in"会保留前向传递中权重方差的量级，"fan_out"会保留反向传递的量级，默认为"fan_in"。
+    - **nonlinearity** (str) - 非线性激活函数，推荐使用"relu"或"leaky_relu"，默认为"leaky_relu"。
              
 .. py:class:: mindspore.common.initializer.HeNormal(negative_slope=0, mode="fan_in", nonlinearity="leaky_relu")
 
@@ -99,9 +99,9 @@ mindspore.common.initializer
     
     **参数：**
 
-    - **negative_slope** (`int, float, bool`) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数"leaky_relu"），默认值为0。
-    - **mode** (`str`) - 可选"fan_in"或"fan_out"，"fan_in"会保留前向传递中权重方差的量级，"fan_out"会保留反向传递的量级，默认为"fan_in"。
-    - **nonlinearity** (`str`) - 非线性激活函数，推荐使用"relu"或"leaky_relu"，默认为"leaky_relu"。
+    - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数"leaky_relu"），默认值为0。
+    - **mode** (str) - 可选"fan_in"或"fan_out"，"fan_in"会保留前向传递中权重方差的量级，"fan_out"会保留反向传递的量级，默认为"fan_in"。
+    - **nonlinearity** (str) - 非线性激活函数，推荐使用"relu"或"leaky_relu"，默认为"leaky_relu"。
         
 .. py:class:: mindspore.common.initializer.XavierUniform(gain=1)
 
@@ -118,7 +118,7 @@ mindspore.common.initializer
     
     **参数：** 
 
-    **gain** (`float`) - 可选的缩放因子，默认值为1。
+    **gain** (float) - 可选的缩放因子，默认值为1。
 
 .. py:class:: mindspore.common.initializer.One(**kwargs)
 
@@ -134,5 +134,5 @@ mindspore.common.initializer
     
     **参数：**
 
-    **value** (`Union[int, numpy.ndarray]`) - 用于初始化的常数值或者数组。
+    **value** (Union[int, numpy.ndarray]) - 用于初始化的常数值或者数组。
     
