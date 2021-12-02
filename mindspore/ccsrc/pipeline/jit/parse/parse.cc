@@ -1868,7 +1868,20 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   auto global_dict_node = NewValueNode(globals_converted_value);
   // Prepare local parameters.
   auto [keys, values] = block->local_py_params();
-  auto local_dict_node = ParseDictByKeysAndValues(block, keys, values);
+  // Filter the func_graph node where the current node is located.
+  auto current_fg = value_node->func_graph();
+  std::vector<AnfNodePtr> filter_keys;
+  std::vector<AnfNodePtr> filter_values;
+  for (size_t index = 0; index < values.size(); ++index) {
+    auto value = values[index];
+    auto fg = GetValueNode<FuncGraphPtr>(value);
+    if (fg == current_fg) {
+      continue;
+    }
+    (void)filter_keys.emplace_back(keys[index]);
+    (void)filter_values.emplace_back(value);
+  }
+  auto local_dict_node = ParseDictByKeysAndValues(block, filter_keys, filter_values);
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
   MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
