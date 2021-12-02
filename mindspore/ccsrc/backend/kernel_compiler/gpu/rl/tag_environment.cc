@@ -22,6 +22,7 @@
 #include <map>
 #include <utility>
 #include "runtime/device/gpu/cuda_driver.h"
+#include "runtime/device/gpu/cuda_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -165,6 +166,13 @@ size_t TagEnvironment::DoneSizeInBytes() { return env_num_ * sizeof(bool); }
 void TagEnvironment::StepKernelProfiling(const int *action, float *state, float *reward, bool *done, float *team_reward,
                                          cudaStream_t stream) {
   if (!enable_profiling_) {
+    return;
+  }
+
+  size_t shared_mem_size = env_num_ * agent_num_ * sizeof(float) * 2;
+  if (shared_mem_size >= device::gpu::CudaCommon::GetInstance().share_memory_size()) {
+    optimal_kernel_ = kCrossBlock;
+    enable_profiling_ = false;
     return;
   }
 
