@@ -1,6 +1,24 @@
 mindspore.nn
 =============
 
+Cell
+----
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.Cell
+
+Dynamic Learning Rate
+---------------------
+
+.. cnmsplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.CosineDecayLR
+    mindspore.nn.ExponentialDecayLR
+    mindspore.nn.WarmUpLR
+
 Gradient
 ---------
 
