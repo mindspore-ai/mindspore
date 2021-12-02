@@ -175,18 +175,18 @@ Status NPUDelegate::Build(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<NPUOp *> npu_ops;
   int graph_index = 0;
-  for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
+  for (auto iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
     auto npu_op = GetOP(kernel, model->GetPrimitive(kernel));
     if (npu_op != nullptr) {
       // If npu_op does not equal nullptr, this kernel can be supported by delegate
-      if (npu_ops.size() == 0) {
+      if (npu_ops.empty()) {
         from = iter;
       }
       npu_ops.push_back(npu_op);
       end = iter;
     } else {
-      if (npu_ops.size() > 0) {
+      if (!npu_ops.empty()) {
         // It should be guaranteed that the npu graph output format is NHWC. Thus, if the last NPU op is a Nhwc2Nchw
         // transpose op, it will be removed and left to CPU.
         auto last_op = npu_ops.back();
@@ -197,7 +197,7 @@ Status NPUDelegate::Build(DelegateModel<schema::Primitive> *model) {
           end -= 1;
         }
       }
-      if (npu_ops.size() > 0) {
+      if (!npu_ops.empty()) {
         auto npu_graph_kernel = CreateNPUGraph(npu_ops, model, from, end);
         if (npu_graph_kernel == nullptr) {
           MS_LOG(ERROR) << "Create NPU Graph failed.";
@@ -209,7 +209,7 @@ Status NPUDelegate::Build(DelegateModel<schema::Primitive> *model) {
       }
     }
   }
-  if (npu_ops.size() > 0) {
+  if (!npu_ops.empty()) {
     auto npu_graph_kernel = CreateNPUGraph(npu_ops, model, from, end);
     if (npu_graph_kernel == nullptr) {
       MS_LOG(ERROR) << "Create NPU Graph failed.";
@@ -241,6 +241,8 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
   auto node_type = primitive->value_type();
   if (node_type == schema::PrimitiveType_Conv2DFusion) {
     npu_op = GetNPUConvOp(primitive, kernel->inputs(), kernel->outputs(), name);
+  } else if (node_type == schema::PrimitiveType_FullConnection) {
+    npu_op = GetNPUFCOp(primitive, kernel->inputs(), kernel->outputs(), name);
   } else {
     if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
       npu_op = op_func_lists_[node_type](primitive, kernel->inputs(), kernel->outputs(), name);
@@ -277,19 +279,19 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
   auto out_tensors = lite::GetGraphOutTensors(ops);
   std::vector<mindspore::MSTensor> all_out_tensors;
   for (auto op : ops) {
-    for (auto out_tensor : op->outputs()) {
+    for (const auto &out_tensor : op->outputs()) {
       if (find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
         all_out_tensors.push_back(out_tensor);
       }
     }
   }
 
-  for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
+  for (auto iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     if (iter >= from && iter <= end) {
       continue;
     }
     // The input of other kernels is the output of the current subgraph kernel.
-    for (auto in_tensor : (*iter)->inputs()) {
+    for (const auto &in_tensor : (*iter)->inputs()) {
       if (find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end() &&
           find(out_tensors.begin(), out_tensors.end(), in_tensor) == out_tensors.end()) {
         out_tensors.push_back(in_tensor);

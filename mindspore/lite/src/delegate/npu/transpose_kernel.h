@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_TRANSPOSE_KERNEL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_TRANSPOSE_KERNEL_H_
+#include <utility>
 #include <vector>
 #include <string>
 #include "include/graph/op/all_ops.h"
@@ -37,8 +38,8 @@ class TransposeNPUKernel : public kernel::Kernel {
                      const std::vector<mindspore::MSTensor> &out_tensors, std::vector<int> perm, std::string name)
       : kernel::Kernel(in_tensors, out_tensors, nullptr, nullptr) {
     type_ = schema::PrimitiveType_Transpose;
-    name_ = name;
-    perm_ = perm;
+    name_ = std::move(name);
+    perm_ = std::move(perm);
   }
 
   ~TransposeNPUKernel() override = default;

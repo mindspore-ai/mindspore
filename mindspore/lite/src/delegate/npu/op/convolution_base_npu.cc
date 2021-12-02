@@ -17,6 +17,7 @@
 #include "src/delegate/npu/op/convolution_base_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 #include "src/delegate/npu/transpose_kernel.h"
+#include "nnacl/int8/pack_int8.h"
 
 namespace mindspore {
 ConvolutionBaseNPUOp::~ConvolutionBaseNPUOp() {
@@ -55,12 +56,6 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   auto origin_weight = inputs[1].Data().get();
   MS_ASSERT(origin_weight);
 
-  nchw_weight_ = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
-  if (nchw_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
-
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
 #ifdef ENABLE_ARM64
     fp32_weight_ = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
@@ -79,7 +74,20 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
     return RET_ERROR;
 #endif
   } else if (inputs[1].DataType() == DataType::kNumberTypeFloat32) {
+    nchw_weight_ = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
+    if (nchw_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
     PackNHWCToNCHWFp32(origin_weight, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W],
+                       w_shape[NHWC_C]);
+  } else if (inputs[1].DataType() == DataType::kNumberTypeInt8) {
+    nchw_weight_ = malloc(inputs[1].ElementNum() * sizeof(int8_t));
+    if (nchw_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    PackNHWCToNCHWInt8(origin_weight, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W],
                        w_shape[NHWC_C]);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight tensor for npu convolution.";
@@ -96,7 +104,11 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[NHWC_N], w_shape[NHWC_C], w_shape[NHWC_H], w_shape[NHWC_W]}),
                              ge::FORMAT_NCHW, ConverterToNPUDataType(inputs[1].DataType()));
   weight_tensor->SetTensorDesc(tensor_desc);
-  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_weight_), inputs[1].ElementNum() * sizeof(float));
+  if (inputs[1].DataType() == DataType::kNumberTypeInt8) {
+    weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_weight_), inputs[1].ElementNum() * sizeof(int8_t));
+  } else {
+    weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_weight_), inputs[1].ElementNum() * sizeof(float));
+  }
 
   weight_->set_attr_value(weight_tensor);
   FreeTmpWeight();

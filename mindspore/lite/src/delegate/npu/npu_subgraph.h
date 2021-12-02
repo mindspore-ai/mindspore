@@ -59,7 +59,7 @@ class NPUSubGraph : public kernel::Kernel {
 
   int GetNPUOperators(const std::vector<NPUOp *> &ops);
 
-  bool IsSubGraphInputTensor(mindspore::MSTensor input);
+  bool IsSubGraphInputTensor(const mindspore::MSTensor &input);
 
   std::string GetOMModelName();
 

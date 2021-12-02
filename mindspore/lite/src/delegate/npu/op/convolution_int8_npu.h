@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_INT8_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_INT8_NPU_H_
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
 #include <vector>
 #include <string>
+#include <utility>
+#include <unordered_map>
 #include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/op/convolution_base_npu.h"
-
 namespace mindspore {
-class FullconnectionNPUOp : public ConvolutionBaseNPUOp {
+class ConvolutionInt8NPUOp : public ConvolutionBaseNPUOp {
  public:
-  FullconnectionNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                      const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+  ConvolutionInt8NPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, name) {}
 
-  ~FullconnectionNPUOp() override;
+  ~ConvolutionInt8NPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override {
-    return RET_OK;
-  }
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
   int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
            const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -42,17 +41,17 @@ class FullconnectionNPUOp : public ConvolutionBaseNPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
+                   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
+
   ge::Operator *GetNPUOp() override;
 
  private:
+  int SetConvParam(const schema::Conv2DFusion *conv_prim);
+
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
-  bool has_bias_ = false;
-  hiai::op::Reshape *reshape_ = nullptr;
-  hiai::op::MatMul *fc_ = nullptr;
-  hiai::op::BiasAdd *biasadd_ = nullptr;
-  hiai::op::Const *reshape_op_ = nullptr;
+  hiai::op::QuantizedConvolution *conv_ = nullptr;
 };
-NPUOp *GetNPUFCOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                  const std::vector<mindspore::MSTensor> &out_tensors, std::string name);
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_NPU_H_

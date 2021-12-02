@@ -54,11 +54,21 @@ void Float16ToFloat32(const float16_t *__restrict input, float *__restrict outpu
 }
 #endif
 
-ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape) {
+ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape, bool is_expand_4d) {
   vector<int64_t> shapes;
   shapes.reserve(src_shape.size());
   for (int i = 0; i < src_shape.size(); i++) {
     shapes.push_back(src_shape[i]);
+  }
+  if (is_expand_4d) {
+    if (shapes.size() == 1) {
+      return ge::Shape({1, shapes[0], 1, 1});
+    } else {
+      const int dimension4 = 4;
+      for (int i = src_shape.size(); i < dimension4; i++) {
+        shapes.push_back(1);
+      }
+    }
   }
   return ge::Shape({shapes});
 }
@@ -111,7 +121,7 @@ ge::DataType ConverterToNPUDataType(DataType type_id) {
   return data_type;
 }
 
-hiai::op::Data *ConverterToNPUData(mindspore::MSTensor src, const std::string &name) {
+hiai::op::Data *ConverterToNPUData(const mindspore::MSTensor &src, const std::string &name) {
   auto data = new (std::nothrow) hiai::op::Data(name);
   if (data == nullptr) {
     MS_LOG(ERROR) << "new data failed.";
@@ -122,13 +132,14 @@ hiai::op::Data *ConverterToNPUData(mindspore::MSTensor src, const std::string &n
   return data;
 }
 
-std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src) {
+std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src, bool is_expand_4d) {
   std::shared_ptr<ge::Tensor> ge_tensor = std::make_shared<ge::Tensor>();
   if (ge_tensor == nullptr) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return nullptr;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src.Shape()), ge::FORMAT_NCHW, ConverterToNPUDataType(src.DataType()));
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src.Shape(), is_expand_4d), ge::FORMAT_NCHW,
+                             ConverterToNPUDataType(src.DataType()));
 
   ge_tensor->SetTensorDesc(tensor_desc);
 
@@ -230,9 +241,5 @@ int ConverterToNPUActivationMode(schema::ActivationType type) {
     default:
       return ACTIVATION_INVALID;
   }
-}
-
-bool IsContainMSTensor(const std::vector<mindspore::MSTensor> &tensor_vec, const mindspore::MSTensor tensor) {
-  return find(tensor_vec.begin(), tensor_vec.end(), tensor) != tensor_vec.end();
 }
 }  // namespace mindspore
