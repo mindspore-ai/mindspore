@@ -348,7 +348,8 @@ json ToJsonImpl(const py::handle &obj) {
     }
     return out;
   }
-  MS_LOG(ERROR) << "Failed to convert Python object to json, object is: " << py::cast<std::string>(obj);
+  MS_LOG(ERROR) << "[Internal ERROR] Failed to convert Python object: " << py::cast<std::string>(obj)
+                << " to type json.";
   return json();
 }
 }  // namespace detail

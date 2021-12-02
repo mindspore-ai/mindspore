@@ -209,6 +209,10 @@ class API_PUBLIC ShardReader {
                             const std::vector<std::string> &columns,
                             std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr);
 
+  /// \brief convert json format to expected type
+  Status ConvertJsonValue(const std::vector<std::string> &label, const std::vector<std::string> &columns,
+                          const json &schema, json *value);
+
   /// \brief read all rows for specified columns
   Status ReadAllRowGroup(const std::vector<std::string> &columns, std::shared_ptr<ROW_GROUPS> *row_group_ptr);
 

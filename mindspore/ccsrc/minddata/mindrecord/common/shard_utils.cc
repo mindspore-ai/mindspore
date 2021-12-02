@@ -62,22 +62,24 @@ Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr
   char real_path[PATH_MAX] = {0};
   char buf[PATH_MAX] = {0};
   if (strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) != EOK) {
-    RETURN_STATUS_UNEXPECTED("Failed to call securec func [strncpy_s], path: " + path);
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to call securec func [strncpy_s], path: " + path);
   }
   char tmp[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, path: " + std::string(buf));
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
+                             std::string(buf));
   }
   if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check success.";
+    MS_LOG(DEBUG) << "Succeed to get realpath: " << common::SafeCStr(path) << ".";
   }
 #else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
-    RETURN_STATUS_UNEXPECTED(std::string("Invalid file, path: ") + buf);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
+                             std::string(buf));
   }
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Path: " << path << "check success.";
+    MS_LOG(DEBUG) << "Succeed to get realpath: " << common::SafeCStr(path) << ".";
   }
 #endif
   std::string s = real_path;
@@ -97,22 +99,24 @@ Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_pt
   char real_path[PATH_MAX] = {0};
   char buf[PATH_MAX] = {0};
   if (strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) != EOK) {
-    RETURN_STATUS_UNEXPECTED("Securec func [strncpy_s] failed, path: " + path);
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to call securec func [strncpy_s], path: " + path);
   }
   char tmp[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, path: " + std::string(buf));
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
+                             std::string(buf));
   }
   if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check success.";
+    MS_LOG(DEBUG) << "Succeed to get realpath: " << common::SafeCStr(path) << ".";
   }
 #else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
-    RETURN_STATUS_UNEXPECTED(std::string("Invalid file, path: ") + buf);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to get the realpath of mindrecord files. Please check file path: " +
+                             std::string(buf));
   }
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Path: " << path << "check success.";
+    MS_LOG(DEBUG) << "Succeed to get realpath: " << common::SafeCStr(path) << ".";
   }
 #endif
   std::string s = real_path;
@@ -173,7 +177,7 @@ Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, st
   uint64_t ll_count = 0;
   struct statfs disk_info;
   if (statfs(common::SafeCStr(str_dir), &disk_info) == -1) {
-    RETURN_STATUS_UNEXPECTED("Failed to get disk size.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get free disk size.");
   }
 
   switch (disk_type) {

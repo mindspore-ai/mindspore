@@ -67,20 +67,23 @@ std::vector<std::string> Schema::PopulateBlobFields(json schema) {
 
 bool Schema::ValidateNumberShape(const json &it_value) {
   if (it_value.find("shape") == it_value.end()) {
-    MS_LOG(ERROR) << "Invalid data, 'shape' object can not found in " << it_value.dump();
+    MS_LOG(ERROR) << "Invalid schema, 'shape' object can not found in " << it_value.dump()
+                  << ". Please check the input schema.";
     return false;
   }
 
   auto shape = it_value["shape"];
   if (!shape.is_array()) {
-    MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump() << "] is invalid.";
+    MS_LOG(ERROR) << "Invalid schema, the value of 'shape' should be list format but got: " << it_value["shape"]
+                  << ". Please check the input schema.";
     return false;
   }
 
   int num_negtive_one = 0;
   for (const auto &i : shape) {
     if (i == 0 || i < -1) {
-      MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump() << "]dimension is invalid.";
+      MS_LOG(ERROR) << "Invalid schema, the element of 'shape' value should be -1 or greater than 0 but got: " << i
+                    << ". Please check the input schema.";
       return false;
     }
     if (i == -1) {
@@ -89,8 +92,8 @@ bool Schema::ValidateNumberShape(const json &it_value) {
   }
 
   if (num_negtive_one > 1) {
-    MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump()
-                  << "] have more than 1 variable dimension(-1).";
+    MS_LOG(ERROR) << "Invalid schema, only 1 variable dimension(-1) allowed in 'shape' value but got: "
+                  << it_value["shape"] << ". Please check the input schema.";
     return false;
   }
 
@@ -98,27 +101,30 @@ bool Schema::ValidateNumberShape(const json &it_value) {
 }
 
 bool Schema::Validate(json schema) {
-  if (schema.size() == kInt0) {
-    MS_LOG(ERROR) << "Invalid data, schema is empty.";
+  if (schema.empty()) {
+    MS_LOG(ERROR) << "Invalid schema, schema is empty. Please check the input schema.";
     return false;
   }
 
   for (json::iterator it = schema.begin(); it != schema.end(); ++it) {
     // make sure schema key name must be composed of '0-9' or 'a-z' or 'A-Z' or '_'
     if (!ValidateFieldName(it.key())) {
-      MS_LOG(ERROR) << "Invalid data, field [" << it.key()
-                    << "] in schema is not composed of '0-9' or 'a-z' or 'A-Z' or '_'.";
+      MS_LOG(ERROR) << "Invalid schema, field name: " << it.key()
+                    << "is not composed of '0-9' or 'a-z' or 'A-Z' or '_'. Please rename the field name in schema.";
       return false;
     }
 
     json it_value = it.value();
     if (it_value.find("type") == it_value.end()) {
-      MS_LOG(ERROR) << "Invalid data, 'type' object can not found in field [" << it_value.dump() << "].";
+      MS_LOG(ERROR) << "Invalid schema, 'type' object can not found in field " << it_value.dump()
+                    << ". Please add the 'type' object for field in schema.";
       return false;
     }
 
     if (kFieldTypeSet.find(it_value["type"]) == kFieldTypeSet.end()) {
-      MS_LOG(ERROR) << "Invalid data, type [" << it_value["type"].dump() << "] is not supported.";
+      MS_LOG(ERROR) << "Invalid schema, the value of 'type': " << it_value["type"]
+                    << " is not supported.\nPlease modify the value of 'type' to 'int32', 'int64', 'float32', "
+                       "'float64', 'string', 'bytes' in schema.";
       return false;
     }
 
@@ -127,12 +133,15 @@ bool Schema::Validate(json schema) {
     }
 
     if (it_value["type"] == "bytes" || it_value["type"] == "string") {
-      MS_LOG(ERROR) << "Invalid data, field [" << it_value.dump() << "] is invalid.";
+      MS_LOG(ERROR)
+        << "Invalid schema, no other field can be added when the value of 'type' is 'string' or 'types' but got: "
+        << it_value.dump() << ". Please remove other fields in schema.";
       return false;
     }
 
     if (it_value.size() != kInt2) {
-      MS_LOG(ERROR) << "Invalid data, field [" << it_value.dump() << "] is invalid.";
+      MS_LOG(ERROR) << "Invalid schema, the fields should be 'type' or 'type' and 'shape' but got: " << it_value.dump()
+                    << ". Please check the schema.";
       return false;
     }
 

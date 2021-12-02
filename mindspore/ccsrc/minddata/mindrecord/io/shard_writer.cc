@@ -170,7 +170,7 @@ Status ShardWriter::InitLockFile() {
 Status ShardWriter::Open(const std::vector<std::string> &paths, bool append, bool overwrite) {
   shard_count_ = paths.size();
   CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ <= kMaxSchemaCount,
-                               "[Internal ERROR] 'schema_count_' must be less than or equal to " +
+                               "[Internal ERROR] 'schema_count_' should be less than or equal to " +
                                  std::to_string(kMaxSchemaCount) + ", but got: " + std::to_string(schema_count_));
 
   // Get full path from file name

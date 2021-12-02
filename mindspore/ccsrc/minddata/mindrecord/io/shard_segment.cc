@@ -60,7 +60,7 @@ Status ShardSegment::GetCategoryFields(std::shared_ptr<vector<std::string>> *fie
       sqlite3_free(errmsg);
       sqlite3_close(database_paths_[0]);
       database_paths_[0] = nullptr;
-      RETURN_STATUS_UNEXPECTED("Invalid data, field_names size must be greater than 1, but got " +
+      RETURN_STATUS_UNEXPECTED("Invalid data, field_names size must be greater than 1, but got: " +
                                std::to_string(field_names[idx].size()));
     }
     candidate_category_fields_.push_back(field_names[idx][1]);

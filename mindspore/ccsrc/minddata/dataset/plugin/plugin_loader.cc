@@ -53,11 +53,13 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
   }
   // Open the .so file
   void *handle = SharedLibUtil::Load(filename);
-  CHECK_FAIL_RETURN_UNEXPECTED(handle != nullptr, "fail to load:" + filename + ".\n" + SharedLibUtil::ErrMsg());
+  CHECK_FAIL_RETURN_UNEXPECTED(handle != nullptr,
+                               "[Internal ERROR] Fail to load:" + filename + ".\n" + SharedLibUtil::ErrMsg());
 
   // Load GetInstance function ptr from the so file, so needs to be compiled with -fPIC
   void *func_handle = SharedLibUtil::FindSym(handle, "GetInstance");
-  CHECK_FAIL_RETURN_UNEXPECTED(func_handle != nullptr, "fail to find GetInstance()\n" + SharedLibUtil::ErrMsg());
+  CHECK_FAIL_RETURN_UNEXPECTED(func_handle != nullptr,
+                               "[Internal ERROR] Fail to find GetInstance()\n" + SharedLibUtil::ErrMsg());
 
   // cast the returned function ptr of type void* to the type of GetInstance
   plugin::PluginManagerBase *(*get_instance)(plugin::MindDataManagerBase *) =
@@ -69,7 +71,7 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
 
   std::string v1 = (*singleton_plugin)->GetPluginVersion(), v2(plugin::kSharedIncludeVersion);
   if (v1 != v2) {
-    std::string err_msg = "[Plugin Version Error] expected:" + v2 + ", received:" + v1 + " please recompile.";
+    std::string err_msg = "[Internal ERROR] expected:" + v2 + ", received:" + v1 + " please recompile.";
     if (SharedLibUtil::Close(handle) != 0) err_msg += ("\ndlclose() error, err_msg:" + SharedLibUtil::ErrMsg() + ".");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -92,14 +94,15 @@ Status PluginLoader::UnloadPlugin(const std::string &filename) {
   RETURN_OK_IF_TRUE(itr == plugins_.end());  // return true if this plugin was never loaded or already removed
 
   void *func_handle = SharedLibUtil::FindSym(itr->second.second, "DestroyInstance");
-  CHECK_FAIL_RETURN_UNEXPECTED(func_handle != nullptr, "fail to find DestroyInstance()\n" + SharedLibUtil::ErrMsg());
+  CHECK_FAIL_RETURN_UNEXPECTED(func_handle != nullptr,
+                               "[Internal ERROR] Fail to find DestroyInstance()\n" + SharedLibUtil::ErrMsg());
 
   void (*destroy_instance)() = reinterpret_cast<void (*)()>(func_handle);
   RETURN_UNEXPECTED_IF_NULL(destroy_instance);
 
   destroy_instance();
   CHECK_FAIL_RETURN_UNEXPECTED(SharedLibUtil::Close(itr->second.second) == 0,
-                               "dlclose() error: " + SharedLibUtil::ErrMsg());
+                               "[Internal ERROR] dlclose() error: " + SharedLibUtil::ErrMsg());
 
   plugins_.erase(filename);
   return Status::OK();

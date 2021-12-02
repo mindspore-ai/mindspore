@@ -47,13 +47,13 @@ class __attribute__((visibility("default"))) ShardIndexGenerator {
   /// \param[in] input
   /// \param[in] value
   /// \return Status
-  Status GetValueByField(const string &field, json input, std::shared_ptr<std::string> *value);
+  Status GetValueByField(const string &field, const json &input, std::shared_ptr<std::string> *value);
 
   /// \brief fetch field type in schema n by field path
   /// \param[in] field_path
   /// \param[in] schema
   /// \return the type of field
-  static std::string TakeFieldType(const std::string &field_path, json schema);
+  static std::string TakeFieldType(const std::string &field_path, json &schema);
 
   /// \brief create databases for indexes
   Status WriteToDatabase();
