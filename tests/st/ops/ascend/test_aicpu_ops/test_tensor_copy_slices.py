@@ -120,14 +120,14 @@ def test_tensor_copy_slices_gpu_pynative():
     test_tensor_copy_slices()
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_cpu_graph():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_tensor_copy_slices()
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_cpu_pynative():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
