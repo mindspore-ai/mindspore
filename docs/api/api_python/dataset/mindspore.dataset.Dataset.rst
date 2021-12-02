@@ -1,3 +1,161 @@
+    ..py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+
+        基于数据集对象创建词汇表。
+
+        用于收集数据集中所有的唯一单词，并返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
+
+        **参数：**
+
+        **columns** (Union[str, list[str]]) ：指定从数据集对象中哪一列中获取单词。
+        **freq_range** (tuple[int])：由(min_frequency, max_frequency)组成的整数元组，在这个频率范围的词汇会被保存下来。
+        取值范围需满足：0 <= min_frequency <= max_frequency <= total_words，其中min_frequency、max_frequency的默认值分别设置为0、total_words。
+        **top_k** (int)：词汇表中包含的单词数，取`top_k`个最常见的单词。`top_k`优先级低于`freq_range`。如果`top_k`的值大于单词总数，则取所有单词。
+        **special_tokens** (list[str])：字符串列表，每个字符串都是一个特殊的标记。
+        **special_first** (bool)：是否将 `special_tokens` 添加到词汇表首尾。如果指定了 `special_tokens` 且
+        `special_first` 设置为默认值，则将`special_tokens`添加到词汇表最前面。
+
+        **返回：**
+            从数据集对象中构建出的词汇表对象。
+
+        **样例：**
+            >>> def gen_corpus():
+            ...     # 键：单词，值：出现次数，键的取值采用字母表示有利于排序和显示。
+            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
+            ...     for k, v in corpus.items():
+            ...         yield (np.array([k] * v, dtype='S'),)
+            >>> column_names = ["column1", "column2", "column3"]
+            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
+            >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
+            ...                               freq_range=(1, 10), top_k=5,
+            ...                               special_tokens=["<pad>", "<unk>"],
+            ...                               special_first=True,vocab='vocab')
+
+
+    ..py:method:: device_que(send_epoch_end=True, create_data_info_queue=False)
+
+        返回一个能将数据传输到设备上的数据集对象。
+
+        **参数：**
+
+         **send_epoch_end** (bool, optional)：数据发送完成后是否发送结束标识到设备上（默认值为True）。
+         **create_data_info_queue** (bool, optional)：是否创建一个队列，用于存储每条数据的type和shape（默认值为False）。
+
+
+        .. note::
+            如果设备类型为Ascend，数据的每一列将被依次单独传输，每次传输的数据大小限制为256M。
+
+
+        **返回：**
+            TransferDataset，用于帮助发送数据到设备上的数据集对象。
+
+
+    ..py:method:: dynamic_min_max_shapes()
+
+        获取数据集对象中单条数据的最小和最大shape，用于图编译过程。
+
+        **返回：**
+            列表，原始数据集对象中单条数据的最小和最大shape分别以list形式返回。
+
+        **样例：**
+            >>> import numpy as np
+            >>>
+            >>> def generator1():
+            >>>     for i in range(1, 100):
+            >>>         yield np.ones((16, i, 83)), np.array(i)
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
+            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
+            >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
+
+
+    ..py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
+
+        通过判断条件对数据集对象中的数据进行过滤。
+
+        .. note::
+             如果`input_columns`未指定或为空，则将使用所有列。
+
+        **参数：**
+
+        **predicate** (callable)：Python可调用对象，返回值为Bool类型。如果为False，则过滤掉该条数据。
+        **input_columns** (Union[str, list[str]], optional)：输入列名组成的列表，当取默认值None时，`predicate` 将应用于数据集中的所有列。
+        **num_parallel_workers** (int, optional)：用于并行处理数据集的线程数（默认为None，将使用配置文件中的值）。
+
+        **返回：**
+            FilterDataset，执行给定筛选过滤操作的数据集对象。
+
+        **样例：**
+            >>> # 生成一个list，其取值范围为（0，63）
+            >>> # 过滤掉数值大于或等于11的数据
+            >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
+
+
+    ..py:method:: flat_map(func)
+
+        对数据集对象中每一条数据执行给定的`func`操作，并将结果展平。
+
+        指定的`func`是一个函数，输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
+
+        **参数：**
+
+        **func** (function)：输入'ndarray'并返回一个'Dataset'对象的函数。
+
+        **返回：**
+            执行给定操作的数据集对象。
+
+        **样例：**
+            >>> # 以NumpySlicesDataset为例
+            >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
+            >>>
+            >>> def flat_map_func(array):
+            ...     # 使用数组创建NumpySlicesDataset
+            ...     dataset = ds.NumpySlicesDataset(array)
+            ...     # 将数据集对象中的数据重复两次
+            ...     dataset = dataset.repeat(2)
+            ...     return dataset
+            >>>
+            >>> dataset = dataset.flat_map(flat_map_func)
+            >>> # [[0, 1], [0, 1], [2, 3], [2, 3]]
+
+        **异常：**
+
+        **TypeError** - `func` 不是函数。
+        **TypeError** - `func` 的返回值不是数据集对象。
+
+    ..py:method:: get_batch_size()
+
+        获得批处理的大小，即一个批次中包含的数据条数。
+
+        **返回：**
+            int，一个批次中包含的数据条数。
+
+        **样例：**
+            >> # dataset是数据集类的实例化对象
+            >> batch_size = dataset.get_batch_size()
+
+    ..py:method:: get_class_indexing()
+
+        返回类别索引。
+
+        **返回：**
+            dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超级类别。
+
+        **样例：**
+            >> # dataset是数据集类的实例化对象
+            >> class_indexing = dataset.get_class_indexing()
+
+
+    ..py:method:: get_col_names()
+
+        返回数据集对象中包含的列名。
+
+        **返回：**
+            list，数据集中所有列名组成列表。
+
+        **样例：**
+            >> # dataset是数据集类的实例化对象
+            >> col_names = dataset.get_col_names()
+
     .. py:method:: get_dataset_size()
 
         返回一个epoch中的batch数。
@@ -53,7 +211,7 @@
         - **output_columns** (Union[str, list[str]], optional) - 最后一个operation输出的列名列表。如果 `input_columns` 长度不等于 `output_columns` 长度，则此参数必选。此列表的大小必须与最后一个operation的输出列数相匹配（默认为None，输出列将与输入列具有相同的名称，例如，替换一些列）。
         - **column_order** (list[str], optional) - 指定整个数据集中所需的所有列的列表。当 `input_columns` 长度不等于 `output_columns` 长度时，则此参数必选。注意：这里的列表不仅仅是参数 `input_columns` 和 `output_columns` 中指定的列。
         - **num_parallel_workers** (int, optional) - 用于并行处理数据集的线程数（默认为None，将使用配置文件中的值）。
-        - **python_multiprocessing** (bool, optional) - 将Python operations委托给多个工作进程进行并行处理。如果Python operations计算量很大，此选项可能会很有用（默认为False）。
+        - **python_multiprocessing** (bool, optional) - 将Python operations委托给多个工作进程进行并行处理。如果Python operations计算量很大，此选项可能会很有用（默认值为False）。
         - **cache** (DatasetCache, optional) - 使用Tensor缓存服务加快数据集处理速度（默认为None，即不使用缓存）。
         - **callbacks** (DSCallback, list[DSCallback], optional) - 要调用的Dataset回调函数列表（默认为None）。
 
@@ -510,10 +668,10 @@
         **参数：**
         
         - **send_epoch_end** (bool, optional) - 是否将end of sequence发送到设备（默认为True）。
-        - **create_data_info_queue** (bool, optional) - 是否创建存储数据类型和shape的队列（默认为False）。
+        - **create_data_info_queue** (bool, optional) - 是否创建存储数据类型和shape的队列（默认值为False）。
                 
         .. note::
-            如果设备为Ascend，则逐个传输数据。每次传输的数据大小限制为256M。
+            如果设备为Ascend，则逐个传输数据。每次传输的数据最大限制为256M。
             
         **返回：**
         
@@ -551,4 +709,3 @@
         
         >>> # 创建一个数据集，它将dataset和dataset_1进行合并
         >>> dataset = dataset.zip(dataset_1)
-        
