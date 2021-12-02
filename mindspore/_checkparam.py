@@ -165,7 +165,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     type_except = TypeError if type_mismatch else ValueError
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
-        raise type_except(f'{arg_name} {prim_name} should be {arg_type.__name__} and must {rel_str}, '
+        raise type_except(f'{arg_name}{prim_name} should be {arg_type.__name__} and must {rel_str}, '
                           f'but got `{arg_value}` with type `{type(arg_value).__name__}`.')
 
     return arg_value
