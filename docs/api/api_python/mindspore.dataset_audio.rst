@@ -22,4 +22,11 @@ mindspore.dataset.audio.transforms
     mindspore.dataset.audio.transforms.LowpassBiquad
     mindspore.dataset.audio.transforms.TimeMasking
     mindspore.dataset.audio.transforms.TimeStretch
+        
+mindspore.dataset.audio.utils
+-----------------------------
+
+.. cnmsautosummary::
+    :toctree: dataset_audio
+
     mindspore.dataset.audio.utils.ScaleType
