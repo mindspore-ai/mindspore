@@ -656,9 +656,8 @@ class _CellGraphExecutor:
             _, args_list = _generate_pip_args(obj, *args_full)
 
         enable_ge = context.get_context("enable_ge")
-        use_vm = self._use_vm_mode()
         self._graph_executor.set_weights_values(obj.parameters_dict())
-        result = self._graph_executor.compile(obj, args_list, phase, use_vm)
+        result = self._graph_executor.compile(obj, args_list, phase, self._use_vm_mode())
         obj.compile_cache.add(phase)
         if not result:
             raise RuntimeError("Executor compile failed.")
