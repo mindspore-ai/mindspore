@@ -1,6 +1,3 @@
-mindspore.train.callback.Callback
-==================================
-
 .. py:class:: mindspore.train.callback.Callback
 
     用于构建回调函数的基类。回调函数是一个上下文管理器，在运行模型时被调用。
