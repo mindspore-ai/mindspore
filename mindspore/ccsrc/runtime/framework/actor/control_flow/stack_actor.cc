@@ -82,7 +82,10 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
     // The outputs of call nodes are placed directly in the input data.
     input_op_datas_[context->sequential_num_].emplace_back(input_data);
   }
-  if (CheckRunningCondition(context)) {
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run;
+  if (is_run) {
     Run(context);
   }
 }
@@ -96,7 +99,11 @@ void StackActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext<D
   } else {
     input_op_partials_[context->sequential_num_].emplace_back(position, partial);
   }
-  if (CheckRunningCondition(context)) {
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op partial and check running condition:" << is_run;
+  if (is_run) {
     Run(context);
   }
 }

@@ -60,7 +60,11 @@ void ControlActor::RunOpPartial(OpPartialPtr partial, size_t position, OpContext
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_op_partials_[sequential_num].emplace_back(position, partial);
-  if (CheckRunningCondition(context)) {
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op partial and check running condition:" << is_run;
+  if (is_run) {
     Run(context);
   }
 }
@@ -70,7 +74,10 @@ void ControlActor::RunBranchID(int branch_id, OpContext<DeviceTensor> *const con
   auto &sequential_num = context->sequential_num_;
   input_branch_ids_[sequential_num].push(branch_id);
 
-  if (CheckRunningCondition(context)) {
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input branch id and check running condition:" << is_run;
+  if (is_run) {
     Run(context);
   }
 }

@@ -428,9 +428,10 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
     return;
   }
 
-  if ((actor_set->copy_actors_.size() > 0) || (actor_set->super_kernel_actors_.size() > 0) ||
-      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum) ||
-      (actor_set->loop_count_actor_->loop_count() > 1)) {
+  // The constraint condition of not supporting the single thread execution.
+  if ((actor_set->control_actors_ != nullptr) || (actor_set->copy_actors_.size() > 0) ||
+      (actor_set->super_kernel_actors_.size() > 0) || (actor_set->loop_count_actor_->loop_count() > 1) ||
+      (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
     return;
   }
 
