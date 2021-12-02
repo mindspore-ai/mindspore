@@ -177,12 +177,26 @@ class Primitive(Primitive_):
             for in_ele in in_strategy:
                 if not isinstance(in_ele, tuple):
                     raise TypeError(f'The element of strategy must be tuple type, but got:{type(in_ele)}')
+                for in_value in in_ele:
+                    if not isinstance(in_value, int):
+                        raise TypeError(f'The in_strategy: {in_strategy} of {self.name} is not valid,'
+                                        f' the value of strategy must be int type, but got:{type(in_value)}')
+
         if out_strategy is not None:
             if not isinstance(out_strategy, tuple):
                 raise TypeError(f'out strategy must be tuple type, but got:{type(out_strategy)}')
             for out_ele in out_strategy:
                 if not isinstance(out_ele, tuple):
                     raise TypeError(f'The element of strategy must be tuple type, but got:{type(out_ele)}')
+                for out_value in out_ele:
+                    if not isinstance(out_value, int):
+                        raise TypeError(f'The in_strategy: {out_strategy} of {self.name} is not valid,'
+                                        f' the value of strategy must be int type, but got:{type(out_value)}')
+
+        if in_strategy is None and out_strategy is not None:
+            raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
+                             f' but got none')
+
         if not _is_in_auto_parallel_mode():
             if in_strategy is not None:
                 logger.warning(f"The in_strategy: {in_strategy} of {self.name} is not valid in {mode}. "
@@ -190,6 +204,7 @@ class Primitive(Primitive_):
             if out_strategy is not None:
                 logger.warning(f"The out_strategy: {out_strategy} of {self.name} is not valid in {mode}. "
                                f"Please use semi auto or auto parallel mode.")
+
         self.add_prim_attr("in_strategy", in_strategy)
         self.add_prim_attr("out_strategy", out_strategy)
         return self

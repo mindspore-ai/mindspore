@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -357,3 +358,81 @@ def test_matmul_output_strategy_all_reduce_transpose_repeat_calc():
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_matmul_in_strategy_not_int():
+    """
+    Feature: the type of in_strategy's value is not int
+    Description:
+    Expectation: rasise TypeError
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = ((2.0, 2), (2, 2))
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+
+    with pytest.raises(TypeError):
+        GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+
+def test_matmul_out_strategy_not_int():
+    """
+    Feature: the type of out_strategy's value is not int
+    Description:
+    Expectation: rasise TypeError
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((2.0, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+
+    with pytest.raises(TypeError):
+        GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+
+def test_matmul_in_strategy_is_none_and_out_strategy_is_not_none():
+    """
+    Feature: the in_strategy is none and out_strategy is not none
+    Description:
+    Expectation: rasise ValueError
+    """
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul_in_strategy = None
+    matmul_out_strategy = ((2, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+
+    with pytest.raises(ValueError):
+        GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
