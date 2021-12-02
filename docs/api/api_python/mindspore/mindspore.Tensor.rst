@@ -50,7 +50,7 @@ mindspore.Tensor
 
         **返回：**
 
-        张量， 含有每个元素的绝对值。
+        张量，含有每个元素的绝对值。
 
         **支持平台：**
 
@@ -147,7 +147,6 @@ mindspore.Tensor
         **返回：**
 
         Tensor，与输入的张量具有相同的数据类型。
-
 
     .. py:method:: mean(axis=(), keep_dims=False)
 
