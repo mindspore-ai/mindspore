@@ -13,18 +13,17 @@
 # limitations under the License.
 # ============================================================================
 
-"""test get and init GraphCell parameters"""
+"""test init GraphCell parameters with illegal data"""
+
+import os
 
 import numpy as np
 import pytest
 
-from mindspore import nn
-from mindspore import context
 from mindspore import Tensor, Parameter
-from mindspore import export, load, save_checkpoint, load_checkpoint
-
-
-context.set_context(mode=context.GRAPH_MODE)
+from mindspore import context
+from mindspore import export, load
+from mindspore import nn
 
 
 class Net(nn.Cell):
@@ -50,44 +49,17 @@ input_a = Tensor(np_a)
 input_b = Tensor(np_b)
 
 
-def load_mindir_and_update_params():
-    net = Net()
-    mindir_name = "net_0.mindir"
-    export(net, input_a, input_b, file_name=mindir_name[:-7], file_format='MINDIR')
-
-    load_net = nn.GraphCell(graph=load(mindir_name))
-    ret = load_net(input_a, input_b)
-    assert np.array_equal(ret.asnumpy(), np_a * np_b * np_param)
-
-    ckpt_name = "net_0.ckpt"
-    save_checkpoint(load_net, ckpt_name)
-    params_init = load_checkpoint(ckpt_name)
-    load_net_with_new_params = nn.GraphCell(graph=load(mindir_name), params_init=params_init)
-    return load_net_with_new_params
+def remove_generated_file(file_name):
+    if os.path.isfile(file_name):
+        os.remove(file_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_get_and_init_graph_cell_parameters():
-    """
-    Description: load mind ir and update parameters.
-    Expectation: generate a graph with updated parameters.
-    """
-    load_net = load_mindir_and_update_params()
-    ret = load_net(input_a, input_b)
-
-    assert np.array_equal(ret.asnumpy(), np_a * np_b * (np_param + 1.0))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_init_graph_cell_parameters_with_wrong_type():
     """
     Description: load mind ir and update parameters with wrong type.
     Expectation: raise a ValueError indicating the params type error.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     mindir_name = "net_1.mindir"
     export(net, input_a, input_b, file_name=mindir_name[:-7], file_format='MINDIR')
@@ -99,16 +71,15 @@ def test_init_graph_cell_parameters_with_wrong_type():
         load_net(input_a, input_b)
 
     assert "The key of the 'params_init' must be str, and the value must be Tensor or Parameter" in str(err.value)
+    remove_generated_file(mindir_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_init_graph_cell_parameters_with_wrong_shape():
     """
     Description: load mind ir and update parameters with wrong tensor shape.
     Expectation: raise a ValueError indicating the tensor shape error.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     mindir_name = "net_2.mindir"
     export(net, input_a, input_b, file_name=mindir_name[:-7], file_format='MINDIR')
@@ -120,16 +91,15 @@ def test_init_graph_cell_parameters_with_wrong_shape():
         load_net(input_a, input_b)
 
     assert "Only support update parameter by Tensor with same shape and dtype as it" in str(err.value)
+    remove_generated_file(mindir_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_init_graph_cell_parameters_with_wrong_dtype():
     """
     Description: load mind ir and update parameters with wrong tensor dtype.
     Expectation: raise a ValueError indicating the tensor dtype error.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     mindir_name = "net_3.mindir"
     export(net, input_a, input_b, file_name=mindir_name[:-7], file_format='MINDIR')
@@ -141,3 +111,4 @@ def test_init_graph_cell_parameters_with_wrong_dtype():
         load_net(input_a, input_b)
 
     assert "Only support update parameter by Tensor with same shape and dtype as it" in str(err.value)
+    remove_generated_file(mindir_name)
