@@ -144,6 +144,9 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
     type_proto->set_data_type(irpb::DT_UNDEFINED);
     return;
   }
+  if (type->isa<External>()) {
+    return;
+  }
   CheckIfValidType(type);
   if (type->isa<Number>()) {
     type_proto->set_data_type(GetNumberDataType(type));

@@ -14,8 +14,8 @@
 # ============================================================================
 """ test graph fallback """
 import math
-import pytest
-from mindspore import ms_function, context
+import numpy as np
+from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -99,7 +99,6 @@ def test_fallback_chr():
     assert foo() == 'a'
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_complex():
     """
     Feature: JIT Fallback
@@ -109,8 +108,11 @@ def test_fallback_complex():
     @ms_function
     def foo():
         x = complex(1, 2)
-        return x
-    assert foo() == (1 + 2j)
+        return Tensor(x)
+    res = foo()
+    expect_res = np.array(1 + 2j)
+    assert isinstance(res, Tensor)
+    assert np.all(res.asnumpy() == expect_res)
 
 
 def test_fallback_dict():
@@ -258,7 +260,6 @@ def test_fallback_ord():
     assert foo() == 97
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_fallback_reversed():
     """
     Feature: JIT Fallback
@@ -268,8 +269,8 @@ def test_fallback_reversed():
     @ms_function
     def foo():
         x = reversed([1, 2, 3])
-        return x
-    assert list(foo()) == [3, 2, 1]
+        return list(x)
+    assert foo() == (3, 2, 1)
 
 
 def test_fallback_round():
