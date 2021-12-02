@@ -76,7 +76,7 @@ class Custom(ops.PrimitiveWithInfer):
                   then nparam=5
                 - params(void \*\*): a pointer to the array of inputs and outputs' pointer; the pointer type of inputs
                   and outputs is void \* ; suppose the operator has 2 inputs and 3 outputs, then the first input's
-                  pointer is nparam[0] and the second output's pointer is nparam[4]
+                  pointer is params[0] and the second output's pointer is params[3]
                 - ndims(int \*): a pointer to the array of inputs and outputs' dimension num; suppose params[i] is a
                   1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
                 - shapes(int64_t \*\*): a pointer to the array of inputs and outputs' shapes(int64_t \*); the ith
