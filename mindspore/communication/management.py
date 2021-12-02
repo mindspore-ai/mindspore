@@ -89,7 +89,8 @@ def init(backend_name=None):
     Note:
         The full name of HCCL is Huawei Collective Communication Library.
         The full name of NCCL is NVIDIA Collective Communication Library.
-        This method should be used after set_context.
+        This method should be used after set_context. The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         backend_name (str): Backend, using HCCL/NCCL. If the `backend_name` is None, system will recognize
@@ -153,7 +154,8 @@ def release():
     Release distributed resource. e.g. HCCL/NCCL.
 
     Note:
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.managerment.
 
     Raises:
         RuntimeError: If failed to release distributed resource.
@@ -171,7 +173,8 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank ID for the current device in the specified collective communication group.
 
     Note:
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -203,7 +206,8 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         GPU version of MindSpore doesn't support this method.
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -237,7 +241,8 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank size of the specified collective communication group.
 
     Note:
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables before
+        running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -272,7 +277,8 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         GPU version of MindSpore doesn't support this method.
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables before
+        running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
@@ -308,7 +314,8 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Note:
         GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
-        This method should be used after init().
+        This method should be used after init(). The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.managerment.
 
     Args:
         group (str): The communication group to work on. The group is created by create_group.
@@ -349,6 +356,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init().
+        The user needs to preset communication environment variables before running the following example, please see
+        the docstring of the mindspore.managerment.
 
     Args:
         world_rank_id (int): A rank ID in the world communication group.
@@ -386,12 +395,11 @@ def create_group(group, rank_ids):
 
     Note:
         GPU version of MindSpore doesn't support this method.
-
         The size of rank_ids should be larger than 1, rank_ids should not have duplicate data.
-
         This method should be used after init().
-
         Only support global single communication group in PyNative mode.
+        The user needs to preset communication environment variables before running the following example, please see
+        the docstring of the mindspore.managerment.
 
     Args:
         group (str): The name of the communication group to be created.
