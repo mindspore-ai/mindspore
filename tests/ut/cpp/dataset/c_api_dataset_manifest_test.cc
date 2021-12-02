@@ -116,56 +116,56 @@ TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
 /// Description: test iterator of ManifestDataset with only the "image" column.
 /// Expectation: get correct data.
 TEST_F(MindDataTestPipeline, TestManifestIteratorOneColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorOneColumn.";
-std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
-// Create a Manifest Dataset
-std::shared_ptr<Dataset> ds = Manifest(file_path);
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorOneColumn.";
+  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  // Create a Manifest Dataset
+  std::shared_ptr<Dataset> ds = Manifest(file_path);
+  EXPECT_NE(ds, nullptr);
 
-// Create a Batch operation on ds
-int32_t batch_size = 1;
-ds = ds->Batch(batch_size);
-EXPECT_NE(ds, nullptr);
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
 
-// Create an iterator over the result of the above dataset
-// Only select "image" column and drop others
-std::vector<std::string> columns = {"image"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
-EXPECT_NE(iter, nullptr);
+  // Create an iterator over the result of the above dataset
+  // Only select "image" column and drop others
+  std::vector<std::string> columns = {"image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
 
-// Iterate the dataset and get each row
-std::vector<mindspore::MSTensor> row;
-ASSERT_OK(iter->GetNextRow(&row));
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
 
-uint64_t i = 0;
-while (row.size() != 0) {
-for (auto &v : row) {
-MS_LOG(INFO) << "image shape:" << v.Shape();
-}
-ASSERT_OK(iter->GetNextRow(&row));
-i++;
-}
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
 
-EXPECT_EQ(i, 2);
+  EXPECT_EQ(i, 2);
 
-// Manually terminate the pipeline
-iter->Stop();
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 /// Feature: ManifestIteratorWrongColumn.
 /// Description: test iterator of ManifestDataset with wrong column.
 /// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestManifestIteratorWrongColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorWrongColumn.";
-std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
-// Create a Manifest Dataset
-std::shared_ptr<Dataset> ds = Manifest(file_path);
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorWrongColumn.";
+  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  // Create a Manifest Dataset
+  std::shared_ptr<Dataset> ds = Manifest(file_path);
+  EXPECT_NE(ds, nullptr);
 
-// Pass wrong column name
-std::vector<std::string> columns = {"digital"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
-EXPECT_EQ(iter, nullptr);
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: ManifestGetters.

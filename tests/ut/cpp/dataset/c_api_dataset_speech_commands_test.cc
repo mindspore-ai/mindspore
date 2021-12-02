@@ -125,6 +125,65 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: TestSpeechCommandsDatasetIteratorOneColumn.
+/// Description: test iterator of SpeechCommands dataset with only the "waveform" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetIteratorOneColumn.";
+  // Create a  SpeechCommands dataset
+  std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
+  std::shared_ptr<Dataset> ds = SpeechCommands(folder_path, "all", std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "waveform" column and drop others
+  std::vector<std::string> columns = {"waveform"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_shape = {1, 1, 16000};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "waveform shape:" << v.Shape();
+      EXPECT_EQ(expect_shape, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: TestSpeechCommandsDatasetIteratorWrongColumn.
+/// Description: test iterator of SpeechCommandsDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetIteratorWrongColumn.";
+  // Create a  SpeechCommands dataset
+  std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
+  std::shared_ptr<Dataset> ds = SpeechCommands(folder_path, "all", std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
+
 /// Feature: Test SpeechCommands dataset.
 /// Description: get the size of SpeechCommands dataset.
 /// Expectation: the data is processed successfully.

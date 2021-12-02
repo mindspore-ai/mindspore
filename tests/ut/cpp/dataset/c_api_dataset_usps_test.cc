@@ -198,58 +198,58 @@ TEST_F(MindDataTestPipeline, TestUSPSDatasetWithPipeline) {
 /// Description: test iterator of USPSDataset with only the "image" column.
 /// Expectation: get correct data.
 TEST_F(MindDataTestPipeline, TestUSPSIteratorOneColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorOneColumn.";
-// Create a USPS Dataset
-std::string folder_path = datasets_root_path_ + "/testUSPSDataset/";
-std::shared_ptr<Dataset> ds = USPS(folder_path, "train");
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorOneColumn.";
+  // Create a USPS Dataset
+  std::string folder_path = datasets_root_path_ + "/testUSPSDataset/";
+  std::shared_ptr<Dataset> ds = USPS(folder_path, "train");
+  EXPECT_NE(ds, nullptr);
 
-// Create a Batch operation on ds
-int32_t batch_size = 1;
-ds = ds->Batch(batch_size);
-EXPECT_NE(ds, nullptr);
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
 
-// Create an iterator over the result of the above dataset
-// Only select "image" column and drop others
-std::vector<std::string> columns = {"image"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
-EXPECT_NE(iter, nullptr);
+  // Create an iterator over the result of the above dataset
+  // Only select "image" column and drop others
+  std::vector<std::string> columns = {"image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
 
-// Iterate the dataset and get each row
-std::vector<mindspore::MSTensor> row;
-ASSERT_OK(iter->GetNextRow(&row));
-std::vector<int64_t> expect_image = {1, 16, 16, 1};
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_image = {1, 16, 16, 1};
 
-uint64_t i = 0;
-while (row.size() != 0) {
-for (auto &v : row) {
-MS_LOG(INFO) << "image shape:" << v.Shape();
-EXPECT_EQ(expect_image, v.Shape());
-}
-ASSERT_OK(iter->GetNextRow(&row));
-i++;
-}
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+      EXPECT_EQ(expect_image, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
 
-EXPECT_EQ(i, 3);
+  EXPECT_EQ(i, 3);
 
-// Manually terminate the pipeline
-iter->Stop();
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 /// Feature: USPSIteratorWrongColumn.
 /// Description: test iterator of USPSDataset with wrong column.
 /// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestUSPSIteratorWrongColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorWrongColumn.";
-// Create a USPS Dataset
-std::string folder_path = datasets_root_path_ + "/testUSPSDataset/";
-std::shared_ptr<Dataset> ds = USPS(folder_path, "train");
-EXPECT_NE(ds, nullptr);
-
-// Pass wrong column name
-std::vector<std::string> columns = {"digital"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
-EXPECT_EQ(iter, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorWrongColumn.";
+  // Create a USPS Dataset
+  std::string folder_path = datasets_root_path_ + "/testUSPSDataset/";
+  std::shared_ptr<Dataset> ds = USPS(folder_path, "train");
+  EXPECT_NE(ds, nullptr);
+  
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: GetUSPSDatasetSize.

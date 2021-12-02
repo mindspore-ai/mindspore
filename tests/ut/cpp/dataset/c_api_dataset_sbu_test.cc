@@ -125,56 +125,56 @@ TEST_F(MindDataTestPipeline, TestSBUDatasetWithPipeline) {
 /// Description: test iterator of SBUDataset with only the "image" column.
 /// Expectation: get correct data.
 TEST_F(MindDataTestPipeline, TestSBUIteratorOneColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorOneColumn.";
-// Create a SBU Dataset
-std::string folder_path = datasets_root_path_ + "/testSBUDataset/";
-std::shared_ptr<Dataset> ds = SBU(folder_path, true, std::make_shared<RandomSampler>(false, 5));
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorOneColumn.";
+  // Create a SBU Dataset
+  std::string folder_path = datasets_root_path_ + "/testSBUDataset/";
+  std::shared_ptr<Dataset> ds = SBU(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
 
-// Create a Batch operation on ds
-int32_t batch_size = 1;
-ds = ds->Batch(batch_size);
-EXPECT_NE(ds, nullptr);
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
 
-// Create an iterator over the result of the above dataset
-// Only select "image" column and drop others
-std::vector<std::string> columns = {"image"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
-EXPECT_NE(iter, nullptr);
+  // Create an iterator over the result of the above dataset
+  // Only select "image" column and drop others
+  std::vector<std::string> columns = {"image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
 
-// Iterate the dataset and get each row
-std::vector<mindspore::MSTensor> row;
-ASSERT_OK(iter->GetNextRow(&row));
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
 
-uint64_t i = 0;
-while (row.size() != 0) {
-for (auto &v : row) {
-MS_LOG(INFO) << "image shape:" << v.Shape();
-}
-ASSERT_OK(iter->GetNextRow(&row));
-i++;
-}
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
 
-EXPECT_EQ(i, 5);
+  EXPECT_EQ(i, 5);
 
-// Manually terminate the pipeline
-iter->Stop();
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 /// Feature: SBUIteratorWrongColumn.
 /// Description: test iterator of SBUtDataset with wrong column.
 /// Expectation: get none piece of data.
 TEST_F(MindDataTestPipeline, TestSBUIteratorWrongColumn) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorWrongColumn.";
-// Create a SBU Dataset
-std::string folder_path = datasets_root_path_ + "/testSBUDataset/";
-std::shared_ptr<Dataset> ds = SBU(folder_path, true, std::make_shared<RandomSampler>(false, 5));
-EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorWrongColumn.";
+  // Create a SBU Dataset
+  std::string folder_path = datasets_root_path_ + "/testSBUDataset/";
+  std::shared_ptr<Dataset> ds = SBU(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
 
-// Pass wrong column name
-std::vector<std::string> columns = {"digital"};
-std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
-EXPECT_EQ(iter, nullptr);
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: SBUDatasetSize.
