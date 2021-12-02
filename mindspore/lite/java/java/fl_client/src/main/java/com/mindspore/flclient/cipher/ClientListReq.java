@@ -91,7 +91,12 @@ public class ClientListReq {
         long timestamp = date.getTime();
         String dateTime = String.valueOf(timestamp);
         int time = builder.createString(dateTime);
-        int clientListRoot = GetClientList.createGetClientList(builder, id, iteration, time);
+
+        GetClientList.startGetClientList(builder);
+        GetClientList.addFlId(builder, id);
+        GetClientList.addIteration(builder, iteration);
+        GetClientList.addTimestamp(builder, time);
+        int clientListRoot = GetClientList.endGetClientList(builder);
         builder.finish(clientListRoot);
         byte[] msg = builder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(), flParameter.getDomainName());

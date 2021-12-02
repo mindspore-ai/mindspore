@@ -141,8 +141,13 @@ public class StartFLJob {
          * @return byte[] data
          */
         public byte[] build() {
-            int root = RequestFLJob.createRequestFLJob(this.builder, this.nameOffset, this.idOffset, this.iteration,
-                    this.dataSize, this.timestampOffset);
+            RequestFLJob.startRequestFLJob(this.builder);
+            RequestFLJob.addFlName(builder, nameOffset);
+            RequestFLJob.addFlId(builder, idOffset);
+            RequestFLJob.addIteration(builder, iteration);
+            RequestFLJob.addDataSize(builder, dataSize);
+            RequestFLJob.addTimestamp(builder, timestampOffset);
+            int root = RequestFLJob.endRequestFLJob(builder);
             builder.finish(root);
             return builder.sizedByteArray();
         }

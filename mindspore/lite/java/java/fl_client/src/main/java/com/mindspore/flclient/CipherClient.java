@@ -449,8 +449,17 @@ public class CipherClient {
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
 
-        int exchangeKeysRoot = RequestExchangeKeys.createRequestExchangeKeys(fbBuilder, id, cpk, spk, iteration, time
-                , indIvFbs, pwIvFbs, pwSaltFbs);
+        // start build
+        RequestExchangeKeys.startRequestExchangeKeys(fbBuilder);
+        RequestExchangeKeys.addFlId(fbBuilder, id);
+        RequestExchangeKeys.addCPk(fbBuilder, cpk);
+        RequestExchangeKeys.addSPk(fbBuilder, spk);
+        RequestExchangeKeys.addIteration(fbBuilder, iteration);
+        RequestExchangeKeys.addTimestamp(fbBuilder, time);
+        RequestExchangeKeys.addIndIv(fbBuilder, indIvFbs);
+        RequestExchangeKeys.addPwIv(fbBuilder, pwIvFbs);
+        RequestExchangeKeys.addPwSalt(fbBuilder, pwSaltFbs);
+        int exchangeKeysRoot = RequestExchangeKeys.endRequestExchangeKeys(fbBuilder);
         fbBuilder.finish(exchangeKeysRoot);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -508,7 +517,13 @@ public class CipherClient {
         long timestamp = date.getTime();
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
-        int getExchangeKeysRoot = GetExchangeKeys.createGetExchangeKeys(fbBuilder, id, iteration, time);
+
+        // start build
+        GetExchangeKeys.startGetExchangeKeys(fbBuilder);
+        GetExchangeKeys.addFlId(fbBuilder, id);
+        GetExchangeKeys.addIteration(fbBuilder, iteration);
+        GetExchangeKeys.addTimestamp(fbBuilder, time);
+        int getExchangeKeysRoot = GetExchangeKeys.endGetExchangeKeys(fbBuilder);
         fbBuilder.finish(getExchangeKeysRoot);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -626,8 +641,14 @@ public class CipherClient {
                 add[i] = clientShareRoot;
             }
             int encryptedSharesFbs = RequestShareSecrets.createEncryptedSharesVector(fbBuilder, add);
-            int requestShareSecretsRoot = RequestShareSecrets.createRequestShareSecrets(fbBuilder, id,
-                    encryptedSharesFbs, iteration, time);
+
+            // start build
+            RequestShareSecrets.startRequestShareSecrets(fbBuilder);
+            RequestShareSecrets.addFlId(fbBuilder, id);
+            RequestShareSecrets.addEncryptedShares(fbBuilder, encryptedSharesFbs);
+            RequestShareSecrets.addIteration(fbBuilder, iteration);
+            RequestShareSecrets.addTimestamp(fbBuilder, time);
+            int requestShareSecretsRoot = RequestShareSecrets.endRequestShareSecrets(fbBuilder);
             fbBuilder.finish(requestShareSecretsRoot);
             byte[] msg = fbBuilder.sizedByteArray();
             String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
@@ -686,7 +707,12 @@ public class CipherClient {
         long timestamp = date.getTime();
         String dateTime = String.valueOf(timestamp);
         int time = fbBuilder.createString(dateTime);
-        int getShareSecrets = GetShareSecrets.createGetShareSecrets(fbBuilder, id, iteration, time);
+
+        GetShareSecrets.startGetShareSecrets(fbBuilder);
+        GetShareSecrets.addFlId(fbBuilder, id);
+        GetShareSecrets.addIteration(fbBuilder, iteration);
+        GetShareSecrets.addTimestamp(fbBuilder, time);
+        int getShareSecrets = GetShareSecrets.endGetShareSecrets(fbBuilder);
         fbBuilder.finish(getShareSecrets);
         byte[] msg = fbBuilder.sizedByteArray();
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
