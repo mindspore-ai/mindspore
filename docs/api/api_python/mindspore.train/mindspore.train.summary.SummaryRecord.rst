@@ -1,8 +1,3 @@
-mindspore.train.summary
-========================
-
-用户可以通过SummaryRecord来自定义回调函数或者在自定义训练循环中将需要的数据存储为summary文件和lineage文件，然后使用MindInsight进行可视化分析。
-
 .. py:class:: mindspore.train.summary.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', network=None, max_file_size=None, raise_exception=False, export_options=None)
 
     SummaryRecord用于记录summary数据和lineage数据。

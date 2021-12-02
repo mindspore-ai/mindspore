@@ -1,6 +1,3 @@
-mindspore.train.callback.LossMonitor
-=====================================
-
 .. py:class:: mindspore.train.callback.LossMonitor(per_print_times=1)
 
     监控训练的loss。
