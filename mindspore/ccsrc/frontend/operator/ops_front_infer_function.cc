@@ -535,8 +535,9 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
         slice_args.push_back(scalar_index->ToAbstract());
       } else {
+        auto type = scalar_value->type();
         MS_EXCEPTION(TypeError) << "The " << index << "th input of scalar should be int or bool, but got "
-                                << scalar_value->ToString();
+                                << type->ToString() << ":" << scalar_value->ToString();
       }
     } else if (args_spec_list[index]->isa<AbstractTensor>()) {
       auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();

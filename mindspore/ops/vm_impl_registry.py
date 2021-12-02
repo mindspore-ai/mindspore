@@ -28,10 +28,11 @@ Register the python primitive debug implementation function of a primitive opera
 
 Examples:
     >>> @vm_impl_registry.register(P.Type)
-    >>> def vm_impl_dtype(self):
-    >>>     def vm_impl(x):
-    >>>         return type(x)
-    >>>     return vm_impl
+    ... def vm_impl_dtype(self):
+    ...     def vm_impl(x):
+    ...         return type(x)
+    ...     return vm_impl
+    ...
 """
 
 
@@ -53,7 +54,7 @@ def get_vm_impl_fn(prim):
         >>> from mindspore.ops.vm_impl_registry import get_vm_impl_fn
         ...
         >>> @vm_impl_registry.register("Type")
-        >>> def vm_impl_dtype(self):
+        ... def vm_impl_dtype(self):
         ...   def vm_impl(x):
         ...     return type(x)
         ...   return vm_impl
