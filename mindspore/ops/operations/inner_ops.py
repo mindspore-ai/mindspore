@@ -541,14 +541,14 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
-                    epsilon_shape, decay_shape, grad_shape):
+                    epsilon_shape, decay_shape, grad_shape, global_norm):
         validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
         return var_shape, m_shape, v_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
-                    epsilon_dtype, decay_dtype, grad_dtype):
+                    epsilon_dtype, decay_dtype, grad_dtype, global_norm):
         args = {"m": m_dtype, "v": v_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         validator.check_scalar_or_tensor_types_same({"var": var_dtype}, [mstype.float16, mstype.float32], self.name)
