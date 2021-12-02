@@ -49,7 +49,6 @@ bool CPUTensorArray::Write(const int64_t index, const mindspore::kernel::Address
       tensors_.push_back(create_dev);
     }
     tensors_.push_back(dev_value);
-    // FillZeros(valid_size_, index);
     for (size_t i = valid_size_; i < LongToSize(index); i++) {
       auto tensor_size = tensors_[i]->size;
       (void)memset_s(tensors_[i]->addr, tensor_size, 0, tensors_[i]->size);

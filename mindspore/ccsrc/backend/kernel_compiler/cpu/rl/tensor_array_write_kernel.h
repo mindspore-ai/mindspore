@@ -45,7 +45,148 @@ class TensorArrayCPUWriteKernel : public CPUKernel {
   std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(TensorArrayWrite, KernelAttr(), TensorArrayCPUWriteKernel)
+// index int64
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeUInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeUInt32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeUInt16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeUInt8)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeBool)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+// index int32
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeUInt64)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeUInt32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeUInt16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeUInt8)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
+MS_REG_CPU_KERNEL(TensorArrayWrite,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeBool)
+                    .AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUWriteKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

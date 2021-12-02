@@ -41,7 +41,8 @@ class TensorArrayCPUCloseKernel : public CPUKernel {
   std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(TensorArrayClose, KernelAttr(), TensorArrayCPUCloseKernel)
+MS_REG_CPU_KERNEL(TensorArrayClose, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                  TensorArrayCPUCloseKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

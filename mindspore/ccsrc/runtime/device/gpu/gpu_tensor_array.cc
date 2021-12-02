@@ -51,7 +51,6 @@ bool GPUTensorArray::Write(const int64_t index, const mindspore::kernel::Address
       tensors_.push_back(create_dev);
     }
     tensors_.push_back(dev_value);
-    // FillZeros(valid_size_, index);
     for (size_t i = valid_size_; i < LongToSize(index); i++) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(tensors_[i]->addr, 0, tensors_[i]->size),
                                          "failed to set cuda memory with zeros.")
