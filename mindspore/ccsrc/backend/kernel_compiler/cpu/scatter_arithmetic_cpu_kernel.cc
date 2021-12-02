@@ -37,7 +37,7 @@ void ScatterArithmeticCPUKernel<T>::InitComputeFunc() {
     {prim::kPrimScatterMin->name(), &ScatterArithmeticCPUKernel<T>::ScatterMin},
     {prim::kPrimScatterUpdate->name(), &ScatterArithmeticCPUKernel<T>::ScatterUpdate}};
   if (scatterArithmeticFuncMap.find(kernel_name_) == scatterArithmeticFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ScatterArithmeticCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
   compute_func_ = scatterArithmeticFuncMap.at(kernel_name_);
 }
@@ -48,12 +48,14 @@ void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() < 1) {
-    MS_LOG(EXCEPTION) << "Input shape size should not be less than 1";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'input_x' should be greater than or equal to 1, but got "
+                      << input_shape.size() << ".";
   }
   input_size_ = 1;
   inner_size_ = 1;
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Input shape is empty";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' should be not empty.";
   }
 
   for (size_t i = 1; i < input_shape.size(); i++) {
@@ -82,7 +84,7 @@ bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
   auto bufferSize = outputs[OUTPUT_INDEX_]->size;
   auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Memory copy failed!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
   }
   return true;
 }

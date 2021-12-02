@@ -36,28 +36,28 @@ void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_n
   adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
-    MS_LOG(EXCEPTION)
-      << "SparseTensorDenseMatmul requires 'indices' should be a 2-D Tensor and the second dimension length "
-         "should be 2, but got 'indices' shape: "
-      << indices_shape;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', it requires 'indices' should be a 2-D Tensor and the second dimension length "
+                         "should be 2, but got 'indices' shape: "
+                      << Vector2Str(indices_shape);
   }
   auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
-    MS_LOG(EXCEPTION)
-      << "SparseTensorDenseMatmul requires 'value's should be a 1-D Tensor and the first dimension length should be "
-         "equal to the first dimension length of 'indices', but got 'values' shape: "
-      << values_shape;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
+                         " should be equal to the first dimension length of 'indices', but got 'values' shape: "
+                      << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
   b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
-    MS_LOG(EXCEPTION) << "Dense shape size should equal to " << kSparseTensorDenseMatmulDenseShapeSize << ", but got "
-                      << b_shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' should be "
+                      << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";
   }
   if (output_shape_.size() != kSparseTensorDenseMatmulOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "Output shape size not equal to " << kSparseTensorDenseMatmulOutputShapeSize << ", but got "
-                      << output_shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+                      << kSparseTensorDenseMatmulOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
 }
 
@@ -68,11 +68,12 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "SparseTensorDenseMatmul output memory size should be greater than 0, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
     return true;
   }
-  if (memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul memset output failed!";
+  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
   const size_t b_index = 3;
@@ -93,15 +94,16 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
 
   for (size_t i = 0; i < values_size_; ++i) {
     if (i * dim_num + 1 >= indices_length) {
-      MS_LOG(EXCEPTION) << "The index of a_indices out of bounds.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'indices' out of bounds.";
     }
     if (i >= values_length) {
-      MS_LOG(EXCEPTION) << "The index of a_values out of bounds.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'values' out of bounds.";
     }
     const int row = adj_st_ ? a_indices[i * dim_num + 1] : a_indices[i * dim_num];
     const int col = adj_st_ ? a_indices[i * dim_num] : a_indices[i * dim_num + 1];
     if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
-      MS_EXCEPTION(ValueError) << "The indices including out of bounds index, row range: [0, " << out_dim_0
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', the indices including out of bounds index, row range: [0, " << out_dim_0
                                << "), col range: [0, " << same_dim << "), but got row: " << row << ", col: " << col;
     }
     const size_t row_s = IntToSize(row);
@@ -109,13 +111,13 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
     for (size_t n = 0; n < out_dim_1; ++n) {
       if (adj_dt_) {
         if (n * b_dim_1 + col_s >= b_length) {
-          MS_LOG(EXCEPTION) << "The index of b out of bounds.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'b' out of bounds.";
         }
         const T b_value = b[n * b_dim_1 + col_s];
         out[row_s * out_dim_1 + n] += a_values[i] * b_value;
       } else {
         if (col_s * b_dim_1 + n >= b_length) {
-          MS_LOG(EXCEPTION) << "The index of b out of bounds.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'b' out of bounds.";
         }
         const T b_value = b[col_s * b_dim_1 + n];
         out[row_s * out_dim_1 + n] += a_values[i] * b_value;

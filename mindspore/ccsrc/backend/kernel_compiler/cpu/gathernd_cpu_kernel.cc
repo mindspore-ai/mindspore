@@ -45,7 +45,8 @@ void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t dim_after_indices = 1;
   size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
   if (dim_indices_last == 0) {
-    MS_LOG(EXCEPTION) << "Value of indices_shapes_[" << indices_shapes_.size() << " - 1] should not be 0";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices_shapes_[" << indices_shapes_.size()
+                      << " - 1] should not be 0.";
   }
   for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
     dim_after_indices *= input_shapes_[i];
@@ -85,7 +86,8 @@ bool GatherNdCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
   size_t num = output_dim0 * output_dim1;
   if (num > MAX_INT) {
-    MS_LOG(EXCEPTION) << "Exceed MAX_INT: " << MAX_INT << ", dim0: " << output_dim0 << ", dim1: " << output_dim1;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', exceed MAX_INT: " << MAX_INT << ", dim0: " << output_dim0
+                      << ", dim1: " << output_dim1;
   }
 
   for (size_t write_index = 0; write_index < num; write_index++) {

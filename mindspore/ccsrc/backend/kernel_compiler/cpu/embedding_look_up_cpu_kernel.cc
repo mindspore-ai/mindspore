@@ -31,7 +31,7 @@ constexpr size_t kEmbeddingLookupInputParamsMaxDim = 2;
 
 template <typename T>
 void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
-                     size_t outer_dim_size, T offset, size_t first_dim_size) {
+                     size_t outer_dim_size, T offset, size_t first_dim_size, std::string kernel_name_) {
   auto type_size = sizeof(float);
   size_t lens = outer_dim_size * type_size;
   for (size_t i = 0; i < indices_lens; ++i) {
@@ -40,12 +40,12 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
       size_t pos = static_cast<size_t>(index) * outer_dim_size;
       auto ret = memcpy_s(output_addr, (indices_lens - i) * lens, input_addr + pos, lens);
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "LookUpTable task memcpy failed.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
       }
     } else {
       auto ret = memset_s(output_addr, (indices_lens - i) * lens, 0, lens);
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "LookUpTable task memset failed.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << ret;
       }
     }
     output_addr += outer_dim_size;
@@ -59,8 +59,8 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "EmbeddingLookUpCPUKernel support 1-" << kEmbeddingLookupInputParamsMaxDim
-                      << "D input tensor, but got " << input_shape.size() << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1-"
+                      << kEmbeddingLookupInputParamsMaxDim << "D, but got " << input_shape.size() << "D.";
   }
   first_dim_size_ = input_shape[0];
   outer_dim_size_ = 1;
@@ -84,11 +84,12 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   if (!node_wpt_.expired()) {
     auto node = node_wpt_.lock();
     if (!node) {
-      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
     }
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
     if (input_shape.empty()) {
-      MS_LOG(EXCEPTION) << "Param must be at least 1D";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of input should be at least 1D, but got empty input.";
     }
     first_dim_size_ = input_shape[0];
     outer_dim_size_ = 1;
@@ -120,7 +121,7 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
     auto task = [input_addr, indices_addr, output_addr, task_offset, task_proc_lens, this]() {
       LookUpTableTask<T>(input_addr, indices_addr + task_offset, output_addr + task_offset * outer_dim_size_,
-                         task_proc_lens, outer_dim_size_, static_cast<T>(offset_), first_dim_size_);
+                         task_proc_lens, outer_dim_size_, static_cast<T>(offset_), first_dim_size_, kernel_name_);
       return common::SUCCESS;
     };
     (void)tasks.emplace_back(task);

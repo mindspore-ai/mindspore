@@ -73,13 +73,15 @@ template <typename T>
 void L2NormalizeGradCPUKernel<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
   for (const auto &shape : input_shape_list_) {
     if (output_shape != shape) {
-      MS_LOG(EXCEPTION) << "Input shape and output shape should be same.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of input should be same with output's, but got the dimension of input: "
+                        << Vector2Str(shape) << ", and the dimension of output: " << Vector2Str(output_shape);
     }
   }
   auto input_x_shape = input_shape_list_[0];
   if (input_x_shape.size() != 0) {
     if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](size_t i) { return i == 0; })) {
-      MS_LOG(EXCEPTION) << "L2NormalizeCPUKernel input is null.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' should be not null.";
     }
   }
 }

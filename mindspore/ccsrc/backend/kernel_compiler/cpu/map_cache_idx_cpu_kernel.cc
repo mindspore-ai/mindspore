@@ -60,17 +60,29 @@ void UpdateShape(size_t miss_count, const CNodePtr &node) {
                                       node.get());
 }
 
+void CheckMissCount(size_t miss_count, int count_size, float total_count, float hit_count) {
+  if (miss_count != 0) {
+    MS_LOG(INFO) << "Miss count: " << miss_count;
+  }
+  if (count_size != 0) {
+    MS_LOG(INFO) << "Avg search count: " << total_count / count_size;
+    MS_LOG(INFO) << "Cache hit rate: " << hit_count / count_size;
+  }
+}
+
 void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   auto hashmap_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (hashmap_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' should be 2-D(n, 4), but got "
+                      << hashmap_shape.size() << "-D.";
   }
   hashmap_length_ = hashmap_shape[0];
   if (hashmap_length_ == 0) {
-    MS_LOG(EXCEPTION) << "Value of hashmap_length_ must > 0!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension of 'HashMap' should be greater than 0, but got " << hashmap_length_;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -85,7 +97,8 @@ bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Only support int32, int64";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int32 or int64, but got "
+                      << dtype_;
   }
   return true;
 }
@@ -126,7 +139,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     while ((!hashmap[tmp_entry].IsEmpty() && !hashmap[tmp_entry].IsKey(key))) {
       tmp_entry = (tmp_entry + 1) % static_cast<T>(hashmap_length_);
       if (count > hashmap_length_) {
-        MS_LOG(EXCEPTION) << "Hashmap is full, search cache idx failed, please set a larger vocab_cache_size!";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', hashmap is full, search cache idx failed, please set a larger vocab_cache_size!";
       }
       count += 1;
     }
@@ -142,13 +156,7 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       hashmap[tmp_entry].step_ = step_[0];
     }
   }
-  if (miss_count != 0) {
-    MS_LOG(INFO) << "Miss count: " << miss_count;
-  }
-  if (count_size != 0) {
-    MS_LOG(INFO) << "Avg search count: " << total_count / count_size;
-    MS_LOG(INFO) << "Cache hit rate: " << hit_count / count_size;
-  }
+  CheckMissCount(miss_count, count_size, total_count, hit_count);
   float total_insert_count = 0;
   float total_delete_count = 0;
   // swap hash map
@@ -159,7 +167,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     while (!hashmap[entry].IsEmpty()) {
       entry = (entry + 1) % static_cast<T>(hashmap_length_);
       if (tag_count > hashmap_length_) {
-        MS_LOG(EXCEPTION) << "Hashmap is full, insert new key failed, please set a larger vocab_cache_size!";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', hashmap is full, insert new key failed, please set a larger vocab_cache_size!";
       }
       tag_count++;
     }
@@ -171,7 +180,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
       tmp_entry = (tmp_entry + 1) % static_cast<T>(hashmap_length_);
       if (delete_count > hashmap_length_) {
-        MS_LOG(EXCEPTION) << "Hashmap is full, delete old key failed, please set a larger vocab_cache_size!";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', hashmap is full, delete old key failed, please set a larger vocab_cache_size!";
       }
       delete_count++;
     }

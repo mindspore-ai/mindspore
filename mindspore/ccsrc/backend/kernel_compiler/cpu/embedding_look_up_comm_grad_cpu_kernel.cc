@@ -33,13 +33,17 @@ void EmbeddingLookUpCommGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "split_num: " << split_num_;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (split_num_ == 0) {
-    MS_LOG(EXCEPTION) << "The split_num_ must be larger than 0.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' should be greater than 0, but got 0.";
   }
   if (input_shape.size() < 1) {
-    MS_LOG(EXCEPTION) << "The size of input's shape must be at least 1.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of input should be at least 1-D, but got: " << input_shape.size() << "-D";
   }
   if (input_shape[0] % split_num_ != 0) {
-    MS_LOG(EXCEPTION) << "Input shape[0] is " << input_shape[0] << ", but it must be multiple of split_num.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension value of input should be multiple of "
+                         "'split_num', but got 'split_num': "
+                      << split_num_ << " and the first dimension value of input: " << input_shape[0];
   }
 }
 
@@ -60,8 +64,9 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   size_t output_size = outputs[0]->size;
   MS_LOG(DEBUG) << "input addr: " << input_addr << "input size: " << input_size;
   MS_LOG(DEBUG) << "output addr: " << output_addr << "output size: " << output_size;
-  if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
-    MS_LOG(EXCEPTION) << "Memset Failed!";
+  auto ret = memset_s(output_addr, output_size, 0, output_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << ret;
   }
   const std::vector<int> &rank_group = {0, 1, 2, 3, 4, 5, 6, 7};
   size_t input_split_lens = input_size / LongToSize(split_num_) / sizeof(float_t);

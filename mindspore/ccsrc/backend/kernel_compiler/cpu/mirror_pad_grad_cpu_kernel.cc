@@ -62,7 +62,8 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   } else if (mode == "SYMMETRIC") {
     mode_ = 1;
   } else {
-    MS_LOG(EXCEPTION) << "For mirror pad, only REFLECT and SYMMETRIC are supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
+                      << mode;
   }
 
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -115,7 +116,8 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   if (output_shape_[(output_shape_.size() - 2)] > max_height ||
       output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
-    MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more DIMS";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the 'paddings' should be not too high for input Tensor on 1 or more dimensions";
   }
 }
 
@@ -133,7 +135,9 @@ bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be float16, float32, float64, or int32, but got "
+                      << TypeIdLabel(dtype_);
   }
 
   return true;

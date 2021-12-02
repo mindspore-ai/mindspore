@@ -148,7 +148,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(each_bucket_size);
     size_t bucket_num = each_bucket_size->size();
     if (bucket_num < 1) {
-      MS_LOG(EXCEPTION) << "Bucket num must > 0!";
+      MS_LOG(EXCEPTION) << "For 'SparseOptimizer', the 'bucket_num' should be at least 1, but got " << bucket_num;
     }
     for (size_t i = 0; i < sparse_grad->indices_size_; ++i) {
       T index = sparse_grad->indices_[i];
@@ -320,7 +320,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
         auto ret_code = memcpy_s(reduced_bucket->value_ + value_offset, (max_length - value_offset) * sizeof(float),
                                  global_value + global_value_offset, param.value_stride_ * sizeof(float));
         if (ret_code != EOK) {
-          MS_LOG(EXCEPTION) << "Failed to copy data!";
+          MS_LOG(EXCEPTION) << "For 'SparseOptimizer', failed to copy data. Error no: " << ret_code;
         }
       } else {
         for (size_t j = 0; j < param.value_stride_; ++j) {
@@ -361,7 +361,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
           memcpy_s(reduced_bucket->value_ + start_index, (max_length - start_index) * sizeof(float),
                    global_value + global_index * param.value_stride_, param.value_stride_ * sizeof(float));
         if (ret_code != EOK) {
-          MS_LOG(EXCEPTION) << "Failed to copy data!";
+          MS_LOG(EXCEPTION) << "For 'SparseOptimizer', failed to copy data. Error no: " << ret_code;
         }
         unique_indices_size++;
       } else {
@@ -429,13 +429,13 @@ class SparseOptimizerCPUKernel : public CPUKernel {
                                (output_grad->indices_size_ - unique_indices_size) * stride_data_size, bucket->value_,
                                bucket->indices_size_ * stride_data_size);
       if (ret_code != EOK) {
-        MS_LOG(EXCEPTION) << "Failed to copy data!";
+        MS_LOG(EXCEPTION) << "For 'SparseOptimizer', failed to copy data. Error no: " << ret_code;
       }
       ret_code = memcpy_s(output_grad->indices_ + unique_indices_size,
                           (output_grad->indices_size_ - unique_indices_size) * sizeof(T), bucket->indices_,
                           bucket->indices_size_ * sizeof(T));
       if (ret_code != EOK) {
-        MS_LOG(EXCEPTION) << "Failed to copy data!";
+        MS_LOG(EXCEPTION) << "For 'SparseOptimizer', failed to copy data. Error no: " << ret_code;
       }
       unique_indices_size += bucket->indices_size_;
     }

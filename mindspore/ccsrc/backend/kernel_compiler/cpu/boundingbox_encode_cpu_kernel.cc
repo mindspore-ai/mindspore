@@ -22,9 +22,10 @@ namespace kernel {
 template <typename T>
 void BoundingBoxEncodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUMS) {
-    MS_LOG(ERROR) << "Input num is " << input_num << ", but BoundingBoxEncode needs 2 inputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
   }
 
   const size_t coordinate_size = 4;
@@ -37,7 +38,8 @@ void BoundingBoxEncodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       means_.emplace_back(mean);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the input 'means' should be a tuple or a list, and dtype should be float, but got is not.";
   }
 
   if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
@@ -49,11 +51,15 @@ void BoundingBoxEncodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       stds_.emplace_back(std);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the input 'stds' should be a tuple or a list, and dtype should be float, but got is not.";
   }
 
   if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {
-    MS_LOG(EXCEPTION) << "The size of means or stds is less than 4.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the length of input 'means' and 'stds' should be at least 4, "
+                         "but got the length of 'means': "
+                      << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
 }
 
@@ -66,15 +72,20 @@ bool BoundingBoxEncodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
   auto deltas = reinterpret_cast<T *>(outputs[0]->addr);
 
   if (inputs[0]->size != inputs[1]->size) {
-    MS_LOG(ERROR) << "Anchor box size must be equal to groundtruth box size: " << inputs[1]->size << ", but got"
-                  << inputs[0]->size;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the memory size of inputs 'anchor_box' and 'groundtruth_box' "
+                     "should be the same, but got the memory size of 'anchor_box': "
+                  << inputs[0]->size << " and the memory size of 'groundtruth_box': " << inputs[1]->size;
     return false;
   }
 
   const size_t coordinate = 4;
   const size_t block_size = inputs[0]->size / sizeof(T);
   if ((block_size % coordinate) != 0) {
-    MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the memory size of input 'anchor_box' should be a multiple of 4, "
+                     "but got the memory size of 'anchor_box': "
+                  << inputs[0]->size;
     return false;
   }
 

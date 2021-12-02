@@ -35,11 +35,12 @@ void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (shape_.size() != kResizeBilinearInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeBilinearInputsShapeSize << ", but got "
-                      << shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be "
+                      << kResizeBilinearInputsShapeSize << ", but got " << shape_.size();
   }
   if (size_.size() != kResizeBilinearAttrSize) {
-    MS_LOG(EXCEPTION) << "Size attr requires " << kResizeBilinearAttrSize << " elements, but got " << size_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'size' should have " << kResizeBilinearAttrSize
+                      << " elements, but got " << size_.size();
   }
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
@@ -59,8 +60,8 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float, float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
-    return false;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+                      << TypeIdLabel(dtype_);
   }
 }
 
@@ -75,7 +76,7 @@ bool ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     size_t input_mem_size = inputs[0]->size / sizeof(T1) * sizeof(float);
     float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
     if (float_input_addr == NULL) {
-      MS_LOG(ERROR) << "Malloc memory failed.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
     for (size_t i = 0; i < ((inputs[0]->size) / sizeof(T1)); ++i) {
@@ -86,14 +87,15 @@ bool ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
     if (float_output_addr == NULL) {
       free(float_input_addr);
-      MS_LOG(ERROR) << "Malloc memory failed.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
   } else if (dtype_ == kNumberTypeFloat32) {
     float_input_addr = reinterpret_cast<float *>(inputs[0]->addr);
     float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported datatype.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+                      << TypeIdLabel(dtype_);
   }
 
   size_t batch_size = shape_[0];

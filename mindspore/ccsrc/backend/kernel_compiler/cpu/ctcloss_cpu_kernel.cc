@@ -79,13 +79,16 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   if (probs_shape_.size() != 3) {
-    MS_LOG(EXCEPTION) << "Probs dims: " << probs_shape_.size() << " not support.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' should be 3-D, but got " << probs_shape_.size()
+                      << "-D.";
   }
   if (labels_dims_.size() != 1) {
-    MS_LOG(EXCEPTION) << "Labels dims: " << labels_dims_.size() << " not support.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels' should be 1-D, but got " << labels_dims_.size()
+                      << "-D.";
   }
   if (indices_dims_.size() != 2) {
-    MS_LOG(EXCEPTION) << "Labels indice dims: " << indices_dims_.size() << " not support.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels_indices' should be 2-D, but got "
+                      << indices_dims_.size() << "-D.";
   }
 
   preprocess_collapse_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
@@ -106,7 +109,8 @@ bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only support float16 and float32 on CPU, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input 'x' should be float16 or float32 on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -234,15 +238,18 @@ void CTCLossCPUKernel::GenLabelWithBlank(const uint32_t *seq_len, const std::vec
           has_blank = true;
         } else {
           if (has_blank) {
-            MS_LOG(EXCEPTION) << "Invalid labels(index >= num_class - 1) should not appear between two valid labels";
+            MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of labels_values[" << i
+                              << "] should be in the range of [0, num_classes), but got " << label[i];
           }
           l.push_back(label[i]);
         }
       }
     }
     if (!ignore_longer_outputs_than_inputs_ && l.size() > seq_len[b]) {
-      MS_LOG(EXCEPTION) << "Input time(sequence length) should be greater than output size(label length), but gets "
-                        << seq_len[b] << "< " << l.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << ", input time(sequence length) should be greater than "
+                           "output size(label length), but got sequence length: "
+                        << seq_len[b] << " and label length: " << l.size();
     }
 
     (*label_with_blank)[b].reserve(2 * l.size() + 1);
@@ -276,18 +283,23 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // check validation of sequence length
   for (size_t b = 0; b < batch_size_; ++b) {
     if (sequence_length_addr[b] == static_cast<uint32_t>(0)) {
-      MS_LOG(EXCEPTION) << "Sequence length should > 0, but gets " << sequence_length_addr[b];
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'sequence_length' should be greater than 0, but got "
+                        << sequence_length_addr[b] << ".";
     }
     if (sequence_length_addr[b] > max_time_) {
-      MS_LOG(EXCEPTION) << "Max time should be greater than sequence length, but gets " << max_time_ << " < "
-                        << sequence_length_addr[b];
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << ", the 'max_time'(the 1st dimension value of 'probs') should be "
+                           "greater than or equal to 'sequence_length', but got 'max_time': "
+                        << max_time_ << " and 'sequence_length': " << sequence_length_addr[b];
     }
   }
   for (size_t i = 0; i < indices_dims_[0]; ++i) {
     const size_t factor = 2;
     auto index = labels_indices_addr[i * factor];
     if (index >= SizeToUlong(each_label_length.size())) {
-      MS_LOG(EXCEPTION) << "Index: " << index << "out of the bounds of the vector.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << ", 'index' should be less than the length of 'label', but got 'index': " << index
+                        << " and the length of 'label': " << SizeToUlong(each_label_length.size());
     }
     each_label_length[index]++;
   }

@@ -61,11 +61,13 @@ bool TensorCopySlicesCPUKernel::Launch(const std::vector<kernel::AddressPtr> &in
   auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
 
-  if (memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices memcpy input failed";
+  auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy input failed. Error no: " << ret;
   }
-  if (memcpy_s(output_addr + offset_, copy_size_, update_addr, copy_size_) != EOK) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices memcpy update failed";
+  ret = memcpy_s(output_addr + offset_, copy_size_, update_addr, copy_size_);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy update failed. Error no: " << ret;
   }
   return true;
 }

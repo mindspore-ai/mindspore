@@ -32,15 +32,15 @@ void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (indices_shape.size() != kIndicesShapeSize) {
-    MS_LOG(EXCEPTION) << "SparseToDense requires 'indices' should be a " << kIndicesShapeSize << "-D Tensor, but got "
-                      << indices_shape.size() << "-D";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' should be a " << kIndicesShapeSize
+                      << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
   auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
-    MS_LOG(EXCEPTION)
-      << "SparseToDense requires 'values' should be a 1-D Tensor and the first dimension length should be "
-         "equal to the 'indices' first dimension length, but got 'values' shape: "
-      << values_shape;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
+                         "should be equal to the first dimension length of 'indices', but got 'values' shape: "
+                      << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
   values_size_ = values_shape[0];
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -53,11 +53,12 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "SparseToDense output memory size should be greater than 0, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
     return true;
   }
-  if (memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "SparseToDense memset output failed!";
+  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
   const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
@@ -69,17 +70,18 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
 
   for (size_t i = 0; i < values_size_; ++i) {
     if (i >= values_length) {
-      MS_LOG(EXCEPTION) << "The index of values out of bounds.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'values' out of bounds.";
     }
     size_t out_index = 0;
     for (size_t j = 0; j < rank; j++) {
       if (i * rank + j >= indices_length) {
-        MS_LOG(EXCEPTION) << "The index of indices out of bounds.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'indices' out of bounds.";
       }
       int index = indices_addr[i * rank + j];
       if (index >= SizeToInt(output_shape_[j]) || index < 0) {
-        MS_EXCEPTION(ValueError) << "The " << i << "th value in " << j << "th dimension index: " << index
-                                 << " out of bounds: [0, " << output_shape_[j] << ")";
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << "th value in " << j
+                                 << "th dimension index: " << index << " out of bounds: [0, " << output_shape_[j]
+                                 << ")";
       }
       size_t count = 1;
       for (size_t k = j + 1; k < rank; k++) {

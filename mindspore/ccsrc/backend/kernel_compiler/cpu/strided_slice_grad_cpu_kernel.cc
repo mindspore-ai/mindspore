@@ -24,9 +24,11 @@
 namespace mindspore {
 namespace kernel {
 void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   param_ = (struct StridedSliceParameter *)malloc(sizeof(struct StridedSliceParameter));
   if (param_ == nullptr) {
-    MS_LOG(ERROR) << "malloc StridedSliceGradParameter failed.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc StridedSliceGradParameter failed.";
   }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -35,7 +37,7 @@ void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
       param_->data_type = kDataTypeFloat;
       break;
     default:
-      MS_LOG(ERROR) << "Not supported data type: " << dtype_;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float32, but got " << dtype_;
   }
   std::vector<size_t> input_shape_me = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   (void)std::transform(input_shape_me.begin(), input_shape_me.end(), std::back_inserter(input_shape_),
@@ -55,7 +57,11 @@ void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
-    MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the length of 'stride' and 'end' should be equal "
+                         "to the dimension of output, but got the length of 'stride': "
+                      << strides_.size() << ", the length of 'end': " << end_.size()
+                      << ", the dimension of output: " << output_shape_.size();
   }
   ExpandAllMemberDims();
   std::copy(input_shape_.begin(), input_shape_.end(), param_->in_shape_);
@@ -100,7 +106,7 @@ bool StridedSliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &in
   if (dtype_ == kNumberTypeFloat32) {
     ret = LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "StridedSliceGrad op only support float32";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float32, but got " << dtype_;
     return false;
   }
   return ret;
@@ -122,7 +128,7 @@ bool StridedSliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPt
                        [](const size_t &value) { return static_cast<int>(value); });
   auto ret = DoStridedSliceGrad(dy, dx, output_.data(), param_);
   if (ret != EOK) {
-    MS_LOG(ERROR) << "StridedSliceGrad error error_code[" << ret << "]";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', raise error, error no: " << ret;
     return false;
   }
   return true;

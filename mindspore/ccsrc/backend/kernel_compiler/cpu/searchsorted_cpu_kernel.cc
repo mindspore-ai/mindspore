@@ -81,8 +81,9 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
 
   if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
-    MS_LOG(EXCEPTION) << "The output dimensions " << outputs[0]->size << " must match the dimensions of input values "
-                      << inputs[1]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimensions of input and output should be matched, but got the dimension of input "
+                      << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
   }
 
   auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
@@ -91,7 +92,8 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
     for (size_t i = start; i < end; i++) {
       for (size_t j = 0; j < search_len - 1; j++) {
         if (sequence[i * search_len + j] > sequence[i * search_len + j + 1]) {
-          MS_LOG(EXCEPTION) << "The input sequence must be sorted.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input sequence should be forward sequence. But got "
+                            << sequence[i * search_len + j] << '>' << sequence[i * search_len + j + 1];
         }
       }
     }

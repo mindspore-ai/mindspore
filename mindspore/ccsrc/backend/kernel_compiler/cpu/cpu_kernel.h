@@ -154,11 +154,12 @@ class CPUKernel : public kernel::KernelMod {
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
-      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+      MS_LOG(EXCEPTION) << "Address index should be in range(" << addr_list.size() << "), but got " << index << ".";
     }
 
     if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
-      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index;
+      MS_LOG(EXCEPTION) << "The device address is empty. Address index is " << index
+                        << ", and the length of 'addr_list' is " << addr_list.size();
     }
 
     return reinterpret_cast<T *>(addr_list[index]->addr);

@@ -25,6 +25,7 @@ namespace {
 constexpr size_t kScatterNdUpdateInputsNum = 3;
 constexpr size_t kScatterNdUpdateOutputsNum = 1;
 constexpr size_t kMinIndiceRank = 2;
+constexpr char kKernelName[] = "ScatterNdUpdate";
 
 template <typename T>
 void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
@@ -43,14 +44,15 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
     for (int j = 0; j < params->indices_unit_rank_; ++j) {
       auto index = indices[i * params->indices_unit_rank_ + j];
       if (index < 0) {
-        MS_LOG(EXCEPTION) << "Error, Indices exist element which less than 0. element=" << index;
+        MS_LOG(EXCEPTION) << "For '" << kKernelName
+                          << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
     auto ret = memcpy_s(x + offset, params->x_mem_size_ - offset, updates + params->unit_size_ * i,
                         params->unit_size_ * sizeof(T));
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', memcpy_s error. Error no: " << ret;
     }
   }
 }
@@ -64,17 +66,27 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
-    MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the value of last dimension of 'indices' should be less than "
+                         "or equal to the dimension of 'shape', but got the value of last dimension of 'indices': "
+                      << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
   }
   if (indices_shape.size() < kMinIndiceRank) {
-    MS_LOG(EXCEPTION) << "Indices dimension less than 2";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' should be at least 2, but got "
+                      << indices_shape.size();
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
-    MS_LOG(EXCEPTION) << "Update, shape rank and indices rank inconsistent";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'update' and 'shape', 'indices' are not "
+                         "satisfy the equivalence relationship: "
+                         "'updates_shape.size() == indices_shape.size() - 1 + shape.size() - indices_unit_rank'";
   }
   for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
     if (updates_shape[i] != indices_shape[i]) {
-      MS_LOG(EXCEPTION) << "Value of " << i << "th dimension of indices is not equal to that update";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape of 'updates' and 'indices' are different in dimension i=" << i
+                        << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
+                        << indices_shape[i];
     }
   }
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
@@ -119,7 +131,9 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
       LaunchKernel<int64_t>(inputs, outputs);
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dtype of 'input_x' should be float16, float32, float64, int32 or int64, but got "
+                        << TypeIdLabel(dtype_);
   }
   return true;
 }
@@ -154,7 +168,7 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
 
   auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
   }
 }
 }  // namespace kernel

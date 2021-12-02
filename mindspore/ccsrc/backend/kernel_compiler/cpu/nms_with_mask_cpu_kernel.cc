@@ -199,15 +199,18 @@ void NMSWithMaskCPUKernel<T>::ReducePass(const int num, bool *sel_boxes, const b
 template <typename T>
 void NMSWithMaskCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   iou_value_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "Input num is " << input_num << ", but NMSWithMask needs 1 input.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
+                  << "input(s).";
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "Output num is " << output_num << ", but NMSWithMask needs 3 outputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num
+                  << "output(s).";
   }
 }
 

@@ -135,7 +135,8 @@ void MaximumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   auto res_dx = memset_s(dx_addr, x_tensor_size, 0, x_tensor_size);
   auto res_dy = memset_s(dy_addr, y_tensor_size, 0, y_tensor_size);
   if (res_dx != EOK || res_dy != EOK) {
-    MS_LOG(EXCEPTION) << "MaximumGradCPUKernel LaunchKernel task memset failed.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no of x: " << res_dx
+                      << " and y: " << res_dy;
   }
   std::vector<size_t> x_shape(dout_shape.size(), 1);
   std::vector<size_t> y_shape(dout_shape.size(), 1);

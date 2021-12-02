@@ -35,12 +35,12 @@ void ResizeBilinearGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (shape_.size() < kResizeBilinearGradInputsDoutShapeSize) {
-    MS_LOG(EXCEPTION) << "Input dout shape should be " << kResizeBilinearGradInputsDoutShapeSize << ", but got "
-                      << shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input 'dout' should be "
+                      << kResizeBilinearGradInputsDoutShapeSize << ", but got " << shape_.size();
   }
-  if (size_.size() < kResizeBilinearGradInputsXShapeSize) {
-    MS_LOG(EXCEPTION) << "Input x shape should be " << kResizeBilinearGradInputsXShapeSize << ", but got "
-                      << size_.size();
+  if (size_.size() != kResizeBilinearGradInputsXShapeSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be "
+                      << kResizeBilinearGradInputsXShapeSize << ", but got " << size_.size();
   }
 
   size_t in_height = shape_[2];
@@ -61,8 +61,8 @@ bool ResizeBilinearGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
-    return false;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+                      << TypeIdLabel(dtype_);
   }
 }
 
@@ -71,8 +71,7 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &outputs) const {
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "Output buffer memset failed.";
-    return false;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   float *float_dloss_addr = NULL;
   float *float_output_addr = NULL;
@@ -81,7 +80,7 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
     size_t input_mem_size = inputs[0]->size / sizeof(T) * sizeof(float);
     float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
     if (float_dloss_addr == NULL) {
-      MS_LOG(ERROR) << "Malloc memory failed.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
     for (size_t i = 0; i < ((inputs[0]->size) / sizeof(T)); ++i) {
@@ -92,22 +91,21 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
     float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
     if (float_output_addr == NULL) {
       free(float_dloss_addr);
-      MS_LOG(ERROR) << "Malloc memory failed.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
     size_t memset_size = outputs[0]->size / sizeof(T) * sizeof(float);
     if (memset_s(float_output_addr, memset_size, 0, memset_size) != EOK) {
       free(float_dloss_addr);
       free(float_output_addr);
-      MS_LOG(EXCEPTION) << "Output buffer memset failed.";
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
     }
   } else if (dtype_ == kNumberTypeFloat32) {
     float_dloss_addr = reinterpret_cast<float *>(inputs[0]->addr);
     float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported datatype.";
-    return false;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+                      << TypeIdLabel(dtype_);
   }
 
   size_t batch_size = shape_[0];

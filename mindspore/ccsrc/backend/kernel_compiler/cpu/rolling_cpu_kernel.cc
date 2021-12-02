@@ -27,6 +27,7 @@ using rolling::Method;
 template <typename T, typename S>
 void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   static const std::map<std::string, Method> kValidMethods = {
@@ -35,25 +36,27 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
   };
   auto method = AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
   if (kValidMethods.find(method) == kValidMethods.end()) {
-    MS_LOG(EXCEPTION) << "[" << method << "] not supported";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'method' should be in (max, min, sum, mean, std, var), but got " << method;
   }
   method_ = kValidMethods.at(method);
   auto window = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
   if (window <= 0) {
-    MS_LOG(EXCEPTION) << "window size should not be less than 0, but got " << window;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'window' should be greater than 0, but got " << window;
   }
   window_ = LongToInt(window);
   min_periods_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, MIN_PERIODS);
   if (min_periods_ <= 0) {
-    MS_LOG(EXCEPTION) << "min_periods should not be less than 0, but got " << min_periods_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'min_periods' should be greater than 0, but got "
+                      << min_periods_;
   }
   center_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CENTER);
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   closed_ = AnfAlgo::GetNodeAttr<std::string>(kernel_node, CLOSED);
   if (axis_t >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "axis should be smaller than the dimension of input tensor " << input_shape.size()
-                      << "D, but got " << axis_t;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be less than the dimension of input tensor "
+                      << input_shape.size() << "D, but got " << axis_t;
   }
   axisIterator_.Init(input_shape, axis_t);
   RollingBoundsCalculate();
@@ -150,7 +153,8 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
       };
       break;
     default:
-      MS_LOG(EXCEPTION) << "reduce method is not yet supported: " << method_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the 'method' should be in (max, min, sum, mean, std, var), but got " << method_;
   }
 }
 

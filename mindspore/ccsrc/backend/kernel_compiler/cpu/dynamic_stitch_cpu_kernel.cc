@@ -80,7 +80,7 @@ void DynamicStitchCPUKernel<T>::LaunchKernel(const std::vector<kernel::AddressPt
     for (size_t j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);
       if (ret != 0) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
       }
     }
   }

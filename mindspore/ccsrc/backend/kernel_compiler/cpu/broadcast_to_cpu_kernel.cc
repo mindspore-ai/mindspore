@@ -33,18 +33,27 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
   if (output_shape_size < input_shape_size) {
-    MS_LOG(EXCEPTION) << "Cannot broadcast input tensor with shape " << input_shape_
-                      << " to  a smaller dimension shape " << output_shape_ << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', input tensor 'input_x' and target shape 'shape' can't "
+                         "broadcast. The dimension of 'input_x' is "
+                      << input_shape_size << ", and the dimension of target shape 'shape' is " << output_shape_size;
   }
   if (output_shape_size > MAX_SHAPE_SIZE) {
-    MS_LOG(EXCEPTION) << "Cannot broadcast input tensor with shape " << input_shape_ << " to a shape " << output_shape_
-                      << " more than 8-D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', input tensor 'input_x' and target shape 'shape' should be "
+                         "broadcast, and the dimension of target shape 'shape' should be at most 8. "
+                         "But got the dimension of 'input_x': "
+                      << input_shape_size << ", and the dimension of target shape 'shape': " << output_shape_size;
   }
   size_t offset = output_shape_size - input_shape_size;
   for (size_t i = 0; i < input_shape_size; ++i) {
     if (input_shape_[i] != output_shape_[i + offset] && input_shape_[i] != 1) {
-      MS_LOG(EXCEPTION) << "Cannot broadcast input tensor with shape " << input_shape_ << " to a shape "
-                        << output_shape_ << ".";
+      MS_LOG(EXCEPTION)
+        << "For '" << kernel_name_ << "', when the " << i
+        << "'th dimension of input tensor 'input_x' "
+           "and target shape 'shape' not equal, the dimension length of input tensor 'input_x' should be "
+           "1. But got the dimension of input tensor 'input_x': "
+        << Vector2Str(input_shape_) << ", and the dimension of target shape 'shape': " << Vector2Str(output_shape_);
     }
   }
 
@@ -73,12 +82,17 @@ bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, cons
   } else if constexpr (std::is_same_v<T, float>) {
     status = BROADCAST_TO(float, input_addr, &shape_info_, output_addr);
   } else {
-    MS_LOG(EXCEPTION) << "Not supported data type for BroadcastTo.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', not supported data type, the dtype of input should be bool, int, or float.";
   }
 
   if (status != static_cast<int>(NNACL_OK)) {
-    MS_LOG(EXCEPTION) << "Broadcast tensor with shape " << input_shape_ << " to shape " << output_shape_
-                      << " execute failed, error code: " << status;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', each dimension pair, 'input_x' shape and target shape, "
+                         "should be either equal or input is one or the target dimension is -1. "
+                         "But got 'input_x' shape: "
+                      << Vector2Str(input_shape_) << " and target shape: " << Vector2Str(output_shape_)
+                      << ". Error code: " << status;
   }
   return true;
 }

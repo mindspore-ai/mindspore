@@ -32,12 +32,12 @@ void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs is empty";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs should be not empty.";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReshapeOutputsNum, kernel_name_);
   if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "Input size: {" << inputs[0]->size << "} is not equal to output size: {" << outputs[0]->size
-                      << "}";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of the first input : {" << inputs[0]->size
+                      << "} is not equal to the size of the first output: {" << outputs[0]->size << "}";
   }
   if (inputs[0]->addr == outputs[0]->addr) {
     return true;
@@ -45,7 +45,7 @@ bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   size_t copy_size = outputs[0]->size;
   auto ret = memcpy_s(outputs[0]->addr, copy_size, inputs[0]->addr, copy_size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
   }
   return true;
 }

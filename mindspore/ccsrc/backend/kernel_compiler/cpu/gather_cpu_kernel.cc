@@ -36,8 +36,8 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > kGatherInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape_.size() << ", but GatherV2CPUKernel olny support "
-                      << kGatherInputParamsMaxDim << "D or lower.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
+                      << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
   }
   if (!is_dynamic_shape_) {
     axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
@@ -59,7 +59,8 @@ bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << ", " << dims
+                  << "), but got " << axis_ << ".";
     return false;
   } else if (axis_ < 0) {
     axis_ = axis_ + dims;
@@ -100,7 +101,8 @@ void GatherV2CPUKernel<T>::ParallelRun(const int8_t *input_addr, const int *indi
     auto block = [this, in, indices_data, count, inner_size, limit, indices_element_size, out, thread_index]() {
       int ret = Gather(in, count, inner_size, limit, indices_data, indices_element_size, out, sizeof(T));
       if (ret != 0) {
-        MS_LOG(ERROR) << "GatherRun error task_id[" << thread_index << "] error_code[" << ret << "]";
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', run error task_id[" << thread_index << "] error_code[" << ret
+                      << "]";
         return common::FAIL;
       }
       return common::SUCCESS;
@@ -109,7 +111,7 @@ void GatherV2CPUKernel<T>::ParallelRun(const int8_t *input_addr, const int *indi
     thread_index++;
   }
   if (!common::ThreadPool::GetInstance().SyncRun(tasks)) {
-    MS_LOG(EXCEPTION) << "SyncRun error!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', syncRun error.";
   }
 }
 }  // namespace kernel

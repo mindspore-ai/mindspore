@@ -39,7 +39,8 @@ void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   } else if (input_x_dtype_ == kNumberTypeFloat64 || input_x_dtype_ == kNumberTypeInt64) {
     input_x_dtype_size_ = 8;
   } else {
-    MS_LOG(EXCEPTION) << "input_x dtype only support float32, float64, int32, int64";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dtype of 'input_x' should be float32, float64, int32, int64, but got: " << input_x_dtype_;
   }
 }
 
@@ -52,7 +53,8 @@ bool UpdateCacheCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (indices_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported indices data type: " << indices_dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'indices' should be int32 or int64, but got: " << indices_dtype_;
   }
   return true;
 }
@@ -65,7 +67,8 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
   if (update_shape.size() < kMinUpdateShapeSize) {
-    MS_LOG(EXCEPTION) << "Update shape should not be less than " << kMinUpdateShapeSize;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'update' should be at least "
+                      << kMinUpdateShapeSize << "D, but got: " << update_shape.size() << "D";
   }
   batch_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); ++i) {
@@ -90,12 +93,12 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
     char *tmp = update + i * one_length_size;
     if (static_cast<size_t>(indices[i]) * one_length_size + one_length_size > max_size) {
-      MS_LOG(EXCEPTION) << "Memcpy out of size";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy out of size.";
     }
     int ret = memcpy_s(input_x + static_cast<size_t>(indices[i]) * one_length_size,
                        max_size - static_cast<size_t>(indices[i]) * one_length_size, tmp, one_length_size);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
     }
   }
 }

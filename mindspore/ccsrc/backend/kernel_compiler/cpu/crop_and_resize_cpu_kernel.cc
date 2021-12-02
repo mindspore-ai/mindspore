@@ -22,22 +22,23 @@ namespace kernel {
 template <typename T>
 void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "Input num is " << input_num << ", but CropAndResize needs 4 inputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number should be 4, but got " << input_num;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "Output num is " << output_num << ", but CropAndResize needs 1 output.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number should be 1, but got " << output_num;
   }
 
   //  input image
   auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
   size_t input_image_shape_len = input_image_shape.size();
   if (input_image_shape_len != IMAGE_DIM) {
-    MS_LOG(ERROR) << "Image tensor is " << input_image_shape_len << "-D, but CropAndResize supports only " << IMAGE_DIM
-                  << "-D image tensor.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'image' should be " << IMAGE_DIM << "-D, but got "
+                  << input_image_shape_len << "-D.";
   }
 
   input_height_ = SizeToInt(input_image_shape[IMAGE_HEIGHT]);
@@ -47,28 +48,28 @@ void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
   size_t input_boxes_shape_len = input_boxes_shape.size();
   if (input_boxes_shape_len != BOX_RANK) {
-    MS_LOG(ERROR) << "Box is rank " << input_boxes_shape_len << ", but CropAndResize supports only rank " << BOX_RANK
-                  << "for boxes.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'boxes' should be " << BOX_RANK << ", but got "
+                  << input_boxes_shape_len;
   }
 
   //  input box_index
   auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
   size_t input_box_index_shape_len = input_box_index_shape.size();
   if (input_box_index_shape_len != 1) {
-    MS_LOG(ERROR) << "Box index is rank " << input_box_index_shape_len << ", but CropAndResize supports only rank " << 1
-                  << "for box_index.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'box_index' should be 1, but got "
+                  << input_box_index_shape_len << ".";
   }
 
   //  input crop_size
   auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
   size_t input_crop_size_shape_len = input_crop_size_shape.size();
   if (input_crop_size_shape_len != 1) {
-    MS_LOG(ERROR) << "Crop_size is rank " << input_crop_size_shape_len << "-D, but CropAndResize supports only rank "
-                  << 1 << "for Crop_size.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'crop_size' should be 1, but got "
+                  << input_crop_size_shape_len << ".";
   }
   if (input_crop_size_shape[0] != CROP_SIZE_LEN) {
-    MS_LOG(ERROR) << "Crop_size is size " << input_crop_size_shape[0] << "-D, but CropAndResize supports only size "
-                  << CROP_SIZE_LEN << "for Crop_size.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first dimension value of 'crop_size' should be "
+                  << CROP_SIZE_LEN << ", but got " << input_crop_size_shape[0];
   }
 
   //  output

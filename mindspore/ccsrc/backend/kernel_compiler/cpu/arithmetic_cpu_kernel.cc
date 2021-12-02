@@ -408,7 +408,8 @@ void ArithmeticCPUKernel<T>::InitComputeFunc() {
     {prim::kPrimRealDiv->name(), &ArithmeticCPUKernel<T>::RealDiv},
     {prim::kPrimSquaredDifference->name(), &ArithmeticCPUKernel<T>::SquaredDifference}};
   if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
+                      << ", but got " << kernel_name_;
   }
   compute_func_ = arithmeticMathFuncMap.at(kernel_name_);
 }

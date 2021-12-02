@@ -310,7 +310,10 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   } else if (dtype_ == kNumberTypeBool) {
     LaunchLogicalNot(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << "is not support.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of the first input should be float16, float32, "
+                         "float64, int16, int32, int64, or bool, but got "
+                      << TypeIdLabel(dtype_);
   }
   return true;
 }
@@ -356,7 +359,8 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticSelfCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticSelfFuncMap)
+                      << ", but got " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
 }

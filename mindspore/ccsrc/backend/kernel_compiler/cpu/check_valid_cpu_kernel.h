@@ -40,6 +40,7 @@ class CheckValidCPUKernel : public CPUKernel {
   void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   std::vector<size_t> anchor_box_shape_;
   std::vector<size_t> img_metas_shape_;
+  std::vector<size_t> output_shape_;
 };
 
 MS_REG_CPU_KERNEL_T(

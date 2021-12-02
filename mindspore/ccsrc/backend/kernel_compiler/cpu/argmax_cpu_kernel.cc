@@ -44,8 +44,13 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t input_size = get_element_num(shape) * data_size;
   size_t output_num = num_before_axis * num_after_axis;
   size_t output_size = output_num * sizeof(int);
-  if (inputs[0]->size != input_size || outputs[0]->size != output_size) {
-    MS_LOG(EXCEPTION) << "Invalid input or output data size!";
+  if (inputs[0]->size != input_size) {
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the type of the first input should be equal to " << input_size
+                      << ", but got the memory size is " << inputs[0]->size;
+  }
+  if (outputs[0]->size != output_size) {
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the type of the first output should be equal to " << output_size
+                      << ", but got the memory size is " << outputs[0]->size;
   }
   return true;
 }
@@ -58,12 +63,13 @@ void ArgmaxCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
-    MS_LOG(EXCEPTION) << "Shape size should be greater than 0";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
   }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
   if (axis < 0) {
-    MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << (shape_len - 1) << "]";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+                      << "], but got " << axis;
   }
   axis = axis % SizeToLong(shape_len);
   num_before_axis_ = 1;

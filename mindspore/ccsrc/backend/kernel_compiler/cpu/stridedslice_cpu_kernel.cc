@@ -48,7 +48,9 @@ void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
-    MS_LOG(EXCEPTION) << "StridedSlice only support 1D to 8D input tensor, but got " << input_shape_.size() << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'input_x' should be in range [1D, 8D], but got " << input_shape_.size()
+                      << "D.";
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -60,8 +62,12 @@ void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto end = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
   auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   if (begin.size() != end.size() || begin.size() != stride.size() || begin.size() > input_shape_.size()) {
-    MS_LOG(EXCEPTION)
-      << "StridedSLice requires the length of begin, stride and end must be equal and less than input dimension.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the length of 'begin', 'stride' and 'end' should be equal "
+                         "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
+                      << begin.size() << ", the length of 'stride': " << stride.size()
+                      << ", the length of 'end': " << end.size()
+                      << ", the dimension of 'input_x': " << input_shape_.size();
   }
 
   InitSliceParam(begin, end, stride);
@@ -125,7 +131,8 @@ void StridedSliceCPUKernel::InitSliceParam(const std::vector<int64_t> &begin, co
 
   auto type_pair = type_convert_map.find(dtype_);
   if (type_pair == type_convert_map.end()) {
-    MS_LOG(EXCEPTION) << "StridedSlice supports bool, int32, float32 and float64 input tensor, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be bool, int32, float32 or float64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   data_size_ = type_pair->second.second;
@@ -139,7 +146,7 @@ void StridedSliceCPUKernel::InitSliceParam(const std::vector<int64_t> &begin, co
       int end_pos = LongToInt(end[i]);
       int stride_size = LongToInt(stride[i]);
       if (stride_size == 0) {
-        MS_LOG(EXCEPTION) << "StridedSlice requires the each dimension slice stride can't be 0.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the each dimension slice stride should not be 0.";
       }
       slice_param_.in_shape_[i] = dim_len;
       slice_param_.strides_[i] = stride_size;
@@ -206,7 +213,7 @@ void StridedSliceCPUKernel::ParallelRun(const uint8_t *input_addr, uint8_t *outp
   } else if (parallel_strategy_ == kOnSplitAxis) {
     execute_func = &StridedSliceCPUKernel::RunTaskOnSplitAxis;
   } else {
-    MS_LOG(EXCEPTION) << "Not supported parallel execute strategy for StridedSlice.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', not supports parallel execute strategy.";
   }
 
   while (thread_index < thread_num) {
@@ -221,8 +228,8 @@ bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> & /* workspace */,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kStridedSliceInputsNum && inputs.size() != kStridedSliceDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "Input num should be " << kStridedSliceInputsNum << " or " << kStridedSliceDynamicInputsNum
-                      << ", but got " << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << kStridedSliceInputsNum
+                      << " or " << kStridedSliceDynamicInputsNum << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
@@ -236,7 +243,11 @@ bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
     auto end_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
     auto stride_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "StridedSliceGrad requires the dimension of begin, end, strides must be equal to 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimension of 'begin', 'end', 'strides' should be equal "
+                           "to 1, but got the dimension of 'begin': "
+                        << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
+                        << ", and the dimension of 'strides': " << stride_shape.size();
     }
     auto begin_ptr = reinterpret_cast<int64_t *>(inputs[1]->addr);
     auto end_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
@@ -245,8 +256,12 @@ bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
     std::vector<int64_t> end{end_ptr, end_ptr + end_shape[0]};
     std::vector<int64_t> stride{strides_ptr, strides_ptr + stride_shape[0]};
     if (begin.size() != end.size() || begin.size() != stride.size() || begin.size() > input_shape_.size()) {
-      MS_LOG(EXCEPTION)
-        << "StridedSLice requires the length of begin, stride and end must be equal and less than input dimension.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the length of 'begin', 'stride' and 'end' should be equal "
+                           "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
+                        << begin.size() << ", the length of 'stride': " << stride.size()
+                        << ", the length of 'end': " << end.size()
+                        << ", the dimension of 'input_x': " << input_shape_.size();
     }
     InitSliceParam(begin, end, stride);
     parallel_ = MatchParallelPattern();

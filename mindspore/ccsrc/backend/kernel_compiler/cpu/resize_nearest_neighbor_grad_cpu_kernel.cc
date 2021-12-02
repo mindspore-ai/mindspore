@@ -36,13 +36,13 @@ void ResizeNearestNeighborGradCPUKernel::InitKernel(const CNodePtr &kernel_node)
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeNearestNeighborGradInputsShapeSize << ", but got "
-                      << input_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be "
+                      << kResizeNearestNeighborGradInputsShapeSize << ", but got " << input_shape.size();
   }
 
   if (output_size.size() != kResizeNearestNeighborGradOutputsShapeSize) {
-    MS_LOG(EXCEPTION) << "Output shape size should be " << kResizeNearestNeighborGradOutputsShapeSize << ", but got "
-                      << output_size.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+                      << kResizeNearestNeighborGradOutputsShapeSize << ", but got " << output_size.size();
   }
 
   batch_size_ = input_shape[0];
@@ -71,7 +71,9 @@ bool ResizeNearestNeighborGradCPUKernel::Launch(const std::vector<kernel::Addres
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be float16, float32, float64, int32, or int64, but got "
+                      << TypeIdLabel(dtype_);
   }
   return true;
 }
@@ -83,7 +85,7 @@ void ResizeNearestNeighborGradCPUKernel::LaunchKernel(const std::vector<AddressP
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Output buffer memset failed, ret:" << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed. Error no: " << ret;
   }
 
   size_t in_hw_size = in_width_ * in_height_;

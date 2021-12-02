@@ -38,7 +38,9 @@ void CumSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   reverse_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, REVERSE);
   int input_dim_length = SizeToInt(shape_.size());
   if (axis_ >= input_dim_length) {
-    MS_LOG(EXCEPTION) << "Axis out of bounds.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
+                      << " and the length of 'input' dimension: " << input_dim_length;
   }
   while (axis_ < 0) {
     axis_ += input_dim_length;
@@ -67,7 +69,8 @@ void CumSumCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   } else if (dtype_ == kNumberTypeUInt8) {
     InitWorkspaceSize<uint8_t>();
   } else {
-    MS_LOG(EXCEPTION) << kernel_name_ << " supports (float16, float32, uint8, int8, int32) on CPU, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", the dtype of input should be in (float16, float32, uint8, int8, int32) on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 }
@@ -89,7 +92,8 @@ bool CumSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeUInt8) {
     LaunchKernel<uint8_t>(inputs, workspace, outputs);
   } else {
-    MS_LOG(EXCEPTION) << kernel_name_ << " supports (float16, float32, uint8, int8, int32) on CPU, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", the dtype of input should be in (float16, float32, uint8, int8, int32) on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

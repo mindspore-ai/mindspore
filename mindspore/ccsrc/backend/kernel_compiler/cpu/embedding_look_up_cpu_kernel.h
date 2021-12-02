@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 

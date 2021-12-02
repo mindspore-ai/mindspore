@@ -49,7 +49,8 @@ void LayerNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     param_num_ *= x_shape[i];
   }
   if (block_num_ == 0 || block_size_ == 0) {
-    MS_LOG(EXCEPTION) << "LayerNormCPUKernel input shape error, input shape: " << x_shape;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got "
+                      << Vector2Str(x_shape);
   }
 }
 
@@ -62,7 +63,8 @@ bool LayerNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Input dtype only support float16, float32, float64";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be float16, float32, or float64, but got " << dtype_;
   }
   return true;
 }
@@ -71,10 +73,10 @@ template <typename T>
 void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   size_t f_size = sizeof(T);
   if (inputs[1]->size != f_size * param_num_ || inputs[2]->size != f_size * param_num_) {
-    MS_LOG(EXCEPTION) << "The product of gamma and beta's shape must be " << param_num_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << param_num_;
   }
   if (outputs[1]->size != f_size * block_num_ || outputs[2]->size != f_size * block_num_) {
-    MS_LOG(EXCEPTION) << "The product of mean and var's shape must be " << block_num_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of mean and var's shape must be " << block_num_;
   }
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
   auto gamma = reinterpret_cast<T *>(inputs[1]->addr);

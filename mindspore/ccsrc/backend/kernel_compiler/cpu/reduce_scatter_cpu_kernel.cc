@@ -43,7 +43,7 @@ void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (ranks_group != nullptr) {
     ranks_group_ = GetValue<std::vector<int>>(ranks_group);
   } else {
-    MS_LOG(EXCEPTION) << "Miss attribute " << kRanksGroup;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group' should be not null, but got empty value.";
   }
 }
 

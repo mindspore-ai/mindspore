@@ -22,10 +22,12 @@ namespace kernel {
 constexpr size_t kBucketSortThreshold = 100000;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but UniqueCPUKernel only support 1d.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1D, but got "
+                      << input_shape.size() << "D";
   }
   input_size_ = input_shape[0];
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -51,12 +53,14 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float, int>(inputs, workspace, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be float16, float32, int32, or int64, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   if (!node_wpt_.expired()) {
     auto node_ = node_wpt_.lock();
     if (!node_) {
-      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
     }
     std::vector<size_t> out_shape;
     (void)out_shape.emplace_back(output_size_);
@@ -77,13 +81,16 @@ void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
     return;
   }
   if (inputs.size() < 1) {
-    MS_LOG(EXCEPTION) << "Input size should be large than 0!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the number of input should be greater than 0, but got: " << inputs.size();
   }
   if (workspace.size() < 3) {
-    MS_LOG(EXCEPTION) << "Workspace size should be large than 2!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the number of workspace should be greater than 2, but got: " << workspace.size();
   }
   if (outputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "Output size should be large than 1!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the number of output should be greater than 1, but got: " << outputs.size();
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
   params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);

@@ -33,8 +33,17 @@ void ApplyMomentumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ApplyMomentumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyMomentumInputsNum, kernel_name_);
-  if (inputs[0]->size != inputs[1]->size || inputs[0]->size != inputs[3]->size) {
-    MS_LOG(EXCEPTION) << "Error input data size!";
+  if (inputs[0]->size != inputs[1]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of input 'accumulation' and 'variable' should be "
+                         "same, but got the memory size of 'accumulation': "
+                      << inputs[1]->size << " and 'variable': " << inputs[0]->size;
+  }
+  if (inputs[0]->size != inputs[3]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of input 'gradient' and 'variable' should be "
+                         "same, but got the memory size of 'gradient': "
+                      << inputs[3]->size << " and 'variable': " << inputs[0]->size;
   }
   auto *weight = reinterpret_cast<float *>(inputs[0]->addr);
   auto *accumulate = reinterpret_cast<float *>(inputs[1]->addr);

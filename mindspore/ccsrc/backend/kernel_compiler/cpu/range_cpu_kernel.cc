@@ -39,7 +39,8 @@ bool RangeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Only support int, float, but actual data type is " << TypeIdLabel(dtype_);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int or float, but got "
+                      << TypeIdLabel(dtype_);
   }
 }
 

@@ -31,8 +31,11 @@ void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (dtype_ != AnfAlgo::GetInputDeviceDataType(kernel_node, 1)) {
-    MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
+  auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  if (dtype_ != dtype_1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', 'input0' and 'input1' should have the same data type, but got the dtype of 'input0': "
+                      << dtype_ << " and the dtype of 'input1': " << dtype_1;
   }
 }
 
@@ -45,7 +48,8 @@ bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << "is not support.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float, but got "
+                      << TypeIdLabel(dtype_) << ".";
   }
   return true;
 }

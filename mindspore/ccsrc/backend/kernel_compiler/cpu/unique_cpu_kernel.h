@@ -102,7 +102,7 @@ class UniqueCPUKernel : public CPUKernel {
     IndexType input_size = params->input_size_;
     size_t thread_num = params->thread_num_;
     if (thread_num < 1) {
-      MS_LOG(EXCEPTION) << "Thread num must > 0 !";
+      MS_LOG(EXCEPTION) << "For 'Unique', thread num should be greater than 0, but got " << thread_num;
     }
     IndexType thread_data_size = input_size / thread_num;
     size_t left_data_size = input_size % thread_num;
@@ -148,13 +148,15 @@ class UniqueCPUKernel : public CPUKernel {
       auto bucket_id = BucketId(data, segment->thread_num_);
       auto bucket_index = bucket_data_num[bucket_id];
       if (bucket_id >= bucket_size) {
-        MS_LOG(ERROR) << "Error bucket id!";
+        MS_LOG(ERROR) << "For 'Unique', bucket id should be less than bucket size, but got 'bucket_id': " << bucket_id
+                      << "and 'bucket_size': " << bucket_size;
         continue;
       }
       auto &bucket = buckets[bucket_id];
       MS_EXCEPTION_IF_NULL(bucket);
       if (bucket_index >= bucket->input_size_) {
-        MS_LOG(ERROR) << "Error bucket index!";
+        MS_LOG(ERROR) << "For 'Unique', bucket index should be less than input size, but got bucket index: "
+                      << bucket_index << "and input size: " << bucket->input_size_;
         continue;
       }
       bucket->input_[bucket_index] = data;
@@ -342,7 +344,7 @@ class UniqueCPUKernel : public CPUKernel {
       auto ret_code = memcpy_s(result->output_ + current_size, (result->input_size_ - current_size) * sizeof(DataType),
                                bucket->output_, bucket->output_size_ * sizeof(DataType));
       if (ret_code != EOK) {
-        MS_LOG(EXCEPTION) << "Failed to copy data!";
+        MS_LOG(EXCEPTION) << "For 'Unique', copy data failed, error no: " << ret_code;
       }
       current_size += bucket->output_size_;
     }

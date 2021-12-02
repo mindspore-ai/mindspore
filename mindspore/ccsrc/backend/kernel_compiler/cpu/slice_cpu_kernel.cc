@@ -26,6 +26,7 @@ namespace {
 constexpr size_t kSliceInputsNum = 1;
 constexpr size_t kSliceDynamicInputNum = 3;
 constexpr size_t kSliceOutputsNum = 1;
+constexpr char kKernelName[] = "Slice";
 }  // namespace
 
 int NormalizeBeginPos(int begin_pos, int dim_len) {
@@ -46,7 +47,9 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                                                                 {kNumberTypeFloat64, sizeof(double)}};
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > DIMENSION_8D || input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Slice only support 1D to 8D input tensor, but got " << input_shape.size() << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of input tensor should be in range [1D, 8D], but got " << input_shape.size()
+                      << "D.";
   }
 
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -55,7 +58,11 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     auto size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
     auto begin = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
-      MS_LOG(EXCEPTION) << "Slice requires the length of begin and size must be equal to input dimension.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the lengths of 'begin' and 'size' should be equal to "
+                           "the dimension of input tensor, but got the length of 'begin' "
+                        << begin.size() << ", the length of 'size' " << size.size()
+                        << "and the dimension of input tensor " << input_shape.size();
     }
     InitSliceParam(input_shape, begin, size);
   }
@@ -63,7 +70,8 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   TypeId dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
-    MS_LOG(EXCEPTION) << "Slice supports bool, int32, float32 and float64 input tensor, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be bool, int32, float32 or float64, but got "
                       << TypeIdToType(dtype)->ToString();
   }
   data_size_ = size_pair->second;
@@ -81,7 +89,10 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
         slice_size = dim_len - begin_pos;
       }
       if (slice_size <= 0) {
-        MS_LOG(EXCEPTION) << "Slice requires the each dimension slice size must be greater than 0 or be equal to -1.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the each dimension slice size should be greater than 0 "
+                             "or be equal to -1, but got slice size "
+                          << slice_size;
       }
       slice_param_.shape_[i] = dim_len;
       slice_param_.size_[i] = slice_size;
@@ -105,7 +116,7 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *
     auto src = input + data_size * (param->shape_[1] * i + param->begin_[1]);
     auto ret = memcpy_s(dst, copy_size, src, copy_size);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy failed.";
+      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', memcpy failed. Error no: " << ret;
     }
   }
 }
@@ -113,8 +124,8 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kSliceInputsNum && inputs.size() != kSliceDynamicInputNum) {
-    MS_LOG(EXCEPTION) << "Input num should be " << kSliceInputsNum << " or " << kSliceDynamicInputNum << ", but got "
-                      << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kSliceInputsNum << " or "
+                      << kSliceDynamicInputNum << ", but got " << inputs.size() << " input(s).";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSliceOutputsNum, kernel_name_);
 
@@ -126,10 +137,16 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
     auto begin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     auto size_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "Slice requires the dimension of begin and size must be equal to 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimensions of 'begin' and 'size' should be 1, but got the dimension of 'begin': "
+                        << begin_shape.size() << " and the dimension of 'size': " << size_shape.size();
     }
     if (begin_shape[0] != input_shape.size() || size_shape[0] != input_shape.size()) {
-      MS_LOG(EXCEPTION) << "Slice requires the length of begin and size must be equal to input dimension.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the lengths of 'begin' and 'size' should be equal to "
+                           "the dimension of input tensor, but got the length of 'begin' "
+                        << begin_shape[0] << ", the length of 'size' " << size_shape[0]
+                        << "and the dimension of input tensor " << input_shape.size();
     }
     auto begin_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
     auto size_ptr = reinterpret_cast<int32_t *>(inputs[2]->addr);
@@ -137,7 +154,10 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
     std::vector<int64_t> size{size_ptr, size_ptr + size_shape[0]};
     for (size_t i = 0; i < begin.size(); ++i) {
       if (input_shape[i] < LongToSize(begin[i] + size[i])) {
-        MS_LOG(EXCEPTION) << "Slice shape can not bigger than origin shape.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', slice shape should be not greater than origin shape. But in dimension i=" << i
+                          << ", origin shape 'input_shape[i]' is " << input_shape[i]
+                          << " and slice shape 'LongToSize(begin[i] + size[i])' is " << LongToSize(begin[i] + size[i]);
       }
     }
     InitSliceParam(input_shape, begin, size);

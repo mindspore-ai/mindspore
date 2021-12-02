@@ -125,6 +125,36 @@ inline std::string Vector2Str(const std::vector<T> &inputs) {
 }
 
 template <typename T>
+inline std::string Map2Str(const std::map<std::string, T> value) {
+  std::stringstream ss;
+  ss << "(";
+  for (auto it = value.begin(); it != value.end(); it++) {
+    if (it == value.begin()) {
+      ss << it->first;
+    } else {
+      ss << ", " << it->first;
+    }
+  }
+  ss << ")";
+  return ss.str();
+}
+
+template <typename T>
+inline std::string Unorderedmap2Str(const std::unordered_map<std::string, T> value) {
+  std::stringstream ss;
+  ss << "(";
+  for (auto it = value.begin(); it != value.end(); it++) {
+    if (it == value.begin()) {
+      ss << it->first;
+    } else {
+      ss << ", " << it->first;
+    }
+  }
+  ss << ")";
+  return ss.str();
+}
+
+template <typename T>
 inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x_lerp, T y_lerp) {
   T top = top_left + (top_right - top_left) * x_lerp;
   T bottom = bottom_left + (bottom_right - bottom_left) * x_lerp;

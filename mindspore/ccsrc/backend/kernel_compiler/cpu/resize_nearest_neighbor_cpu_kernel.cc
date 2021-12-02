@@ -35,12 +35,13 @@ void ResizeNearestNeighborCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_shape.size() != kResizeNearestNeighborInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeNearestNeighborInputsShapeSize << ", but got "
-                      << input_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be "
+                      << kResizeNearestNeighborInputsShapeSize << ", but got " << input_shape.size();
   }
 
   if (output_size.size() != kResizeNearestNeighborAttrSize) {
-    MS_LOG(EXCEPTION) << "Size attr should be " << kResizeNearestNeighborAttrSize << ", but got " << output_size.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'size' should be "
+                      << kResizeNearestNeighborAttrSize << ", but got " << output_size.size();
   }
 
   batch_size_ = input_shape[0];
@@ -70,7 +71,9 @@ bool ResizeNearestNeighborCPUKernel::Launch(const std::vector<kernel::AddressPtr
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be float16, float32, float64, int32, or int64, but got "
+                      << TypeIdLabel(dtype_);
   }
   return true;
 }

@@ -30,7 +30,7 @@ void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (input_shape_.size() < 2) {
-    MS_LOG(EXCEPTION) << "Input tensor's rank must be at least 2 for 'BiasAddGrad' Op, but input tensor's rank is "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension should be at least 2, but got "
                       << input_shape_.size();
   }
 }
@@ -63,7 +63,7 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
       int ret =
         ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
       if (ret != NNACL_OK) {
-        MS_LOG(EXCEPTION) << "ReduceSumDim2Axis0 failed.";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', ReduceSumDim2Axis0 failed. Error no: " << ret;
       }
     };
     ParallelLaunchAutoSearch(task, input_shape_[1], this, &parallel_search_info_);

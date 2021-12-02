@@ -42,7 +42,8 @@ bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
   } else if (input_x_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << input_x_dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int32 or int64, but got "
+                      << TypeIdToType(input_x_dtype_)->ToString();
   }
   return true;
 }

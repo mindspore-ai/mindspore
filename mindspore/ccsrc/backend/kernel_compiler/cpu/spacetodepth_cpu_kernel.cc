@@ -35,10 +35,12 @@ void SpaceToDepthCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   block_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
   if (input_shape_.size() != kSpaceToDepthInputShapeSize) {
-    MS_LOG(EXCEPTION) << "Input shape must be a 4-D tensor, but got " << input_shape_.size() << "-D";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be 4-D, but got "
+                      << input_shape_.size() << "-D";
   }
   if (block_size_ < kSpaceToDepthMinBlockSize) {
-    MS_LOG(EXCEPTION) << "The block size must be >= " << kSpaceToDepthMinBlockSize << ", but got " << block_size_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' should be greater than or equal to "
+                      << kSpaceToDepthMinBlockSize << ", but got " << block_size_;
   }
 }
 

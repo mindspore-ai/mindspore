@@ -39,7 +39,9 @@ bool UniqueWithPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
     UniqueCPUKernel::LaunchKernel<float, int>(inputs, workspace, outputs);
     PadOutput<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be float16, float32, int32, or int64, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   return true;
 }

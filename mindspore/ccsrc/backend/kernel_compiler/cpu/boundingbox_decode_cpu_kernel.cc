@@ -22,9 +22,10 @@ namespace kernel {
 template <typename T>
 void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUMS) {
-    MS_LOG(ERROR) << "Input num is " << input_num << ", but BoundingBoxDecode needs 2 inputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
   }
 
   const size_t coordinate_size = 4;
@@ -37,7 +38,8 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       (void)means_.emplace_back(mean);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the input 'means' should be a tuple or a list, and dtype should be float, but got is not.";
   }
 
   if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
@@ -49,11 +51,15 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       (void)stds_.emplace_back(std);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the input 'stds' should be a tuple or a list, and dtype should be float, but got is not.";
   }
 
   if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {
-    MS_LOG(EXCEPTION) << "The size of means or stds is less than 4.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the length of input 'means' and 'stds' should be at least 4, "
+                         "but got the length of 'means': "
+                      << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
 
   std::vector<int64_t> max_shape_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "max_shape");
@@ -62,7 +68,8 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   wh_ratio_clip_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "wh_ratio_clip");
 
   if (max_shape_.size() < MIN_MAX_SHAPE_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of max_shape is less than 2.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the length of 'max_shape' should be at least 2, but got: " << max_shape_.size();
   }
 }
 
@@ -78,15 +85,20 @@ bool BoundingBoxDecodeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
   T ms2 = static_cast<T>(max_shape_[1]);
 
   if (inputs[0]->size != inputs[1]->size) {
-    MS_LOG(ERROR) << "Anchor box size must be equal to deltas box size: " << inputs[1]->size << ", but got"
-                  << inputs[0]->size;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dtype of inputs 'anchor_box' and 'deltas' should be the same, "
+                     "but got the memory size of 'anchor_box': "
+                  << inputs[0]->size << " and 'deltas': " << inputs[1]->size;
     return false;
   }
 
   const size_t coordinate = 4;
   const size_t block_size = inputs[0]->size / sizeof(T);
   if ((block_size % coordinate) != 0) {
-    MS_LOG(ERROR) << "The size of the box must be a multiple of 4.";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the memory size of input 'anchor_box' must be a multiple of 4, "
+                     "but got the memory size of 'anchor_box': "
+                  << inputs[0]->size;
     return false;
   }
 
