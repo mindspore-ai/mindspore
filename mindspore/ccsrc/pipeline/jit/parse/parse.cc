@@ -1016,6 +1016,7 @@ AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &n
   tuple_vec.emplace_back(make_tuple_op);
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
+    node_ptr = HandleInterpret(block, node_ptr, elts[i]);
     tuple_vec.emplace_back(node_ptr);
   }
   CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(std::move(tuple_vec));

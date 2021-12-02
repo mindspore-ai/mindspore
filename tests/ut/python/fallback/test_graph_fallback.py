@@ -75,7 +75,6 @@ def use_tuple_of_tensor():
     return me_x
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_tuple_of_tensor():
     """
     Feature: JIT Fallback
