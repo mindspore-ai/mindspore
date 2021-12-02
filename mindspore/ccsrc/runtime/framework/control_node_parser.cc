@@ -159,6 +159,41 @@ std::set<FuncGraphPtr> GetFuncGraphbyCallNode(const AnfNodePtr &node, std::stack
   return func_graphs;
 }
 
+// Fetch real input node in maketuple.
+KernelWithIndex FetchRealInputNode(const KernelWithIndex &node_with_index) {
+  const auto &node = node_with_index.first;
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    return node_with_index;
+  }
+
+  const auto &abstract = node->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+  if (output_num <= node_with_index.second) {
+    MS_LOG(EXCEPTION) << "Invalid index:" << node_with_index.second << "for tuple node:" << node->DebugString();
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  const auto &inputs = cnode->inputs();
+  size_t real_index = node_with_index.second;
+  for (size_t i = kMakeTupleInputStartPos; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+    const auto &sub_abstract = inputs[i]->abstract();
+    MS_EXCEPTION_IF_NULL(sub_abstract);
+    size_t tmp_index = AnfAlgo::GetOutputNumByAbstract(sub_abstract);
+    // If it is not the output of node, need to subtract the number of inputs of it.
+    if (real_index >= tmp_index) {
+      real_index -= tmp_index;
+      continue;
+    }
+    return {inputs[i], real_index};
+  }
+  MS_LOG(EXCEPTION) << "Failed to get real output from node:" << node->DebugString()
+                    << " index:" << node_with_index.second;
+  return {};
+}
+
 // Get all the real parameters corresponding to node.
 void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIndex> *real_parameters,
                               std::set<KernelWithIndex> *invalid_call_nodes,
@@ -188,14 +223,10 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
     }
   } else if (AnfAlgo::CheckPrimitiveType(node_with_index.first, prim::kPrimMakeTuple)) {
     // If node is a maketuple node, the real parameters are its total inputs.
-    const auto &make_tuple_cnode = node_with_index.first->cast<CNodePtr>();
-    const auto &make_tuple_inputs = make_tuple_cnode->inputs();
-    if (make_tuple_inputs.size() - kMakeTupleInputStartPos <= node_with_index.second) {
-      MS_LOG(EXCEPTION) << "Invalid index:" << node_with_index.second
-                        << "for tuple node:" << node_with_index.first->DebugString();
-    }
-    FetchRealParameterByNode({make_tuple_inputs[node_with_index.second + kMakeTupleInputStartPos], 0}, real_parameters,
-                             invalid_call_nodes, call_node_to_func_graphs);
+    const auto &real_input = FetchRealInputNode(node_with_index);
+    MS_LOG(DEBUG) << "Real input node:" << real_input.first->DebugString() << " index:" << real_input.second
+                  << " for tuple node:" << node_with_index.first->DebugString() << " index:" << node_with_index.second;
+    FetchRealParameterByNode(real_input, real_parameters, invalid_call_nodes, call_node_to_func_graphs);
   } else if (AnfAlgo::CheckPrimitiveType(node.first, prim::kPrimSwitch)) {
     // If node is a switch node, the real parameters are its both true and false branches.
     const auto cnode = node_with_index.first->cast<CNodePtr>();
@@ -970,7 +1001,7 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
   for (const auto &formal_to_real_parameter : formal_to_real_parameters_) {
     for (const auto &real_parameter_with_index : formal_to_real_parameter.second) {
       const auto &real_parameter = real_parameter_with_index.first;
-      if (!real_parameter->isa<ValueNode>()) {
+      if (!real_parameter->isa<ValueNode>() || IsValueNode<FuncGraph>(real_parameter)) {
         continue;
       }
 
@@ -1342,18 +1373,20 @@ AnfNodePtr ControlNodeParser::FetchRootGraphFrontNodeBySubFrontNode(const AnfNod
   return sub_front_node_to_root_front_node_[sub_front_node];
 }
 
-bool IsFirstControlNode(const AnfNodePtr &node) {
+bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
     return true;
   }
+  checked_nodes->emplace(node);
 
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &inputs = cnode->inputs();
   for (const auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
-    if (AnfAlgo::IsCallNode(input) || (!IsFirstControlNode(input))) {
+    if (AnfAlgo::IsCallNode(input) || (!IsFirstControlNode(input, checked_nodes))) {
       return false;
     }
   }
@@ -1362,8 +1395,9 @@ bool IsFirstControlNode(const AnfNodePtr &node) {
 
 void ControlNodeParser::ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
+    std::set<AnfNodePtr> checked_nodes;
     if ((AnfAlgo::IsCallNode(control_node) || AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) &&
-        IsFirstControlNode(control_node)) {
+        IsFirstControlNode(control_node, &checked_nodes)) {
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       func_graph_to_first_control_nodes_[func_graph].emplace(control_node);
