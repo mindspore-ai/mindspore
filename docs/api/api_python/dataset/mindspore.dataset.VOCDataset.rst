@@ -16,7 +16,7 @@ mindspore.dataset.VOCDataset
     - **task** (str, 可选): 指定读取VOC数据的任务类型，现在只支持 `Segmentation` 或 `Detection` （默认值 `Segmentation` ）。
     - **usage** (str, 可选): 指定数据集的子集（默认值 `train` ）。如果 `task` 参数为 `Segmentation` ，则将在./ImageSets/Segmentation/usage + ".txt"中加载数据集图像和标注信息；如果 `task` 参数为 `Detection` ，则将在./ImageSets/Main/usage + ".txt"中加载数据集图像和标注信息；如果未设置任务和用法，默认将加载./ImageSets/Segmentation/train.txt中的数据集图像和标注信息。
     - **class_indexing** (dict, 可选): 指定标签名称到类标签的映射，要求映射规则为str到int，
-      仅在`Detection`任务中有效（默认值None，文件夹名称将按字母顺序排列，每类都有一个唯一的索引，从0开始)。
+      仅在 `Detection` 任务中有效（默认值None，文件夹名称将按字母顺序排列，每类都有一个唯一的索引，从0开始)。
     - **num_samples** (int, 可选): 指定从数据集中读取的样本数（默认值为None，所有图像样本）。
     - **num_parallel_workers** (int, 可选): 指定读取数据的工作线程数（默认值None，即使用mindspore.dataset.config中配置的线程数）。
     - **shuffle** (bool, 可选): 是否混洗数据集（默认为None，下表中会展示不同配置的预期行为）。
@@ -34,14 +34,14 @@ mindspore.dataset.VOCDataset
     - **RuntimeError**: 标注的xml文件格式异常或无效。
     - **RuntimeError**: 标注的xml文件缺失 `object` 属性。
     - **RuntimeError**: 标注的xml文件缺失 `bndbox` 属性。
-    - **RuntimeError**: 同时指定了 `sampler `和 `shuffle` 。
+    - **RuntimeError**: 同时指定了 `sampler` 和 `shuffle` 。
     - **RuntimeError**: 同时指定了 `sampler` 和 `num_shards` 。
     - **RuntimeError**: 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError**: 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError**： 指定的任务不为'Segmentation'或'Detection'。
     - **ValueError**： 指定任务为'Segmentation'时，class_indexing不为None。
     - **ValueError**： 与usage相关的txt文件不存在。
-    - **ValueError**: `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+    - **ValueError**:  `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note::
         - 当指定 `extra_metadata` 为True时，除非显式使用rename算子以删除元信息列明的前缀('_meta-')，

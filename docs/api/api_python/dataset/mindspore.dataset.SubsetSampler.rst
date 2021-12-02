@@ -1,4 +1,4 @@
-mindspore.dataset.SequentialSampler
+mindspore.dataset.SubsetSampler
 ====================================
 
 .. py:class:: mindspore.dataset.SubsetSampler(indices, num_samples=None)

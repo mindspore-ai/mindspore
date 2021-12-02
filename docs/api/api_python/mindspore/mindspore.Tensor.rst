@@ -7,10 +7,10 @@ mindspore.Tensor
 
     **参数：**
 
-    - **input_data** (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray])：张量的输入数据。
-    - **dtype** (:class:`mindspore.dtype`)：输入数据应是在 `mindspore.dtype` 中定义的None、bool或numeric类型。该参数用于定义输出张量的数据类型。如果值为None，则输出张量的数据类型与 `input_data` 的相同。默认值：None。
-    - **shape** (Union[tuple, list, int])：用来表示张量的形状，可以是整数列表、整数元组或单一整数。如果 `input_data` 已经被设置，则不需要再设置 `shape` 。默认值：None。
-    - **init** (Initializer)：用来表示初始化数据的信息。init用于在并行模式下的延迟初始化。一般情况下，不建议在其他条件下使用init接口来初始化参数。如果使用init接口来初始化参数，需要调用 `Tensor.init_data` 接口把 `Tensor` 转换为实际数据。
+    - **input_data** (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]) - 张量的输入数据。
+    - **dtype** (:class:`mindspore.dtype`) - 输入数据应是在 `mindspore.dtype` 中定义的None、bool或numeric类型。该参数用于定义输出张量的数据类型。如果值为None，则输出张量的数据类型与 `input_data` 的相同。默认值：None。
+    - **shape** (Union[tuple, list, int]) - 用来表示张量的形状，可以是整数列表、整数元组或单一整数。如果 `input_data` 已经被设置，则不需要再设置 `shape` 。默认值：None。
+    - **init** (Initializer) - 用来表示初始化数据的信息。init用于在并行模式下的延迟初始化。一般情况下，不建议在其他条件下使用init接口来初始化参数。如果使用init接口来初始化参数，需要调用 `Tensor.init_data` 接口把 `Tensor` 转换为实际数据。
 
     **返回：**
 
@@ -70,8 +70,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int))：被简化的维度。 当 `axis` 为None或者空元组的时候，简化所有维度。 默认值：()。
-        - **keep_dims** (bool)：是否会保留被简化的维度。 默认值： False。
+        - **axis** (Union[None, int, tuple(int)) - 被简化的维度。 当 `axis` 为None或者空元组的时候，简化所有维度。 默认值：()。
+        - **keep_dims** (bool) - 是否会保留被简化的维度。 默认值： False。
 
         **返回：**
 
@@ -95,8 +95,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int))：简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
-        - **keep_dims** (bool)：表示是否保留简化后的维度。默认值：False。
+        - **axis** (Union[None, int, tuple(int)) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
+        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
 
         **返回：**
 
@@ -129,7 +129,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **x** (Tensor)：输入的张量。该张量的形状必须遵守广播规则。
+        **x** (Tensor) - 输入的张量。该张量的形状必须遵守广播规则。
 
         **返回：**
 
@@ -142,7 +142,7 @@ mindspore.Tensor
 
         **参数：**
 
-        array (numpy.array)：输入数组。
+        **array** (numpy.array) - 输入数组。
 
         **返回：**
 
@@ -154,8 +154,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int), list(int)])：简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
-        - **keep_dims** (bool)：表示是否保留简化后的维度。默认值：False。
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 简化的维度。当轴为None或空元组时，简化所有维度。默认值：()。
+        - **keep_dims** (bool) - 表示是否保留简化后的维度。默认值：False。
 
         **返回：**
 
@@ -367,7 +367,7 @@ mindspore.Tensor
         **参数：**
 
         - **axis** (int, optional) - 轴，在该轴方向上的累积和。其默认值（None）用来计算扁平轴上的累加和。
-        - **dtype** (`mindspore.dtype`, optional) - 如果未指定参数值，则保持与原始Tensor相同，除非参数值是一个精度小于 :class:`float32` 的整数。在这种情况下，使用 `float32` 。默认值：None。
+        - **dtype** (`mindspore.dtype`, optional) - 如果未指定参数值，则保持与原始Tensor相同，除非参数值是一个精度小于 `float32` 的整数。在这种情况下，使用 `float32` 。默认值：None。
 
         **异常：**
 
@@ -500,7 +500,7 @@ mindspore.Tensor
     .. py:method:: init_data(slice_index=None, shape=None, opt_shard_group=None)
 
         获取此Tensor的数据。
-        对于同一个Tensor，只可以调用一次init_data函数。
+        对于同一个Tensor，只可以调用一次 `init_data` 函数。
 
         **参数：**
 
@@ -834,7 +834,7 @@ mindspore.Tensor
         **参数：**
 
         - **v** (Union[int, float, bool, list, tuple, Tensor]) - 要插入元素的值。
-        - **side** ('left', 'right', optional) - 如果参数值为'left'，则给出找到的第一个合适位置的索引。如果参数值为'right'，则返回最后一个这样的索引。如果没有合适的索引，则返回0或N（其中N是Tensor的长度）。默认值：`left` 。
+        - **side** ('left', 'right', optional) - 如果参数值为'left'，则给出找到的第一个合适位置的索引。如果参数值为'right'，则返回最后一个这样的索引。如果没有合适的索引，则返回0或N（其中N是Tensor的长度）。默认值：'left'。
         - **sorter** (Union[int, float, bool, list, tuple, Tensor]) - 整数索引的可选一维数组，将Tensor按升序排序。它们通常是NumPy argsort方法的结果。
 
         **返回：**
@@ -946,8 +946,8 @@ mindspore.Tensor
 
         - **axis** (Union[None, int, tuple(int)]) - 指定维度，在该维度方向上进行求和运算。默认值：None。如果参数值为None，会计算输入数组中所有元素的和。如果axis为负数，则从最后一维开始往第一维计算。如果axis为整数元组，会对该元组指定的所有轴方向上的元素进行求和。
         - **dtype** (`mindspore.dtype`, optional) - 默认值为None。会覆盖输出Tensor的dtype。
-        - **keepdims** (bool) - 如果这个参数为True，被删去的维度保留在结果中，且维度大小设为1。有了这个选项，结果就可以与输入数组进行正确的广播运算。如果设为默认值，那么keepdims不会被传递给ndarray子类的sum方法。但是任何非默认值都会被传递。如果子类的方法未实现keepdims，则引发异常。默认值：`False`。
-        - **initial** (scalar) - 初始化的起始值。默认值：`None` 。
+        - **keepdims** (bool) - 如果这个参数为True，被删去的维度保留在结果中，且维度大小设为1。有了这个选项，结果就可以与输入数组进行正确的广播运算。如果设为默认值，那么 `keepdims` 不会被传递给ndarray子类的sum方法。但是任何非默认值都会被传递。如果子类的方法未实现 `keepdims` ，则引发异常。默认值：False。
+        - **initial** (scalar) - 初始化的起始值。默认值：None。
 
         **返回：**
 
@@ -1015,7 +1015,7 @@ mindspore.Tensor
         **参数：**
 
         - **indices** (Tensor) - 待提取的值的shape为 `(Nj...)` 的索引。
-        - **axis** (int, optional) - 在指定维度上选择值。默认情况下，使用展开的输入数组。默认值：`None` 。
+        - **axis** (int, optional) - 在指定维度上选择值。默认情况下，使用展开的输入数组。默认值：None。
         - **mode** ('raise', 'wrap', 'clip', optional)
 
           - edge：填充Tensor的边缘值。
@@ -1119,7 +1119,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **axes** (Union[None, tuple(int), list(int), int], optional) - 如果axes为None或未设置，则该方法将反转维度。如果axes为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果axes为整数，则此表单仅作为元组/列表表单的备选。
+        **axes** (Union[None, tuple(int), list(int), int], optional) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。
 
         **返回：**
 
@@ -1156,9 +1156,9 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)]) - 维度，在指定维度上计算方差。其默认值是展开Tensor的方差。默认值：`None` 。
+        - **axis** (Union[None, int, tuple(int)]) - 维度，在指定维度上计算方差。其默认值是展开Tensor的方差。默认值：None。
         - **ddof** (int) - δ自由度。默认值：0。计算中使用的除数是 :math:`N - ddof` ，其中 :math:`N` 表示元素的数量。
-        - **keepdims** (bool) - 默认值：`False` 。
+        - **keepdims** (bool) - 默认值：False。
 
         **支持平台：**
 

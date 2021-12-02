@@ -7,7 +7,7 @@ mindspore.export
 
     .. note::
         - 当导出文件格式为AIR、ONNX时，单个Tensor的大小不能超过2GB。
-        - 当file_name 没有后缀时，系统会根据file_format 自动添加后缀。
+        - 当 `file_name` 没有后缀时，系统会根据 `file_format` 自动添加后缀。
 
     **参数：**
 
@@ -22,7 +22,7 @@ mindspore.export
 
     - **kwargs** (dict) – 配置选项字典。
 
-      - **quant_mode** (str) - 如果网络是量化感知训练网络，那么quant_mode需要设置为"QUANT"，否则 `quant_mode` 需要设置为"NONQUANT"。
+      - **quant_mode** (str) - 如果网络是量化感知训练网络，那么 `quant_mode` 需要设置为"QUANT"，否则 `quant_mode` 需要设置为"NONQUANT"。
       - **mean** (float) - 预处理后输入数据的平均值，用于量化网络的第一层。默认值：127.5。
       - **std_dev** (float) - 预处理后输入数据的方差，用于量化网络的第一层。默认值：127.5。
       - **enc_key** (str) - 用于加密的字节类型密钥，有效长度为16、24或者32。

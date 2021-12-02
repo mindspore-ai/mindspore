@@ -11,14 +11,14 @@ mindspore.dataset.GraphData
     - **num_parallel_workers** (int, 可选)：读取数据的工作线程数（默认为None）。
     - **working_mode** (str, 可选)：设置工作模式，目前支持'local'/'client'/'server'（默认为'local'）。
 
-      - 'local'，用于非分布式训练场景。
-      - 'client'，用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
-      - 'server'，用于分布式训练场景。服务器加载数据并可供客户端使用。
+      - **local**：用于非分布式训练场景。
+      - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
+      - **server**：用于分布式训练场景。服务器加载数据并可供客户端使用。
 
-    - **hostname** (str, 可选)：图数据集服务器的主机名。该参数仅在工作模式设置为'client'或'server'时有效（默认为'127.0.0.1'）。
-    - **port** (int, 可选)：图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为'client'或'server'（默认为50051）时有效。
-    - **num_client** (int, 可选)：期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为'server'时有效（默认为1）。
-    - **auto_shutdown** (bool, 可选)：当工作模式设置为'server'时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出（默认为True）。
+    - **hostname** (str, 可选)：图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效（默认为'127.0.0.1'）。
+    - **port** (int, 可选)：图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' （默认为50051）时有效。
+    - **num_client** (int, 可选)：期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效（默认为1）。
+    - **auto_shutdown** (bool, 可选)：当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出（默认为True）。
 
     **样例：**
 
@@ -47,7 +47,6 @@ mindspore.dataset.GraphData
     **异常：**
 
     **TypeError**：参数 `edge_type` 的类型不为整型。
-
 
 .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL: 0。
 
@@ -162,7 +161,6 @@ mindspore.dataset.GraphData
     - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
     - **TypeError**：参数 `neighbor_type` 的类型不为整型。
 
-
 .. py:method:: get_all_nodes(node_type)
 
     获取图中的所有节点。
@@ -183,7 +181,6 @@ mindspore.dataset.GraphData
 
     **TypeError**：参数 `node_type` 的类型不为整型。
 
-
 .. py:method:: get_edges_from_nodes(node_list)
 
     从节点获取边。
@@ -203,7 +200,6 @@ mindspore.dataset.GraphData
     **异常：**
 
     **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
-
 
 .. py:method:: get_edge_feature(edge_list, feature_types)
 
@@ -255,7 +251,6 @@ mindspore.dataset.GraphData
     - **TypeError**：参数 `neg_neighbor_num` 的类型不为整型。
     - **TypeError**：参数 `neg_neighbor_type` 的类型不为整型。
 
-
 .. py:method:: get_nodes_from_edges(edge_list)
 
     从图中的边获取节点。
@@ -271,7 +266,6 @@ mindspore.dataset.GraphData
     **异常：**
 
     **TypeError：** 参数 `edge_list` 不为列表或ndarray。
-
 
 .. py:method:: get_node_feature(node_list, feature_types)
 
@@ -296,7 +290,6 @@ mindspore.dataset.GraphData
     - **TypeError**：参数 `node_list` 的类型不为列表或numpy.ndarray。
     - **TypeError**：参数 `feature_types` 的类型不为列表或numpy.ndarray。
 
-
 .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
 
     获取已采样邻居信息。此API支持多跳邻居采样。即将上一次采样结果作为下一跳采样的输入，最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]
@@ -308,8 +301,8 @@ mindspore.dataset.GraphData
     - **neighbor_types** (Union[list, numpy.ndarray])：每跳采样的邻居类型。
     - **strategy** (SamplingStrategy, 可选)：采样策略（默认为mindspore.dataset.engine.SamplingStrategy.RANDOM）。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
         
-      - SamplingStrategy.RANDOM，随机抽样，带放回采样。
-      - SamplingStrategy.EDGE_WEIGHT，以边缘权重为概率进行采样。
+      - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
+      - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
 
     **返回：**
 
@@ -334,7 +327,7 @@ mindspore.dataset.GraphData
 
     **返回：**
 
-    dict，图的元信息。键为node_num、node_type、node_feature_type、edge_num、edge_type、和edge_feature_type。
+    dict，图的元信息。键为 `node_num` 、 `node_type` 、 `node_feature_type` 、 `edge_num` 、 `edge_type` 、和 `edge_feature_type` 。
 
 
 .. py:method:: random_walk(target_nodes, meta_path, step_home_param=1.0, step_away_param=1.0, default_node=-1)

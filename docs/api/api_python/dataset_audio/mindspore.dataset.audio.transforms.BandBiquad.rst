@@ -9,7 +9,7 @@ mindspore.dataset.audio.transforms.BandBiquad
 
     - **sample_rate** (int)：采样率，例如44100 (Hz)，不能为零。
     - **central_freq** (float)：中心频率（单位：Hz）。
-    - **Q** (float, optional)：品质因子，参考https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
+    - **Q** (float, optional)：品质因子，参考 https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
     - **noise** (bool, optional)：若为True，则使用非音调音频（如打击乐）模式；若为False，则使用音调音频（如语音、歌曲或器乐）模式（默认为False）。
 
     **样例：**

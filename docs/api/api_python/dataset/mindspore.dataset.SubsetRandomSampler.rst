@@ -1,5 +1,5 @@
-mindspore.dataset.SequentialSampler
-====================================
+mindspore.dataset.SubsetRandomSampler
+======================================
 
 .. py:class:: mindspore.dataset.SubsetRandomSampler(indices, num_samples=None)
 

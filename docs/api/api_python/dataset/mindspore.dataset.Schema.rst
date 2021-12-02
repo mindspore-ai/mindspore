@@ -15,7 +15,7 @@ mindspore.dataset.Schema
 
     **异常：**
 
-    **RuntimeError:** 模式文件加载失败。
+    **RuntimeError**： 模式文件加载失败。
 
     **样例：**
 
@@ -25,7 +25,6 @@ mindspore.dataset.Schema
     >>> schema = ds.Schema()
     >>> schema.add_column(name='col1', de_type=mstype.int64, shape=[2])
     
-
     .. py:method::add_column(name, de_type, shape=None)
 
         向schema中添加新列。
@@ -40,7 +39,6 @@ mindspore.dataset.Schema
 
         **ValueError：** 列类型未知。
         
-
     .. py:method::from_json(json_obj)
 
         从JSON对象获取schema文件。
@@ -55,7 +53,6 @@ mindspore.dataset.Schema
         - **RuntimeError：** 对象中缺少数据集类型。
         - **RuntimeError：** 对象中缺少列。
         
-
     .. py:method::parse_columns(columns)
 
         解析传入的数据列的属性并将其添加到自身的schema中。
@@ -64,8 +61,8 @@ mindspore.dataset.Schema
 
         - **columns** (Union[dict, list[dict], tuple[dict]]): 数据集属性信息，从schema文件解码。
 
-            - list[dict]，'name'和'type'必须为key值，'shape'可选。
-            - dict，columns.keys()作为名称，columns.values()是dict，其中包含'type'，'shape'可选。
+            - **list**[dict]：'name'和'type'必须为key值，'shape'可选。
+            - **dict**：columns.keys()作为名称，columns.values()是dict，其中包含'type'，'shape'可选。
 
         **异常：**
 

@@ -9,9 +9,9 @@ mindspore.ms_function
 
     **参数：**
 
-    - **fn**  (Function)：要编译成图的Python函数。默认值：None。
-    - **obj**  (Object)：用于区分编译后函数的Python对象。默认值：None。
-    - **input_signature**  (Tensor)：用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。如果指定了 `input_signature` ，则 `fn` 的每个输入都必须是 `Tensor` 。
+    - **fn**  (Function) - 要编译成图的Python函数。默认值：None。
+    - **obj**  (Object) - 用于区分编译后函数的Python对象。默认值：None。
+    - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。如果指定了 `input_signature` ，则 `fn` 的每个输入都必须是Tensor。
             
     并且 `fn` 的输入参数将不会接受 `\**kwargs` 参数。实际输入的shape和dtype必须与 `input_signature` 的相同。否则，将引发TypeError。默认值：None。
 

@@ -13,7 +13,6 @@ mindspore.dataset.DistributedSampler
     - **num_samples** (int, optional)：要采样的样本数（默认为None，对所有元素进行采样）。
     - **offset** (int, optional)：将数据集中的元素发送到的起始分片ID，不应超过 `num_shards` 。仅当ConcatDataset以DistributedSampler为采样器时，此参数才有效。此参数影响每个分片的样本数（默认为-1，每个分片具有相同的样本数）。
             
-
     **样例：**
 
     >>> # 创建一个分布式采样器，共10个分片。当前分片为分片5。

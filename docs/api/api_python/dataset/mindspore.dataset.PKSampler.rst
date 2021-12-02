@@ -26,8 +26,8 @@ mindspore.dataset.PKSampler
     - **TypeError：** `shuffle` 不是bool值。
     - **TypeError：** `class_column` 不是str值。
     - **TypeError：** `num_samples` 不是整数值。
-    - **NotImplementedError:** `num_class` 不为None。
-    - **RuntimeError:** `num_val` 不是正值。
+    - **NotImplementedError：** `num_class` 不为None。
+    - **RuntimeError：** `num_val` 不是正值。
     - **ValueError：** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
