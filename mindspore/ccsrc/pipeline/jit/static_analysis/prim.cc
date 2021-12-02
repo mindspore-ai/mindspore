@@ -1264,6 +1264,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     }
 
     // Process the object.
+    TraceGuard guard(std::make_shared<TraceResolve>(out_conf->node()->debug_info()));
     ValuePtr converted_ret = nullptr;
     bool converted = parse::ConvertData(obj, &converted_ret, true);
     if (!converted) {
