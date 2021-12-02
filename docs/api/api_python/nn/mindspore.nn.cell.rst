@@ -15,7 +15,7 @@
     - **auto_prefix** (Cell) – 递归地生成作用域。默认值：True。
     - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
-    **支持平台**：
+    **支持平台：**
 
     ``Ascend`` ``GPU`` ``CPU``
 
