@@ -38,9 +38,9 @@ const char benchmark_source[] = R"RAW(
 #include <string>
 #include <cstring>
 
-#include "include/lite_session.h"
-#include "include/ms_tensor.h"
-#include "include/errorcode.h"
+#include "lite_session.h"
+#include "ms_tensor.h"
+#include "errorcode.h"
 
 #include "load_input.h"
 #include "calib_output.h"
