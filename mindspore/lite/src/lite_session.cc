@@ -1543,7 +1543,13 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, mindspore::Mode
 
 int lite::LiteSession::CreateSessionByPath(const std::string &model_path, mindspore::ModelType model_type,
                                            session::LiteSession *session) {
-  auto *model = lite::ImportFromPath(model_path.c_str());
+  size_t model_size;
+  auto model_buf = LoadModelByPath(model_path, model_type, &model_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed";
+    return RET_ERROR;
+  }
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
