@@ -985,8 +985,12 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       }
       auto front_node = graph->GetFrontAnfByBackendAnf(input);
       auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(input);
+      auto tuple_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input);
       KernelWithIndex from_node_with_index =
         (front_node == nullptr) ? internal_node_with_index : KernelWithIndex(front_node, 0);
+      if (from_node_with_index.first == nullptr) {
+        from_node_with_index = tuple_node_with_index;
+      }
       // If the formal parameter is a tuple type, the parameter of the kernel graph will not directly correspond
       // to the front parameter, but the node in the internal parameter.
       if ((!is_call_input_graph) &&

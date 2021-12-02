@@ -145,7 +145,9 @@ class MindRTBackend : public Backend {
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
   void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
                         size_t *output_position, VectorRef *outputs);
-
+  // In the control flow, the output of the call node needs to be created by abstract.
+  BaseRef ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
+                                    const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position);
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 

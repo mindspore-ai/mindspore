@@ -627,6 +627,12 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   root_graph_parameters_ = root_graph->parameters();
 
   func_graph_to_kernel_graphs_ = func_graph_to_kernel_graphs;
+  for (const auto &func_graph_to_kernel_graph : func_graph_to_kernel_graphs) {
+    for (const auto kernel_graph : func_graph_to_kernel_graph.second) {
+      MS_LOG(DEBUG) << "Funcgraph:" << func_graph_to_kernel_graph.first->ToString()
+                    << " to kernel graph:" << kernel_graph->ToString();
+    }
+  }
 
   CreateBranchIDForCallNode(control_nodes);
 
@@ -683,7 +689,11 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   }
 
   // Parameter input should be linked to its entrance actor.
-  const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
+  auto front_node = graph->GetFrontAnfByBackendAnf(node);
+  if (front_node == nullptr) {
+    auto front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(node);
+    front_node = front_node_with_index.first;
+  }
   return (front_node != nullptr && front_node->isa<Parameter>());
 }
 
@@ -1234,7 +1244,9 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
       }
       const auto &front_node = graph->GetFrontAnfByBackendAnf(parameter);
       const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(parameter);
-      if (front_node == nullptr && front_node_with_index.first == nullptr) {
+      const auto &front_tuple_parameter_with_index = graph->GetElementInTupleBackendFrontIndexMap(parameter);
+      if (front_node == nullptr && front_node_with_index.first == nullptr &&
+          front_tuple_parameter_with_index.first == nullptr) {
         MS_LOG(EXCEPTION) << "Invalid backend parameter:" << parameter->DebugString()
                           << " for kernel graph:" << graph->ToString();
       }
@@ -1249,6 +1261,8 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
             front_to_backend_parameters_[real_parameter].emplace(parameter, device_context);
           }
         }
+      } else if (front_tuple_parameter_with_index.first != nullptr) {
+        front_to_backend_parameters_[front_tuple_parameter_with_index].emplace(parameter, device_context);
       } else {
         front_to_backend_parameters_[{front_node, 0}].emplace(parameter, device_context);
       }
