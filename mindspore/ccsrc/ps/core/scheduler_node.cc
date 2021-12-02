@@ -607,6 +607,9 @@ bool SchedulerNode::Stop() {
         client->Stop();
       }
     }
+    if (client_to_scheduler_ != nullptr) {
+      client_to_scheduler_->Stop();
+    }
     if (client_thread_ != nullptr && client_thread_->joinable()) {
       client_thread_->join();
     }
