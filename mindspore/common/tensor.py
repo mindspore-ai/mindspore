@@ -138,8 +138,10 @@ class Tensor(Tensor_):
 
             if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
                 input_data = np.ascontiguousarray(input_data)
-
-            Tensor_.__init__(self, input_data, dtype)
+            if dtype is not None:
+                Tensor_.__init__(self, input_data, dtype)
+            else:
+                Tensor_.__init__(self, input_data)
         else:
             Tensor_.__init__(self, dtype, shape)
 
