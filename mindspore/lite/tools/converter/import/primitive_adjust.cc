@@ -225,6 +225,7 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapActivation(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -245,6 +246,7 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
