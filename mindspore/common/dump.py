@@ -64,6 +64,9 @@ def set_dump(target, enabled=True):
         enabled (bool): True means enable dump, False means disable dump.
             Default: True.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> # Please set the dump config file and environment variable before
         >>> # running this example to actually get the dump data.
@@ -71,10 +74,11 @@ def set_dump(target, enabled=True):
         >>> import numpy as np
         >>>
         >>> import mindspore.nn as nn
-        >>> import mindspore.context as ctx
+        >>> import mindspore.context as context
+        >>> from mindspore import Tensor, set_dump
         >>>
-        >>> ctx.set_context(mode=ctx.GRAPH_MODE)
-        >>> ctx.set_context(device_target="Ascend")
+        >>> context.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
+        >>>
         >>> class MyNet(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
@@ -85,9 +89,11 @@ def set_dump(target, enabled=True):
         ...         x = self.conv1(x)
         ...         x = self.relu1(x)
         ...         return x
+        >>>
         >>> net = MyNet()
         >>> set_dump(net.conv1)
-        >>> net(np.ones([1, 5, 10, 10], dtype=np.float32))
+        >>> input_tensor = Tensor(np.ones([1, 5, 10, 10], dtype=np.float32))
+        >>> net(input_tensor)
     """
     if security.enable_security():
         raise ValueError('The set_dump API is not supported, please recompile '
