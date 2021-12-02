@@ -56,6 +56,8 @@ void EntranceActor::RunOpRealParameterWithBranchID(OpRealParameterWithBranchID r
 
 void EntranceActor::ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the message of clearing data.";
+
   is_loop_body_execution_ = false;
 
   if (loop_body_input_controls_nums_ != 0) {
@@ -64,11 +66,12 @@ void EntranceActor::ClearDataOnStepEnd(AID *const input_control, OpContext<Devic
 }
 
 void EntranceActor::Run(OpContext<DeviceTensor> *const context) {
+  // The begin execution of step is false and the others execution of step is true.
+  is_loop_body_execution_ = true;
+
   FetchInput(context);
   EraseInput(context);
   SendOutput(context);
-  // The begin execution of step is false and the others execution of step is true.
-  is_loop_body_execution_ = true;
 }
 
 void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
