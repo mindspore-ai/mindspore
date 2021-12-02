@@ -158,11 +158,15 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     """
     if test_key == "test_gpu_e2e_dump":
         data = e2e_dump_dict
-        data["common_dump_settings"]["path"] = dump_path
-        data["common_dump_settings"]["saved_data"] = saved_data
+    elif test_key == "test_async_dump":
+        data = async_dump_dict
+        data["common_dump_settings"]["input_output"] = 0
+        data["common_dump_settings"]["file_format"] = "npy"
     else:
         raise ValueError(
             "Failed to generate statistic dump json file. The test name value " + test_key + " is invalid.")
+    data["common_dump_settings"]["path"] = dump_path
+    data["common_dump_settings"]["saved_data"] = saved_data
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 

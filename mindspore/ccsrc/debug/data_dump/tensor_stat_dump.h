@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_
 
+#include <memory>
 #include <string>
 #include <fstream>
 
@@ -24,6 +25,7 @@
 
 namespace mindspore {
 class Debugger;
+class TensorData;
 class CsvWriter {
  public:
   static CsvWriter &GetInstance() {
@@ -31,13 +33,6 @@ class CsvWriter {
     return instance;
   }
 
- private:
-  const std::string kSeparator = ",";
-  const std::string kEndLine = "\n";
-  std::ofstream file_;
-  std::string file_path_str_ = "";
-
- public:
   CsvWriter() = default;
   ~CsvWriter();
   DISABLE_COPY_AND_ASSIGN(CsvWriter)
@@ -45,28 +40,39 @@ class CsvWriter {
   void CloseFile();
   template <typename T>
   void WriteToCsv(const T &val, bool end_line = false);
+
+ private:
+  const std::string kSeparator = ",";
+  const std::string kEndLine = "\n";
+  std::ofstream file_;
+  std::string file_path_str_ = "";
 };
 
 class TensorStatDump {
-  static const char CSV_HEADER[];
-  static const char CSV_FILE_NAME[];
-
-  const std::string &op_type_;
-  const std::string &op_name_;
-  uint32_t task_id_;
-  uint32_t stream_id_;
-  uint64_t timestamp_;
-  std::string io_;
-  size_t slot_;
-  size_t tensor_loader_slot_;
-
  public:
   static bool OpenStatisticsFile(const std::string &dump_path);
 
   TensorStatDump(const std::string &op_type, const std::string &op_name, uint32_t task_id, uint32_t stream_id,
                  uint64_t timestamp, bool input, size_t slot, size_t tensor_loader_slot_);
+  TensorStatDump(const std::string &op_type, const std::string &op_name, const std::string &task_id,
+                 const std::string &stream_id, const std::string &timestamp, const std::string &io, size_t slot,
+                 size_t tensor_loader_slot);
+  bool DumpTensorStatsToFile(const std::string &dump_path, std::shared_ptr<TensorData> data);
   bool DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
                              const Debugger *debugger);
+
+ private:
+  static const char CSV_HEADER[];
+  static const char CSV_FILE_NAME[];
+
+  const std::string op_type_;
+  const std::string op_name_;
+  const std::string task_id_;
+  const std::string stream_id_;
+  const std::string timestamp_;
+  std::string io_;
+  size_t slot_;
+  size_t tensor_loader_slot_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_

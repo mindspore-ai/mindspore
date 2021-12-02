@@ -95,7 +95,8 @@ class E2eDump {
   static nlohmann::json ParseOverflowInfo(char *data_ptr);
 
   template <typename T>
-  static bool ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr);
+  static bool ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr,
+                                            const std::string &io, uint32_t slot);
 #endif
 
   inline static unsigned int starting_graph_id = INT32_MAX;
