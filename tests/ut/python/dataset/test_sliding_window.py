@@ -36,7 +36,7 @@ def test_sliding_window_callable():
     input2 = [["大", "家", "早", "上", "好"]]
     with pytest.raises(RuntimeError) as info:
         _ = op(input2)
-    assert "SlidingWindow: SlidingWindow supports 1D input only for now." in str(info.value)
+    assert "SlidingWindow: SlidingWindow supports 1D input only for now, but got 2D." in str(info.value)
 
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:
@@ -114,7 +114,7 @@ def test_sliding_window_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "axis supports 0 or -1 only for now." in str(e)
+        assert "The parameter axis supports 0 or -1 only for now, but got -100." in str(e)
 
     try:
         inputs = ["aa", "bb", "cc"]
@@ -124,7 +124,7 @@ def test_sliding_window_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "SlidingWindow supports 1D input only for now." in str(e)
+        assert "SlidingWindow supports 1D input only for now, but got 0D." in str(e)
 
 
 if __name__ == '__main__':

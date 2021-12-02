@@ -20,8 +20,11 @@ namespace dataset {
 Status SlidingWindowOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1,
-                               "SlidingWindow: SlidingWindow supports 1D input only for now.");
-  CHECK_FAIL_RETURN_UNEXPECTED(axis_ == 0 || axis_ == -1, "SlidingWindow: axis supports 0 or -1 only for now.");
+                               "SlidingWindow: SlidingWindow supports 1D input only for now, but got " +
+                                 std::to_string(input->shape().Rank()) + "D.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    axis_ == 0 || axis_ == -1,
+    "SlidingWindow: The parameter axis supports 0 or -1 only for now, but got " + std::to_string(axis_) + ".");
 
   std::vector<TensorShape> input_shape = {input->shape()};
   std::vector<TensorShape> output_shape = {TensorShape({})};

@@ -83,7 +83,9 @@ DataType DataType::FromCVType(int cv_type) {
     case CV_64F:
       return DataType(DataType::DE_FLOAT64);
     default:
-      MS_LOG(ERROR) << "Cannot convert from OpenCV type, unknown CV type. Unknown data type is returned!";
+      std::string err_msg = "Cannot convert from OpenCV type, unknown CV type.";
+      err_msg += " Currently supported data type: [int8, uint8, int16, uint16, int32, float16, float32, float64]";
+      MS_LOG(ERROR) << err_msg;
       return DataType(DataType::DE_UNKNOWN);
   }
 }
@@ -156,7 +158,11 @@ DataType DataType::FromNpArray(const py::array &arr) {
   } else if (arr.dtype().kind() == 'S' || arr.dtype().kind() == 'U') {
     return DataType(DataType::DE_STRING);
   } else {
-    MS_LOG(ERROR) << "Cannot convert from numpy type. Unknown data type is returned!";
+    std::string err_msg = "Cannot convert from numpy type. Unknown data type is returned!";
+    err_msg +=
+      " Currently supported data type: [int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, "
+      "float64, string]";
+    MS_LOG(ERROR) << err_msg;
     return DataType(DataType::DE_UNKNOWN);
   }
 }
