@@ -18,6 +18,7 @@ Testing profiling support in DE
 import json
 import os
 import numpy as np
+import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
@@ -41,6 +42,7 @@ file_name_map_rank_id = {"test_profiling_simple_pipeline": "0",
                          "test_profiling_seq_pipelines_repeat": "9"}
 
 
+@pytest.mark.forked
 class TestMinddataProfilingManager:
     """
     Test MinddataProfilingManager
@@ -53,9 +55,9 @@ class TestMinddataProfilingManager:
         # Get instance pointer for MindData profiling manager
         self.md_profiler = cde.GlobalContext.profiling_manager()
 
-        self._PIPELINE_FILE = "./pipeline_profiling"
-        self._CPU_UTIL_FILE = "./minddata_cpu_utilization"
-        self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
+        self._pipeline_file = "./pipeline_profiling"
+        self._cpu_util_file = "./minddata_cpu_utilization"
+        self._dataset_iterator_file = "./dataset_iterator_profiling"
 
     def setup_method(self):
         """
@@ -64,9 +66,9 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
-        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
+        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         # Confirm MindData Profiling files do not yet exist
         assert os.path.exists(pipeline_file) is False
@@ -91,9 +93,9 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
-        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
+        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         # Delete MindData profiling files generated from the test.
         os.remove(pipeline_file)
@@ -132,9 +134,9 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
-        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
+        dataset_iterator_file = self._dataset_iterator_file + "_" + file_id + ".txt"
 
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["data"])
@@ -172,8 +174,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["gen"])
@@ -217,8 +219,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
         def source1():
@@ -273,8 +275,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
         def source1():
@@ -342,8 +344,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         def source1():
             for i in range(8000):
@@ -393,8 +395,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         # Create this common pipeline
         # Cifar10 -> Map -> Map -> Batch -> Repeat
@@ -446,8 +448,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data1 = ds.GeneratorDataset(source, ["data"])
@@ -498,8 +500,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
@@ -550,8 +552,8 @@ class TestMinddataProfilingManager:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
 
-        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
-        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        pipeline_file = self._pipeline_file + "_" + file_id + ".json"
+        cpu_util_file = self._cpu_util_file + "_" + file_id + ".json"
 
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
