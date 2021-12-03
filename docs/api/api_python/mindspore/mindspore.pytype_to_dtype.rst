@@ -7,8 +7,8 @@ mindspore.pytype_to_dtype
 
     **参数：**
 
-        **obj** (type) – Python数据对象。
+    **obj** (type) – Python数据对象。
 
     **返回:**
 
-        MindSpore的数据类型。
+    MindSpore的数据类型。
