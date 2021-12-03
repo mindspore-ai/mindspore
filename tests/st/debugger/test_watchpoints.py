@@ -216,20 +216,6 @@ def test_async_overflow_watchpoints_hit():
     run_overflow_watchpoint(True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_async_overflow_watchpoints_not_hit():
-    """
-    Feature: Offline Debugger CheckWatchpoint
-    Description: Test check overflow watchpoint hit
-    Expectation: Overflow watchpoint is not hit
-    """
-    run_overflow_watchpoint(False)
-
-
 def compare_expect_actual_result(watchpoint_hits_list, test_index, test_name):
     """Compare actual result with golden file."""
     pwd = os.getcwd()

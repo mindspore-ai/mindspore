@@ -449,8 +449,11 @@ class DebugServices {
 
   std::string RemoveKernelGraphPrefix(std::string node_name_to_find);
 
-  bool GetAttrsFromAsyncFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
-                                 uint64_t *stream_id);
+  bool GetTaskIdStreamId(std::string file_name, std::string overflow_file_prefix, uint64_t *task_id,
+                         uint64_t *stream_id);
+
+  bool GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
+                            uint64_t *stream_id);
 
   std::string RealPath(const std::string &input_path);
 
