@@ -70,6 +70,7 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
     }
     output_size_list_.push_back(LongToSize(size_i));
   }
+  anf_node_ = anf_node;
   return true;
 }
 bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

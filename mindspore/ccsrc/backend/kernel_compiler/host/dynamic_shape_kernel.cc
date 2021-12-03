@@ -18,6 +18,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/trace_base.h"
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
+#include "runtime/mem.h"
 
 namespace mindspore {
 namespace kernel {
@@ -54,17 +55,45 @@ void DynamicShapeKernel::Execute() {
       MS_LOG(EXCEPTION) << "Execute DynamicShapeKernel memcpy_s failed!";
     }
   } else {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    auto ret = runtime_instance->SyncStream();
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Sync stream error!";
-    }
     output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
                                   output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
                                   output_tensor_for_sync->device_info().host_format_);
   }
 
+  MS_LOG(INFO) << "Execute DynamicShapeKernel End";
+}
+
+void DynamicShapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  MS_LOG(INFO) << "Execute DynamicShapeKernel Start";
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  if (input_num != 1) {
+    MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
+                      << trace::DumpSourceLines(cnode);
+  }
+
+  auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
+
+  auto output_type = TypeId::kNumberTypeInt64;
+
+  auto output_tensor_for_sync = std::make_shared<tensor::Tensor>(output_type, output_shape);
+  MS_EXCEPTION_IF_NULL(output_tensor_for_sync);
+  auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
+  for (size_t i = 0; i < prev_output_shape.size(); ++i) {
+    MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
+    *(data_ptr + i) = SizeToLong(prev_output_shape[i]);
+  }
+
+  if (outputs.empty()) {
+    MS_LOG(EXCEPTION) << "Output address of DynamicShape is empty";
+  }
+  auto status = rtMemcpyAsync(outputs[0]->addr, outputs[0]->size, output_tensor_for_sync->data_c(),
+                              LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE, stream_);
+  if (status != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Execute DynamicShapeKernel rtMemcpyAsync failed!";
+  }
   MS_LOG(INFO) << "Execute DynamicShapeKernel End";
 }
 
