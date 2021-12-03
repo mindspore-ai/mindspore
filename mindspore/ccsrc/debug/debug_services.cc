@@ -1359,7 +1359,7 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
                                           bool error_on_no_value) {
   DIR *d = opendir(abspath.c_str());
   if (d == nullptr) {
-    MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";
+    MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
@@ -1771,7 +1771,7 @@ std::string DebugServices::RealPath(const std::string &input_path) {
       MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
     }
     if (realpath(prefix_path.c_str(), real_path) == nullptr) {
-      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
+      MS_LOG(INFO) << "The dir " << prefix_path << " does not exist.";
       return "";
     }
 

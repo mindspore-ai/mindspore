@@ -29,6 +29,9 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "debug/data_dump/e2e_dump.h"
+#include "utils/config_manager.h"
+
+constexpr int kFailure = 1;
 
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::KernelLaunchInfo;
@@ -163,6 +166,19 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   // check if the node is last kernel
   bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
   debugger->PostExecuteNode(cnode, last_kernel);
+}
+
+std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
+  std::string error_info = "";
+  bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
+  auto debugger = Debugger::GetInstance();
+  if (debugger->CheckDebuggerDumpEnabled() && sink_mode) {
+    error_info = "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+  }
+  if (debugger->CheckDebuggerEnabled() && sink_mode) {
+    error_info = "Debugger is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+  }
+  return error_info;
 }
 
 #ifdef ENABLE_D

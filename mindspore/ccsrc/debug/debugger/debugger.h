@@ -171,6 +171,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if dump using debugger backend is enabled
   bool CheckDebuggerDumpEnabled() const;
 
+  // check if debugger is enabled
+  bool CheckDebuggerEnabled() const;
+
 #ifdef ENABLE_D
   std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
 
@@ -185,9 +188,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // instantiate class members
   // read env variable for grpc client
   void EnableDebugger();
-
-  // check if debugger enabled
-  bool CheckDebuggerEnabled() const;
 
   void CheckDebuggerEnabledParam() const;
 
