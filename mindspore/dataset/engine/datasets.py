@@ -1745,8 +1745,8 @@ class Dataset:
             >>> import numpy as np
             >>>
             >>> def generator1():
-            >>>     for i in range(1, 100):
-            >>>         yield np.ones((16, i, 83)), np.array(i)
+            ...     for i in range(1, 100):
+            ...         yield np.ones((16, i, 83)), np.array(i)
             >>>
             >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
@@ -1767,8 +1767,8 @@ class Dataset:
             >>> import numpy as np
             >>>
             >>> def generator1():
-            >>>     for i in range(1, 100):
-            >>>         yield np.ones((16, i, 83)), np.array(i)
+            ...     for i in range(1, 100):
+            ...         yield np.ones((16, i, 83)), np.array(i)
             >>>
             >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
@@ -5799,6 +5799,7 @@ class Schema:
             RuntimeError: If column's type field is missing.
 
         Examples:
+            >>> from mindspore.dataset import Schema
             >>> schema = Schema()
             >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
             >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
@@ -6126,7 +6127,7 @@ class VOCDataset(MappableDataset):
         Examples:
             >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
             >>>
-            >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir)
+            >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Detection")
             >>> class_indexing = dataset.get_class_indexing()
         """
         if self.task != "Detection":
