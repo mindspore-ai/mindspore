@@ -13,8 +13,8 @@ mindspore.ParameterTuple
 
         **参数：**
 
-        - **prefix** (str)：参数的命名空间。
-        - **init** (Union[Tensor, str, numbers.Number])：初始化参数的shape和dtype。 `init` 的定义与 `Parameter` API中的定义相同。默认值：'same'。
+        - **prefix** (str) - 参数的命名空间。
+        - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的shape和dtype。 `init` 的定义与 `Parameter` API中的定义相同。默认值：'same'。
 
         **返回：**
 

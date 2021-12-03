@@ -9,7 +9,7 @@ mindspore.common.initializer
    
     **参数：**
 
-    **kwargs** (dict) – **Initializer** 的关键字参数。
+    **kwargs** (dict) – `Initializer` 的关键字参数。
 
     .. py:method:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
    
@@ -19,8 +19,8 @@ mindspore.common.initializer
 
         - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
 
-          - **str** - `init` 是继承自 Initializer 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
-          - **Initializer** - `init` 是继承自Initializer，用于初始化Tensor的类。
+          - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
+          - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
           - **numbers.Number** - 调用常量来初始化张量。
 
         - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。   

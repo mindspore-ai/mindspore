@@ -17,9 +17,9 @@ mindspore.RowTensor
 
     **参数：**
 
-    - **indices** (Tensor)：形状为[D0]的一维整数张量。
-    - **values** (Tensor)：形状为[D0, D1, ..., Dn]中任意类型的张量。
-    - **dense_shape** (tuple(int))：包含相应稠密张量形状的整数元组。
+    - **indices** (Tensor) - 形状为[D0]的一维整数张量。
+    - **values** (Tensor) - 形状为[D0, D1, ..., Dn]中任意类型的张量。
+    - **dense_shape** (tuple(int)) - 包含相应稠密张量形状的整数元组。
 
     **返回：**
 

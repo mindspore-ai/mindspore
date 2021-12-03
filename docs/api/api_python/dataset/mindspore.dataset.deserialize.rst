@@ -5,7 +5,7 @@ mindspore.dataset.deserialize
 
     数据处理管道反序列化，支持输入Python字典或使用 `mindspore.dataset.serialize()` 接口生成的JSON文件。
 
-     .. note::
+    .. note::
         反序列化包含自定义Python函数的数据处理管道时，部分参数信息可能丢失；当 `input_dict` 和 `json_filepath` 同时不为None时，返回反序列化JSON文件的结果。
 
     **参数：**

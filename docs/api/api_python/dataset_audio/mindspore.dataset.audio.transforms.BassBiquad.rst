@@ -10,7 +10,7 @@ mindspore.dataset.audio.transforms.BassBiquad
     - **sample_rate** (int)：采样率，例如44100 (Hz)，不能为零。
     - **gain** (float)：期望提升（或衰减）的音频增益，单位为dB。
     - **central_freq** (float)：中心频率（单位：Hz）。
-    - **Q** (float, optional)：品质因子，参考https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
+    - **Q** (float, optional)：品质因子，参考 https://en.wikipedia.org/wiki/Q_factor，取值范围(0, 1]（默认值为0.707）。
 
     **样例：**
 

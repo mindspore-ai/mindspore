@@ -42,7 +42,7 @@ mindspore.DynamicLossScaleManager
 
         **返回：**
 
-         :class:`mindspore.DynamicLossScaleUpdateCell` 实例，用于更新梯度放大系数。
+        :class:`mindspore.DynamicLossScaleUpdateCell` 实例，用于更新梯度放大系数。
         
     .. py:method:: update_loss_scale(overflow)
 
@@ -50,5 +50,5 @@ mindspore.DynamicLossScaleManager
 
         **参数：**
         
-        overflow (bool)：表示是否溢出。
+        **overflow** (bool) - 表示是否溢出。
         
