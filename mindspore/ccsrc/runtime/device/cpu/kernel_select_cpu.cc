@@ -431,13 +431,13 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
         kernel::CPUKernelRegistrar(op_name, KernelAttr(),
                                    []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
       } else {
-        MS_LOG(EXCEPTION) << "Unsupported func type for Custom op on CPU, it should be 'pyfunc' or 'aot', but got ["
-                          << tp << "] for Custom op [" << op_name << "]";
+        MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be 'pyfunc' or 'aot', "
+                          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
       }
     }
     // If Custom op has not set reg info, then infer info from inputs
     if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
-      MS_LOG(WARNING) << "Not find operator information for Custom op[" << op_name << "]. "
+      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
                       << "Infer operator information from inputs. For more details, "
                       << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
       return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
