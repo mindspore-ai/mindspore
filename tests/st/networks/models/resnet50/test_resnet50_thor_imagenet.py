@@ -207,7 +207,65 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_resnet_thor_imagenet_8p():
+def test_resnet_thor_imagenet_8p_0():
+    """
+    Feature: Resnet50 thor network
+    Description: Train and evaluate resnet50 thor network on imagenet dataset
+    Expectation: accuracy > 0.28, time cost < 25.
+    """
+    context.set_context(enable_graph_kernel=False, enable_sparse=False)
+    context.reset_auto_parallel_context()
+    context.reset_ps_context()
+
+    q = Queue()
+
+    # resnet50_thor
+    device_num = 8
+    epoch_size = 1
+    enable_hccl = True
+    process = []
+    for i in range(device_num):
+        device_id = i
+        process.append(Process(target=train_process_thor,
+                               args=(q, device_id, epoch_size, device_num, enable_hccl)))
+
+    cpu_count = os.cpu_count()
+    each_cpu_count = cpu_count // device_num
+    for i in range(device_num):
+        process[i].start()
+        if each_cpu_count > 1:
+            cpu_start = each_cpu_count * i
+            cpu_end = each_cpu_count * (i + 1)
+            process_cpu = [x for x in range(cpu_start, cpu_end)]
+            pid = process[i].pid
+            os.sched_setaffinity(pid, set(process_cpu))
+
+    print("Waiting for all subprocesses done...")
+
+    for i in range(device_num):
+        process[i].join()
+
+    # THOR
+    thor_acc = 0.0
+    thor_cost = 0.0
+    for i in range(device_num):
+        output = q.get()
+        thor_acc += output['acc']
+        thor_cost += output['cost']
+    thor_acc = thor_acc / device_num
+    thor_cost = thor_cost / device_num
+
+    for i in range(0, device_num):
+        os.system("rm -rf " + str(i))
+    print("End training...")
+    assert thor_acc > 0.28
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_resnet_thor_imagenet_8p_1():
     """
     Feature: Resnet50 thor network
     Description: Train and evaluate resnet50 thor network on imagenet dataset
