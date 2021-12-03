@@ -1119,15 +1119,6 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
   }
 
   auto desc = kernel->desc();
-  if (desc.provider != kernel::kBuiltin) {
-    if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
-      if (desc.data_type == kNumberTypeFloat16) {
-        return kernel::kGpuFp16SubGraph;
-      }
-      return kernel::kGpuFp32SubGraph;
-    }
-    return kernel::kCustomSubGraph;
-  }
   if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
     if (desc.data_type == kNumberTypeFloat16) {
       return kernel::kGpuFp16SubGraph;
@@ -1152,6 +1143,8 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
         return kernel::kCpuFP32SubGraph;
       }
     }
+  } else if (desc.arch == kernel::KERNEL_ARCH::kCustom) {
+    return kernel::kCustomSubGraph;
   }
   return kernel::kNotSubGraph;
 }
