@@ -96,6 +96,7 @@ class FullQuantQuantizer : public Quantizer {
  private:
   // Config
   TypeId activation_target_data_type_{kNumberTypeInt8};
+  TypeId quant_data_type_{kNumberTypeInt8};
   TypeId weight_target_data_type_{kNumberTypeInt8};
   size_t bit_num_{8};
   int q_max_{INT8_MAX};

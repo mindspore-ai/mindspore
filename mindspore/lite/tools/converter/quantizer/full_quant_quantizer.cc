@@ -492,6 +492,8 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
 }
 
 void FullQuantQuantizer::InitCpuConfig() {
+  quant_data_type_ = kNumberTypeInt8;
+  activation_target_data_type_ = kNumberTypeInt8;
   weight_target_data_type_ = kNumberTypeInt8;
   activation_symmetry_ = false;
   weight_symmetry_ = true;
@@ -515,6 +517,7 @@ void FullQuantQuantizer::InitCpuConfig() {
 
 void FullQuantQuantizer::InitKirinConfig() {
   // `kTypeUnknown` represents the original data type
+  quant_data_type_ = kNumberTypeInt8;
   activation_target_data_type_ = kTypeUnknown;
   weight_target_data_type_ = kNumberTypeInt8;
   activation_symmetry_ = false;
@@ -525,14 +528,14 @@ void FullQuantQuantizer::InitKirinConfig() {
 }
 
 void FullQuantQuantizer::InitQMinMax() {
-  if (this->weight_target_data_type_ == kNumberTypeInt8) {
+  if (this->quant_data_type_ == kNumberTypeInt8) {
     q_max_ = QuantMax(this->bit_num_, false);        // 127
     q_min_ = QuantMin(this->bit_num_, false, true);  // -127
-  } else if (weight_target_data_type_ == kNumberTypeUInt8) {
+  } else if (quant_data_type_ == kNumberTypeUInt8) {
     q_max_ = QuantMax(this->bit_num_, true);         // 255
     q_min_ = QuantMin(this->bit_num_, true, false);  // 0
   } else {
-    MS_LOG(ERROR) << "unsupported quant value type: " << weight_target_data_type_;
+    MS_LOG(ERROR) << "unsupported quant value type: " << quant_data_type_;
   }
 }
 
