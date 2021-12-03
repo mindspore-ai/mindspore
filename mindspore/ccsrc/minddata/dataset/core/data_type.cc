@@ -158,6 +158,9 @@ DataType DataType::FromNpArray(const py::array &arr) {
   } else if (arr.dtype().kind() == 'S' || arr.dtype().kind() == 'U') {
     return DataType(DataType::DE_STRING);
   } else {
+    if (arr.shape() == 0) {
+      MS_LOG(ERROR) << "Please check input data, the data of numpy array is empty.";
+    }
     std::string err_msg = "Cannot convert from numpy type. Unknown data type is returned!";
     err_msg +=
       " Currently supported data type: [int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, "
