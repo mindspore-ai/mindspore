@@ -147,25 +147,23 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
     """
     Check argument integer.
-
-    Example:
     - number = check_number(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)
-    prim_name = f'in `{prim_name}`' if prim_name else ''
+    prim_name = f' in `{prim_name}`' if prim_name else ''
     arg_name = f'`{arg_name}`' if arg_name else ''
-
+    prim_info = f'{arg_name}' + f'{prim_name}'
     if isinstance(arg_value, arg_type):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'{arg_name} {prim_name} must be a legal value, but got `{arg_value}`.')
+            raise ValueError(f'f{prim_info} must be a legal value, but got `{arg_value}`.')
     else:
-        raise TypeError(f'{arg_name} {prim_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
+        raise TypeError(f'{prim_info} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
 
     type_mismatch = not isinstance(arg_value, arg_type) or isinstance(arg_value, bool)
     type_except = TypeError if type_mismatch else ValueError
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
-        raise type_except(f'{arg_name}{prim_name} should be {arg_type.__name__} and must {rel_str}, '
+        raise type_except(f'{prim_info} should be {arg_type.__name__} and must {rel_str}, '
                           f'but got `{arg_value}` with type `{type(arg_value).__name__}`.')
 
     return arg_value

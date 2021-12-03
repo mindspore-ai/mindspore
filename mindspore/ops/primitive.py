@@ -221,7 +221,7 @@ class Primitive(Primitive_):
         Examples:
             >>> import mindspore.ops as ops
             >>> a = ops.Add()
-            >>> a.set_prim_instance_name("add")
+            >>> a = a.set_prim_instance_name("add")
             >>> print(a.instance_name)
             add
         """
@@ -664,14 +664,14 @@ def constexpr(fn=None, get_instance=True, name=None):
         >>> a = (1, 2)
         >>> # make an operator to calculate tuple len
         >>> @constexpr
-        >>> def tuple_len(x):
+        ... def tuple_len(x):
         ...     return len(x)
         ...
         >>> print(tuple_len(a))
         2
         >>> # make an operator class to calculate tuple len
         >>> @constexpr(get_instance=False, name="TupleLen")
-        >>> def tuple_len_class(x):
+        ... def tuple_len_class(x):
         ...     return len(x)
         ...
         >>> print(tuple_len_class()(a))
