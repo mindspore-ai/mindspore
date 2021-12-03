@@ -117,25 +117,27 @@ TypePtr StringToNumberType(const std::string &type_name, const std::string &num_
   return type;
 }
 
-std::vector<TypePtr> StringToVectorOfType(const std::string &type_names) {
-  std::vector<TypePtr> types;
+/// Cnvert a string(like "type1, type2, type3") to Vector(TypeID_1, TypeID_1, TypeID_1)
+/// \param type_names
+/// \param types  The return types
+/// \return : 0, convert success  1, format error
+int StringToVectorOfType(const std::string &type_names, std::vector<TypePtr> *types) {
   if (type_names.length() == 0) {
-    return types;
+    return 0;
   }
   std::string::size_type start = 0;
   std::string::size_type end = type_names.find_first_of(',');
   while (end != std::string::npos) {
-    types.push_back(StringToType(type_names.substr(start, end)));
+    types->push_back(StringToType(type_names.substr(start, end)));
     // Skip ',' to find the next element.
     start = end + 1;
     end = type_names.find_first_of(',', start);
   }
   if (start >= type_names.size()) {
-    MS_LOG(EXCEPTION) << "Expect type list format 'type1, type2, type3', but got '" << type_names
-                      << "' which has empty type.";
+    return 1;
   }
-  types.push_back(StringToType(type_names.substr(start)));
-  return types;
+  types->push_back(StringToType(type_names.substr(start)));
+  return 0;
 }
 
 TypePtr TensorStrToType(const std::string &type_name) {
@@ -231,16 +233,20 @@ TypePtr ListStrToType(const std::string &type_name) {
   if (type_name == "List") {
     type = std::make_shared<List>();
   } else {
-    auto start = type_name.find_first_of('[') + 1;
+    auto start = type_name.find_first_of('[');
     auto end = type_name.find_last_of(']');
-    if (start >= type_name.size()) {
-      return nullptr;
+    // It's better to using regular expression, now just do simple check.
+    if (start == std::string::npos || end == std::string::npos || end < start) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'List[type1, type2, ...]', but got '" << type_name
+                                    << "' that not provide pair of ('[', ']').";
     }
+    start = start + 1;
     std::string element_strs = type_name.substr(start, end - start);
-    std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
-    bool wrong = std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
-    if (wrong) {
-      return nullptr;
+    std::vector<TypePtr> element_types;
+    auto ret = StringToVectorOfType(element_strs, &element_types);
+    if (ret > 0) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'List[type1, type2, ...]', but got '" << type_name
+                                    << "' that miss typename after ','.";
     }
     type = std::make_shared<List>(element_types);
   }
@@ -253,16 +259,20 @@ TypePtr TupleStrToType(const std::string &type_name) {
   if (type_name == "Tuple") {
     type = std::make_shared<Tuple>();
   } else {
-    size_t start = type_name.find_first_of('[') + 1;
+    size_t start = type_name.find_first_of('[');
     size_t end = type_name.find_last_of(']');
-    if (start >= type_name.size()) {
-      return nullptr;
+    // It's better to using regular expression, now just do simple check.
+    if (start == std::string::npos || end == std::string::npos || end < start) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Tuple[type1, type2, ...]', but got '" << type_name
+                                    << "' that not provide pair of ('[', ']').";
     }
+    start = start + 1;
     std::string element_strs = type_name.substr(start, end - start);
-    std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
-    bool wrong = std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
-    if (wrong) {
-      return nullptr;
+    std::vector<TypePtr> element_types;
+    auto ret = StringToVectorOfType(element_strs, &element_types);
+    if (ret > 0) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Tuple[type1, type2, ...]', but got '" << type_name
+                                    << "' that miss typename after ','.";
     }
     type = std::make_shared<Tuple>(element_types);
   }
@@ -276,30 +286,38 @@ TypePtr FunctionStrToType(const std::string &type_name) {
     type = std::make_shared<Function>();
   } else {
     // format: [(para1, para2, para3, ...) retval]
-    size_t start = type_name.find_first_of('[') + 1;
+    size_t start = type_name.find_first_of('[');
     size_t end = type_name.find_last_of(']');
-    if (start >= type_name.size()) {
-      return nullptr;
+    // It's better to using regular expression, now just do simple check.
+    if (start == std::string::npos || end == std::string::npos || end < start) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
+                                    << type_name << "' that not provide pair of ('[', ']').";
     }
+    start = start + 1;
     std::string str_all = type_name.substr(start, end - start);
-    size_t start_a = str_all.find_first_of('(') + 1;
+    size_t start_a = str_all.find_first_of('(');
     size_t end_a = str_all.find_last_of(')');
-    if (start_a >= str_all.size()) {
-      return nullptr;
+    // It's better to using regular expression, now just do simple check.
+    if (start_a == std::string::npos || end_a == std::string::npos || end_a < start_a) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
+                                    << type_name << "' that not provide pair of ('(', ')').";
     }
+    start_a = start_a + 1;
     std::string str_args = str_all.substr(start_a, end_a - start_a);
     // bypass " " between ")" and retval
     start = end_a + 2;
     if (start >= str_all.size()) {
-      return nullptr;
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
+                                    << "' that miss typename after ','.";
     }
     std::string str_retval = str_all.substr(start);
-    std::vector<TypePtr> args_type = StringToVectorOfType(str_args);
-    TypePtr retval = StringToType(str_retval);
-    bool wrong = std::any_of(args_type.begin(), args_type.end(), [](const TypePtr &x) { return x == nullptr; });
-    if (retval == nullptr || wrong) {
-      return nullptr;
+    std::vector<TypePtr> args_type;
+    auto ret = StringToVectorOfType(str_args, &args_type);
+    if (ret > 0) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'Function[(type1, type2, ...), ret_type]', but got '"
+                                    << type_name;
     }
+    TypePtr retval = StringToType(str_retval);
     type = std::make_shared<Function>(args_type, retval);
   }
   return type;
