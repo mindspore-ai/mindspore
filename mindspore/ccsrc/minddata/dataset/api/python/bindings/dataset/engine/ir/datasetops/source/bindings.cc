@@ -45,6 +45,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/yes_no_node.h"
 
@@ -408,6 +409,18 @@ PYBIND_REGISTER(SpeechCommandsNode, 2, ([](const py::module *m) {
                         std::make_shared<SpeechCommandsNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(speech_commands->ValidateParams());
                       return speech_commands;
+                    }));
+                }));
+
+PYBIND_REGISTER(TedliumNode, 2, ([](const py::module *m) {
+                  (void)py::class_<TedliumNode, DatasetNode, std::shared_ptr<TedliumNode>>(*m, "TedliumNode",
+                                                                                           "to create a TedliumNode")
+                    .def(py::init([](std::string dataset_dir, std::string release, std::string usage,
+                                     std::string extensions, py::handle sampler) {
+                      auto tedlium = std::make_shared<TedliumNode>(dataset_dir, release, usage, extensions,
+                                                                   toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(tedlium->ValidateParams());
+                      return tedlium;
                     }));
                 }));
 

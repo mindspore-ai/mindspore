@@ -41,6 +41,7 @@ SET(DE_UT_SRCS
         c_api_dataset_save.cc
         c_api_dataset_sbu_test.cc
         c_api_dataset_speech_commands_test.cc
+        c_api_dataset_tedlium_test.cc
         c_api_dataset_textfile_test.cc
         c_api_dataset_tfrecord_test.cc
         c_api_dataset_usps_test.cc
