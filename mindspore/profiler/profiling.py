@@ -403,31 +403,35 @@ class Profiler:
 
     def start(self):
         """
-        Used for Ascend, GPU, start profiling. Users can control turning on profiling in scripts through the start()
-        interface.
+        Used for Ascend, GPU, start profiling. Profiling can be turned on based on step and epoch.
+
+        Raises:
+            RuntimeError: If the profiler has already started.
+            RuntimeError: If MD profiling has stopped, repeated start action is not supported.
+            RuntimeError: If the start_profile value is set to False.
 
         Examples:
              >>> class StopAtStep(Callback):
-             ...    def __init__(self, start_step, stop_step):
-             ...        super(StopAtStep, self).__init__()
-             ...        self.start_step = start_step
-             ...        self.stop_step = stop_step
-             ...        self.profiler = Profiler(start_profile=False)
+             >>>     def __init__(self, start_step, stop_step):
+             ...         super(StopAtStep, self).__init__()
+             ...         self.start_step = start_step
+             ...         self.stop_step = stop_step
+             ...         self.profiler = Profiler(start_profile=False)
              ...
-             ...    def step_begin(self, run_context):
-             ...        cb_params = run_context.original_args()
-             ...        step_num = cb_params.cur_step_num
-             ...        if step_num == self.start_step:
-             ...            self.profiler.start()
+             >>>     def step_begin(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         step_num = cb_params.cur_step_num
+             ...         if step_num == self.start_step:
+             ...             self.profiler.start()
              ...
-             ...    def step_end(self, run_context):
-             ...        cb_params = run_context.original_args()
-             ...        step_num = cb_params.cur_step_num
-             ...        if step_num == self.stop_step:
-             ...            self.profiler.stop()
+             >>>     def step_end(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         step_num = cb_params.cur_step_num
+             ...         if step_num == self.stop_step:
+             ...             self.profiler.stop()
              ...
-             ...    def end(self, run_context):
-             ...        self.profiler.analyse()
+             >>>     def end(self, run_context):
+             ...         self.profiler.analyse()
         """
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
@@ -452,31 +456,33 @@ class Profiler:
 
     def stop(self):
         """
-        Used for Ascend, GPU, stop profiling. Users can control turning off profiling in scripts through the stop()
-        interface.
+        Used for Ascend, GPU, stop profiling. Profiling can be turned off based on step and epoch.
+
+        Raises:
+            RuntimeError: If the profiler has not started, this function is disabled.
 
         Examples:
-             >>> class StopAtStep(Callback):
-             ...    def __init__(self, start_step, stop_step):
-             ...        super(StopAtStep, self).__init__()
-             ...        self.start_step = start_step
-             ...        self.stop_step = stop_step
-             ...        self.profiler = Profiler(start_profile=False)
+             >>> class StopAtEpoch(Callback):
+             >>>     def init(self, start_epoch, stop_epoch):
+             ...         super(StopAtStep, self).init()
+             ...         self.start_epoch = start_epoch
+             ...         self.stop_epoch = stop_epoch
+             ...         self.profiler = Profiler(start_profile=False)
              ...
-             ...    def step_begin(self, run_context):
-             ...        cb_params = run_context.original_args()
-             ...        step_num = cb_params.cur_step_num
-             ...        if step_num == self.start_step:
-             ...            self.profiler.start()
+             >>>     def epoch_begin(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         epoch_num = cb_params.cur_epoch_num
+             ...         if step_num == self.start_epoch:
+             ...             self.profiler.start()
              ...
-             ...    def step_end(self, run_context):
-             ...        cb_params = run_context.original_args()
-             ...        step_num = cb_params.cur_step_num
-             ...        if step_num == self.stop_step:
-             ...            self.profiler.stop()
+             >>>     def epoch_end(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         epoch_num = cb_params.cur_epoch_num
+             ...         if epoch_num == self.stop_epoch:
+             ...             self.profiler.stop()
              ...
-             ...    def end(self, run_context):
-             ...        self.profiler.analyse()
+             >>>     def end(self, run_context):
+             ...         self.profiler.analyse()
         """
         if self._has_started:
             self._has_started = False
