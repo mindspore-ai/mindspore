@@ -741,9 +741,7 @@ def set_context(**kwargs):
 
             - dump_as_text: dump detail info as text files. Default: false.
 
-            More options can refer to the implementation code. These options can also be set by environment
-            variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
-            For example, export MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text".
+            More options can refer to the implementation code.
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: True.
