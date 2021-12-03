@@ -1890,5 +1890,24 @@ std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
   auto val = sequeue->cast<ValueListPtr>();
   return val->value();
 }
+
+ValuePtr MakeListValue(const std::vector<int64_t> &v) {
+  std::vector<ValuePtr> list;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(list), [](int64_t ele) { return MakeValue(ele); });
+  return std::make_shared<ValueSequeue>(list);
+}
+
+ValuePtr MakeTupleListValue(const Shapes &v) {
+  std::vector<ValuePtr> tuple;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(tuple),
+                       [](const std::vector<int64_t> &list) { return MakeListValue(list); });
+  return std::make_shared<ValueTuple>(tuple);
+}
+
+AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple) {
+  auto value_ptr = MakeValue(value_tuple)->cast<ValueTuplePtr>();
+  auto value_node = NewValueNode(value_ptr);
+  return value_node->cast<AnfNodePtr>();
+}
 }  // namespace parallel
 }  // namespace mindspore

@@ -184,12 +184,6 @@ ReplaceGraphPtr SliceInfo::replace_graph(const CNodePtr &cnode) {
   return replace_graph_;
 }
 
-AnfNodePtr CreateValueTupleAndNodePtr(const std::vector<int64_t> &value_tuple) {
-  auto value_ptr = MakeValue(value_tuple)->cast<ValueTuplePtr>();
-  auto value_node = NewValueNode(value_ptr);
-  return value_node->cast<AnfNodePtr>();
-}
-
 Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
@@ -207,8 +201,8 @@ Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
       sliced_size_shape_int.push_back(input_slice_shape[i]);
     }
   }
-  auto new_begin = CreateValueTupleAndNodePtr(begin_);
-  auto new_size = CreateValueTupleAndNodePtr(sliced_size_shape_int);
+  auto new_begin = CreateValueTupleAnfNodePtr(begin_);
+  auto new_size = CreateValueTupleAnfNodePtr(sliced_size_shape_int);
 
   auto slice = gen_g.PushBack({gen_g.NewOpInst(SLICE), gen_g.virtual_input_node(), new_begin, new_size});
 
