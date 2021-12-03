@@ -232,4 +232,3 @@ class TestAutotuneWithProfiler:
 
         with pytest.raises(ValueError):
             ds.config.set_autotune_interval(-999)
-

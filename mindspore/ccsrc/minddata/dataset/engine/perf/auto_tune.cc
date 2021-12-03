@@ -184,7 +184,9 @@ Status AutoTune::RunIteration() {
   // Close AutoTune in Non-sink mode, since it's not ready for test.
   if (!IsSink()) {
     MS_LOG(ERROR) << "Dataset AutoTune doesn't support non-sink pipeline.";
-    return Status(StatusCode::kMDUnexpectedError, "Dataset AutoTune doesn't support non-sink pipeline.");
+    return Status(StatusCode::kMDUnexpectedError,
+                  "Dataset AutoTune hasn't been supported in non-sink mode(dataset_sink_mode=False), check training "
+                  "config or set dataset_sink_mode to True.");
   }
   // Run every epoch
   if ((profiling_manager_->GetNumOfProfiledEpochs()) >= cur_epoch_) {
