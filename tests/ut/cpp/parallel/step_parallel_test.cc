@@ -320,7 +320,7 @@ TEST_F(TestStepParallel, CreatOpInstance) {
         } else if (name == "index") {
           parse::ConvertData(py::cast<py::object>(item.second), &converted_ret);
           ASSERT_EQ(converted_ret->ToString(), "0");
-        } else if (name == "no_elimilate") {
+        } else if (name == "no_eliminate") {
           parse::ConvertData(py::cast<py::object>(item.second), &converted_ret);
           ASSERT_EQ(converted_ret->ToString(), "true");
         } else {
