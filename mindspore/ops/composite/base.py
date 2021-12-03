@@ -695,6 +695,8 @@ class Map(Map_):
 
     Examples:
         >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore.ops import MultitypeFuncGraph, Map
         >>> tensor_list = (Tensor(1, mstype.float32), Tensor(2, mstype.float32), Tensor(3, mstype.float32))
         >>> # square all the tensor in the list
         >>>

@@ -238,8 +238,9 @@ def jvp(fn, inputs, v):
 
     Returns:
         Tuple, tuple of output and jvp.
-        - netout(Tensors or Tuple of Tensors), the output of "fn(inputs)".
-        - jvp(Tensors or Tuple of Tensors), the result of the dot product.
+
+        - **netout** (Tensors or Tuple of Tensors) - The output of "fn(inputs)".
+        - **jvp** (Tensors or Tuple of Tensors) - The result of the dot product.
 
     Raises:
         TypeError: If the input is not a tensor or tuple or list of tensors.
@@ -287,9 +288,10 @@ def vjp(fn, inputs, v):
         v (Tensor or tuple or list): The shape and type of v should be the same as outputs.
 
     Returns:
-        Tuple, tuple of output and jvp.
-        - netout(Tensors or Tuple of Tensors), the output of "fn(inputs)".
-        - vjp(Tensors or Tuple of Tensors), the result of the dot product.
+        Tuple, tuple of output and vjp.
+
+        - **netout** (Tensors or Tuple of Tensors) - The output of "fn(inputs)".
+        - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
 
     Raises:
         TypeError: If the input is not a tensor or tuple or list of tensors.

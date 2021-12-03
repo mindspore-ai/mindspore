@@ -420,7 +420,7 @@ class Cell(Cell_):
 
     def shard(self, strategy):
         """
-        for all primitive ops in this cell(including ops of cells that wrapped by this cell),
+        For all primitive ops in this cell(including ops of cells that wrapped by this cell),
         if parallel strategy is not specified, then instead of auto-searching, data parallel
         strategy will be generated for those primitive ops.
 

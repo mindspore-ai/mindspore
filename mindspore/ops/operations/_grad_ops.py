@@ -426,7 +426,7 @@ class Conv2DBackpropFilter(Primitive):
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
         pad_list (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
-        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
+        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                     2 deconvolution, 3 depthwise convolution. Default: 1.
         stride (tuple): The stride to be applied to the convolution filter. Default: (1, 1).
         dilation (tuple): Specifies the dilation rate to be used for the dilated convolution. Default: (1, 1, 1, 1).
@@ -485,7 +485,7 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
     Args:
         channel_multiplier (int): The multiplier for the original output conv.
         kernel_size (int or tuple): The size of the conv kernel.
-        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution,
+        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution,
                        2 deconvolution,3 depthwise convolution. Default: 3.
         pad_mode (str): The mode to fill padding which can be: "valid", "same" or "pad". Default: "valid".
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
@@ -552,7 +552,7 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
     Args:
         channel_multiplier (int): The multiplier for the original output conv.
         kernel_size (int or tuple): The size of the conv kernel.
-        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
+        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                     2 deconvolution,3 depthwise convolution. Default: 3.
         pad_mode (str):  Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
