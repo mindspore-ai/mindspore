@@ -22,6 +22,8 @@
 namespace mindspore {
 namespace kernel {
 void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   // The dimensions of input tensor must be 1 or 2, with data type of float32.
@@ -39,14 +41,16 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &workspace,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "Invalid input numbers, expect input number 2, but actual input number " << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
+                      << "input(s).";
   }
   if (workspace.size() != 1) {
-    MS_LOG(EXCEPTION) << "Invalid workspace numbers, expect workspace number 1, actual workspace number "
-                      << workspace.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspace should be 1, but got "
+                      << workspace.size() << "workspace(s).";
   }
   if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Invalid output numbers, expect output number 1, actual output number " << outputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size()
+                      << "output(s).";
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);

@@ -42,7 +42,9 @@ bool SigmoidCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::Ad
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be float16, float32, or float64, but got "
+                      << TypeIdLabel(dtype_);
   }
   return true;
 }

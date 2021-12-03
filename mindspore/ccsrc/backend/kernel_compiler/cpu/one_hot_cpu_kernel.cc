@@ -29,11 +29,15 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "Invalid output shape size: " << output_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of output should be greater than or equal to 2, but got "
+                      << output_shape.size() << ".";
   }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
-    MS_LOG(EXCEPTION) << "Invalid axis: " << axis;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'axis' should be -1, or an int which is less than the dimension of output, but got "
+                      << axis;
   }
 
   if (axis == -1) {

@@ -25,6 +25,7 @@ namespace {
 constexpr size_t kScatterNdInputSize = 2;
 constexpr size_t kScatterNdOutputSize = 1;
 constexpr size_t kMinIndiceRank = 2;
+constexpr char kKernelName[] = "ScatterNd";
 
 template <typename S, typename T>
 void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *params, const size_t start,
@@ -39,7 +40,8 @@ void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *param
     for (size_t j = 0; j < IntToSize(params->indices_unit_rank_); ++j) {
       int index = static_cast<int>(indices[i * IntToSize(params->indices_unit_rank_) + j]);
       if (index < 0) {
-        MS_LOG(EXCEPTION) << "Indices contains element " << index << " less than 0.";
+        MS_LOG(EXCEPTION) << "For '" << kKernelName
+                          << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
@@ -56,23 +58,34 @@ void Compute(ScatterNdCPUKernel<S, T> *content, const ComputeParams<S, T> *param
 template <typename S, typename T>
 void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   Check(kernel_node);
   auto shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
-    MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the value of last dimension of 'indices' should be less than "
+                         "or equal to the dimension of 'shape', but got  the value of last dimension of 'indices': "
+                      << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
   }
   if (indices_shape.size() < kMinIndiceRank) {
-    MS_LOG(EXCEPTION) << "Indices has dimension less than 2";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' should be at least 2, but got "
+                      << indices_shape.size();
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
-    MS_LOG(EXCEPTION) << "The ranks of update and indices are inconsistent";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'update' and 'shape', 'indices' are not "
+                         "satisfy the equivalence relationship: "
+                         "'updates_shape.size() == indices_shape.size() - 1 + shape.size() - indices_unit_rank'";
   }
   for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
     if (updates_shape[i] != indices_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of updates and indices are different in dimension " << i << " .";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape of 'updates' and 'indices' are different in dimension i=" << i
+                        << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
+                        << indices_shape[i];
     }
   }
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
@@ -100,8 +113,7 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
   auto target = reinterpret_cast<T *>(outputs[0]->addr);
   auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
   if (target_init != EOK) {
-    MS_LOG(EXCEPTION) << "ScatterNdCPUKernel Launch task memset failed.";
-    return false;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << target_init;
   }
   ComputeParams<S, T> params;
   params.target_ = target;
@@ -125,11 +137,13 @@ template <typename S, typename T>
 void ScatterNdCPUKernel<S, T>::Check(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kScatterNdInputSize) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterNd needs 2 input.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num
+                      << " input(s).";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kScatterNdOutputSize) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterNd needs 1 output.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num
+                      << " output(s).";
   }
 }
 }  // namespace kernel

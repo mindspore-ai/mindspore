@@ -177,7 +177,8 @@ void ArithmeticLogicCPUKernel<T>::InitComputeFunc() {
     {prim::kPrimNotEqual->name(), &ArithmeticLogicCPUKernel<T>::NotEqual},
     {prim::kPrimEqual->name(), &ArithmeticLogicCPUKernel<T>::Equal}};
   if (arithmeticLogicFuncMap.find(kernel_name_) == arithmeticLogicFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticLogicCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
+                      << Unorderedmap2Str(arithmeticLogicFuncMap) << ", but got " << kernel_name_;
   }
   compute_func_ = arithmeticLogicFuncMap.at(kernel_name_);
 }
@@ -210,8 +211,11 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (dtype_ != AnfAlgo::GetInputDeviceDataType(kernel_node, 1)) {
-    MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
+  auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  if (dtype_ != dtype_1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
+                      << dtype_ << ", and the type of 'input2': " << dtype_1;
   }
   InitComputeFunc();
 }

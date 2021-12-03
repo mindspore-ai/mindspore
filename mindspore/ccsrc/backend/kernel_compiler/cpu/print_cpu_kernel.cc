@@ -26,6 +26,7 @@ namespace kernel {
 template <typename T>
 void PrintCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_tensor_num; ++i) {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
@@ -44,7 +45,8 @@ bool PrintCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                const std::vector<kernel::AddressPtr> & /* outputs */) {
   auto data_type = CheckType();
   if (data_type == kTypeUnknown) {
-    MS_LOG(EXCEPTION) << "CPU print does not support the input type.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be bool, float, int, or uint, but got unsupported type.";
   }
   for (size_t i = 0; i < inputs.size(); ++i) {
     if (input_sizes_[i] == 0) {

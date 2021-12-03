@@ -64,7 +64,10 @@ bool UnpackCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
   if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
-    MS_LOG(EXCEPTION) << "unpack error output or workspace size.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the number of 'outputs' and 'workspace' should be at least 1, "
+                         "but got the number of 'outputs':"
+                      << outputs.size() << " and the number of 'workspace':" << workspace.size();
   }
   LaunchKernel(inputs, workspace, outputs);
   return true;

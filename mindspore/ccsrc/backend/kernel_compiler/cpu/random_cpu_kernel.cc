@@ -26,6 +26,7 @@ constexpr size_t kUniformRealInputsNum = 1;
 constexpr size_t kUniformIntOutputsNum = 1;
 constexpr size_t kUniformRealOutputsNum = 1;
 constexpr size_t kStandardNormalOutputsNum = 1;
+constexpr char kKernelName[] = "Random";
 }  // namespace
 void StandardNormal(float *output, std::normal_distribution<float> distribution,
                     std::default_random_engine random_generator, size_t start, size_t end) {
@@ -52,7 +53,7 @@ void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
   int min_val = reinterpret_cast<int *>(inputs[1]->addr)[0];
   int max_val = reinterpret_cast<int *>(inputs[2]->addr)[0];
   if (max_val <= min_val) {
-    MS_LOG(EXCEPTION) << "Invalid min/max values: (" << min_val << "/" << max_val << ")";
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', invalid min/max values: (" << min_val << "/" << max_val << ")";
   }
 
   // Init output address.
@@ -93,7 +94,7 @@ void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "Random operation " << kernel_name_ << " is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', random operation is not supported.";
   } else {
     random_op_type_ = iter->second;
   }
@@ -128,7 +129,7 @@ bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_name_);
     LaunchUniformReal(RNG_seed, inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Random operation " << random_op_type_ << " is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', random operation " << random_op_type_ << " is not supported.";
   }
   return true;
 }

@@ -41,18 +41,23 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (input_x_shape.size() != input_y_shape.size()) {
-    MS_LOG(EXCEPTION) << "X and y must be same shape!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'x' and 'y' should have the same dimension, but got the dimension of 'x': "
+                      << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(EXCEPTION) << "X and y must be same shape!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the 'x' and 'y' should have the same shape, but got the shape of 'x': "
+                        << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
     }
     batch_size_ *= input_x_shape[i];
   }
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto type_len = input_x_dtype_size_map.find(input_x_dtype_);
   if (type_len == input_x_dtype_size_map.end()) {
-    MS_LOG(EXCEPTION) << "Unsupported input_x dtype!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be bool, int, uint, or float, but got " << input_x_dtype_;
   }
   input_x_dtype_size_ = type_len->second;
 }
@@ -61,11 +66,13 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
                              const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
+  static std::string kernel_name = kernel_name_;
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
-    MS_LOG(EXCEPTION) << "Memcpy size must <= max_size, but got memcpy size is : " << total_size
-                      << ", max size is : " << max_size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
+                      << ", and max size: " << max_size;
   }
   constexpr size_t kBlockSize = 10000;
   size_t thread_num = (total_size + kBlockSize - 1) / kBlockSize;
@@ -93,12 +100,12 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
     auto block = [input0, input1, output, max_length, length]() {
       int ret = memcpy_s(input0, max_length, input1, length);
       if (ret != 0) {
-        MS_LOG(ERROR) << "memcpy_s error, error no " << ret;
+        MS_LOG(ERROR) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
         return common::FAIL;
       }
       ret = memcpy_s(output, max_length, input1, length);
       if (ret != 0) {
-        MS_LOG(ERROR) << "memcpy_s error, error no " << ret;
+        MS_LOG(ERROR) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
         return common::FAIL;
       }
       return common::SUCCESS;

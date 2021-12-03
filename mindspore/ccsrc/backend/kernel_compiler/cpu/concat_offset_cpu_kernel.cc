@@ -38,8 +38,9 @@ void ConcatOffsetCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     axis_ = LongToSize(axis);
   }
   if (axis_ >= input_1_shape.size()) {
-    MS_LOG(EXCEPTION) << "axis should less input shape size, but got axis: " << axis_
-                      << ", input shape size: " << input_1_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'axis' should be less than the dimension of input, but got 'axis': " << axis_
+                      << ", and the dimension of the first input: " << input_1_shape.size();
   }
 }
 
@@ -50,7 +51,7 @@ bool ConcatOffsetCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOffsetOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   if (!node_) {
-    MS_LOG(EXCEPTION) << "cnode_ptr_ is expired.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
   size_t input_num = AnfAlgo::GetInputTensorNum(node_);
@@ -61,19 +62,23 @@ bool ConcatOffsetCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
   for (size_t i = 1; i < input_num; i++) {
     auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     if (axis_ >= input_shape_i.size()) {
-      MS_LOG(EXCEPTION) << "axis should less input shape size, but got axis: " << axis_
-                        << ", input shape size: " << input_shape_i.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the 'axis' should be less than the dimension of input, but got 'axis': " << axis_
+                        << ", and the dimension of the " << i << "'th input: " << input_shape_i.size();
     }
     offset.emplace_back(all_shape);
     all_shape += input_shape_i[axis_];
   }
   auto output_shape = AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != kConcatOffsetOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "The length of output_shape must be " << kConcatOffsetOutputShapeSize
-                      << ", but got:" << output_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+                      << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
   }
   if (output_shape[0] != input_num) {
-    MS_LOG(EXCEPTION) << "ConcatOffset output_shape[0] must be equal to input_num, but got " << output_shape[0];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension value of output should be equal to "
+                         "the number of input, but got the first dimension value of output: "
+                      << output_shape[0] << ", and the number of input: " << input_num;
   }
   size_t rank = output_shape[1];
   size_t idx = 0;

@@ -32,14 +32,14 @@ void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
   if (output_num_ == 0) {
-    MS_LOG(EXCEPTION) << "Attr output_num is equal to 0";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' should be positive int, but got 0.";
   }
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](const size_t &value) { return SizeToInt(value); });
   if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "Inpu shape size should not be less than 1 or greater than " << SPLIT_STRIDES_SIZE
-                      << ", but got " << input_shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "
+                      << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();
   }
   CheckParam(kernel_node);
 }
@@ -105,16 +105,19 @@ template <typename T>
 void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   int64_t dims = SizeToLong(input_shape_.size());
   if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "Input dims is " << dims << ", scalar is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "
+                      << SPLIT_STRIDES_SIZE << "], but got " << dims;
   }
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [" << -dims << ", " << dims
+                      << "), but got " << axis_;
   }
   if (axis_ < 0) {
     axis_ += SizeToLong(input_shape_.size());
   }
   if (output_num_ > IntToSize(input_shape_[LongToUlong(axis_)])) {
-    MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must be less than " << input_shape_[axis_];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' should be less than or equal to "
+                      << input_shape_[axis_] << ", but got " << output_num_;
   }
 }
 }  // namespace kernel

@@ -30,7 +30,8 @@ void Expm1CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "Unsupported input type found.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be Float16 or Float32, but got: " << input_dtype_;
   }
 }
 
@@ -43,7 +44,8 @@ bool Expm1CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   } else if (input_dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Only support float, half, but actual data type is " << TypeIdLabel(input_dtype_);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be Float16 or Float32, but got: " << TypeIdLabel(input_dtype_);
   }
   return true;
 }

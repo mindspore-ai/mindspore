@@ -53,7 +53,7 @@ bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "Cast output memory size should be greater than 0, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output should be greater than 0, but got 0.";
     return true;
   }
   const auto *input = reinterpret_cast<S *>(inputs[0]->addr);

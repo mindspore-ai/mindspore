@@ -65,7 +65,7 @@ bool MaskedSelectCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
   if (!node_wpt_.expired()) {
     auto node_ = node_wpt_.lock();
     if (!node_) {
-      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
     }
     std::vector<size_t> out_shape;
     (void)out_shape.emplace_back(j);

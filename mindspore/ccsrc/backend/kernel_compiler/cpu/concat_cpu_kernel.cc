@@ -40,7 +40,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto node_ = cnode_ptr_.lock();
   if (!node_) {
-    MS_LOG(EXCEPTION) << "cnode_ptr_ is expired.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
   const size_t input_num = AnfAlgo::GetInputTensorNum(node_);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -78,7 +78,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
         auto offset = copy_num * i;
         auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
         if (ret != EOK) {
-          MS_LOG(EXCEPTION) << "Memcpy failed.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
         }
         output_ptr += copy_num;
       }

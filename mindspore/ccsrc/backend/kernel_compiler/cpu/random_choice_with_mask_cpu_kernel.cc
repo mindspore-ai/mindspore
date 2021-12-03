@@ -20,6 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr char kKernelName[] = "RandomChoiceWithMask";
+
 void ParseOutputCoordinate(std::vector<int32_t> dims_, int32_t output_length_, int32_t input_dim_size_,
                            int32_t input_total_count_, const int *tmp_output, int *output) {
   int it = 0;
@@ -54,7 +56,8 @@ void GetOutputLength(bool *padding_flag_, int32_t *output_length_, int32_t *outp
     *output_length_ = count_;
     *output_non_zero_length_ = non_zero_num_;
   } else {
-    MS_LOG(EXCEPTION) << "Input count must be greater than or equal to 0, but is " << count_;
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the 'count' should be greater than or equal to 0, but got "
+                      << count_;
   }
 }
 
@@ -80,20 +83,24 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
 
 void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "Input num is " << input_num << ", but RandomChoiceWithMask needs 1 input.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
+                  << "input(s).";
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "Output num is " << output_num << ", but RandomChoiceWithMask needs 2 outputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num
+                  << "output(s).";
   }
 
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_shape_size = input_shape.size();
   if (input_shape_size < 1 || input_shape_size > MAX_DIMENSION) {
-    MS_LOG(ERROR) << "Input is " << input_shape_size << "-D, but RandomChoiceWithMask supports only 1-D to 5-D inputs.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x ' should be in range [1-D, 5-D], but got "
+                  << input_shape_size << "-D.";
   }
 
   seed = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
@@ -110,7 +117,9 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   input_dim_size = SizeToInt(dims.size());
   if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
-    MS_LOG(EXCEPTION) << "Input dim size is " << input_dim_size << ", which is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'input_x ' should be in range [1-D, 5-D], but got " << input_dim_size
+                      << "-D.";
   }
 }
 
@@ -173,7 +182,7 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
 
   int32_t copy_output_length = 0;
   if (output_length * input_dim_size >= INT_MAX || output_length * input_dim_size < 0) {
-    MS_LOG(EXCEPTION) << "Output size exceed INT_MAX";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
   }
 
   copy_output_length = output_length * input_dim_size;
@@ -183,13 +192,13 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   int32_t actual_output_length = count * SizeToInt(dims.size());
   copy_output_length = std::min(actual_output_length, copy_output_length);
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
-    MS_LOG(EXCEPTION) << "The output length is out of range!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output length is out of range.";
   }
 
   size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
   auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s failed, ret = " << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
   }
   UpdateOutput(dims, non_zero_num, count, output_length, mask_dim, output_coordinate, mask);
   return true;

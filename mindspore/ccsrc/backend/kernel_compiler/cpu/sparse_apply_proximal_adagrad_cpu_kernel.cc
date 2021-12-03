@@ -23,6 +23,7 @@ namespace kernel {
 namespace {
 constexpr size_t kSparseApplyProximalAdagradInputsNum = 7;
 constexpr size_t kSparseApplyProximalAdagradWorkspaceSize = 4;
+constexpr char kKernelName[] = "SparseApplyProximalAdagrad";
 
 template <typename T>
 void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
@@ -38,7 +39,8 @@ void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t st
   for (size_t i = start; i < end; ++i) {
     T index = unique_sparse_grad.indices_[i];
     if (index < 0 || LongToSize(index) >= var_first_dim_size) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
+      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' should be in range [0, "
+                        << SizeToLong(var_first_dim_size) << "), but got " << index;
     }
     size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
     size_t end_index = start_index + var_outer_dim_size;
@@ -74,7 +76,8 @@ void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &ke
   } else if (indices_data_type_ == kNumberTypeInt64) {
     InitWorkspaceSize<int64_t>();
   } else {
-    MS_LOG(EXCEPTION) << "Input data type " << indices_data_type_ << " is unsupported";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' should be int32 or int64, but got "
+                      << TypeIdToType(indices_data_type_)->ToString();
   }
 }
 
@@ -89,36 +92,52 @@ void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node
   std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
   if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "var must be at least 1D";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'var' should be at least 1-D, but got empty tensor.";
   }
   if (!IsSameShape(var_shape, accum_shape)) {
-    MS_LOG(EXCEPTION) << "var and accum should have the same shape";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the shape of 'accum' should be same with the shape of 'var', "
+                         "but got the shape of 'accum': "
+                      << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
   }
   if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'grad' should be same with the dimension of "
+                         "'var', but got the dimension of 'grad': "
+                      << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
   }
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of var and grad must equal in dimension " << i;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape of 'var' and 'grad' should equal in dimension i=" << i
+                        << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
     }
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "indices must be a 1D vector";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' should be a 1-D vector, but got "
+                      << indices_shape.size() << "-D.";
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != indices_size_) {
-    MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension value of 'grad' should be equal to "
+                         "the first dimension value of 'indices', but got the first dimension value of 'grad': "
+                      << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
   }
   if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "lr is not a scalar";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', 'lr' should be a scalar, but got the dimension of 'lr': " << Vector2Str(lr_shape);
   }
   if (!l1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "l1 is not a scalar";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', 'l1' should be a scalar, but got the dimension of 'l1': " << Vector2Str(l1_shape);
   }
   if (!l2_shape.empty()) {
-    MS_LOG(EXCEPTION) << "l2 is not a scalar";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', 'l2' should be a scalar, but got the dimension of 'l2': " << Vector2Str(l2_shape);
   }
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 6);
 }
@@ -171,7 +190,8 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
   } else if (indices_data_type_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, workspace);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported indices data type: " << indices_data_type_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' should be int32 or int64, but got "
+                      << TypeIdToType(indices_data_type_)->ToString();
   }
   return true;
 }

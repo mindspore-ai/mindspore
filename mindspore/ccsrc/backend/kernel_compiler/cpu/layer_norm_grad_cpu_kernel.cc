@@ -52,7 +52,8 @@ void LayerNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     param_num_ *= x_shape[i];
   }
   if (block_num_ == 0 || block_size_ == 0) {
-    MS_LOG(EXCEPTION) << "LayerNormGradCPUKernel input shape error, input shape: " << x_shape;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got "
+                      << Vector2Str(x_shape);
   }
 }
 
@@ -66,7 +67,8 @@ bool LayerNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "input dtype only support float16, float32, float64";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'input_x' should be float16, float32, or float64, but got " << dtype_;
   }
   return true;
 }

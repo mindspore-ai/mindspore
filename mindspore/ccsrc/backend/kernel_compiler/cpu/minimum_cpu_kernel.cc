@@ -44,14 +44,19 @@ void MinimumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
     InitInputTensors(input_x_dtype, input_y_dtype);
   } else {
-    MS_LOG(EXCEPTION) << "Only support input two tensors or one tensor and one scalar";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', inputs should be two tensors or one tensor and one scalar, but got " << input_x_dtype
+                      << " and " << input_y_dtype;
   }
 }
 
 template <typename T>
 void MinimumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
   if (max_input_shape_size != output_shape_.size()) {
-    MS_LOG(EXCEPTION) << "Output tensor size must be equal to the max shape size of inputs";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of output tensor should be equal to the max "
+                         "dimension of inputs, but got the dimension of output tensor: "
+                      << output_shape_.size() << " and the max dimension of inputs: " << max_input_shape_size;
   }
   need_broadcast_ = false;
 }
@@ -59,7 +64,7 @@ void MinimumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) 
 template <typename T>
 void MinimumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
   if (input_x_dtype == kNumberTypeBool && input_y_dtype == kNumberTypeBool) {
-    MS_LOG(EXCEPTION) << "Input tensor types cannot be both bool";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor types should not be both bool.";
   }
   // Check if the shape needs to be broadcast
   need_broadcast_ = IsBroadcast();
@@ -119,7 +124,9 @@ bool MinimumCPUKernel<T>::IsBroadcast() const {
 template <typename T>
 void MinimumCPUKernel<T>::InitTensorBroadcastShape() {
   if (output_shape_.size() > max_dims_) {
-    MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of output should be less than or equal to 7, but got "
+                      << output_shape_.size();
   }
   broadcast_input_x_shape_.resize(max_dims_, 1);
   broadcast_input_y_shape_.resize(max_dims_, 1);

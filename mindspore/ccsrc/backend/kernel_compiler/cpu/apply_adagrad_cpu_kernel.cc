@@ -43,7 +43,7 @@ bool ApplyAdagradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const 
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only support float16 and float32 on CPU, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -54,11 +54,23 @@ void ApplyAdagradCPUKernel::CheckParam(const std::vector<AddressPtr> &inputs,
   // inputs: var, accum, lr, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradOutputsNum, kernel_name_);
-  if (inputs[0]->size != inputs[1]->size || inputs[0]->size != inputs[3]->size) {
-    MS_LOG(EXCEPTION) << "Error input data size!";
+  if (inputs[0]->size != inputs[1]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of input data 'accum' and 'var' should be "
+                         "same, but got the memory size of 'accum': "
+                      << inputs[1]->size << " and 'var': " << inputs[0]->size;
+  }
+  if (inputs[0]->size != inputs[3]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of input data 'grad' and 'var' should be "
+                         "same, but got the memory size of 'grad': "
+                      << inputs[3]->size << " and 'var': " << inputs[0]->size;
   }
   if (inputs[2]->size != kSizeFloat16 && inputs[2]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires the attribute lr and grad must be float16 or float32!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the parameter 'lr' should be float16(memory size: 2) or "
+                         "float32(memory size:4), but got memory size of 'lr': "
+                      << inputs[2]->size << " bytes.";
   }
 }
 
@@ -80,11 +92,13 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // Copy result to output tensor
   auto output_var = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_accum = reinterpret_cast<T *>(outputs[1]->addr);
-  if (memcpy_s(output_var, outputs[0]->size, var, inputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed.";
+  auto ret = memcpy_s(output_var, outputs[0]->size, var, inputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
-  if (memcpy_s(output_accum, outputs[1]->size, accum, inputs[1]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed.";
+  ret = memcpy_s(output_accum, outputs[1]->size, accum, inputs[1]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
 }
 

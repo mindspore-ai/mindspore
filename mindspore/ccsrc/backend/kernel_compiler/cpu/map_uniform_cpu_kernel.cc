@@ -43,7 +43,8 @@ bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Only support int32, int64";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int32 or int64, but got "
+                      << dtype_;
   }
   return true;
 }
@@ -53,7 +54,7 @@ void MapUniformCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   if (!node) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
   }
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   batch_size_ = 1;
@@ -66,13 +67,15 @@ void MapUniformCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto group_num = *reinterpret_cast<T *>(inputs[2]->addr);
   auto output_x = reinterpret_cast<T *>(outputs[0]->addr);
   if (group_num <= 0) {
-    MS_LOG(EXCEPTION) << "Group num should be greater than 0";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group_num' should be greater than 0, but got "
+                      << group_num;
   }
   T max_num = group_num * per_group_size;
   for (size_t i = 0; i < batch_size_; ++i) {
     output_x[i] = input_x[i] % group_num * per_group_size + input_x[i] / group_num;
     if (output_x[i] >= max_num) {
-      MS_LOG(EXCEPTION) << "Value can not >= " << max_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', all elements in output should be less than " << max_num
+                        << ", but got " << output_x[i];
     }
   }
 }

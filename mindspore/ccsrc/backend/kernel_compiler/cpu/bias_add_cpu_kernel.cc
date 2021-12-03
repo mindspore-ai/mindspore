@@ -34,16 +34,19 @@ void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   data_shape_ = input_shape_.size();
   if (input_shape_.size() < kBiasAddMinDim || input_shape_.size() > kBiasAddMaxDim) {
-    MS_LOG(EXCEPTION) << "Input tensor's rank must be in closed interval [2,5] for 'BiasAdd' Op,"
-                         "but input tensor's rank is "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'input_x' tensor must be 2D-5D, but input tensor's dimension is "
                       << input_shape_.size();
   }
   if (bias_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "Bias's rank must be 1 for 'BiasAdd' Op, but bias' rank is" << bias_shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'bias' tensor must be 1D, but got dimension: " << bias_shape_.size();
   }
   if (input_shape_[1] != bias_shape_[0]) {
-    MS_LOG(EXCEPTION) << "Bias shape [" << bias_shape_[0] << "] not match, it must equal C channel's shape:["
-                      << input_shape_[1] << "]";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension length of 'bias' should be equal to "
+                         "the second dimension length of 'input_x', the first dimension length of 'bias': "
+                      << bias_shape_[0] << ", and the second dimension length of 'input_x': " << input_shape_[1];
   }
 }
 
@@ -91,7 +94,7 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       for (size_t n = start; n < end; ++n) {
         size_t n_offset = input_shape_[1] * n;
         if (ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]) != NNACL_OK) {
-          MS_LOG(EXCEPTION) << "ElementAdd failed.";
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', ElementAdd failed.";
         }
       }
     };

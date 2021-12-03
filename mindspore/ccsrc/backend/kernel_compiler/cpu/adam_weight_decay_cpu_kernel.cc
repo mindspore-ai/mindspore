@@ -82,7 +82,7 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecayNnacl(const std::vector<Addr
   task = [&](size_t start, size_t end) {
     int ret = AdamWeightDecayFp32(var, m, v, lr, beta1, beta2, epsilon, decay, gradient, start, end);
     if (ret != NNACL_OK) {
-      MS_LOG(EXCEPTION) << "AdamWeightDecayFp32 failed.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', AdamWeightDecayFp32 failed. Error no: " << ret;
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
@@ -99,21 +99,55 @@ bool AdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
-  if (inputs[VAR]->size != inputs[M]->size || inputs[VAR]->size != inputs[V]->size ||
-      inputs[VAR]->size != inputs[GRAD]->size) {
-    MS_LOG(EXCEPTION) << "Var, m, v, grad input data size must be same!";
+  if (inputs[VAR]->size != inputs[M]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type and shape of input data 'm' and 'var' should be same, "
+                         "but got the memory size of 'm': "
+                      << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
   }
-  if (inputs[LR]->size != kSizeFloat32 || inputs[BETA1]->size != kSizeFloat32 || inputs[BETA2]->size != kSizeFloat32 ||
-      inputs[EPSILON]->size != kSizeFloat32 || inputs[DECAY]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "The attribute beta, lr, epsilon and weight decay must be float!";
+  if (inputs[VAR]->size != inputs[V]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type and shape of input data 'v' and 'var' should be same, "
+                         "but got the memory size of 'v': "
+                      << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
   }
-
+  if (inputs[VAR]->size != inputs[GRAD]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type and shape of input data 'grad' and 'var' should be "
+                         "same, but got the memory size of 'grad': "
+                      << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
+  }
+  if (inputs[LR]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute 'lr' should be float, but got the memory size of 'lr': " << inputs[LR]->size;
+  }
+  if (inputs[BETA1]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute 'beta1' should be float, but got the memory size of 'beta1': "
+                      << inputs[BETA1]->size;
+  }
+  if (inputs[BETA2]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute 'beta2' should be float, but got the memory size of 'beta2': "
+                      << inputs[BETA2]->size;
+  }
+  if (inputs[EPSILON]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute 'epsilon' should be float, but got the memory size of 'epsilon': "
+                      << inputs[EPSILON]->size;
+  }
+  if (inputs[DECAY]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute 'decay' should be float, but got the memory size of 'decay': "
+                      << inputs[DECAY]->size;
+  }
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamWeightDecayNnacl(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchAdamWeightDecay<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "AdamWeightDecay not support " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   return true;
 }

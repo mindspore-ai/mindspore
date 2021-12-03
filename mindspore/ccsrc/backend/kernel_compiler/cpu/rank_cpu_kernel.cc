@@ -35,7 +35,8 @@ void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   };
   auto method = AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
   if (kValidMethods.find(method) == kValidMethods.end()) {
-    MS_LOG(EXCEPTION) << "[" << method << "] not supported";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the method should be in " << Map2Str(kValidMethods)
+                      << ", but got " << method;
   }
   method_ = kValidMethods.at(method);
 
@@ -46,7 +47,8 @@ void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   };
   auto option = AnfAlgo::GetNodeAttr<std::string>(kernel_node, NA_OPTION);
   if (kValidOptions.find(option) == kValidOptions.end()) {
-    MS_LOG(EXCEPTION) << "[" << option << "] not supported";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the option should be in " << Map2Str(kValidOptions)
+                      << ", but got " << option;
   }
   option_ = kValidOptions.at(option);
 
@@ -55,8 +57,8 @@ void RankCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis_ = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_ >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "the evaluated axis should be smaller than the "
-                         "dimension of input tensor "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the evaluated axis should be smaller than the dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_;
   }
 
@@ -130,7 +132,9 @@ void RankCpuKernel<T>::SetFunc() {
     } break;
     case Method::MethodNotDefined:
     default:
-      MS_LOG(EXCEPTION) << "method not init";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', method not init. The method should be 'max', 'min', 'average', 'first', or 'dense', "
+                        << ", but got " << method_;
   }
 }
 
@@ -250,16 +254,21 @@ void RankCpuKernel<T>::PctConvert(float *output_addr, const AxisIterator &iter, 
 template <typename T>
 bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                               const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "input or output num error";
+  if (inputs.size() != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
+  }
+  if (outputs.size() != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size();
   }
   if constexpr (std::is_integral_v<T>) {
     if (workspace.size() != 2) {
-      MS_LOG(EXCEPTION) << "workspace num error";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be 2, but got "
+                        << workspace.size();
     }
   } else {
     if (workspace.size() != 3) {
-      MS_LOG(EXCEPTION) << "workspace num error";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be 3, but got "
+                        << workspace.size();
     }
   }
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);

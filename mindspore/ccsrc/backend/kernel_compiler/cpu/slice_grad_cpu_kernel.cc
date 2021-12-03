@@ -31,11 +31,13 @@ constexpr size_t kSliceGradMaxInputShapeSize = 4;
 
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
   ClearVectors();
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradCpuKernel only support 4d or lower.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be 4D or lower, but got "
+                      << input_shape.size() << "D.";
   }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -58,7 +60,9 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
                          [](const int64_t &value) { return LongToInt(value); });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', 'stride|end|input' size should be equal, but got 'stride' size: " << strides_.size()
+                        << ", 'end' size: " << end_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(true);
   } else {
@@ -66,7 +70,9 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
                          [](const int64_t &value) { return LongToInt(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', 'begin|size|input' size should be equal, but got 'begin' size: " << begin_.size()
+                        << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(false);
   }
@@ -123,7 +129,11 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
     auto end_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     auto stride_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "StridedSliceGrad requires the dimension of begin, end, strides must be equal to 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimensions of 'begin', 'end', 'strides' should be 1, "
+                           "but got the dimension of 'begin': "
+                        << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
+                        << ", and the dimension of 'strides': " << stride_shape.size();
     }
 
     auto end_ptr = reinterpret_cast<int32_t *>(inputs[3]->addr);
@@ -135,21 +145,26 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
                          [](const int32_t &value) { return value; });
     (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const int32_t &value) { return value; });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "stride|end|input size must be equal, but got begin: " << begin_ << ", size: " << size_
-                        << ", input shape: " << output_shape_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', 'stride|end|input' size should be equal, but got 'stride' size: " << strides_.size()
+                        << ", 'end' size: " << end_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(true);
   } else {
     auto size_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "SliceGrad requires the dimension of begin, end must be equal to 1.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dimensions of 'begin', 'end' should be 1, but got the dimension of 'begin': "
+                        << begin_shape.size() << ", and the dimension of 'end': " << size_shape.size();
     }
     auto size_ptr = reinterpret_cast<int32_t *>(inputs[3]->addr);
     std::vector<int32_t> size{size_ptr, size_ptr + size_shape[0]};
     (void)std::transform(size.begin(), size.end(), std::back_inserter(size_),
                          [](const int32_t &value) { return value; });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', 'begin|size|input' size should be equal, but got 'begin' size: " << begin_.size()
+                        << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(false);
   }
@@ -161,7 +176,7 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
 bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Input is empty";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input should be not empty.";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -175,7 +190,9 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   } else if (dtype_ == kNumberTypeFloat64) {
     ret = LaunchKernel<double>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of input should be bool, int32, float32 or float64, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   return ret;
 }
@@ -192,7 +209,7 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   }
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
-    MS_LOG(ERROR) << "Output buff memset fail. ret:" << ret;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
     return false;
   }
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
@@ -265,16 +282,16 @@ void SliceGradCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> 
   auto out_buff_size = outputs[0]->size;
 
   if ((in_offset + copy_num) * sizeof(T) > in_buff_size) {
-    MS_LOG(EXCEPTION) << id << "input memory out of bounds.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", " << id << " input memory out of bounds.";
   }
   if ((out_offset + copy_num) * sizeof(T) > out_buff_size) {
-    MS_LOG(EXCEPTION) << id << "output memory out of bounds.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", " << id << " output memory out of bounds.";
   }
 
   auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(T), input_addr + in_offset,
                       copy_num * sizeof(T));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Memcpy failed. ret:" << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
   }
 }
 
@@ -282,7 +299,8 @@ void SliceGradCPUKernel::FormatArgs(bool stride) {
   if (stride) {
     for (size_t i = 0; i < strides_.size(); ++i) {
       if (strides_[i] == 0) {
-        MS_LOG(EXCEPTION) << "Slice stride cannot be zero";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << ", elements in 'stride' should not be 0, but got 0 in dimension " << i;
       }
       if (end_[i] == 0 && begin_[i] < 0) {
         end_[i] = end_[i] + SizeToInt(output_shape_[i]);

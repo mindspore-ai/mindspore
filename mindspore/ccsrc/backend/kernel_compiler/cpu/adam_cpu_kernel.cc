@@ -42,7 +42,7 @@ void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, co
   T *gradient = reinterpret_cast<T *>(inputs[GRAD]->addr);
   constexpr float ONE = 1.0;
   if (beta1_power - ONE == 0) {
-    MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
   }
   T new_lr = static_cast<T>(lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power));
   // multithreading
@@ -77,7 +77,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
   float *gradient = reinterpret_cast<float *>(inputs[GRAD]->addr);
   constexpr float ONE = 1.0;
   if (beta1_power - ONE == 0) {
-    MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
   }
   float new_lr = lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power);
 
@@ -86,7 +86,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
   auto task = [this, &var, &m, &v, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
     int ret = AdamFp32(var, m, v, new_lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
     if (ret != NNACL_OK) {
-      MS_LOG(EXCEPTION) << "AdamFp32 failed.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', AdamFp32 failed. Error no: " << ret;
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
@@ -108,14 +108,29 @@ bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
 
-  if (inputs[VAR]->size != inputs[M]->size || inputs[VAR]->size != inputs[V]->size ||
-      inputs[VAR]->size != inputs[GRAD]->size) {
-    MS_LOG(EXCEPTION) << "Error input data size!";
+  if (inputs[VAR]->size != inputs[M]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the memory size of input 'm' and 'var' should be same, but got "
+                         "the memory size of input 'm': "
+                      << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
+  }
+  if (inputs[VAR]->size != inputs[V]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the memory size of input 'v' and 'var' should be same, but got "
+                         "the memory size of input 'v': "
+                      << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
+  }
+  if (inputs[VAR]->size != inputs[GRAD]->size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the memory size of input 'grad' and 'var' should be same, "
+                         "but got the memory size of input 'grad': "
+                      << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
   }
   size_t f_size = sizeof(float);
   if (inputs[BETA1_POWER]->size != f_size || inputs[BETA2_POWER]->size != f_size || inputs[LR]->size != f_size ||
       inputs[BETA1]->size != f_size || inputs[BETA2]->size != f_size || inputs[EPSILON]->size != f_size) {
-    MS_LOG(EXCEPTION) << "The attribute beta_power, beta, lr and epsilon must be float!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the attribute beta_power, beta, lr and epsilon should be float!";
   }
 
   if (dtype_ == kNumberTypeFloat32) {
@@ -123,7 +138,8 @@ bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchAdam<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Adam not support " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   return true;
 }

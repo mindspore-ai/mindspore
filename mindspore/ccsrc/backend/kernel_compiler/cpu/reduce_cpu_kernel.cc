@@ -29,6 +29,25 @@ constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
 }  // namespace
 
+void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std::string &kernel_name,
+                std::vector<int64_t> *axis) {
+  auto axis_addr = prim->GetAttr(AXIS);
+  if (axis == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be not null.";
+  }
+  if (axis_addr == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be not null, but got empty value.";
+  }
+  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
+    *axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
+  } else if (axis_addr->isa<Int64Imm>()) {
+    (void)axis->emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
+                      << "', the type of 'axis' should be tuple, list, or int, but got invalid type.";
+  }
+}
+
 template <typename T>
 void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -37,19 +56,8 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
-  auto axis_addr = prim->GetAttr(AXIS);
-  if (axis_addr == nullptr) {
-    MS_LOG(EXCEPTION) << "Miss attribute " << AXIS;
-  }
-  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
-    axis_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
-  } else if (axis_addr->isa<Int64Imm>()) {
-    (void)axis_.emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  } else {
-    MS_LOG(EXCEPTION) << "Attribute is invalid";
-  }
-
-  int dimension = input_shape_.size();
+  UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
+  size_t dimension = input_shape_.size();
   (void)std::transform(axis_.begin(), axis_.end(), axis_.begin(),
                        [dimension](const auto &a) { return a < 0 ? dimension + a : a; });
   sort(axis_.begin(), axis_.end());
@@ -66,7 +74,7 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       reduce_type_ = kReduceAny;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported reduce operation: " << kernel_name_ << " for bool.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
     }
   } else {
     if (kernel_name_ == prim::kPrimReduceMax->name()) {
@@ -85,7 +93,7 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       reduce_type_ = kReduceProd;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported reduce operation:  " << kernel_name_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
     }
   }
 

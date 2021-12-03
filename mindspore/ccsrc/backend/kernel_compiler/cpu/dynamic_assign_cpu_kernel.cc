@@ -49,7 +49,8 @@ bool DynamicAssignCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   } else if (input_x_dtype_ == kNumberTypeFloat64) {
     LaunchKernel<double>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << kernel_name_ << " support (int32, int64, float32, float64) on CPU , but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", the dtype of 'input_x' should be in (int32, int64, float32, float64) on CPU, but got "
                       << TypeIdToType(input_x_dtype_)->ToString();
   }
   return true;
@@ -60,7 +61,7 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   if (!node) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " node_wpt_ is expired.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
   }
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
@@ -70,11 +71,17 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   if (input_x_shape.size() != input_y_shape.size()) {
-    MS_LOG(EXCEPTION) << "X and y must be same shape";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'input_x' and 'input_y' should be the same, "
+                         "but got the dimension of 'input_x': "
+                      << input_x_shape.size() << ", and the dimension of 'input_y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(EXCEPTION) << "x and y must be same shape!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape of 'input_x' and 'input_y' should be the same, "
+                           "but got the shape of 'input_x': "
+                        << Vector2Str(input_x_shape) << ", and the shape of 'input_y': " << Vector2Str(input_y_shape);
     }
   }
   auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
@@ -82,12 +89,13 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
-    MS_LOG(EXCEPTION) << "Memcpy size must <= max_size, but got memcpy size is : " << total_size
-                      << ", max size is : " << max_size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', memcpy size should be less than or equal to max size, but got memcpy size: " << total_size
+                      << " and max size: " << max_size;
   }
   int ret = memcpy_s(input_x, total_size, input_y, total_size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "Memcpy_s error, errorno" << ret;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error.  Error no: " << ret;
   }
 
   auto node_with_idx = AnfAlgo::GetPrevNodeOutput(node, 0);
@@ -100,7 +108,7 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     (void)std::transform(input_x_shape.begin(), input_x_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     tensor->set_shape(shape_tmp);
   } else {
-    MS_LOG(EXCEPTION) << "Input x must be a Parameter.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input x should be a Parameter.";
   }
 }
 }  // namespace kernel

@@ -23,6 +23,7 @@ namespace kernel {
 namespace {
 constexpr size_t kSparseApplyLazyAdamInputsNum = 11;
 constexpr size_t kSparseApplyLazyAdamWorkspaceSize = 4;
+constexpr char kKernelName[] = "SparseApplyLazyAdam";
 
 template <typename T>
 void ComputeLazyAdam(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
@@ -41,7 +42,8 @@ void ComputeLazyAdam(MultiThreadComputeParams<T> *input_params, size_t start, si
   for (size_t i = start; i < end; ++i) {
     T index = unique_sparse_grad.indices_[i];
     if (index < 0 || LongToSize(index) >= var_first_dim_size) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range";
+      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' should be in range [0, "
+                        << SizeToLong(var_first_dim_size) << "), but got " << index;
     }
     size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
     size_t end_index = start_index + var_outer_dim_size;
@@ -74,7 +76,8 @@ void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_no
   } else if (indices_data_type_ == kNumberTypeInt64) {
     InitWorkspaceSize<int64_t>();
   } else {
-    MS_LOG(EXCEPTION) << "Input data type " << indices_data_type_ << " is unsupported";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' should be int32 or int64,  but got "
+                      << TypeIdToType(indices_data_type_)->ToString();
   }
 }
 
@@ -87,31 +90,45 @@ void SparseApplyLazyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
   if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "var must be at least 1D";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'var' should be at least 1-D, but got empty tensor.";
   }
   if (!IsSameShape(var_shape, m_shape)) {
-    MS_LOG(EXCEPTION) << "var and m should have the same shape";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the shape of 'm' should be same with the shape of 'var', but got the shape of 'm': "
+                      << Vector2Str(m_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
   }
   if (!IsSameShape(var_shape, v_shape)) {
-    MS_LOG(EXCEPTION) << "var and v should have the same shape";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the shape of 'v' should be same with the shape of 'var', but got the shape of 'v': "
+                      << Vector2Str(v_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
   }
   if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of 'grad' should be same with the dimension of "
+                         "'var', but got the dimension of 'grad': "
+                      << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
   }
 
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of var and grad must equal in dimension " << i;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape of 'var' and 'grad' should equal in dimension i=" << i
+                        << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
     }
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "Indices must be 1D";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' should be a 1-D vector, but got "
+                      << indices_shape.size() << "-D.";
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != indices_size_) {
-    MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the first dimension value of 'grad' should be equal to "
+                         "the first dimension value of 'indices', but got the first dimension value of 'grad': "
+                      << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
   }
   if (AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
     use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
@@ -127,7 +144,7 @@ void SparseApplyLazyAdamCPUKernel::LaunchKernel(const std::vector<kernel::Addres
   auto *v = reinterpret_cast<float *>(inputs[2]->addr);
   auto beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
   if (beta1_power == 1) {
-    MS_LOG(EXCEPTION) << "The beta1_power should not be 1";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' should not be 1.";
   }
   auto beta2_power = reinterpret_cast<float *>(inputs[4]->addr)[0];
   auto lr = reinterpret_cast<float *>(inputs[5]->addr)[0];
@@ -178,7 +195,8 @@ bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
   } else if (indices_data_type_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, workspace);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported indices data type: " << indices_data_type_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' should be int32 or int64, but got "
+                      << TypeIdToType(indices_data_type_)->ToString();
   }
   return true;
 }

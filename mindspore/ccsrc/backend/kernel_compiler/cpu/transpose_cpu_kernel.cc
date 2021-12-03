@@ -40,8 +40,8 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   axes_ = {tmp.begin(), tmp.end()};
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
-    MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
-                      << axes_.size() << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the max dimension of input is " << MAX_TRANSPOSE_DIM_SIZE
+                      << "D, but got " << axes_.size() << "D.";
   }
 
   for (size_t i = 0; i < axes_.size(); ++i) {
@@ -72,7 +72,8 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be bool, int, float or uint, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
 }
 
@@ -122,10 +123,11 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   } else if constexpr (std::is_same_v<T, bool>) {
     res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
   } else {
-    MS_LOG(EXCEPTION) << "Transpose not support the type: " << typeid(T).name();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be bool, int, float or uint, but got "
+                      << typeid(T).name();
   }
   if (res != static_cast<int>(NNACL_OK)) {
-    MS_LOG(EXCEPTION) << "Transpose run failed.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', run failed, error no: " << res;
   }
 }
 

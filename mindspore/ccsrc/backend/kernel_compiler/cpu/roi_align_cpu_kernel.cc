@@ -27,13 +27,14 @@ constexpr size_t kOutputSize = 1;
 template <typename T>
 void ROIAlignCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   //  Get the input shapes
   auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
   auto x_shape_size = x_shape.size();
   if (x_shape_size != X_DIMS) {
-    MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but should be 4.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' should be 4, but got " << x_shape_size;
   }
 
   channels_ = SizeToInt(x_shape[CHANNEL]);
@@ -48,6 +49,10 @@ void ROIAlignCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   spatial_scale_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, "spatial_scale"));
   sample_num_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
   roi_end_mode_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "roi_end_mode"));
+
+  MS_EXCEPTION_IF_ZERO("channel", channels_);
+  MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height_);
+  MS_EXCEPTION_IF_ZERO("pooled_width", pooled_width_);
 }
 
 template <typename T>
@@ -117,11 +122,13 @@ template <typename T>
 void ROIAlignCPUKernel<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputSize) {
-    MS_LOG(EXCEPTION) << "Input number is: " << inputs.size() << ", but ROIAlign needs " << kInputSize << " inputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
+                      << inputs.size() << " input(s).";
   }
 
   if (outputs.size() != kOutputSize) {
-    MS_LOG(EXCEPTION) << "Output number is: " << outputs.size() << ", but ROIAlign needs " << kOutputSize << "outputs.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputSize << ", but got "
+                      << outputs.size() << " output(s).";
   }
 }
 

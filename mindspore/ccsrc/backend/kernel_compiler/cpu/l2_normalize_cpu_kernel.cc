@@ -37,10 +37,11 @@ void L2NormalizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in [" << -dims << ", " << dims
+                      << "), but got: " << axis_;
   }
   if (epsilon_ == (T)0.0) {
-    MS_LOG(EXCEPTION) << "Attr epsilon can not be zero.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the parameter of 'epsilon' can not be zero.";
   }
   if (axis_ < 0) {
     axis_ += SizeToInt(input_shape_.size());

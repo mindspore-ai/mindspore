@@ -68,7 +68,9 @@ void GatherDGradCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape_ != index_shape_) {
-    MS_LOG(EXCEPTION) << "Invalid shape size, input and index shape should be equal";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', shape size of 'x' should be equal to 'index', but got shape size of 'x': "
+                      << input_shape_.size() << ", and shape size of 'index': " << index_shape_.size();
   }
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, DIM);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -83,8 +85,17 @@ bool GatherDGradCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &i
   size_t input_size = get_element_num(input_shape_) * sizeof(T);
   size_t index_size = get_element_num(index_shape_) * sizeof(I);
   size_t output_size = get_element_num(output_shape_) * sizeof(T);
-  if (inputs[0]->size != index_size || inputs[1]->size != input_size || outputs[0]->size != output_size) {
-    MS_LOG(EXCEPTION) << "invalid input or output data size!";
+  if (inputs[0]->size != index_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' should be " << index_size
+                      << ", but got " << inputs[0]->size << ".";
+  }
+  if (inputs[1]->size != input_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' should be " << input_size
+                      << ", but got " << inputs[1]->size << ".";
+  }
+  if (outputs[0]->size != output_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output should be " << output_size
+                      << ", but got " << outputs[0]->size << ".";
   }
 
   auto *index = reinterpret_cast<I *>(inputs[0]->addr);
@@ -92,8 +103,8 @@ bool GatherDGradCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &i
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
   int output_rank = SizeToInt(output_shape_.size());
   if (axis_ >= output_rank || axis_ < -output_rank) {
-    MS_LOG(EXCEPTION) << "The value of 'axis_' should be in [" << -output_rank << ", " << output_rank
-                      << "], but got: " << axis_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' should be in [" << -output_rank << ", "
+                      << output_rank << "), but got: " << axis_;
   }
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(output_shape_.size());
@@ -104,16 +115,17 @@ bool GatherDGradCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &i
   int max_index = SizeToInt(output_shape_[axis_]);
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {
-      MS_LOG(EXCEPTION) << "The value of index should be in [" << -max_index << ", " << max_index
-                        << "], but got: " << index[i];
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' should be in [" << -max_index << ", "
+                        << max_index << "), but got: " << index[i];
     }
     if (index[i] < 0) {
       index[i] = max_index + index[i];
     }
   }
   auto out_size = get_element_num(output_shape_);
-  if (memset_s(out, out_size * sizeof(T), 0x00, out_size * sizeof(T)) != EOK) {
-    MS_LOG(EXCEPTION) << "Memset Failed!";
+  auto ret = memset_s(out, out_size * sizeof(T), 0x00, out_size * sizeof(T));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << ret;
   }
 
   // out_cargo_size
