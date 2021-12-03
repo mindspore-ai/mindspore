@@ -30,26 +30,9 @@ class CPUTensorArray : public TensorArray {
   CPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~CPUTensorArray() override = default;
-
-  bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) override;
-  void Free() override;
-  void Clear() override { valid_size_ = 0; }
-
-  size_t GetValidSize() const override { return valid_size_; }
-  size_t GetRealSize() const override { return tensors_.size(); }
-
-  void *GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
-
-  void SetMaxSize(const int64_t size, const bool is_dynamic) override {
-    is_dynamic_ = is_dynamic;
-    if (!is_dynamic) {
-      max_size_ = size;
-    }
-  }
-
- private:
-  int64_t max_size_;
-  bool is_dynamic_;
+  void ReleaseMemory(void *addr) override;
+  void *CreateMemory(const size_t size) override;
+  void ClearMemory(void *addr, const size_t size) override;
 };
 using CPUTensorArray = CPUTensorArray;
 using CPUTensorArrayPtr = std::shared_ptr<CPUTensorArray>;

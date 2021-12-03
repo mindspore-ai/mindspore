@@ -30,7 +30,7 @@ class TensorArray {
  public:
   // Base TensorArray. Constructed by name, dtype and shapes.
   TensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
-      : name_(name), dtype_(dtype), shapes_(shapes), valid_size_(0) {}
+      : name_(name), dtype_(dtype), shapes_(shapes), valid_size_(0), max_size_(0), is_dynamic_(true) {}
   virtual ~TensorArray() = default;
 
   // Check the index in valid range. Used in Read().
@@ -39,34 +39,46 @@ class TensorArray {
   virtual bool CheckValue(const TypeId &dtype, const std::vector<size_t> &shape);
 
   // Function Write() is used to insert or append dev_value to the position of index.
-  virtual bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) = 0;
+  virtual bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value);
 
   // Function Read() can get the tensors in the scope of tensors_.
   virtual mindspore::kernel::AddressPtr Read(const int64_t index);
 
-  // Free() will free the memory in TensorArray.
-  virtual void Free() = 0;
+  // Function Free() will release the memory in TensorArray.
+  virtual void Free();
+
+  // These three func should by implied for different device due to the difference in memory usage.
+  // Create/Release Memory is used for malloc/free a device memory, used in function Write().
+  // ClearMemory is used to reset the input addr with zeros, used in function Free().
+  virtual void ReleaseMemory(void *addr) = 0;
+  virtual void *CreateMemory(const size_t size) = 0;
+  virtual void ClearMemory(void *addr, const size_t size) = 0;
 
   // Clear() will only set the valid size of TensorArray to zero. The memory in TensorArray is still
-  // kept, In this situation， we can reuse the memory for next use.
+  // kept. In this situation， we can reuse the memory for next using.
   virtual void Clear();
 
   // A vector of tensor address are kept in a TensorArray. For memory reusing, we will keep the addr
   // after Clear(), in this time, the valid size will be zero but the real size still kept as
   // tensors_.size(). Overall， using GetValidSize() to get a logical TensorArray size, and using
   // GetRealSize() to get a physical TensorArray size.
-  virtual size_t GetValidSize() const = 0;
+  virtual size_t GetValidSize() const;
   virtual size_t GetRealSize() const;
 
   // This function is used in the situation that is_dynamic == false then set the max size.
   // Otherwise, it won't be used and use the default implement.
   virtual void SetMaxSize(const int64_t size, const bool is_dynamic);
 
+  // Return the tensor address in position index.
+  virtual void *GetTensorAddr(const size_t &index) const;
+
  protected:
   std::string name_;
   TypePtr dtype_;
   std::vector<size_t> shapes_;
   size_t valid_size_;
+  int64_t max_size_;
+  bool is_dynamic_;
   // Using a vector tensors_ to store the dev_tensor_addr from Write().
   std::vector<mindspore::kernel::AddressPtr> tensors_;
 };

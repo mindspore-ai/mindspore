@@ -48,15 +48,73 @@ mindspore::kernel::AddressPtr TensorArray::Read(const int64_t index) {
   return tensors_[LongToSize(index)];
 }
 
+// Add tensor to the TensorArray and increase the size.
+// Cast 1: is_dynamic = False and index > max_size_, error.
+// Case 2: index > valid_size, fill the rest dev_value with zeros, and set valid_size to index + 1.
+// Case 3: index == tensors_.size(), we need to increase both real tensors_ size and valid size, and add
+// the new dev_value to tensors_.
+// Case 4: tensors_size() > index > valid_size, we can reuse the memory in tensors_[index], so
+// only increase the valid_size.
+bool TensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value) {
+  MS_LOG(DEBUG) << "Write dev_value to " << name_;
+  if (!is_dynamic_ && (index >= max_size_)) {
+    MS_LOG(ERROR) << name_ << " is not in dynamic size, the max_size is " << max_size_ << ", but get index " << index;
+    return false;
+  }
+  if (LongToSize(index) > valid_size_) {
+    // Create/reuse (index - valid_size) size dev_value with zeros.
+    // 1 create new mem : index > real_size ? index - real_size : 0
+    // 2 reuse old mem : index > real_size ? real_size - valid_size : index - valid_size
+    // 3 fill zeros : index - valid_size
+    size_t create_size = (LongToSize(index) > tensors_.size()) ? (LongToSize(index) - tensors_.size()) : 0;
+    for (size_t i = 0; i < create_size; i++) {
+      kernel::AddressPtr create_dev = std::make_shared<kernel::Address>();
+      create_dev->addr = CreateMemory(dev_value->size);
+      create_dev->size = dev_value->size;
+      tensors_.push_back(create_dev);
+    }
+    tensors_.push_back(dev_value);
+    for (size_t i = valid_size_; i < LongToSize(index); i++) {
+      auto tensor_size = tensors_[i]->size;
+      ClearMemory(tensors_[i]->addr, tensor_size);
+    }
+    valid_size_ = LongToSize(index) + 1;
+  } else if (LongToSize(index) == tensors_.size()) {
+    MS_LOG(DEBUG) << "Write to index " << index << ", increase tensors' size to " << (tensors_.size() + 1);
+    tensors_.push_back(dev_value);
+    valid_size_++;
+  } else {
+    MS_LOG(DEBUG) << "Reuse tensors in position " << index << ", tensors size is " << tensors_.size();
+    if (LongToSize(index) == valid_size_) valid_size_++;
+  }
+  return true;
+}
+
 void TensorArray::Clear() {
   valid_size_ = 0;
   return;
 }
 
-size_t TensorArray::GetRealSize() const { return valid_size_; }
+void TensorArray::Free() {
+  MS_LOG(DEBUG) << "Free device memory for " << name_;
+  for (const auto &addr : tensors_) {
+    if (addr != nullptr) {
+      ReleaseMemory(static_cast<void *>(addr->addr));
+    }
+  }
+}
+
+size_t TensorArray::GetValidSize() const { return valid_size_; }
+size_t TensorArray::GetRealSize() const { return tensors_.size(); }
+
+void *TensorArray::GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
 
 void TensorArray::SetMaxSize(const int64_t size, const bool is_dynamic) {
-  MS_LOG(DEBUG) << name_ << " use default SetTensorArrayMaxSize, and keep it empty";
+  is_dynamic_ = is_dynamic;
+  if (!is_dynamic_) {
+    max_size_ = size;
+    MS_LOG(DEBUG) << name_ << " use fixed size " << max_size_;
+  }
   return;
 }
 }  // namespace device
