@@ -28,6 +28,7 @@
 #include "backend/kernel_compiler/kernel_query.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
 #include "debug/anf_ir_dump.h"
@@ -35,6 +36,8 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
+#include "utils/convert_utils.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -682,6 +685,89 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   return select_status;
 }
 
+bool ConvertAttrToInput(const CNodePtr &kernel_node) {
+  std::vector<size_t> input_attr_idx = AnfAlgo::GetNodeAttr<std::vector<size_t>>(kernel_node, kAttrInputToAttrIdx);
+  std::vector<string> input_attr_name = AnfAlgo::GetNodeAttr<std::vector<string>>(kernel_node, kAttrInputToAttrName);
+  if (input_attr_idx.size() != input_attr_name.size()) {
+    MS_LOG(EXCEPTION) << "The size of input_to_attr_index should be equal to the size of input_to_attr_name, but got "
+                      << "input_to_attr_index size: " << input_attr_idx.size()
+                      << ", input_to_attr_name size: " << input_attr_name.size() << ". Node:["
+                      << kernel_node->fullname_with_scope() << "].";
+  }
+
+  auto graph = kernel_node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+
+  auto orig_inputs = kernel_node->inputs();
+  size_t orig_input_num = orig_inputs.size() - 1;
+  size_t new_input_num = orig_input_num + input_attr_idx.size();
+  size_t orig_tmp_idx = 0;
+  size_t attr_tmp_idx = 0;
+  std::vector<AnfNodePtr> new_inputs = {orig_inputs[0]};
+  for (size_t idx = 0; idx < new_input_num; ++idx) {
+    if (attr_tmp_idx < input_attr_idx.size() && idx == input_attr_idx[attr_tmp_idx]) {
+      auto value = primitive->GetAttr(input_attr_name[attr_tmp_idx]);
+      if (value == nullptr) {
+        MS_LOG(INFO) << "Can not get attr[" << input_attr_name[attr_tmp_idx] << "].";
+        return false;
+      }
+      tensor::TensorPtr tensor_ptr = nullptr;
+      if (value->isa<tensor::Tensor>()) {
+        tensor_ptr = value->cast<tensor::TensorPtr>();
+      } else if (value->isa<Scalar>()) {
+        tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
+      } else if (value->isa<ValueTuple>()) {
+        tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+      } else {
+        MS_LOG(INFO) << "The value of attr[" << input_attr_name[attr_tmp_idx]
+                     << "] should be a tensor or scalar or value tuple.";
+        return false;
+      }
+      if (tensor_ptr == nullptr) {
+        MS_LOG(INFO) << "Convert attr[" << input_attr_name[attr_tmp_idx] << "] to tensor value failed.";
+        return false;
+      }
+      auto value_node = kernel_graph->NewValueNode(tensor_ptr);
+      MS_EXCEPTION_IF_NULL(value_node);
+      new_inputs.push_back(value_node);
+      ++attr_tmp_idx;
+    } else if (orig_tmp_idx < orig_input_num) {
+      new_inputs.push_back(orig_inputs[orig_tmp_idx + 1]);
+      ++orig_tmp_idx;
+    } else {
+      continue;
+    }
+  }
+  kernel_node->set_inputs(new_inputs);
+  return true;
+}
+
+KernelSelectStatus AICPUSelectWithConvertAttrToInput(const CNodePtr &kernel_node) {
+  if (!AnfAlgo::HasNodeAttr(kAttrInputToAttrIdx, kernel_node) ||
+      !AnfAlgo::HasNodeAttr(kAttrInputToAttrName, kernel_node)) {
+    return kNoMatched;
+  }
+  MS_LOG(INFO) << "The node [" << kernel_node->fullname_with_scope()
+               << "] cannot find valid kernel info, try to convert attr to input and re-find in ai_cpu kernel info";
+
+  auto orig_inputs = kernel_node->inputs();
+  bool convert_succ = ConvertAttrToInput(kernel_node);
+  if (!convert_succ) {
+    return kNoMatched;
+  }
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
+  kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
+  auto select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
+  if (select_status == kNoMatched) {
+    kernel_node->set_inputs(orig_inputs);
+  }
+  return select_status;
+}
+
 std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu) {
   std::ostringstream buffer;
@@ -756,13 +842,17 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
     SetTensorDeviceInfo(kernel_node);
     select_status = kStatusAllMatched;
   }
-  // If it can node find valid ai_core kernel info, re-find in ai_cpu kernel info
+  // If node can't find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
     MS_LOG(DEBUG) << "The node [" << kernel_node->fullname_with_scope()
                   << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
+  }
+  // If node can't find valid kernel info, try to convert attr to input and re-find in ai_cpu kernel info
+  if (select_status == kNoMatched) {
+    select_status = AICPUSelectWithConvertAttrToInput(kernel_node);
   }
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
