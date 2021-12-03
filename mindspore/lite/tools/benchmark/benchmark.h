@@ -35,6 +35,9 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
+#ifdef ENABLE_OPENGL_TEXTURE
+#include "tools/common/opengl_util.h"
+#endif
 #include "include/lite_session.h"
 
 namespace mindspore::lite {
@@ -50,6 +53,17 @@ class MS_API Benchmark : public BenchmarkBase {
  protected:
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData() override;
+#ifdef ENABLE_OPENGL_TEXTURE
+  int GenerateGLTexture(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
+
+  int LoadGLTexture();
+
+  int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
+
+  int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
+                            std::string name, float *data);
+#endif
+  int LoadInput() override;
 
   int ReadInputFile() override;
 
@@ -84,9 +98,12 @@ class MS_API Benchmark : public BenchmarkBase {
                                                float *total_cosine_distance, int *total_size);
 
  private:
+#ifdef ENABLE_OPENGL_TEXTURE
+  mindspore::OpenGL::OpenGLRuntime gl_runtime_;
+#endif
   session::LiteSession *session_{nullptr};
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> ms_outputs_;
 
   KernelCallBack before_call_back_ = nullptr;
   KernelCallBack after_call_back_ = nullptr;

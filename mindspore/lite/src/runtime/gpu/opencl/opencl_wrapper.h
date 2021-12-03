@@ -21,7 +21,11 @@
 #include <string>
 #include <algorithm>
 #include "CL/cl2.hpp"
-
+#ifdef ENABLE_OPENGL_TEXTURE
+#include "EGL/egl.h"
+#include "GLES3/gl3.h"
+#include "GLES3/gl32.h"
+#endif
 #ifdef USE_OPENCL_WRAPPER
 
 namespace mindspore::lite::opencl {
@@ -109,6 +113,11 @@ using clEnqueueCopyBufferToImageFunc = cl_int (*)(cl_command_queue, cl_mem, cl_m
                                                   const size_t *, cl_uint, const cl_event *, cl_event *);
 using clEnqueueCopyImageToBufferFunc = cl_int (*)(cl_command_queue, cl_mem, cl_mem, const size_t *, const size_t *,
                                                   size_t, cl_uint, const cl_event *, cl_event *);
+#ifdef ENABLE_OPENGL_TEXTURE
+using clGetGLContextInfoKHRFunc = cl_int (*)(const cl_context_properties *, cl_gl_context_info, size_t, void *,
+                                             size_t *);
+#endif
+
 #if CL_TARGET_OPENCL_VERSION >= 120
 using clRetainDeviceFunc = cl_int (*)(cl_device_id);
 using clReleaseDeviceFunc = cl_int (*)(cl_device_id);
@@ -189,6 +198,9 @@ CL_DECLARE_FUNC_PTR(clGetEventProfilingInfo);
 CL_DECLARE_FUNC_PTR(clGetImageInfo);
 CL_DECLARE_FUNC_PTR(clEnqueueCopyBufferToImage);
 CL_DECLARE_FUNC_PTR(clEnqueueCopyImageToBuffer);
+#ifdef ENABLE_OPENGL_TEXTURE
+CL_DECLARE_FUNC_PTR(clGetGLContextInfoKHR);
+#endif
 #if CL_TARGET_OPENCL_VERSION >= 120
 CL_DECLARE_FUNC_PTR(clRetainDevice);
 CL_DECLARE_FUNC_PTR(clReleaseDevice);

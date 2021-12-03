@@ -26,6 +26,25 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore {
 namespace tools {
+int BenchmarkCApi::LoadInput() {
+  if (flags_->in_data_file_.empty()) {
+    auto status = GenerateInputData();
+    if (status != 0) {
+      std::cerr << "Generate input data error " << status << std::endl;
+      MS_LOG(ERROR) << "Generate input data error " << status;
+      return status;
+    }
+  } else {
+    auto status = ReadInputFile();
+    if (status != 0) {
+      std::cerr << "ReadInputFile error, " << status << std::endl;
+      MS_LOG(ERROR) << "ReadInputFile error, " << status;
+      return status;
+    }
+  }
+  return RET_OK;
+}
+
 int BenchmarkCApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   int ret = InitContext();

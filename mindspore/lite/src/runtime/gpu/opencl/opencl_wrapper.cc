@@ -232,6 +232,9 @@ CL_DEFINE_FUNC_PTR(clGetEventProfilingInfo);
 CL_DEFINE_FUNC_PTR(clGetImageInfo);
 CL_DEFINE_FUNC_PTR(clEnqueueCopyBufferToImage);
 CL_DEFINE_FUNC_PTR(clEnqueueCopyImageToBuffer);
+#ifdef ENABLE_OPENGL_TEXTURE
+CL_DEFINE_FUNC_PTR(clGetGLContextInfoKHR);
+#endif
 #if CL_TARGET_OPENCL_VERSION >= 120
 CL_DEFINE_FUNC_PTR(clRetainDevice);
 CL_DEFINE_FUNC_PTR(clReleaseDevice);
@@ -254,7 +257,6 @@ CL_DEFINE_FUNC_PTR(clSetKernelArgSVMPointer);
 #endif
 #undef LOAD_OPENCL_FUNCTION_PTR
 }  // namespace mindspore::lite::opencl
-
 // clGetPlatformIDs wrapper, use OpenCLWrapper function. use OpenCLWrapper function.
 cl_int clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms, cl_uint *num_platforms) {
   auto func = mindspore::lite::opencl::clGetPlatformIDs;
@@ -687,6 +689,13 @@ cl_int clEnqueueFillImage(cl_command_queue command_queue, cl_mem image, const vo
 }
 
 #ifdef ENABLE_OPENGL_TEXTURE
+cl_int clGetGLContextInfoKHR(const cl_context_properties *properties, cl_gl_context_info param_name,
+                             size_t param_value_size, void *param_value, size_t *param_value_size_ret) {
+  auto func = mindspore::lite::opencl::clGetGLContextInfoKHR;
+  MS_ASSERT(func != nullptr);
+  return func(properties, param_name, param_value_size, param_value, param_value_size_ret);
+}
+
 cl_mem clCreateFromGLTexture(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                              cl_GLuint texture, cl_int *errcode_ret) {
   auto func = mindspore::lite::opencl::clCreateFromGLTexture;

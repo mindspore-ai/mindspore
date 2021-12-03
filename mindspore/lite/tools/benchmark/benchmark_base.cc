@@ -72,7 +72,9 @@ const std::unordered_map<schema::Format, std::string> kTensorFormatMap{
   {schema::Format_NC4, "NC4"},   {schema::Format_NC4HW4, "NC4HW4"}, {schema::Format_NCDHW, "NCDHW"}};
 
 int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
-  MS_ASSERT(data != nullptr);
+  if (data == nullptr && size > 0) {
+    data = malloc(size);
+  }
   switch (data_type) {
     case kNumberTypeFloat32:
     case kNumberTypeFloat:
@@ -107,25 +109,6 @@ int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
       for (size_t i = 0; i < size; i++) {
         casted_data[i] = static_cast<char>(i);
       }
-  }
-  return RET_OK;
-}
-
-int BenchmarkBase::LoadInput() {
-  if (flags_->in_data_file_.empty()) {
-    auto status = GenerateInputData();
-    if (status != 0) {
-      std::cerr << "Generate input data error " << status << std::endl;
-      MS_LOG(ERROR) << "Generate input data error " << status;
-      return status;
-    }
-  } else {
-    auto status = ReadInputFile();
-    if (status != 0) {
-      std::cerr << "ReadInputFile error, " << status << std::endl;
-      MS_LOG(ERROR) << "ReadInputFile error, " << status;
-      return status;
-    }
   }
   return RET_OK;
 }
@@ -390,9 +373,7 @@ int BenchmarkBase::InitCallbackParameter() {
 }
 
 int BenchmarkBase::Init() {
-  if (this->flags_ == nullptr) {
-    return 1;
-  }
+  MS_CHECK_FALSE(this->flags_ == nullptr, RET_ERROR);
   MS_LOG(INFO) << "ModelPath = " << this->flags_->model_file_;
   MS_LOG(INFO) << "ModelType = " << this->flags_->model_type_;
   MS_LOG(INFO) << "InDataPath = " << this->flags_->in_data_file_;
@@ -406,6 +387,9 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
   MS_LOG(INFO) << "EnableParallel = " << this->flags_->enable_parallel_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
+#ifdef ENABLE_OPENGL_TEXTURE
+  MS_LOG(INFO) << "EnableGLTexture = " << this->flags_->enable_gl_texture_;
+#endif
   std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
   std::cout << "ModelType = " << this->flags_->model_type_ << std::endl;
   std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
@@ -419,11 +403,21 @@ int BenchmarkBase::Init() {
   std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
   std::cout << "EnableParallel = " << this->flags_->enable_parallel_ << std::endl;
   std::cout << "calibDataPath = " << this->flags_->benchmark_data_file_ << std::endl;
+#ifdef ENABLE_OPENGL_TEXTURE
+  std::cout << "EnableGLTexture = " << this->flags_->enable_gl_texture_ << std::endl;
+#endif
   if (this->flags_->loop_count_ < 1) {
     MS_LOG(ERROR) << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0";
     std::cerr << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (this->flags_->enable_gl_texture_ == true && this->flags_->device_ != "GPU") {
+    MS_LOG(ERROR) << "device must be GPU if you want to enable GLTexture";
+    std::cerr << "ERROR: device must be GPU if you want to enable GLTexture" << std::endl;
+    return RET_ERROR;
+  }
+#endif
 
   auto thread_ret = CheckThreadNumValid();
   if (thread_ret != RET_OK) {

@@ -37,6 +37,7 @@
 #include "src/common/utils.h"
 #include "ir/dtype/type_id.h"
 #include "schema/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 #define BENCHMARK_LOG_ERROR(str)   \
@@ -134,6 +135,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+#ifdef ENABLE_OPENGL_TEXTURE
+    AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
+#endif
   }
 
   ~BenchmarkFlags() override = default;
@@ -156,6 +160,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int loop_count_ = 10;
   int num_threads_ = 2;
   bool enable_fp16_ = false;
+#ifdef ENABLE_OPENGL_TEXTURE
+  bool enable_gl_texture_ = false;
+#endif
   bool enable_parallel_ = false;
   int warm_up_loop_count_ = 3;
   // MarkAccuracy
@@ -184,7 +191,7 @@ class MS_API BenchmarkBase {
   virtual int RunBenchmark() = 0;
 
  protected:
-  int LoadInput();
+  virtual int LoadInput() = 0;
 
   virtual int GenerateInputData() = 0;
 

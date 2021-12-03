@@ -45,6 +45,8 @@ class MS_API BenchmarkCApi : public BenchmarkBase {
 
   int RunBenchmark() override;
 
+  int LoadInput() override;
+
  protected:
   int CompareDataGetTotalBiasAndSize(const std::string &name, MSTensorHandle tensor, float *total_bias,
                                      int *total_size);

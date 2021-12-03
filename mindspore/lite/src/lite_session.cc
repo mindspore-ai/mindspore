@@ -1371,6 +1371,7 @@ int LiteSession::InitGPURuntime() {
     auto opencl_runtime = opencl_runtime_wrapper_->GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
 #ifdef ENABLE_OPENGL_TEXTURE
+    MS_LOG(INFO) << " InitGLQueue";
     opencl_runtime->SetGLTextureEnable(gpu_device_info.enable_gl_texture_);
     if (opencl_runtime->InitGLQueue() != RET_OK) {
       MS_LOG(ERROR)
@@ -1424,7 +1425,6 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
     delete session;
     return nullptr;
   }
-
   auto ret = session->Init(inner_context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";

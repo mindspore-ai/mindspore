@@ -36,7 +36,7 @@ int GLToCLOpenCLKernel::PreProcess() {
 int GLToCLOpenCLKernel::SetConstArgs() { return RET_OK; }
 
 void GLToCLOpenCLKernel::SetGlobalLocal() {
-  global_size_ = {N_ * H_, W_ * UP_DIV(C_, C4NUM)};
+  global_size_ = {W_ * UP_DIV(C_, C4NUM), N_ * H_};
   local_size_ = {1, 1};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }

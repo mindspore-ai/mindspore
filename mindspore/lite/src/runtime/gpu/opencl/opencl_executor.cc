@@ -58,7 +58,6 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
     }
     if (kernel->IsBuiltin()) {
       auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel->kernel());
-
       if (is_tune) {
         ret = Tune(op_kernel);
         if (ret != RET_OK) {

@@ -44,6 +44,25 @@ constexpr int kDumpInputsAndOutputs = 0;
 constexpr int kDumpOutputs = 2;
 
 namespace lite {
+int BenchmarkUnifiedApi::LoadInput() {
+  if (flags_->in_data_file_.empty()) {
+    auto status = GenerateInputData();
+    if (status != 0) {
+      std::cerr << "Generate input data error " << status << std::endl;
+      MS_LOG(ERROR) << "Generate input data error " << status;
+      return status;
+    }
+  } else {
+    auto status = ReadInputFile();
+    if (status != 0) {
+      std::cerr << "ReadInputFile error, " << status << std::endl;
+      MS_LOG(ERROR) << "ReadInputFile error, " << status;
+      return status;
+    }
+  }
+  return RET_OK;
+}
+
 int BenchmarkUnifiedApi::GenerateInputData() {
   for (auto &tensor : ms_inputs_for_api_) {
     if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {

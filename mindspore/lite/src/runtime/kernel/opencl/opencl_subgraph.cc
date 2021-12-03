@@ -241,7 +241,6 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
     static int index = 0;
     in_convert_op->set_name("GLToCL_" + std::to_string(index++));
     ReplaceOutTensorAndKernelToConvert(in_tensor, in_kernels.at(i), new_tensor, in_convert_op, mem_type);
-
     // replace in_tensor of inner kernel which use out tensor
     if (mem_type == MemType::GLTexture) {
       for (auto &iv : loop_kernels[i]) {
