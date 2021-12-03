@@ -173,6 +173,40 @@ int BenchmarkBase::ReadCalibData() {
   return RET_OK;
 }
 
+int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
+                                  const std::vector<size_t> &dims) {
+  std::string line;
+  getline(in_file_stream, line);
+  std::stringstream line_stream(line);
+  if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
+    return RET_OK;
+  }
+  std::vector<float> data;
+  std::vector<std::string> strings_data;
+  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
+  if (GetDataTypeByTensorName(tensor_name) == static_cast<int>(kObjectTypeString)) {
+    strings_data.push_back(line);
+    for (size_t i = 1; i < shape_size; i++) {
+      getline(in_file_stream, line);
+      strings_data.push_back(line);
+    }
+  } else {
+    for (size_t i = 0; i < shape_size; i++) {
+      float tmp_data;
+      line_stream >> tmp_data;
+      data.push_back(tmp_data);
+    }
+  }
+  auto *check_tensor = new (std::nothrow) CheckTensor(dims, data, strings_data);
+  if (check_tensor == nullptr) {
+    MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
+    return RET_ERROR;
+  }
+  this->benchmark_tensor_names_.push_back(tensor_name);
+  this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
+  return RET_OK;
+}
+
 int BenchmarkBase::CompareStringData(const std::string &name, const std::vector<std::string> &calib_strings,
                                      const std::vector<std::string> &output_strings) {
   size_t compare_num = std::min(calib_strings.size(), output_strings.size());
@@ -594,8 +628,11 @@ int BenchmarkBase::PrintPerfResult(const std::vector<std::string> &title,
 #endif
 
 BenchmarkBase::~BenchmarkBase() {
-  for (const auto &iter : this->benchmark_data_) {
-    delete (iter.second);
+  for (auto &iter : this->benchmark_data_) {
+    iter.second->shape.clear();
+    iter.second->data.clear();
+    delete iter.second;
+    iter.second = nullptr;
   }
   this->benchmark_data_.clear();
 }

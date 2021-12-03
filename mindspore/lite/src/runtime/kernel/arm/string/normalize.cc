@@ -114,7 +114,7 @@ int NormalizeCPUKernel::Run() {
     auto chars = all_string_pack[i];
     std::string str(chars.data, chars.len);
     std::string result = Normalize(str);
-    int str_length = result.size();
+    size_t str_length = result.size();
 
     char *normalized_str = nullptr;
     normalized_str = reinterpret_cast<char *>(ms_context_->allocator->Malloc(sizeof(char) * str_length));
@@ -126,7 +126,7 @@ int NormalizeCPUKernel::Run() {
     normalized_strs[i] = normalized_str;
 
     memcpy(normalized_str, result.data(), str_length);
-    out_string_pack.push_back({str_length, normalized_str});
+    out_string_pack.push_back({static_cast<int>(str_length), normalized_str});
   }
   if (string_num == 0) {
     out_string_pack.push_back({1, ""});
