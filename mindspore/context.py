@@ -469,14 +469,14 @@ def set_auto_parallel_context(**kwargs):
                         context.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
-                        - gradient_accumulation_shard: If ture, the accumulation gradient parameters will be
+                        - gradient_accumulation_shard: If true, the accumulation gradient parameters will be
                           sharded across the data parallel devices. This will
                           introduce additional communication(ReduceScatter) at
                           each step when accumulate the gradients, but saves a
                           lot of device memories, thus can make model be trained
                           with larger batch size. This configure is effective only
                           when the model runs on pipeline training or gradient
-                          accumulation with data parallel.
+                          accumulation with data parallel. Default True.
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
@@ -486,7 +486,6 @@ def set_auto_parallel_context(**kwargs):
                           fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
                           manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
                           `all_reduce_fusion_config`.
-
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

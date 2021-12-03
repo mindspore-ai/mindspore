@@ -14,7 +14,7 @@
 # ============================================================================
 """
 NOTE:
-    Transformer Networks
+    Transformer Networks.
     This is an experimental interface that is subject to change or deletion.
 """
 from .transformer import *

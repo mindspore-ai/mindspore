@@ -37,16 +37,16 @@ class CrossEntropyLoss(Cell):
                                            an instance of `OpParallelConfig` with default args.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. the output logits of
+        - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. The output logits of
           the backbone.
 
         - **labels** (Tensor) - Tensor of shape (N, ). The ground truth label of the sample.
 
-        - **input_mask** (Tensor) - Tensor of shape (N, ). input_mask indicates whether there is padded inputs and for
+        - **input_mask** (Tensor) - Tensor of shape (N, ). input_mask indicates whether there are padded inputs and for
           padded inputs it will not be counted into loss.
 
     Outputs:
-        Tensor. the corresponding cross entropy loss
+        Tensor. The corresponding cross entropy loss
 
     Examples:
         >>> import numpy as np
