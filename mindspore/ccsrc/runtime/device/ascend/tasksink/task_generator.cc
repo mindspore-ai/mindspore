@@ -325,7 +325,7 @@ void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
   }
   already_printed = true;
   MS_LOG(WARNING) << "The functionality of dumping task debug info is disabled, "
-                  << "please enable ENABLE_DUMP_IR with '-D on' and recomiple source.";
+                  << "please recompile the source codes with '-D on' option.";
 }
 void TaskGenerator::DumpTaskInfo(const string &real_filename,
                                  const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
@@ -335,7 +335,7 @@ void TaskGenerator::DumpTaskInfo(const string &real_filename,
   }
   already_printed = true;
   MS_LOG(WARNING) << "The functionality of dumping task debug info is disabled, "
-                  << "please enable ENABLE_DUMP_IR with '-D on' and recomiple source.";
+                  << "please recompile the source codes with '-D on' option.";
 }
 #endif
 

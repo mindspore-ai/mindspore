@@ -960,7 +960,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(const session::KernelGraph &grap
           }
         } else {
           if (mem_manager_->MallocMem(kStaticMem, device_address->size_, device_address, graph.graph_id())) {
-            MS_LOG(EXCEPTION) << "MallocMem kStaticMem failed";
+            MS_LOG(EXCEPTION) << "MallocStaticMem failed";
           }
         }
       }

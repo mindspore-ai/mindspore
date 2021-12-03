@@ -284,7 +284,7 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
   }
   if (flag) {
     auto node_name = AnfAlgo::GetCNodeName(cnode);
-    MS_LOG(WARNING) << "Node:[" << node_name << "] don't support int64, reduce precision from int64 to int32.";
+    MS_LOG(WARNING) << "Operator:[" << node_name << "] don't support int64, reduce precision from int64 to int32.";
   }
   return true;
 }
@@ -491,8 +491,9 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   } else if (func_type == kCustomTypeAICPU) {
     *kernel_type = KernelType::AICPU_KERNEL;
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported func type for Custom op on Ascend, it should be 'tbe', 'ir_builder', "
-                      << "'tvm_compute' or 'hybrid', but got [" << func_type << "] for Custom op [" << op_name << "]";
+    MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on Ascend, it should be 'tbe', 'ir_builder', "
+                      << "'tvm_compute' or 'hybrid', but got [" << func_type << "]"
+                      << " for Custom operator [" << op_name << "]";
   }
   static const std::map<KernelType, kernel::OpImplyType> kKernelImplyTypeMap{
     {KernelType::TBE_KERNEL, kernel::OpImplyType::kTBE},

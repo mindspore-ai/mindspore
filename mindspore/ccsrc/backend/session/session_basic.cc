@@ -1872,8 +1872,8 @@ void SessionBasic::Summary(KernelGraph *graph) {
   static bool is_first = true;
   if (is_first && !IsSupportSummary()) {
     is_first = false;
-    MS_LOG(ERROR) << "The Summary operator can not collect data correctly. Detail: the data sink mode is used and the"
-                     " sink size(in model.train() python api) is not equal to 1.";
+    MS_LOG(WARNING) << "The Summary operator can not collect data correctly. Detail: the data sink mode is used and the"
+                       " sink size(in model.train() python api) is not equal to 1.";
   }
   SetSummaryNodes(graph);
   auto summary_outputs = graph->summary_nodes();
@@ -2482,7 +2482,7 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
   if (split_index_num >= grads_count) {
     MS_LOG(WARNING) << "The context configuration all_reduce_fusion_config's upper boundary value should be smaller "
                     << "than total grads count: " << grads_count << ", but got: " << *split_index
-                    << ". Now all AllReduce operations will be fused into one AllReduce operation.";
+                    << ". Now all AllReduce operators will be fused into one AllReduce operator.";
     split_index->clear();
     split_index->push_back(grads_count - 1);
   } else if (split_index_num < grads_count - 1) {
