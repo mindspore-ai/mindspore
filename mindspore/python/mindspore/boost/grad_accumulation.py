@@ -60,7 +60,7 @@ class GradientAccumulation(Cell):
         self._accumulation_step = Parameter(Tensor(0, dtype=mstype.int32), name="accumulation_step")
 
     def construct(self, loss, grads):
-        loss = F.depend(loss, self.hyper_map(F.partial(_gradient_accumulation_op, self._max_accumulation_step),
+        loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self._max_accumulation_step),
                                              self._grad_accumulation, grads))
         self._accumulation_step += 1
 
@@ -69,6 +69,6 @@ class GradientAccumulation(Cell):
             self._accumulation_step = 0
 
         if self._accumulation_step == 0:
-            loss = F.depend(loss, self.hyper_map(F.partial(_gradient_clear_op), self._grad_accumulation))
+            loss = F.depend(loss, self.hyper_map(F.partial(gradient_clear_op), self._grad_accumulation))
 
         return loss

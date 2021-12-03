@@ -22,7 +22,6 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations._inner_ops import Send, Receive
-from mindspore.common.tensor import Tensor
 
 
 __all__ = ["AdaSum"]
@@ -57,8 +56,6 @@ def _send_recv_res(left_send, recv_part, local_part, allreduce, parameter_divisi
     """send result and receive result."""
     if parameter_divisibility:
         recv_part = P.Squeeze()(recv_part)
-        if F.shape(recv_part) is None:
-            recv_part = Tensor([recv_part])
         local_part = F.depend(local_part, recv_part)
         eps = 1e-12
         value_0 = P.ReduceSum()(local_part * recv_part) + eps
@@ -128,10 +125,6 @@ def _adasum_opt_rollback_process(left_send, parameter_divisibility, delta_w, sen
             recv_part = _receive_before_send(delta_w, send, recv)
 
         recv_part = P.Squeeze()(recv_part)
-        if F.shape(recv_part) is None:
-            recv_part = Tensor([recv_part])
-        if F.shape(delta_w) is None:
-            delta_w = Tensor([delta_w])
         recv_part = P.Reshape()(recv_part, (-1,))
         delta_w = P.Reshape()(delta_w, (-1,))
 

@@ -193,8 +193,8 @@ class Model:
         >>> model.train(2, dataset)
     """
 
-    def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
-                 eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs):
+    def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None, eval_indexes=None,
+                 amp_level="O0", boost_level="O0", **kwargs):
         self._network = network
         self._loss_fn = loss_fn
         self._optimizer = optimizer

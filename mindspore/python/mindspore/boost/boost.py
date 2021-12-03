@@ -14,9 +14,11 @@
 # ============================================================================
 """boost"""
 import threading
+from mindspore.nn.optim import SGD
 from .less_batch_normalization import LessBN
 from .grad_freeze import GradientFreeze
 from .base import OptimizerProcess, ParameterProcess
+from .base import get_local_pca_mat_path
 
 
 __all__ = ["AutoBoost"]
@@ -27,17 +29,20 @@ _boost_config_level = {
         "less_bn": False,
         "grad_freeze": False,
         "adasum": False,
-        "grad_accumulation": False},
+        "grad_accumulation": False,
+        "dim_reduce": False},
     "O1": {
         "less_bn": True,
         "grad_freeze": True,
         "adasum": False,
-        "grad_accumulation": False},
+        "grad_accumulation": False,
+        "dim_reduce": False},
     "O2": {
         "less_bn": True,
         "grad_freeze": True,
         "adasum": True,
-        "grad_accumulation": False}}
+        "grad_accumulation": False,
+        "dim_reduce": False}}
 
 
 class AutoBoost:
@@ -57,10 +62,12 @@ class AutoBoost:
                         "less_bn": false,
                         "grad_freeze": false,
                         "adasum": false,
-                        "grad_accumulation": false
+                        "grad_accumulation": false,
+                        "dim_reduce": false
                     },
                     "common": {
-                        "gradient_split_groups": [50, 100]
+                        "gradient_split_groups": [50, 100],
+                        "device_number": 8
                     },
                     "less_bn": {
                         "fn_flag": true,
@@ -73,10 +80,20 @@ class AutoBoost:
                         "total_steps": 65536
                     },
                     "adasum": {
-                        "device_number": 8
+
                     },
                     "grad_accumulation": {
                         "grad_accumulation_step": 1
+                    },
+                    "dim_reduce": {
+                        "ls_weight_decay": 0.0001,
+                        "rho": 0.55,
+                        "gamma": 0.9,
+                        "alpha": 0.001,
+                        "sigma": 0.4,
+                        "n_components": 32,
+                        "pca_mat_path": None,
+                        "weight_load_dir": None
                     }
                 }
 
@@ -120,6 +137,15 @@ class AutoBoost:
             self.gradient_groups = None
             self.device_number = 8
             self.grad_accumulation_step = 1
+            self.ls_weight_decay = 0.0001
+            self.rho = 0.55
+            self.gamma = 0.9
+            self.alpha = 0.001
+            self.sigma = 0.4
+            self.n_components = 32
+            self.pca_mat_path = None
+            self.weight_load_dir = None
+            self.local_pca_mat_path = None
             self.boost_config = self._get_configuration(level, self.boost_config_dict)
             self._param_processer = ParameterProcess()
 
@@ -141,6 +167,13 @@ class AutoBoost:
             network (Cell): The training network.
             optimizer (Cell): Optimizer for updating the weights.
         """
+        if self.boost_config["dim_reduce"]:
+            self.local_pca_mat_path = get_local_pca_mat_path(self.weight_load_dir, self.pca_mat_path,
+                                                             self.n_components, self.device_number)
+            optimizer = SGD(network.trainable_params(), learning_rate=1, loss_scale=optimizer.loss_scale)
+            setattr(optimizer, "dim_reduce", True)
+            return network, optimizer
+
         if self.boost_config["less_bn"]:
             network = LessBN(network, fn_flag=self._fn_flag)
             optimizer_process = OptimizerProcess(optimizer)
@@ -168,6 +201,8 @@ class AutoBoost:
         Args:
             network (Cell): The inference network.
         """
+        if self.boost_config["dim_reduce"]:
+            return network
         if self.boost_config["less_bn"]:
             network = LessBN(network)
 
@@ -204,6 +239,30 @@ class AutoBoost:
             gradient_groups = list(gradient_groups)
         self.gradient_groups = gradient_groups
 
+    def set_ls_weight_decay(self, ls_weight_decay):
+        self.ls_weight_decay = ls_weight_decay
+
+    def set_rho(self, rho):
+        self.rho = rho
+
+    def set_gamma(self, gamma):
+        self.gamma = gamma
+
+    def set_alpha(self, alpha):
+        self.alpha = alpha
+
+    def set_sigma(self, sigma):
+        self.sigma = sigma
+
+    def set_n_components(self, n_components):
+        self.n_components = n_components
+
+    def set_pca_mat_path(self, pca_mat_path):
+        self.pca_mat_path = pca_mat_path
+
+    def set_weight_load_dir(self, weight_load_dir):
+        self.weight_load_dir = weight_load_dir
+
     def _get_configuration(self, level, boost_config_dict):
         """Get configuration."""
         level_config = _boost_config_level[level]
@@ -229,7 +288,6 @@ class AutoBoost:
                         self._boost_config_func_map[key_s](self, boost_each_mode_config[key_s])
         return level_config
 
-
     _boost_config_func_map = {
         "fn_flag": set_fn_flag,
         "gc_flag": set_gc_flag,
@@ -239,5 +297,13 @@ class AutoBoost:
         "total_steps": set_total_steps,
         "device_number": set_device_number,
         "gradient_split_groups": set_gradient_split_groups,
-        "grad_accumulation_step": set_grad_accumulation_step
+        "grad_accumulation_step": set_grad_accumulation_step,
+        "ls_weight_decay": set_ls_weight_decay,
+        "rho": set_rho,
+        "gamma": set_gamma,
+        "alpha": set_alpha,
+        "sigma": set_sigma,
+        "n_components": set_n_components,
+        "pca_mat_path": set_pca_mat_path,
+        "weight_load_dir": set_weight_load_dir,
     }

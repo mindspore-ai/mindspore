@@ -277,7 +277,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         reducer_flag (bool): Reducer flag.
         network (Cell): The training network.
         optimizer (Cell): Optimizer for updating the weights.
-        sens (Tensor):  Tensor with shape :math:`()`
+        sens (numbers.Number):  The scaling number.
         grad (tuple(Tensor)): Tuple of gradient tensors.
         use_grad_accumulation (bool): Use gradient accumulation flag.
         mean (bool): Gradients mean flag. default: None.

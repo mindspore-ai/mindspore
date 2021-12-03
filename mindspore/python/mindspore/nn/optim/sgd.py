@@ -185,6 +185,7 @@ class SGD(Optimizer):
         params = self.parameters
         accum = self.accum
         stat = self.stat
+        gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
