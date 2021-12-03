@@ -20,22 +20,22 @@ mindspore.nn.Momentum
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和:math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
+    其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和 :math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
 
     .. note::
         在参数未分组时，优化器配置的 `weight_decay` 应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置 `weight_decay` ，若未配置，则该组网络参数使用优化器中配置的 `weight_decay` 。
 
     **参数：**
         
-    - **params (Union[list[Parameter], list[dict]]): 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
+    - **params** (Union[list[Parameter], list[dict]]): 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
 
-      -** params** - 必填。当前组别的权重，该值必须是 `Parameter` 列表。
-      -** lr** - 可选。如果键中存在"lr"，则使用对应的值作为学习率。如果没有，则使用优化器中配置的 `learning_rate` 作为学习率。
-      -** weight_decay** - 可选。如果键中存在"weight_decay”，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的 `weight_decay` 作为权重衰减值。
-      -** grad_centralization** - 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为 `grad_centralization` 为False。该参数仅适用于卷积层。
-      -** order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。
+      - ** params** - 必填。当前组别的权重，该值必须是 `Parameter` 列表。
+      - ** lr** - 可选。如果键中存在"lr"，则使用对应的值作为学习率。如果没有，则使用优化器中配置的 `learning_rate` 作为学习率。
+      - ** weight_decay** - 可选。如果键中存在"weight_decay”，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的 `weight_decay` 作为权重衰减值。
+      - ** grad_centralization** - 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为 `grad_centralization` 为False。该参数仅适用于卷积层。
+      - ** order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。
     
-    - **learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
 
       - **float** - 固定的学习率。必须大于等于零。
       - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
@@ -45,7 +45,7 @@ mindspore.nn.Momentum
     
     - **momentum** (float) - 浮点数类型的超参，表示移动平均的动量。必须等于或大于0.0。
     - **weight_decay** (int, float) - 权重衰减（L2 penalty）值。必须大于等于0.0。默认值：0.0。
-    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager` 。默认值：1.0。
+    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.FixedLossScaleManager` 。默认值：1.0。
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。默认值：False。
 
     **输入：**

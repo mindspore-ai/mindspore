@@ -5,7 +5,7 @@ mindspore.nn.Adam
 
     通过Adaptive Moment Estimation (Adam)算法更新梯度。
 
-    请参阅论文`Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
+    请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
     公式如下：
 
@@ -17,14 +17,13 @@ mindspore.nn.Adam
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表更新步骤，:math:`beta_1^t` 和:math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ，:math:`\alpha` 代表 `learning_rate` ，:math:`w` 代表 `params` ，:math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表更新步骤，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ，:math:`\alpha` 代表 `learning_rate` ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
 
     .. note::
         如果前向网络使用了SparseGatherV2等算子，优化器会执行稀疏运算，通过设置 `target` 为CPU，可在主机（host）上进行稀疏运算。
         稀疏特性在持续开发中。
   
         在参数未分组时，优化器配置的 `weight_decay` 应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置 `weight_decay` ，若未配置，则该组网络参数使用优化器中配置的 `weight_decay` 。
-
 
     **参数：**
 
@@ -36,7 +35,7 @@ mindspore.nn.Adam
       - **grad_centralization** - 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为 `grad_centralization` 为False。该参数仅适用于卷积层。
       - **order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。
     
-    - **learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
+    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
 
       - **float** - 固定的学习率。必须大于等于零。
       - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
@@ -50,7 +49,7 @@ mindspore.nn.Adam
     - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
     - **weight_decay** (float) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
-    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager` ，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager` 。默认值：1.0。
+    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager` ，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.FixedLossScaleManager` 。默认值：1.0。
 
     **输入：**
 

@@ -12,7 +12,7 @@ mindspore.nn.Optimizer
 
     **参数：**
 
-    - **learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
 
       - **float** - 固定的学习率。必须大于等于零。
       - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
@@ -29,7 +29,7 @@ mindspore.nn.Optimizer
       - **order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。
 
     - **weight_decay** (Union[float, int]) - 权重衰减的整数或浮点值。必须等于或大于0。如果 `weight_decay` 是整数，它将被转换为浮点数。默认值：0.0。
-    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager `的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager`。默认值：1.0。
+    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager` ，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.FixedLossScaleManager`。默认值：1.0。
 
     **异常：**
 
