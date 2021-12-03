@@ -360,7 +360,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             self.scale_sense.set_data(sens)
         else:
             raise TypeError("For 'TrainOneStepWithLossScaleCell', "
-                            "the input type must be Tensor, but got {}".format(type(sens)))
+                            "the type of 'sens' must be Tensor, but got {}".format(type(sens)))
 
     def start_overflow_check(self, pre_cond, compute_input):
         """

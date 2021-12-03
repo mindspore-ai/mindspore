@@ -314,7 +314,7 @@ class HausdorffDistance(Metric):
             RuntimeError: If the update method is not called first, an error will be reported.
         """
         if self._is_update is False:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
         hd = self._calculate_percent_hausdorff_distance(self.y_pred_edges, self.y_edges)
         if self.directed:

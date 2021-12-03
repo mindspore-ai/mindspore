@@ -128,7 +128,7 @@ class ConfusionMatrix(Metric):
         """
 
         if not self._is_update:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
         confusion_matrix = self.confusion_matrix.astype(float)
 

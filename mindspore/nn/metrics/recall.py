@@ -103,9 +103,9 @@ class Recall(EvaluationBase):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError("Class number not match, last input predicted data contain {} classes, but current "
-                             "predicted data contain {} classes, please check your predicted value(inputs[0])."
-                             .format(self._class_num, y_pred.shape[1]))
+            raise ValueError("For 'Recall.update', class number not match, last input predicted data contain {} "
+                             "classes, but current predicted data contain {} classes, please check your predicted "
+                             "value(inputs[0]).".format(self._class_num, y_pred.shape[1]))
 
         class_num = self._class_num
         if self._type == "classification":

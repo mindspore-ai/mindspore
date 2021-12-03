@@ -96,7 +96,7 @@ class _ThreadLocalInfo(threading.local):
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Set whether to save the network class name in the scope."""
         if not isinstance(reserve_class_name_in_scope, bool):
-            raise ValueError("For '_ThreadLocalInfo', the type of the property 'reserve_class_name_in_scope' must "
+            raise ValueError("For 'context.set_context', the type of the property 'reserve_class_name_in_scope' must "
                              "be bool, but got {}.".format(type(reserve_class_name_in_scope)))
         self._reserve_class_name_in_scope = reserve_class_name_in_scope
 

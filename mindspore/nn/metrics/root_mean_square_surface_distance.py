@@ -165,7 +165,7 @@ class RootMeanSquareDistance(Metric):
 
         """
         if self._is_update is False:
-            raise RuntimeError('Please call the update method before calling eval method.')
+            raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
         residual_mean_square_distance = self._get_surface_distance(self._y_pred_edges, self._y_edges)
 

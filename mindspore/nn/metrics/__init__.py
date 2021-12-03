@@ -120,8 +120,8 @@ def get_metric_fn(name, *args, **kwargs):
         >>> metric = nn.get_metric_fn('precision', eval_type='classification')
     """
     if name not in __factory__:
-        raise KeyError(f"Unsupported metric {name}, please refer to official website for more details about "
-                       f"supported metrics.")
+        raise KeyError(f"For 'get_metric_fn', unsupported metric {name}, please refer to official website "
+                       f"for more details about supported metrics.")
     return __factory__[name](*args, **kwargs)
 
 
