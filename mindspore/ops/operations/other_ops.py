@@ -17,7 +17,6 @@
 import functools
 import mindspore.common._monad as monad
 from mindspore import log as logger
-from mindspore.common._decorator import deprecated
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
@@ -69,53 +68,6 @@ class Assign(Primitive):
         """Initialize Assign."""
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
-
-
-class InplaceAssign(PrimitiveWithInfer):
-    """
-    Inplace assign `Parameter` with a value.
-    This primitive can only use in graph kernel.
-
-    InplaceAssign is deprecated from version 1.3 and will be removed in a future version, use Assign instead.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`.
-        - **value** (Tensor) - The value to be assigned.
-        - **depend** (Tensor) - The dependent tensor to keep this op connected in graph.
-
-    Outputs:
-        Tensor, has the same type as original `variable`.
-
-    Raises:
-        TypeError: If `value` or `depend` is not a Tensor.
-
-    Examples:
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.inplace_assign = ops.InplaceAssign()
-        ...
-        ...     def construct(self, x):
-        ...         val = x - 1.0
-        ...         ret = x + 2.0
-        ...         return self.inplace_assign(x, val, ret)
-        ...
-        >>> x = Tensor([2.0], mindspore.float32)
-        >>> net = Net()
-        >>> output = net(x)
-        >>> print(output)
-    """
-    @deprecated("1.3", "Assign", False)
-    @ prim_attr_register
-    def __init__(self):
-        """Initialize InplaceAssign."""
-        self.init_prim_io_names(inputs=['x', 'y', 'z'], outputs=['output'])
-
-    def infer_shape(self, x, y, z):
-        return z
-
-    def infer_dtype(self, x, y, z):
-        return z
 
 
 class Load(PrimitiveWithCheck):

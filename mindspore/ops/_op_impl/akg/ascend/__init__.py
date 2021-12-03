@@ -24,7 +24,6 @@ from .exp import _exp_akg
 from .expand_dims import _expand_dims_akg
 from .greater import _greater_akg
 from .greater_equal import _greater_equal_akg
-from .inplace_assign import _inplace_assign_akg
 from .less import _less_akg
 from .less_equal import _less_equal_akg
 from .log import _log_akg
