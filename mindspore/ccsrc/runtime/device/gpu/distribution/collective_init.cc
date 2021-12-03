@@ -51,13 +51,13 @@ void CollectiveInitializer::InitCollective() {
     // Because this method InitCollective is static, the non-static member variables should be accessed by
     // CollectiveInitializer::instance().
     CollectiveInitializer::instance().use_mpi_ = true;
-    CollectiveInitializer::instance().collective_inited_ = true;
     CollectiveInitializer::instance().collective_handle_ = handle;
   } else {
     if (!distributed::Initialize()) {
       MS_LOG(EXCEPTION) << "Failed to initialize distributed execution for NCCL.";
     }
   }
+  CollectiveInitializer::instance().collective_inited_ = true;
 }
 
 void CollectiveInitializer::FinalizeCollective() {
@@ -85,49 +85,49 @@ uint32_t CollectiveInitializer::local_rank_id() {
 bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_name,
                                                      const std::vector<uint32_t> &group_ranks) {
   if (common::CheckUseMPI()) {
-    return distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(group_name, group_ranks);
-  } else {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto create_comm_group_funcptr =
       reinterpret_cast<CreateCommGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "CreateCommGroup"));
     MS_EXCEPTION_IF_NULL(create_comm_group_funcptr);
     return (*create_comm_group_funcptr)(group_name, group_ranks);
+  } else {
+    return distributed::collective::CollectiveManager::instance()->CreateCommunicationGroup(group_name, group_ranks);
   }
 }
 
 bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_name) {
   if (common::CheckUseMPI()) {
-    return distributed::collective::CollectiveManager::instance()->DestroyCommunicationGroup(group_name);
-  } else {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto destroy_group_funcptr =
       reinterpret_cast<DestroyGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "DestroyGroup"));
     MS_EXCEPTION_IF_NULL(destroy_group_funcptr);
     return (*destroy_group_funcptr)(group_name);
+  } else {
+    return distributed::collective::CollectiveManager::instance()->DestroyCommunicationGroup(group_name);
   }
 }
 
 uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) {
   if (common::CheckUseMPI()) {
-    return distributed::collective::CollectiveManager::instance()->GetRankId(group_name);
-  } else {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_rank_id_funcptr =
       reinterpret_cast<GetRankIDByGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "GetRankIDByGroup"));
     MS_EXCEPTION_IF_NULL(get_rank_id_funcptr);
     return IntToUint((*get_rank_id_funcptr)(group_name));
+  } else {
+    return distributed::collective::CollectiveManager::instance()->GetRankId(group_name);
   }
 }
 
 uint32_t CollectiveInitializer::GetGroupSize(const std::string &group_name) {
   if (common::CheckUseMPI()) {
-    return distributed::collective::CollectiveManager::instance()->GetGroupSize(group_name);
-  } else {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_group_size_funcptr =
       reinterpret_cast<GetGroupSizeFunc>(dlsym(const_cast<void *>(collective_handle_), "GetGroupSize"));
     MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
     return IntToUint((*get_group_size_funcptr)(group_name));
+  } else {
+    return distributed::collective::CollectiveManager::instance()->GetGroupSize(group_name);
   }
 }
 }  // namespace gpu

@@ -39,6 +39,7 @@ class ClusterContext {
 
   bool Initialize() const;
   bool Finalize() const;
+  bool initialized() const;
 
  private:
   ClusterContext() = default;

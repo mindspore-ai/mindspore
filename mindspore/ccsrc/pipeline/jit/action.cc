@@ -52,6 +52,7 @@
 #include "ps/worker.h"
 #include "fl/worker/fl_worker.h"
 #include "fl/server/server.h"
+#include "distributed/cluster/cluster_context.h"
 #endif
 
 namespace mindspore {
@@ -834,6 +835,15 @@ bool StartFLWorkerAction(const ResourcePtr &) {
 }
 
 bool StartPSServerAction(const ResourcePtr &res) {
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    MS_LOG(INFO) << "This node is server. Start wait for finalizing.";
+    if (!distributed::cluster::ClusterContext::instance()->Finalize()) {
+      MS_LOG(ERROR) << "Failed to finalize server.";
+      return false;
+    }
+    MS_LOG(INFO) << "Server is successfully finalized.";
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   auto &ps = ps::ParameterServer::GetInstance();
@@ -927,6 +937,15 @@ bool StartServerAction(const ResourcePtr &res) {
 }
 
 bool StartPSSchedulerAction(const ResourcePtr &) {
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    MS_LOG(INFO) << "This node is scheduler. Start wait for finalizing.";
+    if (!distributed::cluster::ClusterContext::instance()->Finalize()) {
+      MS_LOG(ERROR) << "Failed to finalize server.";
+      return false;
+    }
+    MS_LOG(INFO) << "Scheduler is successfully finalized.";
+    return true;
+  }
   ps::Scheduler::GetInstance().Run();
   return true;
 }
@@ -1174,11 +1193,15 @@ std::vector<ActionItem> VmPipeline() {
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_worker()) {
-    std::string server_mode = ps::PSContext::instance()->server_mode();
-    if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
-      (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
+    if (distributed::cluster::ClusterContext::instance()->initialized()) {
+      MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
     } else {
-      (void)actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+      std::string server_mode = ps::PSContext::instance()->server_mode();
+      if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
+        (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
+      } else {
+        (void)actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+      }
     }
   }
 #endif
@@ -1229,7 +1252,10 @@ std::vector<ActionItem> PServerPipeline() {
 }
 
 std::vector<ActionItem> PSchedulerPipeline() {
-  std::vector<ActionItem> actions;
+  auto actions = CommonPipeline();
+  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   (void)actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
   return actions;
 }

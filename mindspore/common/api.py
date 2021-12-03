@@ -32,7 +32,7 @@ from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
 from .._c_expression import generate_arguments_key, GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
-from ..parallel._ps_context import _is_role_pserver
+from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
     _get_parameter_broadcast, _get_pipeline_stages
 from .._checkparam import Validator
@@ -737,7 +737,7 @@ class _CellGraphExecutor:
         return self._graph_executor.has_compiled(phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or _is_role_pserver():
+        if context.get_context("precompile_only") or _is_role_pserver() or _is_role_sched():
             return None
         return self.run(obj, *args, phase=phase)
 

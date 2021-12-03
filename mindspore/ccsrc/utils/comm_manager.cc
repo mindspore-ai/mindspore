@@ -131,64 +131,36 @@ CommManager &CommManager::GetInstance() noexcept {
 }
 
 bool CommManager::CreateGroupSync(const string &group, const vector<unsigned int> &rank_id_list) const {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  if (!collective_handle_) {
-    MS_LOG(EXCEPTION) << "GPU collective handle is not initialized.";
-  }
-  MS_LOG(INFO) << "Create communication group " << group << " by rank id list " << rank_id_list;
-  auto create_comm_group_funcptr =
-    reinterpret_cast<CreateCommGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "CreateCommGroup"));
-  MS_EXCEPTION_IF_NULL(create_comm_group_funcptr);
-  bool ret = (*create_comm_group_funcptr)(group, rank_id_list);
+  bool ret = CollectiveInitializer::instance().CreateCommunicationGroup(group, rank_id_list);
   if (!ret) {
-    MS_LOG(ERROR) << "Creating group " << group << "for rank id list" << rank_id_list << "failed.";
+    MS_LOG(ERROR) << "Failed to create group " << group << " for rank id list " << rank_id_list;
     return ret;
   }
+
+  MS_LOG(INFO) << "Successfully create group " << group << " for rank id list " << rank_id_list;
   return ret;
 }
 
 bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  if (!collective_handle_) {
-    MS_LOG(EXCEPTION) << "GPU collective handle is not initialized.";
-  }
-  auto get_rank_id_funcptr =
-    reinterpret_cast<GetRankIDByGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "GetRankIDByGroup"));
-  MS_EXCEPTION_IF_NULL(get_rank_id_funcptr);
-  int rank = (*get_rank_id_funcptr)(group);
-  *rank_id = static_cast<unsigned int>(rank);
+  *rank_id = CollectiveInitializer::instance().GetRankIDByGroup(group);
   MS_LOG(INFO) << "This process rank id is " << *rank_id << " in group " << group;
   return true;
 }
 
 bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) const {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  if (!collective_handle_) {
-    MS_LOG(EXCEPTION) << "GPU collective handle is not initialized.";
-  }
-  auto get_group_size_funcptr =
-    reinterpret_cast<GetGroupSizeFunc>(dlsym(const_cast<void *>(collective_handle_), "GetGroupSize"));
-  MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
-  int size = (*get_group_size_funcptr)(group);
-  *rank_size = static_cast<unsigned int>(size);
+  *rank_size = CollectiveInitializer::instance().GetGroupSize(group);
   MS_LOG(INFO) << "Group " << group << " size is " << *rank_size;
   return true;
 }
 
 bool CommManager::DestroyGroup(const string &group) const {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  if (!collective_handle_) {
-    MS_LOG(EXCEPTION) << "GPU collective handle is not initialized.";
-  }
-  auto destroy_group_funcptr =
-    reinterpret_cast<DestroyGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "DestroyGroup"));
-  MS_EXCEPTION_IF_NULL(destroy_group_funcptr);
-
-  bool ret = (*destroy_group_funcptr)(group);
+  bool ret = CollectiveInitializer::instance().DestroyCommunicationGroup(group);
   if (!ret) {
-    MS_LOG(ERROR) << "Destroying group " << group << " failed.";
+    MS_LOG(ERROR) << "Failed to destroy group " << group;
     return ret;
   }
+
+  MS_LOG(INFO) << "Successfully destroy group " << group;
   return ret;
 }
 #else

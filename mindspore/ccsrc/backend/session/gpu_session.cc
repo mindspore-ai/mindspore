@@ -101,13 +101,8 @@ using GetLocalRankId = device::gpu::GetLocalRankId;
 using InitNCCLComm = device::gpu::InitNCCLComm;
 
 void GPUSession::Init(uint32_t device_id) {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  bool collective_inited = CollectiveInitializer::instance().collective_inited();
-  if (collective_inited && collective_handle_ != nullptr) {
-    auto get_local_rank_funcptr =
-      reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
-    MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
-    device_id = IntToUint((*get_local_rank_funcptr)());
+  if (CollectiveInitializer::instance().collective_inited()) {
+    device_id = CollectiveInitializer::instance().local_rank_id();
   }
   bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id));
   if (!ret) {
@@ -116,11 +111,12 @@ void GPUSession::Init(uint32_t device_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-  if (collective_inited) {
-    if (collective_handle_ != nullptr) {
+  if (CollectiveInitializer::instance().collective_inited()) {
+    auto collective_handle = CollectiveInitializer::instance().collective_handle();
+    if (collective_handle != nullptr) {
       MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_id;
       auto init_nccl_comm_funcptr =
-        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
+        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
       MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
       (*init_nccl_comm_funcptr)();
       MS_LOG(INFO) << "End initializing NCCL communicator.";

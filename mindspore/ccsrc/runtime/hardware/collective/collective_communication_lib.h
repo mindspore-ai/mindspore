@@ -22,11 +22,22 @@
 #include <vector>
 #include <string>
 #include "ir/dtype/type_id.h"
-#include "utils/check_convert_utils.h"
 #include "runtime/hardware/collective/communication_group.h"
 
 namespace mindspore {
 namespace device {
+// The reduce type of collective operations.
+enum CollectiveOpReduceType : int64_t {
+  Reduce_Mean = 0,
+  Reduce_Max = 1,
+  Reduce_Min = 2,
+  Reduce_Prod = 3,
+  Reduce_Sum = 4,
+  Reduce_Sum_Square = 5,
+  Reduce_ASum = 6,
+  Reduce_All = 7
+};
+
 // The base class of collective communication library.
 // For collective communication on the device side like GPU, the entry is NvidiaCollectiveCommLib which calls NCCL.
 // For collective communication on the host side, the entry is MPICollectiveCommLib which call OpenMPI, or
@@ -72,7 +83,7 @@ class CollectiveCommunicationLib {
     return true;
   }
   virtual bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                         ReduceMode reduce_op, const std::string &group_name, void *stream = nullptr) {
+                         CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) {
     return true;
   }
   virtual bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
@@ -80,7 +91,7 @@ class CollectiveCommunicationLib {
     return true;
   }
   virtual bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
-                             ReduceMode reduce_op, const std::string &group_name, void *stream = nullptr) {
+                             CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) {
     return true;
   }
 

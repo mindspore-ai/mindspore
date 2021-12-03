@@ -929,18 +929,23 @@ def set_ps_context(**kwargs):
 
         MS_WORKER: represents the worker,
 
-        MS_PSERVER: represents the Server
+        MS_PSERVER/MS_SERVER: represents the Server
 
     Args:
         enable_ps (bool): Whether to enable parameter server training mode.
                           Only after enable_ps is set True, the environment variables will be effective.
                           Default: False.
+        config_file_path (string): Configuration file path used by recovery. Default: ''.
+        scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
+        enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: true.
+        client_password (str): Password to decrypt the secret key stored in the client certificate.
+        server_password (str): Password to decrypt the secret key stored in the server certificate.
 
     Raises:
         ValueError: If input key is not the attribute in parameter server training mode context.
 
     Examples:
-        >>> context.set_ps_context(enable_ps=True)
+        >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
     _set_ps_context(**kwargs)
 

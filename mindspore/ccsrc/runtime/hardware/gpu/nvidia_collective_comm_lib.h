@@ -42,8 +42,11 @@ const std::map<TypeId, ncclDataType_t> kNCCLDataTypeMap = {
   {TypeId::kNumberTypeFloat64, ncclFloat64}};
 
 // Map of reduce type to NCCL reduce type.
-const std::map<ReduceMode, ncclRedOp_t> kNCCLReduceTypeMap = {
-  {Reduce_Sum, ncclSum}, {Reduce_Prod, ncclProd}, {Reduce_Min, ncclMin}, {Reduce_Max, ncclMax}};
+const std::map<CollectiveOpReduceType, ncclRedOp_t> kNCCLReduceTypeMap = {
+  {CollectiveOpReduceType::Reduce_Sum, ncclSum},
+  {CollectiveOpReduceType::Reduce_Prod, ncclProd},
+  {CollectiveOpReduceType::Reduce_Min, ncclMin},
+  {CollectiveOpReduceType::Reduce_Max, ncclMax}};
 
 constexpr char kNCCLGlobalGroupName[] = "nccl_world_group";
 
@@ -61,14 +64,14 @@ class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicati
   bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  const std::string &group_name, void *stream = nullptr) override;
 
-  bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, ReduceMode reduce_op,
-                 const std::string &group_name, void *stream = nullptr) override;
+  bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                 CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override;
 
   bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, uint32_t root_rank,
                  const std::string &group_name, void *stream = nullptr) override;
 
-  bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type, ReduceMode reduce_op,
-                     const std::string &group_name, void *stream = nullptr) override;
+  bool ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
+                     CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override;
 
   bool Send(const void *send_buff, size_t count, TypeId data_type, uint32_t peer, const std::string &group_name,
             void *stream = nullptr) override;
@@ -84,7 +87,7 @@ class EXPORT_NCCL_WRAPPER NvidiaCollectiveCommLib : public CollectiveCommunicati
   bool CheckNCCLDataType(TypeId data_type);
 
   // Check reduce type of collective operation is valid for NCCL.
-  bool CheckNCCLReduceType(ReduceMode reduce_op);
+  bool CheckNCCLReduceType(CollectiveOpReduceType reduce_op);
 };
 }  // namespace gpu
 

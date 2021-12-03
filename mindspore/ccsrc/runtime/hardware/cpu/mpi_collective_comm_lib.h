@@ -44,8 +44,10 @@ const std::map<TypeId, MPI_Datatype> kMPIDataTypeMap = {{TypeId::kNumberTypeInt8
                                                         {TypeId::kNumberTypeFloat64, MPI_DOUBLE}};
 
 // Map of reduce type to MPI reduce type.
-const std::map<ReduceMode, MPI_Op> kMPIReduceTypeMap = {
-  {Reduce_Sum, MPI_SUM}, {Reduce_Prod, MPI_PROD}, {Reduce_Min, MPI_MIN}, {Reduce_Max, MPI_MAX}};
+const std::map<CollectiveOpReduceType, MPI_Op> kMPIReduceTypeMap = {{CollectiveOpReduceType::Reduce_Sum, MPI_SUM},
+                                                                    {CollectiveOpReduceType::Reduce_Prod, MPI_PROD},
+                                                                    {CollectiveOpReduceType::Reduce_Min, MPI_MIN},
+                                                                    {CollectiveOpReduceType::Reduce_Max, MPI_MAX}};
 
 constexpr char kMPIGlobalGroupName[] = "mpi_world_group";
 class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLib {

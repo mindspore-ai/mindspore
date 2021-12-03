@@ -63,14 +63,9 @@ void GPUDeviceContext::Initialize() {
   }
 
   // Set device id
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  bool collective_inited = CollectiveInitializer::instance().collective_inited();
-  if (collective_inited && collective_handle_ != nullptr) {
+  if (CollectiveInitializer::instance().collective_inited()) {
     DeviceContextKey old_key = device_context_key_;
-    auto get_local_rank_funcptr =
-      reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
-    MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
-    device_context_key_.device_id_ = IntToUint((*get_local_rank_funcptr)());
+    device_context_key_.device_id_ = CollectiveInitializer::instance().local_rank_id();
 
     DeviceContextManager::GetInstance().UpdateDeviceContextKey(old_key, device_context_key_);
 
@@ -91,13 +86,16 @@ void GPUDeviceContext::Initialize() {
   mem_manager_->MallocDeviceMemory();
 
   // Initialize NCCL.
-  if (collective_inited && collective_handle_ != nullptr) {
-    MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_context_key_.device_id_;
-    auto init_nccl_comm_funcptr =
-      reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
-    MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
-    (*init_nccl_comm_funcptr)();
-    MS_LOG(INFO) << "End initializing NCCL communicator.";
+  if (CollectiveInitializer::instance().collective_inited()) {
+    auto collective_handle = CollectiveInitializer::instance().collective_handle();
+    if (collective_handle != nullptr) {
+      MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_context_key_.device_id_;
+      auto init_nccl_comm_funcptr =
+        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
+      MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
+      (*init_nccl_comm_funcptr)();
+      MS_LOG(INFO) << "End initializing NCCL communicator.";
+    }
   }
 
 #ifndef ENABLE_SECURITY
@@ -501,10 +499,9 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
 }
 
 uint32_t GPUDeviceContext::GetRankID() const {
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
   bool collective_inited = CollectiveInitializer::instance().collective_inited();
   uint32_t rank_id = 0;
-  if (collective_inited && collective_handle_ != nullptr) {
+  if (collective_inited) {
     if (!CommManager::GetInstance().GetRankID(kNcclWorldGroup, &rank_id)) {
       MS_LOG(EXCEPTION) << "Failed to get rank id.";
     }
