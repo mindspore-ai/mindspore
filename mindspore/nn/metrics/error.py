@@ -29,9 +29,6 @@ class MAE(Metric):
 
     where :math:`n` is batch size.
 
-    Note:
-        The method `update` must be called with the form `update(y_pred, y)`.
-
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
