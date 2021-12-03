@@ -66,6 +66,7 @@ int ReverseSequenceCPUKernel::ReSize() {
 
   ConvertAxisToPositive(input0->shape(), &(para->batch_axis_));
   ConvertAxisToPositive(input0->shape(), &(para->seq_axis_));
+  MS_CHECK_TRUE_RET(para->batch_axis_ >= 0 && para->seq_axis_ >= 0, RET_ERROR);
 
   para->ndim_ = input0->shape().size();
   for (int i = 0; i < para->ndim_; i++) {

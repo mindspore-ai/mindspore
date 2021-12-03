@@ -113,6 +113,8 @@ int L2NormCPUKernel::DivSqrtSum(int task_id) const {
 
 int L2NormCPUKernel::CalcL2NormTrailingAxis(int task_id) const {
   auto input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
+  MS_CHECK_TRUE_RET(!input->shape().empty(), RET_ERROR);
   if (input->shape().back() == 0) {
     MS_LOG(ERROR) << "input->shape().back() is 0";
     return RET_ERROR;
