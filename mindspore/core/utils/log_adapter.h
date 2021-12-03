@@ -141,6 +141,7 @@ enum SubModuleId : int {
   SM_HCCL_ADPT,          // Hccl Adapter
   SM_RUNTIME_FRAMEWORK,  // Runtime framework
   SM_GE,                 // GraphEngine
+  SM_API,                // MindAPI
   NUM_SUBMODUES          // number of submodules
 };
 

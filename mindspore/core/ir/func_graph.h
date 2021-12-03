@@ -153,7 +153,7 @@ class FuncGraphBase : public Value {
   MS_DECLARE_PARENT(FuncGraphBase, Value);
 };
 
-class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
+class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
@@ -265,7 +265,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }
 
-  api::FuncGraphManagerPtr get_manager() const final { return manager_.lock(); }
+  deprecated::api::FuncGraphManagerPtr get_manager() const final { return manager_.lock(); }
 
   std::string ToString() const override;
   GraphDebugInfoPtr debug_info();

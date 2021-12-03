@@ -71,6 +71,7 @@ if(ENABLE_MINDDATA)
             ./fl/*.cc
             ./cxx_api/*.cc
             ./tbe/*.cc
+            ./mindapi/*.cc
             )
     if(NOT ENABLE_SECURITY)
         file(GLOB_RECURSE UT_SRCS_DEBUG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

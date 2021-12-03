@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_SHAPE_UTILS_INFO_H_
-#define MINDSPORE_SHAPE_UTILS_INFO_H_
+#include "mindapi/base/base.h"
+#include "base/base.h"
 
-#include "mindapi/base/shape_vector.h"
+namespace mindspore::api {
+Base::Base(const std::shared_ptr<mindspore::Base> &impl) : impl_(impl) { MS_EXCEPTION_IF_NULL(impl_); }
 
-#endif  // MINDSPORE_SHAPE_UTILS_INFO_H_
+uint32_t Base::ClassId() { return mindspore::Base::kTypeId; }
+
+bool Base::IsFromClassId(uint32_t class_id) const { return impl_->IsFromTypeId(class_id); }
+
+std::string Base::ToString() const { return impl_->ToString(); }
+}  // namespace mindspore::api

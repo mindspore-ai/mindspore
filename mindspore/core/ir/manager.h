@@ -55,9 +55,9 @@ class FuncGraphTransaction;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
-using AnfNodeIndexSet = api::AnfNodeIndexSet;
+using AnfNodeIndexSet = deprecated::api::AnfNodeIndexSet;
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
-using NodeUsersMap = api::NodeUsersMap;
+using NodeUsersMap = deprecated::api::NodeUsersMap;
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
 using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
 
@@ -277,7 +277,8 @@ class FuncGraphJTotalComputer final : public DepComputer {
   bool SeekJ(const FuncGraphPtr &fg, size_t seen_num);
 };
 
-class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, public api::FuncGraphManager {
+class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
+                         public deprecated::api::FuncGraphManager {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
   ~FuncGraphManager() {

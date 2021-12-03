@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_SHAPE_UTILS_INFO_H_
-#define MINDSPORE_SHAPE_UTILS_INFO_H_
+#include "mindapi/ir/shape.h"
+#include "mindapi/src/helper.h"
+#include "abstract/dshape.h"
 
-#include "mindapi/base/shape_vector.h"
+namespace mindspore::api {
+using ShapeImpl = mindspore::abstract::Shape;
 
-#endif  // MINDSPORE_SHAPE_UTILS_INFO_H_
+MIND_API_BASE_IMPL(Shape, ShapeImpl, Base);
+
+const ShapeVector &Shape::shape() const { return ToRef<ShapeImpl>(impl_).shape(); }
+}  // namespace mindspore::api

@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_SHAPE_UTILS_INFO_H_
-#define MINDSPORE_SHAPE_UTILS_INFO_H_
+#ifndef MINDSPORE_CORE_MINDAPI_IR_SHAPE_H_
+#define MINDSPORE_CORE_MINDAPI_IR_SHAPE_H_
 
+#include "mindapi/base/base.h"
 #include "mindapi/base/shape_vector.h"
+#include "mindapi/ir/common.h"
 
-#endif  // MINDSPORE_SHAPE_UTILS_INFO_H_
+namespace mindspore::api {
+/// \brief Shape defines dimensions of a tensor.
+class MIND_API Shape : public Base {
+ public:
+  MIND_API_BASE_MEMBER(Shape);
+
+  /// \brief Get the shape dimensions.
+  ///
+  /// \return The shape dimensions.
+  const ShapeVector &shape() const;
+};
+}  // namespace mindspore::api
+#endif  // MINDSPORE_CORE_MINDAPI_IR_SHAPE_H_

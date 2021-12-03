@@ -23,6 +23,7 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "ir/*.cc"
   "utils/*.cc"
   "load_mindir/*.cc"
+  "mindapi/src/*.cc"
   )
 
 if(ENABLE_SECURITY)
