@@ -92,7 +92,8 @@ def op_info_register(op_info):
 
 def custom_info_register(*reg_info):
     r"""
-    A decorator which is used to bind the registration information to the `func` parameter of `Custom` op.
+    A decorator which is used to bind the registration information to the `func` parameter of
+    :class:`mindspore.ops.Custom`.
 
     Note:
         The 'reg_info' will be added into oplib.
@@ -645,7 +646,7 @@ class TBERegOp(RegOp):
 
 class CustomRegOp(RegOp):
     r"""
-    Class for `Custom` operator info register.
+    Class used for generating the registration information for the `func` parameter of :class:`mindspore.ops.Custom`.
 
     Args:
         op_name (str): kernel name. No need to set this value as `Custom` operator will generate a unique name
