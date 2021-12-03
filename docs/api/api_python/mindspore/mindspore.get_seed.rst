@@ -7,4 +7,4 @@ mindspore.get_seed
 
     **返回：**
 
-        int，随机种子。
+    int，随机种子。

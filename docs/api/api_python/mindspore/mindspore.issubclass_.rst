@@ -7,9 +7,9 @@ mindspore.issubclass\_
 
     **参数：**
 
-        - **type_** (mindspore.dtype) – MindSpore中的目标dtype。
-        - **dtype** (mindspore.dtype) – dtype的比较对象。
+    - **type_** (mindspore.dtype) – MindSpore中的目标dtype。
+    - **dtype** (mindspore.dtype) – dtype的比较对象。
 
     **返回：**
 
-        bool，True或False。
+    bool，True或False。
