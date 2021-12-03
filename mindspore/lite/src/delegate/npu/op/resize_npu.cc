@@ -20,8 +20,6 @@
 #include "src/delegate/npu/npu_manager.h"
 
 namespace mindspore {
-constexpr int SHAPE_SIZE = 4;
-
 int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   auto resize_prim = primitive->value_as_Resize();
@@ -51,10 +49,10 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   auto new_height = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_H));
   auto new_width = static_cast<float>(out_tensors.at(0).Shape().at(NHWC_W));
 
-  ge::TensorDesc sizeTensorDesc(ge::Shape({SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_FLOAT);
+  ge::TensorDesc sizeTensorDesc(ge::Shape({NPU_SHAPE_SIZE}), ge::FORMAT_ND, ge::DT_FLOAT);
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
-  vector<float> dataValue = {1, 1, new_height / org_height, new_width / org_width};
-  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SHAPE_SIZE * sizeof(float));
+  std::vector<float> dataValue = {1, 1, new_height / org_height, new_width / org_width};
+  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), NPU_SHAPE_SIZE * sizeof(float));
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
   if (out_size_ == nullptr) {
     MS_LOG(ERROR) << "create const NPU op failed for " << name_;
