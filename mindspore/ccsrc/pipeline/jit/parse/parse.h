@@ -187,6 +187,9 @@ class Parser {
   AnfNodePtr ParseListCompIfs(const FunctionBlockPtr &list_body_block, const ParameterPtr &list_param,
                               const py::object &node, const py::object &generator_node);
 
+  // Check if script_text is in global/local params.
+  bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
+                        const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);
