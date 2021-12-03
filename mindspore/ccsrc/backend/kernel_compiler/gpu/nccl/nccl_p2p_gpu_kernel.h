@@ -120,8 +120,11 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
       recv_rank_ids = GetValue<std::vector<int64_t>>(recv_rank_ids_attr);
     }
 
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     return true;
   }
 
@@ -156,32 +159,19 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
       MS_LOG(ERROR) << "Trying to use AlltoAllv, but recv_rank_ids vector size not equals to output_list size.";
     }
 
-    auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
-    auto nccl_send_func = reinterpret_cast<Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
-    auto nccl_gstart_func = reinterpret_cast<GroupStart>(dlsym(const_cast<void *>(collective_handle_), "GroupStart"));
-    auto nccl_gend_func = reinterpret_cast<GroupEnd>(dlsym(const_cast<void *>(collective_handle_), "GroupEnd"));
-    MS_EXCEPTION_IF_NULL(nccl_recv_func);
-    MS_EXCEPTION_IF_NULL(nccl_send_func);
-    MS_EXCEPTION_IF_NULL(nccl_gstart_func);
-    MS_EXCEPTION_IF_NULL(nccl_gend_func);
-
     // This implementation refers to NVIDIA NCCL 2.11 doc.
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, (*nccl_gstart_func)(), "AllToAllv: ncclGroupStart failed");
+    (void)GroupStart();
     for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
       input_addr = GetDeviceAddress<T>(inputs, i);
-      CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                                 (*nccl_send_func)(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_,
-                                                   send_rank_ids[i], stream, group_name_),
-                                 "AllToAllv: ncclSend failed");
+      (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids[i], stream,
+                 group_name_);
     }
     for (int i = 0; i < SizeToInt(output_size_list_.size()); ++i) {
       output_addr = GetDeviceAddress<I>(outputs, i);
-      CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                                 (*nccl_recv_func)(output_addr, output_size_list_[i] / sizeof(I),
-                                                   output_nccl_data_type_, recv_rank_ids[i], stream, group_name_),
-                                 "AllToAllv: ncclRecv failed");
+      (void)Recv(output_addr, output_size_list_[i] / sizeof(I), output_nccl_data_type_, recv_rank_ids[i], stream,
+                 group_name_);
     }
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, (*nccl_gend_func)(), "AllToAllv: ncclGroupEnd failed");
+    (void)GroupEnd();
   }
 
   void InferCommType(const CNodePtr &kernel_node) {
@@ -211,7 +201,6 @@ class NcclP2PGpuKernel : public NcclGpuKernel {
   size_t output_size_;
   int root_;
   bool is_null_input_;
-  const void *collective_handle_;
   cudaStream_t comm_stream_;
   ncclDataType_t output_nccl_data_type_;
   ncclDataType_t input_nccl_data_type_;

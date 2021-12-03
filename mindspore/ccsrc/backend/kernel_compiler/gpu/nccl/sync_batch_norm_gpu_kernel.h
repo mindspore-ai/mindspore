@@ -137,20 +137,15 @@ class SyncBatchNormGpuKernel : public NcclGpuKernel {
       comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
       MS_EXCEPTION_IF_NULL(comm_stream_);
     }
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     // Get group size
-    auto get_group_size_funcptr =
-      reinterpret_cast<GetGroupRanks>(dlsym(const_cast<void *>(collective_handle_), "GetGroupRanks"));
-    MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
-    std::vector<int> group_ranks = (*get_group_size_funcptr)(group_name_);
-    group_size_ = group_ranks.size();
+    group_size_ = device::gpu::CollectiveInitializer::instance().GetGroupSize(group_name_);
     // // Get device rank ID in group
-    using GetLocalRankId = device::gpu::GetLocalRankId;
-    auto get_local_rank_funcptr =
-      reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
-    MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
-    group_rank_ = IntToUint((*get_local_rank_funcptr)());
+    group_rank_ = device::gpu::CollectiveInitializer::instance().local_rank_id();
     InitSizeLists();
     return true;
   }
@@ -208,12 +203,7 @@ class SyncBatchNormGpuKernel : public NcclGpuKernel {
   template <typename gather_type>
   void LaunchAllGather(gather_type *input_addr, gather_type *output_addr, void *stream_ptr) {
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto all_gather_funcptr = reinterpret_cast<AllGather>(dlsym(const_cast<void *>(collective_handle_), "AllGather"));
-    MS_EXCEPTION_IF_NULL(all_gather_funcptr);
-    CHECK_NCCL_RET_WITH_EXCEPT(
-      kernel_node_,
-      (*all_gather_funcptr)(input_addr, output_addr, C_, nccl_dtype(GetTypeID(input_addr)), stream, group_name_),
-      "ncclAllGather failed");
+    (void)AllGather(input_addr, output_addr, C_, nccl_dtype(GetTypeID(input_addr)), stream, group_name_);
   }
 
   size_t input_size_;
@@ -238,7 +228,6 @@ class SyncBatchNormGpuKernel : public NcclGpuKernel {
   // NCCL
   string group_name_;
   int root_;
-  const void *collective_handle_;
   cudaStream_t comm_stream_;
 };
 }  // namespace kernel

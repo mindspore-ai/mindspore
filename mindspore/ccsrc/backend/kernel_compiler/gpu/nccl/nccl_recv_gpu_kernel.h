@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class NcclRecvGpuKernel : public NcclGpuKernel {
  public:
-  NcclRecvGpuKernel() : src_rank_(-1), collective_handle_(nullptr) {}
+  NcclRecvGpuKernel() : src_rank_(-1) {}
   ~NcclRecvGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,12 +40,8 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
       return true;
     }
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
-    MS_EXCEPTION_IF_NULL(nccl_recv_func);
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                               (*nccl_recv_func)(output_addr, output_size_list_[0] / sizeof(T), nccl_data_type_,
-                                                 src_rank_, reinterpret_cast<cudaStream_t>(stream_ptr), group_name_),
-                               "ncclRecv failed");
+    (void)Recv(output_addr, output_size_list_[0] / sizeof(T), nccl_data_type_, src_rank_,
+               reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     return true;
   }
 
@@ -73,8 +69,11 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
     output_size_list_.push_back(output_size);
     MS_LOG(INFO) << "NcclRecv source rank is " << src_rank_ << ", group name is " << group_name_;
 
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     return true;
   }
 
@@ -87,7 +86,6 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
   std::vector<size_t> workspace_size_list_;
   int src_rank_;
   bool is_null_input_;
-  const void *collective_handle_;
 };
 }  // namespace kernel
 }  // namespace mindspore

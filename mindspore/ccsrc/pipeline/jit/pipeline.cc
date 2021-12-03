@@ -1713,7 +1713,7 @@ void FinalizeBackend() {
 }
 
 void ClearResAtexit() {
-  MS_LOG(DEBUG) << "Pipeline clear all resource";
+  MS_LOG(INFO) << "Pipeline clear all resource";
   RecordExitStatus();
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
@@ -1728,6 +1728,9 @@ void ClearResAtexit() {
       ps::Worker::GetInstance().Finalize();
     }
   }
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    (void)distributed::cluster::ClusterContext::instance()->Finalize();
+  }
 #endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
@@ -1735,8 +1738,15 @@ void ClearResAtexit() {
 #endif
   session::ExecutorManager::Instance().Clear();
   runtime::GraphScheduler::GetInstance().Clear();
+
+  MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
+  MS_LOG(INFO) << "End clear device context.";
+
+  MS_LOG(INFO) << "Start clear kernel runtime...";
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  MS_LOG(INFO) << "End clear kernel runtime.";
+
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();

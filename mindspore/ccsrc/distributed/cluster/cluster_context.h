@@ -19,6 +19,7 @@
 
 #include <map>
 #include <set>
+#include <mutex>
 #include <string>
 #include <memory>
 #include <atomic>
@@ -79,9 +80,8 @@ class ClusterContext {
   // The flag that whether this cluster context instance is already finalized.
   std::atomic_bool finalized_;
 
-  // The condition variable and mutex about exiting status of this node.
-  std::mutex wait_finish_mutex_;
-  std::condition_variable wait_finish_cond_;
+  // The mutex about exiting status of this node.
+  std::mutex finish_mutex_;
 
   // Node role to role number map.
   std::map<std::string, uint32_t> node_num_each_role_;

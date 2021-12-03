@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class NcclSendGpuKernel : public NcclGpuKernel {
  public:
-  NcclSendGpuKernel() : dest_rank_(-1), collective_handle_(nullptr) {}
+  NcclSendGpuKernel() : dest_rank_(-1) {}
   ~NcclSendGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,12 +40,8 @@ class NcclSendGpuKernel : public NcclGpuKernel {
       return true;
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    auto nccl_send_func = reinterpret_cast<Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
-    MS_EXCEPTION_IF_NULL(nccl_send_func);
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                               (*nccl_send_func)(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_,
-                                                 dest_rank_, reinterpret_cast<cudaStream_t>(stream_ptr), group_name_),
-                               "ncclSend failed");
+    (void)Send(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_, dest_rank_,
+               reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     return true;
   }
 
@@ -74,8 +70,11 @@ class NcclSendGpuKernel : public NcclGpuKernel {
     input_size_list_.push_back(input_size);
     output_size_list_.push_back(0);
 
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     return true;
   }
 
@@ -88,7 +87,6 @@ class NcclSendGpuKernel : public NcclGpuKernel {
   std::vector<size_t> workspace_size_list_;
   int dest_rank_;
   bool is_null_input_;
-  const void *collective_handle_;
 };
 }  // namespace kernel
 }  // namespace mindspore

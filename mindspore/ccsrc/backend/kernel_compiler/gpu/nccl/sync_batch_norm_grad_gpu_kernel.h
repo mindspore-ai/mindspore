@@ -121,14 +121,13 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
       comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
       MS_EXCEPTION_IF_NULL(comm_stream_);
     }
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     // Get group size
-    auto get_group_size_funcptr =
-      reinterpret_cast<GetGroupRanks>(dlsym(const_cast<void *>(collective_handle_), "GetGroupRanks"));
-    MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
-    std::vector<int> group_ranks = (*get_group_size_funcptr)(group_name_);
-    device_count_ = group_ranks.size();
+    device_count_ = device::gpu::CollectiveInitializer::instance().GetGroupSize(group_name_);
     InitSizeLists();
     return true;
   }
@@ -174,12 +173,8 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
   template <typename reduce_type>
   void LaunchAllReduce(reduce_type *input_addr, reduce_type *output_addr, void *stream_ptr) {
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto all_reduce_funcptr = reinterpret_cast<AllReduce>(dlsym(const_cast<void *>(collective_handle_), "AllReduce"));
-    MS_EXCEPTION_IF_NULL(all_reduce_funcptr);
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                               (*all_reduce_funcptr)(input_addr, output_addr, C_, nccl_dtype(kNumberTypeFloat32),
-                                                     nccl_reduce_type_, stream, group_name_),
-                               "ncclAllReduce - SyncBatchNormGrad - CUDA failed");
+    (void)AllReduce(input_addr, output_addr, C_, nccl_dtype(kNumberTypeFloat32), nccl_reduce_type_, stream,
+                    group_name_);
   }
 
   size_t input_size_;
@@ -201,7 +196,6 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernel {
   // NCCL
   string group_name_;
   int root_;
-  const void *collective_handle_;
   cudaStream_t comm_stream_;
 };
 }  // namespace kernel

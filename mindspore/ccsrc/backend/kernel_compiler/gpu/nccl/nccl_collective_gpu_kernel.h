@@ -128,8 +128,11 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       MS_EXCEPTION_IF_NULL(comm_stream_);
     }
 
-    collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
-    MS_EXCEPTION_IF_NULL(collective_handle_);
+    use_mpi_ = common::CheckUseMPI();
+    if (use_mpi_) {
+      collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
+      MS_EXCEPTION_IF_NULL(collective_handle_);
+    }
     return true;
   }
 
@@ -156,12 +159,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto all_reduce_funcptr = reinterpret_cast<AllReduce>(dlsym(const_cast<void *>(collective_handle_), "AllReduce"));
-    MS_EXCEPTION_IF_NULL(all_reduce_funcptr);
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                               (*all_reduce_funcptr)(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_,
-                                                     nccl_reduce_type_, stream, group_name_),
-                               "ncclAllReduce failed");
+    (void)AllReduce(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_, stream,
+                    group_name_);
   }
 
   void LaunchAllGather(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
@@ -169,12 +168,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto all_gather_funcptr = reinterpret_cast<AllGather>(dlsym(const_cast<void *>(collective_handle_), "AllGather"));
-    MS_EXCEPTION_IF_NULL(all_gather_funcptr);
-    CHECK_NCCL_RET_WITH_EXCEPT(
-      kernel_node_,
-      (*all_gather_funcptr)(input_addr, output_addr, input_size_ / sizeof(T), nccl_data_type_, stream, group_name_),
-      "ncclAllGather failed");
+    (void)AllGather(input_addr, output_addr, input_size_ / sizeof(T), nccl_data_type_, stream, group_name_);
   }
 
   void LaunchReduceScatter(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
@@ -182,13 +176,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto reduce_scatter_funcptr =
-      reinterpret_cast<ReduceScatter>(dlsym(const_cast<void *>(collective_handle_), "ReduceScatter"));
-    MS_EXCEPTION_IF_NULL(reduce_scatter_funcptr);
-    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                               (*reduce_scatter_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
-                                                         nccl_data_type_, nccl_reduce_type_, stream, group_name_),
-                               "ncclReduceScatter failed");
+    (void)ReduceScatter(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_, stream,
+                        group_name_);
   }
 
   void LaunchBroadcast(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
@@ -196,15 +185,11 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     T *input_addr = nullptr;
     T *output_addr = nullptr;
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    auto broadcast_funcptr = reinterpret_cast<Broadcast>(dlsym(const_cast<void *>(collective_handle_), "Broadcast"));
-    MS_EXCEPTION_IF_NULL(broadcast_funcptr);
     for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
       input_addr = GetDeviceAddress<T>(inputs, i);
       output_addr = GetDeviceAddress<T>(outputs, i);
-      CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                                 (*broadcast_funcptr)(input_addr, output_addr, output_size_list_[i] / sizeof(T),
-                                                      nccl_data_type_, root_, stream, group_name_),
-                                 "ncclBroadcast failed");
+      (void)Broadcast(input_addr, output_addr, output_size_list_[i] / sizeof(T), nccl_data_type_, root_, stream,
+                      group_name_);
     }
   }
 
@@ -258,7 +243,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
   size_t output_size_;
   int root_;
   bool is_null_input_;
-  const void *collective_handle_;
   cudaStream_t comm_stream_;
 
   static const size_t COMMUNICATION_MEM_ALIGN_SIZE = 16;

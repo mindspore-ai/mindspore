@@ -39,6 +39,7 @@ CollectiveManager::~CollectiveManager() {
   if (!finalized_) {
     Finalize();
   }
+  finalized_ = true;
 }
 
 std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
@@ -86,6 +87,8 @@ bool CollectiveManager::Initialize() {
   }
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type_;
+  inited_ = true;
+  finalized_ = false;
   return true;
 }
 
@@ -166,6 +169,8 @@ bool CollectiveManager::Finalize() {
   if (!device_comm_lib_instance_->Finalize()) {
     MS_LOG(WARNING) << "Failed to finalize device communication library.";
   }
+
+  finalized_ = true;
   return true;
 }
 
