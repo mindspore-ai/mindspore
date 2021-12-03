@@ -179,6 +179,16 @@ void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
       if (!IsBpropNode(output_node)) {
         continue;
       }
+      if (IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem)) {
+        auto tuple_getitem_users = node_users.find(output_node);
+        if (tuple_getitem_users == node_users.end()) {
+          continue;
+        }
+        for (const auto &user : tuple_getitem_users->second) {
+          target_nodes->insert(user.first->cast<CNodePtr>());
+        }
+        continue;
+      }
       target_nodes->insert(output_node->cast<CNodePtr>());
       if (!inserted) {
         recompute_nodes->insert(node);
