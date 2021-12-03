@@ -82,13 +82,13 @@ STATUS ModelInfer::Finalize() {
     MS_LOG(ERROR) << "Set the ascend device context failed.";
     return lite::RET_ERROR;
   }
-
-  int ret = model_process_.UnLoad();
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Unload model inner failed.";
-    return ret;
+  if (load_flag_) {
+    auto ret = model_process_.UnLoad();
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Unload model inner failed.";
+      return ret;
+    }
   }
-
   if (context_ != nullptr) {
     rt_ret = aclrtDestroyContext(context_);
     if (rt_ret != ACL_ERROR_NONE) {

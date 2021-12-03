@@ -44,7 +44,7 @@ CustomAscend310Kernel::CustomAscend310Kernel(const std::vector<mindspore::MSTens
       InputDataIndex_(0) {}
 
 CustomAscend310Kernel::~CustomAscend310Kernel() {
-  if (load_model_) {
+  if (model_infer_ != nullptr) {
     int ret = model_infer_->Finalize();
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Model finalize failed.";
@@ -59,8 +59,8 @@ STATUS CustomAscend310Kernel::PrepareModelInfer() {
   }
   // last input is om data tensor
   int idx = inputs_.size() - 1;
-  Buffer om_data(inputs_[idx].Data().get(), inputs_[idx].DataSize());
   if (model_infer_ == nullptr) {
+    Buffer om_data(inputs_[idx].Data().get(), inputs_[idx].DataSize());
     AclOptionsParser parser;
     if (parser.ParseAclOptions(context_, &acl_options_) != lite::RET_OK) {
       MS_LOG(ERROR) << "Parse acl options failed.";

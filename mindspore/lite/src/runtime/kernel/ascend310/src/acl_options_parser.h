@@ -33,7 +33,7 @@ class AclOptionsParser {
 
  private:
   STATUS Parse310AclOptions(const std::shared_ptr<DeviceInfoContext> &device_info, AclModelOptions *acl_options);
-  STATUS CheckAndModifyDeviceId(int32_t *device_id);
+  STATUS CheckDeviceId(int32_t *device_id);
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
