@@ -43,7 +43,6 @@ struct CommonQuantString {
   std::string min_quant_weight_channel;
   std::string skip_quant_node;
   std::string debug_info_save_path;
-  std::string target_device;
 };
 
 struct MixedBitWeightQuantString {
@@ -54,6 +53,7 @@ struct MixedBitWeightQuantString {
 struct FullQuantString {
   std::string activation_quant_method;
   std::string bias_correction;
+  std::string target_device;
 };
 
 struct RegistryInfoString {
