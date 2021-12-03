@@ -20,3 +20,5 @@ mindspore.dataset.PaddedDataset
     >>> import numpy as np
     >>> data = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
     >>> dataset = ds.PaddedDataset(padded_samples=data)
+
+    .. include:: mindspore.dataset.Dataset.rst

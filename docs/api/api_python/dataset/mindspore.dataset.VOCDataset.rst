@@ -143,3 +143,5 @@ mindspore.dataset.VOCDataset
         biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
         howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html}
         }
+
+    .. include:: mindspore.dataset.Dataset.rst
