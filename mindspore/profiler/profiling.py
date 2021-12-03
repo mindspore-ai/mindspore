@@ -141,6 +141,7 @@ class Profiler:
         self._get_output_path(kwargs)
         self._profile_communication = False
         self._has_started = False
+        self._has_started_twice = False
         self.start_profile = True
 
         # Setup and start MindData Profiling
@@ -242,8 +243,8 @@ class Profiler:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
             if not self.start_profile:
-                raise TypeError("The parameter profile_communication can not be True if want to start profiler in the "
-                                "process of training.")
+                raise RuntimeError("The parameter profile_communication can not be True while starting profiler in the "
+                                   "process of training.")
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
             raise TypeError("The parameter profile_memory must be bool")
@@ -404,9 +405,14 @@ class Profiler:
         logger.info("Profiling: start time: %d", self._start_time)
 
         if not self._has_started:
-            self._has_started = True
+            if not self._has_started_twice:
+                self._has_started = True
+                self._has_started_twice = True
+            else:
+                raise RuntimeError("MD Profiling has finished, repeated start and stop actions are not supported.")
         else:
-            raise RuntimeError("The profiler has already started.")
+            raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
+                               "is set to False.")
 
         self._md_profiler.start()
         self._cpu_profiler.step_profiling_enable(True)
@@ -421,7 +427,7 @@ class Profiler:
         if self._has_started:
             self._has_started = False
         else:
-            raise RuntimeError("The profiler has not start, so can not stop.")
+            raise RuntimeError("The profiler has not started, so can not stop.")
 
         self._md_profiler.stop()
         self._md_profiler.save(self._output_path)
