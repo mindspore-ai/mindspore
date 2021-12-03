@@ -415,10 +415,12 @@ class Partial(Primitive):
         >>> partial_show_input = partial(show_input, Tensor(1))
         >>> output1 = partial_show_input(Tensor(2), Tensor(3))
         >>> print(output1)
-        (1, 2, 3)
+        (Tensor(shape=[], dtype=Int64, value= 1), Tensor(shape=[], dtype=Int64, value= 2), Tensor(shape=[], dtype=Int64,
+         value= 3))
         >>> output2 = partial_show_input(Tensor(3), Tensor(4))
         >>> print(output2)
-        (1, 3, 4)
+        (Tensor(shape=[], dtype=Int64, value= 1), Tensor(shape=[], dtype=Int64, value= 3), Tensor(shape=[], dtype=Int64,
+         value= 4))
     """
 
     # Side effect will propagated from the first argument to return value.
