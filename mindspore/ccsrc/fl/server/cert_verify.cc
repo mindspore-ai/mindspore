@@ -28,6 +28,8 @@ namespace ps {
 namespace server {
 #ifndef _WIN32
 static int64_t replayAttackTimeDiff;
+static int64_t certStartTimeDiff = -600;
+
 X509 *CertVerify::readCertFromFile(const std::string &certPath) {
   BIO *bio = BIO_new_file(certPath.c_str(), "r");
   X509 *certObj = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
@@ -69,9 +71,12 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
   if (ret != 1) {
     return false;
   }
-
-  if (day < 0 || sec < 0) {
-    MS_LOG(ERROR) << "cert start time is later than now time.";
+  if (day < 0) {
+    MS_LOG(ERROR) << "cert start day time is later than now day time, day is" << day;
+    return false;
+  }
+  if (day == 0 && sec < certStartTimeDiff) {
+    MS_LOG(ERROR) << "cert start second time is later than 600 second, second is" << sec;
     return false;
   }
   day = 0;
@@ -85,7 +90,7 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
     MS_LOG(ERROR) << "cert end time is sooner than now time.";
     return false;
   }
-
+  MS_LOG(INFO) << "verify cert time success.";
   return true;
 }
 
@@ -480,7 +485,7 @@ bool CertVerify::verifyTimeStamp(const std::string &flID, const std::string &tim
   MS_LOG(INFO) << "flID: " << flID.c_str() << ",now time: " << now << ",requestTime: " << requestTime;
 
   int64_t diff = now - requestTime;
-  if (diff > replayAttackTimeDiff || diff < 0) {
+  if (abs(diff) > replayAttackTimeDiff) {
     return false;
   }
   MS_LOG(INFO) << "verifyTimeStamp success.";
