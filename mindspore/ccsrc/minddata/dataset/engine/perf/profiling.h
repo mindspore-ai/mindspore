@@ -113,6 +113,7 @@ class Tracing : public Profiling {
               const uint64_t time_stamp);
   Status TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts);
   Status StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step);
+  size_t GetNumberSteps();
 
  protected:
   Tracing() = default;
@@ -436,6 +437,10 @@ class ProfilingManager {
   /// Get number of epochs that have been already profiled
   /// \return number of epochs
   int32_t GetNumOfProfiledEpochs() { return epoch_end_step_.size() - 1; }
+
+  // Get number of steps taken in pipeline
+  /// \return number of steps
+  Status GetNumberOfProfiledSteps(int32_t *size);
 
   /// Determine if the Profiler is being used for autotuning.
   /// \return boolean

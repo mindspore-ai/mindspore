@@ -25,24 +25,38 @@
 namespace mindspore {
 namespace dataset {
 AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
-    : tree_adapter_(tree_adap), profiling_manager_(profiling_mgr), leaf_op_id_(-1), cur_epoch_(1) {
+    : tree_adapter_(tree_adap),
+      profiling_manager_(profiling_mgr),
+      leaf_op_id_(-1),
+      cur_epoch_(1),
+      skip_bool_(true),
+      last_step_profiled_(0) {
   tree_modifier_ = std::make_unique<TreeModifier>(tree_adapter_);
   max_workers_ = GlobalContext::config_manager()->num_cpu_threads();
+  step_gap_ = GlobalContext::config_manager()->autotune_interval();
 }
 
 Status AutoTune::Main() {
   TaskManager::FindMe()->Post();
   MS_LOG(INFO) << "Dataset AutoTune thread has started.";
   std::unique_lock<std::mutex> _lock(mux_);
-  cur_epoch_ = 1;
+  if (step_gap_) {
+    mode_ = AutoTuneMode::kAutoTuneModeStep;
+  } else if (step_gap_ == 0) {
+    mode_ = AutoTuneMode::kAutoTuneModeEpoch;
+  }
   Status rc;
   while (!this_thread::is_interrupted() && !(tree_adapter_->tree_->isFinished())) {
-    rc = RunIteration();
+    if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+      rc = RunIterationEpoch();
+    } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+      rc = RunIterationStep();
+    }
     if (rc.IsError()) {
       MS_LOG(ERROR) << "Dataset AutoTune failed and will exit with the following error: " << rc;
       break;
     }
-    rc = cv_.WaitFor(&_lock, GlobalContext::config_manager()->autotune_interval());
+    rc = cv_.WaitFor(&_lock, GlobalContext::config_manager()->monitor_sampling_interval());
     // the thread may be interrupted for tree termination when waiting (we should not report error in this case)
     if (rc.IsError() && rc != StatusCode::kMDInterrupted) {
       return rc;
@@ -101,7 +115,7 @@ Status AutoTune::CollectOpsInfo() {
 
 Status AutoTune::GetOpConnectorCapacity(int32_t op_id, int64_t *capacity) {
   auto item = ops_.find(op_id);
-  CHECK_FAIL_RETURN_UNEXPECTED(item != ops_.end(), "Invalid Operator ID");
+  CHECK_FAIL_RETURN_UNEXPECTED(item != ops_.end(), "Invalid Operator ID.");
   *capacity = item->second->ConnectorCapacity();
   return Status::OK();
 }
@@ -112,8 +126,15 @@ Status AutoTune::GetOpsCpuUtil(std::map<int32_t, double> *ops_cpu_util) {
     std::vector<uint16_t> sys_util;
     std::vector<uint16_t> user_util;
 #ifndef ENABLE_ANDROID
-    RETURN_IF_NOT_OK(profiling_manager_->GetSysCpuUtilByEpoch(itr->first, cur_epoch_, &sys_util));
-    RETURN_IF_NOT_OK(profiling_manager_->GetUserCpuUtilByEpoch(itr->first, cur_epoch_, &user_util));
+    if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+      RETURN_IF_NOT_OK(profiling_manager_->GetSysCpuUtilByEpoch(itr->first, cur_epoch_, &sys_util));
+      RETURN_IF_NOT_OK(profiling_manager_->GetUserCpuUtilByEpoch(itr->first, cur_epoch_, &user_util));
+    } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+      RETURN_IF_NOT_OK(
+        profiling_manager_->GetSysCpuUtilByStep(itr->first, last_step_profiled_, cur_step_ - 1, &sys_util));
+      RETURN_IF_NOT_OK(
+        profiling_manager_->GetUserCpuUtilByStep(itr->first, last_step_profiled_, cur_step_ - 1, &user_util));
+    }
 #endif
     double sys_cpu_util = Mean(sys_util);
     double user_cpu_util = Mean(user_util);
@@ -131,7 +152,12 @@ Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util,
       continue;
     }
     std::vector<int32_t> sizes;
-    RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(itr->first, cur_epoch_, &sizes));
+    if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+      RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(itr->first, cur_epoch_, &sizes));
+    } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+      RETURN_IF_NOT_OK(
+        profiling_manager_->GetConnectorSizeByStep(itr->first, last_step_profiled_, cur_step_ - 1, &sizes));
+    }
     double avg_size = Mean(sizes);
     int64_t capacity = itr->second->ConnectorCapacity();
     CHECK_FAIL_RETURN_UNEXPECTED(capacity != 0, "Capacity of connector should not be 0");
@@ -180,34 +206,63 @@ double AutoTune::Mean(const std::vector<T> &items) {
   return std::accumulate(items.begin(), items.end(), 0.0) / static_cast<double>(items.size());
 }
 
-Status AutoTune::RunIteration() {
+Status IsSinkCheck(bool sink_type) {
   // Close AutoTune in Non-sink mode, since it's not ready for test.
-  if (!IsSink()) {
+  if (sink_type == true) {
+    return Status::OK();
+  } else {
     MS_LOG(ERROR) << "Dataset AutoTune doesn't support non-sink pipeline.";
     return Status(StatusCode::kMDUnexpectedError,
                   "Dataset AutoTune hasn't been supported in non-sink mode(dataset_sink_mode=False), check training "
                   "config or set dataset_sink_mode to True.");
   }
+}
+
+Status AutoTune::RunIterationEpoch() {
+  RETURN_IF_NOT_OK(IsSinkCheck(IsSink()));
   // Run every epoch
   if ((profiling_manager_->GetNumOfProfiledEpochs()) >= cur_epoch_) {
     MS_LOG(INFO) << "Run Dataset AutoTune at epoch #" << cur_epoch_;
-    RETURN_IF_NOT_OK(RunIterationEpoch());
+    RETURN_IF_NOT_OK(RunIteration());
     ++cur_epoch_;
+  }
+  return Status::OK();
+}
+
+Status AutoTune::RunIterationStep() {
+  RETURN_IF_NOT_OK(IsSinkCheck(IsSink()));
+  // Run at autotune step interval
+  int32_t step_temp = 0;
+  profiling_manager_->GetNumberOfProfiledSteps(&step_temp);
+  cur_step_ = step_temp;
+  if (cur_step_ - last_step_profiled_ >= step_gap_) {
+    if (skip_bool_) {
+      skip_bool_ = false;
+      last_step_profiled_ = cur_step_;
+      return Status::OK();
+    }
+    MS_LOG(INFO) << "Run AutoTune at step#" << cur_step_;
+    RETURN_IF_NOT_OK(RunIteration());
+    last_step_profiled_ = cur_step_;
   }
   return Status::OK();
 }
 
 Status AutoTune::RecordPipelineTime() {
   std::vector<int32_t> times;
-  RETURN_IF_NOT_OK(profiling_manager_->GetPipelineTimeByEpoch(cur_epoch_, &times));
+  if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetPipelineTimeByEpoch(cur_epoch_, &times));
+  } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetPipelineTimeByStep(last_step_profiled_, cur_step_ - 1, &times));
+  }
   double avg_time = Mean(times);
   avg_pipeline_times_.push_back(avg_time);
-  MS_LOG(INFO) << "Epoch #" << cur_epoch_ << ", Average Pipeline time is " << avg_time
-               << " ms. The avg pipeline time for all epochs is " << Mean(avg_pipeline_times_) << "ms";
+  MS_LOG(INFO) << "Average Pipeline time is " << avg_time << " ms. The avg pipeline time for all epochs is "
+               << Mean(avg_pipeline_times_) << "ms";
   return Status::OK();
 }
 
-Status AutoTune::RunIterationEpoch() {
+Status AutoTune::RunIteration() {
   RETURN_IF_NOT_OK(RecordPipelineTime());
   bool isBottleneck = false;
   RETURN_IF_NOT_OK(IsDSaBottleneck(&isBottleneck));
@@ -217,17 +272,44 @@ Status AutoTune::RunIterationEpoch() {
   return Status::OK();
 }
 
+Status AutoTune::GetConnectorSize(std::vector<int32_t> *sizes) {
+  if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(cur_epoch_, sizes));
+  } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByStep(last_step_profiled_, cur_step_ - 1, sizes));
+  }
+  return Status::OK();
+}
+
+Status AutoTune::GetConnectorCapacity(std::vector<int32_t> *capacities) {
+  if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetConnectorCapacityByEpoch(cur_epoch_, capacities));
+  } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetConnectorCapacityByStep(last_step_profiled_, cur_step_ - 1, capacities));
+  }
+  return Status::OK();
+}
+
+Status AutoTune::GetEmptyQueueFrequency(float *empty_freq) {
+  if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetEmptyQueueFrequencyByEpoch(cur_epoch_, empty_freq));
+  } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+    RETURN_IF_NOT_OK(profiling_manager_->GetEmptyQueueFrequencyByStep(last_step_profiled_, cur_step_ - 1, empty_freq));
+  }
+  return Status::OK();
+}
+
 Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
   std::vector<int32_t> sizes;
-  RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(cur_epoch_, &sizes));
+  RETURN_IF_NOT_OK(GetConnectorSize(&sizes));
   double avg_size = Mean(sizes);
   std::vector<int32_t> capacities;
-  RETURN_IF_NOT_OK(profiling_manager_->GetConnectorCapacityByEpoch(cur_epoch_, &capacities));
+  RETURN_IF_NOT_OK(GetConnectorCapacity(&capacities));
   double avg_capacity = Mean(capacities);
   CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != 0, "Capacities of connectors should not be 0");
   double usage_avg_last = (avg_size / avg_capacity);
   float empty_freq = 0;
-  RETURN_IF_NOT_OK(profiling_manager_->GetEmptyQueueFrequencyByEpoch(cur_epoch_, &empty_freq));
+  RETURN_IF_NOT_OK(GetEmptyQueueFrequency(&empty_freq));
 
   // Reporting values
   MS_LOG(INFO) << "Epoch #" << cur_epoch_ << ", Device Connector Size: " << avg_size
