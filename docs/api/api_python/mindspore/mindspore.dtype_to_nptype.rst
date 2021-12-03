@@ -7,8 +7,8 @@ mindspore.dtype_to_nptype
 
     **参数：**
 
-        **type_** (mindspore.dtype) – MindSpore中的dtype。
+    **type_** (mindspore.dtype) – MindSpore中的dtype。
 
     **返回：**
 
-        NumPy的数据类型。
+    NumPy的数据类型。

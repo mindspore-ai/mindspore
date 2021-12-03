@@ -6,7 +6,7 @@ mindspore.nn.Adagrad
     使用ApplyAdagrad算子实现Adagrad算法。
 
     Adagrad用于在线学习和随机优化。
-    请参阅论文`Efficient Learning using Forward-Backward Splitting <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_。
+    请参阅论文 `Efficient Learning using Forward-Backward Splitting <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_。
     公式如下：
 
     .. math::
@@ -15,8 +15,8 @@ mindspore.nn.Adagrad
             w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
         \end{array}
 
-    :math:`h` 表示梯度平方的累积和，:math:`g` 表示 `grads` 。
-    :math:`lr` 代表 `learning_rate`，:math:`w` 代表 `params` 。
+    :math:`h` 表示梯度平方的累积和， :math:`g` 表示 `grads` 。
+    :math:`lr` 代表 `learning_rate`， :math:`w` 代表 `params` 。
 
     .. note::
         在参数未分组时，优化器配置的 `weight_decay` 应用于名称含有"beta"或"gamma"的网络参数，通过网络参数分组可调整权重衰减策略。分组时，每组网络参数均可配置 `weight_decay` ，若未配置，则该组网络参数使用优化器中配置的 `weight_decay` 。
@@ -34,14 +34,14 @@ mindspore.nn.Adagrad
     - **accum** (float) - 累加器 :math:`h` 的初始值，必须大于等于零。默认值：0.1。
     - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
 
-       - **float** - 固定的学习率。必须大于等于零。
-       - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
-       - **Tensor** - 可以是标量或一维向量。标量是固定的学习率。一维向量是动态的学习率，第i步将取向量中第i个值作为学习率。
-       - **Iterable** - 动态的学习率。第i步将取迭代器第i个值作为学习率。
-       - **LearningRateSchedule** - 动态的学习率。在训练过程中，优化器将使用步数（step）作为输入，调用 `LearningRateSchedule` 实例来计算当前学习率。
+      - **float** - 固定的学习率。必须大于等于零。
+      - **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
+      - **Tensor** - 可以是标量或一维向量。标量是固定的学习率。一维向量是动态的学习率，第i步将取向量中第i个值作为学习率。
+      - **Iterable** - 动态的学习率。第i步将取迭代器第i个值作为学习率。
+      - **LearningRateSchedule** - 动态的学习率。在训练过程中，优化器将使用步数（step）作为输入，调用 `LearningRateSchedule` 实例来计算当前学习率。
     
     - **update_slots** (bool) - 如果为True，则更新累加器 :math:`h` 。默认值：True。
-    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果`loss_scale`是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager` ，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅class：`mindspore.FixedLossScaleManager` 。默认值：1.0。
+    - **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager` ，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.FixedLossScaleManager` 。默认值：1.0。
     - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须大于等于0.0。默认值：0.0。
 
     **输入：**

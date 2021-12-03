@@ -1,3 +1,6 @@
+mindspore.train.callback.LearningRateScheduler
+===============================================
+
 .. py:class:: mindspore.train.callback.LearningRateScheduler(learning_rate_function)
 
     在训练期间更改学习率。

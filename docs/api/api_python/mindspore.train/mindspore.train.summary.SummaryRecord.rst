@@ -1,3 +1,6 @@
+mindspore.train.summary.SummaryRecord
+=======================================
+
 .. py:class:: mindspore.train.summary.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', network=None, max_file_size=None, raise_exception=False, export_options=None)
 
     SummaryRecord用于记录summary数据和lineage数据。
@@ -76,7 +79,6 @@
         ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
         ...         summary_record.add_value('scalar', 'loss', Tensor(0.1))
         
-
     .. py:method:: close()
 
         将所有事件持久化并关闭SummaryRecord。请使用with语句或try…finally语句进行自动关闭。
@@ -90,7 +92,6 @@
         ...     finally:
         ...         summary_record.close()
             
-
     .. py:method:: flush()
 
         将事件文件持久化到磁盘。
@@ -104,7 +105,6 @@
         ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
         ...         summary_record.flush()
         
-
     .. py:method:: log_dir
         :property:
 
@@ -121,7 +121,6 @@
         ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
         ...         log_dir = summary_record.log_dir
         
-
     .. py:method:: record(step, train_network=None, plugin_filter=None)
 
         记录summary。
@@ -150,7 +149,6 @@
         ...
         True
         
-
     .. py:method:: set_mode(mode)
 
         设置训练阶段。不同的训练阶段会影响数据记录。

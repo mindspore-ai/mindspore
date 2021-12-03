@@ -60,7 +60,7 @@ mindspore.nn.probability.bijector.Invert
 
         正变换：将输入值转换为另一个分布。
         
-       **参数：**
+        **参数：**
 
         **y** (Tensor) - 输入。
         
