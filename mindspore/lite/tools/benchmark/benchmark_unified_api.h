@@ -53,6 +53,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
 
   // call GenerateRandomData to fill inputTensors
+  int LoadInput() override;
   int GenerateInputData() override;
 
   int ReadInputFile() override;
