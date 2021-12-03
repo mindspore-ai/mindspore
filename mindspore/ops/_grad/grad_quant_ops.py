@@ -137,7 +137,6 @@ def get_bprop_batchnormfold(self):
 
 
 @bprop_getters.register(P.BNTrainingReduce)
-@bprop_getters.register(P.BNTrainingReduce.__name__)
 def get_bprop_bn_training_reduce(self):
     """Generate bprop for BNTrainingReduce for Ascend"""
 
