@@ -648,38 +648,6 @@ def prim_attr_register(fn):
     return deco
 
 
-def custom_aicpu_register(custom_aicpu_so="mindspore_aicpu_kernels"):
-    """Register custom aicpu attribute.
-
-    Args:
-        custom_aicpu_so (str): Path of the dynamic library loaded by the aicpu ops.
-                               Default: "mindspore_aicpu_kernels"
-    """
-
-    def deco(fn):
-        def wrapper(self, *args, **kwargs):
-            if not isinstance(custom_aicpu_so, str):
-                raise ValueError(f"custom_aicpu_so must be a str, but got {custom_aicpu_so}")
-            class_name = self.__class__.__name__
-            if hasattr(self.__class__, "substitute_name"):
-                class_name = self.__class__.substitute_name
-            if isinstance(self, PrimitiveWithInfer):
-                PrimitiveWithInfer.__init__(self, class_name)
-            elif isinstance(self, PrimitiveWithCheck):
-                PrimitiveWithCheck.__init__(self, class_name)
-            else:
-                Primitive.__init__(self, self.__class__.__name__)
-            attr_name = "cust_aicpu"
-            self.add_prim_attr(attr_name, custom_aicpu_so)
-            self.init_attrs[attr_name] = custom_aicpu_so
-            ret = fn(self, *args, **kwargs)
-            return ret
-
-        return wrapper
-
-    return deco
-
-
 def constexpr(fn=None, get_instance=True, name=None):
     """
     Creates a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function
