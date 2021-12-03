@@ -2290,7 +2290,7 @@ class CSRTensor(CSRTensor_):
         >>> indptr = Tensor([0, 1, 2])
         >>> indices = Tensor([0, 1])
         >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> shape = (3, 4)
+        >>> shape = (2, 4)
         >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
         >>> # initialize a csr_tensor from another csr_tensor
         >>> csr_tensor_2 = CSRTensor(csr_tensor=csr_tensor)
