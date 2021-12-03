@@ -172,7 +172,7 @@ void AiCoreDynamicKernel::ComputeTiling() {
   tiling::OpTilingCalculateAdapter converter;
   ge::ComputeGraphPtr ge_graph = std::make_shared<ge::ComputeGraph>("default");
   auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map_, op_compile_info_);
-  (void)optiling::OpParaCalculateV2(*ge_node, op_run_info_v2);
+  (void)optiling::OpParaCalculateV2(ge_node, op_run_info_v2);
 
   block_dim_ = op_run_info_v2.GetBlockDim();
   op_run_info_v2.GetAllWorkspaces(workspaces_size_);

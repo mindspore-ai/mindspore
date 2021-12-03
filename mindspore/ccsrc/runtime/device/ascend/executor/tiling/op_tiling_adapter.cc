@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
@@ -270,7 +271,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   }
 }
 
-ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
+ge::Operator OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
   const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
   const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
@@ -290,7 +291,8 @@ ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
   auto ge_node = (*ge_graph)->AddNode(op_desc);
   MS_EXCEPTION_IF_NULL(ge_node);
   AddEdge(ge_node, constant_ops);
-  return ge_node;
+  auto op = ge::OpDescUtils::CreateOperatorFromNode(ge_node);
+  return op;
 }
 }  // namespace tiling
 }  // namespace device
