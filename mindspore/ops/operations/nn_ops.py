@@ -1992,11 +1992,10 @@ class AvgPool(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     .. warning::
-        - Only single input and single output are supported.
         - Global pooling is supported.
-        - The height of "kernel_size" and the weight of "kernel_size" are positive integers within the range [1, 255].
-          ksize_h * ksize_w < 256.
-        - Due to instruction restrictions, the values of "strides_h" and "strides_w" are
+        - For Ascend, the height of "kernel_size" and the weight of "kernel_size" are positive integers
+          within the range [1, 255]. ksize_h * ksize_w < 256.
+        - For Ascend, due to instruction restrictions, the values of "strides_h" and "strides_w" are
           positive integers within the range [1, 63].
 
     Args:
