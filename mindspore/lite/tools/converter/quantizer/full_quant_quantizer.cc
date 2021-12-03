@@ -578,7 +578,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
 }
 
 int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
-  switch (flags_.commonQuantParam.target_device) {
+  switch (flags_.fullQuantParam.target_device) {
     case CPU:
       InitCpuConfig();
       break;
@@ -586,7 +586,7 @@ int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
       InitKirinConfig();
       break;
     default:
-      MS_LOG(ERROR) << " Unsupported device " << flags_.commonQuantParam.target_device;
+      MS_LOG(ERROR) << " Unsupported device " << flags_.fullQuantParam.target_device;
       return RET_ERROR;
       break;
   }

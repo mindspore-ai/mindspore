@@ -104,13 +104,6 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
     common_quant->is_debug = true;
   }
 
-  if (!common_quant_string.target_device.empty()) {
-    ret = ParseTargetDevice(common_quant_string.target_device, &common_quant->target_device);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Parse device failed.";
-      return ret;
-    }
-  }
   return RET_OK;
 }
 
@@ -147,6 +140,13 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
     MS_LOG(ERROR) << "INPUT ILLEGAL: bias_correction should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!full_quant_string.target_device.empty()) {
+    auto ret = ParseTargetDevice(full_quant_string.target_device, &full_quant->target_device);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse device failed.";
+      return ret;
+    }
+  }
   return RET_OK;
 }
 
@@ -167,14 +167,11 @@ int QuantParamParser::ParseQuantType(const std::string &quant_type_str, schema::
 }
 
 int QuantParamParser::ParseTargetDevice(const std::string &target_device_str, quant::TargetDevice *target_device) {
-  if (target_device_str == "CPU") {
-    (*target_device) = quant::CPU;
-    return RET_OK;
-  } else if (target_device_str == "KIRIN") {
+  if (target_device_str == "KIRIN") {
     (*target_device) = quant::KIRIN;
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be CPU|KIRIN.";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN.";
     return RET_INPUT_PARAM_INVALID;
   }
 }

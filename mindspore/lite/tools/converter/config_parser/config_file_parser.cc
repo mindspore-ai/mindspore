@@ -114,7 +114,6 @@ int ConfigFileParser::ParseCommonQuantString(const std::map<std::string, std::ma
       {"min_quant_weight_channel", common_quant_string_.min_quant_weight_channel},
       {"skip_quant_node", common_quant_string_.skip_quant_node},
       {"debug_info_save_path", common_quant_string_.debug_info_save_path},
-      {"target_device", common_quant_string_.target_device},
     };
     return SetMapData(map, parse_map, kCommonQuantParam);
   }
@@ -139,6 +138,7 @@ int ConfigFileParser::ParseFullQuantString(const std::map<std::string, std::map<
     std::map<std::string, std::string &> parse_map{
       {"activation_quant_method", full_quant_string_.activation_quant_method},
       {"bias_correction", full_quant_string_.bias_correction},
+      {"target_device", full_quant_string_.target_device},
     };
     return SetMapData(map, parse_map, kFullQuantParam);
   }
