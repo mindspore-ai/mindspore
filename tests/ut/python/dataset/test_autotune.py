@@ -88,6 +88,7 @@ class TestAutotuneWithProfiler:
         md_profiler.stop()
         ds.config.set_enable_autotune(True)
 
+    @pytest.mark.skip(reason="close non-sink")
     def test_autotune_with_2_pipeline(self, capfd):
         """
         Feature: Autotuning
@@ -112,6 +113,7 @@ class TestAutotuneWithProfiler:
 
         ds.config.set_enable_autotune(False)
 
+    @pytest.mark.skip(reason="close non-sink")
     def test_delayed_autotune_with_2_pipeline(self, capfd):
         """
         Feature: Autotuning
@@ -134,6 +136,7 @@ class TestAutotuneWithProfiler:
         # sys.stdout.write(_)
         # sys.stderr.write(err)
 
+    @pytest.mark.skip(reason="close non-sink")
     def test_delayed_start_autotune_with_3_pipeline(self, capfd):
         """
         Feature: Autotuning
@@ -158,6 +161,7 @@ class TestAutotuneWithProfiler:
         # sys.stdout.write(_)
         # sys.stderr.write(err)
 
+    @pytest.mark.skip(reason="close non-sink")
     def test_autotune_before_profiler(self):
         """
         Feature: Autotuning with Profiler
@@ -228,3 +232,4 @@ class TestAutotuneWithProfiler:
 
         with pytest.raises(ValueError):
             ds.config.set_autotune_interval(-999)
+
