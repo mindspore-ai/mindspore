@@ -187,10 +187,19 @@ void GraphKernelFlags::Refresh() {
       MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE";
       opt_level = OptLevel_0;
     }
+#ifndef USE_LLVM
+    auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+    if (is_cpu) {
+      MS_LOG(WARNING) << "GraphKernel is not usable without LLVM on cpu platform";
+      opt_level = OptLevel_0;
+    }
+#endif
   }
 #endif
-  // Dump flags so that people can check the setting.
-  MS_LOG(INFO) << "graph_kernel_flags = \"" << flags_cache_ << "\", all flags: " << DumpAllFlags();
+  // If enable graphkernel, Dump flags so that people can check the setting.
+  if (IsEnableGraphKernel()) {
+    MS_LOG(INFO) << "graph_kernel_flags = \"" << flags_cache_ << "\", all flags: " << DumpAllFlags();
+  }
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
