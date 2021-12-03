@@ -79,6 +79,8 @@ class Profiler:
         profile_communication (bool): Whether to collect communication performance data in a multi devices training,
             collect when True. Default is False. Setting this parameter has no effect during single device training.
         profile_memory (bool): Whether to collect tensor memory data, collect when True. Default is False.
+        start_profile (bool): The start_profile parameter controls whether to enable or disable performance data
+            collection based on conditions. The default value is True.
 
     Examples:
         >>> import numpy as np
@@ -400,7 +402,33 @@ class Profiler:
         flops_parser.execute()
 
     def start(self):
-        """Used for Ascend, start profiling."""
+        """
+        Used for Ascend, GPU, start profiling. Users can control turning on profiling in scripts through the start()
+        interface.
+
+        Examples:
+             >>> class StopAtStep(Callback):
+             ...    def __init__(self, start_step, stop_step):
+             ...        super(StopAtStep, self).__init__()
+             ...        self.start_step = start_step
+             ...        self.stop_step = stop_step
+             ...        self.profiler = Profiler(start_profile=False)
+             ...
+             ...    def step_begin(self, run_context):
+             ...        cb_params = run_context.original_args()
+             ...        step_num = cb_params.cur_step_num
+             ...        if step_num == self.start_step:
+             ...            self.profiler.start()
+             ...
+             ...    def step_end(self, run_context):
+             ...        cb_params = run_context.original_args()
+             ...        step_num = cb_params.cur_step_num
+             ...        if step_num == self.stop_step:
+             ...            self.profiler.stop()
+             ...
+             ...    def end(self, run_context):
+             ...        self.profiler.analyse()
+        """
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
 
@@ -423,7 +451,33 @@ class Profiler:
             self._ascend_profiler.start()
 
     def stop(self):
-        """Used for Ascend, stop profiling."""
+        """
+        Used for Ascend, GPU, stop profiling. Users can control turning off profiling in scripts through the stop()
+        interface.
+
+        Examples:
+             >>> class StopAtStep(Callback):
+             ...    def __init__(self, start_step, stop_step):
+             ...        super(StopAtStep, self).__init__()
+             ...        self.start_step = start_step
+             ...        self.stop_step = stop_step
+             ...        self.profiler = Profiler(start_profile=False)
+             ...
+             ...    def step_begin(self, run_context):
+             ...        cb_params = run_context.original_args()
+             ...        step_num = cb_params.cur_step_num
+             ...        if step_num == self.start_step:
+             ...            self.profiler.start()
+             ...
+             ...    def step_end(self, run_context):
+             ...        cb_params = run_context.original_args()
+             ...        step_num = cb_params.cur_step_num
+             ...        if step_num == self.stop_step:
+             ...            self.profiler.stop()
+             ...
+             ...    def end(self, run_context):
+             ...        self.profiler.analyse()
+        """
         if self._has_started:
             self._has_started = False
         else:
