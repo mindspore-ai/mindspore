@@ -340,7 +340,7 @@ Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode nor
   TensorShape dct_shape({n_mels, n_mfcc});
   Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output);
   auto iter = (*output)->begin<float>();
-  float sqrt_2 = 1 / sqrt(2);
+  const float sqrt_2 = 1 / sqrt(2);
   float sqrt_2_n_mels = sqrt(2.0 / n_mels);
   for (int i = 0; i < n_mels; i++) {
     for (int j = 0; j < n_mfcc; j++) {
@@ -886,7 +886,7 @@ Status ComputeCmnStartAndEnd(int32_t cmn_window, int32_t min_cmn_window, bool ce
   RETURN_IF_NOT_OK(ValidateNonNegative("SlidingWindowCmn", "cmn_window", cmn_window));
   RETURN_IF_NOT_OK(ValidateNonNegative("SlidingWindowCmn", "min_cmn_window", min_cmn_window));
   int32_t cmn_window_start = 0, cmn_window_end = 0;
-  constexpr int window_center = 2;
+  const constexpr int window_center = 2;
   if (center) {
     cmn_window_start = idx - cmn_window / window_center;
     cmn_window_end = cmn_window_start + cmn_window;
@@ -1023,8 +1023,8 @@ Status SlidingWindowCmnHelper(const std::shared_ptr<Tensor> &input, std::shared_
   *r_it = num_frames;
   RETURN_IF_NOT_OK(cmn_waveform->Reshape(TensorShape(re_shape)));
 
-  constexpr int specify_input_shape = 2;
-  constexpr int specify_first_shape = 1;
+  const constexpr int specify_input_shape = 2;
+  const constexpr int specify_first_shape = 1;
   if (input_shape.size() == specify_input_shape && cmn_waveform->shape()[0] == specify_first_shape) {
     cmn_waveform->Squeeze();
   }

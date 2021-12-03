@@ -33,7 +33,8 @@ __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'se
            'get_num_parallel_workers', 'set_numa_enable', 'get_numa_enable', 'set_monitor_sampling_interval',
            'get_monitor_sampling_interval', 'set_callback_timeout', 'get_callback_timeout',
            'set_auto_num_workers', 'get_auto_num_workers', 'set_enable_shared_mem', 'get_enable_shared_mem',
-           'set_sending_batches', 'load', '_init_device_info']
+           'set_sending_batches', 'load', '_init_device_info', 'set_enable_autotune', 'get_enable_autotune',
+           'set_autotune_interval', 'get_autotune_interval']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295

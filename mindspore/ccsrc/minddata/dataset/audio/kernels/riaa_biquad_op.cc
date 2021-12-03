@@ -63,7 +63,7 @@ Status RiaaBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   float b_im = b1 * sin(-w0) + b2 * sin(-2 * w0);
   float a_im = a1 * sin(-w0) + a2 * sin(-2 * w0);
   // temp is the intermediate variable used to solve for b0, b1, b2.
-  float temp = 1 / sqrt((b_re * b_re + b_im * b_im) / (a_re * a_re + a_im * a_im));
+  const float temp = 1 / sqrt((b_re * b_re + b_im * b_im) / (a_re * a_re + a_im * a_im));
   b0 *= temp;
   b1 *= temp;
   b2 *= temp;

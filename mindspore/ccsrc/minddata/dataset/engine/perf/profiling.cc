@@ -111,7 +111,7 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
   (void)records_.emplace_back(record);
   (void)value_.emplace_back(record.ToString());
   // save timestamp per batch
-  constexpr int32_t RECORDS_PER_STEP = 4;
+  const constexpr int32_t RECORDS_PER_STEP = 4;
   if (records_.size() % RECORDS_PER_STEP == 0) {
     (void)ts_.emplace_back(time_stamp);
   }
@@ -158,7 +158,7 @@ Status Tracing::StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int
 Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset,
                                          const std::string &field, std::vector<int32_t> *result) {
   std::lock_guard<std::mutex> guard(lock_);
-  constexpr int32_t RECORDS_PER_STEP = 4;
+  const constexpr int32_t RECORDS_PER_STEP = 4;
   auto total_steps = records_.size() / RECORDS_PER_STEP;
   MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
   CHECK_FAIL_RETURN_UNEXPECTED(start_step <= total_steps,

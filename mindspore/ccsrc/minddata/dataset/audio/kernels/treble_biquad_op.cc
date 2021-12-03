@@ -37,7 +37,7 @@ Status TrebleBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   float attenuation = exp(gain_ / 40 * log(10));
 
   // temp1, temp2, temp3 are the intermediate variable used to solve for a and b.
-  float temp1 = 2 * sqrt(attenuation) * alpha;
+  const float temp1 = 2 * sqrt(attenuation) * alpha;
   float temp2 = (attenuation - 1) * cos(w0);
   float temp3 = (attenuation + 1) * cos(w0);
 
