@@ -157,7 +157,7 @@ class AllReduce(PrimitiveWithInfer):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('index', 0)
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -231,7 +231,7 @@ class AllGather(PrimitiveWithInfer):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('mean_flag', False)
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -350,7 +350,7 @@ class _HostAllGather(PrimitiveWithInfer):
             validator.check_value_type("rank_id", r, (int,), self.name)
         self.group_size = len(group)
         self.add_prim_attr('group', group)
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -425,7 +425,7 @@ class ReduceScatter(PrimitiveWithInfer):
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         if self.rank_size == 0:
@@ -480,7 +480,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         self.op = op
         self.group_size = len(group)
         self.add_prim_attr('group', group)
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.group_size != 0:
@@ -558,7 +558,7 @@ class Broadcast(PrimitiveWithInfer):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         check_hcom_group_valid(group, prim_name=self.name)
         self.add_prim_attr('group', _get_group(group))
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -605,7 +605,7 @@ class AllSwap(PrimitiveWithCheck):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.init_prim_io_names(inputs=['tensor_in', 'send_size', 'recv_size'], outputs=['tensor_out'])
         self.add_prim_attr('group', _get_group(group))
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def __check__(self, tensor_in, send_size, recv_size):
         validator.check_subclass("tensor_in", tensor_in['dtype'], mstype.tensor, self.name)
@@ -650,7 +650,7 @@ class NeighborExchange(Primitive):
         self.recv_shapes = recv_shapes
         self.send_shapes = send_shapes
         self.recv_type = recv_type
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def __call__(self, tensor):
         raise NotImplementedError
@@ -690,7 +690,7 @@ class AlltoAll(PrimitiveWithInfer):
         self.split_dim = split_dim
         self.concat_dim = concat_dim
         self.add_prim_attr('group', _get_group(group))
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         rank_size = get_group_size(_get_group(self.group))
@@ -740,7 +740,7 @@ class NeighborExchangeV2(Primitive):
         self.send_lens = send_lens
         self.recv_lens = recv_lens
         self.format = data_format
-        self.add_prim_attr('no_elimilate', True)
+        self.add_prim_attr('no_eliminate', True)
 
     def __call__(self, tensor):
         raise NotImplementedError
