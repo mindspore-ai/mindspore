@@ -104,7 +104,7 @@ TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
     engine_->Run(tupleSliceGraphPtr, args_spec_list);
     FAIL() << "Excepted exception :Args type is wrong";
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("TupleSlice input arguments size should be 2, but got 3") !=
+    ASSERT_TRUE(std::string(err.what()).find("For 'TupleSlice', the number of input should be 2, but got 3") !=
                 std::string::npos);
   } catch (...) {
     FAIL() << "Excepted exception :Args type is wrong";

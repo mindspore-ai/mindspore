@@ -40,12 +40,18 @@ ABSTRACT_REPORT_NAME_DEC(KeywordArg)
 ABSTRACT_REPORT_NAME_DEC(Class)
 
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix) {
+  auto ori_type = type;
+  if (type->isa<TensorType>()) {
+    auto tensor = type->cast<TensorTypePtr>();
+    type = tensor->element();
+    MS_EXCEPTION_IF_NULL(type);
+  }
   bool ok = std::any_of(accepts.begin(), accepts.end(),
                         [type](const TypePtr &accept) -> bool { return IsIdentidityOrSubclass(type, accept); });
   if (ok) {
     return type;
   } else {
-    MS_EXCEPTION(TypeError) << error_message_prefix << " should be " << accepts << ",but got " << type->ToString();
+    MS_EXCEPTION(TypeError) << error_message_prefix << " should be " << accepts << ",but got " << ori_type->ToString();
   }
 }
 
@@ -57,13 +63,7 @@ TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &acc
   if (!type->isa<TensorType>()) {
     MS_LOG(EXCEPTION) << error_message_prefix << "requires Tensor but got " << type->ToString();
   }
-  auto elem = tensor->element();
-  MS_EXCEPTION_IF_NULL(elem);
-  TypePtr ele_type = elem->BuildType();
-  if (ele_type == nullptr) {
-    MS_LOG(EXCEPTION) << "Abstract tensor element type nullptr";
-  }
-  return CheckType(ele_type, accepts, error_message_prefix);
+  return CheckType(type, accepts, error_message_prefix);
 }
 
 TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const TypePtrList &accepts,
@@ -161,7 +161,8 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
   return type_base;
 }
 
-int64_t CheckAxis(const std::string &op, const ValuePtr &axis, int64_t minimum, int64_t max) {
+int64_t CheckAxis(const std::string &op, const std::string &args_name, const ValuePtr &axis, int64_t minimum,
+                  int64_t max) {
   if (axis == nullptr) {
     MS_LOG(EXCEPTION) << op << " evaluator axis is null";
   }
@@ -169,9 +170,9 @@ int64_t CheckAxis(const std::string &op, const ValuePtr &axis, int64_t minimum, 
     MS_LOG(EXCEPTION) << op << " evaluator axis should be int64_t, but got " << axis->type_name();
   }
   int64_t axis_value = GetValue<int64_t>(axis);
-  if (axis_value > max || axis_value < minimum) {
-    MS_LOG(EXCEPTION) << "The primitive[" << op << "]'s axis value should be in the range [" << minimum << ", " << max
-                      << "], but got " << axis_value;
+  if (axis_value >= max || axis_value < minimum) {
+    MS_LOG(EXCEPTION) << "The primitive[" << op << "]'s \'" << args_name << "\' value should be in the range ["
+                      << minimum << ", " << max << "), but got " << axis_value;
   }
   if (axis_value < 0) {
     axis_value = axis_value + SizeToLong(max);
@@ -181,7 +182,7 @@ int64_t CheckAxis(const std::string &op, const ValuePtr &axis, int64_t minimum, 
 void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_spec_list,
                    size_t size_expect) {
   if (args_spec_list.size() != size_expect) {
-    MS_LOG(EXCEPTION) << op << " input arguments size should be " << size_expect << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << op << "', the number of input should be " << size_expect << ", but got "
                       << args_spec_list.size();
   }
 
