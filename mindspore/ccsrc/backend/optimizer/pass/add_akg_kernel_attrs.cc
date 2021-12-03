@@ -58,6 +58,11 @@ const AnfNodePtr AddAkgKernelAttrs::Process(const FuncGraphPtr &func_graph, cons
                                             const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto shape = node->Shape();
+  // dynamic shape nodes will re-infer the shape and dtype
+  if (shape == nullptr || shape->IsDynamic()) {
+    return nullptr;
+  }
   if (IsPrimitiveCNode(node, prim::kPrimCast)) {
     ProcessCast(node);
   } else if (IsPrimitiveCNode(node, prim::kPrimMatMul) || IsPrimitiveCNode(node, prim::kPrimBatchMatMul)) {
