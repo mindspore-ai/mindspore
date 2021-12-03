@@ -18,19 +18,26 @@ import shutil
 import argparse
 
 from mindspore.ops import operations as P
+from mindspore.ops import _constants
 import mindspore.ops._grad as g
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore._c_expression import _export_bprop_mindir
 
-serializable_bprop_ops = [P.ReLU(), P.Identity(), inner.Range(1.0), P.OnesLike(), P.ZerosLike(), P.Argmax(), P.Argmin(),
-                          P.Broadcast(1), P.AssignAdd(), P.AssignSub(), P.IsFinite(), P.ApproximateEqual(), P.Sign(),
-                          P.LogicalNot(), P.Round(), P.LinSpace(), P.DropoutGenMask(), P.OneHot(), P.Assign(), P.IOU(),
-                          P.BNTrainingReduce(), P.Equal(), P.NotEqual(), P.Greater(), P.GreaterEqual(), P.Less(),
-                          P.LessEqual(), P.LogicalAnd(), P.LogicalOr(), P.ReduceAll(), P.ReduceAny(), P.DropoutDoMask()]
+serializable_bprop_ops = [P.ReLU, P.Identity, inner.Range, P.OnesLike, P.ZerosLike, P.Argmax, P.Argmin, P.Broadcast,
+                          P.AssignAdd, P.AssignSub, P.IsFinite, P.ApproximateEqual, P.Sign, P.LogicalNot, P.Round,
+                          P.LinSpace, P.DropoutGenMask, P.OneHot, P.Assign, P.IOU, P.BNTrainingReduce, P.Equal,
+                          P.NotEqual, P.Greater, P.GreaterEqual, P.Less, P.LessEqual, P.LogicalAnd, P.LogicalOr,
+                          P.ReduceAll, P.ReduceAny, P.DropoutDoMask, P.DType, P.Shape, P.DynamicShape, P.Rank,
+                          P.Select, P.ScatterMax, G.ReluGrad, _constants.kTupleGetItem, P.FloorDiv, P.TruncateDiv,
+                          P.Minimum, P.Maximum, P.IsNan, P.IsInf, P.ReLUV2, "Depend", "stop_gradient", "Switch",
+                          "UpdateState", "Load"]
 
 
 def run_generate():
     for op in serializable_bprop_ops:
+        if not isinstance(op, str):
+            op = op.__name__
         _export_bprop_mindir(op)
 
 

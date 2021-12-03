@@ -15,4 +15,4 @@ bprop.64:x*
 bprop.64:y*
 bprop.64:out*
 bprop.64:dout2
-bprop.64:[CNode]67:3:@d600ac5742fbd8dc8b4b041517ce58e1beec6270a8d533616d7cfd5b4b178b15P
+bprop.64:[CNode]67:3:@95e1589c91520e66f639d339cd47d91fc97beeb20be68b44d08ebcf9a49136a9P

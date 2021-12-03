@@ -65,13 +65,15 @@ py::tuple ConvertDatatoPyTuple(const VectorRef &args) {
 }
 
 py::function GetComputeFunctionWithoutPyObj(const std::string &name) {
-  static const std::string module = "tests.vm_impl.vm_impl_function";
-  py::module mod = py::module::import(common::SafeCStr(module));
-  if (!py::hasattr(mod, common::SafeCStr(name))) {
+  static const std::string vm_module = "mindspore.ops.vm_impl_registry";
+  static const std::string get_vm_impl_fn = "get_vm_impl_fn";
+  py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
+  if (py::isinstance<py::none>(get_fn)) {
+    MS_LOG(DEBUG) << "Failed to get the function 'get_vm_impl_fn'";
     return py::none();
   }
-  py::object fn = mod.attr(common::SafeCStr(name));
-  return fn;
+  py::function vm_fn = get_fn(py::str(name));
+  return vm_fn;
 }
 
 BaseRef RunComputeFunctionWithoutPyObj(const PrimitivePtr &prim, const VectorRef &args) {

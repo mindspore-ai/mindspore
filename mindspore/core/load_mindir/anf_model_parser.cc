@@ -947,13 +947,21 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
     }
   }
   MS_EXCEPTION_IF_NULL(prim);
+  auto prim_to_add_attr = prim;
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
+    if (func != nullptr && func->isa<Primitive>()) {
+      prim_to_add_attr = func->cast<PrimitivePtr>();
+      prim_to_add_attr->set_attr("is_load", MakeValue(true));
+    }
+  }
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
     const mind_ir::AttributeProto &attr_proto = node_proto.attribute(i);
     // CNode abstract
     if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
       continue;
     }
-    if (!GetAttrValueForCNode(prim, attr_proto)) {
+    if (!GetAttrValueForCNode(prim_to_add_attr, attr_proto)) {
       MS_LOG(ERROR) << "Parser prim: " << node_type << " attributes error : " << attr_proto.DebugString();
       return nullptr;
     }

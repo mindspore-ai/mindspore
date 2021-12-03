@@ -19,6 +19,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
+import mindspore.ops.functional as F
 import mindspore.ops as ops
 from mindspore.ops.operations import _inner_ops as inner
 import mindspore.common.dtype as mstype
@@ -67,7 +68,11 @@ def test_load_mindir_dir():
     bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
     bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
     for op in serializable_bprop_ops:
-        file_name = bprop_mindir_export_dir + "/" + op.name + "_bprop.mindir"
+        if isinstance(op, str):
+            op_name = op
+        else:
+            op_name = op.__name__
+        file_name = bprop_mindir_export_dir + "/" + op_name + "_bprop.mindir"
         graph = load_mindir(file_name)
         assert not graph is None
 
@@ -339,3 +344,282 @@ def test_dropout_do_mask():
     dropout_do_mask = Net(P.DropoutDoMask())
     grad = GradNet(dropout_do_mask)
     grad.compile(input_x, mask, keep_prob)
+
+
+def test_select():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the select op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_cond = Tensor([True, False])
+    x = Tensor(np.array([1, 2]), mstype.int32)
+    y = Tensor(np.array([1, 1]), mstype.int32)
+    select = Net(P.Select())
+    grad = GradNet(select)
+    grad.compile(input_cond, x, y)
+
+
+def test_scatter_max():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the scatter_max op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class ScatterMaxNet(nn.Cell):
+        def __init__(self):
+            super(ScatterMaxNet, self).__init__()
+            self.scatter_max = P.ScatterMax()
+            self.input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32),
+                                     name="input_x")
+
+        def construct(self, indices, updates):
+            return self.scatter_max(self.input_x, indices, updates)
+
+    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
+    updates = Tensor(np.ones([2, 2, 3]) * 88, mstype.float32)
+    scatter_max = ScatterMaxNet()
+    grad = GradNet(scatter_max)
+    grad.compile(indices, updates)
+
+
+def test_relu_grad():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the relu_grad op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[[-1, 1, 10],
+                           [1, -1, 1],
+                           [10, 1, -1]]]]).astype(np.float32))
+    relu = Net(P.ReLU())
+    grad1 = GradNet(relu)
+    grad2 = GradNet(grad1)
+    grad2.compile(x)
+
+
+def test_tuple_getitem():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the tuple_getitem op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class TupleGetitemNet(nn.Cell):
+        def __init__(self):
+            super(TupleGetitemNet, self).__init__()
+            self.maxpool_arg = P.MaxPoolWithArgmax(pad_mode="VALID", kernel_size=2, strides=1)
+
+        def construct(self, x):
+            output = self.maxpool_arg(x)
+            return output[0]
+
+    x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mstype.float32)
+    tuple_getitem = TupleGetitemNet()
+    grad = GradNet(tuple_getitem)
+    grad.compile(x)
+
+
+def test_depend():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the depend op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class DependNet(nn.Cell):
+        def __init__(self):
+            super(DependNet, self).__init__()
+            self.softmax = P.Softmax()
+            self.depend = ops.Depend()
+
+        def construct(self, x, y):
+            mul = x * y
+            y = self.depend(y, mul)
+            output = self.softmax(y)
+            return output
+
+    x = Tensor(np.ones([4, 5]), mstype.float32)
+    y = Tensor(np.ones([4, 5]), mstype.float32)
+    depend = DependNet()
+    grad = GradNet(depend)
+    grad.compile(x, y)
+
+
+def test_stop_gradient():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the stop_gradient op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class StopGradientNet(nn.Cell):
+        def __init__(self):
+            super(StopGradientNet, self).__init__()
+
+        def construct(self, x, y):
+            c = x * y
+            c_s = F.stop_gradient(c)
+            return c_s
+
+    x = Tensor(np.ones([4, 5]), mstype.float32)
+    y = Tensor(np.ones([4, 5]), mstype.float32)
+    stop_gradient = StopGradientNet()
+    grad = GradNet(stop_gradient)
+    grad.compile(x, y)
+
+
+def test_switch():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the switch op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class SwitchNet(nn.Cell):
+        def __init__(self):
+            super(SwitchNet, self).__init__()
+
+        def construct(self, x, y):
+            if x > y:
+                return x
+            return y
+
+    x = Tensor(np.array([3]), mstype.float32)
+    y = Tensor(np.array([2]), mstype.float32)
+    switch_net = SwitchNet()
+    grad = GradNet(switch_net)
+    grad.compile(x, y)
+
+
+def test_update_state():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the update_state op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class UpdateStateNet(nn.Cell):
+        def __init__(self):
+            super(UpdateStateNet, self).__init__()
+            self.assign_add = P.AssignAdd()
+            self.variable = Parameter(initializer(1, [1], mstype.int64), name="global_step")
+
+        def construct(self, x):
+            return self.assign_add(self.variable, x)
+
+    value = Tensor(np.ones([1]).astype(np.int64) * 100)
+    update_state = UpdateStateNet()
+    grad = GradNet(update_state)
+    grad.compile(value)
+
+
+def test_load():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the load op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class LoadNet(nn.Cell):
+        def __init__(self):
+            super(LoadNet, self).__init__()
+            self.add = P.Add()
+            self.variable = Parameter(initializer(1, [1], mstype.int64), name="global_step")
+
+        def construct(self, x):
+            return self.add(self.variable, x)
+
+    value = Tensor(np.ones([1]).astype(np.int64) * 100)
+    load = LoadNet()
+    grad = GradNet(load)
+    grad.compile(value)
+
+
+def test_floor_div():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the floor_div op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([2, 4, -1]), mstype.int32)
+    y = Tensor(np.array([3, 3, 3]), mstype.int32)
+    floor_div = Net(P.FloorDiv())
+    grad = GradNet(floor_div)
+    grad.compile(x, y)
+
+
+def test_truncate_div():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the truncate_div op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([2, 4, -1]), mstype.int32)
+    y = Tensor(np.array([3, 3, 3]), mstype.int32)
+    truncate_div = Net(P.TruncateDiv())
+    grad = GradNet(truncate_div)
+    grad.compile(x, y)
+
+
+def test_minimum():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the minimum op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
+    y = Tensor(np.array([4.0, 2.0, 6.0]), mstype.float32)
+    minimum = Net(P.Minimum())
+    grad = GradNet(minimum)
+    grad.compile(x, y)
+
+
+def test_maximum():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the maximum op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
+    y = Tensor(np.array([4.0, 2.0, 6.0]), mstype.float32)
+    maximum = Net(P.Maximum())
+    grad = GradNet(maximum)
+    grad.compile(x, y)
+
+
+def test_is_nan():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the is_nan op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mstype.float32)
+    is_nan = Net(P.IsNan())
+    grad = GradNet(is_nan)
+    grad.compile(x)
+
+
+def test_is_inf():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the is_inf op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mstype.float32)
+    is_inf = Net(P.IsInf())
+    grad = GradNet(is_inf)
+    grad.compile(x)
+
+
+def test_relu_v2():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the relu_v2 op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mstype.float32)
+    relu_v2 = Net(P.ReLUV2())
+    grad = GradNet(relu_v2)
+    grad.compile(x)

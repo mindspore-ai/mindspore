@@ -1,0 +1,31 @@
+
+0.1.0	MindSpore*1.6.0:¬
+
+ì
+bprop.128:condbprop.128:[CNode]129:1bprop.128:[CNode]129:1"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op92
+ê
+bprop.128:xbprop.128:[CNode]130:2bprop.128:[CNode]130:2"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op93
+ç
+bprop.128:cond
+bprop.128:dout
+bprop.128:[CNode]130:2bprop.128:[CNode]131:3bprop.128:[CNode]131:3"S-Prim-Select*0
+output_namesZoutputzscalar:List[value1,],Ä*F
+input_namesZ	conditionZxZyz#scalar:List[value1,value2,value3,],Ä:Default/S-Prim-Select-op94
+ê
+bprop.128:ybprop.128:[CNode]132:4bprop.128:[CNode]132:4"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op95
+ç
+bprop.128:cond
+bprop.128:[CNode]132:4
+bprop.128:doutbprop.128:[CNode]133:5bprop.128:[CNode]133:5"S-Prim-Select*0
+output_namesZoutputzscalar:List[value1,],Ä*F
+input_namesZ	conditionZxZyz#scalar:List[value1,value2,value3,],Ä:Default/S-Prim-Select-op96
+©
+bprop.128:[CNode]129:1
+bprop.128:[CNode]131:3
+bprop.128:[CNode]133:5bprop.128:[CNode]134:6bprop.128:[CNode]134:6"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op97	bprop.128*
+bprop.128:cond*
+bprop.128:x*
+bprop.128:y*
+bprop.128:out*
+bprop.128:dout2
+bprop.128:[CNode]134:6:@c8a644cc520f380808ab8a19d3b5f795ef28e37966296c6941e187e7de28f9d7P
