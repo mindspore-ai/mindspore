@@ -56,12 +56,12 @@ class ScatterNdFunctorKernel : public GpuKernel {
                                cudaMemcpyAsync(indices_stride, &out_strides_[0], indices_len, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::Launch.");
-    CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices,
-                        updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
+    CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices,
+                        updates, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
