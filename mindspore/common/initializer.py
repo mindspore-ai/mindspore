@@ -434,6 +434,7 @@ class Sparse(Initializer):
         _assignment(arr, data)
 
 
+@_register()
 class Dirac(Initializer):
     """Initialize input tensor with the Dirac delta function. It tries to preserves the identity of
     input for convolution layers. For group convolution, each group of channels will be preserved respectively.
@@ -442,8 +443,8 @@ class Dirac(Initializer):
         groups (int): The number of group in convolution layer. Default: 1.
 
     Raises:
-        ValueError: If the value of group is not in [3, 4, 5] or the first dimension of the initialized
-        tensor cannot be divisible by group.
+        ValueError: If the value of group is not in [3, 4, 5].
+        ValueError: The first dimension of the initialized tensor cannot be divisible by group.
 
     Examples:
         >>> import mindspore
@@ -545,7 +546,7 @@ class VarianceScaling(Initializer):
         distribution(str): The type of distribution chose to sample values. Default: 'truncated_normal'.
 
     Raises:
-        ValueError: If scale is not greater than 0..
+        ValueError: If scale is not greater than 0.
         ValueError: If mode is not fan_in, fan_out or fan_avg.
         ValueError: If distribution is not uniform, truncated_normal or untruncated_normal.
 
@@ -553,7 +554,7 @@ class VarianceScaling(Initializer):
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, VarianceScaling
         >>> tensor1 = initializer(VarianceScaling(scale=1.0, mode='fan_out',
-        >>>                                       distribution='untruncated_normal'), [2, 3], mindspore.float32)
+        ...                                       distribution='untruncated_normal'), [2, 3], mindspore.float32)
         >>> tensor2 = initializer('varianceScaling', [2, 3], mindspore.float32)
     """
     def __init__(self, scale=1.0, mode='fan_in', distribution='truncated_normal'):

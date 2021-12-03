@@ -34,13 +34,13 @@ class Rprop(Optimizer):
 
     .. math::
             \begin{gather*}
-            &\hspace{0mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\
-            &\hspace{5mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max}) \\
+            &\hspace{-10mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max}) \\
             &\hspace{0mm}  \textbf{else if}  \:  g_{t-1} g_t < 0                                 \\
-            &\hspace{5mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min}) \\
-            &\hspace{mm}  \textbf{else}  \:                                                      \\
-            &\hspace{5mm}  \Delta_t \leftarrow \Delta_{t-1}                                      \\
-            &\hspace{0mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min}) \\
+            &\hspace{-25mm}  \textbf{else}  \:                                                      \\
+            &\hspace{-5mm}  \Delta_t \leftarrow \Delta_{t-1}                                      \\
+            &\hspace{15mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                \\
             \end{gather*}
 
     :math:`\Delta_{min/max}` represents the min/max step size, :math:`\eta_{+/-}` represents the factors of
@@ -53,8 +53,8 @@ class Rprop(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
-        `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
-        "order_params" are the keys can be parsed.
+            `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
+            "order_params" are the keys can be parsed.
 
             - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
@@ -91,7 +91,7 @@ class Rprop(Optimizer):
         etas (tuple[float, float]): The factor of multiplicative increasing or
             descreasing(etaminus, etaplus).
         step_sizes(tuple[float, float]): The allowed minimal and maximal step size(min_step_sizes, max_step_size).
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -104,7 +104,7 @@ class Rprop(Optimizer):
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `step_sizes` or `etas` is not a tuple.
         ValueError: If maximal step size is less than minimal step size.
-        ValueError: If the length of `step_sizes` or `ets` is not equal to 2.
+        ValueError: If the length of `step_sizes` or `etas` is not equal to 2.
         TypeError: If  the element in `etas` or `step_sizes` is not a float.
         ValueError: If `etaminus` is not in the range of (0, 1) or `etaplus` is not greater than 1.
         TypeError: If `weight_decay` is neither float nor int.
@@ -136,7 +136,7 @@ class Rprop(Optimizer):
     """
 
     @opt_init_args_register
-    def __init__(self, params, learning_rate=0.1, etas=(0.5, 1.2), step_sizes=(1e-6, 50.), weight_decay=0.1):
+    def __init__(self, params, learning_rate=0.1, etas=(0.5, 1.2), step_sizes=(1e-6, 50.), weight_decay=0.):
 
         super(Rprop, self).__init__(learning_rate, params, weight_decay)
         if not isinstance(etas, tuple):

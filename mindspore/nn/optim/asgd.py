@@ -52,8 +52,8 @@ class ASGD(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
-        `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
-        "order_params" are the keys can be parsed.
+            `parameters` is a list of `dict`, the "params", "lr", "weight_decay", "grad_centralization" and
+            "order_params" are the keys can be parsed.
 
             - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
@@ -90,7 +90,7 @@ class ASGD(Optimizer):
         lambd (float): The decay term. Default: 1e-4.
         alpha (float): The power for eta update. Default: 0.75.
         t0 (float): The point of starting averaging. Default: 1e6.
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -168,6 +168,7 @@ class ASGD(Optimizer):
 
         for index, (grad, param, mu, eta, ax) in enumerate(zip(gradients, self.parameters, self.mu, self.eta, self.ax)):
             lr = lrs[index] if self.is_group_lr else lrs
+            lr = self.squeeze(lr)
 
             if self.step == 1.:
                 self.assign(eta, lr)
