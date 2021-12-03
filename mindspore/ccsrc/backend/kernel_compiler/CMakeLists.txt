@@ -18,6 +18,10 @@ if(ENABLE_D)
         "rts/*.cc"
         "hccl/*.cc"
     )
+    file(GLOB_RECURSE AICPU_OPS_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "aicpu/aicpu_ops/*.cc"
+    )
+    list(REMOVE_ITEM D_SRC_LIST ${AICPU_OPS_SRC})
     add_compile_definitions(ENABLE_D)
 endif()
 

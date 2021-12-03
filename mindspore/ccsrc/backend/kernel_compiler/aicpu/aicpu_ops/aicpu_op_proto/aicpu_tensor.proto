@@ -1,0 +1,118 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package aicpuops;
+
+message AttrValue {
+
+  message ArrayValue {
+    repeated bytes s = 2;                         //"array(string)"
+    repeated int64 i = 3 [ packed = true ];       //"array(int)"
+    repeated float f = 4 [ packed = true ];       //"array(float)"
+    repeated bool b = 5 [ packed = true ];        //"array(bool)"
+    repeated int32 type = 6 [ packed = true ];    //"array(type)"
+    repeated TensorShape shape = 7;               //"array(shape)"
+    repeated Tensor tensor = 8;                   //"array(tensor)"
+  }
+
+  oneof value {
+    ArrayValue array = 1;
+    bytes s = 2;           //"string"
+    int64 i = 3;           //"int"
+    float f = 4;           //"float"
+    bool b = 5;            //"bool"
+    int32 type = 6;        //"type"
+    TensorShape shape = 7; //"shape"
+    Tensor tensor = 8;     //"tensor"
+  }
+}
+
+message DynamicIdx {
+  int32 idx = 1;
+  int32 num = 2;
+}
+
+message NodeDef {
+  string op = 2;
+  map<string, AttrValue> attrs = 3;
+  repeated Tensor inputs = 4;
+  repeated Tensor outputs = 5;
+  map<string, DynamicIdx> dym_inputs = 6;
+  map<string, DynamicIdx> dym_outputs = 7;
+}
+
+message TensorShape {
+  // One dimension of the tensor.
+  message Dim {
+    // size must >=0
+    int64 size = 1;
+  };
+
+  // group dim info
+  repeated Dim dim = 2;
+
+  // If true, the number of dimensions in the shape is unknown.
+  // If true, "dim.size()" must be 0.
+  bool unknown_rank = 3;
+
+  // data format "NHWC" "NCHW" "NC1HWC0" OR "NONE"
+  int32 data_format = 4;
+};
+
+message Tensor {
+
+  // tensor shape info
+  TensorShape tensor_shape = 1;
+
+  // tensor content data type
+  int32 tensor_type = 2;
+
+  // tensor memory device
+  // data located memory device , "DDR" "HBM" OR "NONE"
+  string mem_device = 3;
+  string name = 4;
+  uint64 data_ptr = 5;
+  uint64 data_size = 6;
+}
+
+enum DataType {
+  MS_FLOAT32 = 0;
+  MS_FLOAT16 = 1;
+  MS_INT8 = 2;
+  MS_INT32 = 3;
+  MS_UINT8 = 4;
+  MS_INT16 = 6;
+  MS_UINT16 = 7;
+  MS_UINT32 = 8;
+  MS_INT64 = 9;
+  MS_UINT64 = 10;
+  MS_FLOAT64 = 11;
+  MS_BOOL = 12;
+  MS_STRING = 13;
+  MS_DUAL_SUB_INT8 = 14;
+  MS_DUAL_SUB_UINT8 = 15;
+  MS_COMPLEX64 = 16;
+  MS_COMPLEX128 = 17;
+  MS_QINT8 = 18;
+  MS_QINT16 = 19;
+  MS_QINT32 = 20;
+  MS_QUINT8 = 21;
+  MS_QUINT16 = 22;
+  MS_RESOURCE = 23;
+  MS_STRING_REF = 24;
+  MS_DUAL = 25;
+  MS_UNKNOWN = 26;
+}
