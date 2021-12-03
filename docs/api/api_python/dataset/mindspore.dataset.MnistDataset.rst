@@ -93,3 +93,5 @@ mindspore.dataset.MnistDataset
         year         = {2010},
         howpublished = {http://yann.lecun.com/exdb/mnist}
         }
+
+    .. include:: mindspore.dataset.Dataset.rst

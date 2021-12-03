@@ -93,3 +93,5 @@ mindspore.dataset.CLUEDataset
         year    = {2020},
         howpublished = {https://github.com/CLUEbenchmark/CLUE}
         }
+
+    .. include:: mindspore.dataset.Dataset.rst

@@ -95,3 +95,5 @@ mindspore.dataset.Cifar100Dataset
         year         = {2009},
         howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
         }
+
+    .. include:: mindspore.dataset.Dataset.rst
