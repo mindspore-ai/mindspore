@@ -289,6 +289,9 @@ if(APPLE)
     set(MINDSPORE_LITE_PUB_HDRS_IR_HDRS
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
             )
+    set(MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/type_id.h
+            )
     add_library(mindspore-lite_static STATIC
             ${LITE_SRC}
             ${MINDSPORE_LITE_PUB_HDRS}
@@ -422,6 +425,9 @@ if(DEFINED ARCHS)
     ENDFOREACH()
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS})
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/ir/dtype/)
+    ENDFOREACH()
+    FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS})
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/mindapi/base/)
     ENDFOREACH()
     target_link_libraries(mindspore-lite_static)
 endif()

@@ -24,8 +24,7 @@
 #include "utils/visible.h"
 #include "api/ir/func_graph_manager.h"
 
-namespace mindspore::api {
-
+namespace mindspore::deprecated::api {
 /// \brief FuncGraph defines interface for a function graph.
 class MS_CORE_API FuncGraph {
  public:
@@ -147,5 +146,12 @@ class MS_CORE_API FuncGraph {
   /// \return The function graph if the input is value node that holds the graph, nullptr otherwise.
   static FuncGraphPtr GetFuncGraphFromAnfNode(const AnfNodePtr &input);
 };
-}  // namespace mindspore::api
+
+#ifndef USE_DEPRECATED_API
+#define USE_DEPRECATED_API
+namespace mindspore {
+namespace api = deprecated::api;
+}
+#endif
+}  // namespace mindspore::deprecated::api
 #endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_

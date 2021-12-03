@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_SHAPE_UTILS_INFO_H_
-#define MINDSPORE_SHAPE_UTILS_INFO_H_
+#ifndef MINDSPORE_CORE_MINDAPI_BASE_SHAPE_VECTOR_H_
+#define MINDSPORE_CORE_MINDAPI_BASE_SHAPE_VECTOR_H_
 
-#include "mindapi/base/shape_vector.h"
+#include <cstdint>
+#include <vector>
 
-#endif  // MINDSPORE_SHAPE_UTILS_INFO_H_
+using ShapeVector = std::vector<int64_t>;
+
+#endif  // MINDSPORE_CORE_MINDAPI_BASE_SHAPE_VECTOR_H_

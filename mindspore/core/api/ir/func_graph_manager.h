@@ -26,8 +26,7 @@
 #include "utils/hashing.h"
 #include "ir/anf.h"
 
-namespace mindspore::api {
-
+namespace mindspore::deprecated::api {
 class FuncGraph;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 
@@ -80,7 +79,13 @@ class MS_CORE_API FuncGraphManager {
   /// \return The manager that manages the given function graph.
   static FuncGraphManagerPtr Manage(const FuncGraphPtr &func_graph, bool manage = true);
 };
+}  // namespace mindspore::deprecated::api
 
-}  // namespace mindspore::api
+#ifndef USE_DEPRECATED_API
+#define USE_DEPRECATED_API
+namespace mindspore {
+namespace api = deprecated::api;
+}
+#endif
 
 #endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_MANAGER_H_

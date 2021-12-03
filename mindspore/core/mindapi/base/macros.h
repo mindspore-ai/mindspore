@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_SHAPE_UTILS_INFO_H_
-#define MINDSPORE_SHAPE_UTILS_INFO_H_
+#ifndef MINDSPORE_CORE_MINDAPI_BASE_MACROS_H_
+#define MINDSPORE_CORE_MINDAPI_BASE_MACROS_H_
 
-#include "mindapi/base/shape_vector.h"
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
+#ifdef BUILDING_DLL
+#define MIND_API __declspec(dllexport)
+#else
+#define MIND_API __declspec(dllimport)
+#endif
+#else
+#define MIND_API __attribute__((visibility("default")))
+#endif
 
-#endif  // MINDSPORE_SHAPE_UTILS_INFO_H_
+#endif  // MINDSPORE_CORE_MINDAPI_BASE_MACROS_H_

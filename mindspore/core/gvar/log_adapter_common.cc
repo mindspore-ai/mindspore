@@ -52,6 +52,7 @@ static const std::vector<std::string> sub_module_names = {
   "HCCL_ADPT",          // SM_HCCL_ADPT
   "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
   "GE",                 // SM_GE
+  "API",                // SM_API
 };
 
 const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_names[(module_id % NUM_SUBMODUES)]; }
