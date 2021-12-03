@@ -2407,7 +2407,7 @@ class Erf(PrimitiveWithInfer):
         return x_dtype
 
 
-class Erfc(PrimitiveWithInfer):
+class Erfc(Primitive):
     r"""
     Computes the complementary error function of `x` element-wise.
 
@@ -2423,7 +2423,8 @@ class Erfc(PrimitiveWithInfer):
         Tensor, has the same shap dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2440,14 +2441,6 @@ class Erfc(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Erfc"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
-        return x_type
-
 
 class Minimum(_MathBinaryOp):
     r"""
