@@ -961,7 +961,7 @@ def get_ps_context(attr_key):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
-        >>> context.get_ps_context(enable_ps)
+        >>> context.get_ps_context("enable_ps")
     """
     return _get_ps_context(attr_key)
 
