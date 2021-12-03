@@ -435,10 +435,24 @@ class MS_CORE_API Parameter : public ANode {
   void set_has_dynamic_shape(bool flag) { has_dynamic_shape_ = flag; }
   bool has_dynamic_shape() const { return has_dynamic_shape_; }
 
-  void set_fracz_group(int64_t fracz_group) { fracz_group_ = fracz_group; }
-  int64_t fracz_group() { return fracz_group_; }
+  void set_fracz_group(int64_t fracz_group) { format_attrs_.fracz_group = fracz_group; }
+
+  int64_t fracz_group() { return format_attrs_.fracz_group; }
+
+  void set_input_size(int64_t input_size) { format_attrs_.input_size = input_size; }
+
+  int64_t input_size() { return format_attrs_.input_size; }
+
+  void set_hidden_size(int64_t hidden_size) { format_attrs_.hidden_size = hidden_size; }
+
+  int64_t hidden_size() { return format_attrs_.hidden_size; }
 
  private:
+  struct FormatAttr {
+    int64_t fracz_group = 1;
+    int64_t input_size = 0;
+    int64_t hidden_size = 0;
+  };
   std::string name_;
   bool has_default_;
   std::set<uint32_t> not_used_in_graphs_;
@@ -446,8 +460,8 @@ class MS_CORE_API Parameter : public ANode {
   ValuePtr default_param_;
   // The count of graphs using the parameter.
   int used_graph_count_;
-  // groups attr in FracZ format
-  int64_t fracz_group_ = 1;
+  // some attrs used in special format
+  FormatAttr format_attrs_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
