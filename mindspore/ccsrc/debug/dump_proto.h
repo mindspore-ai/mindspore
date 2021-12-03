@@ -32,7 +32,7 @@ std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 
 std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
 
-ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph);
+ModelProtoPtr GetBinaryProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg = nullptr);
 
 void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 

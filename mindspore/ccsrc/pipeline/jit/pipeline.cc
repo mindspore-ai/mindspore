@@ -298,7 +298,8 @@ std::map<string, string> GenerateJitConfigMap(const py::dict &jit_config) {
   return ret;
 }
 
-FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx, const py::dict &weights) {
+FuncGraphPtr LoadFuncGraphFromMindIR(const ResourcePtr &resource, const py::dict &weights, bool need_layout) {
+  const size_t idx = resource->compile_cache_id();
   std::string compile_cache_path = GetCompileCachePath(idx);
   auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
   if (!realpath.has_value()) {
@@ -315,7 +316,12 @@ FuncGraphPtr LoadFuncGraphFromMindIR(size_t idx, const py::dict &weights) {
   MindIRLoader mindir_loader;
   mindir_loader.set_need_renormalize(false);
   mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
-  return mindir_loader.LoadMindIR(realpath.value());
+  mindir_loader.set_need_layout(need_layout);
+  auto fg = mindir_loader.LoadMindIR(realpath.value());
+  if (need_layout) {
+    resource->set_layout_map(mindir_loader.get_layout_map());
+  }
+  return fg;
 }
 
 FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const py::dict &weights, const std::string &queue_name) {
@@ -326,8 +332,14 @@ FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const py::dict &wei
     return nullptr;
   }
 
+  // Determine whether to load layout information.
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  bool need_layout = false;
+  if ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL)) {
+    need_layout = true;
+  }
   // Load the compilation cache file.
-  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource->compile_cache_id(), weights);
+  FuncGraphPtr fg = LoadFuncGraphFromMindIR(resource, weights, need_layout);
   if (fg == nullptr) {
     MS_LOG(WARNING) << "Failed to load the compilation cache file. Execute all the compilation actions.";
     return nullptr;
@@ -356,7 +368,7 @@ FuncGraphPtr GetCachedFuncGraph(const ResourcePtr &resource, const py::dict &wei
   return fg;
 }
 
-bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, size_t idx) {
+bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg, size_t idx) {
   std::string compile_cache_path = GetCompileCachePath(idx);
   auto realpath = Common::CreatePrefixPath(compile_cache_path, true);
   if (!realpath.has_value()) {
@@ -370,7 +382,7 @@ bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, size_t idx) {
     MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-  ModelProtoPtr fg_model = GetBinaryProto(fg);
+  ModelProtoPtr fg_model = GetBinaryProto(fg, layout_fg);
   if (fg_model == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
     fout.close();
@@ -413,7 +425,13 @@ void CacheFuncGraph(const ResourcePtr &resource) {
     MS_LOG(ERROR) << "The func_graph to be cached is null.";
     return;
   }
-  if (!ExportFuncGraphToMindIR(fg, resource->compile_cache_id())) {
+  FuncGraphPtr layout_fg = nullptr;
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (fg->has_flag(parallel::AUTO_PARALLEL) &&
+      ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
+    layout_fg = resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
+  }
+  if (!ExportFuncGraphToMindIR(fg, layout_fg, resource->compile_cache_id())) {
     MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
     return;
   }
@@ -524,7 +542,8 @@ ResourcePtr GraphExecutorPy::GetResource(const std::string &phase) {
 
 FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
+    MS_LOG(INFO) << "No executor info. found for phase: " << phase;
+    return nullptr;
   }
   return info_[phase]->func_graph;
 }
@@ -636,7 +655,11 @@ py::dict GraphExecutorPy::GetParameterLayout(const std::string &phase) {
   MS_LOG(DEBUG) << "GetParameterLayout!";
   std::string layout_graph = phase + kStepParallelGraph;
   auto graph = GetFuncGraph(layout_graph);
-  return mindspore::parallel::GetParameterLayout(graph);
+  if (graph == nullptr) {
+    auto resource = info_[phase]->resource;
+    return mindspore::parallel::GetParameterLayoutFromResource(resource);
+  }
+  return mindspore::parallel::GetParameterLayoutFromGraph(graph);
 }
 
 py::dict GraphExecutorPy::GetCNodeStrategy(const std::string &phase) {
@@ -647,7 +670,11 @@ py::dict GraphExecutorPy::GetCNodeStrategy(const std::string &phase) {
 py::list GraphExecutorPy::GetParallelParameterNameList(const std::string &phase) {
   std::string param_graph = phase + kStepParallelGraph;
   auto graph = GetFuncGraph(param_graph);
-  return mindspore::parallel::GetParallelParameterNameList(graph);
+  if (graph == nullptr) {
+    auto resource = info_[phase]->resource;
+    return mindspore::parallel::GetParallelParameterNameListFromResource(resource);
+  }
+  return mindspore::parallel::GetParallelParameterNameListFromGraph(graph);
 }
 
 void GraphExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
@@ -840,11 +867,15 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
-    func_graph = info_[phase]->resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
-    ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-    std::string layout_graph = phase + kStepParallelGraph;
-    executor_info->func_graph = func_graph;
-    info_[layout_graph] = executor_info;
+    auto results = info_[phase]->resource->results();
+    // When using frontend compile cache, model parallel parameter layout graph is not saved.
+    if (results.find(kStepParallelGraph) != results.end()) {
+      func_graph = results[kStepParallelGraph].cast<FuncGraphPtr>();
+      ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
+      std::string layout_graph = phase + kStepParallelGraph;
+      executor_info->func_graph = func_graph;
+      info_[layout_graph] = executor_info;
+    }
   } else {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph null!";
   }

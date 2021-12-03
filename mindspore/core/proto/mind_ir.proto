@@ -76,7 +76,8 @@ message ModelProto {
   optional GraphProto graph = 7;
   repeated GraphProto functions = 8; // all the graphs without the main graph.
   optional string preprocessor = 9;  // data graph from MindData.
-  optional bool little_endian = 10; // bytes order in load device
+  optional bool little_endian = 10; // bytes order in load device.
+  optional ParallelProto parallel = 11; // information for parallel.
 }
 
 
@@ -136,4 +137,16 @@ message TensorProto {
   optional string ref_key = 13;
 }
 
+message ParallelProto {
+  repeated LayoutProto layout = 1;
+}
 
+message LayoutProto {
+  optional string name = 1;
+  repeated int64 device_arrangement_int = 2;
+  repeated int64 tensor_map_int = 3;
+  repeated int64 slice_shape_int = 4;
+  optional int64 field_size = 5;
+  optional bool uniform_split = 6;
+  optional string opt_shard_group = 7;
+}

@@ -124,7 +124,7 @@ def _get_filename_from_trace(trace):
     return filename
 
 
-def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files):
+def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files, pkg):
     """Get the dependency files of the network"""
     with open(file_path) as fh:
         root = ast.parse(fh.read(), file_path)
@@ -132,6 +132,8 @@ def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_f
         module_name = ""
         if isinstance(node, ast.ImportFrom):
             module_name = node.module
+            if node.level == 1:
+                module_name = "." + module_name
         elif not isinstance(node, ast.Import):
             continue
         # Do not care the files in mindspore package
@@ -148,10 +150,10 @@ def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_f
                 if not n.name is None:
                     whole_module += "." + n.name
             try:
-                module_spec = importlib.util.find_spec(whole_module)
+                module_spec = importlib.util.find_spec(whole_module, pkg)
             except (ModuleNotFoundError, ValueError):
                 whole_module = whole_module[0:whole_module.rfind('.')]
-                module_spec = importlib.util.find_spec(whole_module)
+                module_spec = importlib.util.find_spec(whole_module, pkg)
             if module_spec is None:
                 continue
             module = importlib.util.module_from_spec(module_spec)
@@ -162,7 +164,8 @@ def __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_f
             if not dep_file_path.startswith(python_bin_dir) and not dep_file_path in compile_cache_dep_files:
                 logger.debug(f"dependent file path: {dep_file_path}")
                 compile_cache_dep_files.append(dep_file_path)
-                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files)
+                pkg = module.__package__
+                __get_compile_cache_dep_files(dep_file_path, python_bin_dir, compile_cache_dep_files, pkg)
 
 
 def _get_compile_cache_dep_files():
@@ -187,7 +190,7 @@ def _get_compile_cache_dep_files():
     file_path = os.path.realpath(filename)
     logger.debug(f"entry script file path: {file_path}")
     compile_cache_dep_files.append(file_path)
-    __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files)
+    __get_compile_cache_dep_files(file_path, python_bin_dir, compile_cache_dep_files, None)
     return compile_cache_dep_files
 
 

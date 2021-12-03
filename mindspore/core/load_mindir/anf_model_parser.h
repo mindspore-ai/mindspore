@@ -25,6 +25,7 @@
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/crypto.h"
+#include "load_mindir/load_model.h"
 namespace mindspore {
 using int32 = int32_t;
 using int64 = int64_t;
@@ -36,6 +37,7 @@ class MSANFModelParser {
 
   static void LoadTensorMapClear() { load_tensor_map_.clear(); }
   FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto, const std::map<std::string, ValuePtr> &weights = {});
+  const LayoutMap ParseLayout(const mind_ir::ModelProto &model_proto);
   bool MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto);
 
   std::string GetProducerName() { return producer_name_; }
