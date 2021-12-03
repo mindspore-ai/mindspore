@@ -1,0 +1,1 @@
+- **order_params** - 可选。对应值是预期的参数更新顺序。当使用参数分组功能时，通常使用该配置项保持 `parameters` 的顺序以提升性能。如果键中存在"order_params"，则会忽略该组配置中的其他键。"order_params"中的参数必须在某一组 `params` 参数中。

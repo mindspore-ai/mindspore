@@ -59,16 +59,17 @@ class DynamicLossScaleUpdateCell(Cell):
     Dynamic Loss scale update cell.
 
     For loss scaling training, the initial loss scaling value will be set to be `loss_scale_value`.
-    In each training step, the loss scaling value  will be updated by loss scaling value/`scale_factor`
-    when there is an overflow. And it will be increased by loss scaling value * `scale_factor` if there is no
-    overflow for a continuous `scale_window` steps. This cell is used for Graph mode training in which all
-    logic will be executed on device side(Another training mode is normal(non-sink) mode in which some logic will be
-    executed on host).
+    In each training step, the loss scaling value will be decreased by `loss_scale`/`scale_factor`
+    when there is an overflow. And it will be increased by `loss_scale` * `scale_factor` if there is no
+    overflow for a continuous `scale_window` steps.
+
+    `get_update_cell` method of :class:`mindspore.nn.DynamicLossScaleManager` will return this class, it will be called
+    by :class:`mindspore.TrainOneStepWithLossScaleCell` during training to update loss scale.
 
     Args:
         loss_scale_value (float): Initializes loss scale.
         scale_factor (int): Coefficient of increase and decrease.
-        scale_window (int): Maximum continuous training steps that do not have overflow.
+        scale_window (int): Maximum continuous training steps that do not have overflow to increase the loss scale.
 
     Inputs:
         - **loss_scale** (Tensor) - The loss scale value during training with shape :math:`()`.
@@ -76,9 +77,6 @@ class DynamicLossScaleUpdateCell(Cell):
 
     Outputs:
         bool, the input `overflow`.
-
-    Raises:
-        TypeError: If dtype of `inputs` or `label` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -162,15 +160,17 @@ class DynamicLossScaleUpdateCell(Cell):
 
 class FixedLossScaleUpdateCell(Cell):
     """
-    Static scale update cell, the loss scaling value will not be updated.
+    Update cell with fixed loss scaling value.
 
-    For usage, refer to `DynamicLossScaleUpdateCell`.
+    `get_update_cell` method of :class:`mindspore.nn.FixedLossScaleManager` will return this class, it will be called
+    by :class:`mindspore.TrainOneStepWithLossScaleCell` during trainning.
 
     Args:
         loss_scale_value (float): Initializes loss scale.
 
     Inputs:
-        - **loss_scale** (Tensor) - The loss scale value during training with shape :math:`()`, that will be ignored.
+        - **loss_scale** (Tensor) - The loss scale value during training with shape :math:`()`, it is ignored in this
+          class.
         - **overflow** (bool) - Whether the overflow occurs or not.
 
     Outputs:
@@ -227,28 +227,27 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     r"""
     Network training with loss scaling.
 
-    This is a training step with loss scaling. It takes a network, an optimizer and possibly a scale update
-    Cell as args. The loss scale value can be updated in both host side or device side. The
-    TrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
-    The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
-    the value must be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
-    must be provide by Cell type of `scale_sense`.
+    This is a training step with loss scaling. It takes a network, an optimizer and a scale update Cell(or a Tensor) as
+    args. The loss scale value can be updated in both host side or device side. If you want to update it on
+    host side, using a value of Tensor type as `scale_sense`, otherwise, using a Cell instance for updating loss
+    scale as `scale_sense`.
 
     Args:
         network (Cell): The training network. The network only supports single output.
-        optimizer (Cell): Optimizer for updating the weights.
-        scale_sense (Union[Tensor, Cell]): If this value is Cell type, the loss scaling update logic cell.If this value
-            is Tensor type, Tensor with shape :math:`()` or :math:`(1,)`.
+        optimizer (Cell): Optimizer for updating the network parameters.
+        scale_sense (Union[Tensor, Cell]): If this value is a Cell, it will be called by `TrainOneStepWithLossScaleCell`
+            to update loss scale. If this value is a Tensor, the loss scale can be modified by `set_sense_scale`,
+            the shape should be :math:`()` or :math:`(1,)`.
 
     Inputs:
         - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
-        Tuple of 3 Tensor, the loss, overflow flag and current loss scaling value.
+        Tuple of 3 Tensor, the loss, overflow flag and current loss scale value.
 
         - **loss** (Tensor) -  Tensor with shape :math:`()`.
         - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
-        - **loss scaling value** (Tensor) -  Tensor with shape :math:`()`
+        - **loss scale** (Tensor) -  Tensor with shape :math:`()`
 
     Raises:
         TypeError: If `scale_sense` is neither Cell nor Tensor.
@@ -350,8 +349,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     def set_sense_scale(self, sens):
         """
-        If the user has set the sens in the training process and wants to reassign the value, he can call
-        this function again to make modification, and sens needs to be of type Tensor.
+        If the user has set the `scale_sense` of Tensor type, he can call this function to reassign the value.
 
         Args:
             sens(Tensor): The new sense whose shape and type are the same with original `scale_sense`.
@@ -382,7 +380,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
         Returns:
             Tuple[object, object], the first value is False for GPU backend, while it is an instance of
-            NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
+            NPUAllocFloatStatus for other backend. The status is used to detect overflow during `get_overflow_status`.
             The second value is the same as the input of `compute_input`, but contains some information about the
             execution order.
         """
@@ -406,7 +404,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         Args:
             status (object): A status instance used to detect the overflow.
             compute_output: Overflow detection should be performed on a certain computation. Set `compute_output`
-              as the output of the computation, to ensure overflow status is acquired before executing the
+              as the output of the computation, to ensure overflow `status` is acquired before executing the
               computation.
 
         Returns:
@@ -442,7 +440,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             overflow(bool): Whether the overflow occurs or not.
 
         Returns:
-            bool, overflow value.
+            bool, the input overflow value.
         """
         if self.loss_scaling_manager is not None:
             return self.loss_scaling_manager(self.scale_sense, overflow)

@@ -206,7 +206,7 @@ class Adam(Optimizer):
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent
-    `beta1` and `beta2`, :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent
+    `beta1` and `beta2`, :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
     `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
@@ -263,7 +263,7 @@ class Adam(Optimizer):
                        Default: 0.999.
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
-        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
+        use_locking (bool): Whether to enable a lock to protect the updating process of variable tensors.
             If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
@@ -380,7 +380,7 @@ class Adam(Optimizer):
 
 class AdamWeightDecay(Optimizer):
     r"""
-    Implements the Adam algorithm to fix the weight decay.
+    Implements the Adam algorithm with weight decay.
 
     .. math::
         \begin{array}{ll} \\
@@ -399,7 +399,7 @@ class AdamWeightDecay(Optimizer):
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`lr` represents `learning_rate`,
-    :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents updating step while
+    :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents the current step,
     :math:`w` represents `params`.
 
     Note:
@@ -542,7 +542,7 @@ class AdamOffload(Optimizer):
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent
-    `beta1` and `beta2`, :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent
+    `beta1` and `beta2`, :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
     `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
@@ -593,7 +593,7 @@ class AdamOffload(Optimizer):
                        Default: 0.999.
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
-        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
+        use_locking (bool): Whether to enable a lock to protect the updating process of variable tensors.
             If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.

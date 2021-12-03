@@ -287,13 +287,13 @@ class TrainOneStepCell(Cell):
     r"""
     Network training package class.
 
-    Wraps the network with an optimizer. The resulting Cell is trained with input '\*inputs'.
+    Wraps the `network` with the `optimizer`. The resulting Cell is trained with input '\*inputs'.
     The backward graph will be created in the construct function to update the parameter. Different
     parallel modes are available for training.
 
     Args:
         network (Cell): The training network. The network only supports single output.
-        optimizer (Union[Cell]): Optimizer for updating the weights.
+        optimizer (Union[Cell]): Optimizer for updating the network parameters.
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
@@ -303,7 +303,7 @@ class TrainOneStepCell(Cell):
         Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
 
     Raises:
-        TypeError: If `sens` is not a number.
+        TypeError: If `sens` is not a numbers.Number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -312,7 +312,7 @@ class TrainOneStepCell(Cell):
         >>> net = Net()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> #1) Using the WithLossCell existing provide
+        >>> #1) Using the WithLossCell provided by MindSpore
         >>> loss_net = nn.WithLossCell(net, loss_fn)
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
         >>>
@@ -596,22 +596,21 @@ class VirtualDatasetCellTriple(Cell):
 
 class WithEvalCell(Cell):
     r"""
-    Cell that returns loss, output and label for evaluation.
+    Wraps the forward network with the loss function.
 
-    This Cell accepts a network and loss function as arguments and computes loss for model.
-    It returns loss, output and label to calculate the metrics.
+    It returns loss, forward output and label to calculate the metrics.
 
     Args:
-        network (Cell): The network Cell.
-        loss_fn (Cell): The loss Cell.
-        add_cast_fp32 (bool): Adjust the data type to float32. Default: False.
+        network (Cell): The forward network.
+        loss_fn (Cell): The loss function.
+        add_cast_fp32 (bool): Whether to adjust the data type to float32. Default: False.
 
     Inputs:
         - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
         - **label** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
 
     Outputs:
-        Tuple, containing a scalar loss Tensor, a network output Tensor of shape :math:`(N, \ldots)`
+        Tuple(Tensor), containing a scalar loss Tensor, a network output Tensor of shape :math:`(N, \ldots)`
         and a label Tensor of shape :math:`(N, \ldots)`.
 
     Raises:
@@ -621,7 +620,7 @@ class WithEvalCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # For a defined network Net without loss function
+        >>> # Forward network without loss function
         >>> net = Net()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> eval_net = nn.WithEvalCell(net, loss_fn)

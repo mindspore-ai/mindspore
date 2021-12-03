@@ -1,0 +1,1 @@
+- **weight_decay** - 可选。如果键中存在"weight_decay”，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的 `weight_decay` 作为权重衰减值。

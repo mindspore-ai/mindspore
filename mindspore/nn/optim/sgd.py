@@ -128,8 +128,8 @@ class SGD(Optimizer):
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 default weight decay of 0.0 and grad
-        >>> # centralization of True.
+        >>> # The conv_params's parameters will use default learning rate of 0.1 and default weight decay of 0.0
+        >>> # and grad centralization of True.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
         >>> # centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.

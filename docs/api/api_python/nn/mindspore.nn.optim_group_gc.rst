@@ -1,0 +1,1 @@
+- **grad_centralization** - 可选。如果键中存在"grad_centralization"，则使用对应的值，该值必须为布尔类型。如果没有，则认为 `grad_centralization` 为False。该参数仅适用于卷积层。
