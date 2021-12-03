@@ -108,7 +108,7 @@ class ProfilingOp {
   std::string op_name_;
 };
 
-class GPUProfiler : public Profiler {
+class MS_CORE_API GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> &GetInstance();
   GPUProfiler() = default;
