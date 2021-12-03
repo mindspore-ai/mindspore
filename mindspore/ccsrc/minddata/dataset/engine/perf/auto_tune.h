@@ -125,7 +125,7 @@ class AutoTune {
   /// \param old_workers Old number of workers for logging purposes
   /// \param new_workers new number of worker
   /// \return Status code
-  Status RequestNumWorkerChange(int32_t op_id, int32_t old_workers, int32_t new_workers);
+  Status RequestNumWorkerChange(int32_t op_id, int32_t old_workers, int32_t *num_workers_requested);
 
   /// Send a ChangeRequest to the operator to update the connector capacity
   /// \param op_id operator ID
