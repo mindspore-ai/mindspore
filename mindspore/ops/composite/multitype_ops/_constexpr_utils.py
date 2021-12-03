@@ -321,8 +321,8 @@ def get_pos_of_indexes_types(indexes_types, op_name):
         elif isinstance(index_type, (list, tuple)):
             sequence_positions += (i,)
         else:
-            raise IndexError(f"For '{op_name}', the index elements only support 'Slice', 'Ellipsis', 'None', "
-                             f"'Tensor', 'int',  'List', 'Tuple', 'bool' but got {index_type}.")
+            raise TypeError(f"For '{op_name}', the types only support 'Slice', 'Ellipsis', 'None', 'Tensor', 'int', "
+                            f"'List', 'Tuple', 'bool', but got {index_type}.")
     if len(ellipsis_positions) > 1:
         raise IndexError(
             f"For '{op_name}, an index can only have a single ellipsis('...')")
