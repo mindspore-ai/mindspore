@@ -44,9 +44,11 @@ Status DecodeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   if (is_rgb_format_) {  // RGB colour mode
     return Decode(input, output);
   } else {  // BGR colour mode
-    RETURN_STATUS_UNEXPECTED("Decode: only support Decoded into RGB image, check input parameter first.");
+    RETURN_STATUS_UNEXPECTED(
+      "Decode: only support Decoded into RGB image, check input parameter 'rgb' first, its value should be 'True'.");
   }
 }
+
 Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();

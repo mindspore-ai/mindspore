@@ -26,7 +26,8 @@ Status PluginOp::PluginToTensorRow(const std::vector<plugin::Tensor> &in_row, Te
   for (const auto &tensor : in_row) {
     std::shared_ptr<Tensor> output;
     DataType tp = DataType(tensor.type_);
-    CHECK_FAIL_RETURN_UNEXPECTED(tp.IsNumeric() && tp != DataType::DE_UNKNOWN, "Unsupported type: " + tensor.type_);
+    CHECK_FAIL_RETURN_UNEXPECTED(tp.IsNumeric() && tp != DataType::DE_UNKNOWN,
+                                 "Input datatype should be numeric, got Unsupported type: " + tensor.type_);
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(tensor.shape_), tp, tensor.buffer_.data(), &output));
     out_row->emplace_back(output);
   }

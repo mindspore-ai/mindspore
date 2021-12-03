@@ -83,18 +83,21 @@ ConcatenateOperation::ConcatenateOperation(int8_t axis, const std::shared_ptr<Te
 
 Status ConcatenateOperation::ValidateParams() {
   if (axis_ != 0 && axis_ != -1) {
-    std::string err_msg = "Concatenate: Only 1D concatenation supported.";
+    std::string err_msg =
+      "Concatenate: Only 1D concatenation supported, input 'axis' should be 0 or -1, but got:" + std::to_string(axis_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (prepend_) {
     if (prepend_->shape().Size() != 1) {
-      std::string err_msg = "Concatenate: Can only prepend 1D arrays.";
+      std::string err_msg = "Concatenate: Can only prepend 1D arrays, rank of input 'prepend' should be 1, but got:" +
+                            std::to_string(prepend_->shape().Size());
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   if (append_) {
     if (append_->shape().Size() != 1) {
-      std::string err_msg = "Concatenate: Can only append 1D arrays.";
+      std::string err_msg = "Concatenate: Can only append 1D arrays, rank of input 'append' should be 1, but got:" +
+                            std::to_string(append_->shape().Size());
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
@@ -118,7 +121,7 @@ FillOperation::FillOperation(const std::shared_ptr<Tensor> &fill_value) : fill_v
 
 Status FillOperation::ValidateParams() {
   if (fill_value_->shape() != TensorShape::CreateScalar()) {
-    std::string err_msg = "Fill: fill_value is not a scalar tensor.";
+    std::string err_msg = "Fill: fill_value is not a scalar tensor, got shape:" + fill_value_->shape().ToString();
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -145,7 +148,8 @@ MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &con
 
 Status MaskOperation::ValidateParams() {
   if (!dtype_.IsBool() && !dtype_.IsFloat() && !dtype_.IsInt()) {
-    std::string err_msg = "Mask: Only supports bool or numeric datatype for generated mask type.";
+    std::string err_msg =
+      "Mask: Only supports bool or numeric datatype for generated mask type, but got:" + dtype_.ToString();
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();

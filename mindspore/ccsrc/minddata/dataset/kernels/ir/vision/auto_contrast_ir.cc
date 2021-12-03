@@ -38,7 +38,7 @@ std::string AutoContrastOperation::Name() const { return kAutoContrastOperation;
 
 Status AutoContrastOperation::ValidateParams() {
   if (cutoff_ < 0 || cutoff_ > 100) {
-    std::string err_msg = "AutoContrast: cutoff has to be between 0 and 100, got: " + std::to_string(cutoff_);
+    std::string err_msg = "AutoContrast: 'cutoff' has to be between 0 and 100, got: " + std::to_string(cutoff_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
@@ -46,7 +46,7 @@ Status AutoContrastOperation::ValidateParams() {
   for (uint32_t single_ignore : ignore_) {
     if (single_ignore > kMaxIgnoreSize) {
       std::string err_msg =
-        "AutoContrast: invalid size, ignore has to be between 0 and 255, got: " + std::to_string(single_ignore);
+        "AutoContrast: invalid size, 'ignore' has to be between 0 and 255, got: " + std::to_string(single_ignore);
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }

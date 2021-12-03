@@ -67,12 +67,12 @@ Status RandomAffineOperation::ValidateParams() {
   }
   // Translate
   if (translate_range_.size() != size_two && translate_range_.size() != size_four) {
-    std::string err_msg = "RandomAffine: translate_range expecting size 2 or 4, got: translate_range.size() = " +
+    std::string err_msg = "RandomAffine: 'translate'(translate_range) expecting size 2 or 4, got size: " +
                           std::to_string(translate_range_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (translate_range_[dimension_zero] > translate_range_[dimension_one]) {
-    std::string err_msg = "RandomAffine: minimum of translate range on x is greater than maximum: min = " +
+    std::string err_msg = "RandomAffine: minimum of 'translate'(translate_range) on x is greater than maximum: min = " +
                           std::to_string(translate_range_[dimension_zero]) +
                           ", max = " + std::to_string(translate_range_[dimension_one]);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -82,9 +82,10 @@ Status RandomAffineOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[dimension_one], {-1, 1}, false, false));
   if (translate_range_.size() == size_four) {
     if (translate_range_[dimension_two] > translate_range_[dimension_three]) {
-      std::string err_msg = "RandomAffine: minimum of translate range on y is greater than maximum: min = " +
-                            std::to_string(translate_range_[dimension_two]) +
-                            ", max = " + std::to_string(translate_range_[dimension_three]);
+      std::string err_msg =
+        "RandomAffine: minimum of 'translate'(translate range) on y is greater than maximum: min = " +
+        std::to_string(translate_range_[dimension_two]) +
+        ", max = " + std::to_string(translate_range_[dimension_three]);
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     RETURN_IF_NOT_OK(
@@ -96,18 +97,18 @@ Status RandomAffineOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorScale("RandomAffine", scale_range_));
   // Shear
   if (shear_ranges_.size() != size_two && shear_ranges_.size() != size_four) {
-    std::string err_msg = "RandomAffine: shear_ranges expecting size 2 or 4, got: shear_ranges.size() = " +
-                          std::to_string(shear_ranges_.size());
+    std::string err_msg =
+      "RandomAffine: 'shear'(shear_range) expecting size 2 or 4, got size:" + std::to_string(shear_ranges_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (shear_ranges_[dimension_zero] > shear_ranges_[dimension_one]) {
-    std::string err_msg = "RandomAffine: minimum of horizontal shear range is greater than maximum: min = " +
+    std::string err_msg = "RandomAffine: minimum of horizontal 'shear'(shear_range) is greater than maximum: min = " +
                           std::to_string(shear_ranges_[dimension_zero]) +
                           ", max = " + std::to_string(shear_ranges_[dimension_one]);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (shear_ranges_.size() == size_four && shear_ranges_[dimension_two] > shear_ranges_[dimension_three]) {
-    std::string err_msg = "RandomAffine: minimum of vertical shear range is greater than maximum: min = " +
+    std::string err_msg = "RandomAffine: minimum of vertical 'shear'(shear_range) is greater than maximum: min = " +
                           std::to_string(shear_ranges_[dimension_two]) +
                           ", max = " + std::to_string(scale_range_[dimension_three]);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

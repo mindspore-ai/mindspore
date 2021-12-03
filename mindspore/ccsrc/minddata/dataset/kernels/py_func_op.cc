@@ -93,7 +93,8 @@ ComputeReturn:
 
 ShapeMisMatch:
   ret = Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-               "PyFunc should return a numpy array or a numpy array tuple");
+               "PyFunc should return a numpy array or a numpy array tuple, check data type of return value in user "
+               "defined python function.");
   goto ComputeReturn;
 
 TimeoutError:
