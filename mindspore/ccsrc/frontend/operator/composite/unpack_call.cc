@@ -42,11 +42,10 @@ using mindspore::abstract::AbstractTuplePtr;
 FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
-  const std::string op_name = std::string("UnpackCall");
   size_t arg_length = args_spec_list.size();
   const size_t min_args_size = 2;
   if (arg_length < min_args_size) {
-    MS_LOG(EXCEPTION) << op_name << " requires at least two args, but got " << arg_length << ".";
+    MS_LOG(EXCEPTION) << "The UnpackCall operator requires at least two arguments, but got " << arg_length << ".";
   }
 
   // No need to check, check will be done in infer.
@@ -85,7 +84,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
                                {NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(item.first), dict_get_item});
                            });
     } else {
-      MS_LOG(EXCEPTION) << op_name << " require args should be tuple, list or dict, but got "
+      MS_LOG(EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
                         << args_spec_list[index]->ToString();
     }
   }

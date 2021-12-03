@@ -48,7 +48,7 @@ def test_zip_operation_args_size():
 
     x = Tensor.from_numpy(np.ones([1], np.float32))
     net = AssignInZipLoop()
-    with pytest.raises(Exception, match="For 'zip', there is at least one input."):
+    with pytest.raises(Exception, match="The zip operator must have at least 1 argument"):
         out = net(x)
         assert np.all(out.asnumpy() == 1)
 
@@ -80,6 +80,6 @@ def test_zip_operation_args_type():
 
     x = Tensor.from_numpy(np.ones([1], np.float32))
     net = AssignInZipLoop()
-    with pytest.raises(Exception, match="For 'zip', all inputs must be sequence."):
+    with pytest.raises(Exception, match="The all inputs of zip operator must be sequence"):
         out = net(x)
         assert np.all(out.asnumpy() == 1)
