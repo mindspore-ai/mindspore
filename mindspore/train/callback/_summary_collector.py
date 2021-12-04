@@ -15,11 +15,13 @@
 """Summary collector callback."""
 
 import os
+import stat
 import re
 import json
 from json.decoder import JSONDecodeError
 
 from importlib import import_module
+from collections import defaultdict
 from collections.abc import Iterable
 
 import numpy as np
@@ -32,8 +34,8 @@ from mindspore.train.summary.summary_record import SummaryRecord, process_export
 from mindspore.train.summary.enums import PluginEnum, ModeEnum
 from mindspore.train.callback import Callback, ModelCheckpoint
 from mindspore.train import lineage_pb2
+from mindspore.train.serialization import save_checkpoint
 from mindspore.train.callback._dataset_graph import DatasetGraph
-from mindspore.train.callback._landscape import SummaryLandscape
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
@@ -119,7 +121,7 @@ class SummaryCollector(Callback):
                 The calculation time increases with the increase of resolution.
                 Default: 40. Optional values: between 3 and 256.
               - unit (str): Specify the interval strength of the training process. Optional: epoch/step.
-              - create_landscape (List[bool, bool]): Select how to create loss landscape.
+              - create_landscape (dict): Select how to create loss landscape.
                 Training process loss landscape(train) and Training result loss landscape(result).
                 Default: {"train": True, "result": True}. Optional: True/False.
               - num_samples (int): The size of the dataset used to create the loss landscape.
@@ -255,8 +257,13 @@ class SummaryCollector(Callback):
         self._is_collect_landscape = bool(landscape)
         if self._is_collect_landscape:
             self._check_collect_landscape_data(landscape)
+            self._ckpt_dir = os.path.join(self._summary_dir, 'ckpt_dir')
+            _make_directory(self._ckpt_dir)
+            self._model_params_file_map = {}
+            self._loss_map = {}
+            self._epoch_group = defaultdict(list)
             intervals = landscape.get('intervals')
-            self._landscape = SummaryLandscape(summary_dir=summary_dir, intervals=intervals)
+            self._create_epoch_group(intervals)
 
         self._custom_lineage_data = self._process_custom_lineage_data(custom_lineage_data)
 
@@ -286,6 +293,12 @@ class SummaryCollector(Callback):
         check_value_type(name, value, int)
         if value <= 0:
             raise ValueError(f'For `{name}` the value should be greater than 0, but got `{value}`.')
+
+    def _create_epoch_group(self, intervals):
+        """Create epoch group."""
+        for i, interval in enumerate(intervals):
+            for j in interval:
+                self._epoch_group[i].append(j)
 
     def _process_custom_lineage_data(self, custom_lineage_data):
         """
@@ -564,7 +577,44 @@ class SummaryCollector(Callback):
             num_samples = collect_landscape.get('num_samples', 2048)
             landscape_size = collect_landscape.get('landscape_size', 40)
             create_landscape = collect_landscape.get('create_landscape', {'train': True, 'result': True})
-            self._landscape.save_metadata(cb_params.batch_num, unit, num_samples, landscape_size, create_landscape)
+            self._save_metadata(cb_params.batch_num, unit, num_samples, landscape_size, create_landscape)
+
+    def _save_metadata(self, step_per_epoch, unit, num_samples, landscape_size, create_landscape):
+        """Save meta data to json file."""
+        data = {
+            "epoch_group": self._epoch_group,
+            "model_params_file_map": self._model_params_file_map,
+            "step_per_epoch": step_per_epoch,
+            "unit": unit,
+            "num_samples": num_samples,
+            "landscape_size": landscape_size,
+            "create_landscape": create_landscape,
+            "loss_map": self._loss_map
+        }
+        meta_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
+        with open(meta_path, 'w') as file:
+            json.dump(data, file)
+        os.chmod(meta_path, stat.S_IRUSR)
+
+    def _save_loss_and_model_params(self, cur_num, unit, backbone, loss):
+        """Save model params and loss."""
+        param_list = []
+
+        for param in backbone.get_parameters():
+            param.init_data()
+            param_data = param.data if isinstance(param.data, Tensor) else Tensor(param.data)
+
+            param_list.append(dict(
+                name=param.name,
+                data=param_data
+            ))
+
+        ckpt_file_name = f"{type(backbone).__name__}_{cur_num}_{unit}.ckpt"
+        file_path = os.path.join(self._ckpt_dir, ckpt_file_name)
+        save_checkpoint(param_list, file_path)
+
+        self._model_params_file_map[str(cur_num)] = file_path
+        self._loss_map[str(cur_num)] = loss
 
     def _save_model_params_for_landscape(self, cb_params):
         """Save model params and loss for landscape."""
@@ -585,7 +635,7 @@ class SummaryCollector(Callback):
             unit = collect_landscape.get('unit', 'step')
             cur_num = cb_params.cur_epoch_num if collect_landscape and unit == 'epoch' else cb_params.cur_step_num
             logger.info("Save loss and model params, %s: %s." % (unit, cur_num))
-            self._landscape.save_loss_and_model_params(cur_num, unit, backbone, loss)
+            self._save_loss_and_model_params(cur_num, unit, backbone, loss)
 
     def _check_callbacks(self, cb_params):
         """Check there if there are duplicate instances of SummaryCollector."""
