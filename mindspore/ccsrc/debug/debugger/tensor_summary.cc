@@ -325,10 +325,10 @@ void TensorSummary<T>::InitCalculators(const std::vector<DebugServices::watchpoi
     if (wp.allclose_enabled() && prev_tensor_ptr_) {
       all_close_[wp_id] = std::make_unique<AllCloseCalculator>();
       if (!wp.parameter_list[0].disabled) {
-        all_close_[wp_id]->set_atol(wp.parameter_list[0].value);
+        all_close_[wp_id]->set_rtol(wp.parameter_list[0].value);
       }
       if (!wp.parameter_list[1].disabled) {
-        all_close_[wp_id]->set_rtol(wp.parameter_list[1].value);
+        all_close_[wp_id]->set_atol(wp.parameter_list[1].value);
       }
     } else if (wp.range_enabled()) {
       range_counts_[wp_id] = std::make_unique<RangeCountCalculator>();
