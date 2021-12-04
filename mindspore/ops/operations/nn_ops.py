@@ -2543,7 +2543,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         return logits_type
 
 
-class ApplyMomentum(PrimitiveWithInfer):
+class ApplyMomentum(Primitive):
     r"""
     Optimizer that implements the Momentum algorithm.
 
@@ -2629,19 +2629,6 @@ class ApplyMomentum(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
-        return v_shape
-
-    def infer_dtype(self, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
-        valid_dtypes = [mstype.float16, mstype.float32, mstype.float64]
-        if v_dtype != mstype.type_refkey and a_dtype != mstype.type_refkey:
-            validator.check_tensor_dtype_valid("v", v_dtype, valid_dtypes, self.name)
-            validator.check_tensor_dtype_valid("a", a_dtype, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"l_dtype": l_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"g_dtype": g_dtype}, valid_dtypes, self.name)
-        validator.check_scalar_or_tensor_types_same({"m_dtype": m_dtype}, valid_dtypes, self.name)
-        return v_dtype
 
 
 class SmoothL1Loss(PrimitiveWithInfer):
