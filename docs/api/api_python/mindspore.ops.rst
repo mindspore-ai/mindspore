@@ -1,0 +1,58 @@
+mindspore.ops
+=============
+
+operations
+----------
+
+Neural Network Operators
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.GeLU
+    mindspore.ops.L2Loss
+    mindspore.ops.PReLU
+    mindspore.ops.ReLUV2
+    mindspore.ops.SeLU
+    mindspore.ops.Sigmoid
+
+Array Operators
+----------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.OnesLike
+    mindspore.ops.Reshape
+    mindspore.ops.Size
+    mindspore.ops.Tile
+    mindspore.ops.ZerosLike
+
+Math Operators
+--------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.Add
+    mindspore.ops.AddN
+    mindspore.ops.Div
+    mindspore.ops.Eps
+    mindspore.ops.Erf
+    mindspore.ops.LessEqual
+    mindspore.ops.Log
+    mindspore.ops.MatMul
+    mindspore.ops.Mul
+    mindspore.ops.Pow
+    mindspore.ops.Sub
+
+
+Random Operators
+----------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+    
+    mindspore.ops.Gamma
+    mindspore.ops.UniformReal

@@ -11,6 +11,26 @@ Tensor
     mindspore.SparseTensor
     mindspore.Tensor
 
+DataType
+--------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.dtype_to_nptype
+    mindspore.dtype_to_pytype
+    mindspore.get_py_obj_dtype
+    mindspore.issubclass\_
+    mindspore.pytype_to_dtype
+
+Installation Verification
+--------------------------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+    
+    indspore.run_check
+
 Parameter
 ---------
 
@@ -20,6 +40,15 @@ Parameter
     mindspore.Parameter
     mindspore.ParameterTuple
 
+Log
+---
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.get_level
+    mindspore.get_log_config
+
 Model
 -----
 
@@ -27,6 +56,15 @@ Model
     :toctree: mindspore
 
     mindspore.Model
+
+Seed
+----
+
+.. cnmsautosummary::
+    :toctree: mindspore
+
+    mindspore.get_seed
+    mindspore.set_seed
 
 Serialization
 --------------
