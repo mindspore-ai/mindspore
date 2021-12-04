@@ -1,4 +1,4 @@
-    ..py:method:: use_sampler(new_sampler)
+    .. py:method:: use_sampler(new_sampler)
     
        为当前数据集更换一个新的采样器。
 

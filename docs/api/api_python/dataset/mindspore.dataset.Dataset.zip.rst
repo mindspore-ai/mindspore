@@ -1,4 +1,4 @@
-    ..py:method:: zip(datasets)
+    .. py:method:: zip(datasets)
 
         将数据集和输入的数据集或者数据集元组按列进行合并压缩。输入数据集中的列名必须不同。
 

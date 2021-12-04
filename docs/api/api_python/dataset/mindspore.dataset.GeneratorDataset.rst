@@ -27,14 +27,15 @@
     - **max_rowsize** (int，可选)：指定在多进程之间复制数据时，共享内存分配的最大空间（数量级为MB，默认为6MB），仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
 
     **异常：**
-        - **RuntimeError**：Python对象 `source` 在执行期间引发异常。
-        - **RuntimeError**：参数 `column_names` 指定的列名数量与 `source` 的输出数据数量不匹配。
-        - **RuntimeError**：参数 `num_parallel_workers` 超过最大线程数。
-        - **RuntimeError**: 同时指定了 `sampler` 和 `shuffle` 。
-        - **RuntimeError**: 同时指定了 `sampler` 和 `num_shards` 。
-        - **RuntimeError**: 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
-        - **RuntimeError**: 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError**: `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+
+    - **RuntimeError** - Python对象 `source` 在执行期间引发异常。
+    - **RuntimeError** - 参数 `column_names` 指定的列名数量与 `source` 的输出数据数量不匹配。
+    - **RuntimeError** - 参数 `num_parallel_workers` 超过最大线程数。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 。
+    - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note:: 此数据集可以指定 `sampler` 参数，但 `sampler` 和 `shuffle` 是互斥的。下表展示了几种合法的输入参数及预期的行为。
 

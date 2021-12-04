@@ -1,6 +1,3 @@
-mindspore.train.callback.CheckpointConfig
-==========================================
-
 .. py:class:: mindspore.train.callback.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM')
 
     保存checkpoint时的配置策略。
