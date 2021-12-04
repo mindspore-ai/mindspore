@@ -24,6 +24,7 @@ from mindspore.ops import DataType
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Oplib
 from ._pyfunc_registry import add_pyfunc
+from ._custom_grad import autodiff_bprop
 
 
 class Custom(ops.PrimitiveWithInfer):
@@ -322,6 +323,8 @@ class Custom(ops.PrimitiveWithInfer):
                 self.func_type = "tvm_compute"
             else:
                 self.func_type = "hybrid"
+                if not self.bprop:
+                    self._hybrid_autodiff()
         self.add_prim_attr("func_type", self.func_type)
         self._update_attr()
 
@@ -604,3 +607,25 @@ class Custom(ops.PrimitiveWithInfer):
                 self.add_prim_attr("primitive_target", "GPU")
             elif registered_targets == ["CPU"]:
                 self.add_prim_attr("primitive_target", "CPU")
+        if callable(self.func) and callable(self.out_shape):
+            if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == "autodiff":
+                self.add_prim_attr("autodiff", True)
+        else:
+            self.add_prim_attr("autodiff", False)
+
+    def _hybrid_autodiff(self):
+        """generate backward op for a custom hybrid op"""
+        inputs_num = len(inspect.signature(self.func).parameters)
+        if inputs_num == 0:
+            logger.warning("Function with no input has no backward op.")
+        elif inputs_num > 10:
+            logger.warning("Currently autodiff for function with more than 10 inputs is not supported.")
+        else:
+            grad_func = autodiff_bprop(inputs_num)
+
+            def infer_func(*args):
+                return args[:inputs_num]
+            setattr(infer_func, "type", "autodiff")
+            op = Custom(func=self.func, out_shape=infer_func, out_dtype=infer_func,
+                        func_type="akg", bprop=True)
+            self.bprop = grad_func(op)

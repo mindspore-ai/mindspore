@@ -15,6 +15,7 @@
 
 import pytest
 import numpy as np
+import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
@@ -33,29 +34,100 @@ def outer_product(a, b):
     return c
 
 
-class TestHybrid(Cell):
+def cube(a):
+    c = output_tensor((a.shape[0], a.shape[1]), 'float32')
+    b = allocate((a.shape[0], a.shape[1]), 'float32', 'local')
+
+    for i0 in range(a.shape[0]):
+        for i1 in range(a.shape[1]):
+            b[i0, i1] = a[i0, i1] * a[i0, i1]
+            c[i0, i1] = b[i0, i1] * a[i0, i1]
+
+    return c
+
+
+class TestHybridTwoInputs(Cell):
     """Net definition"""
 
-    def __init__(self):
-        super(TestHybrid, self).__init__()
+    def __init__(self, func, shapes, types):
+        super(TestHybridTwoInputs, self).__init__()
 
-        def infer_func(x, y):
-            return x
-
-        self.program = ops.Custom(outer_product, out_shape=infer_func, out_dtype=infer_func, func_type="akg")
+        self.program = ops.Custom(func, out_shape=shapes, out_dtype=types, func_type="akg")
 
     def construct(self, x, y):
         return self.program(x, y)
 
 
-def hybrid_case():
+class TestHybridOneInput(Cell):
+    """Net definition"""
+
+    def __init__(self, func, shapes, types):
+        super(TestHybridOneInput, self).__init__()
+
+        self.program = ops.Custom(func, out_shape=shapes, out_dtype=types, func_type="akg")
+
+    def construct(self, x):
+        return self.program(x)
+
+
+class MatMulNN(Cell):
+    """Net definition"""
+
+    def __init__(self):
+        super(MatMulNN, self).__init__()
+        self.matmul = ops.MatMul()
+
+    def construct(self, x, y):
+        return self.matmul(x, y)
+
+
+class PowNN(Cell):
+    """Net definition"""
+
+    def __init__(self):
+        super(PowNN, self).__init__()
+        self.pow = ops.Pow()
+
+    def construct(self, x):
+        return self.pow(x, 3)
+
+
+def hybrid_outer_product():
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
 
-    test = TestHybrid()
+    test = TestHybridTwoInputs(outer_product, (4, 4), (ms.float32))
     output = test(Tensor(input_x), Tensor(input_y))
     expect = np.matmul(input_x, input_y)
     compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
+def hybrid_outer_product_autodiff():
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    sens = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestHybridTwoInputs(outer_product, (4, 4), (ms.float32))
+    net = MatMulNN()
+    dx, dy = ops.GradOperation(sens_param=True, get_all=True)(test)(Tensor(input_x), Tensor(input_y), Tensor(sens))
+    edx, edy = ops.GradOperation(sens_param=True, get_all=True)(net)(Tensor(input_x), Tensor(input_y), Tensor(sens))
+    compare_res = np.allclose(edx.asnumpy(), dx.asnumpy(), 0.001, 0.001)
+    compare_res &= np.allclose(edy.asnumpy(), dy.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
+def hybrid_pow_autodiff():
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    sens = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestHybridOneInput(cube, (4, 4), (ms.float32))
+    net = PowNN()
+    dx = ops.GradOperation(sens_param=True)(test)(Tensor(input_x), Tensor(sens))
+    edx = ops.GradOperation(sens_param=True)(net)(Tensor(input_x), Tensor(sens))
+    compare_res = np.allclose(edx.asnumpy(), dx.asnumpy(), 0.001, 0.001)
     if not compare_res:
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
@@ -71,7 +143,7 @@ def test_hybrid_ascend_graph_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    hybrid_case()
+    hybrid_outer_product()
 
 
 @pytest.mark.level0
@@ -85,7 +157,7 @@ def test_hybrid_ascend_pynative_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    hybrid_case()
+    hybrid_outer_product()
 
 
 @pytest.mark.level0
@@ -98,7 +170,9 @@ def test_hybrid_gpu_graph_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    hybrid_case()
+    hybrid_outer_product()
+    hybrid_outer_product_autodiff()
+    hybrid_pow_autodiff()
 
 
 @pytest.mark.level0
@@ -111,7 +185,9 @@ def test_hybrid_gpu_pynative_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    hybrid_case()
+    hybrid_outer_product()
+    hybrid_outer_product_autodiff()
+    hybrid_pow_autodiff()
 
 
 v_add_ascend_info = CustomRegOp() \
