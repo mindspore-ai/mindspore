@@ -113,6 +113,8 @@ class CommUtil {
 
   // Check if the file exists.
   static bool IsFileExists(const std::string &file);
+  // Check whether the file is empty or not.
+  static bool IsFileEmpty(const std::string &file);
   // Convert cluster state to string when response the http request.
   static std::string ClusterStateToString(const ClusterState &state);
 

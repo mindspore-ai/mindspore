@@ -48,6 +48,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   Initialize();
   StartUpdateClusterStateTimer();
   RunRecovery();
+
   if (is_worker_timeout_) {
     BroadcastTimeoutEvent();
   }
@@ -56,9 +57,10 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     return false;
   }
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+
+  StartUpdatePersistentCommandTimer();
   MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler, there are " << node_manager_.worker_num()
                << " workers and " << node_manager_.server_num() << " servers registered.";
-
   return true;
 }
 
@@ -133,10 +135,24 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   HeartbeatMessage heartbeat_message;
   CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
-  node_manager_.UpdateHeartbeat(heartbeat_message.node_id());
+  std::string node_id = heartbeat_message.node_id();
+  node_manager_.UpdateHeartbeat(node_id);
   MS_LOG(DEBUG) << "The scheduler get a heartbeat from node id :" << heartbeat_message.node_id();
 
   HeartbeatRespMessage heartbeat_resp_message;
+  heartbeat_resp_message.set_persistent_cmd(PersistentCommand::DEFAULT);
+
+  NodeRole node_role = (node_manager_.QueryNodeInfo(node_id)).node_role_;
+  // The worker role does not support disaster recovery for the time being.
+  if (node_role == NodeRole::SERVER && persistent_cmd_ == PersistentCommand::BEGIN_PERSIST) {
+    if (!node_manager_.IsNodePersisting(node_id)) {
+      heartbeat_resp_message.set_persistent_cmd(PersistentCommand::BEGIN_PERSIST);
+      node_manager_.AddPersistingNode(node_id);
+    }
+    if (node_manager_.IsAllNodeInPersisting()) {
+      persistent_cmd_ = PersistentCommand::DEFAULT;
+    }
+  }
 
   MS_LOG(DEBUG) << "The cluster state:" << CommUtil::ClusterStateToString(node_manager_.GetClusterState());
   heartbeat_resp_message.set_cluster_state(node_manager_.GetClusterState());
@@ -145,7 +161,8 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
 
   *heartbeat_resp_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
-  heartbeat_resp_message.set_is_worker_or_server0(node_manager_.IsWorkerOrServer0());
+  heartbeat_resp_message.set_is_worker(node_manager_.IsWorker());
+  heartbeat_resp_message.set_is_server0(node_manager_.IsServer0());
 
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
                            heartbeat_resp_message.ByteSizeLong())) {
@@ -559,6 +576,23 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
   MS_EXCEPTION_IF_NULL(update_state_thread_);
 }
 
+void SchedulerNode::StartUpdatePersistentCommandTimer() {
+  if (!EnableRecovery()) {
+    return;
+  }
+
+  update_persistent_cmd_thread_ = std::make_unique<std::thread>([&]() {
+    while (!is_finish_.load()) {
+      std::unique_lock<std::mutex> locker(persistent_cmd_mutex_);
+      (void)persistent_cmd_cv_.wait_for(
+        locker, std::chrono::seconds(PSContext::instance()->cluster_config().persistent_interval));
+      persistent_cmd_ = PersistentCommand::BEGIN_PERSIST;
+    }
+  });
+
+  MS_EXCEPTION_IF_NULL(update_persistent_cmd_thread_);
+}
+
 const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInfo &node_info) {
   std::lock_guard<std::mutex> lock(client_mutex_);
   if (connected_nodes_.count(node_info.node_id_)) {
@@ -620,6 +654,12 @@ bool SchedulerNode::Stop() {
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
     StopRestfulServer();
   }
+
+  if (update_persistent_cmd_thread_) {
+    persistent_cmd_cv_.notify_one();
+    update_persistent_cmd_thread_->join();
+  }
+
   return true;
 }
 

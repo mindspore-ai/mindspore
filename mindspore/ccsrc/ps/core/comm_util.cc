@@ -216,6 +216,19 @@ bool CommUtil::IsFileExists(const std::string &file) {
   }
 }
 
+bool CommUtil::IsFileEmpty(const std::string &file) {
+  if (!IsFileExists(file)) {
+    MS_LOG(EXCEPTION) << "The file does not exist, file path: " << file;
+  }
+
+  std::ifstream fs(file.c_str());
+  std::string str;
+  fs >> str;
+  fs.close();
+
+  return str.empty();
+}
+
 std::string CommUtil::ClusterStateToString(const ClusterState &state) {
   MS_LOG(DEBUG) << "The cluster state:" << state;
   if (state < SizeToInt(kClusterState.size())) {

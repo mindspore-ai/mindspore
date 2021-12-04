@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_FILE_IO_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_FILE_IO_UTILS_H_
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <vector>
 #include <string>
 #include <utility>
@@ -33,7 +35,13 @@ class FileIOUtils {
   static bool Read(const std::string &file_name, const std::vector<std::pair<void *, size_t>> &outputs);
 
   // Judeg whether a file exists.
-  static bool IsFileExist(const std::string &file);
+  static bool IsFileOrDirExist(const std::string &file);
+
+  // Create file.
+  static void CreateFile(const std::string &file_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
+
+  // Create directory.
+  static void CreateDir(const std::string &dir_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
 };
 }  // namespace storage
 }  // namespace distributed

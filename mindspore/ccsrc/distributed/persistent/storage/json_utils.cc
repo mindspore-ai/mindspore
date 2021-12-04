@@ -22,10 +22,10 @@ namespace mindspore {
 namespace distributed {
 namespace storage {
 bool JsonUtils::Initialize() {
-  if (!FileIOUtils::IsFileExist(file_name_)) {
+  if (!FileIOUtils::IsFileOrDirExist(file_name_)) {
     std::ofstream output_file(file_name_);
     output_file.close();
-    ChangeFileMode(file_name_, S_IRUSR | S_IWUSR);
+    ChangeFileMode(file_name_, S_IRWXU | S_IRWXG | S_IRWXO);
     return true;
   }
 

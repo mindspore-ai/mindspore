@@ -25,6 +25,11 @@ bool FileConfiguration::Initialize() {
     return false;
   }
 
+  if (CommUtil::IsFileEmpty(file_path_)) {
+    MS_LOG(INFO) << "The file: " << file_path_ << " is empty.";
+    return true;
+  }
+
   std::ifstream json_file(file_path_);
   try {
     json_file >> js;

@@ -36,13 +36,6 @@ using OutputData = std::pair<void *, size_t>;
 // DirtyInfo is used to indicate the part of the Tensor that needs to be rewritten to storage,
 using DirtyInfo = std::vector<int>;
 
-// Storage configuration, you can choose different configurations according to different storage forms, and support
-// modification, such as using file storage to configure the file storage path.
-std::map<std::string, std::string> &Config() {
-  static std::map<std::string, std::string> config = {{kFileStoragePath, ""}};
-  return config;
-}
-
 // This Class provides upper-layer interfaces for persistent storage.
 class StorageBase {
  public:

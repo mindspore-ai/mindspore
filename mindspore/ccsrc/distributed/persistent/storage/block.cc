@@ -33,6 +33,7 @@ bool Block::CheckSha256Seq() const {
   std::string sha256_gen = block_meta_->Get<std::string>(kHashSeq);
   if (sha256_gen != system::sha256::GetHashFromFile(block_file_name_)) {
     MS_LOG(ERROR) << "The block file has been modified, file name: " << block_file_name_;
+    return false;
   }
   return true;
 }

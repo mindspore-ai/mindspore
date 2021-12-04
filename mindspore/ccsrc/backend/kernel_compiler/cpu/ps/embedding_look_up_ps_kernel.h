@@ -41,6 +41,7 @@ class EmbeddingLookUpPSKernel : public EmbeddingLookUpCPUKernel, public PServerK
   const std::vector<size_t> &input_sizes() const override;
   const std::vector<size_t> &output_sizes() const override;
   const std::vector<size_t> &workspace_sizes() const override;
+  int64_t offset() const override;
 
  private:
   std::vector<size_t> input_shape_;

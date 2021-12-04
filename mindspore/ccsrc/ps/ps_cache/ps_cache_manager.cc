@@ -192,8 +192,12 @@ bool PsCacheManager::InitParameterServer() {
     info.set_init_val(param_init_info.init_val_);
     info.set_global_seed(param_init_info.global_seed_);
     info.set_op_seed(param_init_info.op_seed_);
-    // if worker role
-    if (!Worker::GetInstance().InitPSEmbeddingTable(key, input_shape, indices_shape, output_shape, info)) {
+
+    // It takes a long time to initialize the super-large embedding table, and set the maximum timeout time to 180
+    // seconds.
+    const uint32_t timeout_in_seconds = 180;
+    if (!Worker::GetInstance().InitPSEmbeddingTable(key, input_shape, indices_shape, output_shape, info,
+                                                    timeout_in_seconds)) {
       MS_LOG(ERROR) << "InitPSEmbeddingTable failed.";
       return false;
     }
@@ -925,98 +929,6 @@ bool PsCacheManager::HashSwapServerToHost(size_t key, const HashTableInfo &hash_
     "Embedding lookup from parameter server executed failed.");
   RETURN_IF_FALSE(InsertHostHashTable(embedding_size, IntToSize(swap_indices_size), server_to_host_index,
                                       lookup_result.data(), host_hash_table_addr));
-  return true;
-}
-
-bool PsCacheManager::HashSwapDeviceOut(int *swap_out_index, std::vector<float> *swap_out_data,
-                                       const HashTableInfo &hash_info) {
-  MS_ERROR_IF_NULL(swap_out_index);
-  MS_ERROR_IF_NULL(swap_out_data);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
-  auto swap_out_index_size = statistics_info_.device_to_host_size_;
-  if (swap_out_index_size == 0) {
-    return true;
-  }
-
-  MS_ERROR_IF_NULL_W_RET_VAL(hash_info.device_address.addr, false);
-  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto cache_vocab_size = hash_info.cache_vocab_size;
-  auto embedding_size = hash_info.embedding_size;
-  swap_out_data->resize(swap_out_index_size * embedding_size);
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(
-    embedding_device_cache_->hash_swap_index_addr_, swap_out_index, swap_out_index_size * sizeof(int)));
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapOut(
-    hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    cache_vocab_size, embedding_size, swap_out_index_size));
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyDeviceMemToHost(
-    swap_out_data->data(), embedding_device_cache_->hash_swap_value_addr_,
-    swap_out_index_size * embedding_size * sizeof(float)));
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->RecordEvent());
-  return true;
-}
-
-bool PsCacheManager::HashSwapDeviceIn(const int *swap_in_ids, const int *swap_in_index, const HashTableInfo &hash_info,
-                                      size_t key) {
-  MS_ERROR_IF_NULL(swap_in_ids);
-  MS_ERROR_IF_NULL(swap_in_index);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
-  auto swap_in_ids_size = statistics_info_.host_to_device_size_;
-  if (swap_in_ids_size == 0) {
-    return true;
-  }
-
-  MS_ERROR_IF_NULL_W_RET_VAL(hash_info.device_address.addr, false);
-  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto cache_vocab_size = hash_info.cache_vocab_size;
-  auto embedding_size = hash_info.embedding_size;
-  // Get id embs by swap_in_ids in host(Pipeline with hash swap-out in device).
-  std::vector<float> lookup_result(swap_in_ids_size * embedding_size, 0);
-  std::vector<int> lookup_ids(swap_in_ids_size, 0);
-  size_t copy_len = swap_in_ids_size * sizeof(int);
-  size_t dest_len = copy_len;
-  auto ret = memcpy_s(lookup_ids.data(), dest_len, swap_in_ids, copy_len);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Lookup id memcpy failed.";
-    return false;
-  }
-  RETURN_IF_FALSE_WITH_LOG(
-    Worker::GetInstance().DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd),
-    "Embedding lookup from parameter server executed failed.");
-  // Hash swap-in in device.
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(
-    embedding_device_cache_->hash_swap_value_addr_, lookup_result.data(),
-    swap_in_ids_size * embedding_size * sizeof(float)));
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(embedding_device_cache_->hash_swap_index_addr_,
-                                                                       swap_in_index, swap_in_ids_size * sizeof(int)));
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapIn(
-    hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    cache_vocab_size, embedding_size, swap_in_ids_size));
-  return true;
-}
-
-bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *const swap_out_ids,
-                                          size_t key) {
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
-  MS_ERROR_IF_NULL(swap_out_ids);
-  auto swap_out_ids_size = statistics_info_.device_to_host_size_;
-  if (swap_out_ids_size == 0) {
-    return true;
-  }
-  std::vector<int> lookup_ids(swap_out_ids_size, 0);
-  size_t copy_len = swap_out_ids_size * sizeof(int);
-  size_t dest_len = copy_len;
-  auto ret = memcpy_s(lookup_ids.data(), dest_len, swap_out_ids, copy_len);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Lookup id memcpy failed.";
-    return false;
-  }
-  // Need synchronize event to ensure that the swap-out in device is completed.
-  RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeEvent());
-  RETURN_IF_FALSE_WITH_LOG(Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data),
-                           "Update embedding table to parameter server failed.");
   return true;
 }
 

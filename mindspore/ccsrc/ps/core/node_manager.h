@@ -113,7 +113,8 @@ class NodeManager {
 
   void SaveRecoveryRankId(const NodeInfo &info);
 
-  bool IsWorkerOrServer0();
+  bool IsWorker() const;
+  bool IsServer0() const;
 
   // Determine whether the node id has been registered.
   bool IsNodeRegistered(const std::string &node_id);
@@ -122,6 +123,18 @@ class NodeManager {
   void set_next_worker_rank_id(const int32_t &next_worker_rank_id);
   void set_next_server_rank_id(const int32_t &next_server_rank_id);
   void setPersistCallback(const OnPersist &onPersist);
+
+  // Query node information by node id.
+  const NodeInfo &QueryNodeInfo(const std::string &node_id) const;
+
+  // Determine whether the node is in persistent.
+  bool IsNodePersisting(const std::string &node_id) const;
+
+  // Record the node that is persisting.
+  void AddPersistingNode(const std::string &node_id);
+
+  // Determine whether all nodes that need to be persisted are in persistence.
+  bool IsAllNodeInPersisting();
 
  private:
   std::mutex node_mutex_;
@@ -139,6 +152,10 @@ class NodeManager {
   // When all nodes are registered successfully, then all nodes info will be stored in this map. In other words, the
   // nodes_info_ is a snapshot of the registered_nodes_info_.
   std::unordered_map<std::string, NodeInfo> nodes_info_;
+
+  // Record the node that is persisting.
+  std::set<std::string> nodes_persisting_;
+
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
 

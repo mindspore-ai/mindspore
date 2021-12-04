@@ -341,16 +341,22 @@ void NodeManager::SaveRecoveryRankId(const NodeInfo &info) {
   }
 }
 
-bool NodeManager::IsWorkerOrServer0() {
+bool NodeManager::IsWorker() const {
   bool res = std::any_of(registered_nodes_info_.begin(), registered_nodes_info_.end(), [](auto item) {
     if (item.second.node_role_ == NodeRole::WORKER && item.second.is_alive == false) {
       return true;
     }
+    return false;
+  });
 
+  return res;
+}
+
+bool NodeManager::IsServer0() const {
+  bool res = std::any_of(registered_nodes_info_.begin(), registered_nodes_info_.end(), [](auto item) {
     if (item.second.node_role_ == NodeRole::SERVER && item.second.is_alive == false && item.second.rank_id_ == 0) {
       return true;
     }
-
     return false;
   });
 
@@ -359,6 +365,29 @@ bool NodeManager::IsWorkerOrServer0() {
 
 bool NodeManager::IsNodeRegistered(const std::string &node_id) {
   if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
+    return true;
+  }
+  return false;
+}
+
+const NodeInfo &NodeManager::QueryNodeInfo(const std::string &node_id) const {
+  auto iter = registered_nodes_info_.find(node_id);
+  if (iter == registered_nodes_info_.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find node of id: " << node_id;
+  }
+  return iter->second;
+}
+
+bool NodeManager::IsNodePersisting(const std::string &node_id) const {
+  return nodes_persisting_.find(node_id) != nodes_persisting_.end();
+}
+
+void NodeManager::AddPersistingNode(const std::string &node_id) { nodes_persisting_.insert(node_id); }
+
+bool NodeManager::IsAllNodeInPersisting() {
+  // The worker role does not support disaster recovery currently.
+  if (nodes_persisting_.size() == IntToSize(server_num())) {
+    nodes_persisting_.clear();
     return true;
   }
   return false;

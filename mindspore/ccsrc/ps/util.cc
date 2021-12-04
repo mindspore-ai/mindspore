@@ -136,6 +136,17 @@ bool Util::FuseServerCommOps(const pipeline::ResourcePtr &res) {
   return true;
 }
 
+WeightPtr Util::MakeWeightPtr(const std::shared_ptr<std::vector<float>> &data, bool enable_recovery,
+                              const std::shared_ptr<std::vector<int>> &shape) {
+  WeightPtr weight_ptr;
+  if (!enable_recovery) {
+    weight_ptr = std::make_shared<Weight>(data, shape);
+  } else {
+    weight_ptr = std::make_shared<PersistentWeight>(data, shape);
+  }
+  return weight_ptr;
+}
+
 void Util::DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,
                     const std::string &fused_cnode_name) {
   MS_EXCEPTION_IF_NULL(func_graph);

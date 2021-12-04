@@ -79,7 +79,8 @@ bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, c
                                 [this] { return data_ready_ == false || need_wait_ == false; })) {
       return true;
     } else {
-      MS_LOG(INFO) << "Waiting for ps data process, channel name:" << channel_name << "...(" << i << " / 10)";
+      MS_LOG(INFO) << "Waiting for ps data process, channel name:" << channel_name << "...(" << i << " / "
+                   << kTimeoutLoopCount << ")";
     }
   }
   MS_LOG(ERROR) << "Ps cache data process timeout, suggest to enlarge the cache size.";
@@ -105,7 +106,8 @@ bool PsDataPrefetch::FinalizeData(const std::string &channel_name) {
                                [this] { return data_ready_ == true || need_wait_ == false; })) {
       return true;
     } else {
-      MS_LOG(INFO) << "Waiting for ps data prefetch, channel name:" << channel_name << "...(" << i << " / 10)";
+      MS_LOG(INFO) << "Waiting for ps data prefetch, channel name:" << channel_name << "...(" << i << " / "
+                   << kTimeoutLoopCount << ")";
     }
   }
   MS_LOG(ERROR) << "Ps cache data prefetch timeout.";

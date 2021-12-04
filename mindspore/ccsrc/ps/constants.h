@@ -27,6 +27,7 @@
 #include <functional>
 
 #include "ps/core/communicator/request_process_result_code.h"
+#include "distributed/persistent/data.h"
 
 namespace mindspore {
 namespace ps {
@@ -59,6 +60,14 @@ constexpr char kSparseFtrlOp[] = "FTRL";
 constexpr char kCertificateChain[] = "server.crt";
 constexpr char kPrivateKey[] = "server.key";
 constexpr char kCAcrt[] = "ca.crt";
+
+constexpr char kKeys[] = "keys";
+constexpr char kShapes[] = "shapes";
+constexpr char kParamNames[] = "param_names";
+constexpr char kRecoverFunc[] = "recover_function";
+constexpr char kRecoverEmbedding[] = "RecoverEmbedding";
+constexpr char kCurrentDirOfServer[] = "./server_";
+constexpr char kParamWithKey[] = "_parameter_key_";
 
 constexpr int64_t kInitWeightsCmd = 10;
 constexpr int64_t kInitWeightToOptimIdCmd = 11;
@@ -194,11 +203,13 @@ using Key = size_t;
 using Keys = std::vector<Key>;
 using Values = std::vector<float>;
 using ValuesPtr = std::shared_ptr<Values>;
-using Weight = std::vector<float>;
+using Weight = distributed::persistent::Data<float>;
+using PersistentWeight = distributed::persistent::PersistentData<float>;
 using Grad = std::vector<float>;
 using LookupIds = std::vector<Key>;
 using Lengths = std::vector<int>;
 using WeightPtr = std::shared_ptr<Weight>;
+using PersistentWeightPtr = std::shared_ptr<PersistentWeight>;
 using GradPtr = std::shared_ptr<Grad>;
 using InputsShape = std::vector<std::shared_ptr<std::vector<size_t>>>;
 using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>>;
