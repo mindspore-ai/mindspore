@@ -70,7 +70,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_ag_news_dataset, check_dbpedia_dataset, check_lj_speech_dataset, \
-    check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset
+    check_yes_no_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_svhn_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_auto_offload
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -8962,3 +8962,149 @@ class TedliumDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.TedliumNode(self.dataset_dir, self.release, self.usage, self.extensions, self.sampler)
+
+
+class _SVHNDataset:
+    """
+    Mainly for loading SVHN Dataset, and return two rows each time.
+    """
+    def __init__(self, dataset_dir, usage):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.usage = usage
+        self.column_names = ["image", "label"]
+        self.usage_all = ["train", "test", "extra"]
+        self.data = np.array([], dtype=np.uint8)
+        self.labels = np.array([], dtype=np.uint32)
+
+        if self.usage == "all":
+            for _usage in self.usage_all:
+                data, label = self._load_mat(_usage)
+                self.data = np.concatenate((self.data, data)) if self.data.size else data
+                self.labels = np.concatenate((self.labels, label)) if self.labels.size else label
+        else:
+            self.data, self.labels = self._load_mat(self.usage)
+
+    def _load_mat(self, mode):
+        filename = mode + "_32x32.mat"
+        mat_data = loadmat(os.path.join(self.dataset_dir, filename))
+        data = np.transpose(mat_data['X'], [3, 0, 1, 2])
+        label = mat_data['y'].astype(np.uint32).squeeze()
+        np.place(label, label == 10, 0)
+        return data, label
+
+    def __getitem__(self, index):
+        return self.data[index], self.labels[index]
+
+    def __len__(self):
+        return len(self.data)
+
+
+class SVHNDataset(GeneratorDataset):
+    """
+    A source dataset for reading and parsing SVHN dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Specify the 'train', 'test', 'extra' or 'all' parts of dataset
+            (default=None, will read all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
+            sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+            when num_shards is also specified. Random accessible input is required.
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not exist or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If usage is invalid.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> svhn_dataset_dir = "/path/to/svhn_dataset_directory"
+        >>> dataset = ds.SVHNDataset(dataset_dir=svhn_dataset_dir, usage="train")
+
+    About SVHN dataset:
+
+    SVHN dataset consists of 10 digit classes.
+    SVHN is obtained from house numbers in Google Street View images.
+    73257 digits for training, 26032 digits for testing, and 531131 additional extra training data.
+
+    Here is the original SVHN dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── svhn_dataset_dir
+             ├── train_32x32.mat
+             ├── test_32x32.mat
+             └── extra_32x32.mat
+
+    Citation:
+
+    .. code-block::
+
+        @article{
+          title={Reading Digits in Natural Images with Unsupervised Feature Learning},
+          author={Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco, Bo Wu, Andrew Y. Ng},
+          conference={NIPS Workshop on Deep Learning and Unsupervised Feature Learning 2011.},
+          year={2011},
+          publisher={NIPS}
+          url={http://ufldl.stanford.edu/housenumbers}
+        }
+
+    """
+
+    @check_svhn_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=1, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.usage = replace_none(usage, "all")
+        dataset = _SVHNDataset(self.dataset_dir, self.usage)
+
+        super().__init__(dataset, column_names=dataset.column_names, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
